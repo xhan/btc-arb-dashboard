@@ -1,0 +1,489 @@
+{
+  "dashboard": [
+    {
+      "name": "WBTC监控",
+      "id": 1760020971492,
+      "quotes": [
+        {
+          "id": 1760021015130,
+          "chain": "ethereum",
+          "amount": 1,
+          "fromToken": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
+          "toToken": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+          "preferredSource": "Kyber",
+          "showInverse": true
+        },
+        {
+          "id": 1760021219294,
+          "chain": "solana",
+          "amount": 1,
+          "fromToken": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
+          "toToken": "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
+          "showInverse": true
+        },
+        {
+          "id": 1760021311236,
+          "chain": "arbitrum",
+          "amount": 1,
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+          "preferredSource": "Kyber",
+          "showInverse": true
+        },
+        {
+          "id": 1760021254627,
+          "chain": "sui",
+          "amount": 1,
+          "fromToken": "0x876a4b7bce8aeaef60464c11f4026903e9afacab79b9b142686158aa86560b50::xbtc::XBTC",
+          "toToken": "0xaafb102dd0902f5055cadecd687fb5b71ca82ef0e0285d90afde828ec58ca96b::btc::BTC",
+          "showInverse": true
+        },
+        {
+          "id": 1765473582708,
+          "chain": "sui",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x876a4b7bce8aeaef60464c11f4026903e9afacab79b9b142686158aa86560b50::xbtc::XBTC",
+          "toToken": "0x0041f9f9344cac094454cd574e333c4fdb132d7bcc9379bcd4aab485b2a63942::wbtc::WBTC",
+          "showInverse": true
+        },
+        {
+          "id": 1760023626748,
+          "chain": "avalanche",
+          "amount": 1,
+          "fromToken": "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
+          "toToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "preferredSource": "Kyber",
+          "showInverse": true,
+          "alerts": {
+            "targetAbove": 1.003,
+            "targetBelow": 1
+          }
+        },
+        {
+          "id": 1760021919113,
+          "chain": "Bybit",
+          "amount": 1,
+          "symbol": "WBTCBTC",
+          "alerts": {
+            "percentUp": 0.05,
+            "targetAbove": 0.9993,
+            "basePrice": 0.9992
+          },
+          "showInverse": true
+        },
+        {
+          "id": 1764504889432,
+          "chain": "avalanche",
+          "amount": 0.5,
+          "preferredSource": "Kyber",
+          "fromToken": "0x50b7545627a5162F82A992c33b87aDc75187B218",
+          "toToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "showInverse": false,
+          "alerts": {
+            "targetAbove": 0.5002
+          }
+        },
+        {
+          "id": 1765263440178,
+          "chain": "avalanche",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x50b7545627a5162F82A992c33b87aDc75187B218",
+          "toToken": "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
+          "showInverse": false
+        },
+        {
+          "id": 1766515351128,
+          "chain": "bsc",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+          "toToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "showInverse": true
+        },
+        {
+          "id": 1766515450074,
+          "chain": "base",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "showInverse": true
+        }
+      ]
+    },
+    {
+      "name": "LBTC监控",
+      "id": 1760021353958,
+      "quotes": [
+        {
+          "id": 1760021390090,
+          "chain": "ethereum",
+          "amount": 1,
+          "fromToken": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
+          "toToken": "0x8236a87084f8B84306f72007F36F2618A5634494",
+          "alerts": {
+            "percentUp": 0.05,
+            "basePrice": 0.99847186
+          },
+          "preferredSource": "Kyber",
+          "showInverse": true
+        },
+        {
+          "id": 1760021467952,
+          "chain": "solana",
+          "amount": 1,
+          "fromToken": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
+          "toToken": "LBTCgU4b3wsFKsPwBn1rRZDx5DoFutM6RPiEt1TPDsY",
+          "alerts": {
+            "percentUp": 0.05,
+            "percentDown": 0.05,
+            "basePrice": 0.99818413
+          },
+          "showInverse": true
+        },
+        {
+          "id": 1760021522815,
+          "chain": "base",
+          "amount": 0.1,
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0xecAc9C5F704e954931349Da37F60E39f515c11c1",
+          "preferredSource": "Kyber",
+          "showInverse": true,
+          "alerts": {
+            "targetAbove": 0.9989
+          }
+        },
+        {
+          "id": 1760021622661,
+          "chain": "sui",
+          "amount": 1,
+          "fromToken": "0x876a4b7bce8aeaef60464c11f4026903e9afacab79b9b142686158aa86560b50::xbtc::XBTC",
+          "toToken": "0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC",
+          "showInverse": true
+        },
+        {
+          "id": 1762836033569,
+          "chain": "ethereum",
+          "amount": 1,
+          "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+          "toToken": "0x8236a87084f8B84306f72007F36F2618A5634494",
+          "preferredSource": "Kyber",
+          "showInverse": true,
+          "alerts": {
+            "percentUp": 0.08,
+            "percentDown": 0.08,
+            "basePrice": 0.99637087
+          }
+        },
+        {
+          "id": 1760021587492,
+          "chain": "sui",
+          "amount": 1,
+          "fromToken": "0xaafb102dd0902f5055cadecd687fb5b71ca82ef0e0285d90afde828ec58ca96b::btc::BTC",
+          "toToken": "0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC",
+          "showInverse": true
+        },
+        {
+          "id": 1763869402435,
+          "chain": "etherlink",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0xbfc94cd2b1e55999cfc7347a9313e88702b83d0f",
+          "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
+          "showInverse": true,
+          "alerts": {
+            "percentUp": 0.2,
+            "basePrice": 0.9947818
+          }
+        },
+        {
+          "id": 1767678293304,
+          "chain": "sui",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x0041f9f9344cac094454cd574e333c4fdb132d7bcc9379bcd4aab485b2a63942::wbtc::WBTC",
+          "toToken": "0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC",
+          "showInverse": true
+        }
+      ]
+    },
+    {
+      "name": "TBTC监控",
+      "id": 1760021694460,
+      "quotes": [
+        {
+          "id": 1760021727906,
+          "chain": "ethereum",
+          "amount": 1,
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x18084fbA666a33d37592fA2633fD49a74DD93a88",
+          "alerts": {
+            "percentUp": 0.05,
+            "percentDown": 0.05,
+            "targetAbove": 1.0035,
+            "targetBelow": 0.9995,
+            "basePrice": 1.0006637090439447
+          },
+          "preferredSource": "Kyber",
+          "showInverse": true
+        },
+        {
+          "id": 1760021761184,
+          "chain": "base",
+          "amount": 1,
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
+          "alerts": {
+            "percentUp": 0.1,
+            "percentDown": 0.1,
+            "targetAbove": 1.001,
+            "basePrice": 1.0006262880426537
+          },
+          "preferredSource": "Kyber",
+          "showInverse": true
+        },
+        {
+          "id": 1764033761453,
+          "chain": "sui",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x876a4b7bce8aeaef60464c11f4026903e9afacab79b9b142686158aa86560b50::xbtc::XBTC",
+          "toToken": "0x77045f1b9f811a7a8fb9ebd085b5b0c55c5cb0d1520ff55f7037f89b5da9f5f1::TBTC::TBTC",
+          "showInverse": true,
+          "alerts": {
+            "targetAbove": 1.0025
+          }
+        },
+        {
+          "id": 1763038314615,
+          "chain": "ethereum",
+          "amount": 1,
+          "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+          "toToken": "0x18084fbA666a33d37592fA2633fD49a74DD93a88",
+          "preferredSource": "Kyber",
+          "showInverse": true,
+          "alerts": {
+            "percentUp": 0.1,
+            "percentDown": 0.1,
+            "targetAbove": 1.002,
+            "basePrice": 0.9989809483350381
+          }
+        },
+        {
+          "id": 1760021802015,
+          "chain": "arbitrum",
+          "amount": 1,
+          "fromToken": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+          "toToken": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+          "preferredSource": "Kyber",
+          "showInverse": true,
+          "alerts": {
+            "percentUp": 0.1,
+            "targetAbove": 0.999,
+            "basePrice": 0.9992533697244222
+          }
+        },
+        {
+          "id": 1760021829626,
+          "chain": "optimism",
+          "amount": 1,
+          "fromToken": "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
+          "toToken": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+          "preferredSource": "Kyber",
+          "showInverse": true
+        },
+        {
+          "id": 1766762585771,
+          "chain": "sui",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x0041f9f9344cac094454cd574e333c4fdb132d7bcc9379bcd4aab485b2a63942::wbtc::WBTC",
+          "toToken": "0x77045f1b9f811a7a8fb9ebd085b5b0c55c5cb0d1520ff55f7037f89b5da9f5f1::TBTC::TBTC",
+          "showInverse": true
+        }
+      ]
+    },
+    {
+      "name": "没太多流动性的BTC",
+      "id": 1766413506569,
+      "quotes": [
+        {
+          "id": 1766413527443,
+          "chain": "ethereum",
+          "amount": 0.5,
+          "preferredSource": "Kyber",
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0xC96dE26018A54D51c097160568752c4E3BD6C364",
+          "showInverse": false,
+          "alerts": {
+            "targetAbove": 0.5002
+          }
+        },
+        {
+          "id": 1766413984286,
+          "chain": "ethereum",
+          "amount": 0.2,
+          "preferredSource": "Kyber",
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x9BE89D2a4cd102D8Fecc6BF9dA793be995C22541",
+          "showInverse": false,
+          "alerts": {
+            "targetAbove": 0.2001
+          }
+        },
+        {
+          "id": 1766413543985,
+          "chain": "ethereum",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x7A56E1C57C7475CCf742a1832B028F0456652F97",
+          "showInverse": false,
+          "alerts": {
+            "percentUp": 0.1,
+            "percentDown": 0.1,
+            "basePrice": 0.9997911329523287
+          }
+        },
+        {
+          "id": 1766413776518,
+          "chain": "bsc",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+          "toToken": "0x4aae823a6a0b376De6A78e74eCC5b079d38cBCf7",
+          "showInverse": true,
+          "alerts": {
+            "percentUp": 0.1,
+            "targetAbove": 1.0015,
+            "basePrice": 1.0013268772513084
+          }
+        },
+        {
+          "id": 1766413874601,
+          "chain": "ethereum",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+          "toToken": "0x7A56E1C57C7475CCf742a1832B028F0456652F97",
+          "showInverse": true
+        },
+        {
+          "id": 1766413934828,
+          "chain": "avalanche",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
+          "toToken": "0xbc78D84Ba0c46dFe32cf2895a19939c86b81a777",
+          "showInverse": false
+        },
+        {
+          "id": 1766414038503,
+          "chain": "solana",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
+          "toToken": "CtzPWv73Sn1dMGVU3ZtLv9yWSyUAanBni19YWDaznnkn",
+          "showInverse": true
+        },
+        {
+          "id": 1766414742208,
+          "chain": "ethereum",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x004E9C3EF86bc1ca1f0bB5C7662861Ee93350568"
+        },
+        {
+          "id": 1766414759640,
+          "chain": "base",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x93919784C523f39CACaa98Ee0a9d96c3F32b593e",
+          "showInverse": true
+        },
+        {
+          "id": 1766484079028,
+          "chain": "berachain",
+          "amount": 0.1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "toToken": "0xC3827A4BC8224ee2D116637023b124CED6db6e90",
+          "showInverse": true
+        }
+      ]
+    },
+    {
+      "name": "U搬砖",
+      "id": 1766416805440,
+      "quotes": [
+        {
+          "id": 1766416823874,
+          "chain": "ethereum",
+          "amount": 1000000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          "toToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
+          "showInverse": true,
+          "alerts": {
+            "targetAbove": 1000850
+          }
+        },
+        {
+          "id": 1766416837020,
+          "chain": "Bybit",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "symbol": "USDEUSDT"
+        },
+        {
+          "id": 1766416849432,
+          "chain": "Bybit",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "symbol": "DAIUSDT"
+        }
+      ]
+    },
+    {
+      "name": "WBTC-ETH",
+      "id": 1766503359354,
+      "quotes": [
+        {
+          "id": 1766503384581,
+          "chain": "arbitrum",
+          "amount": 28.774,
+          "preferredSource": "Kyber",
+          "fromToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "toToken": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+        },
+        {
+          "id": 1766503423741,
+          "chain": "solana",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
+          "toToken": "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"
+        },
+        {
+          "id": 1766503449422,
+          "chain": "ethereum",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+          "toToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "kyber": 300,
+    "zerox": 20000,
+    "bybit": 1000,
+    "solana": 5000,
+    "sui": 500
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "ultimate-dashboard-final",
+  "version": "1.0.0",
+  "description": "Interactive and persistent crypto quote dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@cetusprotocol/aggregator-sdk": "^1.1.8",
+    "@mysten/sui.js": "^0.54.1",
+    "bn.js": "^5.2.1",
+    "cors": "^2.8.5",
+    "ethers": "^6.12.1",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
+  }
+}
