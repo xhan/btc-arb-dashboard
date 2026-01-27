@@ -926,30 +926,38 @@
             return;
         }
 
-        const category = dashboardState.find(c => c.name === 'WBTC监控');
-        if (!category || !Array.isArray(category.quotes) || category.quotes.length === 0) {
+        const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
+        const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
+        const targetQuotes = targetCategories.flatMap(c => Array.isArray(c.quotes) ? c.quotes : []);
+
+        if (!targetQuotes.length) {
             arbPathContent.textContent = '暂无可用路径';
             return;
         }
 
-        const edges = window.ArbPaths.buildEdges(category.quotes, quoteMonitorState, ['CBBTC', 'WBTC']);
-        const best = window.ArbPaths.findBestTwoStepCycle(edges);
+        const edges = window.ArbPaths.buildEdges(targetQuotes, quoteMonitorState, null);
+        const ruleEdges = window.ArbPaths.buildRuleEdges({ xBTC: 'cbBTC' });
+        const best = window.ArbPaths.findBestCycle(edges.concat(ruleEdges), { maxDepth: 4 });
 
         if (!best || !best.legs || best.legs.length < 2) {
             arbPathContent.textContent = '等待数据...';
             return;
         }
 
-        const [leg1, leg2] = best.legs;
-        const leg1Text = `${leg1.from}(${formatChainLabel(leg1.chain)}) -> ${leg1.to}(${formatChainLabel(leg1.chain)}) @${leg1.rate.toFixed(6)}`;
-        const leg2Text = `${leg2.from}(${formatChainLabel(leg2.chain)}) -> ${leg2.to}(${formatChainLabel(leg2.chain)}) @${leg2.rate.toFixed(6)}`;
+        const legLines = best.legs.map((leg) => window.ArbPaths.formatLegLine({
+            from: leg.from,
+            to: leg.to,
+            rate: leg.rate,
+            chainLabel: formatChainLabel(leg.chain)
+        }));
+
         const profitPercent = best.profitRate * 100;
         const profitClass = profitPercent >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
         const profitText = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(4)}%`;
 
+        const legHtml = legLines.map(line => `<div class="arb-path-line">${line}</div>`).join('');
         arbPathContent.innerHTML = [
-            `<div class="arb-path-line">${leg1Text}</div>`,
-            `<div class="arb-path-line">${leg2Text}</div>`,
+            legHtml,
             `<div class="${profitClass}">循环收益: ${profitText}</div>`
         ].join('');
     }
