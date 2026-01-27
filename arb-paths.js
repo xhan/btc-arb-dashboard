@@ -32,6 +32,14 @@ function buildEdges(quotes, quoteStateById, allowedSymbols) {
   return edges;
 }
 
+function formatLegLine({ from, to, rate, chainLabel, precision = 6 }) {
+  const label = chainLabel ? `（${chainLabel}）` : '';
+  const safeFrom = from || '';
+  const safeTo = to || '';
+  const safeRate = typeof rate === 'number' ? rate.toFixed(precision) : '--';
+  return `${label}${safeFrom} -> ${safeTo} @${safeRate}`;
+}
+
 function findBestTwoStepCycle(edges) {
   let best = null;
 
@@ -52,8 +60,79 @@ function findBestTwoStepCycle(edges) {
   return best;
 }
 
-module.exports = { buildEdges, findBestTwoStepCycle };
+function buildRuleEdges(aliases) {
+  const edges = [];
+  if (!aliases) return edges;
 
-if (typeof window !== 'undefined') {
-  window.ArbPaths = { buildEdges, findBestTwoStepCycle };
+  for (const [alias, target] of Object.entries(aliases)) {
+    if (!alias || !target) continue;
+    edges.push({ from: alias, to: target, rate: 1, chain: '规则', rule: true });
+    edges.push({ from: target, to: alias, rate: 1, chain: '规则', rule: true });
+  }
+
+  return edges;
 }
+
+function findBestCycle(edges, options = {}) {
+  const maxDepth = Number(options.maxDepth) || 4;
+  let best = null;
+
+  const adjacency = new Map();
+  for (const edge of edges) {
+    if (!edge || !edge.from || !edge.to || typeof edge.rate !== 'number') continue;
+    const list = adjacency.get(edge.from) || [];
+    list.push(edge);
+    adjacency.set(edge.from, list);
+  }
+
+  function dfs(start, current, visited, path, product) {
+    if (path.length > maxDepth) return;
+
+    const neighbors = adjacency.get(current) || [];
+    for (const edge of neighbors) {
+      const next = edge.to;
+      const nextProduct = product * edge.rate;
+
+      if (next === start && path.length >= 1) {
+        const profitRate = nextProduct - 1;
+        const legs = path.concat(edge);
+        if (!best || profitRate > best.profitRate) {
+          best = { legs, profitRate };
+        }
+        continue;
+      }
+
+      if (visited.has(next)) continue;
+      if (path.length + 1 >= maxDepth) continue;
+
+      visited.add(next);
+      dfs(start, next, visited, path.concat(edge), nextProduct);
+      visited.delete(next);
+    }
+  }
+
+  for (const start of adjacency.keys()) {
+    const visited = new Set([start]);
+    dfs(start, start, visited, [], 1);
+  }
+
+  return best;
+}
+
+function buildApi() {
+  return {
+    buildEdges,
+    findBestTwoStepCycle,
+    formatLegLine,
+    buildRuleEdges,
+    findBestCycle
+  };
+}
+
+(function attachApi(root, factory) {
+  if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.ArbPaths = factory();
+  }
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this), buildApi);
