@@ -628,7 +628,7 @@
 
     <script src="arb-paths.js"></script>
 <script>
-    const BACKEND_URL = 'http://localhost:3000';
+    const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
     let dashboardState = [];
     let quoteMonitorState = new Map();
     let globalSymbolCache = new Map(); 
@@ -960,10 +960,12 @@ function renderArbSection(title, legs, profitRate) {
             const quotes = Array.isArray(category.quotes) ? category.quotes : [];
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
             const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
-            const best = window.ArbPaths.findBestCycle(edges.concat(ruleEdges), { maxDepth: 4 });
+            const best = window.ArbPaths.findBestCycle(
+                edges.concat(ruleEdges),
+                { maxDepth: 4, acceptCycle: window.ArbPaths.isMeaningfulPath }
+            );
             sections.push(renderArbSection(category.name, best ? best.legs : [], best ? best.profitRate : null));
         }
-
         arbPathContent.innerHTML = sections.join('');
     }
 

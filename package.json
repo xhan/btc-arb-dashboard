@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/arb-paths.test.js"
+    "test": "node tests/arb-paths.test.js && node tests/static-server.test.js"
   },
   "dependencies": {
     "@cetusprotocol/aggregator-sdk": "^1.1.8",

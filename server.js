@@ -6,11 +6,17 @@ const { AggregatorClient } = require('@cetusprotocol/aggregator-sdk');
 const BN = require('bn.js');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
 const fs = require('fs').promises;
+const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 const CONFIG_PATH = './config.json';
 const METADATA_CACHE_PATH = './metadata-cache.json';
 

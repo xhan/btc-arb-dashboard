@@ -80,6 +80,7 @@ const mixedPath = [
 
 assert.strictEqual(isMeaningfulPath(ruleOnly), false);
 assert.strictEqual(isMeaningfulPath(mixedPath), true);
+assert.strictEqual(findBestCycle(ruleOnly, { maxDepth: 2, acceptCycle: isMeaningfulPath }), null);
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'arb-paths.js'), 'utf8');
 const browserSandbox = { window: {} };

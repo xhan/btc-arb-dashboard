@@ -75,6 +75,7 @@ function buildRuleEdges(aliases) {
 
 function findBestCycle(edges, options = {}) {
   const maxDepth = Number(options.maxDepth) || 4;
+  const acceptCycle = typeof options.acceptCycle === 'function' ? options.acceptCycle : null;
   let best = null;
 
   const adjacency = new Map();
@@ -96,6 +97,9 @@ function findBestCycle(edges, options = {}) {
       if (next === start && path.length >= 1) {
         const profitRate = nextProduct - 1;
         const legs = path.concat(edge);
+        if (acceptCycle && !acceptCycle(legs)) {
+          continue;
+        }
         if (!best || profitRate > best.profitRate) {
           best = { legs, profitRate };
         }
