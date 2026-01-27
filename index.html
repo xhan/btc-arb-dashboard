@@ -920,6 +920,25 @@
     }
 
     function updateArbPanel() {
+function renderArbSection(title, legs, profitRate) {
+        const header = `<div class="arb-path-line"><strong>${title}</strong></div>`;
+        if (!legs || legs.length === 0) {
+            return `${header}<div class="arb-path-line">等待数据...</div>`;
+        }
+        const legLines = legs.map((leg) => window.ArbPaths.formatLegLine({
+            from: leg.from,
+            to: leg.to,
+            rate: leg.rate,
+            chainLabel: formatChainLabel(leg.chain)
+        }));
+        const profitPercent = typeof profitRate === 'number' ? profitRate * 100 : 0;
+        const profitClass = profitPercent >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
+        const profitText = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(4)}%`;
+        const legHtml = legLines.map(line => `<div class="arb-path-line">${line}</div>`).join('');
+        const profitHtml = profitRate === null ? '' : `<div class="${profitClass}">循环收益: ${profitText}</div>`;
+        return [header, legHtml, profitHtml].filter(Boolean).join('');
+    }
+
         if (!arbPathContent) return;
         if (!window.ArbPaths) {
             arbPathContent.textContent = '路径模块未加载';
@@ -928,38 +947,32 @@
 
         const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
         const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
-        const targetQuotes = targetCategories.flatMap(c => Array.isArray(c.quotes) ? c.quotes : []);
 
-        if (!targetQuotes.length) {
+        if (!targetCategories.length) {
             arbPathContent.textContent = '暂无可用路径';
             return;
         }
 
-        const edges = window.ArbPaths.buildEdges(targetQuotes, quoteMonitorState, null);
-        const ruleEdges = window.ArbPaths.buildRuleEdges({ xBTC: 'cbBTC' });
-        const best = window.ArbPaths.findBestCycle(edges.concat(ruleEdges), { maxDepth: 4 });
+        const aliasRules = { xBTC: 'cbBTC' };
+        const sections = [];
 
-        if (!best || !best.legs || best.legs.length < 2) {
-            arbPathContent.textContent = '等待数据...';
-            return;
+        const wbtcCategory = targetCategories.find(c => c.name === 'WBTC监控');
+        if (wbtcCategory && Array.isArray(wbtcCategory.quotes)) {
+            const wbtcEdges = window.ArbPaths.buildEdges(wbtcCategory.quotes, quoteMonitorState, null);
+            const direct = window.ArbPaths.selectBestDirectEdge(wbtcEdges, 'cbBTC', 'WBTC', aliasRules);
+            sections.push(renderArbSection('WBTC 直连', direct ? [direct] : [], direct ? 0 : null));
         }
 
-        const legLines = best.legs.map((leg) => window.ArbPaths.formatLegLine({
-            from: leg.from,
-            to: leg.to,
-            rate: leg.rate,
-            chainLabel: formatChainLabel(leg.chain)
-        }));
+        for (const category of targetCategories) {
+            if (category.name === 'WBTC监控') continue;
+            const quotes = Array.isArray(category.quotes) ? category.quotes : [];
+            const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
+            const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
+            const best = window.ArbPaths.findBestCycle(edges.concat(ruleEdges), { maxDepth: 4 });
+            sections.push(renderArbSection(category.name, best ? best.legs : [], best ? best.profitRate : null));
+        }
 
-        const profitPercent = best.profitRate * 100;
-        const profitClass = profitPercent >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
-        const profitText = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(4)}%`;
-
-        const legHtml = legLines.map(line => `<div class="arb-path-line">${line}</div>`).join('');
-        arbPathContent.innerHTML = [
-            legHtml,
-            `<div class="${profitClass}">循环收益: ${profitText}</div>`
-        ].join('');
+        arbPathContent.innerHTML = sections.join('');
     }
 
     async function getEvmMetadata(chain, tokenAddress, signal) {
