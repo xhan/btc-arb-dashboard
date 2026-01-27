@@ -4,7 +4,8 @@
   "description": "Interactive and persistent crypto quote dashboard",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node tests/arb-paths.test.js"
   },
   "dependencies": {
     "@cetusprotocol/aggregator-sdk": "^1.1.8",
