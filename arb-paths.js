@@ -119,13 +119,36 @@ function findBestCycle(edges, options = {}) {
   return best;
 }
 
+function resolveAlias(symbol, aliases) {
+  if (!aliases) return symbol;
+  return aliases[symbol] || symbol;
+}
+
+function selectBestDirectEdge(edges, from, to, aliases) {
+  const targetFrom = resolveAlias(from, aliases);
+  const targetTo = resolveAlias(to, aliases);
+  let best = null;
+
+  for (const edge of edges || []) {
+    const edgeFrom = resolveAlias(edge.from, aliases);
+    const edgeTo = resolveAlias(edge.to, aliases);
+    if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
+    if (!best || edge.rate > best.rate) {
+      best = { ...edge, from: targetFrom, to: targetTo };
+    }
+  }
+
+  return best;
+}
+
 function buildApi() {
   return {
     buildEdges,
     findBestTwoStepCycle,
     formatLegLine,
     buildRuleEdges,
-    findBestCycle
+    findBestCycle,
+    selectBestDirectEdge
   };
 }
 
