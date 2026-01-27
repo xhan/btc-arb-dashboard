@@ -358,6 +358,15 @@
         #alert-log-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
+
+        #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 480px; height: 220px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
+        #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; }
+        .dark-mode #arb-path-header { background-color: #1a202c; }
+        #arb-path-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
+        .arb-path-line { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+        .arb-path-line:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .arb-profit { font-weight: 700; color: var(--trend-up-bg); }
+        .arb-profit-neg { color: var(--trend-down-bg); }
         
         #audio-notice {
             display: none;
@@ -445,6 +454,7 @@
     <button id="add-category-btn">+ 添加新分区</button>
 
     <div id="alert-log-window"><div id="alert-log-header">提醒日志</div><div id="alert-log-content"></div></div>
+    <div id="arb-path-window"><div id="arb-path-header">套利路径</div><div id="arb-path-content">等待数据...</div></div>
     
     <audio id="alert-sound" src="alert.mp3" preload="auto"></audio>
     
@@ -616,7 +626,7 @@
         </div>
     </div>
 
-
+    <script src="arb-paths.js"></script>
 <script>
     const BACKEND_URL = 'http://localhost:3000';
     let dashboardState = [];
@@ -662,6 +672,7 @@
 
     let activeFetchControllers = new Map(); 
     let saveTimeout = null;
+    let arbUpdateTimer = null;
     
     let hoverTimeout = null;        
     let currentHoveredQuoteId = null; 
@@ -695,6 +706,8 @@
     const addCategoryModal = document.getElementById('add-category-modal');
     const addCategoryNameInput = document.getElementById('add-category-name');
     const globalTooltip = document.getElementById('global-tooltip');
+    const arbPathWindow = document.getElementById('arb-path-window');
+    const arbPathContent = document.getElementById('arb-path-content');
     
     const CHAIN_DISPLAY_NAMES = {
         ethereum: 'ETH', solana: 'SOL', sui: 'SUI', polygon: 'Polygon',
@@ -894,6 +907,53 @@
     document.body.addEventListener('click', unlockAudio, { once: true });
     document.body.addEventListener('keydown', unlockAudio, { once: true });
 
+    function scheduleArbUpdate() {
+        if (arbUpdateTimer) return;
+        arbUpdateTimer = setTimeout(() => {
+            arbUpdateTimer = null;
+            updateArbPanel();
+        }, 300);
+    }
+
+    function formatChainLabel(chain) {
+        return CHAIN_DISPLAY_NAMES[chain] || chain;
+    }
+
+    function updateArbPanel() {
+        if (!arbPathContent) return;
+        if (!window.ArbPaths) {
+            arbPathContent.textContent = '路径模块未加载';
+            return;
+        }
+
+        const category = dashboardState.find(c => c.name === 'WBTC监控');
+        if (!category || !Array.isArray(category.quotes) || category.quotes.length === 0) {
+            arbPathContent.textContent = '暂无可用路径';
+            return;
+        }
+
+        const edges = window.ArbPaths.buildEdges(category.quotes, quoteMonitorState, ['CBBTC', 'WBTC']);
+        const best = window.ArbPaths.findBestTwoStepCycle(edges);
+
+        if (!best || !best.legs || best.legs.length < 2) {
+            arbPathContent.textContent = '等待数据...';
+            return;
+        }
+
+        const [leg1, leg2] = best.legs;
+        const leg1Text = `${leg1.from}(${formatChainLabel(leg1.chain)}) -> ${leg1.to}(${formatChainLabel(leg1.chain)}) @${leg1.rate.toFixed(6)}`;
+        const leg2Text = `${leg2.from}(${formatChainLabel(leg2.chain)}) -> ${leg2.to}(${formatChainLabel(leg2.chain)}) @${leg2.rate.toFixed(6)}`;
+        const profitPercent = best.profitRate * 100;
+        const profitClass = profitPercent >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
+        const profitText = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(4)}%`;
+
+        arbPathContent.innerHTML = [
+            `<div class="arb-path-line">${leg1Text}</div>`,
+            `<div class="arb-path-line">${leg2Text}</div>`,
+            `<div class="${profitClass}">循环收益: ${profitText}</div>`
+        ].join('');
+    }
+
     async function getEvmMetadata(chain, tokenAddress, signal) {
         const cacheKey = `${chain}-${tokenAddress}`;
         if (globalSymbolCache.has(cacheKey) && globalSymbolCache.get(cacheKey).decimals !== undefined) {
@@ -1079,12 +1139,18 @@
             const oldPrice = previousState.lastRawPrice;
             const oldSource = previousState.usedSourceReal; 
 
+            let inverseRawPrice = null;
+            if (quote.showInverse && quote.chain !== 'Bybit' && inverseData && !inverseData.error) {
+                inverseRawPrice = inverseData.rawPrice;
+            }
+
             const newState = {
                 ...previousState,
                 fromSymbol: data.symbols.from,
                 toSymbol: data.symbols.to,
                 lastResultText: data.resultText,
                 lastRawPrice: data.rawPrice,
+                inverseRawPrice: inverseRawPrice,
                 usedSource: data.usedSource,
                 usedSourceReal: successSource 
             };
@@ -1115,6 +1181,7 @@
             }
 
             quoteMonitorState.set(quote.id, newState);
+            scheduleArbUpdate();
             
             if (currentlyEditingQuote && currentlyEditingQuote.quote.id === quote.id && alertModal.classList.contains('visible')) {
                  const modalPriceEl = document.getElementById('alert-current-price-value');
@@ -1967,6 +2034,7 @@
             }
             
             renderDashboard();
+            updateArbPanel();
             
             const allQuotes = dashboardState.flatMap(c => c.quotes || []);
             
@@ -1981,6 +2049,10 @@
             updateSchedulers();
             
             makeDraggable(alertLogWindow, document.getElementById('alert-log-header'));
+            const arbHeader = document.getElementById('arb-path-header');
+            if (arbPathWindow && arbHeader) {
+                makeDraggable(arbPathWindow, arbHeader);
+            }
         } catch (error) {
             dashboardEl.innerHTML = `<div class="module"><h2 style="color: var(--error-color);">加载配置失败</h2><p>${error.message}。请确保后端服务已启动并刷新页面。</p></div>`;
         }
