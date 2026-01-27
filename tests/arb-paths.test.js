@@ -8,7 +8,8 @@ const {
   findBestTwoStepCycle,
   formatLegLine,
   buildRuleEdges,
-  findBestCycle
+  findBestCycle,
+  selectBestDirectEdge
 } = require('../arb-paths');
 
 const quotes = [
@@ -54,6 +55,18 @@ const bestCycle = findBestCycle(multiEdges.concat(ruleEdges), { maxDepth: 4 });
 
 assert.ok(bestCycle, 'expected a cycle');
 assert.ok(bestCycle.legs.length >= 3 && bestCycle.legs.length <= 4);
+
+const directEdges = [
+  { from: 'xBTC', to: 'WBTC', rate: 1.01, chain: 'arbitrum' },
+  { from: 'cbBTC', to: 'WBTC', rate: 1.005, chain: 'ethereum' }
+];
+
+const bestDirect = selectBestDirectEdge(directEdges, 'cbBTC', 'WBTC', { xBTC: 'cbBTC' });
+
+assert.ok(bestDirect);
+assert.strictEqual(bestDirect.from, 'cbBTC');
+assert.strictEqual(bestDirect.to, 'WBTC');
+assert.strictEqual(bestDirect.rate, 1.01);
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'arb-paths.js'), 'utf8');
 const browserSandbox = { window: {} };
