@@ -9,7 +9,8 @@ const {
   formatLegLine,
   buildRuleEdges,
   findBestCycle,
-  selectBestDirectEdge
+  selectBestDirectEdge,
+  isMeaningfulPath
 } = require('../arb-paths');
 
 const quotes = [
@@ -67,6 +68,18 @@ assert.ok(bestDirect);
 assert.strictEqual(bestDirect.from, 'cbBTC');
 assert.strictEqual(bestDirect.to, 'WBTC');
 assert.strictEqual(bestDirect.rate, 1.01);
+
+const ruleOnly = [
+  { from: 'cbBTC', to: 'xBTC', rate: 1, chain: '规则', rule: true },
+  { from: 'xBTC', to: 'cbBTC', rate: 1, chain: '规则', rule: true }
+];
+const mixedPath = [
+  { from: 'cbBTC', to: 'WBTC', rate: 1.01, chain: 'ethereum' },
+  { from: 'WBTC', to: 'cbBTC', rate: 0.99, chain: '规则', rule: true }
+];
+
+assert.strictEqual(isMeaningfulPath(ruleOnly), false);
+assert.strictEqual(isMeaningfulPath(mixedPath), true);
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'arb-paths.js'), 'utf8');
 const browserSandbox = { window: {} };
