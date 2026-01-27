@@ -922,7 +922,7 @@
     function updateArbPanel() {
 function renderArbSection(title, legs, profitRate) {
         const header = `<div class="arb-path-line"><strong>${title}</strong></div>`;
-        if (!legs || legs.length === 0) {
+        if (!window.ArbPaths.isMeaningfulPath(legs)) {
             return `${header}<div class="arb-path-line">等待数据...</div>`;
         }
         const legLines = legs.map((leg) => window.ArbPaths.formatLegLine({
@@ -934,8 +934,8 @@ function renderArbSection(title, legs, profitRate) {
         const profitPercent = typeof profitRate === 'number' ? profitRate * 100 : 0;
         const profitClass = profitPercent >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
         const profitText = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(4)}%`;
-        const legHtml = legLines.map(line => `<div class="arb-path-line">${line}</div>`).join('');
-        const profitHtml = profitRate === null ? '' : `<div class="${profitClass}">循环收益: ${profitText}</div>`;
+        const legHtml = legLines.map(line => `<div class=\"arb-path-line\">${line}</div>`).join('');
+        const profitHtml = profitRate === null ? '' : `<div class=\"${profitClass}\">循环收益: ${profitText}</div>`;
         return [header, legHtml, profitHtml].filter(Boolean).join('');
     }
 
@@ -956,15 +956,7 @@ function renderArbSection(title, legs, profitRate) {
         const aliasRules = { xBTC: 'cbBTC' };
         const sections = [];
 
-        const wbtcCategory = targetCategories.find(c => c.name === 'WBTC监控');
-        if (wbtcCategory && Array.isArray(wbtcCategory.quotes)) {
-            const wbtcEdges = window.ArbPaths.buildEdges(wbtcCategory.quotes, quoteMonitorState, null);
-            const direct = window.ArbPaths.selectBestDirectEdge(wbtcEdges, 'cbBTC', 'WBTC', aliasRules);
-            sections.push(renderArbSection('WBTC 直连', direct ? [direct] : [], direct ? 0 : null));
-        }
-
         for (const category of targetCategories) {
-            if (category.name === 'WBTC监控') continue;
             const quotes = Array.isArray(category.quotes) ? category.quotes : [];
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
             const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);

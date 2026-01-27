@@ -141,6 +141,11 @@ function selectBestDirectEdge(edges, from, to, aliases) {
   return best;
 }
 
+function isMeaningfulPath(legs) {
+  if (!Array.isArray(legs) || legs.length === 0) return false;
+  return legs.some((leg) => leg && !leg.rule && leg.chain !== '规则');
+}
+
 function buildApi() {
   return {
     buildEdges,
@@ -148,7 +153,8 @@ function buildApi() {
     formatLegLine,
     buildRuleEdges,
     findBestCycle,
-    selectBestDirectEdge
+    selectBestDirectEdge,
+    isMeaningfulPath
   };
 }
 
