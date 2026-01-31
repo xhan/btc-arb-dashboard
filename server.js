@@ -106,7 +106,7 @@ async function getCachedMetadata(key, fetchFunction) {
     await saveCache();
     return metadata;
 }
-
+// chainlist.org RPC endpoints
 const RPC_URLS = {
     ethereum: 'https://eth.llamarpc.com',
     optimism: 'https://optimism-rpc.publicnode.com',
@@ -128,7 +128,7 @@ const RPC_URLS = {
     hyperevm: 'https://rpc.hypurrscan.io',
     plasma: 'https://rpc.plasma.to',
     etherlink: 'https://node.mainnet.etherlink.com',
-    monad: 'https://testnet-rpc.monad.xyz',
+    monad: 'https://monad-mainnet.drpc.org',
 
     zksync: 'https://mainnet.era.zksync.io',
     moonbeam: 'https://rpc.api.moonbeam.network',

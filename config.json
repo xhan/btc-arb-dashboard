@@ -110,6 +110,14 @@
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "showInverse": true
+        },
+        {
+          "id": 1769774410399,
+          "chain": "bsc",
+          "amount": 0.1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "toToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c"
         }
       ]
     },
@@ -206,6 +214,15 @@
           "fromToken": "0x0041f9f9344cac094454cd574e333c4fdb132d7bcc9379bcd4aab485b2a63942::wbtc::WBTC",
           "toToken": "0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC",
           "showInverse": true
+        },
+        {
+          "id": 1769588428781,
+          "chain": "monad",
+          "amount": 0.5,
+          "preferredSource": "Auto",
+          "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
+          "showInverse": true
         }
       ]
     },
@@ -247,7 +264,7 @@
         {
           "id": 1764033761453,
           "chain": "sui",
-          "amount": 1,
+          "amount": 0.1,
           "preferredSource": "Kyber",
           "fromToken": "0x876a4b7bce8aeaef60464c11f4026903e9afacab79b9b142686158aa86560b50::xbtc::XBTC",
           "toToken": "0x77045f1b9f811a7a8fb9ebd085b5b0c55c5cb0d1520ff55f7037f89b5da9f5f1::TBTC::TBTC",
