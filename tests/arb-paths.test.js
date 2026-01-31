@@ -9,6 +9,8 @@ const {
   formatLegLine,
   buildRuleEdges,
   findBestCycle,
+  findTopCycles,
+  findBestFixedPath,
   selectBestDirectEdge,
   isMeaningfulPath
 } = require('../arb-paths');
@@ -81,6 +83,33 @@ const mixedPath = [
 assert.strictEqual(isMeaningfulPath(ruleOnly), false);
 assert.strictEqual(isMeaningfulPath(mixedPath), true);
 assert.strictEqual(findBestCycle(ruleOnly, { maxDepth: 2, acceptCycle: isMeaningfulPath }), null);
+
+const cycleEdges = [
+  { from: 'A', to: 'B', rate: 1.02, chain: 'ethereum' },
+  { from: 'B', to: 'A', rate: 0.99, chain: 'ethereum' },
+  { from: 'A', to: 'C', rate: 1.01, chain: 'base' },
+  { from: 'C', to: 'A', rate: 0.995, chain: 'base' },
+  { from: 'B', to: 'C', rate: 1.0, chain: 'arbitrum' },
+  { from: 'C', to: 'B', rate: 1.0, chain: 'arbitrum' }
+];
+
+const topCycles = findTopCycles(cycleEdges, { maxDepth: 3, limit: 2 });
+assert.strictEqual(topCycles.length, 2);
+assert.ok(topCycles[0].profitRate >= topCycles[1].profitRate);
+
+const fixedEdges = [
+  { from: 'cbBTC', to: 'WBTC', rate: 1.01, chain: 'ethereum' },
+  { from: 'WBTC', to: 'cbBTC', rate: 0.99, chain: 'arbitrum' },
+  { from: 'cbBTC', to: 'WBTC', rate: 1.03, chain: 'arbitrum' },
+  { from: 'WBTC', to: 'cbBTC', rate: 0.98, chain: 'ethereum' }
+];
+
+const fixedRule = { base: 'cbBTC', quote: 'WBTC', chains: ['ethereum', 'arbitrum'], steps: 2 };
+const fixedBest = findBestFixedPath(fixedEdges, fixedRule, null);
+
+assert.ok(fixedBest);
+assert.strictEqual(fixedBest.legs[0].chain, 'arbitrum');
+assert.strictEqual(fixedBest.legs[1].chain, 'ethereum');
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'arb-paths.js'), 'utf8');
 const browserSandbox = { window: {} };
