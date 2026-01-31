@@ -415,6 +415,26 @@
             border-style: solid;
             border-color: var(--popover-bg) transparent transparent transparent;
         }
+
+        #copy-toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--module-bg-color);
+            color: var(--text-color);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 1200;
+        }
+        #copy-toast.visible { opacity: 1; }
         
         .checkbox-group {
             display: flex;
@@ -435,6 +455,7 @@
 </head>
 <body>
     <div id="global-tooltip"></div>
+    <div id="copy-toast"></div>
 
     <div id="top-bar">
         <div id="top-bar-left">
@@ -707,8 +728,10 @@
     const addCategoryModal = document.getElementById('add-category-modal');
     const addCategoryNameInput = document.getElementById('add-category-name');
     const globalTooltip = document.getElementById('global-tooltip');
+    const copyToast = document.getElementById('copy-toast');
     const arbPathWindow = document.getElementById('arb-path-window');
     const arbPathContent = document.getElementById('arb-path-content');
+    let copyToastTimer = null;
     
     const CHAIN_DISPLAY_NAMES = {
         ethereum: 'ETH', solana: 'SOL', sui: 'SUI', polygon: 'Polygon',
@@ -930,42 +953,6 @@
         }
     ];
 
-    function resolveAliasLocal(symbol, aliases) {
-        if (!aliases) return symbol;
-        return aliases[symbol] || symbol;
-    }
-
-    function selectBestEdgeByChain(edges, from, to, chain, aliases) {
-        if (!chain) return null;
-        const targetFrom = resolveAliasLocal(from, aliases);
-        const targetTo = resolveAliasLocal(to, aliases);
-        let best = null;
-
-        for (const edge of edges || []) {
-            if (edge.chain !== chain) continue;
-            const edgeFrom = resolveAliasLocal(edge.from, aliases);
-            const edgeTo = resolveAliasLocal(edge.to, aliases);
-            if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
-            if (!best || edge.rate > best.rate) {
-                best = { ...edge, from: targetFrom, to: targetTo };
-            }
-        }
-
-        return best;
-    }
-
-    function buildFixedPath(rule, edges, aliases) {
-        if (!rule || rule.steps !== 2) return null;
-        const [chainA, chainB] = Array.isArray(rule.chains) ? rule.chains : [];
-        if (!rule.base || !rule.quote || !chainA || !chainB) return null;
-
-        const legA = selectBestEdgeByChain(edges, rule.base, rule.quote, chainA, aliases);
-        const legB = selectBestEdgeByChain(edges, rule.quote, rule.base, chainB, aliases);
-        if (!legA || !legB) return null;
-
-        return { legs: [legA, legB], profitRate: (legA.rate * legB.rate) - 1 };
-    }
-
     function buildLegLines(legs) {
         return legs.map((leg) => window.ArbPaths.formatLegLine({
             from: leg.from,
@@ -995,7 +982,7 @@ function renderArbSection(title, legs, profitRate) {
             const blocks = [];
 
             for (const rule of rules || []) {
-                const result = buildFixedPath(rule, edges, aliases);
+                const result = window.ArbPaths.findBestFixedPath(edges, rule, aliases);
                 if (!result) continue;
                 const label = rule.title ? `<div class="arb-path-line">${rule.title}</div>` : '';
                 const legHtml = buildLegLines(result.legs).map(line => `<div class=\"arb-path-line\">${line}</div>`).join('');
@@ -1053,12 +1040,6 @@ function renderArbSection(title, legs, profitRate) {
         const allEdgesWithRules = allEdges.concat(ruleEdges);
 
         sections.push(renderFixedSection('固定路径', FIXED_PATH_RULES, allEdgesWithRules, aliasRules));
-        const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
-            maxDepth: 4,
-            limit: 2,
-            acceptCycle: window.ArbPaths.isMeaningfulPath
-        });
-        sections.push(renderGlobalSection('全局路径', globalCycles));
 
         for (const category of targetCategories) {
             const quotes = Array.isArray(category.quotes) ? category.quotes : [];
@@ -1069,6 +1050,13 @@ function renderArbSection(title, legs, profitRate) {
             );
             sections.push(renderArbSection(category.name, best ? best.legs : [], best ? best.profitRate : null));
         }
+
+        const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
+            maxDepth: 4,
+            limit: 2,
+            acceptCycle: window.ArbPaths.isMeaningfulPath
+        });
+        sections.push(renderGlobalSection('全局路径', globalCycles));
         arbPathContent.innerHTML = sections.join('');
     }
 
@@ -1379,6 +1367,7 @@ function renderArbSection(title, legs, profitRate) {
         const price = extractPriceFromText(text);
         if (!price) return;
         copyTextToClipboard(price);
+        showCopyToast(`已复制: ${price}`);
     }
 
     function bindCopyHandler(targetEl, getText) {
@@ -1389,6 +1378,19 @@ function renderArbSection(title, legs, profitRate) {
             const text = typeof getText === 'function' ? getText() : targetEl.textContent;
             copyPriceFromText(text);
         });
+    }
+
+    function showCopyToast(message) {
+        if (!copyToast) return;
+        if (copyToastTimer) {
+            clearTimeout(copyToastTimer);
+            copyToastTimer = null;
+        }
+        copyToast.textContent = message;
+        copyToast.classList.add('visible');
+        copyToastTimer = setTimeout(() => {
+            copyToast.classList.remove('visible');
+        }, 1200);
     }
 
     function handleQuoteHover(event, quoteId) {

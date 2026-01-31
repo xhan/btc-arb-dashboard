@@ -182,6 +182,45 @@ function resolveAlias(symbol, aliases) {
   return aliases[symbol] || symbol;
 }
 
+function selectBestEdgeByChain(edges, from, to, chain, aliases) {
+  if (!chain) return null;
+  const targetFrom = resolveAlias(from, aliases);
+  const targetTo = resolveAlias(to, aliases);
+  let best = null;
+
+  for (const edge of edges || []) {
+    if (edge.chain !== chain) continue;
+    const edgeFrom = resolveAlias(edge.from, aliases);
+    const edgeTo = resolveAlias(edge.to, aliases);
+    if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
+    if (!best || edge.rate > best.rate) {
+      best = { ...edge, from: targetFrom, to: targetTo };
+    }
+  }
+
+  return best;
+}
+
+function buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases) {
+  const legA = selectBestEdgeByChain(edges, rule.base, rule.quote, chainA, aliases);
+  const legB = selectBestEdgeByChain(edges, rule.quote, rule.base, chainB, aliases);
+  if (!legA || !legB) return null;
+  return { legs: [legA, legB], profitRate: (legA.rate * legB.rate) - 1 };
+}
+
+function findBestFixedPath(edges, rule, aliases) {
+  if (!rule || rule.steps !== 2) return null;
+  const chains = Array.isArray(rule.chains) ? rule.chains : [];
+  const [chainA, chainB] = chains;
+  if (!rule.base || !rule.quote || !chainA || !chainB) return null;
+
+  const forward = buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases);
+  const reverse = buildTwoStepFixedPath(edges, rule, chainB, chainA, aliases);
+  if (!forward) return reverse;
+  if (!reverse) return forward;
+  return forward.profitRate >= reverse.profitRate ? forward : reverse;
+}
+
 function selectBestDirectEdge(edges, from, to, aliases) {
   const targetFrom = resolveAlias(from, aliases);
   const targetTo = resolveAlias(to, aliases);
@@ -212,6 +251,7 @@ function buildApi() {
     buildRuleEdges,
     findBestCycle,
     findTopCycles,
+    findBestFixedPath,
     selectBestDirectEdge,
     isMeaningfulPath
   };
