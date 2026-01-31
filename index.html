@@ -235,7 +235,7 @@
         
         .quote-text-wrapper {
             position: relative;
-            cursor: help;
+            cursor: pointer;
             padding: 4px 8px; 
             white-space: nowrap; 
             border-radius: 4px;
@@ -257,6 +257,7 @@
             margin-top: 2px;
             font-weight: normal;
             min-height: 1.2em; 
+            cursor: pointer;
         }
         
         .quote-text.loading-text {
@@ -1292,6 +1293,7 @@ function renderArbSection(title, legs, profitRate) {
                     } else {
                         inverseEl.textContent = `${quote.amount || 1} ${inverseData.symbols.from} ≈ ${inverseData.finalAmountOut.toFixed(6)} ${inverseData.symbols.to}`;
                     }
+                    bindCopyHandler(inverseEl, () => inverseEl.textContent);
                 }
             } else if (inverseEl) {
                 inverseEl.remove();
@@ -1338,6 +1340,55 @@ function renderArbSection(title, legs, profitRate) {
                 activeFetchControllers.delete(quote.id);
             }
         }
+    }
+
+    function extractPriceFromText(text) {
+        if (!text) return null;
+        const delimiterMatch = text.match(/(?:≈|=|:)\s*([-+]?\d*\.?\d+(?:e[+-]?\d+)?)/i);
+        if (delimiterMatch) return delimiterMatch[1];
+        const numberMatch = text.match(/[-+]?\d*\.?\d+(?:e[+-]?\d+)?/i);
+        return numberMatch ? numberMatch[0] : null;
+    }
+
+    async function copyTextToClipboard(text) {
+        if (!text) return;
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return;
+            } catch (error) {
+                console.warn('Clipboard write failed', error);
+            }
+        }
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+        } catch (error) {
+            console.warn('Clipboard fallback failed', error);
+        }
+        textarea.remove();
+    }
+
+    function copyPriceFromText(text) {
+        const price = extractPriceFromText(text);
+        if (!price) return;
+        copyTextToClipboard(price);
+    }
+
+    function bindCopyHandler(targetEl, getText) {
+        if (!targetEl || targetEl.dataset.copyBound) return;
+        targetEl.dataset.copyBound = '1';
+        targetEl.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const text = typeof getText === 'function' ? getText() : targetEl.textContent;
+            copyPriceFromText(text);
+        });
     }
 
     function handleQuoteHover(event, quoteId) {
@@ -1642,6 +1693,8 @@ function renderArbSection(title, legs, profitRate) {
             textWrapper.addEventListener('mouseenter', (e) => handleQuoteHover(e, quote.id));
             textWrapper.addEventListener('mousedown', (e) => e.stopPropagation());
             textWrapper.setAttribute('draggable', 'false'); 
+            const quoteTextEl = itemEl.querySelector(`#quote-text-${quote.id}`);
+            bindCopyHandler(textWrapper, () => (quoteTextEl ? quoteTextEl.textContent : textWrapper.textContent));
         }
         
         return itemEl;
