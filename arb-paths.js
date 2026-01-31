@@ -123,6 +123,60 @@ function findBestCycle(edges, options = {}) {
   return best;
 }
 
+function findTopCycles(edges, options = {}) {
+  const maxDepth = Number(options.maxDepth) || 4;
+  const limit = Number(options.limit) || 3;
+  const acceptCycle = typeof options.acceptCycle === 'function' ? options.acceptCycle : null;
+  const results = [];
+  const seen = new Set();
+
+  const adjacency = new Map();
+  for (const edge of edges) {
+    if (!edge || !edge.from || !edge.to || typeof edge.rate !== 'number') continue;
+    const list = adjacency.get(edge.from) || [];
+    list.push(edge);
+    adjacency.set(edge.from, list);
+  }
+
+  function recordCycle(legs, profitRate) {
+    if (acceptCycle && !acceptCycle(legs)) return;
+    const key = legs.map((leg) => `${leg.from}|${leg.to}|${leg.chain || ''}|${leg.rate}`).join('>');
+    if (seen.has(key)) return;
+    seen.add(key);
+    results.push({ legs, profitRate });
+  }
+
+  function dfs(start, current, visited, path, product) {
+    if (path.length > maxDepth) return;
+
+    const neighbors = adjacency.get(current) || [];
+    for (const edge of neighbors) {
+      const next = edge.to;
+      const nextProduct = product * edge.rate;
+
+      if (next === start && path.length >= 1) {
+        recordCycle(path.concat(edge), nextProduct - 1);
+        continue;
+      }
+
+      if (visited.has(next)) continue;
+      if (path.length + 1 >= maxDepth) continue;
+
+      visited.add(next);
+      dfs(start, next, visited, path.concat(edge), nextProduct);
+      visited.delete(next);
+    }
+  }
+
+  for (const start of adjacency.keys()) {
+    const visited = new Set([start]);
+    dfs(start, start, visited, [], 1);
+  }
+
+  results.sort((a, b) => b.profitRate - a.profitRate);
+  return results.slice(0, Math.max(0, limit));
+}
+
 function resolveAlias(symbol, aliases) {
   if (!aliases) return symbol;
   return aliases[symbol] || symbol;
@@ -157,6 +211,7 @@ function buildApi() {
     formatLegLine,
     buildRuleEdges,
     findBestCycle,
+    findTopCycles,
     selectBestDirectEdge,
     isMeaningfulPath
   };
