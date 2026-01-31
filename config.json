@@ -117,7 +117,8 @@
           "amount": 0.1,
           "preferredSource": "Kyber",
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-          "toToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c"
+          "toToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+          "showInverse": true
         }
       ]
     },

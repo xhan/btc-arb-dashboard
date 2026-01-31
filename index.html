@@ -97,11 +97,22 @@
         
         #top-bar-left { display: flex; align-items: center; gap: 20px; }
         #top-bar-right { display: flex; align-items: center; gap: 15px; }
+        #toggle-arb-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #toggle-arb-btn:hover { background-color: rgba(0,0,0,0.05); }
+        .dark-mode #toggle-arb-btn:hover { background-color: rgba(255,255,255,0.08); }
 
         #dashboard { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(550px, 1fr)); 
-            gap: 20px; 
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); 
+            gap: 15px; 
         }
         .module { 
             background-color: var(--module-bg-color); 
@@ -361,8 +372,18 @@
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
 
         #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 480px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
-        #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; }
+        #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #arb-path-header { background-color: #1a202c; }
+        #arb-path-max-btn {
+            border: 1px solid rgba(255,255,255,0.3);
+            background: transparent;
+            color: #fff;
+            border-radius: 6px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        #arb-path-max-btn:hover { background-color: rgba(255,255,255,0.12); }
         #arb-path-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
         .arb-path-line { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
         .arb-path-line:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
@@ -459,12 +480,13 @@
 
     <div id="top-bar">
         <div id="top-bar-left">
-            <h3 style="margin: 0; color: var(--text-color);">聚合报价看板 3.0 No.2</h3>
+            <h3 style="margin: 0; color: var(--text-color);">聚合报价看板 4.0</h3>
             <button id="manual-save-btn" title="立即保存当前配置到文件">
                 <span>💾</span> <span id="manual-save-text">保存配置</span>
             </button>
         </div>
         <div id="top-bar-right">
+             <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
              <button id="global-settings-btn" class="icon-btn" title="API 设置">⚙️</button>
              <button id="theme-toggle-btn" class="icon-btn" title="切换深色/浅色模式">🌙</button>
         </div>
@@ -476,7 +498,13 @@
     <button id="add-category-btn">+ 添加新分区</button>
 
     <div id="alert-log-window"><div id="alert-log-header">提醒日志</div><div id="alert-log-content"></div></div>
-    <div id="arb-path-window"><div id="arb-path-header">套利路径</div><div id="arb-path-content">等待数据...</div></div>
+    <div id="arb-path-window">
+        <div id="arb-path-header">
+            <span>套利路径</span>
+            <button id="arb-path-max-btn" title="最大化高度">⇵</button>
+        </div>
+        <div id="arb-path-content">等待数据...</div>
+    </div>
     
     <audio id="alert-sound" src="alert.mp3" preload="auto"></audio>
     
@@ -731,6 +759,9 @@
     const copyToast = document.getElementById('copy-toast');
     const arbPathWindow = document.getElementById('arb-path-window');
     const arbPathContent = document.getElementById('arb-path-content');
+    const arbPathHeader = document.getElementById('arb-path-header');
+    const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
+    const toggleArbBtn = document.getElementById('toggle-arb-btn');
     let copyToastTimer = null;
     
     const CHAIN_DISPLAY_NAMES = {
@@ -1489,6 +1520,21 @@ function renderArbSection(title, legs, profitRate) {
         quoteMonitorState.set(quoteId, state);
     }
 
+    function toggleArbPanel() {
+        if (!arbPathWindow) return;
+        const isHidden = arbPathWindow.style.display === 'none';
+        arbPathWindow.style.display = isHidden ? 'flex' : 'none';
+    }
+
+    function setArbPanelMaxHeight() {
+        if (!arbPathWindow) return;
+        const topBar = document.getElementById('top-bar');
+        const bannerHeight = topBar ? topBar.getBoundingClientRect().height : 0;
+        const padding = 20 * 2;
+        const maxHeight = Math.max(200, window.innerHeight - bannerHeight - padding);
+        arbPathWindow.style.height = `${maxHeight}px`;
+    }
+
     function checkPriceForAlerts(quote, newRawPrice, newTotalAmountOut) {
         if (!quote.alerts || typeof newRawPrice !== 'number') return; 
 
@@ -2221,9 +2267,18 @@ function renderArbSection(title, legs, profitRate) {
             updateSchedulers();
             
             makeDraggable(alertLogWindow, document.getElementById('alert-log-header'));
-            const arbHeader = document.getElementById('arb-path-header');
-            if (arbPathWindow && arbHeader) {
-                makeDraggable(arbPathWindow, arbHeader);
+            if (arbPathWindow && arbPathHeader) {
+                makeDraggable(arbPathWindow, arbPathHeader);
+            }
+
+            if (toggleArbBtn) {
+                toggleArbBtn.addEventListener('click', toggleArbPanel);
+            }
+            if (arbPathMaxBtn) {
+                arbPathMaxBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setArbPanelMaxHeight();
+                });
             }
         } catch (error) {
             dashboardEl.innerHTML = `<div class="module"><h2 style="color: var(--error-color);">加载配置失败</h2><p>${error.message}。请确保后端服务已启动并刷新页面。</p></div>`;
