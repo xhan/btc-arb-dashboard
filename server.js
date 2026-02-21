@@ -6,6 +6,8 @@ const { AggregatorClient } = require('@cetusprotocol/aggregator-sdk');
 const BN = require('bn.js');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
 const { pickKyberClientId, DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT } = require('./kyber-client-id');
+const { buildLifiChainIdMap, resolveLifiChainId } = require('./lifi-utils');
+const { getDisplayedToAmountRaw } = require('./lifi-quote-utils');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -56,6 +58,8 @@ async function getConfigMore() {
     try {
         const configMore = await readJsonFile(CONFIG_MORE_PATH);
         const rawClientId = typeof configMore.kyberClientId === 'string' ? configMore.kyberClientId.trim() : '';
+        const rawLifiApiKey = typeof configMore.LIFIApiKey === 'string' ? configMore.LIFIApiKey.trim() : '';
+        const rawLifiIntegrator = typeof configMore.LIFIIntegrator === 'string' ? configMore.LIFIIntegrator.trim() : '';
         const parsedSuffixCount = Number.parseInt(configMore.kyberClientIdSuffixCount, 10);
         const suffixCount = Number.isNaN(parsedSuffixCount) || parsedSuffixCount < 0
             ? DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT
@@ -63,7 +67,9 @@ async function getConfigMore() {
 
         return {
             kyberClientId: rawClientId || 'xh-quote-dashboard',
-            kyberClientIdSuffixCount: suffixCount
+            kyberClientIdSuffixCount: suffixCount,
+            lifiApiKey: rawLifiApiKey,
+            lifiIntegrator: rawLifiIntegrator
         };
     } catch (error) {
         if (error.code !== 'ENOENT') {
@@ -71,7 +77,9 @@ async function getConfigMore() {
         }
         return {
             kyberClientId: 'xh-quote-dashboard',
-            kyberClientIdSuffixCount: DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT
+            kyberClientIdSuffixCount: DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT,
+            lifiApiKey: '',
+            lifiIntegrator: ''
         };
     }
 }
@@ -211,6 +219,48 @@ const ERC20_ABI = ["function decimals() view returns (uint8)", "function symbol(
 const suiClient = new SuiClient({ url: getFullnodeUrl('mainnet') });
 const cetusAggregator = new AggregatorClient('https://api.cetus.zone/router_v2/find_routes');
 const solanaRpc = 'https://mainnet.helius-rpc.com/?api-key=f5e20297-9ca2-4afb-98f9-be16153777b5';
+const LIFI_API_BASE_URL = 'https://li.quest/v1';
+const LIFI_DEFAULT_FROM_ADDRESS = '0x1111111111111111111111111111111111111111';
+const LIFI_DEFAULT_SLIPPAGE = '0.005';
+
+let lifiChainIdMapCache = null;
+let lifiChainIdMapFetchedAt = 0;
+const LIFI_CHAIN_MAP_TTL_MS = 10 * 60 * 1000;
+
+function getLifiHeaders(configMore = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    const apiKey = configMore.lifiApiKey;
+    if (apiKey) {
+        headers['x-lifi-api-key'] = apiKey;
+    }
+    return headers;
+}
+
+async function getLifiChainIdMap(configMore = {}) {
+    const now = Date.now();
+    if (lifiChainIdMapCache && (now - lifiChainIdMapFetchedAt) < LIFI_CHAIN_MAP_TTL_MS) {
+        return lifiChainIdMapCache;
+    }
+
+    const response = await fetchWithRetry(`${LIFI_API_BASE_URL}/chains`, { headers: getLifiHeaders(configMore) });
+    const data = await response.json();
+    lifiChainIdMapCache = buildLifiChainIdMap(data?.chains);
+    lifiChainIdMapFetchedAt = now;
+    return lifiChainIdMapCache;
+}
+
+async function getLifiTokenMeta(chainId, tokenAddress, configMore = {}) {
+    const params = new URLSearchParams({
+        chain: String(chainId),
+        token: tokenAddress
+    });
+    const response = await fetchWithRetry(`${LIFI_API_BASE_URL}/token?${params.toString()}`, { headers: getLifiHeaders(configMore) });
+    const data = await response.json();
+    if (!data || !Number.isFinite(Number(data.decimals))) {
+        throw new Error(`LI.FI 无法识别代币: ${tokenAddress}`);
+    }
+    return { decimals: Number(data.decimals), symbol: data.symbol || '???' };
+}
 
 app.post('/api/save-config', async (req, res) => {
     try {
@@ -351,6 +401,68 @@ app.post('/api/get-0x-quote', async (req, res) => {
         };
         res.json(result);
 
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/get-lifi-quote', async (req, res) => {
+    const { chain, fromToken, toToken, amount } = req.body;
+    const finalAmount = amount || 1;
+
+    try {
+        if (!chain || !fromToken || !toToken) {
+            throw new Error('缺少 chain/fromToken/toToken 参数');
+        }
+
+        const configMore = await getConfigMore();
+        const chainIdMap = await getLifiChainIdMap(configMore);
+        const chainId = resolveLifiChainId(chain, chainIdMap);
+        if (!chainId) {
+            throw new Error(`LI.FI 不支持此链: ${chain}`);
+        }
+
+        const [fromMeta, toMeta] = await Promise.all([
+            getLifiTokenMeta(chainId, fromToken, configMore),
+            getLifiTokenMeta(chainId, toToken, configMore)
+        ]);
+
+        const fromAmount = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals).toString();
+        const quoteParams = new URLSearchParams({
+            fromChain: String(chainId),
+            toChain: String(chainId),
+            fromToken,
+            toToken,
+            fromAmount,
+            fromAddress: LIFI_DEFAULT_FROM_ADDRESS,
+            toAddress: LIFI_DEFAULT_FROM_ADDRESS,
+            slippage: LIFI_DEFAULT_SLIPPAGE
+        });
+
+        const integrator = configMore.lifiIntegrator;
+        if (integrator) {
+            quoteParams.set('integrator', integrator);
+        }
+
+        const quoteResp = await fetchWithRetry(
+            `${LIFI_API_BASE_URL}/quote?${quoteParams.toString()}`,
+            { headers: getLifiHeaders(configMore) }
+        );
+        const quoteData = await quoteResp.json();
+        const toAmountRaw = getDisplayedToAmountRaw(quoteData);
+        if (!toAmountRaw) {
+            throw new Error(quoteData?.message || 'LI.FI 未返回有效报价');
+        }
+
+        const finalAmountOut = parseFloat(ethers.formatUnits(toAmountRaw, toMeta.decimals));
+        const result = {
+            fromSymbol: fromMeta.symbol,
+            toSymbol: toMeta.symbol,
+            amountOut: finalAmountOut,
+            raw_price: finalAmountOut / finalAmount,
+            source: 'LI.FI'
+        };
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

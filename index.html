@@ -590,6 +590,7 @@
                     <option value="Kyber">Kyber (默认)</option>
                     <option value="Auto">Auto (Kyber -> 0x)</option>
                     <option value="0x">0x</option>
+                    <option value="LI.FI">LI.FI</option>
                 </select>
                 <div style="font-size:0.8em; color:var(--text-color-light); margin-top:4px;">
                     Auto模式失败会自动切换源，可能会导致价格轻微跳动。
@@ -658,6 +659,7 @@
                         <option value="plasma">Plasma</option>
                         <option value="etherlink">Etherlink</option>
                         <option value="monad">Monad</option>
+                        <option value="katana">Katana</option>
                     </optgroup>
                     
                     <optgroup label="Solana">
@@ -819,13 +821,14 @@
         linea: 'Linea', mantle: 'Mantle', sonic: 'Sonic', berachain: 'Berachain',
         ronin: 'Ronin', unichain: 'Unichain', hyperevm: 'HyperEVM', plasma: 'Plasma',
         scroll: 'Scroll', blast: 'Blast', mode: 'Mode', monad: 'Monad', etherlink: 'Etherlink',
-        fantom: 'Fantom', cronos: 'Cronos', moonbeam: 'Moonbeam', boba: 'Boba', gnosis: 'Gnosis', celo: 'Celo'
+        fantom: 'Fantom', cronos: 'Cronos', moonbeam: 'Moonbeam', boba: 'Boba', gnosis: 'Gnosis', celo: 'Celo',
+        katana: 'Katana'
     };
 
     const CHAIN_ADDRESS_PLACEHOLDERS = {
         ethereum: '0x...', solana: 'Enter mint address...', sui: '0x...::module::TYPE',
         polygon: '0x...', arbitrum: '0x...', optimism: '0x...',
-        bsc: '0x...', avalanche: '0x...', base: '0x...', Bybit: 'N/A'
+        bsc: '0x...', avalanche: '0x...', base: '0x...', katana: '0x...', Bybit: 'N/A'
     };
     
     const KYBER_SUPPORTED_CHAINS = [
@@ -1156,6 +1159,26 @@
         };
     }
 
+    async function getLifiQuote(quote, signal) {
+        const response = await fetch(`${BACKEND_URL}/api/get-lifi-quote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...quote }),
+            signal
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'LI.FI API Request Failed');
+
+        return {
+            symbols: { from: data.fromSymbol, to: data.toSymbol },
+            finalAmountOut: data.amountOut,
+            rawPrice: data.raw_price,
+            usedSource: 'LI.FI',
+            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
+        };
+    }
+
     async function apiGetQuote(quote, signal, targetSource) {
         const amountToFetch = quote.amount || 1;
         const fetchOptions = { signal };
@@ -1165,6 +1188,8 @@
         try {
             if (targetSource === '0x' || targetSource === 'Velora') {
                  result = await get0xQuote(quote, signal);
+            } else if (targetSource === 'LI.FI') {
+                result = await getLifiQuote(quote, signal);
             } else if (targetSource === 'Jupiter') {
                 const [resFrom, resTo] = await Promise.all([
                      fetch(`${BACKEND_URL}/api/solana-metadata?mint=${quote.fromToken}`, fetchOptions).then(res => res.ok ? res.json() : {}),
@@ -1249,6 +1274,8 @@
                     strategy = ['Kyber', '0x', 'Kyber'];
                 } else if (pref === '0x' || pref === 'Velora') {
                     strategy = ['0x', '0x'];
+                } else if (pref === 'LI.FI') {
+                    strategy = ['LI.FI', 'LI.FI'];
                 } else {
                     strategy = ['Kyber', 'Kyber'];
                 }
@@ -2302,7 +2329,8 @@
         } else if (e.target.id === 'add-quote-save') {
             if (currentCategoryIdToAdd === null) return;
             const chain = addQuoteChainSelect.value;
-            const newQuote = { id: Date.now(), chain: chain.toLowerCase(), amount: 1, preferredSource: 'Kyber' }; 
+            const defaultSource = chain.toLowerCase() === 'katana' ? 'LI.FI' : 'Kyber';
+            const newQuote = { id: Date.now(), chain: chain.toLowerCase(), amount: 1, preferredSource: defaultSource }; 
             if (chain === 'Bybit') {
                 newQuote.chain = 'Bybit';
                 newQuote.symbol = addQuoteSymbolInput.value.trim();
