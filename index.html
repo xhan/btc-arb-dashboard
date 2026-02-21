@@ -155,7 +155,7 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 12px 0; 
+            padding: 10px 0; 
             border-bottom: 1px solid var(--border-color); 
             gap: 8px; 
             position: relative;
@@ -262,7 +262,7 @@
         .quote-text { white-space: nowrap; }
         
         .inverse-quote-text {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-color-light);
             opacity: 0.8;
             margin-top: 2px;
@@ -363,6 +363,22 @@
         .modal-buttons button:disabled { background-color: #a0aec0; cursor: not-allowed; }
         #modal-save, #add-quote-save, #add-category-save, #settings-save { background-color: #3182ce; color: white; } 
         #modal-cancel, #add-quote-cancel, #confirm-cancel, #add-category-cancel, #settings-cancel { background-color: var(--button-hover-bg); color: var(--text-color); }
+        .quote-settings-actions { display: flex; gap: 10px; margin: 12px 0 6px; }
+        .quote-settings-actions button {
+            flex: 1;
+            padding: 9px 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--button-hover-bg);
+            color: var(--text-color);
+        }
+        .quote-settings-actions button:hover { filter: brightness(0.97); }
+        #modal-delete-quote { background: #fee2e2; color: #c53030; }
+        #modal-delete-quote:hover { background: #fecaca; filter: none; }
+        .dark-mode #modal-delete-quote { background: #3c2323; color: #e53e3e; }
+        .dark-mode #modal-delete-quote:hover { background: #5c2c2c; }
 
         #alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 400px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
         #alert-log-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; }
@@ -602,6 +618,11 @@
                 <label for="show-inverse-quote">显示反向报价 (小字号)</label>
             </div>
 
+            <div class="quote-settings-actions">
+                <button id="modal-swap-quote" type="button">反转价格对</button>
+                <button id="modal-delete-quote" type="button">删除价格对</button>
+            </div>
+
             <hr style="border:0; border-top:1px solid var(--border-color); margin: 15px 0;">
             
             <div style="margin-bottom:10px; font-weight:bold;">监控与提醒</div>
@@ -778,6 +799,8 @@
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const audioNoticeEl = document.getElementById('audio-notice');
     const alertModal = document.getElementById('alert-modal');
+    const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
+    const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
     
     const manualSaveBtn = document.getElementById('manual-save-btn');
     const manualSaveText = document.getElementById('manual-save-text');
@@ -1841,7 +1864,6 @@
         const itemEl = document.createElement('li');
         itemEl.id = `quote-item-${quote.id}`;
         itemEl.className = 'quote-item';
-        const swapButtonHTML = quote.chain !== 'Bybit' ? `<button class="icon-btn swap-btn" title="交换" data-category-id="${categoryId}" data-quote-id="${quote.id}">&#8645;</button>` : '';
         const initialAmount = quote.amount || 1;
         const amountInputHTML = quote.chain !== 'Bybit' ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
         
@@ -1861,8 +1883,6 @@
                 </div>
                 <div class="quote-actions">
                     <button class="icon-btn" title="设置" data-edit-alert-id="${quote.id}" data-category-id="${categoryId}">⚙️</button>
-                    ${swapButtonHTML}
-                    <button class="icon-btn delete-btn" title="删除报价" data-category-id="${categoryId}" data-quote-id="${quote.id}">×</button>
                 </div>
             </div>`;
         
@@ -2027,6 +2047,80 @@
         onConfirmAction = null;
     }
 
+    function deleteQuoteFromCategory(categoryId, quoteId) {
+        const category = dashboardState.find(c => c.id == categoryId);
+        const quoteIndex = category ? category.quotes.findIndex(q => q.id == quoteId) : -1;
+        if (quoteIndex === -1) return false;
+
+        const quoteToDelete = category.quotes[quoteIndex];
+        removeFromQueue(quoteToDelete.id);
+        category.quotes.splice(quoteIndex, 1);
+
+        const quoteItem = document.getElementById(`quote-item-${quoteId}`);
+        if (quoteItem) quoteItem.remove();
+
+        quoteMonitorState.delete(quoteId);
+        updateAlertSoundState();
+        saveData();
+        return true;
+    }
+
+    function swapQuoteTokens(categoryId, quoteId) {
+        const category = dashboardState.find(c => c.id == categoryId);
+        if (!category) return false;
+        const quote = category.quotes.find(q => q.id == quoteId);
+        if (!quote || quote.chain === 'Bybit') return false;
+
+        [quote.fromToken, quote.toToken] = [quote.toToken, quote.fromToken];
+
+        const state = quoteMonitorState.get(quoteId);
+        if (state) {
+            state.lastRawPrice = null;
+            state.isSoundActive = false;
+            state.logShown = false;
+            state.hasUnreadAlert = false;
+
+            const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
+            if (arrowEl) {
+                arrowEl.className = 'trend-arrow';
+                if (state.trendTimer) clearTimeout(state.trendTimer);
+            }
+
+            if (state.fromSymbol && state.toSymbol) {
+                const temp = state.fromSymbol;
+                state.fromSymbol = state.toSymbol;
+                state.toSymbol = temp;
+
+                globalSymbolCache.set(`${quote.chain}-${quote.fromToken}`, state.fromSymbol);
+                globalSymbolCache.set(`${quote.chain}-${quote.toToken}`, state.toSymbol);
+            }
+
+            const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
+            if (quoteItemEl) {
+                quoteItemEl.classList.remove('highlight');
+                quoteItemEl.classList.remove('highlight-past');
+                const dismissBtn = quoteItemEl.querySelector('.dismiss-highlight-btn');
+                if (dismissBtn) dismissBtn.remove();
+            }
+        }
+        updateAlertSoundState();
+
+        if (quote.alerts && quote.alerts.basePrice) quote.alerts.basePrice = 1 / quote.alerts.basePrice;
+
+        const quoteTextEl = document.getElementById(`quote-text-${quoteId}`);
+        const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quoteId}`);
+        if (quoteTextEl && quoteTextWrapperEl) {
+            quoteTextEl.textContent = '切换中...';
+            quoteTextWrapperEl.classList.add('loading-text');
+            const inverseEl = document.getElementById(`inverse-quote-${quoteId}`);
+            if (inverseEl) inverseEl.textContent = '刷新中...';
+        }
+
+        saveData();
+        fetchSingleQuote(quote);
+        return true;
+    }
+
     dashboardEl.addEventListener('click', (e) => {
         const target = e.target.closest('button');
         if (!target) return;
@@ -2054,7 +2148,7 @@
             if (!category) return;
             const quote = category.quotes.find(q => q.id == editQuoteId);
             if (!quote) return;
-            currentlyEditingQuote = { quote: quote };
+            currentlyEditingQuote = { quote: quote, categoryId: categoryId };
             const currentAlerts = quote.alerts || {};
             const monitorState = quoteMonitorState.get(quote.id) || {};
             
@@ -2085,6 +2179,13 @@
                  document.getElementById('inverse-toggle-group').style.display = 'flex';
                  inverseCheckbox.checked = !!quote.showInverse;
             }
+
+            if (modalSwapQuoteBtn) {
+                modalSwapQuoteBtn.style.display = quote.chain === 'Bybit' ? 'none' : 'block';
+            }
+            if (modalDeleteQuoteBtn) {
+                modalDeleteQuoteBtn.style.display = 'block';
+            }
             
             document.getElementById('reset-base-price').checked = false;
 
@@ -2108,20 +2209,7 @@
         } else if (target.matches('.delete-btn')) {
              if (quoteId && categoryId) {
                 showConfirmation('确定删除此报价吗？', () => {
-                    const category = dashboardState.find(c => c.id == categoryId);
-                    const quoteIndex = category ? category.quotes.findIndex(q => q.id == quoteId) : -1;
-                    if (quoteIndex !== -1) {
-                        const quoteToDelete = category.quotes[quoteIndex];
-                        removeFromQueue(quoteToDelete.id);
-                        
-                        category.quotes.splice(quoteIndex, 1);
-                        document.getElementById(`quote-item-${quoteId}`).remove();
-                        
-                        quoteMonitorState.delete(quoteId);
-                        updateAlertSoundState();
-                        
-                        saveData();
-                    }
+                    deleteQuoteFromCategory(categoryId, quoteId);
                 });
             } else if (categoryId) {
                 const categoryIndex = dashboardState.findIndex(c => c.id == categoryId);
@@ -2142,58 +2230,7 @@
             currentCategoryIdToAdd = categoryId;
             addQuoteModal.classList.add('visible');
         } else if (target.matches('.swap-btn')) {
-            const category = dashboardState.find(c => c.id == categoryId);
-            if (!category) return;
-            const quote = category.quotes.find(q => q.id == quoteId);
-            if (!quote) return;
-
-            [quote.fromToken, quote.toToken] = [quote.toToken, quote.fromToken];
-            
-            const state = quoteMonitorState.get(quoteId);
-            if (state) {
-                state.lastRawPrice = null; 
-                state.isSoundActive = false;
-                state.logShown = false;
-                state.hasUnreadAlert = false;
-                
-                const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
-                if (arrowEl) {
-                    arrowEl.className = 'trend-arrow'; 
-                    if (state.trendTimer) clearTimeout(state.trendTimer); 
-                }
-                
-                if (state.fromSymbol && state.toSymbol) {
-                     const temp = state.fromSymbol;
-                     state.fromSymbol = state.toSymbol;
-                     state.toSymbol = temp;
-                     
-                     globalSymbolCache.set(`${quote.chain}-${quote.fromToken}`, state.fromSymbol);
-                     globalSymbolCache.set(`${quote.chain}-${quote.toToken}`, state.toSymbol);
-                }
-                
-                const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
-                if (quoteItemEl) {
-                    quoteItemEl.classList.remove('highlight');
-                    quoteItemEl.classList.remove('highlight-past');
-                    const dismissBtn = quoteItemEl.querySelector('.dismiss-highlight-btn');
-                    if (dismissBtn) dismissBtn.remove();
-                }
-            }
-            updateAlertSoundState();
-            
-            if (quote.alerts && quote.alerts.basePrice) quote.alerts.basePrice = 1 / quote.alerts.basePrice;
-
-            const quoteTextEl = document.getElementById(`quote-text-${quoteId}`);
-            const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quoteId}`);
-            if (quoteTextEl && quoteTextWrapperEl) {
-                quoteTextEl.textContent = '切换中...';
-                quoteTextWrapperEl.classList.add('loading-text');
-                const inverseEl = document.getElementById(`inverse-quote-${quoteId}`);
-                if (inverseEl) inverseEl.textContent = '刷新中...';
-            }
-
-            saveData(); 
-            fetchSingleQuote(quote);
+            swapQuoteTokens(categoryId, quoteId);
         }
     });
 
@@ -2201,6 +2238,19 @@
         if (e.target.id === 'modal-cancel' || (e.target === alertModal && !e.target.closest('.modal-box'))) {
             alertModal.classList.remove('visible');
             currentlyEditingQuote = null;
+        } else if (e.target.id === 'modal-swap-quote') {
+            if (currentlyEditingQuote && currentlyEditingQuote.quote) {
+                swapQuoteTokens(currentlyEditingQuote.categoryId, currentlyEditingQuote.quote.id);
+            }
+        } else if (e.target.id === 'modal-delete-quote') {
+            if (currentlyEditingQuote && currentlyEditingQuote.quote) {
+                const { categoryId, quote } = currentlyEditingQuote;
+                alertModal.classList.remove('visible');
+                currentlyEditingQuote = null;
+                showConfirmation('确定删除此报价吗？', () => {
+                    deleteQuoteFromCategory(categoryId, quote.id);
+                });
+            }
         } else if (e.target.id === 'modal-save') {
             if (currentlyEditingQuote && currentlyEditingQuote.quote) {
                 const { quote } = currentlyEditingQuote;
