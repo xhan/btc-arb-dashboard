@@ -5,6 +5,7 @@ const { ethers } = require('ethers');
 const { AggregatorClient } = require('@cetusprotocol/aggregator-sdk');
 const BN = require('bn.js');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
+const { pickKyberClientId, DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT } = require('./kyber-client-id');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -18,6 +19,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 const CONFIG_PATH = './config.json';
+const CONFIG_MORE_PATH = './config_more.json';
 const METADATA_CACHE_PATH = './metadata-cache.json';
 
 let tokenMetaCache = {};
@@ -50,15 +52,27 @@ async function readJsonFile(filePath) {
     return JSON.parse(stripBom(data));
 }
 
-async function getConfigSettings() {
+async function getConfigMore() {
     try {
-        const parsedData = await readJsonFile(CONFIG_PATH);
-        return parsedData.settings || {};
+        const configMore = await readJsonFile(CONFIG_MORE_PATH);
+        const rawClientId = typeof configMore.kyberClientId === 'string' ? configMore.kyberClientId.trim() : '';
+        const parsedSuffixCount = Number.parseInt(configMore.kyberClientIdSuffixCount, 10);
+        const suffixCount = Number.isNaN(parsedSuffixCount) || parsedSuffixCount < 0
+            ? DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT
+            : parsedSuffixCount;
+
+        return {
+            kyberClientId: rawClientId || 'xh-quote-dashboard',
+            kyberClientIdSuffixCount: suffixCount
+        };
     } catch (error) {
         if (error.code !== 'ENOENT') {
-            console.warn(`⚠️ 读取settings失败，使用默认值: ${error.message}`);
+            console.warn(`⚠️ 读取config_more失败，使用默认值: ${error.message}`);
         }
-        return {};
+        return {
+            kyberClientId: 'xh-quote-dashboard',
+            kyberClientIdSuffixCount: DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT
+        };
     }
 }
 
@@ -359,9 +373,11 @@ app.post('/api/get-kyber-quote', async (req, res) => {
         let finalAmountOut = null;
 
         const apiUrl = `https://aggregator-api.kyberswap.com/${chain}/api/v1/routes?tokenIn=${fromToken}&tokenOut=${toToken}&amountIn=${amountInWei.toString()}`;
-        const settings = await getConfigSettings();
-        const kyberClientId = settings.kyberClientId || 'xh-quote-dashboard';
-        const response = await fetchWithRetry(apiUrl, { headers: { 'X-Client-Id': kyberClientId } });
+        const configMore = await getConfigMore();
+        const kyberClientId = configMore.kyberClientId;
+        const kyberClientIdSuffixCount = configMore.kyberClientIdSuffixCount ?? DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT;
+        const requestClientId = pickKyberClientId(kyberClientId, kyberClientIdSuffixCount);
+        const response = await fetchWithRetry(apiUrl, { headers: { 'X-Client-Id': requestClientId } });
         const resultData = await response.json();
 
         if (resultData.code !== 0) throw new Error(resultData.message || `Kyber API返回错误`);
