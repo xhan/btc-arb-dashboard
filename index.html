@@ -97,7 +97,7 @@
         
         #top-bar-left { display: flex; align-items: center; gap: 20px; }
         #top-bar-right { display: flex; align-items: center; gap: 15px; }
-        #toggle-arb-btn {
+        #toggle-arb-btn, #toggle-calc-btn {
             background-color: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-color);
@@ -106,8 +106,8 @@
             cursor: pointer;
             font-weight: 600;
         }
-        #toggle-arb-btn:hover { background-color: rgba(0,0,0,0.05); }
-        .dark-mode #toggle-arb-btn:hover { background-color: rgba(255,255,255,0.08); }
+        #toggle-arb-btn:hover, #toggle-calc-btn:hover { background-color: rgba(0,0,0,0.05); }
+        .dark-mode #toggle-arb-btn:hover, .dark-mode #toggle-calc-btn:hover { background-color: rgba(255,255,255,0.08); }
 
         #dashboard { 
             display: grid; 
@@ -374,7 +374,8 @@
         #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1080px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
         #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #arb-path-header { background-color: #1a202c; }
-        #arb-path-max-btn {
+        .panel-header-actions { display: flex; align-items: center; gap: 8px; }
+        #arb-path-max-btn, #arb-path-min-btn {
             border: 1px solid rgba(255,255,255,0.3);
             background: transparent;
             color: #fff;
@@ -383,7 +384,7 @@
             cursor: pointer;
             font-weight: 700;
         }
-        #arb-path-max-btn:hover { background-color: rgba(255,255,255,0.12); }
+        #arb-path-max-btn:hover, #arb-path-min-btn:hover { background-color: rgba(255,255,255,0.12); }
         #arb-path-content { flex-grow: 1; overflow-y: auto; padding: 12px; font-size: 13px; }
         .arb-path-grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 10px; align-items: start; }
         .arb-column { min-width: 0; }
@@ -395,6 +396,24 @@
         .arb-opportunity:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
         .arb-profit { font-weight: 700; color: var(--trend-up-bg); }
         .arb-profit-neg { color: var(--trend-down-bg); }
+
+        #calc-window { position: fixed; bottom: 20px; right: 390px; width: 430px; height: 280px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
+        #calc-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .dark-mode #calc-header { background-color: #1a202c; }
+        #calc-reset-btn, #calc-min-btn {
+            border: 1px solid rgba(255,255,255,0.3);
+            background: transparent;
+            color: #fff;
+            border-radius: 6px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        #calc-reset-btn:hover, #calc-min-btn:hover { background-color: rgba(255,255,255,0.12); }
+        #calc-content { flex-grow: 1; overflow-y: auto; padding: 12px; font-size: 13px; }
+        .calc-line { margin-bottom: 6px; line-height: 1.35; }
+        .calc-footer { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-color); font-weight: 700; }
+        .calc-empty { color: var(--text-color-light); }
         
         #audio-notice {
             display: none;
@@ -493,6 +512,7 @@
         </div>
         <div id="top-bar-right">
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
+             <button id="toggle-calc-btn" title="显示/隐藏计算器">计算器</button>
              <button id="global-settings-btn" class="icon-btn" title="API 设置">⚙️</button>
              <button id="theme-toggle-btn" class="icon-btn" title="切换深色/浅色模式">🌙</button>
         </div>
@@ -507,9 +527,22 @@
     <div id="arb-path-window">
         <div id="arb-path-header">
             <span>套利路径</span>
-            <button id="arb-path-max-btn" title="最大化高度">⇵</button>
+            <div class="panel-header-actions">
+                <button id="arb-path-min-btn" title="最小化">－</button>
+                <button id="arb-path-max-btn" title="最大化高度">⇵</button>
+            </div>
         </div>
         <div id="arb-path-content">等待数据...</div>
+    </div>
+    <div id="calc-window">
+        <div id="calc-header">
+            <span>计算器</span>
+            <div class="panel-header-actions">
+                <button id="calc-reset-btn" title="清空结果">Reset</button>
+                <button id="calc-min-btn" title="最小化">－</button>
+            </div>
+        </div>
+        <div id="calc-content"><div class="calc-empty">点击报价价格后会显示在这里</div></div>
     </div>
     
     <audio id="alert-sound" src="alert.mp3" preload="auto"></audio>
@@ -683,6 +716,7 @@
     </div>
 
     <script src="arb-paths.js"></script>
+    <script src="quote-calculator.js"></script>
 <script>
     const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
     let dashboardState = [];
@@ -767,8 +801,16 @@
     const arbPathContent = document.getElementById('arb-path-content');
     const arbPathHeader = document.getElementById('arb-path-header');
     const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
+    const arbPathMinBtn = document.getElementById('arb-path-min-btn');
     const toggleArbBtn = document.getElementById('toggle-arb-btn');
+    const calcWindow = document.getElementById('calc-window');
+    const calcContent = document.getElementById('calc-content');
+    const calcHeader = document.getElementById('calc-header');
+    const calcResetBtn = document.getElementById('calc-reset-btn');
+    const calcMinBtn = document.getElementById('calc-min-btn');
+    const toggleCalcBtn = document.getElementById('toggle-calc-btn');
     let copyToastTimer = null;
+    let calculatorEntries = [];
     
     const CHAIN_DISPLAY_NAMES = {
         ethereum: 'ETH', solana: 'SOL', sui: 'SUI', polygon: 'Polygon',
@@ -1273,6 +1315,8 @@
                 lastResultText: data.resultText,
                 lastRawPrice: data.rawPrice,
                 inverseRawPrice: inverseRawPrice,
+                inverseFromSymbol: inverseData && !inverseData.error && inverseData.symbols ? inverseData.symbols.from : null,
+                inverseToSymbol: inverseData && !inverseData.error && inverseData.symbols ? inverseData.symbols.to : null,
                 usedSource: data.usedSource,
                 usedSourceReal: successSource 
             };
@@ -1297,7 +1341,16 @@
                     } else {
                         inverseEl.textContent = `${quote.amount || 1} ${inverseData.symbols.from} ≈ ${inverseData.finalAmountOut.toFixed(6)} ${inverseData.symbols.to}`;
                     }
-                    bindCopyHandler(inverseEl, () => inverseEl.textContent);
+                    bindCopyHandler(
+                        inverseEl,
+                        () => inverseEl.textContent,
+                        () => ({
+                            chain: quote.chain,
+                            fromSymbol: (quoteMonitorState.get(quote.id) || {}).inverseFromSymbol || '',
+                            toSymbol: (quoteMonitorState.get(quote.id) || {}).inverseToSymbol || '',
+                            normalizedPrice: (quoteMonitorState.get(quote.id) || {}).inverseRawPrice
+                        })
+                    );
                 }
             } else if (inverseEl) {
                 inverseEl.remove();
@@ -1347,11 +1400,14 @@
     }
 
     function extractPriceFromText(text) {
+        if (window.QuoteCalculator && typeof window.QuoteCalculator.extractPriceFromText === 'function') {
+            return window.QuoteCalculator.extractPriceFromText(text);
+        }
         if (!text) return null;
         const delimiterMatch = text.match(/(?:≈|=|:)\s*([-+]?\d*\.?\d+(?:e[+-]?\d+)?)/i);
-        if (delimiterMatch) return delimiterMatch[1];
+        if (delimiterMatch) return Number(delimiterMatch[1]);
         const numberMatch = text.match(/[-+]?\d*\.?\d+(?:e[+-]?\d+)?/i);
-        return numberMatch ? numberMatch[0] : null;
+        return numberMatch ? Number(numberMatch[0]) : null;
     }
 
     async function copyTextToClipboard(text) {
@@ -1379,20 +1435,72 @@
         textarea.remove();
     }
 
-    function copyPriceFromText(text) {
-        const price = extractPriceFromText(text);
-        if (!price) return;
-        copyTextToClipboard(price);
-        showCopyToast(`已复制: ${price}`);
+    function formatCalculatorProduct(product, count) {
+        if (typeof product !== 'number' || Number.isNaN(product)) return '--';
+        if (count <= 1) return product.toFixed(6);
+        return product.toFixed(10).replace(/\.?0+$/, '');
     }
 
-    function bindCopyHandler(targetEl, getText) {
+    function renderCalculatorPanel() {
+        if (!calcContent) return;
+        if (!calculatorEntries.length) {
+            calcContent.innerHTML = '<div class="calc-empty">点击报价价格后会显示在这里</div>';
+            return;
+        }
+
+        const entryLines = calculatorEntries.map((entry) => {
+            const lineText = window.QuoteCalculator
+                ? window.QuoteCalculator.formatCalculatorEntry(entry)
+                : `${entry.chainLabel} ${entry.fromSymbol} -> ${entry.toSymbol} ${entry.price.toFixed(6)}`;
+            return `<div class="calc-line">${lineText}</div>`;
+        }).join('');
+
+        const product = window.QuoteCalculator
+            ? window.QuoteCalculator.calculateProduct(calculatorEntries)
+            : calculatorEntries.reduce((acc, item) => acc * item.price, 1);
+
+        calcContent.innerHTML = `${entryLines}<div class="calc-footer">乘积: ${formatCalculatorProduct(product, calculatorEntries.length)}</div>`;
+    }
+
+    function addToCalculator(details, clickedPrice) {
+        if (!details) return;
+        const normalizedPrice = Number(details.normalizedPrice);
+        const calculatorPrice = Number.isFinite(normalizedPrice) ? normalizedPrice : clickedPrice;
+        if (typeof calculatorPrice !== 'number' || Number.isNaN(calculatorPrice)) return;
+        const entryInput = {
+            chainLabel: formatChainLabel(details.chain),
+            fromSymbol: details.fromSymbol || '',
+            toSymbol: details.toSymbol || '',
+            price: calculatorPrice
+        };
+        const entry = (window.QuoteCalculator && window.QuoteCalculator.buildCalculatorEntry)
+            ? window.QuoteCalculator.buildCalculatorEntry(entryInput)
+            : entryInput;
+        if (!entry || !entry.fromSymbol || !entry.toSymbol) return;
+
+        calculatorEntries.push(entry);
+        if (calcWindow && calcWindow.style.display === 'none') {
+            calcWindow.style.display = 'flex';
+        }
+        renderCalculatorPanel();
+    }
+
+    function copyPriceFromText(text, details) {
+        const price = extractPriceFromText(text);
+        if (typeof price !== 'number' || Number.isNaN(price)) return;
+        copyTextToClipboard(String(price));
+        showCopyToast(`已复制: ${price}`);
+        addToCalculator(details, price);
+    }
+
+    function bindCopyHandler(targetEl, getText, getDetails) {
         if (!targetEl || targetEl.dataset.copyBound) return;
         targetEl.dataset.copyBound = '1';
         targetEl.addEventListener('click', (event) => {
             event.stopPropagation();
             const text = typeof getText === 'function' ? getText() : targetEl.textContent;
-            copyPriceFromText(text);
+            const details = typeof getDetails === 'function' ? getDetails() : null;
+            copyPriceFromText(text, details);
         });
     }
 
@@ -1507,8 +1615,20 @@
 
     function toggleArbPanel() {
         if (!arbPathWindow) return;
-        const isHidden = arbPathWindow.style.display === 'none';
+        const isHidden = window.getComputedStyle(arbPathWindow).display === 'none';
         arbPathWindow.style.display = isHidden ? 'flex' : 'none';
+    }
+
+    function toggleCalcPanel() {
+        if (!calcWindow) return;
+        const isHidden = window.getComputedStyle(calcWindow).display === 'none';
+        calcWindow.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) renderCalculatorPanel();
+    }
+
+    function resetCalculator() {
+        calculatorEntries = [];
+        renderCalculatorPanel();
     }
 
     function setArbPanelMaxHeight() {
@@ -1727,7 +1847,19 @@
             textWrapper.addEventListener('mousedown', (e) => e.stopPropagation());
             textWrapper.setAttribute('draggable', 'false'); 
             const quoteTextEl = itemEl.querySelector(`#quote-text-${quote.id}`);
-            bindCopyHandler(textWrapper, () => (quoteTextEl ? quoteTextEl.textContent : textWrapper.textContent));
+            bindCopyHandler(
+                textWrapper,
+                () => (quoteTextEl ? quoteTextEl.textContent : textWrapper.textContent),
+                () => {
+                    const state = quoteMonitorState.get(quote.id) || {};
+                    return {
+                        chain: quote.chain,
+                        fromSymbol: state.fromSymbol || '',
+                        toSymbol: state.toSymbol || '',
+                        normalizedPrice: state.lastRawPrice
+                    };
+                }
+            );
         }
         
         return itemEl;
@@ -2255,14 +2387,39 @@
             if (arbPathWindow && arbPathHeader) {
                 makeDraggable(arbPathWindow, arbPathHeader);
             }
+            if (calcWindow && calcHeader) {
+                makeDraggable(calcWindow, calcHeader);
+                renderCalculatorPanel();
+            }
 
             if (toggleArbBtn) {
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
+            }
+            if (arbPathMinBtn) {
+                arbPathMinBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleArbPanel();
+                });
             }
             if (arbPathMaxBtn) {
                 arbPathMaxBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     setArbPanelMaxHeight();
+                });
+            }
+            if (toggleCalcBtn) {
+                toggleCalcBtn.addEventListener('click', toggleCalcPanel);
+            }
+            if (calcMinBtn) {
+                calcMinBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleCalcPanel();
+                });
+            }
+            if (calcResetBtn) {
+                calcResetBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    resetCalculator();
                 });
             }
         } catch (error) {
