@@ -11,6 +11,7 @@ const {
   findBestCycle,
   findTopCycles,
   findBestFixedPath,
+  formatProfitWanfen,
   selectBestDirectEdge,
   isMeaningfulPath
 } = require('../arb-paths');
@@ -71,6 +72,16 @@ assert.strictEqual(bestDirect.from, 'cbBTC');
 assert.strictEqual(bestDirect.to, 'WBTC');
 assert.strictEqual(bestDirect.rate, 1.01);
 
+const aliasEdges = [
+  { from: 'BTC.b', to: 'WBTC', rate: 1.002, chain: 'avalanche' },
+  { from: 'cbBTC', to: 'WBTC', rate: 1.001, chain: 'ethereum' }
+];
+const aliasBest = selectBestDirectEdge(aliasEdges, 'btcb', 'wbtc', { 'BTC.B': 'CBBTC', 'XBTC': 'CBBTC', 'BTCB': 'CBBTC' });
+assert.ok(aliasBest);
+assert.strictEqual(aliasBest.from, 'CBBTC');
+assert.strictEqual(aliasBest.to, 'wbtc');
+assert.strictEqual(aliasBest.rate, 1.002);
+
 const ruleOnly = [
   { from: 'cbBTC', to: 'xBTC', rate: 1, chain: '规则', rule: true },
   { from: 'xBTC', to: 'cbBTC', rate: 1, chain: '规则', rule: true }
@@ -96,6 +107,8 @@ const cycleEdges = [
 const topCycles = findTopCycles(cycleEdges, { maxDepth: 3, limit: 2 });
 assert.strictEqual(topCycles.length, 2);
 assert.ok(topCycles[0].profitRate >= topCycles[1].profitRate);
+assert.strictEqual(formatProfitWanfen(0.0002), '+2.00‱');
+assert.strictEqual(formatProfitWanfen(-0.0002), '-2.00‱');
 
 const fixedEdges = [
   { from: 'cbBTC', to: 'WBTC', rate: 1.01, chain: 'ethereum' },

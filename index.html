@@ -371,7 +371,7 @@
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
 
-        #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 480px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
+        #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1080px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
         #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #arb-path-header { background-color: #1a202c; }
         #arb-path-max-btn {
@@ -384,9 +384,15 @@
             font-weight: 700;
         }
         #arb-path-max-btn:hover { background-color: rgba(255,255,255,0.12); }
-        #arb-path-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
-        .arb-path-line { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
-        .arb-path-line:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        #arb-path-content { flex-grow: 1; overflow-y: auto; padding: 12px; font-size: 13px; }
+        .arb-path-grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 10px; align-items: start; }
+        .arb-column { min-width: 0; }
+        .arb-section { border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; margin-bottom: 8px; background-color: rgba(0,0,0,0.01); }
+        .dark-mode .arb-section { background-color: rgba(255,255,255,0.02); }
+        .arb-section-title { font-weight: 700; margin-bottom: 6px; font-size: 13px; }
+        .arb-path-line { margin-bottom: 4px; line-height: 1.35; }
+        .arb-opportunity { padding-top: 6px; margin-top: 6px; border-top: 1px dashed var(--border-color); }
+        .arb-opportunity:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
         .arb-profit { font-weight: 700; color: var(--trend-up-bg); }
         .arb-profit-neg { color: var(--trend-down-bg); }
         
@@ -994,59 +1000,18 @@
     }
 
     function updateArbPanel() {
-function renderArbSection(title, legs, profitRate) {
-        const header = `<div class="arb-path-line"><strong>${title}</strong></div>`;
-        if (!window.ArbPaths.isMeaningfulPath(legs)) {
-            return `${header}<div class="arb-path-line">等待数据...</div>`;
-        }
-        const legLines = buildLegLines(legs);
-        const profitPercent = typeof profitRate === 'number' ? profitRate * 100 : 0;
-        const profitClass = profitPercent >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
-        const profitText = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(4)}%`;
-        const legHtml = legLines.map(line => `<div class=\"arb-path-line\">${line}</div>`).join('');
-        const profitHtml = profitRate === null ? '' : `<div class=\"${profitClass}\">循环收益: ${profitText}</div>`;
-        return [header, legHtml, profitHtml].filter(Boolean).join('');
-    }
-
-        function renderFixedSection(title, rules, edges, aliases) {
-            const header = `<div class="arb-path-line"><strong>${title}</strong></div>`;
-            const blocks = [];
-
-            for (const rule of rules || []) {
-                const result = window.ArbPaths.findBestFixedPath(edges, rule, aliases);
-                if (!result) continue;
-                const label = rule.title ? `<div class="arb-path-line">${rule.title}</div>` : '';
-                const legHtml = buildLegLines(result.legs).map(line => `<div class=\"arb-path-line\">${line}</div>`).join('');
-                const profitPercent = typeof result.profitRate === 'number' ? result.profitRate * 100 : 0;
-                const profitClass = profitPercent >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
-                const profitText = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(4)}%`;
-                const profitHtml = `<div class=\"${profitClass}\">循环收益: ${profitText}</div>`;
-                blocks.push([label, legHtml, profitHtml].filter(Boolean).join(''));
-            }
-
-            if (!blocks.length) {
-                return `${header}<div class="arb-path-line">等待数据...</div>`;
-            }
-            return [header].concat(blocks).join('');
+        function renderOpportunity(label, cycle) {
+            if (!cycle || !window.ArbPaths.isMeaningfulPath(cycle.legs)) return '';
+            const legHtml = buildLegLines(cycle.legs).map(line => `<div class="arb-path-line">${line}</div>`).join('');
+            const profitClass = cycle.profitRate >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
+            const profitText = window.ArbPaths.formatProfitWanfen(cycle.profitRate);
+            const labelHtml = label ? `<div class="arb-path-line"><strong>${label}</strong></div>` : '';
+            return `<div class="arb-opportunity">${labelHtml}${legHtml}<div class="${profitClass}">收益: ${profitText}</div></div>`;
         }
 
-        function renderGlobalSection(title, cycles) {
-            const header = `<div class="arb-path-line"><strong>${title}</strong></div>`;
-            if (!cycles || !cycles.length) {
-                return `${header}<div class="arb-path-line">等待数据...</div>`;
-            }
-
-            const blocks = cycles.map((cycle, index) => {
-                const label = cycles.length > 1 ? `<div class="arb-path-line">机会 ${index + 1}</div>` : '';
-                const legHtml = buildLegLines(cycle.legs).map(line => `<div class=\"arb-path-line\">${line}</div>`).join('');
-                const profitPercent = typeof cycle.profitRate === 'number' ? cycle.profitRate * 100 : 0;
-                const profitClass = profitPercent >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
-                const profitText = `${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(4)}%`;
-                const profitHtml = `<div class=\"${profitClass}\">循环收益: ${profitText}</div>`;
-                return [label, legHtml, profitHtml].filter(Boolean).join('');
-            });
-
-            return [header].concat(blocks).join('');
+        function renderSection(title, opportunitiesHtml) {
+            const body = opportunitiesHtml.length ? opportunitiesHtml.join('') : '<div class="arb-path-line">等待数据...</div>';
+            return `<div class="arb-section"><div class="arb-section-title">${title}</div>${body}</div>`;
         }
 
         if (!arbPathContent) return;
@@ -1057,38 +1022,58 @@ function renderArbSection(title, legs, profitRate) {
 
         const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
         const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
-
         if (!targetCategories.length) {
             arbPathContent.textContent = '暂无可用路径';
             return;
         }
 
-        const aliasRules = { xBTC: 'cbBTC' };
-        const sections = [];
+        const aliasRules = {
+            xBTC: 'cbBTC',
+            BTCB: 'cbBTC',
+            'BTC.b': 'cbBTC',
+            'BTC.B': 'cbBTC'
+        };
         const allQuotes = dashboardState.flatMap(c => c.quotes || []);
         const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
 
-        sections.push(renderFixedSection('固定路径', FIXED_PATH_RULES, allEdgesWithRules, aliasRules));
+        const fixedOpportunities = [];
+        for (const rule of FIXED_PATH_RULES) {
+            const cycle = window.ArbPaths.findBestFixedPath(allEdgesWithRules, rule, aliasRules);
+            if (cycle) fixedOpportunities.push(renderOpportunity(rule.title, cycle));
+        }
+        const fixedColumn = renderSection('固定路径', fixedOpportunities);
 
+        const categorySections = [];
         for (const category of targetCategories) {
             const quotes = Array.isArray(category.quotes) ? category.quotes : [];
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
-            const best = window.ArbPaths.findBestCycle(
-                edges.concat(ruleEdges),
-                { maxDepth: 4, acceptCycle: window.ArbPaths.isMeaningfulPath }
-            );
-            sections.push(renderArbSection(category.name, best ? best.legs : [], best ? best.profitRate : null));
+            const cycles = window.ArbPaths.findTopCycles(edges.concat(ruleEdges), {
+                maxDepth: 4,
+                limit: 2,
+                acceptCycle: window.ArbPaths.isMeaningfulPath
+            });
+            const opportunities = cycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
+            categorySections.push(renderSection(category.name, opportunities));
         }
+        const categoryColumn = categorySections.join('');
 
         const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
             maxDepth: 4,
-            limit: 2,
+            limit: 4,
             acceptCycle: window.ArbPaths.isMeaningfulPath
         });
-        sections.push(renderGlobalSection('全局路径', globalCycles));
-        arbPathContent.innerHTML = sections.join('');
+        const globalOpportunities = globalCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
+        const globalColumn = renderSection('全局路径', globalOpportunities);
+
+        arbPathContent.innerHTML = `
+            <div class="arb-path-grid">
+                <div class="arb-column">${fixedColumn}</div>
+                <div class="arb-column">${categoryColumn}</div>
+                <div class="arb-column">${globalColumn}</div>
+            </div>
+        `;
     }
 
     async function getEvmMetadata(chain, tokenAddress, signal) {

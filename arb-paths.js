@@ -40,6 +40,12 @@ function formatLegLine({ from, to, rate, chainLabel, precision = 6 }) {
   return `${label}${safeFrom} -> ${safeTo} @${safeRate}`;
 }
 
+function formatProfitWanfen(profitRate, precision = 2) {
+  if (typeof profitRate !== 'number') return '--';
+  const wanfen = profitRate * 10000;
+  return `${wanfen >= 0 ? '+' : ''}${wanfen.toFixed(precision)}‱`;
+}
+
 function findBestTwoStepCycle(edges) {
   let best = null;
 
@@ -179,20 +185,28 @@ function findTopCycles(edges, options = {}) {
 
 function resolveAlias(symbol, aliases) {
   if (!aliases) return symbol;
-  return aliases[symbol] || symbol;
+  const normalizedSymbol = normalizeSymbol(symbol);
+  for (const [alias, target] of Object.entries(aliases)) {
+    if (normalizeSymbol(alias) === normalizedSymbol) {
+      return target;
+    }
+  }
+  return symbol;
 }
 
 function selectBestEdgeByChain(edges, from, to, chain, aliases) {
   if (!chain) return null;
   const targetFrom = resolveAlias(from, aliases);
   const targetTo = resolveAlias(to, aliases);
+  const normalizedTargetFrom = normalizeSymbol(targetFrom);
+  const normalizedTargetTo = normalizeSymbol(targetTo);
   let best = null;
 
   for (const edge of edges || []) {
     if (edge.chain !== chain) continue;
     const edgeFrom = resolveAlias(edge.from, aliases);
     const edgeTo = resolveAlias(edge.to, aliases);
-    if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
+    if (normalizeSymbol(edgeFrom) !== normalizedTargetFrom || normalizeSymbol(edgeTo) !== normalizedTargetTo) continue;
     if (!best || edge.rate > best.rate) {
       best = { ...edge, from: targetFrom, to: targetTo };
     }
@@ -224,12 +238,14 @@ function findBestFixedPath(edges, rule, aliases) {
 function selectBestDirectEdge(edges, from, to, aliases) {
   const targetFrom = resolveAlias(from, aliases);
   const targetTo = resolveAlias(to, aliases);
+  const normalizedTargetFrom = normalizeSymbol(targetFrom);
+  const normalizedTargetTo = normalizeSymbol(targetTo);
   let best = null;
 
   for (const edge of edges || []) {
     const edgeFrom = resolveAlias(edge.from, aliases);
     const edgeTo = resolveAlias(edge.to, aliases);
-    if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
+    if (normalizeSymbol(edgeFrom) !== normalizedTargetFrom || normalizeSymbol(edgeTo) !== normalizedTargetTo) continue;
     if (!best || edge.rate > best.rate) {
       best = { ...edge, from: targetFrom, to: targetTo };
     }
@@ -248,6 +264,7 @@ function buildApi() {
     buildEdges,
     findBestTwoStepCycle,
     formatLegLine,
+    formatProfitWanfen,
     buildRuleEdges,
     findBestCycle,
     findTopCycles,
