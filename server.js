@@ -41,6 +41,10 @@ function stripBom(text) {
     return text.replace(/^\uFEFF/, '');
 }
 
+function getLogTimestamp() {
+    return new Date().toISOString();
+}
+
 async function readJsonFile(filePath) {
     const data = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(stripBom(data));
@@ -83,7 +87,7 @@ async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
         } catch (error) {
             if (error.name === 'AbortError') throw error;
             if (i === retries - 1) {
-                 console.warn(`❌ 请求最终失败: ${url}`);
+                 console.warn(`[${getLogTimestamp()}] ❌ 请求最终失败: ${url}`);
             }
             if (i < retries - 1) {
                 await new Promise(resolve => setTimeout(resolve, delay));
