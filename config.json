@@ -119,6 +119,15 @@
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
           "showInverse": true
+        },
+        {
+          "id": 1771637092856,
+          "chain": "monad",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
+          "toToken": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
+          "showInverse": true
         }
       ]
     },
@@ -187,6 +196,15 @@
           }
         },
         {
+          "id": 1767678293304,
+          "chain": "sui",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x0041f9f9344cac094454cd574e333c4fdb132d7bcc9379bcd4aab485b2a63942::wbtc::WBTC",
+          "toToken": "0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC",
+          "showInverse": true
+        },
+        {
           "id": 1760021587492,
           "chain": "sui",
           "amount": 1,
@@ -206,15 +224,6 @@
             "percentUp": 0.2,
             "basePrice": 0.9947818
           }
-        },
-        {
-          "id": 1767678293304,
-          "chain": "sui",
-          "amount": 1,
-          "preferredSource": "Kyber",
-          "fromToken": "0x0041f9f9344cac094454cd574e333c4fdb132d7bcc9379bcd4aab485b2a63942::wbtc::WBTC",
-          "toToken": "0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC",
-          "showInverse": true
         },
         {
           "id": 1769588428781,
@@ -498,7 +507,8 @@
     }
   ],
   "settings": {
-    "kyber": 300,
+    "kyber": 400,
+    "kyberClientId": "xh-quote-dashboard",
     "zerox": 20000,
     "bybit": 1000,
     "solana": 5000,

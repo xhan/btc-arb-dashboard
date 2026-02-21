@@ -37,6 +37,27 @@ async function safeWriteConfig(data) {
     return writeQueue;
 }
 
+function stripBom(text) {
+    return text.replace(/^\uFEFF/, '');
+}
+
+async function readJsonFile(filePath) {
+    const data = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(stripBom(data));
+}
+
+async function getConfigSettings() {
+    try {
+        const parsedData = await readJsonFile(CONFIG_PATH);
+        return parsedData.settings || {};
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            console.warn(`⚠️ 读取settings失败，使用默认值: ${error.message}`);
+        }
+        return {};
+    }
+}
+
 async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
     for (let i = 0; i < retries; i++) {
         try {
@@ -76,9 +97,7 @@ async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
 
 async function loadCache() {
     try {
-        const data = await fs.readFile(METADATA_CACHE_PATH, 'utf-8');
-        const cleanData = data.replace(/^\uFEFF/, '');
-        tokenMetaCache = JSON.parse(cleanData);
+        tokenMetaCache = await readJsonFile(METADATA_CACHE_PATH);
         console.log('代币元数据缓存已加载');
     } catch (error) {
         if (error.code === 'ENOENT') {
@@ -175,31 +194,26 @@ const suiClient = new SuiClient({ url: getFullnodeUrl('mainnet') });
 const cetusAggregator = new AggregatorClient('https://api.cetus.zone/router_v2/find_routes');
 const solanaRpc = 'https://mainnet.helius-rpc.com/?api-key=f5e20297-9ca2-4afb-98f9-be16153777b5';
 
-app.get('/api/get-config', async (req, res) => {
-    try {
-        const data = await fs.readFile(CONFIG_PATH, 'utf-8');
-        const cleanData = data.replace(/^\uFEFF/, '');
-        try {
-            const parsedData = JSON.parse(cleanData);
-            res.json(parsedData);
-        } catch(parseError) {
-             console.error("Config JSON Parse Error:", parseError);
-             res.json([]); 
-        }
-    } catch (error) {
-        if (error.code === 'ENOENT') { res.json([]); }
-        else { 
-            console.error("Config Read Error:", error);
-            res.status(500).json({ error: error.message }); 
-        }
-    }
-});
-
 app.post('/api/save-config', async (req, res) => {
     try {
         await safeWriteConfig(req.body);
         res.json({ message: '配置保存成功' });
     } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.get('/api/get-config', async (req, res) => {
+    try {
+        const parsedData = await readJsonFile(CONFIG_PATH);
+        res.json(parsedData);
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            console.error("Config JSON Parse Error:", error);
+            return res.json([]);
+        }
+        if (error.code === 'ENOENT') { return res.json([]); }
+        console.error("Config Read Error:", error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 async function getEvmTokenMeta(chain, tokenAddress, provider) {
@@ -341,8 +355,9 @@ app.post('/api/get-kyber-quote', async (req, res) => {
         let finalAmountOut = null;
 
         const apiUrl = `https://aggregator-api.kyberswap.com/${chain}/api/v1/routes?tokenIn=${fromToken}&tokenOut=${toToken}&amountIn=${amountInWei.toString()}`;
-        
-        const response = await fetchWithRetry(apiUrl, { headers: { 'X-Client-Id': 'xh-quote-dashboard' } });
+        const settings = await getConfigSettings();
+        const kyberClientId = settings.kyberClientId || 'xh-quote-dashboard';
+        const response = await fetchWithRetry(apiUrl, { headers: { 'X-Client-Id': kyberClientId } });
         const resultData = await response.json();
 
         if (resultData.code !== 0) throw new Error(resultData.message || `Kyber API返回错误`);
