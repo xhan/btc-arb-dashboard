@@ -12,6 +12,10 @@ const path = require('path');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const SERVER_VERBOSE = process.argv.includes('-v')
+    || process.argv.includes('--verbose')
+    || process.env.SERVER_VERBOSE === '1'
+    || ['verbose', 'silly'].includes(String(process.env.npm_config_loglevel || '').toLowerCase());
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -45,7 +49,65 @@ function stripBom(text) {
 }
 
 function getLogTimestamp() {
-    return new Date().toISOString();
+    const d = new Date();
+    const pad = (n, len = 2) => String(n).padStart(len, '0');
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hour = pad(d.getHours());
+    const minute = pad(d.getMinutes());
+    const second = pad(d.getSeconds());
+    const ms = pad(d.getMilliseconds(), 3);
+
+    const offsetMinutes = -d.getTimezoneOffset();
+    const sign = offsetMinutes >= 0 ? '+' : '-';
+    const abs = Math.abs(offsetMinutes);
+    const offsetHour = pad(Math.floor(abs / 60));
+    const offsetMin = pad(abs % 60);
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}.${ms} ${sign}${offsetHour}:${offsetMin}`;
+}
+
+function logMessage(category, message, level = 'info') {
+    const line = `[${getLogTimestamp()}] [${category}] ${message}`;
+    if (level === 'error') console.error(line);
+    else if (level === 'warn') console.warn(line);
+    else console.log(line);
+}
+
+function verboseLog(category, message) {
+    if (!SERVER_VERBOSE) return;
+    logMessage(category, message, 'info');
+}
+
+function shortAddr(addr = '') {
+    const s = String(addr);
+    if (s.length <= 12) return s;
+    return `${s.slice(0, 6)}...${s.slice(-4)}`;
+}
+
+function getQuoteLogPairLabel(chain, fromSymbol, toSymbol, fromToken, toToken) {
+    const left = fromSymbol || shortAddr(fromToken);
+    const right = toSymbol || shortAddr(toToken);
+    return `${String(chain || '').toLowerCase()} ${left}/${right}`;
+}
+
+function logQuoteRequest(source, ctx) {
+    const pair = getQuoteLogPairLabel(ctx.chain, ctx.fromSymbol, ctx.toSymbol, ctx.fromToken, ctx.toToken);
+    verboseLog(`${source}_REQ`, `${pair} amount=${ctx.amount ?? ''} url=${ctx.url}`);
+}
+
+function logQuoteResult(source, ctx) {
+    const pair = getQuoteLogPairLabel(ctx.chain, ctx.fromSymbol, ctx.toSymbol, ctx.fromToken, ctx.toToken);
+    const price = Number.isFinite(ctx.rawPrice) ? ctx.rawPrice : NaN;
+    const amountOut = Number.isFinite(ctx.amountOut) ? ctx.amountOut : NaN;
+    const priceText = Number.isFinite(price) ? price.toFixed(10) : 'NaN';
+    const amountOutText = Number.isFinite(amountOut) ? amountOut.toString() : 'NaN';
+    verboseLog(`${source}_RES`, `${pair} 结果=OK price=${priceText} amountOut=${amountOutText}`);
+}
+
+function logQuoteError(source, ctx, error) {
+    const pair = getQuoteLogPairLabel(ctx.chain, ctx.fromSymbol, ctx.toSymbol, ctx.fromToken, ctx.toToken);
+    logMessage(`${source}_ERR`, `${pair} ${error.message}`, 'warn');
 }
 
 async function readJsonFile(filePath) {
@@ -102,7 +164,7 @@ async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
         } catch (error) {
             if (error.name === 'AbortError') throw error;
             if (i === retries - 1) {
-                 console.warn(`[${getLogTimestamp()}] ❌ 请求最终失败: ${url}`);
+                 logMessage('HTTP_FINAL_FAIL', `请求最终失败: ${url} | error=${error.message}`, 'warn');
             }
             if (i < retries - 1) {
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -300,6 +362,7 @@ app.post('/api/get-evm-meta', async (req, res) => {
 app.post('/api/get-0x-quote', async (req, res) => {
     const { chain, fromToken, toToken, amount } = req.body;
     const finalAmount = amount || 1;
+    let logCtx = { chain, fromToken, toToken, amount: finalAmount };
 
     try {
         const chainId = ZEROX_CHAIN_IDS[chain.toLowerCase()];
@@ -312,6 +375,7 @@ app.post('/api/get-0x-quote', async (req, res) => {
             getEvmTokenMeta(chain, fromToken, provider),
             getEvmTokenMeta(chain, toToken, provider)
         ]);
+        logCtx = { ...logCtx, fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol };
 
         const amountInWei = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals).toString();
         
@@ -327,6 +391,7 @@ app.post('/api/get-0x-quote', async (req, res) => {
         });
 
         const apiUrl = `https://api.0x.org/swap/permit2/price?${params.toString()}`;
+        logQuoteRequest('ZEROX', { ...logCtx, url: apiUrl });
         
         const response = await fetchWithRetry(apiUrl, { 
             headers: { 
@@ -392,9 +457,11 @@ app.post('/api/get-0x-quote', async (req, res) => {
             raw_price: finalAmountOut / finalAmount,
             source: '0x'
         };
+        logQuoteResult('ZEROX', { ...logCtx, amountOut: result.amountOut, rawPrice: result.raw_price });
         res.json(result);
 
     } catch (error) {
+        logQuoteError('ZEROX', logCtx, error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -402,6 +469,7 @@ app.post('/api/get-0x-quote', async (req, res) => {
 app.post('/api/get-lifi-quote', async (req, res) => {
     const { chain, fromToken, toToken, amount } = req.body;
     const finalAmount = amount || 1;
+    let logCtx = { chain, fromToken, toToken, amount: finalAmount };
 
     try {
         if (!chain || !fromToken || !toToken) {
@@ -419,6 +487,7 @@ app.post('/api/get-lifi-quote', async (req, res) => {
             getLifiTokenMeta(chainId, fromToken, configMore),
             getLifiTokenMeta(chainId, toToken, configMore)
         ]);
+        logCtx = { ...logCtx, fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol };
 
         const fromAmount = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals).toString();
         const quoteParams = new URLSearchParams({
@@ -437,8 +506,10 @@ app.post('/api/get-lifi-quote', async (req, res) => {
             quoteParams.set('integrator', integrator);
         }
 
+        const lifiQuoteUrl = `${LIFI_API_BASE_URL}/quote?${quoteParams.toString()}`;
+        logQuoteRequest('LIFI', { ...logCtx, url: lifiQuoteUrl });
         const quoteResp = await fetchWithRetry(
-            `${LIFI_API_BASE_URL}/quote?${quoteParams.toString()}`,
+            lifiQuoteUrl,
             { headers: getLifiHeaders(configMore) }
         );
         const quoteData = await quoteResp.json();
@@ -455,8 +526,10 @@ app.post('/api/get-lifi-quote', async (req, res) => {
             raw_price: finalAmountOut / finalAmount,
             source: 'LI.FI'
         };
+        logQuoteResult('LIFI', { ...logCtx, amountOut: result.amountOut, rawPrice: result.raw_price });
         res.json(result);
     } catch (error) {
+        logQuoteError('LIFI', logCtx, error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -464,6 +537,7 @@ app.post('/api/get-lifi-quote', async (req, res) => {
 app.post('/api/get-kyber-quote', async (req, res) => {
     const { chain, fromToken, toToken, amount } = req.body;
     const finalAmount = amount || 1; 
+    let logCtx = { chain, fromToken, toToken, amount: finalAmount };
     
     try {
         const provider = evmProviders[chain];
@@ -473,6 +547,7 @@ app.post('/api/get-kyber-quote', async (req, res) => {
             getEvmTokenMeta(chain, fromToken, provider),
             getEvmTokenMeta(chain, toToken, provider)
         ]);
+        logCtx = { ...logCtx, fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol };
         
         const amountInWei = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals);
         let finalAmountOut = null;
@@ -480,6 +555,7 @@ app.post('/api/get-kyber-quote', async (req, res) => {
         const apiUrl = `https://aggregator-api.kyberswap.com/${chain}/api/v1/routes?tokenIn=${fromToken}&tokenOut=${toToken}&amountIn=${amountInWei.toString()}`;
         const configMore = await getConfigMore();
         const kyberClientId = configMore.kyberClientId;
+        logQuoteRequest('KYBER', { ...logCtx, url: apiUrl });
         const response = await fetchWithRetry(apiUrl, { headers: { 'X-Client-Id': kyberClientId } });
         const resultData = await response.json();
 
@@ -494,9 +570,11 @@ app.post('/api/get-kyber-quote', async (req, res) => {
             raw_price: finalAmountOut / finalAmount,
             source: 'Kyber'
         };
+        logQuoteResult('KYBER', { ...logCtx, amountOut: result.amountOut, rawPrice: result.raw_price });
         res.json(result);
 
     } catch (error) { 
+        logQuoteError('KYBER', logCtx, error);
         res.status(500).json({ error: error.message }); 
     }
 });

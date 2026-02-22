@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:v": "node server.js -v",
     "test": "node tests/arb-paths.test.js && node tests/quote-calculator.test.js && node tests/lifi-utils.test.js && node tests/lifi-quote-utils.test.js && node tests/kyber-url-list.test.js && node tests/static-server.test.js"
   },
   "dependencies": {

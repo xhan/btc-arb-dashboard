@@ -577,6 +577,10 @@
                 <input type="number" id="setting-zerox-interval" placeholder="110">
             </div>
             <div class="form-group">
+                <label>LI.FI (默认 170ms)</label>
+                <input type="number" id="setting-lifi-interval" placeholder="170">
+            </div>
+            <div class="form-group">
                 <label>Bybit (默认 1000ms)</label>
                 <input type="number" id="setting-bybit-interval" placeholder="1000">
             </div>
@@ -752,6 +756,7 @@
     let queues = {
         kyber: [],
         zerox: [],
+        lifi: [],
         bybit: [],
         solana: [],
         sui: []
@@ -760,6 +765,7 @@
     let indices = {
         kyber: 0,
         zerox: 0,
+        lifi: 0,
         bybit: 0,
         solana: 0,
         sui: 0
@@ -768,6 +774,7 @@
     let timers = {
         kyber: null,
         zerox: null,
+        lifi: null,
         bybit: null,
         solana: null,
         sui: null
@@ -776,6 +783,7 @@
     const DEFAULT_INTERVALS = {
         kyber: 170, 
         zerox: 110, 
+        lifi: 170,
         bybit: 1000,
         solana: 3500, 
         sui: 500
@@ -892,7 +900,11 @@
         return KYBER_SUPPORTED_CHAINS.includes(chain.toLowerCase());
     }
 
-    function addToQueue(quote) {
+    function shouldQueueInverseFetch(quote) {
+        return !!quote && !!quote.showInverse && quote.chain !== 'Bybit';
+    }
+
+    function getQueueTypeForQuote(quote) {
         let type = 'kyber';
         if (quote.chain === 'Bybit') type = 'bybit';
         else if (quote.chain === 'solana') type = 'solana';
@@ -900,20 +912,58 @@
         else if (isEvmChain(quote.chain)) {
             if (quote.preferredSource === '0x' || quote.preferredSource === 'Velora') {
                 type = 'zerox';
-            } else {
-                type = 'kyber';
+            } else if (quote.preferredSource === 'LI.FI') {
+                type = 'lifi';
             }
         }
-        
-        if (!queues[type].some(q => q.id === quote.id)) {
-            queues[type].push(quote);
+        return type;
+    }
+
+    function buildQueueTasksForQuote(quote) {
+        const tasks = [{ quoteId: quote.id, mode: 'main' }];
+        if (shouldQueueInverseFetch(quote)) {
+            tasks.push({ quoteId: quote.id, mode: 'inverse' });
+        }
+        return tasks;
+    }
+
+    function getQueueTaskKey(task) {
+        return `${task.quoteId}:${task.mode}`;
+    }
+
+    function addToQueue(quote) {
+        const type = getQueueTypeForQuote(quote);
+        const queue = queues[type];
+        const taskKeys = new Set(queue.map(getQueueTaskKey));
+        const tasks = buildQueueTasksForQuote(quote);
+
+        for (const task of tasks) {
+            const key = getQueueTaskKey(task);
+            if (!taskKeys.has(key)) {
+                queue.push(task);
+                taskKeys.add(key);
+            }
         }
     }
 
     function removeFromQueue(quoteId) {
         Object.keys(queues).forEach(type => {
-            queues[type] = queues[type].filter(q => q.id !== quoteId);
+            queues[type] = queues[type].filter(task => task.quoteId !== quoteId);
         });
+    }
+
+    function deferCurrentQueueTask(type) {
+        const queue = queues[type];
+        if (!queue || queue.length <= 1) return;
+
+        const currentIndex = indices[type];
+        if (currentIndex < 0 || currentIndex >= queue.length) return;
+
+        const [task] = queue.splice(currentIndex, 1);
+        queue.push(task);
+
+        // 回退一格，确保下一个 tick 轮到“当前任务后面的任务”，而不是刚被挪到队尾的同一任务。
+        indices[type] = (currentIndex - 1 + queue.length) % queue.length;
     }
 
     function processQueue(type) {
@@ -921,33 +971,28 @@
         if (queue.length === 0) return;
 
         indices[type] = (indices[type] + 1) % queue.length;
-        const quoteFromQueue = queue[indices[type]];
+        const taskFromQueue = queue[indices[type]];
         
-        const category = dashboardState.find(c => c.quotes && c.quotes.some(q => q.id === quoteFromQueue.id));
-        const quoteToFetch = category ? category.quotes.find(q => q.id === quoteFromQueue.id) : null;
+        const category = dashboardState.find(c => c.quotes && c.quotes.some(q => q.id === taskFromQueue.quoteId));
+        const quoteToFetch = category ? category.quotes.find(q => q.id === taskFromQueue.quoteId) : null;
 
         if (quoteToFetch) {
-            let currentType = 'kyber';
-            if (quoteToFetch.chain === 'Bybit') currentType = 'bybit';
-            else if (quoteToFetch.chain === 'solana') currentType = 'solana';
-            else if (quoteToFetch.chain === 'sui') currentType = 'sui';
-            else if (isEvmChain(quoteToFetch.chain)) {
-                if (quoteToFetch.preferredSource === '0x' || quoteToFetch.preferredSource === 'Velora') {
-                    currentType = 'zerox';
-                }
-            }
+            const currentType = getQueueTypeForQuote(quoteToFetch);
+            const inverseTaskInvalid = taskFromQueue.mode === 'inverse' && !shouldQueueInverseFetch(quoteToFetch);
 
-            if (currentType !== type) {
+            if (currentType !== type || inverseTaskInvalid) {
                 removeFromQueue(quoteToFetch.id);
                 addToQueue(quoteToFetch);
                 return;
             }
 
             if (!activeFetchControllers.has(quoteToFetch.id)) {
-                fetchSingleQuote(quoteToFetch);
+                fetchSingleQuote(quoteToFetch, taskFromQueue.mode);
+            } else {
+                deferCurrentQueueTask(type);
             }
         } else {
-            removeFromQueue(quoteFromQueue.id);
+            removeFromQueue(taskFromQueue.quoteId);
         }
     }
 
@@ -965,6 +1010,7 @@
     settingsBtn.addEventListener('click', () => {
         document.getElementById('setting-kyber-interval').value = apiIntervals.kyber;
         document.getElementById('setting-zerox-interval').value = apiIntervals.zerox;
+        document.getElementById('setting-lifi-interval').value = apiIntervals.lifi;
         document.getElementById('setting-bybit-interval').value = apiIntervals.bybit;
         document.getElementById('setting-solana-interval').value = apiIntervals.solana;
         document.getElementById('setting-sui-interval').value = apiIntervals.sui;
@@ -979,6 +1025,7 @@
         const newIntervals = {
             kyber: parseInt(document.getElementById('setting-kyber-interval').value) || DEFAULT_INTERVALS.kyber,
             zerox: parseInt(document.getElementById('setting-zerox-interval').value) || DEFAULT_INTERVALS.zerox,
+            lifi: parseInt(document.getElementById('setting-lifi-interval').value) || DEFAULT_INTERVALS.lifi,
             bybit: parseInt(document.getElementById('setting-bybit-interval').value) || DEFAULT_INTERVALS.bybit,
             solana: parseInt(document.getElementById('setting-solana-interval').value) || DEFAULT_INTERVALS.solana,
             sui: parseInt(document.getElementById('setting-sui-interval').value) || DEFAULT_INTERVALS.sui
@@ -1269,11 +1316,12 @@
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    async function fetchSingleQuote(quote) {
+    async function fetchSingleQuote(quote, fetchMode = 'main') {
         const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
         const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
         const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
         if (!quoteDataEl || !quoteTextEl) return;
+        const isInverseFetch = fetchMode === 'inverse' && shouldQueueInverseFetch(quote);
 
         if (activeFetchControllers.has(quote.id)) {
             activeFetchControllers.get(quote.id).abort();
@@ -1284,11 +1332,12 @@
         const signal = controller.signal;
         activeFetchControllers.set(quote.id, controller);
 
-        quoteDataEl.classList.remove('error');
+        if (!isInverseFetch) {
+            quoteDataEl.classList.remove('error');
+        }
 
         try {
             let data;
-            let inverseData;
 
             let strategy = [];
             if (isEvmChain(quote.chain)) {
@@ -1320,19 +1369,14 @@
                         await sleep(600);
                     }
 
-                    const mainPromise = apiGetQuote(quote, signal, source);
-                    
-                    let invPromise = Promise.resolve(null);
-                    if (quote.showInverse && quote.chain !== 'Bybit') {
-                        const inverseQuote = { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: quote.amount || 1 };
-                        invPromise = apiGetQuote(inverseQuote, signal, source).catch(e => ({ error: e }));
-                    }
-
-                    [data, inverseData] = await Promise.all([mainPromise, invPromise]);
+                    const requestQuote = isInverseFetch
+                        ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: quote.amount || 1 }
+                        : quote;
+                    data = await apiGetQuote(requestQuote, signal, source);
                     
                     if (data) {
                         successSource = source;
-                        if (quote.preferredSource === 'Auto' && source !== 'Kyber') {
+                        if (!isInverseFetch && quote.preferredSource === 'Auto' && source !== 'Kyber') {
                             data.usedSource = `${source} (Auto Fallback)`;
                         }
                         break; 
@@ -1350,47 +1394,26 @@
             }
 
             const previousState = quoteMonitorState.get(quote.id) || {};
-            const oldPrice = previousState.lastRawPrice;
-            const oldSource = previousState.usedSourceReal; 
-
-            let inverseRawPrice = null;
-            if (quote.showInverse && quote.chain !== 'Bybit' && inverseData && !inverseData.error) {
-                inverseRawPrice = inverseData.rawPrice;
-            }
-
-            const newState = {
-                ...previousState,
-                fromSymbol: data.symbols.from,
-                toSymbol: data.symbols.to,
-                lastResultText: data.resultText,
-                lastRawPrice: data.rawPrice,
-                inverseRawPrice: inverseRawPrice,
-                inverseFromSymbol: inverseData && !inverseData.error && inverseData.symbols ? inverseData.symbols.from : null,
-                inverseToSymbol: inverseData && !inverseData.error && inverseData.symbols ? inverseData.symbols.to : null,
-                usedSource: data.usedSource,
-                usedSourceReal: successSource 
-            };
-            
-            quoteTextEl.textContent = data.resultText;
-            quoteTextWrapperEl.classList.remove('loading-text');
-            
             const inverseContainerId = `inverse-quote-${quote.id}`;
             let inverseEl = document.getElementById(inverseContainerId);
-            
-            if (quote.showInverse && quote.chain !== 'Bybit') {
-                 if (!inverseEl) {
-                    inverseEl = document.createElement('div');
-                    inverseEl.id = inverseContainerId;
-                    inverseEl.className = 'inverse-quote-text';
-                    quoteDataEl.appendChild(inverseEl);
-                }
-                
-                if (inverseData) {
-                    if (inverseData.error) {
-                        if (inverseData.error.name !== 'AbortError') inverseEl.textContent = `反向报价失败`;
-                    } else {
-                        inverseEl.textContent = `${quote.amount || 1} ${inverseData.symbols.from} ≈ ${inverseData.finalAmountOut.toFixed(6)} ${inverseData.symbols.to}`;
+
+            if (isInverseFetch) {
+                if (shouldQueueInverseFetch(quote)) {
+                    if (!inverseEl) {
+                        inverseEl = document.createElement('div');
+                        inverseEl.id = inverseContainerId;
+                        inverseEl.className = 'inverse-quote-text';
+                        quoteDataEl.appendChild(inverseEl);
                     }
+
+                    inverseEl.textContent = `${quote.amount || 1} ${data.symbols.from} ≈ ${data.finalAmountOut.toFixed(6)} ${data.symbols.to}`;
+                    const inverseState = {
+                        ...previousState,
+                        inverseRawPrice: data.rawPrice,
+                        inverseFromSymbol: data.symbols.from,
+                        inverseToSymbol: data.symbols.to
+                    };
+                    quoteMonitorState.set(quote.id, inverseState);
                     bindCopyHandler(
                         inverseEl,
                         () => inverseEl.textContent,
@@ -1402,46 +1425,89 @@
                         })
                     );
                 }
-            } else if (inverseEl) {
-                inverseEl.remove();
-            }
+            } else {
+                const oldPrice = previousState.lastRawPrice;
+                const oldSource = previousState.usedSourceReal;
 
-            quoteMonitorState.set(quote.id, newState);
-            scheduleArbUpdate();
-            
-            if (currentlyEditingQuote && currentlyEditingQuote.quote.id === quote.id && alertModal.classList.contains('visible')) {
-                 const modalPriceEl = document.getElementById('alert-current-price-value');
-                 if (modalPriceEl) {
-                     modalPriceEl.textContent = data.rawPrice.toFixed(6);
-                 }
-            }
+                const newState = {
+                    ...previousState,
+                    fromSymbol: data.symbols.from,
+                    toSymbol: data.symbols.to,
+                    lastResultText: data.resultText,
+                    lastRawPrice: data.rawPrice,
+                    usedSource: data.usedSource,
+                    usedSourceReal: successSource
+                };
 
-            updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
-            checkPriceForAlerts(quote, data.rawPrice, data.finalAmountOut);
+                quoteTextEl.textContent = data.resultText;
+                quoteTextWrapperEl.classList.remove('loading-text');
+
+                if (shouldQueueInverseFetch(quote)) {
+                    if (!inverseEl) {
+                        inverseEl = document.createElement('div');
+                        inverseEl.id = inverseContainerId;
+                        inverseEl.className = 'inverse-quote-text';
+                        inverseEl.textContent = '反向报价排队中...';
+                        quoteDataEl.appendChild(inverseEl);
+                    }
+                } else {
+                    if (inverseEl) inverseEl.remove();
+                    newState.inverseRawPrice = null;
+                    newState.inverseFromSymbol = null;
+                    newState.inverseToSymbol = null;
+                }
+
+                quoteMonitorState.set(quote.id, newState);
+                scheduleArbUpdate();
+                
+                if (currentlyEditingQuote && currentlyEditingQuote.quote.id === quote.id && alertModal.classList.contains('visible')) {
+                     const modalPriceEl = document.getElementById('alert-current-price-value');
+                     if (modalPriceEl) {
+                         modalPriceEl.textContent = data.rawPrice.toFixed(6);
+                     }
+                }
+
+                updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
+                checkPriceForAlerts(quote, data.rawPrice, data.finalAmountOut);
+            }
             
         } catch (error) {
             if (error.name === 'AbortError') return; 
-            
-            let displayMsg = error.message;
-            if (displayMsg.includes("ENOTFOUND")) displayMsg = "网络连接失败";
-            
-            if (displayMsg.includes("ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT")) {
-                displayMsg = "流动性不足 (滑点过高)";
-            }
-            if (displayMsg.includes("Liquidity unavailable") || displayMsg.includes("Liquidity Unavailable")) {
-                displayMsg = "流动性不足 (0x)";
-            }
-            if (displayMsg.includes("INSUFFICIENT_ASSET_LIQUIDITY") || displayMsg.includes("Asset Liquidity")) {
-                displayMsg = "资产流动性不足 (0x)";
-            }
-            
-            if (displayMsg.includes("429")) displayMsg = "请求过快 (Rate Limit)";
-            if (displayMsg.length > 40) displayMsg = displayMsg.substring(0, 40) + '...';
 
-            quoteTextEl.textContent = `❌ ${displayMsg}`;
-            quoteTextWrapperEl.classList.remove('loading-text');
-            quoteDataEl.classList.add('error');
-            quoteDataEl.title = `详细错误: ${error.message}`;
+            if (isInverseFetch) {
+                let inverseEl = document.getElementById(`inverse-quote-${quote.id}`);
+                if (shouldQueueInverseFetch(quote)) {
+                    if (!inverseEl) {
+                        inverseEl = document.createElement('div');
+                        inverseEl.id = `inverse-quote-${quote.id}`;
+                        inverseEl.className = 'inverse-quote-text';
+                        quoteDataEl.appendChild(inverseEl);
+                    }
+                    inverseEl.textContent = '反向报价失败';
+                    inverseEl.title = `详细错误: ${error.message}`;
+                }
+            } else {
+                let displayMsg = error.message;
+                if (displayMsg.includes("ENOTFOUND")) displayMsg = "网络连接失败";
+                
+                if (displayMsg.includes("ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT")) {
+                    displayMsg = "流动性不足 (滑点过高)";
+                }
+                if (displayMsg.includes("Liquidity unavailable") || displayMsg.includes("Liquidity Unavailable")) {
+                    displayMsg = "流动性不足 (0x)";
+                }
+                if (displayMsg.includes("INSUFFICIENT_ASSET_LIQUIDITY") || displayMsg.includes("Asset Liquidity")) {
+                    displayMsg = "资产流动性不足 (0x)";
+                }
+                
+                if (displayMsg.includes("429")) displayMsg = "请求过快 (Rate Limit)";
+                if (displayMsg.length > 40) displayMsg = displayMsg.substring(0, 40) + '...';
+
+                quoteTextEl.textContent = `❌ ${displayMsg}`;
+                quoteTextWrapperEl.classList.remove('loading-text');
+                quoteDataEl.classList.add('error');
+                quoteDataEl.title = `详细错误: ${error.message}`;
+            }
         } finally {
             if (activeFetchControllers.get(quote.id) === controller) {
                 activeFetchControllers.delete(quote.id);
@@ -2270,7 +2336,9 @@
 
                 const showInverse = document.getElementById('show-inverse-quote').checked;
                 if (quote.showInverse !== showInverse) {
+                    removeFromQueue(quote.id);
                     quote.showInverse = showInverse;
+                    addToQueue(quote);
                     setTimeout(() => fetchSingleQuote(quote), 0); 
                 }
 
@@ -2455,9 +2523,10 @@
                 addToQueue(quote);
             });
 
-            allQuotes.forEach((quote, i) => {
-                setTimeout(() => fetchSingleQuote(quote), i * 100);
-            });
+            // 启动 burst 会与 scheduler 并行，容易放大瞬时请求量（尤其是 Kyber）。
+            // allQuotes.forEach((quote, i) => {
+            //     setTimeout(() => fetchSingleQuote(quote), i * 100);
+            // });
 
             updateSchedulers();
             
