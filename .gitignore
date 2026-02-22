@@ -5,3 +5,4 @@ node_modules/*
 config.json
 config_more.json
 codex_continue.md
+metadata-cache.json

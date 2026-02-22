@@ -380,6 +380,40 @@
         #modal-delete-quote:hover { background: #fecaca; filter: none; }
         .dark-mode #modal-delete-quote { background: #3c2323; color: #e53e3e; }
         .dark-mode #modal-delete-quote:hover { background: #5c2c2c; }
+        .quote-token-addresses {
+            margin: 6px 0 12px;
+        }
+        .quote-token-address-line + .quote-token-address-line {
+            margin-top: 8px;
+        }
+        .quote-token-address-line {
+            font-size: 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            color: var(--text-color);
+            line-height: 1.35;
+            white-space: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 2px;
+        }
+        .alert-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .alert-modal-footer .modal-buttons {
+            margin-top: 0;
+            flex-shrink: 0;
+        }
+        .alert-modal-footer .quote-settings-actions {
+            margin: 0;
+            flex: 1;
+        }
+        .alert-modal-footer .quote-settings-actions button {
+            padding: 10px 12px;
+        }
 
         #alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 400px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
         #alert-log-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; }
@@ -604,6 +638,10 @@
     <div class="modal-overlay" id="alert-modal">
         <div class="modal-box">
             <h3 id="modal-title">设置</h3>
+            <div id="quote-token-addresses" class="quote-token-addresses" style="display:none;">
+                <div id="quote-from-token-line" class="quote-token-address-line"></div>
+                <div id="quote-to-token-line" class="quote-token-address-line"></div>
+            </div>
             
             <div class="form-group" id="source-select-group" style="display:none;">
                 <label>数据源偏好</label>
@@ -621,11 +659,6 @@
             <div class="checkbox-group" id="inverse-toggle-group">
                 <input type="checkbox" id="show-inverse-quote">
                 <label for="show-inverse-quote">显示反向报价 (小字号)</label>
-            </div>
-
-            <div class="quote-settings-actions">
-                <button id="modal-swap-quote" type="button">反转价格对</button>
-                <button id="modal-delete-quote" type="button">删除价格对</button>
             </div>
 
             <hr style="border:0; border-top:1px solid var(--border-color); margin: 15px 0;">
@@ -651,8 +684,14 @@
             </div>
             <div class="form-group"><label>价格高于</label><input type="number" id="alert-target-above" placeholder="例如: 70000"></div>
             <div class="form-group"><label>价格低于</label><input type="number" id="alert-target-below" placeholder="例如: 65000"></div>
-            <div class="modal-buttons">
-                <button id="modal-cancel">取消</button><button id="modal-save">保存</button>
+            <div class="alert-modal-footer">
+                <div class="quote-settings-actions">
+                    <button id="modal-swap-quote" type="button">反转价格对</button>
+                    <button id="modal-delete-quote" type="button">删除价格对</button>
+                </div>
+                <div class="modal-buttons">
+                    <button id="modal-cancel">取消</button><button id="modal-save">保存</button>
+                </div>
             </div>
         </div>
     </div>

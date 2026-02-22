@@ -62,6 +62,9 @@
     const alertModal = document.getElementById('alert-modal');
     const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
     const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
+    const quoteTokenAddressesEl = document.getElementById('quote-token-addresses');
+    const quoteFromTokenLineEl = document.getElementById('quote-from-token-line');
+    const quoteToTokenLineEl = document.getElementById('quote-to-token-line');
     
     const manualSaveBtn = document.getElementById('manual-save-btn');
     const manualSaveText = document.getElementById('manual-save-text');
@@ -1550,6 +1553,18 @@
                 pairLabel = `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
             }
             document.getElementById('modal-title').textContent = `设置: ${CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain} (${pairLabel || '...'})`;
+
+            const fromSymbolLabel = monitorState.fromSymbol || 'From Token';
+            const toSymbolLabel = monitorState.toSymbol || 'To Token';
+            if (quoteTokenAddressesEl && quoteFromTokenLineEl && quoteToTokenLineEl) {
+                if (quote.chain === 'Bybit' || !quote.fromToken || !quote.toToken) {
+                    quoteTokenAddressesEl.style.display = 'none';
+                } else {
+                    quoteFromTokenLineEl.textContent = `${fromSymbolLabel} ${quote.fromToken}`;
+                    quoteToTokenLineEl.textContent = `${toSymbolLabel} ${quote.toToken}`;
+                    quoteTokenAddressesEl.style.display = 'block';
+                }
+            }
             
             const sourceGroup = document.getElementById('source-select-group');
             const sourceSelect = document.getElementById('quote-source-pref');
