@@ -1,0 +1,27 @@
+{
+  "dashboard": [
+    {
+      "name": "示例分区",
+      "id": 1700000000000,
+      "quotes": [
+        {
+          "id": 1700000000001,
+          "chain": "ethereum",
+          "amount": 1,
+          "fromToken": "0xFromTokenAddress",
+          "toToken": "0xToTokenAddress",
+          "preferredSource": "Kyber",
+          "showInverse": true
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "kyber": 170,
+    "zerox": 110,
+    "lifi": 170,
+    "bybit": 1000,
+    "solana": 3500,
+    "sui": 500
+  }
+}

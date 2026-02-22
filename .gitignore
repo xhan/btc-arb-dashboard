@@ -2,3 +2,6 @@ node_modules
 node_modules/*
 
 .worktrees/
+config.json
+config_more.json
+codex_continue.md
