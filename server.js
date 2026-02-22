@@ -5,7 +5,6 @@ const { ethers } = require('ethers');
 const { AggregatorClient } = require('@cetusprotocol/aggregator-sdk');
 const BN = require('bn.js');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
-const { pickKyberClientId, DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT } = require('./kyber-client-id');
 const { buildLifiChainIdMap, resolveLifiChainId } = require('./lifi-utils');
 const { getDisplayedToAmountRaw } = require('./lifi-quote-utils');
 const fs = require('fs').promises;
@@ -60,14 +59,9 @@ async function getConfigMore() {
         const rawClientId = typeof configMore.kyberClientId === 'string' ? configMore.kyberClientId.trim() : '';
         const rawLifiApiKey = typeof configMore.LIFIApiKey === 'string' ? configMore.LIFIApiKey.trim() : '';
         const rawLifiIntegrator = typeof configMore.LIFIIntegrator === 'string' ? configMore.LIFIIntegrator.trim() : '';
-        const parsedSuffixCount = Number.parseInt(configMore.kyberClientIdSuffixCount, 10);
-        const suffixCount = Number.isNaN(parsedSuffixCount) || parsedSuffixCount < 0
-            ? DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT
-            : parsedSuffixCount;
 
         return {
             kyberClientId: rawClientId || 'xh-quote-dashboard',
-            kyberClientIdSuffixCount: suffixCount,
             lifiApiKey: rawLifiApiKey,
             lifiIntegrator: rawLifiIntegrator
         };
@@ -77,7 +71,6 @@ async function getConfigMore() {
         }
         return {
             kyberClientId: 'xh-quote-dashboard',
-            kyberClientIdSuffixCount: DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT,
             lifiApiKey: '',
             lifiIntegrator: ''
         };
@@ -487,9 +480,7 @@ app.post('/api/get-kyber-quote', async (req, res) => {
         const apiUrl = `https://aggregator-api.kyberswap.com/${chain}/api/v1/routes?tokenIn=${fromToken}&tokenOut=${toToken}&amountIn=${amountInWei.toString()}`;
         const configMore = await getConfigMore();
         const kyberClientId = configMore.kyberClientId;
-        const kyberClientIdSuffixCount = configMore.kyberClientIdSuffixCount ?? DEFAULT_KYBER_CLIENT_ID_SUFFIX_COUNT;
-        const requestClientId = pickKyberClientId(kyberClientId, kyberClientIdSuffixCount);
-        const response = await fetchWithRetry(apiUrl, { headers: { 'X-Client-Id': requestClientId } });
+        const response = await fetchWithRetry(apiUrl, { headers: { 'X-Client-Id': kyberClientId } });
         const resultData = await response.json();
 
         if (resultData.code !== 0) throw new Error(resultData.message || `Kyber API返回错误`);
