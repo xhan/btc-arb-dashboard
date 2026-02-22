@@ -7,6 +7,31 @@ function extractPriceFromText(text) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function splitCompactTradingPairSymbol(symbol) {
+  if (typeof symbol !== 'string') return null;
+  const raw = symbol.trim().toUpperCase();
+  if (!raw) return null;
+
+  const separated = raw.match(/^([A-Z0-9.]+)\s*[-_/:]\s*([A-Z0-9.]+)$/);
+  if (separated) {
+    return { fromSymbol: separated[1], toSymbol: separated[2] };
+  }
+
+  const quoteSuffixes = [
+    'USDT', 'USDC', 'FDUSD', 'USDE', 'TUSD',
+    'DAI', 'BTC', 'ETH', 'EUR', 'TRY', 'BRL'
+  ];
+
+  for (const suffix of quoteSuffixes) {
+    if (!raw.endsWith(suffix) || raw.length <= suffix.length) continue;
+    const base = raw.slice(0, -suffix.length);
+    if (!base) continue;
+    return { fromSymbol: base, toSymbol: suffix };
+  }
+
+  return null;
+}
+
 function buildCalculatorEntry(input) {
   if (!input) return null;
   const price = Number(input.price);
@@ -34,6 +59,7 @@ function calculateProduct(entries) {
 function buildApi() {
   return {
     extractPriceFromText,
+    splitCompactTradingPairSymbol,
     buildCalculatorEntry,
     formatCalculatorEntry,
     calculateProduct

@@ -570,7 +570,12 @@
                 result.usedSource = 'Jupiter';
 
             } else if (targetSource === 'Bybit') {
-                result.symbols = { from: quote.symbol, to: '' };
+                const parsedPair = window.QuoteCalculator && window.QuoteCalculator.splitCompactTradingPairSymbol
+                    ? window.QuoteCalculator.splitCompactTradingPairSymbol(quote.symbol)
+                    : null;
+                result.symbols = parsedPair
+                    ? { from: parsedPair.fromSymbol, to: parsedPair.toSymbol }
+                    : { from: quote.symbol, to: 'QUOTE' };
                 const apiUrl = `https://api.bybit.com/v5/market/tickers?category=spot&symbol=${quote.symbol}`;
                 const response = await fetch(apiUrl, fetchOptions);
                 const data = await response.json();
@@ -1025,6 +1030,36 @@
         if (!arbPathWindow) return;
         const isHidden = window.getComputedStyle(arbPathWindow).display === 'none';
         arbPathWindow.style.display = isHidden ? 'flex' : 'none';
+    }
+
+    function isTypingTarget(target) {
+        if (!target || typeof target.closest !== 'function') return false;
+        if (target.isContentEditable) return true;
+        return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+    }
+
+    function handleGlobalShortcuts(event) {
+        if (event.defaultPrevented) return;
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        if (isTypingTarget(event.target)) return;
+
+        const key = (event.key || '').toLowerCase();
+        if (!key) return;
+
+        if (key === 't') {
+            event.preventDefault();
+            toggleArbPanel();
+            return;
+        }
+        if (key === 'c') {
+            event.preventDefault();
+            toggleCalcPanel();
+            return;
+        }
+        if (key === 'r') {
+            event.preventDefault();
+            resetCalculator();
+        }
     }
 
     function toggleCalcPanel() {
@@ -1834,6 +1869,7 @@
             if (toggleArbBtn) {
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
             }
+            document.addEventListener('keydown', handleGlobalShortcuts);
             if (arbPathMinBtn) {
                 arbPathMinBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
