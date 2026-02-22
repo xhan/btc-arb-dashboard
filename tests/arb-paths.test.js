@@ -60,6 +60,10 @@ const bestCycle = findBestCycle(multiEdges.concat(ruleEdges), { maxDepth: 4 });
 assert.ok(bestCycle, 'expected a cycle');
 assert.ok(bestCycle.legs.length >= 3 && bestCycle.legs.length <= 4);
 
+const fullRuleEdges = buildRuleEdges({ xBTC: 'cbBTC', 'BTC.b': 'cbBTC' });
+assert.ok(fullRuleEdges.some((edge) => edge.from === 'BTC.b' && edge.to === 'xBTC' && edge.rate === 1));
+assert.ok(fullRuleEdges.some((edge) => edge.from === 'xBTC' && edge.to === 'BTC.b' && edge.rate === 1));
+
 const directEdges = [
   { from: 'xBTC', to: 'WBTC', rate: 1.01, chain: 'arbitrum' },
   { from: 'cbBTC', to: 'WBTC', rate: 1.005, chain: 'ethereum' }
@@ -103,6 +107,36 @@ const cycleEdges = [
   { from: 'B', to: 'C', rate: 1.0, chain: 'arbitrum' },
   { from: 'C', to: 'B', rate: 1.0, chain: 'arbitrum' }
 ];
+
+const symmetricLoopEdges = [
+  { from: 'cbBTC', to: 'WBTC', rate: 1.002944, chain: 'Arbitrum' },
+  { from: 'WBTC', to: 'BTC.b', rate: 0.997321, chain: 'Monad' },
+  { from: 'BTC.b', to: 'cbBTC', rate: 1, chain: '规则', rule: true }
+];
+
+const symmetricLoopCycles = findTopCycles(symmetricLoopEdges, { maxDepth: 4, limit: 5 });
+assert.strictEqual(symmetricLoopCycles.length, 1);
+
+const preferredStartCycles = findTopCycles(symmetricLoopEdges, {
+  maxDepth: 4,
+  limit: 5,
+  preferredStartSymbols: ['cbBTC']
+});
+assert.strictEqual(preferredStartCycles[0].legs[0].from, 'cbBTC');
+
+const noConsecutiveRuleCycles = findTopCycles([
+  { from: 'xBTC', to: 'WBTC', rate: 1.002912, chain: 'SUI' },
+  { from: 'WBTC', to: 'BTC.b', rate: 0.99743, chain: 'Monad' },
+  ...buildRuleEdges({ xBTC: 'cbBTC', 'BTC.b': 'cbBTC' })
+], { maxDepth: 4, limit: 10 });
+assert.ok(noConsecutiveRuleCycles.length > 0);
+for (const cycle of noConsecutiveRuleCycles) {
+  for (let i = 1; i < cycle.legs.length; i += 1) {
+    const prev = cycle.legs[i - 1];
+    const curr = cycle.legs[i];
+    assert.ok(!(prev.rule && curr.rule), 'should not contain consecutive rule legs');
+  }
+}
 
 const topCycles = findTopCycles(cycleEdges, { maxDepth: 3, limit: 2 });
 assert.strictEqual(topCycles.length, 2);

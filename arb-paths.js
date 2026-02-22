@@ -66,17 +66,50 @@ function findBestTwoStepCycle(edges) {
   return best;
 }
 
-function buildRuleEdges(aliases) {
-  const edges = [];
-  if (!aliases) return edges;
+function isRuleEdge(edge) {
+  return Boolean(edge && (edge.rule || edge.chain === '规则'));
+}
 
+function buildRuleEdges(aliases) {
+  if (!aliases) return [];
+
+  const groups = new Map();
   for (const [alias, target] of Object.entries(aliases)) {
     if (!alias || !target) continue;
-    edges.push({ from: alias, to: target, rate: 1, chain: '规则', rule: true });
-    edges.push({ from: target, to: alias, rate: 1, chain: '规则', rule: true });
+    const key = normalizeSymbol(target);
+    const group = groups.get(key) || [];
+
+    if (!group.some((symbol) => normalizeSymbol(symbol) === normalizeSymbol(target))) {
+      group.push(target);
+    }
+    if (!group.some((symbol) => normalizeSymbol(symbol) === normalizeSymbol(alias))) {
+      group.push(alias);
+    }
+
+    groups.set(key, group);
+  }
+
+  const edges = [];
+  for (const group of groups.values()) {
+    for (let i = 0; i < group.length; i += 1) {
+      for (let j = 0; j < group.length; j += 1) {
+        if (i === j) continue;
+        edges.push({ from: group[i], to: group[j], rate: 1, chain: '规则', rule: true });
+      }
+    }
   }
 
   return edges;
+}
+
+function hasAdjacentRuleLegs(legs) {
+  if (!Array.isArray(legs) || legs.length < 2) return false;
+  for (let i = 0; i < legs.length; i += 1) {
+    const current = legs[i];
+    const next = legs[(i + 1) % legs.length];
+    if (isRuleEdge(current) && isRuleEdge(next)) return true;
+  }
+  return false;
 }
 
 function findBestCycle(edges, options = {}) {
@@ -99,10 +132,16 @@ function findBestCycle(edges, options = {}) {
     for (const edge of neighbors) {
       const next = edge.to;
       const nextProduct = product * edge.rate;
+      const prevEdge = path[path.length - 1];
+
+      if (isRuleEdge(prevEdge) && isRuleEdge(edge)) continue;
 
       if (next === start && path.length >= 1) {
         const profitRate = nextProduct - 1;
         const legs = path.concat(edge);
+        if (hasAdjacentRuleLegs(legs)) {
+          continue;
+        }
         if (acceptCycle && !acceptCycle(legs)) {
           continue;
         }
@@ -129,10 +168,54 @@ function findBestCycle(edges, options = {}) {
   return best;
 }
 
+function rotateCycleLegs(legs, offset) {
+  if (!Array.isArray(legs) || !legs.length) return [];
+  const start = ((offset % legs.length) + legs.length) % legs.length;
+  return legs.slice(start).concat(legs.slice(0, start));
+}
+
+function buildCycleLegKey(leg) {
+  if (!leg) return '';
+  const from = normalizeSymbol(leg.from);
+  const to = normalizeSymbol(leg.to);
+  const chain = leg.chain || '';
+  const rate = typeof leg.rate === 'number' ? String(leg.rate) : '';
+  return `${from}|${to}|${chain}|${rate}`;
+}
+
+function canonicalizeCycleRotation(legs, preferredStartSymbols) {
+  if (!Array.isArray(legs) || !legs.length) {
+    return { legs: [], key: '' };
+  }
+
+  const preferredSet = Array.isArray(preferredStartSymbols) && preferredStartSymbols.length
+    ? new Set(preferredStartSymbols.map(normalizeSymbol))
+    : null;
+
+  let bestLegs = legs;
+  let bestKey = '';
+  let bestRank = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < legs.length; i += 1) {
+    const rotated = rotateCycleLegs(legs, i);
+    const startSymbol = normalizeSymbol(rotated[0] && rotated[0].from);
+    const rank = preferredSet ? (preferredSet.has(startSymbol) ? 0 : 1) : 0;
+    const key = rotated.map(buildCycleLegKey).join('>');
+    if (rank < bestRank || (rank === bestRank && (bestKey === '' || key < bestKey))) {
+      bestLegs = rotated;
+      bestKey = key;
+      bestRank = rank;
+    }
+  }
+
+  return { legs: bestLegs, key: bestKey };
+}
+
 function findTopCycles(edges, options = {}) {
   const maxDepth = Number(options.maxDepth) || 4;
   const limit = Number(options.limit) || 3;
   const acceptCycle = typeof options.acceptCycle === 'function' ? options.acceptCycle : null;
+  const preferredStartSymbols = Array.isArray(options.preferredStartSymbols) ? options.preferredStartSymbols : null;
   const results = [];
   const seen = new Set();
 
@@ -146,10 +229,10 @@ function findTopCycles(edges, options = {}) {
 
   function recordCycle(legs, profitRate) {
     if (acceptCycle && !acceptCycle(legs)) return;
-    const key = legs.map((leg) => `${leg.from}|${leg.to}|${leg.chain || ''}|${leg.rate}`).join('>');
-    if (seen.has(key)) return;
-    seen.add(key);
-    results.push({ legs, profitRate });
+    const canonical = canonicalizeCycleRotation(legs, preferredStartSymbols);
+    if (!canonical.key || seen.has(canonical.key)) return;
+    seen.add(canonical.key);
+    results.push({ legs: canonical.legs, profitRate });
   }
 
   function dfs(start, current, visited, path, product) {
@@ -159,9 +242,14 @@ function findTopCycles(edges, options = {}) {
     for (const edge of neighbors) {
       const next = edge.to;
       const nextProduct = product * edge.rate;
+      const prevEdge = path[path.length - 1];
+
+      if (isRuleEdge(prevEdge) && isRuleEdge(edge)) continue;
 
       if (next === start && path.length >= 1) {
-        recordCycle(path.concat(edge), nextProduct - 1);
+        const legs = path.concat(edge);
+        if (hasAdjacentRuleLegs(legs)) continue;
+        recordCycle(legs, nextProduct - 1);
         continue;
       }
 

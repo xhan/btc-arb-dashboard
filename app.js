@@ -367,10 +367,44 @@
         }));
     }
 
+    function isRuleLeg(leg) {
+        return Boolean(leg && (leg.rule || leg.chain === '规则'));
+    }
+
+    function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
+        const target = String(canonicalSymbol || '').toUpperCase();
+        const symbols = new Set([canonicalSymbol]);
+        for (const [alias, mapped] of Object.entries(aliasRules || {})) {
+            if (String(mapped || '').toUpperCase() === target) {
+                symbols.add(alias);
+                symbols.add(mapped);
+            }
+        }
+        return Array.from(symbols);
+    }
+
+    function pickCyclesForDisplay(cycles, maxPositiveCount) {
+        const list = Array.isArray(cycles) ? cycles : [];
+        if (!list.length) return [];
+
+        const positiveCycles = list.filter(cycle =>
+            cycle &&
+            typeof cycle.profitRate === 'number' &&
+            cycle.profitRate > 0
+        );
+
+        if (positiveCycles.length) {
+            return positiveCycles.slice(0, Math.max(1, Number(maxPositiveCount) || 1));
+        }
+
+        return list.slice(0, 1);
+    }
+
     function updateArbPanel() {
         function renderOpportunity(label, cycle) {
             if (!cycle || !window.ArbPaths.isMeaningfulPath(cycle.legs)) return '';
-            const legHtml = buildLegLines(cycle.legs).map(line => `<div class="arb-path-line">${line}</div>`).join('');
+            const displayLegs = (cycle.legs || []).filter(leg => !isRuleLeg(leg));
+            const legHtml = buildLegLines(displayLegs).map(line => `<div class="arb-path-line">${line}</div>`).join('');
             const profitClass = cycle.profitRate >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
             const profitText = window.ArbPaths.formatProfitWanfen(cycle.profitRate);
             const labelHtml = label ? `<div class="arb-path-line"><strong>${label}</strong></div>` : '';
@@ -401,6 +435,7 @@
             'BTC.b': 'cbBTC',
             'BTC.B': 'cbBTC'
         };
+        const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
         const allQuotes = dashboardState.flatMap(c => c.quotes || []);
         const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
@@ -419,20 +454,24 @@
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
             const cycles = window.ArbPaths.findTopCycles(edges.concat(ruleEdges), {
                 maxDepth: 4,
-                limit: 2,
-                acceptCycle: window.ArbPaths.isMeaningfulPath
+                limit: 4,
+                acceptCycle: window.ArbPaths.isMeaningfulPath,
+                preferredStartSymbols: preferredCycleStartSymbols
             });
-            const opportunities = cycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
+            const displayCycles = pickCyclesForDisplay(cycles, 4);
+            const opportunities = displayCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
             categorySections.push(renderSection(category.name, opportunities));
         }
         const categoryColumn = categorySections.join('');
 
         const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
             maxDepth: 4,
-            limit: 4,
-            acceptCycle: window.ArbPaths.isMeaningfulPath
+            limit: 8,
+            acceptCycle: window.ArbPaths.isMeaningfulPath,
+            preferredStartSymbols: preferredCycleStartSymbols
         });
-        const globalOpportunities = globalCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
+        const globalDisplayCycles = pickCyclesForDisplay(globalCycles, 8);
+        const globalOpportunities = globalDisplayCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
         const globalColumn = renderSection('全局路径', globalOpportunities);
 
         arbPathContent.innerHTML = `
