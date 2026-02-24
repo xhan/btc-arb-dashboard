@@ -310,17 +310,51 @@ function buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases) {
   return { legs: [legA, legB], profitRate: (legA.rate * legB.rate) - 1 };
 }
 
+function chooseBetterCycle(candidateA, candidateB) {
+  if (!candidateA) return candidateB;
+  if (!candidateB) return candidateA;
+  return candidateA.profitRate >= candidateB.profitRate ? candidateA : candidateB;
+}
+
+function collectQuoteChains(edges) {
+  const chains = [];
+  const seen = new Set();
+  for (const edge of edges || []) {
+    const chain = edge && edge.chain;
+    if (!chain || chain === '规则') continue;
+    if (seen.has(chain)) continue;
+    seen.add(chain);
+    chains.push(chain);
+  }
+  return chains;
+}
+
 function findBestFixedPath(edges, rule, aliases) {
   if (!rule || rule.steps !== 2) return null;
-  const chains = Array.isArray(rule.chains) ? rule.chains : [];
-  const [chainA, chainB] = chains;
-  if (!rule.base || !rule.quote || !chainA || !chainB) return null;
+  if (!rule.base || !rule.quote) return null;
 
-  const forward = buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases);
-  const reverse = buildTwoStepFixedPath(edges, rule, chainB, chainA, aliases);
-  if (!forward) return reverse;
-  if (!reverse) return forward;
-  return forward.profitRate >= reverse.profitRate ? forward : reverse;
+  const chains = Array.isArray(rule.chains) ? rule.chains.filter(Boolean) : [];
+  if (chains.length >= 2) {
+    const [chainA, chainB] = chains;
+    const forward = buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases);
+    const reverse = buildTwoStepFixedPath(edges, rule, chainB, chainA, aliases);
+    return chooseBetterCycle(forward, reverse);
+  }
+
+  if (!rule.crossChain) return null;
+
+  const candidateChains = collectQuoteChains(edges);
+  let best = null;
+  for (let i = 0; i < candidateChains.length; i += 1) {
+    for (let j = 0; j < candidateChains.length; j += 1) {
+      if (i === j) continue;
+      const chainA = candidateChains[i];
+      const chainB = candidateChains[j];
+      const cycle = buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases);
+      best = chooseBetterCycle(best, cycle);
+    }
+  }
+  return best;
 }
 
 function selectBestDirectEdge(edges, from, to, aliases) {

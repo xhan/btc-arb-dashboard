@@ -358,6 +358,13 @@
             quote: 'WBTC',
             chains: ['ethereum', 'arbitrum'],
             steps: 2
+        },
+        {
+            title: 'GHO <-> USDC',
+            base: 'GHO',
+            quote: 'USDC',
+            steps: 2,
+            crossChain: true
         }
     ];
 

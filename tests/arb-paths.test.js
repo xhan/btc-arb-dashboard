@@ -158,6 +158,20 @@ assert.ok(fixedBest);
 assert.strictEqual(fixedBest.legs[0].chain, 'arbitrum');
 assert.strictEqual(fixedBest.legs[1].chain, 'ethereum');
 
+const fixedAnyChainEdges = [
+  { from: 'GHO', to: 'USDC', rate: 1.001, chain: 'ethereum' },
+  { from: 'USDC', to: 'GHO', rate: 1.003, chain: 'base' },
+  { from: 'USDC', to: 'GHO', rate: 1.0015, chain: 'arbitrum' },
+  { from: 'GHO', to: 'USDC', rate: 1.0002, chain: 'base' }
+];
+const fixedAnyChainRule = { title: 'GHO <-> USDC', base: 'GHO', quote: 'USDC', steps: 2, crossChain: true };
+const fixedAnyChainBest = findBestFixedPath(fixedAnyChainEdges, fixedAnyChainRule, null);
+
+assert.ok(fixedAnyChainBest);
+assert.notStrictEqual(fixedAnyChainBest.legs[0].chain, fixedAnyChainBest.legs[1].chain);
+assert.strictEqual(fixedAnyChainBest.legs[0].chain, 'ethereum');
+assert.strictEqual(fixedAnyChainBest.legs[1].chain, 'base');
+
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'arb-paths.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
