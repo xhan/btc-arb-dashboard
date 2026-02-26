@@ -436,6 +436,13 @@
             font-weight: 700;
         }
         #arb-path-max-btn:hover, #arb-path-min-btn:hover { background-color: rgba(255,255,255,0.12); }
+        #arb-global-filter-bar { padding: 8px 12px; border-bottom: 1px solid var(--border-color); background-color: rgba(0,0,0,0.015); }
+        .dark-mode #arb-global-filter-bar { background-color: rgba(255,255,255,0.02); }
+        .arb-global-filter-row { display: flex; gap: 6px; align-items: center; }
+        #arb-global-filter-input { flex: 1; min-width: 0; padding: 4px 6px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; color: inherit; }
+        #arb-global-filter-clear-btn { padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
+        #arb-global-filter-clear-btn:disabled { opacity: 0.5; cursor: default; }
+        #arb-global-filter-hint { margin-top: 4px; opacity: 0.75; font-size: 12px; line-height: 1.3; }
         #arb-path-content { flex-grow: 1; overflow-y: auto; padding: 12px; font-size: 13px; }
         .arb-path-grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 10px; align-items: start; }
         .arb-column { min-width: 0; }
@@ -583,6 +590,13 @@
                 <button id="arb-path-max-btn" title="最大化高度">⇵</button>
             </div>
         </div>
+        <div id="arb-global-filter-bar">
+            <div class="arb-global-filter-row">
+                <input id="arb-global-filter-input" type="text" placeholder="全局路径过滤代币，如 WBTC, LBTC">
+                <button id="arb-global-filter-clear-btn" type="button" disabled>清空</button>
+            </div>
+            <div id="arb-global-filter-hint">输入代币 symbol 过滤全局路径（空格/逗号分隔）</div>
+        </div>
         <div id="arb-path-content">等待数据...</div>
     </div>
     <div id="calc-window">
@@ -724,6 +738,7 @@
                         <option value="plasma">Plasma</option>
                         <option value="etherlink">Etherlink</option>
                         <option value="monad">Monad</option>
+                        <option value="hemi">Hemi</option>
                         <option value="katana">Katana</option>
                     </optgroup>
                     
@@ -784,6 +799,7 @@
 
     <script src="arb-paths.js"></script>
     <script src="quote-calculator.js"></script>
+    <script src="chain-defaults.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

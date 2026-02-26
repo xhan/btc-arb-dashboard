@@ -47,6 +47,8 @@
     let activeFetchControllers = new Map(); 
     let saveTimeout = null;
     let arbUpdateTimer = null;
+    let arbExpandedSections = new Set();
+    let arbGlobalExcludedSymbolsInput = '';
     
     let hoverTimeout = null;        
     let currentHoveredQuoteId = null; 
@@ -88,6 +90,10 @@
     const copyToast = document.getElementById('copy-toast');
     const arbPathWindow = document.getElementById('arb-path-window');
     const arbPathContent = document.getElementById('arb-path-content');
+    const arbGlobalFilterBar = document.getElementById('arb-global-filter-bar');
+    const arbGlobalFilterInput = document.getElementById('arb-global-filter-input');
+    const arbGlobalFilterClearBtn = document.getElementById('arb-global-filter-clear-btn');
+    const arbGlobalFilterHint = document.getElementById('arb-global-filter-hint');
     const arbPathHeader = document.getElementById('arb-path-header');
     const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
@@ -109,13 +115,14 @@
         ronin: 'Ronin', unichain: 'Unichain', hyperevm: 'HyperEVM', plasma: 'Plasma',
         scroll: 'Scroll', blast: 'Blast', mode: 'Mode', monad: 'Monad', etherlink: 'Etherlink',
         fantom: 'Fantom', cronos: 'Cronos', moonbeam: 'Moonbeam', boba: 'Boba', gnosis: 'Gnosis', celo: 'Celo',
+        hemi: 'Hemi',
         katana: 'Katana'
     };
 
     const CHAIN_ADDRESS_PLACEHOLDERS = {
         ethereum: '0x...', solana: 'Enter mint address...', sui: '0x...::module::TYPE',
         polygon: '0x...', arbitrum: '0x...', optimism: '0x...',
-        bsc: '0x...', avalanche: '0x...', base: '0x...', katana: '0x...', Bybit: 'N/A'
+        bsc: '0x...', avalanche: '0x...', base: '0x...', hemi: '0x...', katana: '0x...', Bybit: 'N/A'
     };
     
     const KYBER_SUPPORTED_CHAINS = [
@@ -142,6 +149,9 @@
         'mode': 34443
     };
     const ZEROX_SUPPORTED_CHAINS = Object.keys(ZEROX_CHAIN_IDS);
+    const defaultSourceResolver = (window.ChainDefaults && typeof window.ChainDefaults.getDefaultSourceForChain === 'function')
+        ? window.ChainDefaults.getDefaultSourceForChain
+        : () => 'Kyber';
 
     function isEvmChain(chain) {
         const nonEvm = ['solana', 'sui', 'bybit'];
@@ -393,9 +403,51 @@
         return Array.from(symbols);
     }
 
-    function pickCyclesForDisplay(cycles, maxPositiveCount) {
+    function parseArbSymbolFilterInput(inputText) {
+        const tokens = String(inputText || '')
+            .split(/[\s,，]+/)
+            .map(token => token.trim())
+            .filter(Boolean);
+        return Array.from(new Set(tokens));
+    }
+
+    function cycleContainsAnySymbols(cycle, symbols) {
+        if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(symbols) || !symbols.length) return false;
+        const symbolSet = new Set(symbols);
+        return cycle.legs.some(leg => symbolSet.has(leg.from) || symbolSet.has(leg.to));
+    }
+
+    function updateGlobalArbFilterBar(excludedSymbols, filteredCount) {
+        if (!arbGlobalFilterBar) return;
+
+        const hasFilter = Boolean(arbGlobalExcludedSymbolsInput.trim());
+        const hintText = excludedSymbols.length
+            ? `已过滤 ${excludedSymbols.join(', ')}（隐藏 ${filteredCount} 条）`
+            : '输入代币 symbol 过滤全局路径（空格/逗号分隔）';
+
+        if (arbGlobalFilterInput && arbGlobalFilterInput.value !== arbGlobalExcludedSymbolsInput) {
+            arbGlobalFilterInput.value = arbGlobalExcludedSymbolsInput;
+        }
+        if (arbGlobalFilterClearBtn) {
+            arbGlobalFilterClearBtn.disabled = !hasFilter;
+        }
+        if (arbGlobalFilterHint) {
+            arbGlobalFilterHint.textContent = hintText;
+        }
+    }
+
+    function getCycleDisplayState(cycles, maxPositiveCount, expanded = false) {
         const list = Array.isArray(cycles) ? cycles : [];
-        if (!list.length) return [];
+        const maxCount = Math.max(1, Number(maxPositiveCount) || 1);
+        if (!list.length) {
+            return {
+                displayCycles: [],
+                positiveCount: 0,
+                hiddenPositiveCount: 0,
+                canToggleExpand: false,
+                expanded: false
+            };
+        }
 
         const positiveCycles = list.filter(cycle =>
             cycle &&
@@ -404,10 +456,79 @@
         );
 
         if (positiveCycles.length) {
-            return positiveCycles.slice(0, Math.max(1, Number(maxPositiveCount) || 1));
+            const canToggleExpand = positiveCycles.length > maxCount;
+            const shouldExpand = canToggleExpand && expanded;
+            const displayCycles = shouldExpand ? positiveCycles : positiveCycles.slice(0, maxCount);
+            return {
+                displayCycles,
+                positiveCount: positiveCycles.length,
+                hiddenPositiveCount: Math.max(0, positiveCycles.length - displayCycles.length),
+                canToggleExpand,
+                expanded: shouldExpand
+            };
         }
 
-        return list.slice(0, 1);
+        return {
+            displayCycles: list.slice(0, 1),
+            positiveCount: 0,
+            hiddenPositiveCount: 0,
+            canToggleExpand: false,
+            expanded: false
+        };
+    }
+
+    function buildArbSectionToggleHtml(sectionKey, cycleDisplayState) {
+        if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
+
+        const buttonText = cycleDisplayState.expanded
+            ? `已展开 ${cycleDisplayState.positiveCount} 条正收益，点击收起`
+            : `还有 ${cycleDisplayState.hiddenPositiveCount} 条正收益未显示，点击展开全部`;
+
+        return `
+            <button
+                type="button"
+                class="arb-path-expand-toggle"
+                data-arb-section-key="${sectionKey}"
+                aria-expanded="${cycleDisplayState.expanded ? 'true' : 'false'}"
+                style="margin-top:6px;padding:0;border:none;background:none;color:#2563eb;cursor:pointer;font-size:12px;text-decoration:underline;"
+            >${buttonText}</button>
+        `;
+    }
+
+    function buildArbSectionKey(prefix, idOrName) {
+        return `${prefix}:${String(idOrName ?? '')}`;
+    }
+
+    function handleArbPathContentClick(event) {
+        if (!arbPathContent) return;
+        const toggleBtn = event.target.closest('.arb-path-expand-toggle');
+        if (!toggleBtn || !arbPathContent.contains(toggleBtn)) return;
+
+        const sectionKey = toggleBtn.dataset.arbSectionKey;
+        if (!sectionKey) return;
+
+        if (arbExpandedSections.has(sectionKey)) {
+            arbExpandedSections.delete(sectionKey);
+        } else {
+            arbExpandedSections.add(sectionKey);
+        }
+        updateArbPanel();
+    }
+
+    function handleArbGlobalFilterInput(event) {
+        const nextValue = (event && event.target && typeof event.target.value === 'string') ? event.target.value : '';
+        if (nextValue === arbGlobalExcludedSymbolsInput) return;
+        arbGlobalExcludedSymbolsInput = nextValue;
+        updateArbPanel();
+    }
+
+    function handleArbGlobalFilterClear() {
+        if (!arbGlobalExcludedSymbolsInput) return;
+        arbGlobalExcludedSymbolsInput = '';
+        updateArbPanel();
+        if (arbGlobalFilterInput) {
+            arbGlobalFilterInput.focus();
+        }
     }
 
     function updateArbPanel() {
@@ -421,9 +542,9 @@
             return `<div class="arb-opportunity">${labelHtml}${legHtml}<div class="${profitClass}">收益: ${profitText}</div></div>`;
         }
 
-        function renderSection(title, opportunitiesHtml) {
-            const body = opportunitiesHtml.length ? opportunitiesHtml.join('') : '<div class="arb-path-line">等待数据...</div>';
-            return `<div class="arb-section"><div class="arb-section-title">${title}</div>${body}</div>`;
+        function renderSection(title, opportunitiesHtml, footerHtml = '', headerExtraHtml = '', emptyText = '等待数据...') {
+            const body = opportunitiesHtml.length ? opportunitiesHtml.join('') : `<div class="arb-path-line">${emptyText}</div>`;
+            return `<div class="arb-section"><div class="arb-section-title">${title}</div>${headerExtraHtml}${body}${footerHtml}</div>`;
         }
 
         if (!arbPathContent) return;
@@ -459,34 +580,52 @@
         const fixedColumn = renderSection('固定路径', fixedOpportunities);
 
         const categorySections = [];
+        let lbtcSectionHtml = '';
         for (const category of targetCategories) {
             const quotes = Array.isArray(category.quotes) ? category.quotes : [];
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
+            const sectionKey = buildArbSectionKey('category', category.id || category.name);
             const cycles = window.ArbPaths.findTopCycles(edges.concat(ruleEdges), {
                 maxDepth: 4,
-                limit: 4,
+                limit: Number.MAX_SAFE_INTEGER,
                 acceptCycle: window.ArbPaths.isMeaningfulPath,
                 preferredStartSymbols: preferredCycleStartSymbols
             });
-            const displayCycles = pickCyclesForDisplay(cycles, 4);
-            const opportunities = displayCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
-            categorySections.push(renderSection(category.name, opportunities));
+            const cycleDisplayState = getCycleDisplayState(cycles, 4, arbExpandedSections.has(sectionKey));
+            const opportunities = cycleDisplayState.displayCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
+            const footerHtml = buildArbSectionToggleHtml(sectionKey, cycleDisplayState);
+            const sectionHtml = renderSection(category.name, opportunities, footerHtml);
+            if (category.name === 'LBTC监控') {
+                lbtcSectionHtml = sectionHtml;
+            } else {
+                categorySections.push(sectionHtml);
+            }
         }
         const categoryColumn = categorySections.join('');
 
+        const globalSectionKey = buildArbSectionKey('global', 'all');
         const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
             maxDepth: 4,
-            limit: 8,
+            limit: Number.MAX_SAFE_INTEGER,
             acceptCycle: window.ArbPaths.isMeaningfulPath,
             preferredStartSymbols: preferredCycleStartSymbols
         });
-        const globalDisplayCycles = pickCyclesForDisplay(globalCycles, 8);
-        const globalOpportunities = globalDisplayCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
-        const globalColumn = renderSection('全局路径', globalOpportunities);
+        const excludedSymbols = parseArbSymbolFilterInput(arbGlobalExcludedSymbolsInput);
+        const filteredGlobalCycles = excludedSymbols.length
+            ? globalCycles.filter(cycle => !cycleContainsAnySymbols(cycle, excludedSymbols))
+            : globalCycles;
+        const globalFilteredOutCount = globalCycles.length - filteredGlobalCycles.length;
+        updateGlobalArbFilterBar(excludedSymbols, globalFilteredOutCount);
+        const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
+        const globalOpportunities = globalCycleDisplayState.displayCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
+        const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
+        const globalEmptyText = excludedSymbols.length ? '过滤后暂无路径' : '等待数据...';
+        const globalColumn = renderSection('全局路径', globalOpportunities, globalFooterHtml, '', globalEmptyText);
+        const leftColumn = `${fixedColumn}${lbtcSectionHtml}`;
 
         arbPathContent.innerHTML = `
             <div class="arb-path-grid">
-                <div class="arb-column">${fixedColumn}</div>
+                <div class="arb-column">${leftColumn}</div>
                 <div class="arb-column">${categoryColumn}</div>
                 <div class="arb-column">${globalColumn}</div>
             </div>
@@ -1796,7 +1935,7 @@
         } else if (e.target.id === 'add-quote-save') {
             if (currentCategoryIdToAdd === null) return;
             const chain = addQuoteChainSelect.value;
-            const defaultSource = chain.toLowerCase() === 'katana' ? 'LI.FI' : 'Kyber';
+            const defaultSource = defaultSourceResolver(chain);
             const newQuote = { id: Date.now(), chain: chain.toLowerCase(), amount: 1, preferredSource: defaultSource }; 
             if (chain === 'Bybit') {
                 newQuote.chain = 'Bybit';
@@ -1890,6 +2029,15 @@
 
             if (toggleArbBtn) {
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
+            }
+            if (arbPathContent) {
+                arbPathContent.addEventListener('click', handleArbPathContentClick);
+            }
+            if (arbGlobalFilterInput) {
+                arbGlobalFilterInput.addEventListener('input', handleArbGlobalFilterInput);
+            }
+            if (arbGlobalFilterClearBtn) {
+                arbGlobalFilterClearBtn.addEventListener('click', handleArbGlobalFilterClear);
             }
             document.addEventListener('keydown', handleGlobalShortcuts);
             if (arbPathMinBtn) {
