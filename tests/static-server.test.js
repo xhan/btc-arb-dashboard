@@ -39,6 +39,13 @@ async function waitForServer(attempts = 12) {
     const response = await request('/index.html');
     assert.strictEqual(response.statusCode, 200);
     assert.ok(response.body.includes('聚合报价看板'));
+
+    const snapshotResponse = await request('/snapshot');
+    assert.strictEqual(snapshotResponse.statusCode, 200);
+    assert.ok(snapshotResponse.body.includes('快照回放'));
+    assert.ok(snapshotResponse.body.includes('查看快照 JSON'));
+    assert.ok(snapshotResponse.body.includes('查看回放 JSON'));
+    assert.ok(snapshotResponse.body.includes('grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);'));
   } finally {
     serverProcess.kill();
   }

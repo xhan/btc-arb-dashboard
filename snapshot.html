@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快照回放</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --line: #d7deea;
+      --text: #1f2937;
+      --sub: #5b6472;
+      --accent: #0f766e;
+      --accent-soft: #d9f5f1;
+      --danger: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, #f8fafc 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .toolbar,
+    .status-card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .toolbar {
+      padding: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .toolbar h1 {
+      width: 100%;
+      margin: 0 0 6px;
+      font-size: 26px;
+    }
+
+    .toolbar-note {
+      width: 100%;
+      color: var(--sub);
+      font-size: 13px;
+      margin-top: -4px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 220px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .field input,
+    .field select,
+    .field button {
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 0 12px;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .field button {
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0 18px;
+      font-weight: 600;
+    }
+
+    .field button:hover {
+      opacity: 0.92;
+    }
+
+    .status-card {
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .status-item {
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 12px;
+    }
+
+    .status-item strong {
+      display: block;
+      font-size: 12px;
+      color: var(--sub);
+      margin-bottom: 6px;
+    }
+
+    .status-item span {
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+
+    .snapshot-categories {
+      display: grid;
+      gap: 18px;
+    }
+
+    .snapshot-category {
+      padding: 0 0 2px;
+    }
+
+    .snapshot-category-header {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .snapshot-category-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .snapshot-category-meta {
+      font-size: 12px;
+      color: var(--sub);
+      margin-left: 8px;
+      font-weight: 500;
+    }
+
+    .snapshot-category-divider {
+      height: 1px;
+      background: var(--line);
+      margin-bottom: 4px;
+    }
+
+    .snapshot-quote-list {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .snapshot-quote-item {
+      border-bottom: 1px solid #edf2f7;
+      padding: 10px 0;
+      display: grid;
+      gap: 4px;
+      background: transparent;
+    }
+
+    .snapshot-quote-item:last-child {
+      border-bottom: none;
+    }
+
+    .snapshot-quote-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .snapshot-chain {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #0f4c45;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .snapshot-source {
+      font-size: 12px;
+      color: var(--sub);
+      text-align: right;
+    }
+
+    .snapshot-result {
+      font-size: 14px;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .snapshot-inverse {
+      font-size: 13px;
+      color: var(--sub);
+      word-break: break-word;
+    }
+
+    .snapshot-empty,
+    .snapshot-error {
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .snapshot-empty {
+      background: #f8fafc;
+      color: var(--sub);
+    }
+
+    .snapshot-error {
+      background: #fef2f2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+    }
+
+    .arb-path-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .arb-column {
+      display: grid;
+      gap: 12px;
+    }
+
+    .arb-section {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fcfdff;
+    }
+
+    .arb-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .arb-opportunity {
+      border-top: 1px dashed var(--line);
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+
+    .arb-opportunity:first-of-type {
+      border-top: none;
+      margin-top: 0;
+      padding-top: 0;
+    }
+
+    .arb-path-line {
+      font-size: 13px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .arb-profit {
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .arb-profit-neg {
+      color: var(--danger);
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .arb-path-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="toolbar">
+      <h1>快照回放</h1>
+      <div class="toolbar-note">只读模式，不会触发实时请求。时间默认按 UTC+8 解析。</div>
+      <div class="field">
+        <label for="snapshot-time-input">查询时间</label>
+        <input id="snapshot-time-input" type="text" placeholder="例如: 2026-03-01 12:00:00">
+      </div>
+      <div class="field">
+        <label for="snapshot-mode-select">匹配策略</label>
+        <select id="snapshot-mode-select">
+          <option value="floor">floor</option>
+          <option value="nearest">nearest</option>
+          <option value="ceil">ceil</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="snapshot-max-gap-input">最大偏差秒数</label>
+        <input id="snapshot-max-gap-input" type="number" min="1" step="1" placeholder="可选">
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="snapshot-load-btn" type="button">加载快照</button>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="snapshot-open-snapshot-json-btn" type="button">查看快照 JSON</button>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button id="snapshot-open-replay-json-btn" type="button">查看回放 JSON</button>
+      </div>
+    </div>
+
+    <div id="snapshot-status" class="status-card"></div>
+
+    <div class="layout">
+      <div class="panel">
+        <h2>快照报价</h2>
+        <div id="snapshot-dashboard"></div>
+      </div>
+      <div class="panel">
+        <h2>套利路径</h2>
+        <div id="snapshot-arb-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="arb-paths.js"></script>
+  <script src="arb-panel-renderer.js"></script>
+  <script src="snapshot-app.js"></script>
+</body>
+</html>

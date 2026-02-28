@@ -46,6 +46,8 @@
 
     let activeFetchControllers = new Map(); 
     let saveTimeout = null;
+    let priceSnapshotTimer = null;
+    let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     let arbUpdateTimer = null;
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
@@ -532,24 +534,13 @@
     }
 
     function updateArbPanel() {
-        function renderOpportunity(label, cycle) {
-            if (!cycle || !window.ArbPaths.isMeaningfulPath(cycle.legs)) return '';
-            const displayLegs = (cycle.legs || []).filter(leg => !isRuleLeg(leg));
-            const legHtml = buildLegLines(displayLegs).map(line => `<div class="arb-path-line">${line}</div>`).join('');
-            const profitClass = cycle.profitRate >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
-            const profitText = window.ArbPaths.formatProfitWanfen(cycle.profitRate);
-            const labelHtml = label ? `<div class="arb-path-line"><strong>${label}</strong></div>` : '';
-            return `<div class="arb-opportunity">${labelHtml}${legHtml}<div class="${profitClass}">收益: ${profitText}</div></div>`;
-        }
-
-        function renderSection(title, opportunitiesHtml, footerHtml = '', headerExtraHtml = '', emptyText = '等待数据...') {
-            const body = opportunitiesHtml.length ? opportunitiesHtml.join('') : `<div class="arb-path-line">${emptyText}</div>`;
-            return `<div class="arb-section"><div class="arb-section-title">${title}</div>${headerExtraHtml}${body}${footerHtml}</div>`;
-        }
-
         if (!arbPathContent) return;
         if (!window.ArbPaths) {
             arbPathContent.textContent = '路径模块未加载';
+            return;
+        }
+        if (!window.ArbPanelRenderer || typeof window.ArbPanelRenderer.renderArbGrid !== 'function') {
+            arbPathContent.textContent = '路径渲染模块未加载';
             return;
         }
 
@@ -572,15 +563,18 @@
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
 
-        const fixedOpportunities = [];
-        for (const rule of FIXED_PATH_RULES) {
-            const cycle = window.ArbPaths.findBestFixedPath(allEdgesWithRules, rule, aliasRules);
-            if (cycle) fixedOpportunities.push(renderOpportunity(rule.title, cycle));
-        }
-        const fixedColumn = renderSection('固定路径', fixedOpportunities);
+        const fixedSections = [{
+            title: '固定路径',
+            opportunities: FIXED_PATH_RULES
+                .map(rule => ({
+                    label: rule.title,
+                    cycle: window.ArbPaths.findBestFixedPath(allEdgesWithRules, rule, aliasRules)
+                }))
+                .filter(item => item.cycle)
+        }];
 
         const categorySections = [];
-        let lbtcSectionHtml = '';
+        let lbtcSection = null;
         for (const category of targetCategories) {
             const quotes = Array.isArray(category.quotes) ? category.quotes : [];
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
@@ -592,16 +586,18 @@
                 preferredStartSymbols: preferredCycleStartSymbols
             });
             const cycleDisplayState = getCycleDisplayState(cycles, 4, arbExpandedSections.has(sectionKey));
-            const opportunities = cycleDisplayState.displayCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
             const footerHtml = buildArbSectionToggleHtml(sectionKey, cycleDisplayState);
-            const sectionHtml = renderSection(category.name, opportunities, footerHtml);
+            const sectionDef = {
+                title: category.name,
+                opportunities: cycleDisplayState.displayCycles.map((cycle, index) => ({ label: `机会 ${index + 1}`, cycle })),
+                footerHtml
+            };
             if (category.name === 'LBTC监控') {
-                lbtcSectionHtml = sectionHtml;
+                lbtcSection = sectionDef;
             } else {
-                categorySections.push(sectionHtml);
+                categorySections.push(sectionDef);
             }
         }
-        const categoryColumn = categorySections.join('');
 
         const globalSectionKey = buildArbSectionKey('global', 'all');
         const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
@@ -617,19 +613,32 @@
         const globalFilteredOutCount = globalCycles.length - filteredGlobalCycles.length;
         updateGlobalArbFilterBar(excludedSymbols, globalFilteredOutCount);
         const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
-        const globalOpportunities = globalCycleDisplayState.displayCycles.map((cycle, index) => renderOpportunity(`机会 ${index + 1}`, cycle));
         const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
         const globalEmptyText = excludedSymbols.length ? '过滤后暂无路径' : '等待数据...';
-        const globalColumn = renderSection('全局路径', globalOpportunities, globalFooterHtml, '', globalEmptyText);
-        const leftColumn = `${fixedColumn}${lbtcSectionHtml}`;
+        const columns = [
+            lbtcSection ? fixedSections.concat([lbtcSection]) : fixedSections,
+            categorySections,
+            [{
+                title: '全局路径',
+                opportunities: globalCycleDisplayState.displayCycles.map((cycle, index) => ({ label: `机会 ${index + 1}`, cycle })),
+                footerHtml: globalFooterHtml,
+                emptyText: globalEmptyText
+            }]
+        ];
 
-        arbPathContent.innerHTML = `
-            <div class="arb-path-grid">
-                <div class="arb-column">${leftColumn}</div>
-                <div class="arb-column">${categoryColumn}</div>
-                <div class="arb-column">${globalColumn}</div>
-            </div>
-        `;
+        arbPathContent.innerHTML = window.ArbPanelRenderer.renderArbGrid({
+            columns,
+            isMeaningfulPath: cycle => cycle && window.ArbPaths.isMeaningfulPath(cycle.legs),
+            shouldIncludeLeg: leg => !isRuleLeg(leg),
+            formatChainLabel,
+            formatLegLine: ({ from, to, rate, chainLabel }) => window.ArbPaths.formatLegLine({
+                from,
+                to,
+                rate,
+                chainLabel
+            }),
+            formatProfit: profitRate => window.ArbPaths.formatProfitWanfen(profitRate)
+        });
     }
 
     async function getEvmMetadata(chain, tokenAddress, signal) {
@@ -1536,6 +1545,97 @@
         saveTimeout = setTimeout(() => { performSave(false); }, 1500); 
     }
 
+    async function loadPriceSnapshotConfig() {
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/get-price-snapshot-config`);
+            if (!response.ok) throw new Error('获取价格快照配置失败');
+            const data = await response.json();
+            const intervalSec = Number.parseInt(data.intervalSec, 10);
+            priceSnapshotConfig = {
+                enabled: data.enabled === true,
+                intervalSec: Number.isFinite(intervalSec) && intervalSec > 0 ? intervalSec : 10
+            };
+        } catch (error) {
+            console.warn('加载价格快照配置失败:', error);
+            priceSnapshotConfig = { enabled: false, intervalSec: 10 };
+        }
+    }
+
+    function buildPriceSnapshotPayload() {
+        const quotes = [];
+
+        for (const category of dashboardState) {
+            const categoryId = category?.id ?? null;
+            const categoryName = category?.name || '';
+            for (const quote of (category?.quotes || [])) {
+                const state = quoteMonitorState.get(quote.id) || {};
+                const fromSymbol = state.fromSymbol || '';
+                const toSymbol = state.toSymbol || '';
+                const inverseFromSymbol = state.inverseFromSymbol || '';
+                const inverseToSymbol = state.inverseToSymbol || '';
+                const size = quote.amount || 1;
+                const pair = fromSymbol && toSymbol
+                    ? `${fromSymbol}/${toSymbol}`
+                    : (quote.symbol || '');
+                const inversePair = inverseFromSymbol && inverseToSymbol
+                    ? `${inverseFromSymbol}/${inverseToSymbol}`
+                    : '';
+
+                quotes.push({
+                    quoteId: quote.id,
+                    categoryId,
+                    categoryName,
+                    chain: quote.chain,
+                    pair,
+                    size,
+                    preferredSource: quote.preferredSource || 'Kyber',
+                    usedSource: state.usedSource || '',
+                    fromToken: quote.fromToken || '',
+                    toToken: quote.toToken || '',
+                    fromSymbol,
+                    toSymbol,
+                    price: typeof state.lastRawPrice === 'number' ? state.lastRawPrice : null,
+                    inversePrice: typeof state.inverseRawPrice === 'number' ? state.inverseRawPrice : null,
+                    resultText: state.lastResultText || '',
+                    inversePair,
+                    inverseResultText: inversePair && typeof state.inverseRawPrice === 'number' && size
+                        ? `${size} ${inverseFromSymbol} ≈ ${(size * state.inverseRawPrice).toFixed(6)} ${inverseToSymbol}`
+                        : ''
+                });
+            }
+        }
+
+        return {
+            clientCapturedAt: new Date().toISOString(),
+            quotes
+        };
+    }
+
+    async function savePriceSnapshot() {
+        if (!priceSnapshotConfig.enabled) return;
+        const payload = buildPriceSnapshotPayload();
+        if (!payload.quotes.length) return;
+
+        try {
+            await fetch(`${BACKEND_URL}/api/save-price-snapshot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (error) {
+            console.warn('保存价格快照失败:', error);
+        }
+    }
+
+    function startPriceSnapshotTimer() {
+        if (priceSnapshotTimer) clearInterval(priceSnapshotTimer);
+        priceSnapshotTimer = null;
+        if (!priceSnapshotConfig.enabled) return;
+        priceSnapshotTimer = setInterval(() => {
+            savePriceSnapshot();
+        }, priceSnapshotConfig.intervalSec * 1000);
+    }
+
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
     
     themeToggleBtn.addEventListener('click', () => {
@@ -1971,6 +2071,7 @@
     
     async function init() {
         audioNoticeEl.style.display = 'block';
+        await loadPriceSnapshotConfig();
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.body.classList.add('dark-mode');
@@ -2017,6 +2118,7 @@
             // });
 
             updateSchedulers();
+            startPriceSnapshotTimer();
             
             makeDraggable(alertLogWindow, document.getElementById('alert-log-header'));
             if (arbPathWindow && arbPathHeader) {

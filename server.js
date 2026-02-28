@@ -7,6 +7,9 @@ const BN = require('bn.js');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
 const { buildLifiChainIdMap, resolveLifiChainId } = require('./lifi-utils');
 const { getDisplayedToAmountRaw } = require('./lifi-quote-utils');
+const { normalizePriceSnapshotConfig, appendPriceSnapshot, getClosestPriceSnapshot } = require('./price-snapshot-store');
+const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./price-snapshot-replay');
+const { parseUtc8Input } = require('./time-utils');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -23,9 +26,13 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
+app.get('/snapshot', (req, res) => {
+    res.sendFile(path.join(__dirname, 'snapshot.html'));
+});
 const CONFIG_PATH = './config.json';
 const CONFIG_MORE_PATH = './config_more.json';
 const METADATA_CACHE_PATH = './metadata-cache.json';
+const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
 
 let tokenMetaCache = {};
 
@@ -125,7 +132,9 @@ async function getConfigMore() {
         return {
             kyberClientId: rawClientId || 'xh-quote-dashboard',
             lifiApiKey: rawLifiApiKey,
-            lifiIntegrator: rawLifiIntegrator
+            lifiIntegrator: rawLifiIntegrator,
+            enablePriceSnapshot: configMore.enablePriceSnapshot === true,
+            priceSnapshotIntervalSec: Number.parseInt(configMore.priceSnapshotIntervalSec, 10) || 10
         };
     } catch (error) {
         if (error.code !== 'ENOENT') {
@@ -134,7 +143,9 @@ async function getConfigMore() {
         return {
             kyberClientId: 'xh-quote-dashboard',
             lifiApiKey: '',
-            lifiIntegrator: ''
+            lifiIntegrator: '',
+            enablePriceSnapshot: false,
+            priceSnapshotIntervalSec: 10
         };
     }
 }
@@ -335,6 +346,84 @@ app.get('/api/get-config', async (req, res) => {
         }
         if (error.code === 'ENOENT') { return res.json([]); }
         console.error("Config Read Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/get-price-snapshot-config', async (req, res) => {
+    try {
+        const configMore = await getConfigMore();
+        res.json(normalizePriceSnapshotConfig(configMore));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/save-price-snapshot', async (req, res) => {
+    try {
+        const configMore = await getConfigMore();
+        const snapshotConfig = normalizePriceSnapshotConfig(configMore);
+        if (!snapshotConfig.enabled) {
+            return res.json({ message: '价格快照未启用', skipped: true });
+        }
+
+        const savedPath = await appendPriceSnapshot(PRICE_SNAPSHOT_DIR, req.body || {});
+        verboseLog('SNAPSHOT', `价格快照已保存: ${savedPath}`);
+        res.json({ message: '价格快照保存成功' });
+    } catch (error) {
+        logMessage('SNAPSHOT_ERR', `价格快照保存失败: ${error.message}`, 'error');
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/get-price-snapshot', async (req, res) => {
+    try {
+        const at = req.query.at ? parseUtc8Input(req.query.at) : new Date();
+        if (Number.isNaN(at.getTime())) {
+            throw new Error('无效的 at 参数');
+        }
+
+        const mode = ['floor', 'nearest', 'ceil'].includes(String(req.query.mode || '')) ? String(req.query.mode) : 'floor';
+        const maxGapSec = Number.parseInt(req.query.maxGapSec || req.query['max-gap-sec'], 10);
+        const maxGapMs = Number.isFinite(maxGapSec) && maxGapSec > 0 ? maxGapSec * 1000 : null;
+        const selection = await getClosestPriceSnapshot(PRICE_SNAPSHOT_DIR, at, { mode, maxGapMs });
+        if (!selection) {
+            return res.json(null);
+        }
+
+        res.json(decorateSnapshotSelection(selection));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/replay-arb-snapshot', async (req, res) => {
+    try {
+        const at = req.query.at ? parseUtc8Input(req.query.at) : new Date();
+        if (Number.isNaN(at.getTime())) {
+            throw new Error('无效的 at 参数');
+        }
+
+        const mode = ['floor', 'nearest', 'ceil'].includes(String(req.query.mode || '')) ? String(req.query.mode) : 'floor';
+        const format = String(req.query.format || 'json').toLowerCase() === 'text' ? 'text' : 'json';
+        const maxGapSec = Number.parseInt(req.query.maxGapSec || req.query['max-gap-sec'], 10);
+        const maxGapMs = Number.isFinite(maxGapSec) && maxGapSec > 0 ? maxGapSec * 1000 : null;
+        const selection = await getClosestPriceSnapshot(PRICE_SNAPSHOT_DIR, at, { mode, maxGapMs });
+
+        if (!selection) {
+            if (format === 'text') {
+                return res.status(404).type('text/plain; charset=utf-8').send('未找到满足条件的快照');
+            }
+            return res.status(404).json({ error: '未找到满足条件的快照' });
+        }
+
+        const replay = buildReplayFromSnapshot(selection);
+        if (format === 'text') {
+            return res.type('text/plain; charset=utf-8').send(renderReplayText(replay));
+        }
+
+        res.json(replay);
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
