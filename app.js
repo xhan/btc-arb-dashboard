@@ -12,7 +12,8 @@
         lifi: [],
         bybit: [],
         solana: [],
-        sui: []
+        sui: [],
+        starknet: []
     };
 
     let indices = {
@@ -21,7 +22,8 @@
         lifi: 0,
         bybit: 0,
         solana: 0,
-        sui: 0
+        sui: 0,
+        starknet: 0
     };
 
     let timers = {
@@ -30,7 +32,8 @@
         lifi: null,
         bybit: null,
         solana: null,
-        sui: null
+        sui: null,
+        starknet: null
     };
 
     const DEFAULT_INTERVALS = {
@@ -39,7 +42,8 @@
         lifi: 170,
         bybit: 1000,
         solana: 3500, 
-        sui: 500
+        sui: 500,
+        starknet: 1000
     };
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
@@ -118,13 +122,14 @@
         scroll: 'Scroll', blast: 'Blast', mode: 'Mode', monad: 'Monad', etherlink: 'Etherlink',
         fantom: 'Fantom', cronos: 'Cronos', moonbeam: 'Moonbeam', boba: 'Boba', gnosis: 'Gnosis', celo: 'Celo',
         hemi: 'Hemi',
-        katana: 'Katana'
+        katana: 'Katana',
+        starknet: 'Starknet'
     };
 
     const CHAIN_ADDRESS_PLACEHOLDERS = {
         ethereum: '0x...', solana: 'Enter mint address...', sui: '0x...::module::TYPE',
         polygon: '0x...', arbitrum: '0x...', optimism: '0x...',
-        bsc: '0x...', avalanche: '0x...', base: '0x...', hemi: '0x...', katana: '0x...', Bybit: 'N/A'
+        bsc: '0x...', avalanche: '0x...', base: '0x...', hemi: '0x...', katana: '0x...', starknet: '0x...', Bybit: 'N/A'
     };
     
     const KYBER_SUPPORTED_CHAINS = [
@@ -156,7 +161,7 @@
         : () => 'Kyber';
 
     function isEvmChain(chain) {
-        const nonEvm = ['solana', 'sui', 'bybit'];
+        const nonEvm = ['solana', 'sui', 'starknet', 'bybit'];
         return !nonEvm.includes(chain.toLowerCase());
     }
 
@@ -177,6 +182,7 @@
         if (quote.chain === 'Bybit') type = 'bybit';
         else if (quote.chain === 'solana') type = 'solana';
         else if (quote.chain === 'sui') type = 'sui';
+        else if (quote.chain === 'starknet') type = 'starknet';
         else if (isEvmChain(quote.chain)) {
             if (quote.preferredSource === '0x' || quote.preferredSource === 'Velora') {
                 type = 'zerox';
@@ -282,6 +288,7 @@
         document.getElementById('setting-bybit-interval').value = apiIntervals.bybit;
         document.getElementById('setting-solana-interval').value = apiIntervals.solana;
         document.getElementById('setting-sui-interval').value = apiIntervals.sui;
+        document.getElementById('setting-starknet-interval').value = apiIntervals.starknet;
         settingsModal.classList.add('visible');
     });
 
@@ -296,7 +303,8 @@
             lifi: parseInt(document.getElementById('setting-lifi-interval').value) || DEFAULT_INTERVALS.lifi,
             bybit: parseInt(document.getElementById('setting-bybit-interval').value) || DEFAULT_INTERVALS.bybit,
             solana: parseInt(document.getElementById('setting-solana-interval').value) || DEFAULT_INTERVALS.solana,
-            sui: parseInt(document.getElementById('setting-sui-interval').value) || DEFAULT_INTERVALS.sui
+            sui: parseInt(document.getElementById('setting-sui-interval').value) || DEFAULT_INTERVALS.sui,
+            starknet: parseInt(document.getElementById('setting-starknet-interval').value) || DEFAULT_INTERVALS.starknet
         };
         
         apiIntervals = newIntervals;
@@ -699,6 +707,26 @@
         };
     }
 
+    async function getEkuboQuote(quote, signal) {
+        const response = await fetch(`${BACKEND_URL}/api/get-ekubo-quote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...quote }),
+            signal
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Ekubo API Request Failed');
+
+        return {
+            symbols: { from: data.fromSymbol, to: data.toSymbol },
+            finalAmountOut: data.amountOut,
+            rawPrice: data.raw_price,
+            usedSource: 'Ekubo',
+            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
+        };
+    }
+
     async function apiGetQuote(quote, signal, targetSource) {
         const amountToFetch = quote.amount || 1;
         const fetchOptions = { signal };
@@ -710,6 +738,8 @@
                  result = await get0xQuote(quote, signal);
             } else if (targetSource === 'LI.FI') {
                 result = await getLifiQuote(quote, signal);
+            } else if (targetSource === 'Ekubo') {
+                result = await getEkuboQuote(quote, signal);
             } else if (targetSource === 'Jupiter') {
                 const [resFrom, resTo] = await Promise.all([
                      fetch(`${BACKEND_URL}/api/solana-metadata?mint=${quote.fromToken}`, fetchOptions).then(res => res.ok ? res.json() : {}),
@@ -809,6 +839,7 @@
             } else {
                 if (quote.chain === 'sui') strategy = ['Cetus'];
                 else if (quote.chain === 'solana') strategy = ['Jupiter'];
+                else if (quote.chain === 'starknet') strategy = ['Ekubo'];
                 else if (quote.chain === 'Bybit') strategy = ['Bybit'];
             }
 

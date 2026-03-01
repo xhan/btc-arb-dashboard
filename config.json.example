@@ -22,6 +22,7 @@
     "lifi": 170,
     "bybit": 1000,
     "solana": 3500,
-    "sui": 500
+    "sui": 500,
+    "starknet": 1000
   }
 }

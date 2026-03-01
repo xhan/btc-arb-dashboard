@@ -5,6 +5,12 @@ const { ethers } = require('ethers');
 const { AggregatorClient } = require('@cetusprotocol/aggregator-sdk');
 const BN = require('bn.js');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
+const {
+    EKUBO_STARKNET_CHAIN_ID,
+    buildEkuboQuoteUrl,
+    extractEkuboAmountOutRaw,
+    buildEkuboQuoteResult
+} = require('./ekubo-utils');
 const { buildLifiChainIdMap, resolveLifiChainId } = require('./lifi-utils');
 const { getDisplayedToAmountRaw } = require('./lifi-quote-utils');
 const { normalizePriceSnapshotConfig, appendPriceSnapshot, getClosestPriceSnapshot } = require('./price-snapshot-store');
@@ -328,6 +334,25 @@ async function getLifiTokenMeta(chainId, tokenAddress, configMore = {}) {
     return { decimals: Number(data.decimals), symbol: data.symbol || '???' };
 }
 
+async function getEkuboTokenMeta(tokenAddress) {
+    const normalizedToken = String(tokenAddress || '').trim().toLowerCase();
+    if (!normalizedToken) {
+        throw new Error('缺少 Starknet 代币地址');
+    }
+
+    return await getCachedMetadata(`starknet-${normalizedToken}`, async () => {
+        const response = await fetchWithRetry(
+            `https://prod-api.ekubo.org/tokens/${EKUBO_STARKNET_CHAIN_ID}/${normalizedToken}`
+        );
+        const data = await response.json();
+
+        return {
+            symbol: data?.symbol || '???',
+            decimals: Number(data?.decimals) || 0
+        };
+    });
+}
+
 app.post('/api/save-config', async (req, res) => {
     try {
         await safeWriteConfig(req.body);
@@ -619,6 +644,39 @@ app.post('/api/get-lifi-quote', async (req, res) => {
         res.json(result);
     } catch (error) {
         logQuoteError('LIFI', logCtx, error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/get-ekubo-quote', async (req, res) => {
+    const { chain, fromToken, toToken, amount } = req.body;
+    const finalAmount = amount || 1;
+    let logCtx = { chain, fromToken, toToken, amount: finalAmount };
+
+    try {
+        if (String(chain || '').trim().toLowerCase() !== 'starknet') {
+            throw new Error(`Ekubo 仅支持 Starknet: ${chain}`);
+        }
+
+        const [fromMeta, toMeta] = await Promise.all([
+            getEkuboTokenMeta(fromToken),
+            getEkuboTokenMeta(toToken)
+        ]);
+        logCtx = { ...logCtx, fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol };
+
+        const amountInRaw = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals).toString();
+        const quoteUrl = buildEkuboQuoteUrl({ amountInRaw, fromToken, toToken });
+        logQuoteRequest('EKUBO', { ...logCtx, url: quoteUrl });
+
+        const quoteResp = await fetchWithRetry(quoteUrl);
+        const quoteData = await quoteResp.json();
+        const amountOutRaw = extractEkuboAmountOutRaw(quoteData);
+
+        const result = buildEkuboQuoteResult({ amount: finalAmount, amountOutRaw, fromMeta, toMeta });
+        logQuoteResult('EKUBO', { ...logCtx, amountOut: result.amountOut, rawPrice: result.raw_price });
+        res.json(result);
+    } catch (error) {
+        logQuoteError('EKUBO', logCtx, error);
         res.status(500).json({ error: error.message });
     }
 });

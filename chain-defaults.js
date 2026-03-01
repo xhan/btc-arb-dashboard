@@ -5,7 +5,11 @@
   }
   root.ChainDefaults = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  const LIFI_DEFAULT_CHAINS = new Set(['katana', 'hemi']);
+  const CHAIN_DEFAULT_SOURCES = new Map([
+    ['katana', 'LI.FI'],
+    ['hemi', 'LI.FI'],
+    ['starknet', 'Ekubo']
+  ]);
 
   function normalizeChain(chain) {
     return typeof chain === 'string' ? chain.trim().toLowerCase() : '';
@@ -13,7 +17,8 @@
 
   function getDefaultSourceForChain(chain) {
     const normalized = normalizeChain(chain);
-    if (LIFI_DEFAULT_CHAINS.has(normalized)) return 'LI.FI';
+    const defaultSource = CHAIN_DEFAULT_SOURCES.get(normalized);
+    if (defaultSource) return defaultSource;
     return 'Kyber';
   }
 
@@ -21,4 +26,3 @@
     getDefaultSourceForChain
   };
 });
-
