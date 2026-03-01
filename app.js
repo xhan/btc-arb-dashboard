@@ -376,6 +376,7 @@
             title: 'WBTC ETH <-> ARB',
             base: 'cbBTC',
             quote: 'WBTC',
+            categoryNames: ['WBTC监控'],
             chains: ['ethereum', 'arbitrum'],
             steps: 2
         },
@@ -570,13 +571,25 @@
         const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
+        const quoteMetaById = new Map();
+        for (const category of dashboardState) {
+            for (const quote of (category.quotes || [])) {
+                quoteMetaById.set(quote.id, { categoryName: category.name });
+            }
+        }
 
         const fixedSections = [{
             title: '固定路径',
             opportunities: FIXED_PATH_RULES
                 .map(rule => ({
                     label: rule.title,
-                    cycle: window.ArbPaths.findBestFixedPath(allEdgesWithRules, rule, aliasRules)
+                    cycle: window.ArbPaths.findBestFixedPath(
+                        (window.ArbFixedUtils && typeof window.ArbFixedUtils.filterEdgesForFixedRule === 'function')
+                            ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
+                            : allEdgesWithRules,
+                        rule,
+                        aliasRules
+                    )
                 }))
                 .filter(item => item.cycle)
         }];

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "start:v": "node server.js -v",
-    "test": "node tests/arb-paths.test.js && node tests/quote-calculator.test.js && node tests/chain-defaults.test.js && node tests/ekubo-utils.test.js && node tests/lifi-utils.test.js && node tests/lifi-quote-utils.test.js && node tests/time-utils.test.js && node tests/price-snapshot-store.test.js && node tests/price-snapshot-replay.test.js && node tests/price-snapshot-api.test.js && node tests/arb-panel-renderer.test.js && node tests/kyber-url-list.test.js && node tests/static-server.test.js"
+    "test": "node tests/arb-paths.test.js && node tests/quote-calculator.test.js && node tests/chain-defaults.test.js && node tests/ekubo-utils.test.js && node tests/lifi-utils.test.js && node tests/lifi-quote-utils.test.js && node tests/time-utils.test.js && node tests/arb-fixed-utils.test.js && node tests/price-snapshot-store.test.js && node tests/price-snapshot-replay.test.js && node tests/price-snapshot-api.test.js && node tests/arb-panel-renderer.test.js && node tests/kyber-url-list.test.js && node tests/static-server.test.js"
   },
   "dependencies": {
     "@cetusprotocol/aggregator-sdk": "^1.1.8",

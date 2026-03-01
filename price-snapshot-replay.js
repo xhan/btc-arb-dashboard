@@ -1,4 +1,5 @@
 const ArbPaths = require('./arb-paths');
+const { filterEdgesForFixedRule } = require('./arb-fixed-utils');
 const { formatUtc8 } = require('./time-utils');
 
 const ALIAS_RULES = {
@@ -13,6 +14,7 @@ const FIXED_PATH_RULES = [
     title: 'WBTC ETH <-> ARB',
     base: 'cbBTC',
     quote: 'WBTC',
+    categoryNames: ['WBTC监控'],
     chains: ['ethereum', 'arbitrum'],
     steps: 2
   },
@@ -140,10 +142,18 @@ function buildReplayFromSnapshot(selection) {
   const edges = buildEdgesFromSnapshotQuotes(snapshot);
   const ruleEdges = ArbPaths.buildRuleEdges(ALIAS_RULES);
   const allEdgesWithRules = edges.concat(ruleEdges);
+  const quoteMetaById = new Map((snapshot?.quotes || []).map((quote) => [quote.quoteId, { categoryName: quote.categoryName }]));
   const preferredStartSymbols = buildPreferredCycleStartSymbols(ALIAS_RULES, 'cbBTC');
 
   const fixedPaths = FIXED_PATH_RULES
-    .map((rule) => cycleToPlain(ArbPaths.findBestFixedPath(allEdgesWithRules, rule, ALIAS_RULES), rule.title))
+    .map((rule) => cycleToPlain(
+      ArbPaths.findBestFixedPath(
+        filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById),
+        rule,
+        ALIAS_RULES
+      ),
+      rule.title
+    ))
     .filter(Boolean);
 
   const globalTopCycles = (ArbPaths.findTopCycles(allEdgesWithRules, {
