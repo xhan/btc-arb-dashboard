@@ -5,6 +5,14 @@
   }
   root.ArbPanelRenderer = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function escapeAttr(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   function defaultFormatLegLine(leg) {
     return `${leg.from} -> ${leg.to} ${leg.rate}`;
   }
@@ -45,8 +53,12 @@
     const labelHtml = entry && entry.label
       ? `<div class="arb-path-line"><strong>${entry.label}</strong></div>`
       : '';
+    const opportunityId = entry && entry.opportunityId ? String(entry.opportunityId) : '';
+    const clickableAttrs = opportunityId
+      ? ` data-arb-opportunity-id="${escapeAttr(opportunityId)}" role="button" tabindex="0"`
+      : '';
 
-    return `<div class="arb-opportunity">${labelHtml}${legHtml}<div class="${profitClass}">收益: ${profitText}</div></div>`;
+    return `<div class="arb-opportunity"${clickableAttrs}>${labelHtml}${legHtml}<div class="${profitClass}">收益: ${profitText}</div></div>`;
   }
 
   function renderSection(section, options) {
