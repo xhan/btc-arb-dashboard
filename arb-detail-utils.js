@@ -93,6 +93,35 @@
     return key === 'Enter';
   }
 
+  function getArbDetailIntervalKey(source) {
+    switch (source) {
+      case 'Kyber':
+        return 'kyber';
+      case '0x':
+        return 'zerox';
+      case 'LI.FI':
+        return 'lifi';
+      case 'Bybit':
+        return 'bybit';
+      case 'Jupiter':
+        return 'solana';
+      case 'Cetus':
+        return 'sui';
+      case 'Ekubo':
+        return 'starknet';
+      default:
+        return null;
+    }
+  }
+
+  function getArbDetailRateLimitDelay(lastRequestAt, intervalMs, now = Date.now()) {
+    const safeInterval = Number(intervalMs);
+    if (!Number.isFinite(safeInterval) || safeInterval <= 0) return 0;
+    const safeLast = Number(lastRequestAt);
+    if (!Number.isFinite(safeLast) || safeLast <= 0) return 0;
+    return Math.max(0, Math.ceil(safeLast + safeInterval - now));
+  }
+
   return {
     buildDetailInputAmounts,
     summarizeDetailResult,
@@ -101,6 +130,8 @@
     getArbDetailCardDomIds,
     shouldSyncArbDetailInput,
     parseCommittedArbDetailInput,
-    shouldCommitArbDetailInputOnKey
+    shouldCommitArbDetailInputOnKey,
+    getArbDetailIntervalKey,
+    getArbDetailRateLimitDelay
   };
 }));

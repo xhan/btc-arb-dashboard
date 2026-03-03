@@ -68,6 +68,7 @@
         editingInputIndex: null
     };
     let arbDetailFetchController = null;
+    let arbDetailLastRequestAtBySource = new Map();
     
     let hoverTimeout = null;        
     let currentHoveredQuoteId = null; 
@@ -848,6 +849,39 @@
         });
     }
 
+    function getArbDetailIntervalMsForSource(source) {
+        const intervalKey = getArbDetailUtils().getArbDetailIntervalKey(source);
+        if (!intervalKey) return 0;
+        const configured = Number(apiIntervals[intervalKey]);
+        return Number.isFinite(configured) && configured > 0 ? configured : 0;
+    }
+
+    async function waitForArbDetailSourceBudget(source, signal) {
+        const intervalKey = getArbDetailUtils().getArbDetailIntervalKey(source);
+        if (!intervalKey) return;
+        if (signal && signal.aborted) {
+            const aborted = new Error('Aborted');
+            aborted.name = 'AbortError';
+            throw aborted;
+        }
+
+        const waitMs = getArbDetailUtils().getArbDetailRateLimitDelay(
+            arbDetailLastRequestAtBySource.get(intervalKey),
+            getArbDetailIntervalMsForSource(source)
+        );
+
+        if (waitMs > 0) {
+            await sleep(waitMs);
+            if (signal && signal.aborted) {
+                const aborted = new Error('Aborted');
+                aborted.name = 'AbortError';
+                throw aborted;
+            }
+        }
+
+        arbDetailLastRequestAtBySource.set(intervalKey, Date.now());
+    }
+
     function renderArbDetailModal(forceShellRebuild = false) {
         if (!arbDetailGrid || !arbDetailModal) return;
         if (!arbDetailState.visible) {
@@ -974,10 +1008,10 @@
 
     async function refreshArbDetailCards(runToken) {
         const current = arbDetailState.selectedOpportunity;
-        if (!current || !current.cycle) return;
+        if (!current || !current.cycle) return false;
 
         const executableLegs = (current.cycle.legs || []).filter(leg => !isRuleLeg(leg));
-        if (!executableLegs.length) return;
+        if (!executableLegs.length) return false;
 
         const controller = new AbortController();
         arbDetailFetchController = controller;
@@ -1001,7 +1035,8 @@
                         signal: controller.signal,
                         isInverseFetch: Boolean(leg.inverse),
                         amount: rollingAmount,
-                        skipDelay: true
+                        skipDelay: true,
+                        beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)
                     });
 
                     rollingAmount = data.finalAmountOut;
@@ -1035,6 +1070,8 @@
             }
             renderArbDetailModal();
         }
+
+        return true;
     }
 
     async function startArbDetailLoop(runToken) {
@@ -1043,9 +1080,9 @@
 
         try {
             while (arbDetailState.visible && arbDetailState.loopToken === runToken) {
-                await refreshArbDetailCards(runToken);
+                const didRefresh = await refreshArbDetailCards(runToken);
                 if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) break;
-                await sleep(150);
+                if (!didRefresh) break;
             }
         } finally {
             if (arbDetailState.loopToken === runToken) {
@@ -1401,6 +1438,9 @@
 
     async function fetchQuoteByStrategy(quote, options = {}) {
         const signal = options.signal;
+        const beforeSourceAttempt = typeof options.beforeSourceAttempt === 'function'
+            ? options.beforeSourceAttempt
+            : null;
         const isInverseFetch = Boolean(options.isInverseFetch);
         const amountOverride = Number(options.amount);
         const requestedAmount = Number.isFinite(amountOverride) && amountOverride > 0
@@ -1418,6 +1458,10 @@
             try {
                 if (source === 'Kyber' && !isKyberSupported(quote.chain)) continue;
                 if (source === '0x' && !is0xSupported(quote.chain)) continue;
+
+                if (beforeSourceAttempt) {
+                    await beforeSourceAttempt(source, requestQuote);
+                }
 
                 if (!options.skipDelay && source === '0x' && strategy[0] !== '0x') {
                     await sleep(600);

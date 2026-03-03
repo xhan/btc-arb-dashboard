@@ -8,6 +8,40 @@
 
 **Tech Stack:** 原生 HTML/CSS/JS，现有 `app.js`、`arb-panel-renderer.js`、Node 测试脚本。
 
+## 详情报价调度补充（2026-03-03）
+
+### 与主看板调度的区别
+
+- 主看板仍然保持现有设计：按 `kyber / zerox / lifi / bybit / solana / sui / starknet` 分队列，用各自 `setInterval` 轮询。
+- 详情弹窗**不复用主看板队列**，避免把详情对比请求插进现有监控调度，影响主看板稳定性。
+- 因此主看板调度逻辑保持不变，这次只约束详情弹窗自己的请求节奏。
+
+### 详情弹窗当前调度规则
+
+- 详情刷新按卡片顺序串行执行；每张卡片再按套利路径的腿顺序串行请求。
+- 例如：4 张卡片、2 条腿，最少是 8 次请求，顺序执行，不会 8 个同时打出。
+- 详情刷新不再使用固定的“整轮结束后 sleep 150ms”节流。
+- 现在改为：**每次实际发请求前，按本次 source 对应的设置间隔检查是否需要等待。**
+
+### Source 与间隔的映射
+
+- `Kyber -> apiIntervals.kyber`
+- `0x -> apiIntervals.zerox`
+- `LI.FI -> apiIntervals.lifi`
+- `Bybit -> apiIntervals.bybit`
+- `Jupiter -> apiIntervals.solana`
+- `Cetus -> apiIntervals.sui`
+- `Ekubo -> apiIntervals.starknet`
+
+### 设计理由
+
+- 详情弹窗的规则和主看板不同：它是“固定路径、多输入金额、逐腿复算”，天然更适合串行计算。
+- 但每个 API 又有各自频率限制，所以详情弹窗不能简单无间隔 while 循环。
+- 用“详情独立串行 + 发请求前按 source 限速”的方式，可以同时满足：
+  - 不破坏主看板现有调度
+  - 遵循各 API 的请求频率设置
+  - 避免旧版固定 `150ms` 节流过粗、对不同 source 不准确的问题
+
 ### Task 1: 先补测试，锁定新行为
 
 **Files:**

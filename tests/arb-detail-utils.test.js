@@ -8,7 +8,9 @@ const {
   getArbDetailCardDomIds,
   shouldSyncArbDetailInput,
   parseCommittedArbDetailInput,
-  shouldCommitArbDetailInputOnKey
+  shouldCommitArbDetailInputOnKey,
+  getArbDetailIntervalKey,
+  getArbDetailRateLimitDelay
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -100,4 +102,29 @@ assert.strictEqual(
 assert.strictEqual(
   shouldCommitArbDetailInputOnKey('Tab'),
   false
+);
+
+assert.strictEqual(
+  getArbDetailIntervalKey('Kyber'),
+  'kyber'
+);
+
+assert.strictEqual(
+  getArbDetailIntervalKey('Jupiter'),
+  'solana'
+);
+
+assert.strictEqual(
+  getArbDetailIntervalKey('Unknown'),
+  null
+);
+
+assert.strictEqual(
+  getArbDetailRateLimitDelay(1000, 170, 1100),
+  70
+);
+
+assert.strictEqual(
+  getArbDetailRateLimitDelay(1000, 170, 1200),
+  0
 );
