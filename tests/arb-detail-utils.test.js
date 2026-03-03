@@ -4,7 +4,11 @@ const {
   buildDetailInputAmounts,
   summarizeDetailResult,
   getQuoteRunState,
-  findBestSummaryIndices
+  findBestSummaryIndices,
+  getArbDetailCardDomIds,
+  shouldSyncArbDetailInput,
+  parseCommittedArbDetailInput,
+  shouldCommitArbDetailInputOnKey
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -51,4 +55,49 @@ assert.deepStrictEqual(
     bestProfitIndices: [1],
     bestProfitRateIndices: [2]
   }
+);
+
+assert.strictEqual(
+  getArbDetailCardDomIds(2).inputId,
+  'arb-detail-input-2'
+);
+
+assert.strictEqual(
+  getArbDetailCardDomIds(2).rowsId,
+  'arb-detail-rows-2'
+);
+
+assert.strictEqual(
+  getArbDetailCardDomIds(2).summaryId,
+  'arb-detail-summary-2'
+);
+
+assert.strictEqual(
+  shouldSyncArbDetailInput(1, null),
+  true
+);
+
+assert.strictEqual(
+  shouldSyncArbDetailInput(1, 1),
+  false
+);
+
+assert.strictEqual(
+  parseCommittedArbDetailInput('1.5'),
+  1.5
+);
+
+assert.strictEqual(
+  parseCommittedArbDetailInput('0'),
+  null
+);
+
+assert.strictEqual(
+  shouldCommitArbDetailInputOnKey('Enter'),
+  true
+);
+
+assert.strictEqual(
+  shouldCommitArbDetailInputOnKey('Tab'),
+  false
 );

@@ -742,7 +742,113 @@
         };
     }
 
-    function renderArbDetailModal() {
+    function buildArbDetailRowsHtml(card) {
+        if (card.rows && card.rows.length) {
+            return card.rows.map((row) => `
+                <div class="arb-detail-leg">
+                    <div class="arb-detail-leg-line">
+                        <div class="arb-detail-leg-main">
+                            <div class="arb-detail-leg-pair">${escapeHtml(row.line)}</div>
+                            <div class="arb-detail-leg-source">${escapeHtml(row.sourceText)}</div>
+                        </div>
+                        <span class="arb-detail-leg-amount">${escapeHtml(row.amountText)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        return `<div class="${card.error ? 'arb-detail-error' : 'arb-detail-loading'}">${escapeHtml(card.error || '等待报价...')}</div>`;
+    }
+
+    function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
+        if (card.summary && typeof card.summary.profit === 'number') {
+            const profitClass = bestProfitIndices.includes(index) ? ' arb-detail-metric-best' : '';
+            const rateClass = bestProfitRateIndices.includes(index) ? ' arb-detail-metric-best' : '';
+            return `
+                <span class="arb-detail-metric${profitClass}">收益 ${formatDetailNumber(card.summary.profit)} ${escapeHtml(card.summary.symbol || '')}</span>
+                <span class="arb-detail-metric${rateClass}">${formatDetailProfitRate(card.summary.profitRate)}</span>
+            `;
+        }
+
+        return '<span class="arb-detail-metric">收益 --</span>';
+    }
+
+    function shouldRebuildArbDetailShell() {
+        if (!arbDetailGrid) return false;
+        if (arbDetailGrid.querySelectorAll('[data-arb-detail-card-index]').length !== arbDetailState.cards.length) {
+            return true;
+        }
+
+        return arbDetailState.cards.some((_, index) => {
+            const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
+            return !document.getElementById(ids.inputId)
+                || !document.getElementById(ids.rowsId)
+                || !document.getElementById(ids.summaryId);
+        });
+    }
+
+    function renderArbDetailShell() {
+        const cardsHtml = arbDetailState.cards.map((card, index) => {
+            const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
+            return `
+                <div class="arb-detail-card" data-arb-detail-card-index="${index}">
+                    <div class="arb-detail-card-header">
+                        <span class="arb-detail-badge">${index + 1}</span>
+                        <div class="arb-detail-input-row">
+                            <input
+                                id="${ids.inputId}"
+                                class="arb-detail-input"
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                data-arb-detail-input-index="${index}"
+                                value="${escapeHtml(card.inputAmount)}"
+                            >
+                            <div class="arb-detail-stepper">
+                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="-0.1">－</button>
+                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="0.1">＋</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="${ids.rowsId}" class="arb-detail-path-list"></div>
+                    <div id="${ids.summaryId}" class="arb-detail-summary"></div>
+                </div>
+            `;
+        }).join('');
+
+        arbDetailGrid.innerHTML = cardsHtml;
+    }
+
+    function syncArbDetailInputValues() {
+        arbDetailState.cards.forEach((card, index) => {
+            if (!getArbDetailUtils().shouldSyncArbDetailInput(index, arbDetailState.editingInputIndex)) {
+                return;
+            }
+            const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
+            const inputEl = document.getElementById(ids.inputId);
+            if (!inputEl) return;
+            const nextValue = String(card.inputAmount);
+            if (inputEl.value !== nextValue) {
+                inputEl.value = nextValue;
+            }
+        });
+    }
+
+    function renderArbDetailCardContents() {
+        const { bestProfitIndices, bestProfitRateIndices } = getArbDetailUtils().findBestSummaryIndices(arbDetailState.cards);
+
+        arbDetailState.cards.forEach((card, index) => {
+            const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
+            const rowsEl = document.getElementById(ids.rowsId);
+            const summaryEl = document.getElementById(ids.summaryId);
+            if (!rowsEl || !summaryEl) return;
+
+            rowsEl.innerHTML = buildArbDetailRowsHtml(card);
+            summaryEl.innerHTML = buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices);
+        });
+    }
+
+    function renderArbDetailModal(forceShellRebuild = false) {
         if (!arbDetailGrid || !arbDetailModal) return;
         if (!arbDetailState.visible) {
             arbDetailModal.classList.remove('visible');
@@ -759,65 +865,11 @@
 
         const legLines = buildLegLines((current.cycle.legs || []).filter(leg => !isRuleLeg(leg)));
         arbDetailSubtitle.textContent = `${current.label || '套利机会'} | ${legLines.join(' | ')}`;
-        const { bestProfitIndices, bestProfitRateIndices } = getArbDetailUtils().findBestSummaryIndices(arbDetailState.cards);
-
-        const cardsHtml = arbDetailState.cards.map((card, index) => {
-            const rowsHtml = card.rows && card.rows.length
-                ? card.rows.map((row) => `
-                    <div class="arb-detail-leg">
-                        <div class="arb-detail-leg-line">
-                            <div class="arb-detail-leg-main">
-                                <div class="arb-detail-leg-pair">${escapeHtml(row.line)}</div>
-                                <div class="arb-detail-leg-source">${escapeHtml(row.sourceText)}</div>
-                            </div>
-                            <span class="arb-detail-leg-amount">${escapeHtml(row.amountText)}</span>
-                        </div>
-                    </div>
-                `).join('')
-                : `<div class="${card.error ? 'arb-detail-error' : 'arb-detail-loading'}">${escapeHtml(card.error || '等待报价...')}</div>`;
-
-            const profitClass = bestProfitIndices.includes(index) ? ' arb-detail-metric-best' : '';
-            const rateClass = bestProfitRateIndices.includes(index) ? ' arb-detail-metric-best' : '';
-            const summaryHtml = (card.summary && typeof card.summary.profit === 'number')
-                ? `
-                    <div class="arb-detail-summary">
-                        <span class="arb-detail-metric${profitClass}">收益 ${formatDetailNumber(card.summary.profit)} ${escapeHtml(card.summary.symbol || '')}</span>
-                        <span class="arb-detail-metric${rateClass}">${formatDetailProfitRate(card.summary.profitRate)}</span>
-                    </div>
-                `
-                : `
-                    <div class="arb-detail-summary">
-                        <span class="arb-detail-metric">收益 --</span>
-                    </div>
-                `;
-
-            return `
-                <div class="arb-detail-card">
-                    <div class="arb-detail-card-header">
-                        <span class="arb-detail-badge">${index + 1}</span>
-                        <div class="arb-detail-input-row">
-                            <input
-                                id="arb-detail-input-${index}"
-                                class="arb-detail-input"
-                                type="number"
-                                min="0.1"
-                                step="0.1"
-                                data-arb-detail-input-index="${index}"
-                                value="${escapeHtml(card.inputAmount)}"
-                            >
-                            <div class="arb-detail-stepper">
-                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="-0.1">－</button>
-                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="0.1">＋</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="arb-detail-path-list">${rowsHtml}</div>
-                    ${summaryHtml}
-                </div>
-            `;
-        }).join('');
-
-        arbDetailGrid.innerHTML = cardsHtml;
+        if (forceShellRebuild || shouldRebuildArbDetailShell()) {
+            renderArbDetailShell();
+        }
+        syncArbDetailInputValues();
+        renderArbDetailCardContents();
         arbDetailModal.classList.add('visible');
     }
 
@@ -886,19 +938,38 @@
         arbDetailState.isRefreshing = false;
         arbDetailState.editingInputIndex = null;
         setArbDetailDashboardPause(true);
-        renderArbDetailModal();
+        renderArbDetailModal(true);
         startArbDetailLoop(arbDetailState.loopToken);
     }
 
     function updateArbDetailInput(index, rawValue) {
         const card = arbDetailState.cards[index];
         if (!card) return;
-        const parsed = Number(rawValue);
-        if (!Number.isFinite(parsed) || parsed <= 0) return;
+        const parsed = getArbDetailUtils().parseCommittedArbDetailInput(rawValue);
+        if (parsed === null) return;
         card.inputAmount = parsed;
         card.rows = [];
         card.summary = null;
         card.error = '';
+    }
+
+    function commitArbDetailInput(index, rawValue) {
+        const card = arbDetailState.cards[index];
+        if (!card) return;
+
+        const parsed = getArbDetailUtils().parseCommittedArbDetailInput(rawValue);
+        if (parsed === null) {
+            renderArbDetailModal();
+            return;
+        }
+
+        if (parsed === card.inputAmount) {
+            renderArbDetailModal();
+            return;
+        }
+
+        updateArbDetailInput(index, parsed);
+        renderArbDetailModal();
     }
 
     async function refreshArbDetailCards(runToken) {
@@ -972,10 +1043,6 @@
 
         try {
             while (arbDetailState.visible && arbDetailState.loopToken === runToken) {
-                if (arbDetailState.editingInputIndex !== null) {
-                    await sleep(150);
-                    continue;
-                }
                 await refreshArbDetailCards(runToken);
                 if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) break;
                 await sleep(150);
@@ -2699,11 +2766,6 @@
                 arbPathContent.addEventListener('keydown', handleArbPathContentKeydown);
             }
             if (arbDetailGrid) {
-                arbDetailGrid.addEventListener('input', (event) => {
-                    const input = event.target.closest('[data-arb-detail-input-index]');
-                    if (!input) return;
-                    updateArbDetailInput(Number(input.dataset.arbDetailInputIndex), input.value);
-                });
                 arbDetailGrid.addEventListener('mousedown', (event) => {
                     const stepBtn = event.target.closest('[data-arb-detail-step-index]');
                     if (stepBtn) {
@@ -2727,7 +2789,14 @@
                     const input = event.target.closest('[data-arb-detail-input-index]');
                     if (!input) return;
                     arbDetailState.editingInputIndex = null;
-                    renderArbDetailModal();
+                    commitArbDetailInput(Number(input.dataset.arbDetailInputIndex), input.value);
+                });
+                arbDetailGrid.addEventListener('keydown', (event) => {
+                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    if (!input) return;
+                    if (!getArbDetailUtils().shouldCommitArbDetailInputOnKey(event.key)) return;
+                    event.preventDefault();
+                    input.blur();
                 });
             }
             if (arbDetailCloseBtn) {

@@ -70,10 +70,37 @@
     };
   }
 
+  function getArbDetailCardDomIds(index) {
+    const suffix = String(index);
+    return {
+      inputId: `arb-detail-input-${suffix}`,
+      rowsId: `arb-detail-rows-${suffix}`,
+      summaryId: `arb-detail-summary-${suffix}`
+    };
+  }
+
+  function shouldSyncArbDetailInput(index, editingInputIndex) {
+    return index !== editingInputIndex;
+  }
+
+  function parseCommittedArbDetailInput(rawValue) {
+    const parsed = Number(rawValue);
+    if (!Number.isFinite(parsed) || parsed <= 0) return null;
+    return parsed;
+  }
+
+  function shouldCommitArbDetailInputOnKey(key) {
+    return key === 'Enter';
+  }
+
   return {
     buildDetailInputAmounts,
     summarizeDetailResult,
     getQuoteRunState,
-    findBestSummaryIndices
+    findBestSummaryIndices,
+    getArbDetailCardDomIds,
+    shouldSyncArbDetailInput,
+    parseCommittedArbDetailInput,
+    shouldCommitArbDetailInputOnKey
   };
 }));
