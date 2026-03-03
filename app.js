@@ -55,6 +55,7 @@
     let arbUpdateTimer = null;
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
+    let arbGlobalExcludedChainsInput = '';
     let arbOpportunityMap = new Map();
     let arbDetailState = {
         visible: false,
@@ -111,8 +112,8 @@
     const arbPathContent = document.getElementById('arb-path-content');
     const arbGlobalFilterBar = document.getElementById('arb-global-filter-bar');
     const arbGlobalFilterInput = document.getElementById('arb-global-filter-input');
+    const arbGlobalChainFilterInput = document.getElementById('arb-global-chain-filter-input');
     const arbGlobalFilterClearBtn = document.getElementById('arb-global-filter-clear-btn');
-    const arbGlobalFilterHint = document.getElementById('arb-global-filter-hint');
     const arbPathHeader = document.getElementById('arb-path-header');
     const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
@@ -141,6 +142,38 @@
         hemi: 'Hemi',
         katana: 'Katana',
         starknet: 'Starknet'
+    };
+
+    const CHAIN_FILTER_ALIASES = {
+        ETH: 'ethereum',
+        SOL: 'solana',
+        SUI: 'sui',
+        POLY: 'polygon',
+        MATIC: 'polygon',
+        ARB: 'arbitrum',
+        OP: 'optimism',
+        BSC: 'bsc',
+        BNB: 'bsc',
+        AVAX: 'avalanche',
+        BASE: 'base',
+        LINEA: 'linea',
+        MNT: 'mantle',
+        MANTLE: 'mantle',
+        SONIC: 'sonic',
+        BERA: 'berachain',
+        RON: 'ronin',
+        UNI: 'unichain',
+        HYPE: 'hyperevm',
+        SCROLL: 'scroll',
+        BLAST: 'blast',
+        MODE: 'mode',
+        MONAD: 'monad',
+        FTM: 'fantom',
+        CRO: 'cronos',
+        GLMR: 'moonbeam',
+        BOBA: 'boba',
+        GNO: 'gnosis',
+        CELO: 'celo'
     };
 
     const CHAIN_ADDRESS_PLACEHOLDERS = {
@@ -392,6 +425,23 @@
         return CHAIN_DISPLAY_NAMES[chain] || chain;
     }
 
+    function normalizeArbChainFilterToken(chainToken) {
+        const token = String(chainToken || '').trim();
+        if (!token) return '';
+        if (Object.prototype.hasOwnProperty.call(CHAIN_DISPLAY_NAMES, token)) {
+            return token;
+        }
+
+        for (const [chainKey, displayName] of Object.entries(CHAIN_DISPLAY_NAMES)) {
+            if (displayName === token) {
+                return chainKey;
+            }
+        }
+
+        const aliasMatch = CHAIN_FILTER_ALIASES[token.toUpperCase()];
+        return aliasMatch || '';
+    }
+
     const FIXED_PATH_RULES = [
         {
             title: 'WBTC ETH <-> ARB',
@@ -548,9 +598,9 @@
         return Array.from(symbols);
     }
 
-    function parseArbSymbolFilterInput(inputText) {
+    function parseArbFilterInput(inputText) {
         const tokens = String(inputText || '')
-            .split(/[\s,，]+/)
+            .split(/\s+/)
             .map(token => token.trim())
             .filter(Boolean);
         return Array.from(new Set(tokens));
@@ -562,22 +612,23 @@
         return cycle.legs.some(leg => symbolSet.has(leg.from) || symbolSet.has(leg.to));
     }
 
-    function updateGlobalArbFilterBar(excludedSymbols, filteredCount) {
-        if (!arbGlobalFilterBar) return;
+    function cycleContainsAnyChains(cycle, chains) {
+        if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(chains) || !chains.length) return false;
+        const chainSet = new Set(chains);
+        return cycle.legs.some(leg => chainSet.has(String(leg.chain || '')));
+    }
 
-        const hasFilter = Boolean(arbGlobalExcludedSymbolsInput.trim());
-        const hintText = excludedSymbols.length
-            ? `已过滤 ${excludedSymbols.join(', ')}（隐藏 ${filteredCount} 条）`
-            : '输入代币 symbol 过滤全局路径（空格/逗号分隔）';
+    function updateGlobalArbFilterBar() {
+        if (!arbGlobalFilterBar) return;
 
         if (arbGlobalFilterInput && arbGlobalFilterInput.value !== arbGlobalExcludedSymbolsInput) {
             arbGlobalFilterInput.value = arbGlobalExcludedSymbolsInput;
         }
-        if (arbGlobalFilterClearBtn) {
-            arbGlobalFilterClearBtn.disabled = !hasFilter;
+        if (arbGlobalChainFilterInput && arbGlobalChainFilterInput.value !== arbGlobalExcludedChainsInput) {
+            arbGlobalChainFilterInput.value = arbGlobalExcludedChainsInput;
         }
-        if (arbGlobalFilterHint) {
-            arbGlobalFilterHint.textContent = hintText;
+        if (arbGlobalFilterClearBtn) {
+            arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim() && !arbGlobalExcludedChainsInput.trim();
         }
     }
 
@@ -943,9 +994,17 @@
         updateArbPanel();
     }
 
+    function handleArbGlobalChainFilterInput(event) {
+        const nextValue = (event && event.target && typeof event.target.value === 'string') ? event.target.value : '';
+        if (nextValue === arbGlobalExcludedChainsInput) return;
+        arbGlobalExcludedChainsInput = nextValue;
+        updateArbPanel();
+    }
+
     function handleArbGlobalFilterClear() {
-        if (!arbGlobalExcludedSymbolsInput) return;
+        if (!arbGlobalExcludedSymbolsInput && !arbGlobalExcludedChainsInput) return;
         arbGlobalExcludedSymbolsInput = '';
+        arbGlobalExcludedChainsInput = '';
         updateArbPanel();
         if (arbGlobalFilterInput) {
             arbGlobalFilterInput.focus();
@@ -1047,15 +1106,23 @@
             acceptCycle: window.ArbPaths.isMeaningfulPath,
             preferredStartSymbols: preferredCycleStartSymbols
         });
-        const excludedSymbols = parseArbSymbolFilterInput(arbGlobalExcludedSymbolsInput);
-        const filteredGlobalCycles = excludedSymbols.length
-            ? globalCycles.filter(cycle => !cycleContainsAnySymbols(cycle, excludedSymbols))
+        const excludedSymbols = parseArbFilterInput(arbGlobalExcludedSymbolsInput);
+        const excludedChains = Array.from(new Set(
+            parseArbFilterInput(arbGlobalExcludedChainsInput)
+                .map(normalizeArbChainFilterToken)
+                .filter(Boolean)
+        ));
+        const hasGlobalFilter = excludedSymbols.length || excludedChains.length;
+        const filteredGlobalCycles = hasGlobalFilter
+            ? globalCycles.filter(cycle =>
+                !cycleContainsAnySymbols(cycle, excludedSymbols) &&
+                !cycleContainsAnyChains(cycle, excludedChains)
+            )
             : globalCycles;
-        const globalFilteredOutCount = globalCycles.length - filteredGlobalCycles.length;
-        updateGlobalArbFilterBar(excludedSymbols, globalFilteredOutCount);
+        updateGlobalArbFilterBar();
         const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
         const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
-        const globalEmptyText = excludedSymbols.length ? '过滤后暂无路径' : '等待数据...';
+        const globalEmptyText = hasGlobalFilter ? '过滤后暂无路径' : '等待数据...';
         const columns = [
             lbtcSection ? fixedSections.concat([lbtcSection]) : fixedSections,
             categorySections,
@@ -2675,6 +2742,9 @@
             }
             if (arbGlobalFilterInput) {
                 arbGlobalFilterInput.addEventListener('input', handleArbGlobalFilterInput);
+            }
+            if (arbGlobalChainFilterInput) {
+                arbGlobalChainFilterInput.addEventListener('input', handleArbGlobalChainFilterInput);
             }
             if (arbGlobalFilterClearBtn) {
                 arbGlobalFilterClearBtn.addEventListener('click', handleArbGlobalFilterClear);
