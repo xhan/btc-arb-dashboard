@@ -10,6 +10,7 @@ const html = renderArbGrid({
         opportunities: [
           {
             label: '机会 1',
+            opportunityId: 'fixed-1',
             profitRate: 0.0012,
             legs: [
               { from: 'WBTC', to: 'WETH', rate: 16, chain: 'ethereum' },
@@ -26,5 +27,6 @@ const html = renderArbGrid({
 
 assert.ok(html.includes('固定路径'));
 assert.ok(html.includes('机会 1'));
+assert.ok(html.includes('data-arb-opportunity-id="fixed-1"'));
 assert.ok(html.includes('WBTC->WETH 16 @ethereum'));
 assert.ok(html.includes('收益: 12.00'));

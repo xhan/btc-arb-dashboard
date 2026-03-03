@@ -55,6 +55,18 @@
     let arbUpdateTimer = null;
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
+    let arbOpportunityMap = new Map();
+    let arbDetailState = {
+        visible: false,
+        opportunityId: null,
+        selectedOpportunity: null,
+        cards: [],
+        pausedDashboard: false,
+        loopToken: 0,
+        isRefreshing: false,
+        editingInputIndex: null
+    };
+    let arbDetailFetchController = null;
     
     let hoverTimeout = null;        
     let currentHoveredQuoteId = null; 
@@ -76,6 +88,7 @@
     
     const manualSaveBtn = document.getElementById('manual-save-btn');
     const manualSaveText = document.getElementById('manual-save-text');
+    const quoteRunStateTag = document.getElementById('quote-run-state-tag');
 
     const settingsBtn = document.getElementById('global-settings-btn');
     const settingsModal = document.getElementById('settings-modal');
@@ -104,6 +117,10 @@
     const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
     const toggleArbBtn = document.getElementById('toggle-arb-btn');
+    const arbDetailModal = document.getElementById('arb-detail-modal');
+    const arbDetailCloseBtn = document.getElementById('arb-detail-close-btn');
+    const arbDetailSubtitle = document.getElementById('arb-detail-subtitle');
+    const arbDetailGrid = document.getElementById('arb-detail-grid');
     const calcWindow = document.getElementById('calc-window');
     const calcContent = document.getElementById('calc-content');
     const calcHeader = document.getElementById('calc-header');
@@ -274,7 +291,11 @@
         Object.keys(timers).forEach(type => {
             if (timers[type]) clearInterval(timers[type]);
             timers[type] = null;
-            
+
+            if (arbDetailState.pausedDashboard) {
+                return;
+            }
+
             if (apiIntervals[type] > 0) {
                 timers[type] = setInterval(() => processQueue(type), apiIntervals[type]);
             }
@@ -402,6 +423,119 @@
         return Boolean(leg && (leg.rule || leg.chain === '规则'));
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function getArbDetailUtils() {
+        return window.ArbDetailUtils || {
+            buildDetailInputAmounts(baseAmount) {
+                const amount = Number(baseAmount);
+                return [Number.isFinite(amount) && amount > 0 ? amount : 1, 0.2, 1, 2];
+            },
+            summarizeDetailResult(startAmount, finalAmount) {
+                const safeStart = Number(startAmount) > 0 ? Number(startAmount) : 1;
+                if (typeof finalAmount !== 'number' || Number.isNaN(finalAmount)) {
+                    return { profit: null, profitRate: null };
+                }
+                const profit = finalAmount - safeStart;
+                return {
+                    profit,
+                    profitRate: profit / safeStart
+                };
+            },
+            getQuoteRunState(isPaused) {
+                return isPaused
+                    ? { text: '暂停中', tone: 'paused' }
+                    : { text: '报价中', tone: 'running' };
+            },
+            findBestSummaryIndices(cards) {
+                let bestProfit = null;
+                let bestProfitRate = null;
+                const bestProfitIndices = [];
+                const bestProfitRateIndices = [];
+
+                (cards || []).forEach((card, index) => {
+                    const profit = card?.summary?.profit;
+                    const profitRate = card?.summary?.profitRate;
+                    if (typeof profit === 'number' && Number.isFinite(profit)) {
+                        if (bestProfit === null || profit > bestProfit) {
+                            bestProfit = profit;
+                            bestProfitIndices.length = 0;
+                            bestProfitIndices.push(index);
+                        } else if (profit === bestProfit) {
+                            bestProfitIndices.push(index);
+                        }
+                    }
+                    if (typeof profitRate === 'number' && Number.isFinite(profitRate)) {
+                        if (bestProfitRate === null || profitRate > bestProfitRate) {
+                            bestProfitRate = profitRate;
+                            bestProfitRateIndices.length = 0;
+                            bestProfitRateIndices.push(index);
+                        } else if (profitRate === bestProfitRate) {
+                            bestProfitRateIndices.push(index);
+                        }
+                    }
+                });
+
+                return { bestProfitIndices, bestProfitRateIndices };
+            }
+        };
+    }
+
+    function formatDetailNumber(value, precision = 6) {
+        return (typeof value === 'number' && Number.isFinite(value))
+            ? Number(value.toFixed(precision))
+            : '--';
+    }
+
+    function formatDetailProfitRate(profitRate) {
+        if (typeof profitRate !== 'number' || !Number.isFinite(profitRate)) return '--';
+        return window.ArbPaths && typeof window.ArbPaths.formatProfitWanfen === 'function'
+            ? window.ArbPaths.formatProfitWanfen(profitRate)
+            : `${(profitRate * 10000).toFixed(2)}‱`;
+    }
+
+    function nudgeArbDetailInput(index, delta) {
+        const card = arbDetailState.cards[index];
+        if (!card) return;
+        const currentValue = Number(card.inputAmount);
+        const base = Number.isFinite(currentValue) && currentValue > 0 ? currentValue : 1;
+        const nextValue = Math.max(0.1, Number((base + delta).toFixed(4)));
+        arbDetailState.editingInputIndex = null;
+        updateArbDetailInput(index, nextValue);
+        renderArbDetailModal();
+    }
+
+    function updateQuoteRunStateTag() {
+        if (!quoteRunStateTag) return;
+        const state = getArbDetailUtils().getQuoteRunState(arbDetailState.pausedDashboard);
+        quoteRunStateTag.textContent = state.text;
+        quoteRunStateTag.classList.remove('running', 'paused');
+        quoteRunStateTag.classList.add(state.tone || 'running');
+    }
+
+    function findQuoteById(quoteId) {
+        for (const category of dashboardState) {
+            const quote = (category.quotes || []).find(item => item.id === quoteId);
+            if (quote) return { quote, category };
+        }
+        return null;
+    }
+
+    function getArbOpportunityBaseAmount(cycle) {
+        const firstLeg = (cycle?.legs || []).find(leg => !isRuleLeg(leg) && leg.quoteId !== undefined && leg.quoteId !== null);
+        if (!firstLeg) return 1;
+        const match = findQuoteById(firstLeg.quoteId);
+        const amount = match && match.quote ? Number(match.quote.amount) : NaN;
+        return Number.isFinite(amount) && amount > 0 ? amount : 1;
+    }
+
     function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
         const target = String(canonicalSymbol || '').toUpperCase();
         const symbols = new Set([canonicalSymbol]);
@@ -513,17 +647,293 @@
     function handleArbPathContentClick(event) {
         if (!arbPathContent) return;
         const toggleBtn = event.target.closest('.arb-path-expand-toggle');
-        if (!toggleBtn || !arbPathContent.contains(toggleBtn)) return;
+        if (toggleBtn && arbPathContent.contains(toggleBtn)) {
+            const sectionKey = toggleBtn.dataset.arbSectionKey;
+            if (!sectionKey) return;
 
-        const sectionKey = toggleBtn.dataset.arbSectionKey;
-        if (!sectionKey) return;
-
-        if (arbExpandedSections.has(sectionKey)) {
-            arbExpandedSections.delete(sectionKey);
-        } else {
-            arbExpandedSections.add(sectionKey);
+            if (arbExpandedSections.has(sectionKey)) {
+                arbExpandedSections.delete(sectionKey);
+            } else {
+                arbExpandedSections.add(sectionKey);
+            }
+            updateArbPanel();
+            return;
         }
-        updateArbPanel();
+
+        const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
+        if (!opportunityEl || !arbPathContent.contains(opportunityEl)) return;
+        openArbDetailModal(opportunityEl.dataset.arbOpportunityId);
+    }
+
+    function handleArbPathContentKeydown(event) {
+        if (!arbPathContent) return;
+        const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
+        if (!opportunityEl || !arbPathContent.contains(opportunityEl)) return;
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openArbDetailModal(opportunityEl.dataset.arbOpportunityId);
+    }
+
+    function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
+        if (!cycle) return null;
+        const opportunityId = `arb-opportunity-${targetMap.size + 1}`;
+        targetMap.set(opportunityId, {
+            id: opportunityId,
+            cycle,
+            label,
+            ...meta
+        });
+
+        return {
+            label,
+            cycle,
+            opportunityId
+        };
+    }
+
+    function renderArbDetailModal() {
+        if (!arbDetailGrid || !arbDetailModal) return;
+        if (!arbDetailState.visible) {
+            arbDetailModal.classList.remove('visible');
+            return;
+        }
+
+        const current = arbDetailState.selectedOpportunity;
+        if (!current || !current.cycle) {
+            arbDetailSubtitle.textContent = '当前套利机会不可用';
+            arbDetailGrid.innerHTML = '<div class="arb-detail-error">当前套利机会已失效，请关闭后重新选择。</div>';
+            arbDetailModal.classList.add('visible');
+            return;
+        }
+
+        const legLines = buildLegLines((current.cycle.legs || []).filter(leg => !isRuleLeg(leg)));
+        arbDetailSubtitle.textContent = `${current.label || '套利机会'} | ${legLines.join(' | ')}`;
+        const { bestProfitIndices, bestProfitRateIndices } = getArbDetailUtils().findBestSummaryIndices(arbDetailState.cards);
+
+        const cardsHtml = arbDetailState.cards.map((card, index) => {
+            const rowsHtml = card.rows && card.rows.length
+                ? card.rows.map((row) => `
+                    <div class="arb-detail-leg">
+                        <div class="arb-detail-leg-line">
+                            <div class="arb-detail-leg-main">
+                                <div class="arb-detail-leg-pair">${escapeHtml(row.line)}</div>
+                                <div class="arb-detail-leg-source">${escapeHtml(row.sourceText)}</div>
+                            </div>
+                            <span class="arb-detail-leg-amount">${escapeHtml(row.amountText)}</span>
+                        </div>
+                    </div>
+                `).join('')
+                : `<div class="${card.error ? 'arb-detail-error' : 'arb-detail-loading'}">${escapeHtml(card.error || '等待报价...')}</div>`;
+
+            const profitClass = bestProfitIndices.includes(index) ? ' arb-detail-metric-best' : '';
+            const rateClass = bestProfitRateIndices.includes(index) ? ' arb-detail-metric-best' : '';
+            const summaryHtml = (card.summary && typeof card.summary.profit === 'number')
+                ? `
+                    <div class="arb-detail-summary">
+                        <span class="arb-detail-metric${profitClass}">收益 ${formatDetailNumber(card.summary.profit)} ${escapeHtml(card.summary.symbol || '')}</span>
+                        <span class="arb-detail-metric${rateClass}">${formatDetailProfitRate(card.summary.profitRate)}</span>
+                    </div>
+                `
+                : `
+                    <div class="arb-detail-summary">
+                        <span class="arb-detail-metric">收益 --</span>
+                    </div>
+                `;
+
+            return `
+                <div class="arb-detail-card">
+                    <div class="arb-detail-card-header">
+                        <span class="arb-detail-badge">${index + 1}</span>
+                        <div class="arb-detail-input-row">
+                            <input
+                                id="arb-detail-input-${index}"
+                                class="arb-detail-input"
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                data-arb-detail-input-index="${index}"
+                                value="${escapeHtml(card.inputAmount)}"
+                            >
+                            <div class="arb-detail-stepper">
+                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="-0.1">－</button>
+                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="0.1">＋</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="arb-detail-path-list">${rowsHtml}</div>
+                    ${summaryHtml}
+                </div>
+            `;
+        }).join('');
+
+        arbDetailGrid.innerHTML = cardsHtml;
+        arbDetailModal.classList.add('visible');
+    }
+
+    function abortActiveQuoteFetches() {
+        for (const controller of activeFetchControllers.values()) {
+            controller.abort();
+        }
+        activeFetchControllers.clear();
+    }
+
+    function setArbDetailDashboardPause(paused) {
+        const nextPaused = Boolean(paused);
+        if (arbDetailState.pausedDashboard === nextPaused) return;
+        arbDetailState.pausedDashboard = nextPaused;
+        if (nextPaused) {
+            abortActiveQuoteFetches();
+        }
+        updateSchedulers();
+        updateQuoteRunStateTag();
+    }
+
+    function closeArbDetailModal() {
+        if (arbDetailFetchController) {
+            arbDetailFetchController.abort();
+            arbDetailFetchController = null;
+        }
+        arbDetailState.visible = false;
+        arbDetailState.opportunityId = null;
+        arbDetailState.selectedOpportunity = null;
+        arbDetailState.cards = [];
+        arbDetailState.loopToken += 1;
+        arbDetailState.isRefreshing = false;
+        arbDetailState.editingInputIndex = null;
+        if (arbDetailModal) {
+            arbDetailModal.classList.remove('visible');
+        }
+        setArbDetailDashboardPause(false);
+    }
+
+    function openArbDetailModal(opportunityId) {
+        const current = arbOpportunityMap.get(opportunityId);
+        if (!current || !current.cycle) return;
+
+        if (arbDetailFetchController) {
+            arbDetailFetchController.abort();
+            arbDetailFetchController = null;
+        }
+
+        const baseAmount = getArbOpportunityBaseAmount(current.cycle);
+        const defaultAmounts = getArbDetailUtils().buildDetailInputAmounts(baseAmount);
+        arbDetailState.visible = true;
+        arbDetailState.opportunityId = opportunityId;
+        arbDetailState.selectedOpportunity = {
+            ...current,
+            cycle: current.cycle
+                ? { ...current.cycle, legs: Array.isArray(current.cycle.legs) ? current.cycle.legs.map(leg => ({ ...leg })) : [] }
+                : null
+        };
+        arbDetailState.cards = defaultAmounts.map((amount) => ({
+            inputAmount: amount,
+            rows: [],
+            summary: null,
+            error: ''
+        }));
+        arbDetailState.loopToken += 1;
+        arbDetailState.isRefreshing = false;
+        arbDetailState.editingInputIndex = null;
+        setArbDetailDashboardPause(true);
+        renderArbDetailModal();
+        startArbDetailLoop(arbDetailState.loopToken);
+    }
+
+    function updateArbDetailInput(index, rawValue) {
+        const card = arbDetailState.cards[index];
+        if (!card) return;
+        const parsed = Number(rawValue);
+        if (!Number.isFinite(parsed) || parsed <= 0) return;
+        card.inputAmount = parsed;
+        card.rows = [];
+        card.summary = null;
+        card.error = '';
+    }
+
+    async function refreshArbDetailCards(runToken) {
+        const current = arbDetailState.selectedOpportunity;
+        if (!current || !current.cycle) return;
+
+        const executableLegs = (current.cycle.legs || []).filter(leg => !isRuleLeg(leg));
+        if (!executableLegs.length) return;
+
+        const controller = new AbortController();
+        arbDetailFetchController = controller;
+
+        try {
+            for (const card of arbDetailState.cards) {
+                if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) return;
+
+                const startAmount = Number(card.inputAmount);
+                let rollingAmount = startAmount;
+                const rows = [];
+                let finalSymbol = '';
+
+                for (const leg of executableLegs) {
+                    const match = findQuoteById(leg.quoteId);
+                    if (!match || !match.quote) {
+                        throw new Error('报价配置不存在');
+                    }
+
+                    const { data } = await fetchQuoteByStrategy(match.quote, {
+                        signal: controller.signal,
+                        isInverseFetch: Boolean(leg.inverse),
+                        amount: rollingAmount,
+                        skipDelay: true
+                    });
+
+                    rollingAmount = data.finalAmountOut;
+                    finalSymbol = data.symbols.to || finalSymbol;
+                    rows.push({
+                        line: `（${formatChainLabel(match.quote.chain)}）${data.symbols.from} -> ${data.symbols.to}`,
+                        amountText: `${formatDetailNumber(data.finalAmountOut)}`,
+                        sourceText: data.usedSource || match.quote.preferredSource || 'Unknown'
+                    });
+                }
+
+                const summary = getArbDetailUtils().summarizeDetailResult(startAmount, rollingAmount);
+                card.rows = rows;
+                card.summary = {
+                    ...summary,
+                    symbol: finalSymbol
+                };
+                card.error = '';
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                for (const card of arbDetailState.cards) {
+                    card.rows = [];
+                    card.summary = null;
+                    card.error = error.message || '详情报价失败';
+                }
+            }
+        } finally {
+            if (arbDetailFetchController === controller) {
+                arbDetailFetchController = null;
+            }
+            renderArbDetailModal();
+        }
+    }
+
+    async function startArbDetailLoop(runToken) {
+        if (arbDetailState.isRefreshing) return;
+        arbDetailState.isRefreshing = true;
+
+        try {
+            while (arbDetailState.visible && arbDetailState.loopToken === runToken) {
+                if (arbDetailState.editingInputIndex !== null) {
+                    await sleep(150);
+                    continue;
+                }
+                await refreshArbDetailCards(runToken);
+                if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) break;
+                await sleep(150);
+            }
+        } finally {
+            if (arbDetailState.loopToken === runToken) {
+                arbDetailState.isRefreshing = false;
+            }
+        }
     }
 
     function handleArbGlobalFilterInput(event) {
@@ -571,6 +981,7 @@
         const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
+        const nextOpportunityMap = new Map();
         const quoteMetaById = new Map();
         for (const category of dashboardState) {
             for (const quote of (category.quotes || [])) {
@@ -581,17 +992,19 @@
         const fixedSections = [{
             title: '固定路径',
             opportunities: FIXED_PATH_RULES
-                .map(rule => ({
-                    label: rule.title,
-                    cycle: window.ArbPaths.findBestFixedPath(
+                .map(rule => createArbOpportunityEntry(
+                    nextOpportunityMap,
+                    window.ArbPaths.findBestFixedPath(
                         (window.ArbFixedUtils && typeof window.ArbFixedUtils.filterEdgesForFixedRule === 'function')
                             ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
                             : allEdgesWithRules,
                         rule,
                         aliasRules
-                    )
-                }))
-                .filter(item => item.cycle)
+                    ),
+                    rule.title,
+                    { section: 'fixed' }
+                ))
+                .filter(Boolean)
         }];
 
         const categorySections = [];
@@ -610,7 +1023,14 @@
             const footerHtml = buildArbSectionToggleHtml(sectionKey, cycleDisplayState);
             const sectionDef = {
                 title: category.name,
-                opportunities: cycleDisplayState.displayCycles.map((cycle, index) => ({ label: `机会 ${index + 1}`, cycle })),
+                opportunities: cycleDisplayState.displayCycles
+                    .map((cycle, index) => createArbOpportunityEntry(
+                        nextOpportunityMap,
+                        cycle,
+                        `机会 ${index + 1}`,
+                        { section: category.name }
+                    ))
+                    .filter(Boolean),
                 footerHtml
             };
             if (category.name === 'LBTC监控') {
@@ -641,11 +1061,20 @@
             categorySections,
             [{
                 title: '全局路径',
-                opportunities: globalCycleDisplayState.displayCycles.map((cycle, index) => ({ label: `机会 ${index + 1}`, cycle })),
+                opportunities: globalCycleDisplayState.displayCycles
+                    .map((cycle, index) => createArbOpportunityEntry(
+                        nextOpportunityMap,
+                        cycle,
+                        `机会 ${index + 1}`,
+                        { section: '全局路径' }
+                    ))
+                    .filter(Boolean),
                 footerHtml: globalFooterHtml,
                 emptyText: globalEmptyText
             }]
         ];
+
+        arbOpportunityMap = nextOpportunityMap;
 
         arbPathContent.innerHTML = window.ArbPanelRenderer.renderArbGrid({
             columns,
@@ -814,6 +1243,74 @@
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    function buildQuoteStrategy(quote) {
+        if (isEvmChain(quote.chain)) {
+            const pref = quote.preferredSource || 'Kyber';
+            if (pref === 'Auto') {
+                return ['Kyber', '0x', 'Kyber'];
+            }
+            if (pref === '0x' || pref === 'Velora') {
+                return ['0x', '0x'];
+            }
+            if (pref === 'LI.FI') {
+                return ['LI.FI', 'LI.FI'];
+            }
+            return ['Kyber', 'Kyber'];
+        }
+
+        if (quote.chain === 'sui') return ['Cetus'];
+        if (quote.chain === 'solana') return ['Jupiter'];
+        if (quote.chain === 'starknet') return ['Ekubo'];
+        if (quote.chain === 'Bybit') return ['Bybit'];
+        return [];
+    }
+
+    async function fetchQuoteByStrategy(quote, options = {}) {
+        const signal = options.signal;
+        const isInverseFetch = Boolean(options.isInverseFetch);
+        const amountOverride = Number(options.amount);
+        const requestedAmount = Number.isFinite(amountOverride) && amountOverride > 0
+            ? amountOverride
+            : (quote.amount || 1);
+        const requestQuote = isInverseFetch
+            ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: requestedAmount }
+            : { ...quote, amount: requestedAmount };
+        const strategy = buildQuoteStrategy(quote);
+        let fetchError = null;
+        let successSource = null;
+        let data = null;
+
+        for (const source of strategy) {
+            try {
+                if (source === 'Kyber' && !isKyberSupported(quote.chain)) continue;
+                if (source === '0x' && !is0xSupported(quote.chain)) continue;
+
+                if (!options.skipDelay && source === '0x' && strategy[0] !== '0x') {
+                    await sleep(600);
+                }
+
+                data = await apiGetQuote(requestQuote, signal, source);
+                if (data) {
+                    successSource = source;
+                    if (!isInverseFetch && quote.preferredSource === 'Auto' && source !== 'Kyber') {
+                        data.usedSource = `${source} (Auto Fallback)`;
+                    }
+                    break;
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') throw error;
+                fetchError = error;
+                console.warn(`${quote.chain} Quote Fetch Failed [${source}]:`, error.message);
+            }
+        }
+
+        if (!data) {
+            throw fetchError || new Error('All strategies failed');
+        }
+
+        return { data, successSource };
+    }
+
     async function fetchSingleQuote(quote, fetchMode = 'main') {
         const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
         const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
@@ -835,62 +1332,10 @@
         }
 
         try {
-            let data;
-
-            let strategy = [];
-            if (isEvmChain(quote.chain)) {
-                const pref = quote.preferredSource || 'Kyber';
-                if (pref === 'Auto') {
-                    strategy = ['Kyber', '0x', 'Kyber'];
-                } else if (pref === '0x' || pref === 'Velora') {
-                    strategy = ['0x', '0x'];
-                } else if (pref === 'LI.FI') {
-                    strategy = ['LI.FI', 'LI.FI'];
-                } else {
-                    strategy = ['Kyber', 'Kyber'];
-                }
-            } else {
-                if (quote.chain === 'sui') strategy = ['Cetus'];
-                else if (quote.chain === 'solana') strategy = ['Jupiter'];
-                else if (quote.chain === 'starknet') strategy = ['Ekubo'];
-                else if (quote.chain === 'Bybit') strategy = ['Bybit'];
-            }
-
-            let fetchError = null;
-            let successSource = null;
-
-            for (const source of strategy) {
-                try {
-                    if (source === 'Kyber' && !isKyberSupported(quote.chain)) continue;
-                    if (source === '0x' && !is0xSupported(quote.chain)) continue;
-                    
-                    if (source === '0x' && strategy[0] !== '0x') {
-                        await sleep(600);
-                    }
-
-                    const requestQuote = isInverseFetch
-                        ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: quote.amount || 1 }
-                        : quote;
-                    data = await apiGetQuote(requestQuote, signal, source);
-                    
-                    if (data) {
-                        successSource = source;
-                        if (!isInverseFetch && quote.preferredSource === 'Auto' && source !== 'Kyber') {
-                            data.usedSource = `${source} (Auto Fallback)`;
-                        }
-                        break; 
-                    }
-
-                } catch (e) {
-                    if (e.name === 'AbortError') throw e;
-                    fetchError = e;
-                    console.warn(`${quote.chain} Quote Fetch Failed [${source}]:`, e.message);
-                }
-            }
-
-            if (!data) {
-                throw fetchError || new Error("All strategies failed");
-            }
+            const { data, successSource } = await fetchQuoteByStrategy(quote, {
+                signal,
+                isInverseFetch
+            });
 
             const previousState = quoteMonitorState.get(quote.id) || {};
             const inverseContainerId = `inverse-quote-${quote.id}`;
@@ -1248,6 +1693,11 @@
         const key = (event.key || '').toLowerCase();
         if (!key) return;
 
+        if (key === 'escape' && arbDetailState.visible) {
+            event.preventDefault();
+            closeArbDetailModal();
+            return;
+        }
         if (key === 't') {
             event.preventDefault();
             toggleArbPanel();
@@ -2161,6 +2611,7 @@
             //     setTimeout(() => fetchSingleQuote(quote), i * 100);
             // });
 
+            updateQuoteRunStateTag();
             updateSchedulers();
             startPriceSnapshotTimer();
             
@@ -2178,6 +2629,49 @@
             }
             if (arbPathContent) {
                 arbPathContent.addEventListener('click', handleArbPathContentClick);
+                arbPathContent.addEventListener('keydown', handleArbPathContentKeydown);
+            }
+            if (arbDetailGrid) {
+                arbDetailGrid.addEventListener('input', (event) => {
+                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    if (!input) return;
+                    updateArbDetailInput(Number(input.dataset.arbDetailInputIndex), input.value);
+                });
+                arbDetailGrid.addEventListener('mousedown', (event) => {
+                    const stepBtn = event.target.closest('[data-arb-detail-step-index]');
+                    if (stepBtn) {
+                        event.preventDefault();
+                    }
+                });
+                arbDetailGrid.addEventListener('click', (event) => {
+                    const stepBtn = event.target.closest('[data-arb-detail-step-index]');
+                    if (!stepBtn) return;
+                    const index = Number(stepBtn.dataset.arbDetailStepIndex);
+                    const step = Number(stepBtn.dataset.arbDetailStep);
+                    if (!Number.isFinite(index) || !Number.isFinite(step)) return;
+                    nudgeArbDetailInput(index, step);
+                });
+                arbDetailGrid.addEventListener('focusin', (event) => {
+                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    if (!input) return;
+                    arbDetailState.editingInputIndex = Number(input.dataset.arbDetailInputIndex);
+                });
+                arbDetailGrid.addEventListener('focusout', (event) => {
+                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    if (!input) return;
+                    arbDetailState.editingInputIndex = null;
+                    renderArbDetailModal();
+                });
+            }
+            if (arbDetailCloseBtn) {
+                arbDetailCloseBtn.addEventListener('click', closeArbDetailModal);
+            }
+            if (arbDetailModal) {
+                arbDetailModal.addEventListener('click', (event) => {
+                    if (event.target === arbDetailModal) {
+                        closeArbDetailModal();
+                    }
+                });
             }
             if (arbGlobalFilterInput) {
                 arbGlobalFilterInput.addEventListener('input', handleArbGlobalFilterInput);
