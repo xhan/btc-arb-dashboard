@@ -39,6 +39,8 @@ async function waitForServer(attempts = 12) {
     const response = await request('/index.html');
     assert.strictEqual(response.statusCode, 200);
     assert.ok(response.body.includes('聚合报价看板'));
+    assert.ok(response.body.includes('href="/snapshot?mode=nearest"'));
+    assert.ok(response.body.includes('target="_blank"'));
     assert.ok(response.body.includes('width: min(720px, 92vw);'));
 
     const appJsResponse = await request('/app.js');
