@@ -39,6 +39,12 @@ async function waitForServer(attempts = 12) {
     const response = await request('/index.html');
     assert.strictEqual(response.statusCode, 200);
     assert.ok(response.body.includes('聚合报价看板'));
+    assert.ok(response.body.includes('width: min(720px, 92vw);'));
+
+    const appJsResponse = await request('/app.js');
+    assert.strictEqual(appJsResponse.statusCode, 200);
+    assert.ok(appJsResponse.body.includes('inputmode="decimal"'));
+    assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);

@@ -749,7 +749,7 @@
                 <div class="arb-detail-leg">
                     <div class="arb-detail-leg-line">
                         <div class="arb-detail-leg-main">
-                            <div class="arb-detail-leg-pair">${escapeHtml(row.line)}</div>
+                            <div class="arb-detail-leg-pair">${buildArbDetailPairHtml(row)}</div>
                             <div class="arb-detail-leg-source">${escapeHtml(row.sourceText)}</div>
                         </div>
                         <span class="arb-detail-leg-amount">${escapeHtml(row.amountText)}</span>
@@ -759,6 +759,24 @@
         }
 
         return `<div class="${card.error ? 'arb-detail-error' : 'arb-detail-loading'}">${escapeHtml(card.error || '等待报价...')}</div>`;
+    }
+
+    function buildArbDetailTokenHtml(symbol, address) {
+        const safeSymbol = escapeHtml(symbol || '');
+        if (!address) {
+            return safeSymbol;
+        }
+
+        const safeAddress = escapeHtml(address);
+        return `<span class="arb-detail-token" data-arb-detail-token-address="${safeAddress}" data-arb-detail-token-symbol="${safeSymbol}" title="${safeAddress}">${safeSymbol}</span>`;
+    }
+
+    function buildArbDetailPairHtml(row) {
+        if (!row) return '';
+        const chainText = `（${escapeHtml(row.chainLabel || '')}）`;
+        const fromHtml = buildArbDetailTokenHtml(row.fromSymbol, row.fromTokenAddress);
+        const toHtml = buildArbDetailTokenHtml(row.toSymbol, row.toTokenAddress);
+        return `${chainText}${fromHtml} -> ${toHtml}`;
     }
 
     function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
@@ -799,9 +817,8 @@
                             <input
                                 id="${ids.inputId}"
                                 class="arb-detail-input"
-                                type="number"
-                                min="0.1"
-                                step="0.1"
+                                type="text"
+                                inputmode="decimal"
                                 data-arb-detail-input-index="${index}"
                                 value="${escapeHtml(card.inputAmount)}"
                             >
@@ -1041,8 +1058,13 @@
 
                     rollingAmount = data.finalAmountOut;
                     finalSymbol = data.symbols.to || finalSymbol;
+                    const isInverseLeg = Boolean(leg.inverse);
                     rows.push({
-                        line: `（${formatChainLabel(match.quote.chain)}）${data.symbols.from} -> ${data.symbols.to}`,
+                        chainLabel: formatChainLabel(match.quote.chain),
+                        fromSymbol: data.symbols.from,
+                        toSymbol: data.symbols.to,
+                        fromTokenAddress: isInverseLeg ? match.quote.toToken : match.quote.fromToken,
+                        toTokenAddress: isInverseLeg ? match.quote.fromToken : match.quote.toToken,
                         amountText: `${formatDetailNumber(data.finalAmountOut)}`,
                         sourceText: data.usedSource || match.quote.preferredSource || 'Unknown'
                     });
@@ -2817,6 +2839,17 @@
                     }
                 });
                 arbDetailGrid.addEventListener('click', (event) => {
+                    const tokenEl = event.target.closest('[data-arb-detail-token-address]');
+                    if (tokenEl) {
+                        const tokenAddress = tokenEl.dataset.arbDetailTokenAddress;
+                        const tokenSymbol = tokenEl.dataset.arbDetailTokenSymbol || 'Token';
+                        if (!tokenAddress) return;
+                        copyTextToClipboard(tokenAddress)
+                            .then(() => showCopyToast(`已复制 ${tokenSymbol} 地址`))
+                            .catch(() => showCopyToast('复制失败'));
+                        return;
+                    }
+
                     const stepBtn = event.target.closest('[data-arb-detail-step-index]');
                     if (!stepBtn) return;
                     const index = Number(stepBtn.dataset.arbDetailStepIndex);
@@ -2828,10 +2861,24 @@
                     const input = event.target.closest('[data-arb-detail-input-index]');
                     if (!input) return;
                     arbDetailState.editingInputIndex = Number(input.dataset.arbDetailInputIndex);
+                    input.dataset.arbDetailJustFocused = '1';
+                    setTimeout(() => {
+                        if (document.activeElement === input) {
+                            input.select();
+                        }
+                    }, 0);
+                });
+                arbDetailGrid.addEventListener('mouseup', (event) => {
+                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    if (!input) return;
+                    if (input.dataset.arbDetailJustFocused !== '1') return;
+                    delete input.dataset.arbDetailJustFocused;
+                    event.preventDefault();
                 });
                 arbDetailGrid.addEventListener('focusout', (event) => {
                     const input = event.target.closest('[data-arb-detail-input-index]');
                     if (!input) return;
+                    delete input.dataset.arbDetailJustFocused;
                     arbDetailState.editingInputIndex = null;
                     commitArbDetailInput(Number(input.dataset.arbDetailInputIndex), input.value);
                 });
