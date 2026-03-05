@@ -122,6 +122,23 @@
     return Math.max(0, Math.ceil(safeLast + safeInterval - now));
   }
 
+  function buildArbOpportunityStableId(section, label, cycle) {
+    const safeSection = String(section || '');
+    const safeLabel = String(label || '');
+    const legs = Array.isArray(cycle?.legs) ? cycle.legs : [];
+    const legSignature = legs
+      .filter((leg) => !(leg && (leg.rule || leg.chain === '规则')))
+      .map((leg) => [
+        String(leg.chain || ''),
+        String(leg.from || ''),
+        String(leg.to || ''),
+        String(leg.quoteId ?? ''),
+        leg.inverse ? '1' : '0'
+      ].join(':'))
+      .join('|');
+    return `arb-opportunity:${safeSection}:${safeLabel}:${legSignature}`;
+  }
+
   return {
     buildDetailInputAmounts,
     summarizeDetailResult,
@@ -132,6 +149,7 @@
     parseCommittedArbDetailInput,
     shouldCommitArbDetailInputOnKey,
     getArbDetailIntervalKey,
-    getArbDetailRateLimitDelay
+    getArbDetailRateLimitDelay,
+    buildArbOpportunityStableId
   };
 }));

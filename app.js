@@ -713,14 +713,14 @@
         }
 
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
-        if (!opportunityEl || !arbPathContent.contains(opportunityEl)) return;
+        if (!opportunityEl) return;
         openArbDetailModal(opportunityEl.dataset.arbOpportunityId);
     }
 
     function handleArbPathContentKeydown(event) {
         if (!arbPathContent) return;
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
-        if (!opportunityEl || !arbPathContent.contains(opportunityEl)) return;
+        if (!opportunityEl) return;
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
         openArbDetailModal(opportunityEl.dataset.arbOpportunityId);
@@ -728,7 +728,13 @@
 
     function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
         if (!cycle) return null;
-        const opportunityId = `arb-opportunity-${targetMap.size + 1}`;
+        const baseId = getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
+        let opportunityId = baseId;
+        let collisionIndex = 2;
+        while (targetMap.has(opportunityId)) {
+            opportunityId = `${baseId}:${collisionIndex}`;
+            collisionIndex += 1;
+        }
         targetMap.set(opportunityId, {
             id: opportunityId,
             cycle,
@@ -961,7 +967,11 @@
     }
 
     function openArbDetailModal(opportunityId) {
-        const current = arbOpportunityMap.get(opportunityId);
+        let current = arbOpportunityMap.get(opportunityId);
+        if (!current) {
+            updateArbPanel();
+            current = arbOpportunityMap.get(opportunityId);
+        }
         if (!current || !current.cycle) return;
 
         if (arbDetailFetchController) {
@@ -1077,6 +1087,7 @@
                     symbol: finalSymbol
                 };
                 card.error = '';
+                renderArbDetailModal();
             }
         } catch (error) {
             if (error.name !== 'AbortError') {

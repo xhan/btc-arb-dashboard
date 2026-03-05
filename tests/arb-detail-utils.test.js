@@ -10,7 +10,8 @@ const {
   parseCommittedArbDetailInput,
   shouldCommitArbDetailInputOnKey,
   getArbDetailIntervalKey,
-  getArbDetailRateLimitDelay
+  getArbDetailRateLimitDelay,
+  buildArbOpportunityStableId
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -127,4 +128,33 @@ assert.strictEqual(
 assert.strictEqual(
   getArbDetailRateLimitDelay(1000, 170, 1200),
   0
+);
+
+const stableCycleA = {
+  legs: [
+    { chain: 'ethereum', from: 'cbBTC', to: 'WBTC', quoteId: '1', inverse: false, rate: 1.0022 },
+    { chain: 'arbitrum', from: 'WBTC', to: 'cbBTC', quoteId: '2', inverse: false, rate: 0.9978 }
+  ]
+};
+const stableCycleB = {
+  legs: [
+    { chain: 'ethereum', from: 'cbBTC', to: 'WBTC', quoteId: '1', inverse: false, rate: 1.1234 },
+    { chain: 'arbitrum', from: 'WBTC', to: 'cbBTC', quoteId: '2', inverse: false, rate: 0.8888 }
+  ]
+};
+const stableCycleC = {
+  legs: [
+    { chain: 'ethereum', from: 'cbBTC', to: 'WBTC', quoteId: '1', inverse: false, rate: 1.0022 },
+    { chain: 'arbitrum', from: 'WBTC', to: 'xBTC', quoteId: '9', inverse: false, rate: 0.9978 }
+  ]
+};
+
+assert.strictEqual(
+  buildArbOpportunityStableId('固定路径', '机会 1', stableCycleA),
+  buildArbOpportunityStableId('固定路径', '机会 1', stableCycleB)
+);
+
+assert.notStrictEqual(
+  buildArbOpportunityStableId('固定路径', '机会 1', stableCycleA),
+  buildArbOpportunityStableId('固定路径', '机会 1', stableCycleC)
 );
