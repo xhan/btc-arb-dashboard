@@ -1,6 +1,10 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
+const {
+  buildChartPairKey,
+  buildChartPairLabel
+} = require('./charts-utils');
 
 function normalizePriceSnapshotConfig(configMore = {}) {
   const enabled = configMore.enablePriceSnapshot === true;
@@ -97,6 +101,15 @@ function withDatabase(dbPath, fn) {
   } finally {
     db.close();
   }
+}
+
+function getLatestSnapshotMeta(db) {
+  return db.prepare(`
+    SELECT id, captured_at_ms
+    FROM snapshot_batches
+    ORDER BY captured_at_ms DESC
+    LIMIT 1
+  `).get();
 }
 
 function getSnapshotByBatchId(db, batchId) {
@@ -302,11 +315,181 @@ async function getClosestPriceSnapshot(baseDir, targetTime = new Date(), options
   });
 }
 
+async function openSnapshotDatabase(baseDir) {
+  const dbPath = getPriceSnapshotDbPath(baseDir);
+  try {
+    await fs.access(dbPath);
+  } catch {
+    return null;
+  }
+  return dbPath;
+}
+
+function buildChartPairEntry(row, direction, latestCapturedAtMs) {
+  const isInverse = direction === 'inverse';
+  const fromSymbol = isInverse ? row.toSymbol : row.fromSymbol;
+  const toSymbol = isInverse ? row.fromSymbol : row.toSymbol;
+  return {
+    key: buildChartPairKey(row.quoteId, direction),
+    quoteId: row.quoteId,
+    direction,
+    chain: row.chain || '',
+    fromSymbol: fromSymbol || '',
+    toSymbol: toSymbol || '',
+    label: buildChartPairLabel({
+      chain: row.chain,
+      fromSymbol,
+      toSymbol
+    }),
+    source: row.usedSource || row.preferredSource || '',
+    latestCapturedAtMs
+  };
+}
+
+async function listRecentChartPairs(baseDir, options = {}) {
+  const dbPath = await openSnapshotDatabase(baseDir);
+  if (!dbPath) return [];
+
+  const windowMs = Number.isFinite(options.windowMs) && options.windowMs > 0
+    ? options.windowMs
+    : 2 * 60 * 60 * 1000;
+
+  return withDatabase(dbPath, (db) => {
+    const latest = getLatestSnapshotMeta(db);
+    if (!latest) return [];
+
+    const sinceMs = latest.captured_at_ms - windowMs;
+    const rows = db.prepare(`
+      SELECT
+        q.quote_id AS quoteId,
+        q.chain AS chain,
+        q.from_symbol AS fromSymbol,
+        q.to_symbol AS toSymbol,
+        q.price AS price,
+        q.inverse_price AS inversePrice,
+        q.used_source AS usedSource,
+        q.preferred_source AS preferredSource,
+        b.captured_at_ms AS capturedAtMs
+      FROM snapshot_quotes q
+      INNER JOIN snapshot_batches b
+        ON b.id = q.snapshot_id
+      WHERE b.captured_at_ms >= ?
+      ORDER BY b.captured_at_ms DESC, q.id DESC
+    `).all(sinceMs);
+
+    const pairMap = new Map();
+    for (const row of rows) {
+      if (!Number.isFinite(row.quoteId) || !row.fromSymbol || !row.toSymbol) continue;
+
+      if (typeof row.price === 'number') {
+        const key = buildChartPairKey(row.quoteId, 'forward');
+        if (!pairMap.has(key)) {
+          pairMap.set(key, buildChartPairEntry(row, 'forward', row.capturedAtMs));
+        }
+      }
+
+      if (typeof row.inversePrice === 'number') {
+        const key = buildChartPairKey(row.quoteId, 'inverse');
+        if (!pairMap.has(key)) {
+          pairMap.set(key, buildChartPairEntry(row, 'inverse', row.capturedAtMs));
+        }
+      }
+    }
+
+    return Array.from(pairMap.values())
+      .sort((left, right) => {
+        if (right.latestCapturedAtMs !== left.latestCapturedAtMs) {
+          return right.latestCapturedAtMs - left.latestCapturedAtMs;
+        }
+        if (left.label !== right.label) {
+          return left.label.localeCompare(right.label);
+        }
+        if (left.direction !== right.direction) {
+          return left.direction === 'forward' ? -1 : 1;
+        }
+        return left.quoteId - right.quoteId;
+      })
+      .map(({ latestCapturedAtMs, ...item }) => item);
+  });
+}
+
+async function getChartSeries(baseDir, options = {}) {
+  const dbPath = await openSnapshotDatabase(baseDir);
+  if (!dbPath) return null;
+
+  const quoteId = Number(options.quoteId);
+  if (!Number.isFinite(quoteId)) return null;
+
+  const direction = options.direction === 'inverse' ? 'inverse' : 'forward';
+  const priceField = direction === 'inverse' ? 'inversePrice' : 'price';
+  const windowMs = Number.isFinite(options.windowMs) && options.windowMs > 0
+    ? options.windowMs
+    : 2 * 60 * 60 * 1000;
+
+  return withDatabase(dbPath, (db) => {
+    const latest = getLatestSnapshotMeta(db);
+    if (!latest) return null;
+
+    const sinceMs = latest.captured_at_ms - windowMs;
+    const rows = db.prepare(`
+      SELECT
+        q.quote_id AS quoteId,
+        q.chain AS chain,
+        q.from_symbol AS fromSymbol,
+        q.to_symbol AS toSymbol,
+        q.price AS price,
+        q.inverse_price AS inversePrice,
+        q.used_source AS usedSource,
+        q.preferred_source AS preferredSource,
+        b.captured_at_ms AS capturedAtMs
+      FROM snapshot_quotes q
+      INNER JOIN snapshot_batches b
+        ON b.id = q.snapshot_id
+      WHERE q.quote_id = ?
+        AND b.captured_at_ms >= ?
+      ORDER BY b.captured_at_ms ASC, q.id ASC
+    `).all(quoteId, sinceMs);
+
+    if (!rows.length) return null;
+
+    const points = rows
+      .filter((row) => typeof row[priceField] === 'number')
+      .map((row) => ({
+        time: Math.floor(row.capturedAtMs / 1000),
+        value: row[priceField]
+      }));
+
+    if (!points.length) return null;
+
+    const latestRow = rows[rows.length - 1];
+    const fromSymbol = direction === 'inverse' ? latestRow.toSymbol : latestRow.fromSymbol;
+    const toSymbol = direction === 'inverse' ? latestRow.fromSymbol : latestRow.toSymbol;
+
+    return {
+      key: buildChartPairKey(quoteId, direction),
+      quoteId,
+      direction,
+      chain: latestRow.chain || '',
+      fromSymbol: fromSymbol || '',
+      toSymbol: toSymbol || '',
+      label: buildChartPairLabel({
+        chain: latestRow.chain,
+        fromSymbol,
+        toSymbol
+      }),
+      source: latestRow.usedSource || latestRow.preferredSource || '',
+      points
+    };
+  });
+}
+
 module.exports = {
   normalizePriceSnapshotConfig,
   buildPriceSnapshotEntry,
   getPriceSnapshotDbPath,
   appendPriceSnapshot,
   getNearestPriceSnapshot,
-  getClosestPriceSnapshot
+  getClosestPriceSnapshot,
+  listRecentChartPairs,
+  getChartSeries
 };

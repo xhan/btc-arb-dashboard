@@ -13,7 +13,13 @@ const {
 } = require('./ekubo-utils');
 const { buildLifiChainIdMap, resolveLifiChainId } = require('./lifi-utils');
 const { getDisplayedToAmountRaw } = require('./lifi-quote-utils');
-const { normalizePriceSnapshotConfig, appendPriceSnapshot, getClosestPriceSnapshot } = require('./price-snapshot-store');
+const {
+    normalizePriceSnapshotConfig,
+    appendPriceSnapshot,
+    getClosestPriceSnapshot,
+    listRecentChartPairs,
+    getChartSeries
+} = require('./price-snapshot-store');
 const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./price-snapshot-replay');
 const { parseUtc8Input } = require('./time-utils');
 const fs = require('fs').promises;
@@ -34,6 +40,9 @@ app.get('/', (req, res) => {
 });
 app.get('/snapshot', (req, res) => {
     res.sendFile(path.join(__dirname, 'snapshot.html'));
+});
+app.get('/charts', (req, res) => {
+    res.sendFile(path.join(__dirname, 'charts.html'));
 });
 const CONFIG_PATH = './config.json';
 const CONFIG_MORE_PATH = './config_more.json';
@@ -419,6 +428,38 @@ app.get('/api/get-price-snapshot', async (req, res) => {
         res.json(decorateSnapshotSelection(selection));
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/chart-pairs', async (req, res) => {
+    try {
+        const pairs = await listRecentChartPairs(PRICE_SNAPSHOT_DIR);
+        res.json(pairs);
+    } catch (error) {
+        logMessage('CHART_PAIRS_ERR', `读取图表候选失败: ${error.message}`, 'error');
+        res.status(500).json({ error: '读取图表候选失败' });
+    }
+});
+
+app.get('/api/chart-series', async (req, res) => {
+    try {
+        const quoteId = Number(req.query.quoteId);
+        const direction = req.query.direction === 'inverse' ? 'inverse' : req.query.direction === 'forward' ? 'forward' : '';
+        if (!Number.isFinite(quoteId) || !direction) {
+            res.status(400).json({ error: '缺少合法的 quoteId 或 direction' });
+            return;
+        }
+
+        const series = await getChartSeries(PRICE_SNAPSHOT_DIR, { quoteId, direction });
+        if (!series) {
+            res.status(404).json({ error: '未找到图表数据' });
+            return;
+        }
+
+        res.json(series);
+    } catch (error) {
+        logMessage('CHART_SERIES_ERR', `读取图表序列失败: ${error.message}`, 'error');
+        res.status(500).json({ error: '读取图表序列失败' });
     }
 });
 

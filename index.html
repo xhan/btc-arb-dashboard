@@ -97,7 +97,7 @@
         
         #top-bar-left { display: flex; align-items: center; gap: 20px; }
         #top-bar-right { display: flex; align-items: center; gap: 15px; }
-        #toggle-arb-btn, #toggle-calc-btn, #snapshot-link-btn {
+        #toggle-arb-btn, #toggle-calc-btn, #snapshot-link-btn, #charts-link-btn {
             background-color: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-color);
@@ -109,8 +109,8 @@
             display: inline-flex;
             align-items: center;
         }
-        #toggle-arb-btn:hover, #toggle-calc-btn:hover, #snapshot-link-btn:hover { background-color: rgba(0,0,0,0.05); }
-        .dark-mode #toggle-arb-btn:hover, .dark-mode #toggle-calc-btn:hover, .dark-mode #snapshot-link-btn:hover { background-color: rgba(255,255,255,0.08); }
+        #toggle-arb-btn:hover, #toggle-calc-btn:hover, #snapshot-link-btn:hover, #charts-link-btn:hover { background-color: rgba(0,0,0,0.05); }
+        .dark-mode #toggle-arb-btn:hover, .dark-mode #toggle-calc-btn:hover, .dark-mode #snapshot-link-btn:hover, .dark-mode #charts-link-btn:hover { background-color: rgba(255,255,255,0.08); }
 
         #dashboard { 
             display: grid; 
@@ -496,6 +496,20 @@
         .arb-opportunity:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
         .arb-opportunity[data-arb-opportunity-id] { cursor: pointer; }
         .arb-opportunity[data-arb-opportunity-id]:hover { background-color: rgba(37, 99, 235, 0.04); }
+        .arb-opportunity-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .arb-opportunity-chart-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            color: #2563eb;
+            background-color: rgba(37, 99, 235, 0.08);
+            flex: 0 0 auto;
+        }
+        .arb-opportunity-chart-link:hover { background-color: rgba(37, 99, 235, 0.16); }
         .arb-profit { font-weight: 700; color: var(--trend-up-bg); }
         .arb-profit-neg { color: var(--trend-down-bg); }
         #arb-detail-modal .modal-box {
@@ -822,6 +836,7 @@
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
              <button id="toggle-calc-btn" title="显示/隐藏计算器">计算器</button>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">快照</a>
+             <a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">图表</a>
              <button id="global-settings-btn" class="icon-btn" title="API 设置">⚙️</button>
              <button id="theme-toggle-btn" class="icon-btn" title="切换深色/浅色模式">🌙</button>
         </div>
@@ -1072,6 +1087,7 @@
     <script src="arb-panel-renderer.js"></script>
     <script src="arb-fixed-utils.js"></script>
     <script src="arb-detail-utils.js"></script>
+    <script src="charts-utils.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

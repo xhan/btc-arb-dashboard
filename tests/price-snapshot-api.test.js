@@ -58,6 +58,30 @@ async function waitForServer(attempts = 15) {
       }
     ]
   }, new Date('2026-02-28T16:00:10.000Z'));
+  await appendPriceSnapshot(tempDir, {
+    quotes: [
+      {
+        quoteId: 1,
+        chain: 'ethereum',
+        pair: 'WBTC/WETH',
+        size: 1,
+        fromSymbol: 'WBTC',
+        toSymbol: 'WETH',
+        price: 16.5,
+        inversePrice: 0.060606
+      },
+      {
+        quoteId: 3,
+        chain: 'ethereum',
+        pair: 'GHO/USDC',
+        size: 1,
+        fromSymbol: 'GHO',
+        toSymbol: 'USDC',
+        price: 0.999,
+        inversePrice: 1.001001
+      }
+    ]
+  }, new Date('2026-02-28T16:05:10.000Z'));
 
   const serverProcess = spawn('node', ['server.js'], {
     cwd: path.join(__dirname, '..'),
@@ -89,6 +113,25 @@ async function waitForServer(attempts = 15) {
     const replayJson = JSON.parse(replayJsonResponse.body);
     assert.strictEqual(replayJson.requestedAtLocal, '2026-03-01 00:00:12 +08:00');
     assert.strictEqual(replayJson.snapshot.capturedAtLocal, '2026-03-01 00:00:10 +08:00');
+
+    const pairsResponse = await request('/api/chart-pairs');
+    assert.strictEqual(pairsResponse.statusCode, 200);
+    const pairs = JSON.parse(pairsResponse.body);
+    assert.ok(Array.isArray(pairs));
+    assert.ok(pairs.some((item) => item.key === '3:forward' && item.label === '(ETH) GHO -> USDC'));
+
+    const seriesResponse = await request('/api/chart-series?quoteId=1&direction=forward');
+    assert.strictEqual(seriesResponse.statusCode, 200);
+    const series = JSON.parse(seriesResponse.body);
+    assert.strictEqual(series.key, '1:forward');
+    assert.strictEqual(series.label, '(ETH) WBTC -> WETH');
+    assert.deepStrictEqual(series.points, [
+      { time: Math.floor(new Date('2026-02-28T16:00:10.000Z').getTime() / 1000), value: 16 },
+      { time: Math.floor(new Date('2026-02-28T16:05:10.000Z').getTime() / 1000), value: 16.5 }
+    ]);
+
+    const badSeriesResponse = await request('/api/chart-series?quoteId=abc&direction=forward');
+    assert.strictEqual(badSeriesResponse.statusCode, 400);
   } finally {
     serverProcess.kill();
     fs.rmSync(tempDir, { recursive: true, force: true });

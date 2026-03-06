@@ -541,6 +541,14 @@
         };
     }
 
+    function getChartsUtils() {
+        return window.ChartsUtils || {
+            buildChartsPageHref() {
+                return '/charts';
+            }
+        };
+    }
+
     function formatDetailNumber(value, precision = 6) {
         return (typeof value === 'number' && Number.isFinite(value))
             ? Number(value.toFixed(precision))
@@ -714,6 +722,8 @@
             return;
         }
 
+        if (event.target.closest('.arb-opportunity-chart-link')) return;
+
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
         if (!opportunityEl) return;
         const opportunityId = opportunityEl.dataset.arbOpportunityId;
@@ -727,6 +737,7 @@
 
     function handleArbPathContentKeydown(event) {
         if (!arbPathContent) return;
+        if (event.target.closest('.arb-opportunity-chart-link')) return;
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
         if (!opportunityEl) return;
         if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -738,6 +749,7 @@
         if (!arbPathContent) return;
         if (typeof event.button === 'number' && event.button !== 0) return;
         if (event.target.closest('.arb-path-expand-toggle')) return;
+        if (event.target.closest('.arb-opportunity-chart-link')) return;
 
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
         if (!opportunityEl) return;
@@ -751,10 +763,18 @@
     function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
         if (!cycle) return null;
         const opportunityId = getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
+        const chartPairs = (Array.isArray(cycle.legs) ? cycle.legs : [])
+            .filter((leg) => !isRuleLeg(leg) && leg && Number.isFinite(Number(leg.quoteId)))
+            .map((leg) => ({
+                quoteId: Number(leg.quoteId),
+                direction: leg.inverse ? 'inverse' : 'forward'
+            }));
+        const chartHref = getChartsUtils().buildChartsPageHref(chartPairs);
         const entry = {
             id: opportunityId,
             cycle,
             label,
+            chartHref,
             ...meta
         };
         targetMap.set(opportunityId, entry);
@@ -763,7 +783,8 @@
         return {
             label,
             cycle,
-            opportunityId
+            opportunityId,
+            chartHref
         };
     }
 

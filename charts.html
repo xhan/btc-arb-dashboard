@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>交易对历史价格图表</title>
+  <style>
+    :root {
+      --bg-top: #f3efe4;
+      --bg-bottom: #f8fafc;
+      --panel-bg: rgba(255, 255, 255, 0.92);
+      --panel-border: rgba(15, 23, 42, 0.08);
+      --text-main: #172033;
+      --text-muted: #5f6c80;
+      --accent: #0f766e;
+      --accent-soft: rgba(15, 118, 110, 0.12);
+      --shadow: 0 18px 48px rgba(15, 23, 42, 0.10);
+      --danger: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 36%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      min-height: 100vh;
+    }
+
+    .page-shell {
+      width: min(1320px, calc(100vw - 40px));
+      margin: 18px auto 32px;
+    }
+
+    .control-card {
+      position: relative;
+      padding: 14px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 112px 112px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .search-shell {
+      position: relative;
+    }
+
+    #chart-search-input {
+      width: 100%;
+      padding: 0 16px;
+      height: 50px;
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: rgba(255, 255, 255, 0.94);
+      font-size: 16px;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #chart-search-input:focus {
+      border-color: rgba(15, 118, 110, 0.55);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    }
+
+    #chart-add-btn,
+    #chart-refresh-btn {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 50px;
+    }
+
+    #chart-add-btn {
+      background: linear-gradient(135deg, #0f766e, #115e59);
+      color: #fff;
+    }
+
+    #chart-refresh-btn {
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--text-main);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    #chart-add-btn:disabled,
+    #chart-refresh-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .chart-suggestions {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: none;
+      background: rgba(252, 252, 252, 0.98);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      border-radius: 18px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+      overflow: hidden;
+    }
+
+    .chart-suggestions.visible { display: block; }
+
+    .chart-suggestion {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+      background: transparent;
+      text-align: left;
+      padding: 14px 16px;
+      cursor: pointer;
+      color: var(--text-main);
+    }
+
+    .chart-suggestion:last-child { border-bottom: none; }
+    .chart-suggestion:hover,
+    .chart-suggestion.active { background: var(--accent-soft); }
+
+    .chart-suggestion-label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .chart-suggestion-meta {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .status-line {
+      min-height: 20px;
+      margin-top: 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    #chart-panels {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    .chart-panel,
+    .chart-empty {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .chart-empty {
+      padding: 28px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .chart-panel {
+      padding: 18px;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .chart-panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .chart-panel-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-panel-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    .chart-panel-meta {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .chart-panel-action-btn {
+      flex: 0 0 auto;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text-main);
+      cursor: pointer;
+      min-width: 34px;
+      height: 34px;
+      padding: 0 12px;
+      font-size: 14px;
+      line-height: 1.1;
+    }
+
+    .chart-panel-action-btn-refresh:hover {
+      color: var(--accent);
+      border-color: rgba(15, 118, 110, 0.22);
+      background: rgba(15, 118, 110, 0.08);
+    }
+
+    .chart-panel-action-btn-remove {
+      width: 34px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    .chart-panel-action-btn-remove:hover {
+      background: rgba(185, 28, 28, 0.12);
+      color: var(--danger);
+      border-color: rgba(185, 28, 28, 0.18);
+    }
+
+    .chart-canvas {
+      flex: 1 1 auto;
+      min-height: 320px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(243,244,246,0.9));
+      border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .chart-message {
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--text-muted);
+      padding: 20px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.7);
+      border: 1px dashed rgba(15, 23, 42, 0.12);
+    }
+
+    @media (max-width: 900px) {
+      .page-shell {
+        width: min(100vw - 24px, 1320px);
+        margin-top: 12px;
+      }
+
+      .control-row {
+        grid-template-columns: 1fr;
+      }
+
+      #chart-panels {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="control-card">
+      <div class="control-row">
+        <div class="search-shell">
+          <input id="chart-search-input" type="text" autocomplete="off" spellcheck="false" placeholder="搜索交易对，例如：eth gho us">
+          <div id="chart-suggestions" class="chart-suggestions"></div>
+        </div>
+        <button id="chart-add-btn" type="button">添加</button>
+        <button id="chart-refresh-btn" type="button">刷新</button>
+      </div>
+      <div id="chart-page-status" class="status-line">正在加载候选交易对...</div>
+    </section>
+
+    <section id="chart-panels">
+      <div class="chart-empty">暂无图表。先在上方输入交易对并添加，例如 <strong>(ETH) GHO -> USDC</strong>。</div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="charts-utils.js"></script>
+  <script src="charts-app.js"></script>
+</body>
+</html>
