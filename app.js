@@ -58,6 +58,7 @@
     let arbGlobalExcludedChainsInput = '';
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
+    let arbLastPointerOpenedOpportunityId = null;
     let arbDetailState = {
         visible: false,
         opportunityId: null,
@@ -715,7 +716,13 @@
 
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
         if (!opportunityEl) return;
-        openArbDetailModal(opportunityEl.dataset.arbOpportunityId);
+        const opportunityId = opportunityEl.dataset.arbOpportunityId;
+        if (!opportunityId) return;
+        if (arbLastPointerOpenedOpportunityId === opportunityId) {
+            arbLastPointerOpenedOpportunityId = null;
+            return;
+        }
+        openArbDetailModal(opportunityId);
     }
 
     function handleArbPathContentKeydown(event) {
@@ -725,6 +732,20 @@
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
         openArbDetailModal(opportunityEl.dataset.arbOpportunityId);
+    }
+
+    function handleArbPathContentPointerDown(event) {
+        if (!arbPathContent) return;
+        if (typeof event.button === 'number' && event.button !== 0) return;
+        if (event.target.closest('.arb-path-expand-toggle')) return;
+
+        const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
+        if (!opportunityEl) return;
+        const opportunityId = opportunityEl.dataset.arbOpportunityId;
+        if (!opportunityId) return;
+
+        arbLastPointerOpenedOpportunityId = opportunityId;
+        openArbDetailModal(opportunityId);
     }
 
     function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
@@ -2836,6 +2857,7 @@
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
             }
             if (arbPathContent) {
+                arbPathContent.addEventListener('pointerdown', handleArbPathContentPointerDown);
                 arbPathContent.addEventListener('click', handleArbPathContentClick);
                 arbPathContent.addEventListener('keydown', handleArbPathContentKeydown);
             }
