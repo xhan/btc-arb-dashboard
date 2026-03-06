@@ -57,6 +57,7 @@
     let arbGlobalExcludedSymbolsInput = '';
     let arbGlobalExcludedChainsInput = '';
     let arbOpportunityMap = new Map();
+    let arbOpportunityStore = new Map();
     let arbDetailState = {
         visible: false,
         opportunityId: null,
@@ -728,19 +729,15 @@
 
     function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
         if (!cycle) return null;
-        const baseId = getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
-        let opportunityId = baseId;
-        let collisionIndex = 2;
-        while (targetMap.has(opportunityId)) {
-            opportunityId = `${baseId}:${collisionIndex}`;
-            collisionIndex += 1;
-        }
-        targetMap.set(opportunityId, {
+        const opportunityId = getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
+        const entry = {
             id: opportunityId,
             cycle,
             label,
             ...meta
-        });
+        };
+        targetMap.set(opportunityId, entry);
+        arbOpportunityStore.set(opportunityId, entry);
 
         return {
             label,
@@ -967,10 +964,10 @@
     }
 
     function openArbDetailModal(opportunityId) {
-        let current = arbOpportunityMap.get(opportunityId);
+        let current = arbOpportunityMap.get(opportunityId) || arbOpportunityStore.get(opportunityId);
         if (!current) {
             updateArbPanel();
-            current = arbOpportunityMap.get(opportunityId);
+            current = arbOpportunityMap.get(opportunityId) || arbOpportunityStore.get(opportunityId);
         }
         if (!current || !current.cycle) return;
 
