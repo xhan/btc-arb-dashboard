@@ -63,22 +63,30 @@
   ];
 
   const TARGET_CATEGORY_NAMES = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
-  const ALIAS_RULES = {
-    xBTC: 'cbBTC',
-    BTCB: 'cbBTC',
-    'BTC.b': 'cbBTC',
-    'BTC.B': 'cbBTC'
-  };
+  const ASSET_EQUIVALENCE_GROUPS = (window.ArbEquivalenceUtils && window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS)
+    ? window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
+    : {
+      cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b', 'BTC.B'],
+      tBTC: ['tBTC', 'TBTC']
+    };
+  const ALIAS_RULES = (window.ArbEquivalenceUtils && typeof window.ArbEquivalenceUtils.buildAliasRulesFromGroups === 'function')
+    ? window.ArbEquivalenceUtils.buildAliasRulesFromGroups(ASSET_EQUIVALENCE_GROUPS)
+    : {
+      xBTC: 'cbBTC',
+      BTCB: 'cbBTC',
+      'BTC.b': 'cbBTC',
+      'BTC.B': 'cbBTC',
+      TBTC: 'tBTC'
+    };
 
   function formatChainLabel(chain) {
     return CHAIN_DISPLAY_NAMES[chain] || chain || '';
   }
 
   function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol) {
-    const target = String(canonicalSymbol || '').toUpperCase();
     const symbols = new Set([canonicalSymbol]);
     for (const [alias, mapped] of Object.entries(aliasRules || {})) {
-      if (String(mapped || '').toUpperCase() === target) {
+      if (mapped === canonicalSymbol) {
         symbols.add(alias);
         symbols.add(mapped);
       }

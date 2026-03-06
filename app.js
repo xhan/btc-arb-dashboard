@@ -598,10 +598,9 @@
     }
 
     function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
-        const target = String(canonicalSymbol || '').toUpperCase();
         const symbols = new Set([canonicalSymbol]);
         for (const [alias, mapped] of Object.entries(aliasRules || {})) {
-            if (String(mapped || '').toUpperCase() === target) {
+            if (mapped === canonicalSymbol) {
                 symbols.add(alias);
                 symbols.add(mapped);
             }
@@ -1205,12 +1204,21 @@
             return;
         }
 
-        const aliasRules = {
-            xBTC: 'cbBTC',
-            BTCB: 'cbBTC',
-            'BTC.b': 'cbBTC',
-            'BTC.B': 'cbBTC'
-        };
+        const assetEquivalenceGroups = (window.ArbEquivalenceUtils && window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS)
+            ? window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
+            : {
+                cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b', 'BTC.B'],
+                tBTC: ['tBTC', 'TBTC']
+            };
+        const aliasRules = (window.ArbEquivalenceUtils && typeof window.ArbEquivalenceUtils.buildAliasRulesFromGroups === 'function')
+            ? window.ArbEquivalenceUtils.buildAliasRulesFromGroups(assetEquivalenceGroups)
+            : {
+                xBTC: 'cbBTC',
+                BTCB: 'cbBTC',
+                'BTC.b': 'cbBTC',
+                'BTC.B': 'cbBTC',
+                TBTC: 'tBTC'
+            };
         const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
         const allQuotes = dashboardState.flatMap(c => c.quotes || []);
         const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);

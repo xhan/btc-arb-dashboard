@@ -1,10 +1,6 @@
-function normalizeSymbol(symbol) {
-  return (symbol || '').toUpperCase();
-}
-
 function buildEdges(quotes, quoteStateById, allowedSymbols) {
   const allowSet = Array.isArray(allowedSymbols)
-    ? new Set(allowedSymbols.map((item) => item.toUpperCase()))
+    ? new Set(allowedSymbols.filter(Boolean))
     : null;
 
   const edges = [];
@@ -17,13 +13,13 @@ function buildEdges(quotes, quoteStateById, allowedSymbols) {
     const rate = state.lastRawPrice;
 
     if (from && to && typeof rate === 'number') {
-      if (!allowSet || (allowSet.has(normalizeSymbol(from)) && allowSet.has(normalizeSymbol(to)))) {
+      if (!allowSet || (allowSet.has(from) && allowSet.has(to))) {
         edges.push({ from, to, rate, chain: quote.chain, quoteId: quote.id });
       }
     }
 
     if (quote.showInverse && typeof state.inverseRawPrice === 'number' && from && to) {
-      if (!allowSet || (allowSet.has(normalizeSymbol(from)) && allowSet.has(normalizeSymbol(to)))) {
+      if (!allowSet || (allowSet.has(from) && allowSet.has(to))) {
         edges.push({ from: to, to: from, rate: state.inverseRawPrice, chain: quote.chain, quoteId: quote.id, inverse: true });
       }
     }
@@ -76,13 +72,13 @@ function buildRuleEdges(aliases) {
   const groups = new Map();
   for (const [alias, target] of Object.entries(aliases)) {
     if (!alias || !target) continue;
-    const key = normalizeSymbol(target);
+    const key = String(target);
     const group = groups.get(key) || [];
 
-    if (!group.some((symbol) => normalizeSymbol(symbol) === normalizeSymbol(target))) {
+    if (!group.includes(target)) {
       group.push(target);
     }
-    if (!group.some((symbol) => normalizeSymbol(symbol) === normalizeSymbol(alias))) {
+    if (!group.includes(alias)) {
       group.push(alias);
     }
 
@@ -176,8 +172,8 @@ function rotateCycleLegs(legs, offset) {
 
 function buildCycleLegKey(leg) {
   if (!leg) return '';
-  const from = normalizeSymbol(leg.from);
-  const to = normalizeSymbol(leg.to);
+  const from = leg.from || '';
+  const to = leg.to || '';
   const chain = leg.chain || '';
   const rate = typeof leg.rate === 'number' ? String(leg.rate) : '';
   return `${from}|${to}|${chain}|${rate}`;
@@ -189,7 +185,7 @@ function canonicalizeCycleRotation(legs, preferredStartSymbols) {
   }
 
   const preferredSet = Array.isArray(preferredStartSymbols) && preferredStartSymbols.length
-    ? new Set(preferredStartSymbols.map(normalizeSymbol))
+    ? new Set(preferredStartSymbols.filter(Boolean))
     : null;
 
   let bestLegs = legs;
@@ -198,7 +194,7 @@ function canonicalizeCycleRotation(legs, preferredStartSymbols) {
 
   for (let i = 0; i < legs.length; i += 1) {
     const rotated = rotateCycleLegs(legs, i);
-    const startSymbol = normalizeSymbol(rotated[0] && rotated[0].from);
+    const startSymbol = rotated[0] && rotated[0].from;
     const rank = preferredSet ? (preferredSet.has(startSymbol) ? 0 : 1) : 0;
     const key = rotated.map(buildCycleLegKey).join('>');
     if (rank < bestRank || (rank === bestRank && (bestKey === '' || key < bestKey))) {
@@ -273,9 +269,8 @@ function findTopCycles(edges, options = {}) {
 
 function resolveAlias(symbol, aliases) {
   if (!aliases) return symbol;
-  const normalizedSymbol = normalizeSymbol(symbol);
   for (const [alias, target] of Object.entries(aliases)) {
-    if (normalizeSymbol(alias) === normalizedSymbol) {
+    if (alias === symbol) {
       return target;
     }
   }
@@ -286,15 +281,13 @@ function selectBestEdgeByChain(edges, from, to, chain, aliases) {
   if (!chain) return null;
   const targetFrom = resolveAlias(from, aliases);
   const targetTo = resolveAlias(to, aliases);
-  const normalizedTargetFrom = normalizeSymbol(targetFrom);
-  const normalizedTargetTo = normalizeSymbol(targetTo);
   let best = null;
 
   for (const edge of edges || []) {
     if (edge.chain !== chain) continue;
     const edgeFrom = resolveAlias(edge.from, aliases);
     const edgeTo = resolveAlias(edge.to, aliases);
-    if (normalizeSymbol(edgeFrom) !== normalizedTargetFrom || normalizeSymbol(edgeTo) !== normalizedTargetTo) continue;
+    if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
     if (!best || edge.rate > best.rate) {
       best = { ...edge, from: targetFrom, to: targetTo };
     }
@@ -360,14 +353,12 @@ function findBestFixedPath(edges, rule, aliases) {
 function selectBestDirectEdge(edges, from, to, aliases) {
   const targetFrom = resolveAlias(from, aliases);
   const targetTo = resolveAlias(to, aliases);
-  const normalizedTargetFrom = normalizeSymbol(targetFrom);
-  const normalizedTargetTo = normalizeSymbol(targetTo);
   let best = null;
 
   for (const edge of edges || []) {
     const edgeFrom = resolveAlias(edge.from, aliases);
     const edgeTo = resolveAlias(edge.to, aliases);
-    if (normalizeSymbol(edgeFrom) !== normalizedTargetFrom || normalizeSymbol(edgeTo) !== normalizedTargetTo) continue;
+    if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
     if (!best || edge.rate > best.rate) {
       best = { ...edge, from: targetFrom, to: targetTo };
     }

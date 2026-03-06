@@ -48,6 +48,13 @@
 - 报价边：由监控报价生成（真实交易方向）
 - 规则边：由别名规则生成（1:1 等价映射，如 `BTC.b <-> cbBTC`）
 
+当前 symbol 语义：
+
+- 路径图按原始 symbol 字符串精确匹配
+- `wBTC` 与 `WBTC` 视为不同 symbol
+- 只有显式等价资产规则才允许不同 symbol 之间生成规则边
+- 不再在搜索核心里做全局大小写归一
+
 ### 2) 路径 / 闭环（Cycle）
 
 搜索结果统一表示为：
@@ -77,11 +84,20 @@
 
 ### 2) 别名规则 -> 规则边（1:1 等价币）
 
-当前别名规则（`app.js`）示例：
+当前不再直接手写零散 `aliasRules`，而是先在 `app.js` 里维护 `ASSET_EQUIVALENCE_GROUPS`，再生成别名规则。
 
-- `xBTC -> cbBTC`
-- `BTCB -> cbBTC`
-- `BTC.b -> cbBTC`
+当前示例：
+
+- `cbBTC` 组：`cbBTC / xBTC / BTCB / BTC.b / BTC.B`
+- `tBTC` 组：`tBTC / TBTC`
+
+注意：
+
+- 这一层只处理 symbol 等价关系
+- 不把 token address / Sui type address 直接塞进规则边
+- 地址仍然作为报价元数据保留，用于详情展示和人工核对
+
+这样做的原因是：当前套利图构建只依赖 `fromSymbol / toSymbol`，不依赖 token address。
 
 `arb-paths.js` 的 `buildRuleEdges()` 会把同一等价组做成“组内全互联”：
 
