@@ -13,7 +13,8 @@
     activeIndex: -1,
     panels: new Map(),
     profitPanel: null,
-    prefillApplied: false
+    prefillApplied: false,
+    prefillPairs: utils ? utils.parseChartsPagePrefill(location.href) : []
   };
 
   function setStatus(message, tone) {
@@ -233,6 +234,45 @@
     panel.bodyEl.innerHTML = `<div class="chart-message">${escapeHtml(message)}</div>`;
   }
 
+  function buildPanelPlaceholderLabel(pair) {
+    if (pair && pair.label) return pair.label;
+    if (!pair) return '加载图表...';
+    return `加载图表 #${pair.quoteId} (${pair.direction === 'inverse' ? 'inverse' : 'forward'})`;
+  }
+
+  function updatePanelTitle(panel) {
+    if (!panel || !panel.titleEl) return;
+    panel.titleEl.textContent = buildPanelPlaceholderLabel(panel.pair);
+  }
+
+  function mergePairWithSeries(pair, series) {
+    if (!series) return pair;
+    return {
+      ...pair,
+      key: pair && pair.key ? pair.key : (utils ? utils.buildChartPairKey(series.quoteId, series.direction) : `${series.quoteId}:${series.direction}`),
+      quoteId: Number.isFinite(Number(series.quoteId)) ? Number(series.quoteId) : pair.quoteId,
+      direction: series.direction || pair.direction,
+      chain: series.chain || pair.chain || '',
+      fromSymbol: series.fromSymbol || pair.fromSymbol || '',
+      toSymbol: series.toSymbol || pair.toSymbol || '',
+      label: series.label || pair.label || '',
+      source: series.source || pair.source || ''
+    };
+  }
+
+  function buildPrefillPair(item) {
+    const safeQuoteId = Number(item && item.quoteId);
+    const direction = item && item.direction === 'inverse' ? 'inverse' : 'forward';
+    const key = utils ? utils.buildChartPairKey(safeQuoteId, direction) : `${safeQuoteId}:${direction}`;
+    return {
+      key,
+      quoteId: safeQuoteId,
+      direction,
+      label: `加载图表 #${safeQuoteId}`,
+      source: ''
+    };
+  }
+
   function prepareChartCanvas(panel) {
     if (!panel || !panel.bodyEl) return null;
     destroyPanelChart(panel);
@@ -365,6 +405,8 @@
         throw new Error('图表库加载失败，请刷新页面重试');
       }
 
+      panel.pair = mergePairWithSeries(panel.pair, series);
+      updatePanelTitle(panel);
       renderPricePanelChart(panel, series);
       panel.metaEl.textContent = `${series.source || '历史快照'} · 最近 2 小时 · ${series.points.length} 个点`;
       if (!options.silentStatus) {
@@ -418,7 +460,7 @@
     root.innerHTML = `
       <div class="chart-panel-header">
         <div>
-          <h2 class="chart-panel-title">${escapeHtml(pair.label)}</h2>
+          <h2 class="chart-panel-title">${escapeHtml(buildPanelPlaceholderLabel(pair))}</h2>
           <div class="chart-panel-meta">等待加载...</div>
         </div>
         <div class="chart-panel-actions">
@@ -435,6 +477,7 @@
     const panel = {
       pair,
       root,
+      titleEl: root.querySelector('.chart-panel-title'),
       metaEl: root.querySelector('.chart-panel-meta'),
       bodyEl: root.querySelector('.chart-panel-body'),
       chart: null,
@@ -506,39 +549,24 @@
     if (state.prefillApplied || !utils) return;
     state.prefillApplied = true;
 
-    const prefillPairs = utils.parseChartsPagePrefill(location.href);
+    const prefillPairs = Array.isArray(state.prefillPairs) ? state.prefillPairs : [];
     if (!prefillPairs.length) return;
 
-    const pairMap = new Map(state.pairs.map((pair) => [pair.key, pair]));
-    const matched = [];
-    const missing = [];
+    const loadResults = await Promise.all(prefillPairs.map((item) => addPanel(buildPrefillPair(item), { silentStatus: true })));
+    const loadedCount = loadResults.filter((item) => item && Array.isArray(item.points) && item.points.length).length;
+    const missingCount = Math.max(0, prefillPairs.length - loadedCount);
 
-    for (const item of prefillPairs) {
-      const key = utils.buildChartPairKey(item.quoteId, item.direction);
-      if (pairMap.has(key)) {
-        matched.push(pairMap.get(key));
-      } else {
-        missing.push(key);
-      }
-    }
-
-    for (const pair of matched) {
-      // 保持按套利腿顺序依次添加，避免状态提示来回跳。
-      // eslint-disable-next-line no-await-in-loop
-      await addPanel(pair, { silentStatus: true });
-    }
-
-    if (matched.length && missing.length) {
-      setStatus(`已预加载 ${matched.length} 张图表，另有 ${missing.length} 条腿在最近两小时内没有快照。`, 'error');
+    if (loadedCount && missingCount) {
+      setStatus(`已预加载 ${loadedCount} 张图表，另有 ${missingCount} 条腿在最近两小时内没有快照。`, 'error');
       return;
     }
 
-    if (matched.length) {
-      setStatus(`已从套利机会预加载 ${matched.length} 张图表。`);
+    if (loadedCount) {
+      setStatus(`已从套利机会预加载 ${loadedCount} 张图表。`);
       return;
     }
 
-    setStatus('URL 中的套利图表参数未命中最近两小时快照。', 'error');
+    setStatus('URL 中的套利图表参数在最近两小时内没有可用快照。', 'error');
   }
 
   async function loadPairs() {
@@ -553,13 +581,19 @@
       state.pairs = Array.isArray(pairs) ? pairs : [];
       addBtn.disabled = state.pairs.length === 0;
       syncRefreshButtonState();
-      setStatus(state.pairs.length ? `已加载 ${state.pairs.length} 个可选交易对。` : '最近两小时暂无可用历史数据。');
       renderSuggestions();
-      await applyPrefillPairs();
+
+      if (!state.prefillPairs.length) {
+        setStatus(state.pairs.length ? `已加载 ${state.pairs.length} 个可选交易对。` : '最近 10 分钟暂无可选交易对。');
+      }
     } catch (error) {
       addBtn.disabled = true;
       if (refreshBtn) {
         refreshBtn.disabled = true;
+      }
+      if (state.prefillPairs.length && state.panels.size) {
+        setStatus(`图表已预加载，但候选交易对加载失败：${error.message || '候选交易对加载失败'}`, 'error');
+        return;
       }
       setStatus(error.message || '候选交易对加载失败', 'error');
     }
@@ -640,6 +674,7 @@
   }
 
   bindEvents();
+  applyPrefillPairs();
   loadPairs();
   syncRefreshButtonState();
   renderEmptyState();

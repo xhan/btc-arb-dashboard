@@ -37,6 +37,19 @@ async function waitForServer(attempts = 15) {
   await appendPriceSnapshot(tempDir, {
     quotes: [
       {
+        quoteId: 9,
+        chain: 'ethereum',
+        pair: 'OLD/USDC',
+        size: 1,
+        fromSymbol: 'OLD',
+        toSymbol: 'USDC',
+        price: 1.23
+      }
+    ]
+  }, new Date('2026-02-28T15:52:10.000Z'));
+  await appendPriceSnapshot(tempDir, {
+    quotes: [
+      {
         quoteId: 1,
         chain: 'ethereum',
         pair: 'WBTC/WETH',
@@ -119,6 +132,7 @@ async function waitForServer(attempts = 15) {
     const pairs = JSON.parse(pairsResponse.body);
     assert.ok(Array.isArray(pairs));
     assert.ok(pairs.some((item) => item.key === '3:forward' && item.label === '(ETH) GHO -> USDC'));
+    assert.ok(!pairs.some((item) => item.key === '9:forward'));
 
     const seriesResponse = await request('/api/chart-series?quoteId=1&direction=forward');
     assert.strictEqual(seriesResponse.statusCode, 200);
@@ -128,6 +142,14 @@ async function waitForServer(attempts = 15) {
     assert.deepStrictEqual(series.points, [
       { time: Math.floor(new Date('2026-02-28T16:00:10.000Z').getTime() / 1000), value: 16 },
       { time: Math.floor(new Date('2026-02-28T16:05:10.000Z').getTime() / 1000), value: 16.5 }
+    ]);
+
+    const oldSeriesResponse = await request('/api/chart-series?quoteId=9&direction=forward');
+    assert.strictEqual(oldSeriesResponse.statusCode, 200);
+    const oldSeries = JSON.parse(oldSeriesResponse.body);
+    assert.strictEqual(oldSeries.key, '9:forward');
+    assert.deepStrictEqual(oldSeries.points, [
+      { time: Math.floor(new Date('2026-02-28T15:52:10.000Z').getTime() / 1000), value: 1.23 }
     ]);
 
     const badSeriesResponse = await request('/api/chart-series?quoteId=abc&direction=forward');

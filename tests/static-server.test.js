@@ -59,10 +59,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('查看回放 JSON'));
     assert.ok(snapshotResponse.body.includes('grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);'));
     assert.ok(snapshotResponse.body.includes('src="arb-equivalence-utils.js"'));
+    assert.ok(snapshotResponse.body.includes('src="charts-utils.js"'));
 
     const snapshotAppResponse = await request('/snapshot-app.js');
     assert.strictEqual(snapshotAppResponse.statusCode, 200);
     assert.ok(snapshotAppResponse.body.includes('buildAliasRulesFromGroups'));
+    assert.ok(snapshotAppResponse.body.includes('buildOpportunityChartHref'));
 
     const chartsResponse = await request('/charts');
     assert.strictEqual(chartsResponse.statusCode, 200);

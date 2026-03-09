@@ -88,6 +88,8 @@ function ensureSchema(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_snapshot_quotes_snapshot_id
       ON snapshot_quotes (snapshot_id);
+    CREATE INDEX IF NOT EXISTS idx_snapshot_quotes_quote_id_snapshot_id
+      ON snapshot_quotes (quote_id, snapshot_id);
     CREATE INDEX IF NOT EXISTS idx_snapshot_quotes_chain_pair
       ON snapshot_quotes (chain, pair);
   `);

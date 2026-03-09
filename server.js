@@ -48,6 +48,7 @@ const CONFIG_PATH = './config.json';
 const CONFIG_MORE_PATH = './config_more.json';
 const METADATA_CACHE_PATH = './metadata-cache.json';
 const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
+const CHART_PAIR_WINDOW_MS = 10 * 60 * 1000;
 
 let tokenMetaCache = {};
 
@@ -433,7 +434,7 @@ app.get('/api/get-price-snapshot', async (req, res) => {
 
 app.get('/api/chart-pairs', async (req, res) => {
     try {
-        const pairs = await listRecentChartPairs(PRICE_SNAPSHOT_DIR);
+        const pairs = await listRecentChartPairs(PRICE_SNAPSHOT_DIR, { windowMs: CHART_PAIR_WINDOW_MS });
         res.json(pairs);
     } catch (error) {
         logMessage('CHART_PAIRS_ERR', `读取图表候选失败: ${error.message}`, 'error');

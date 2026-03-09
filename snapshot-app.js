@@ -120,6 +120,31 @@
     return edges;
   }
 
+  function buildOpportunityChartHref(cycle) {
+    const utils = window.ChartsUtils;
+    if (!utils || typeof utils.buildChartsPageHref !== 'function') {
+      return '/charts';
+    }
+
+    const chartPairs = (Array.isArray(cycle && cycle.legs) ? cycle.legs : [])
+      .filter((leg) => !(leg && (leg.rule || leg.chain === '规则')) && Number.isFinite(Number(leg && leg.quoteId)))
+      .map((leg) => ({
+        quoteId: Number(leg.quoteId),
+        direction: leg.inverse ? 'inverse' : 'forward'
+      }));
+
+    return utils.buildChartsPageHref(chartPairs);
+  }
+
+  function buildOpportunityEntry(cycle, label) {
+    if (!cycle) return null;
+    return {
+      label,
+      cycle,
+      chartHref: buildOpportunityChartHref(cycle)
+    };
+  }
+
   function renderStatus(selection) {
     if (!selection) {
       statusEl.innerHTML = '<div class="snapshot-empty">未找到满足条件的快照</div>';
@@ -213,17 +238,17 @@
       {
         title: '固定路径',
         opportunities: FIXED_PATH_RULES
-          .map((rule) => ({
-            label: rule.title,
-            cycle: window.ArbPaths.findBestFixedPath(
+          .map((rule) => buildOpportunityEntry(
+            window.ArbPaths.findBestFixedPath(
               (window.ArbFixedUtils && typeof window.ArbFixedUtils.filterEdgesForFixedRule === 'function')
                 ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
                 : allEdgesWithRules,
               rule,
               ALIAS_RULES
-            )
-          }))
-          .filter((item) => item.cycle)
+            ),
+            rule.title
+          ))
+          .filter(Boolean)
       }
     ];
 
@@ -243,8 +268,10 @@
       });
       const displayCycles = (cycles || []).filter((cycle) => cycle && cycle.profitRate > 0).slice(0, 4);
       const opportunities = displayCycles.length
-        ? displayCycles.map((cycle, index) => ({ label: `机会 ${index + 1}`, cycle }))
-        : ((cycles && cycles[0]) ? [{ label: '机会 1', cycle: cycles[0] }] : []);
+        ? displayCycles
+          .map((cycle, index) => buildOpportunityEntry(cycle, `机会 ${index + 1}`))
+          .filter(Boolean)
+        : ((cycles && cycles[0]) ? [buildOpportunityEntry(cycles[0], '机会 1')].filter(Boolean) : []);
       return {
         title: category.name,
         opportunities
@@ -259,8 +286,10 @@
     });
     const globalPositive = (globalCycles || []).filter((cycle) => cycle && cycle.profitRate > 0).slice(0, 8);
     const globalOps = globalPositive.length
-      ? globalPositive.map((cycle, index) => ({ label: `机会 ${index + 1}`, cycle }))
-      : ((globalCycles && globalCycles[0]) ? [{ label: '机会 1', cycle: globalCycles[0] }] : []);
+      ? globalPositive
+        .map((cycle, index) => buildOpportunityEntry(cycle, `机会 ${index + 1}`))
+        .filter(Boolean)
+      : ((globalCycles && globalCycles[0]) ? [buildOpportunityEntry(globalCycles[0], '机会 1')].filter(Boolean) : []);
 
     return [
       fixedSections,

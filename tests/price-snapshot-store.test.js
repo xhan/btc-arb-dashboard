@@ -2,6 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { DatabaseSync } = require('node:sqlite');
 
 const {
   normalizePriceSnapshotConfig,
@@ -123,6 +124,16 @@ assert.strictEqual(dbPath, path.join('db/price', 'price-snapshots.db'));
 
   assert.strictEqual(savedPath, path.join(tempDir, 'price-snapshots.db'));
   assert.ok(fs.existsSync(savedPath));
+
+  const db = new DatabaseSync(savedPath, { readonly: true });
+  const quoteIdIndex = db.prepare(`
+    SELECT name
+    FROM sqlite_master
+    WHERE type = 'index'
+      AND name = 'idx_snapshot_quotes_quote_id_snapshot_id'
+  `).get();
+  db.close();
+  assert.ok(quoteIdIndex, '应创建 quote_id 复合索引');
 
   const nearest = await getNearestPriceSnapshot(tempDir, new Date('2026-02-28T12:05:00.000Z'));
   assert.strictEqual(nearest.capturedAt, firstTime.toISOString());
