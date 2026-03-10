@@ -63,6 +63,7 @@
     let priceSnapshotTimer = null;
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     let arbUpdateTimer = null;
+    const ARB_PANEL_UPDATE_DELAY_MS = 1000;
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
     let arbGlobalExcludedChainsInput = '';
@@ -450,7 +451,7 @@
         arbUpdateTimer = setTimeout(() => {
             arbUpdateTimer = null;
             updateArbPanel();
-        }, 300);
+        }, ARB_PANEL_UPDATE_DELAY_MS);
     }
 
     function formatChainLabel(chain) {

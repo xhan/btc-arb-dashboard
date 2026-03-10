@@ -4,6 +4,18 @@
 
 把 `showInverse` 的反向报价纳入队列调度，避免在一次 `fetchSingleQuote()` 中与主向并发请求，降低实际 QPS 放大。
 
+补充：
+
+- 主看板右侧“套利路径”面板不跟着每次报价立即刷新
+- 它走单独的节流更新逻辑，当前节流窗口常量是 `ARB_PANEL_UPDATE_DELAY_MS = 1000`
+- 含义是：
+  - 任意一个主报价成功后，会请求一次套利路径刷新
+  - 如果当前已经有一个等待中的套利路径刷新 timer，则新的请求会被忽略
+  - timer 到期后只执行一次 `updateArbPanel()`
+- 所以当前实际语义是：
+  - `最多每 1000ms 重算一次套利路径`
+  - 不是“每个报价都立刻重算一次”
+
 ## 核心变化
 
 - 旧模型：队列里存 `quote`
@@ -19,13 +31,14 @@
 
 ## 当前有几个队列
 
-当前主看板固定有 `8` 个队列：
+当前主看板固定有 `9` 个队列：
 
 - `kyber`
 - `zerox`
 - `velora`
 - `lifi`
 - `bybit`
+- `binance`
 - `solana`
 - `sui`
 - `starknet`
@@ -33,6 +46,7 @@
 队列选择规则：
 
 - `Bybit` 走 `bybit`
+- `Binance` 走 `binance`
 - `solana` 走 `solana`
 - `sui` 走 `sui`
 - `starknet` 走 `starknet`
@@ -44,13 +58,14 @@
 
 ## 队列与执行逻辑
 
-1. `addToQueue(quote)` 按数据源类型（`kyber/zerox/velora/lifi/bybit/solana/sui/starknet`）决定进入哪个队列
+1. `addToQueue(quote)` 按数据源类型（`kyber/zerox/velora/lifi/bybit/binance/solana/sui/starknet`）决定进入哪个队列
 2. 把 `quote` 展开成一个或两个任务（`main`、`inverse`）
 3. `processQueue(type)` 每次轮询取出一个任务
 4. 通过 `task.quoteId` 找到当前 quote 配置
 5. 调用 `fetchSingleQuote(quote, task.mode)`
 6. `main` 模式更新主价格/趋势/告警
-7. `inverse` 模式只更新反向小字，不触发主价格告警逻辑
+7. `main` 模式成功后会请求一次套利路径刷新，但当前有 `1000ms` 节流窗口
+8. `inverse` 模式只更新反向小字，不触发主价格告警逻辑
 
 ## 为什么更好
 
@@ -65,7 +80,7 @@
 
 - 每个队列都有自己独立的 `setInterval`
 - `updateSchedulers()` 会给每个队列分别启动一个 timer
-- 所以 `kyber / zerox / velora / lifi / bybit / solana / sui / starknet` 之间可以同时跑
+- 所以 `kyber / zerox / velora / lifi / bybit / binance / solana / sui / starknet` 之间可以同时跑
 
 但每个单独队列内部仍然是串行节奏：
 
@@ -86,11 +101,33 @@
 - `velora`: `200ms`
 - `lifi`: `170ms`
 - `bybit`: `1000ms`
+- `binance`: `1000ms`
 - `solana`: `3500ms`
 - `sui`: `500ms`
 - `starknet`: `1000ms`
 
 这些值可以在设置面板里改，改完会重新 `updateSchedulers()`。
+
+## 与套利路径面板的关系
+
+右侧“套利路径”面板和请求队列不是同一套 timer。
+
+- 报价队列负责拉 quote
+- 套利路径面板负责读取当前最新 quote 状态后做路径计算和渲染
+- 当前路径面板走一个单独节流器：`ARB_PANEL_UPDATE_DELAY_MS = 1000`
+
+触发顺序是：
+
+1. 某个 `main` 报价成功
+2. 更新 `quoteMonitorState`
+3. 调用 `scheduleArbUpdate()`
+4. 如果当前没有等待中的路径刷新 timer，则创建一个 `1000ms` timer
+5. timer 到期后执行一次 `updateArbPanel()`
+
+这意味着：
+
+- 多个报价如果落在同一个 `1000ms` 窗口里，只会合并成一次路径刷新
+- 当前路径面板是“节流更新”，不是固定周期轮询
 
 ## 与套利详情弹窗的关系
 
