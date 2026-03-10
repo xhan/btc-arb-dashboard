@@ -263,6 +263,12 @@
         }
 
         .quote-text { white-space: nowrap; }
+        .quote-text.bybit-orderbook-summary {
+            display: inline-block;
+            white-space: pre-line;
+            text-align: right;
+            line-height: 1.35;
+        }
         
         .inverse-quote-text {
             font-size: 13px;
@@ -772,6 +778,11 @@
             transition: opacity 0.2s ease;
         }
         #global-tooltip.visible { display: block; }
+        #global-tooltip.bybit-orderbook-tooltip-host {
+            min-width: 300px;
+            white-space: normal;
+            text-align: left;
+        }
         #global-tooltip::after {
             content: "";
             position: absolute;
@@ -781,6 +792,33 @@
             border-width: 5px;
             border-style: solid;
             border-color: var(--popover-bg) transparent transparent transparent;
+        }
+        .bybit-orderbook-tooltip {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(120px, 1fr));
+            gap: 12px;
+            font-variant-numeric: tabular-nums;
+        }
+        .bybit-orderbook-side {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .bybit-orderbook-title {
+            font-weight: 700;
+            font-size: 11px;
+            opacity: 0.72;
+            letter-spacing: 0.04em;
+        }
+        .bybit-orderbook-level {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .bybit-orderbook-level.empty,
+        .bybit-orderbook-tooltip-empty {
+            opacity: 0.72;
         }
 
         #copy-toast {

@@ -578,6 +578,61 @@
             : `${(profitRate * 10000).toFixed(2)}‱`;
     }
 
+    function formatBybitBookValue(value, maxDecimals = 10) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) return '--';
+        const abs = Math.abs(value);
+        let decimals = maxDecimals;
+        if (abs >= 1000) decimals = Math.min(decimals, 2);
+        else if (abs >= 1) decimals = Math.min(decimals, 6);
+        else if (abs >= 0.01) decimals = Math.min(decimals, 8);
+        return Number(value.toFixed(decimals)).toString();
+    }
+
+    function buildBybitOrderbookSummary(symbol, orderbook) {
+        if (!orderbook) return `${symbol}: 等待盘口...`;
+        const ask = `ASK ${formatBybitBookValue(orderbook.bestAskPrice)} × ${formatBybitBookValue(orderbook.bestAskSize, 6)}`;
+        const bid = `BID ${formatBybitBookValue(orderbook.bestBidPrice)} × ${formatBybitBookValue(orderbook.bestBidSize, 6)}`;
+        return `${ask}\n${bid}`;
+    }
+
+    function buildBybitOrderbookTooltipHtml(orderbook) {
+        if (!orderbook) {
+            return '<div class="bybit-orderbook-tooltip-empty">盘口等待数据...</div>';
+        }
+
+        function renderSide(title, levels) {
+            if (!Array.isArray(levels) || levels.length === 0) {
+                return `
+                    <div class="bybit-orderbook-side">
+                        <div class="bybit-orderbook-title">${escapeHtml(title)}</div>
+                        <div class="bybit-orderbook-level empty">暂无数据</div>
+                    </div>
+                `;
+            }
+
+            const rows = levels.map((level, index) => `
+                <div class="bybit-orderbook-level">
+                    <span>${index + 1}. ${formatBybitBookValue(level.price)}</span>
+                    <span>${formatBybitBookValue(level.size, 6)}</span>
+                </div>
+            `).join('');
+
+            return `
+                <div class="bybit-orderbook-side">
+                    <div class="bybit-orderbook-title">${escapeHtml(title)}</div>
+                    ${rows}
+                </div>
+            `;
+        }
+
+        return `
+            <div class="bybit-orderbook-tooltip">
+                ${renderSide('ASK', orderbook.asksTop5)}
+                ${renderSide('BID', orderbook.bidsTop5)}
+            </div>
+        `;
+    }
+
     function nudgeArbDetailInput(index, delta) {
         const card = arbDetailState.cards[index];
         if (!card) return;
@@ -1488,12 +1543,22 @@
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Bybit API Request Failed');
 
+        const bybitOrderbook = {
+            bestBidPrice: data.bestBidPrice,
+            bestBidSize: data.bestBidSize,
+            bestAskPrice: data.bestAskPrice,
+            bestAskSize: data.bestAskSize,
+            bidsTop5: data.bidsTop5,
+            asksTop5: data.asksTop5
+        };
+
         return {
             symbols: { from: data.fromSymbol, to: data.toSymbol },
             finalAmountOut: data.amountOut,
             rawPrice: data.raw_price,
             usedSource: 'Bybit',
-            resultText: `${quote.symbol}: ${parseFloat(data.raw_price.toFixed(10))}`
+            resultText: buildBybitOrderbookSummary(quote.symbol, bybitOrderbook),
+            bybitOrderbook
         };
     }
 
@@ -1688,6 +1753,7 @@
                     toSymbol: data.symbols.to,
                     lastResultText: data.resultText,
                     lastRawPrice: data.rawPrice,
+                    bybitOrderbook: data.bybitOrderbook || null,
                     usedSource: data.usedSource,
                     usedSourceReal: successSource
                 };
@@ -1905,9 +1971,18 @@
         hoverTimeout = setTimeout(() => {
             if (currentHoveredQuoteId !== quoteId) return;
             
+            if (quote.chain === 'Bybit') {
+                showGlobalTooltip(
+                    buildBybitOrderbookTooltipHtml(state ? state.bybitOrderbook : null),
+                    textWrapper,
+                    { className: 'bybit-orderbook-tooltip-host' }
+                );
+                return;
+            }
+
             let content = '';
             let sourceInfo = state ? (state.usedSource || '未知') : '等待数据...';
-            
+
             if (isEvmChain(quote.chain)) {
                 let pref = quote.preferredSource || 'Kyber';
                 content += `<div>来源：<strong>${sourceInfo}</strong></div>`;
@@ -1920,9 +1995,13 @@
         }, 100); 
     }
 
-    function showGlobalTooltip(htmlContent, targetEl) {
+    function showGlobalTooltip(htmlContent, targetEl, options = {}) {
         globalTooltip.innerHTML = htmlContent;
+        globalTooltip.classList.remove('visible', 'bybit-orderbook-tooltip-host');
         globalTooltip.classList.add('visible');
+        if (options.className) {
+            globalTooltip.classList.add(options.className);
+        }
         
         const rect = targetEl.getBoundingClientRect();
         const top = rect.top;
@@ -2219,6 +2298,7 @@
         itemEl.className = 'quote-item';
         const initialAmount = quote.amount || 1;
         const amountInputHTML = quote.chain !== 'Bybit' ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
+        const quoteTextClassName = quote.chain === 'Bybit' ? 'quote-text bybit-orderbook-summary' : 'quote-text';
         
         itemEl.innerHTML = `
             <div class="quote-left-container">
@@ -2230,7 +2310,7 @@
                     <div style="display:flex; align-items:center;">
                         ${amountInputHTML}
                         <span class="quote-text-wrapper" id="quote-text-wrapper-${quote.id}">
-                            <span class="quote-text" id="quote-text-${quote.id}">${lastResultText}</span>
+                            <span class="${quoteTextClassName}" id="quote-text-${quote.id}">${lastResultText}</span>
                         </span>
                     </div>
                 </div>
