@@ -1223,8 +1223,9 @@
         const assetEquivalenceGroups = (window.ArbEquivalenceUtils && window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS)
             ? window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
             : {
-                cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b', 'BTC.B'],
-                tBTC: ['tBTC', 'TBTC']
+                cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
+                tBTC: ['tBTC', 'TBTC'],
+                USDT: ['USDT', 'USD₮0']
             };
         const aliasRules = (window.ArbEquivalenceUtils && typeof window.ArbEquivalenceUtils.buildAliasRulesFromGroups === 'function')
             ? window.ArbEquivalenceUtils.buildAliasRulesFromGroups(assetEquivalenceGroups)
@@ -1232,8 +1233,8 @@
                 xBTC: 'cbBTC',
                 BTCB: 'cbBTC',
                 'BTC.b': 'cbBTC',
-                'BTC.B': 'cbBTC',
-                TBTC: 'tBTC'
+                TBTC: 'tBTC',
+                'USD₮0': 'USDT'
             };
         const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
         const allQuotes = dashboardState.flatMap(c => c.quotes || []);

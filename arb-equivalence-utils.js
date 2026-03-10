@@ -1,7 +1,8 @@
 function buildApi() {
   const DEFAULT_ASSET_EQUIVALENCE_GROUPS = {
-    cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b', 'BTC.B'],
-    tBTC: ['tBTC', 'TBTC']
+    cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
+    tBTC: ['tBTC', 'TBTC'],
+    USDT: ['USDT', 'USD₮0']
   };
 
   function buildAliasRulesFromGroups(groups) {
