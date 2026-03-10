@@ -262,7 +262,7 @@
 
     const categorySections = targetCategories.map((category) => {
       const cycles = window.ArbPaths.findTopCycles(buildEdgesFromQuotes(category.quotes).concat(ruleEdges), {
-        maxDepth: 4,
+        maxDepth: 3,
         limit: Number.MAX_SAFE_INTEGER,
         acceptCycle: window.ArbPaths.isMeaningfulPath,
         preferredStartSymbols
@@ -280,7 +280,7 @@
     });
 
     const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
-      maxDepth: 4,
+      maxDepth: 3,
       limit: Number.MAX_SAFE_INTEGER,
       acceptCycle: window.ArbPaths.isMeaningfulPath,
       preferredStartSymbols

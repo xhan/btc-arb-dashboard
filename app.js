@@ -1357,7 +1357,7 @@
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
             const sectionKey = buildArbSectionKey('category', category.id || category.name);
             const cycles = window.ArbPaths.findTopCycles(edges.concat(ruleEdges), {
-                maxDepth: 4,
+                maxDepth: 3,
                 limit: Number.MAX_SAFE_INTEGER,
                 acceptCycle: window.ArbPaths.isMeaningfulPath,
                 preferredStartSymbols: preferredCycleStartSymbols
@@ -1385,7 +1385,7 @@
 
         const globalSectionKey = buildArbSectionKey('global', 'all');
         const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
-            maxDepth: 4,
+            maxDepth: 3,
             limit: Number.MAX_SAFE_INTEGER,
             acceptCycle: window.ArbPaths.isMeaningfulPath,
             preferredStartSymbols: preferredCycleStartSymbols

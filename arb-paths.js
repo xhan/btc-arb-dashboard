@@ -109,7 +109,7 @@ function hasAdjacentRuleLegs(legs) {
 }
 
 function findBestCycle(edges, options = {}) {
-  const maxDepth = Number(options.maxDepth) || 4;
+  const maxDepth = Number(options.maxDepth) || 3;
   const acceptCycle = typeof options.acceptCycle === 'function' ? options.acceptCycle : null;
   let best = null;
 
@@ -207,7 +207,7 @@ function canonicalizeCycleRotation(legs, preferredStartSymbols) {
 }
 
 function findTopCycles(edges, options = {}) {
-  const maxDepth = Number(options.maxDepth) || 4;
+  const maxDepth = Number(options.maxDepth) || 3;
   const limit = Number(options.limit) || 3;
   const acceptCycle = typeof options.acceptCycle === 'function' ? options.acceptCycle : null;
   const preferredStartSymbols = Array.isArray(options.preferredStartSymbols) ? options.preferredStartSymbols : null;

@@ -115,7 +115,7 @@
 
 参数（当前前端）：
 
-- `maxDepth: 4`（最多 4 条真实报价腿，规则边不占深度）
+- `maxDepth: 3`（最多 3 条真实报价腿，规则边不占深度）
 - 分区 `limit: 4`
 - 全局 `limit: 8`
 - `acceptCycle: isMeaningfulPath`（过滤纯规则路径）
