@@ -160,6 +160,21 @@ for (const cycle of noConsecutiveRuleCycles) {
   }
 }
 
+const ruleDoesNotConsumeDepthCycles = findTopCycles([
+  { from: 'WBTC', to: 'TBTC', rate: 0.9987258, chain: 'sui' },
+  { from: 'tBTC', to: 'WBTC', rate: 1.00153977, chain: 'ethereum' },
+  ...buildRuleEdges({ TBTC: 'tBTC' })
+], { maxDepth: 2, limit: 10 });
+assert.ok(
+  ruleDoesNotConsumeDepthCycles.some((cycle) =>
+    cycle.profitRate > 0 &&
+    cycle.legs.some((leg) => leg.chain === 'sui' && leg.from === 'WBTC' && leg.to === 'TBTC') &&
+    cycle.legs.some((leg) => leg.chain === 'ethereum' && leg.from === 'tBTC' && leg.to === 'WBTC') &&
+    cycle.legs.some((leg) => leg.rule && leg.from === 'TBTC' && leg.to === 'tBTC')
+  ),
+  'rule legs should not consume maxDepth when counting path length'
+);
+
 const topCycles = findTopCycles(cycleEdges, { maxDepth: 3, limit: 2 });
 assert.strictEqual(topCycles.length, 2);
 assert.ok(topCycles[0].profitRate >= topCycles[1].profitRate);

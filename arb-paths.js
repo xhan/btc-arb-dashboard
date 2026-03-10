@@ -121,16 +121,16 @@ function findBestCycle(edges, options = {}) {
     adjacency.set(edge.from, list);
   }
 
-  function dfs(start, current, visited, path, product) {
-    if (path.length > maxDepth) return;
-
+  function dfs(start, current, visited, path, product, pricedDepth) {
     const neighbors = adjacency.get(current) || [];
     for (const edge of neighbors) {
       const next = edge.to;
       const nextProduct = product * edge.rate;
       const prevEdge = path[path.length - 1];
+      const nextPricedDepth = pricedDepth + (isRuleEdge(edge) ? 0 : 1);
 
       if (isRuleEdge(prevEdge) && isRuleEdge(edge)) continue;
+      if (nextPricedDepth > maxDepth) continue;
 
       if (next === start && path.length >= 1) {
         const profitRate = nextProduct - 1;
@@ -148,17 +148,16 @@ function findBestCycle(edges, options = {}) {
       }
 
       if (visited.has(next)) continue;
-      if (path.length + 1 >= maxDepth) continue;
 
       visited.add(next);
-      dfs(start, next, visited, path.concat(edge), nextProduct);
+      dfs(start, next, visited, path.concat(edge), nextProduct, nextPricedDepth);
       visited.delete(next);
     }
   }
 
   for (const start of adjacency.keys()) {
     const visited = new Set([start]);
-    dfs(start, start, visited, [], 1);
+    dfs(start, start, visited, [], 1, 0);
   }
 
   return best;
@@ -231,16 +230,16 @@ function findTopCycles(edges, options = {}) {
     results.push({ legs: canonical.legs, profitRate });
   }
 
-  function dfs(start, current, visited, path, product) {
-    if (path.length > maxDepth) return;
-
+  function dfs(start, current, visited, path, product, pricedDepth) {
     const neighbors = adjacency.get(current) || [];
     for (const edge of neighbors) {
       const next = edge.to;
       const nextProduct = product * edge.rate;
       const prevEdge = path[path.length - 1];
+      const nextPricedDepth = pricedDepth + (isRuleEdge(edge) ? 0 : 1);
 
       if (isRuleEdge(prevEdge) && isRuleEdge(edge)) continue;
+      if (nextPricedDepth > maxDepth) continue;
 
       if (next === start && path.length >= 1) {
         const legs = path.concat(edge);
@@ -250,17 +249,16 @@ function findTopCycles(edges, options = {}) {
       }
 
       if (visited.has(next)) continue;
-      if (path.length + 1 >= maxDepth) continue;
 
       visited.add(next);
-      dfs(start, next, visited, path.concat(edge), nextProduct);
+      dfs(start, next, visited, path.concat(edge), nextProduct, nextPricedDepth);
       visited.delete(next);
     }
   }
 
   for (const start of adjacency.keys()) {
     const visited = new Set([start]);
-    dfs(start, start, visited, [], 1);
+    dfs(start, start, visited, [], 1, 0);
   }
 
   results.sort((a, b) => b.profitRate - a.profitRate);
