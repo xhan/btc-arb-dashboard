@@ -9,6 +9,7 @@ const {
   buildPriceSnapshotEntry,
   getPriceSnapshotDbPath,
   appendPriceSnapshot,
+  prunePriceSnapshots,
   getNearestPriceSnapshot,
   getClosestPriceSnapshot,
   listRecentChartPairs,
@@ -193,6 +194,41 @@ assert.strictEqual(dbPath, path.join('db/price', 'price-snapshots.db'));
 
   const missingSeries = await getChartSeries(tempDir, { quoteId: 999, direction: 'forward' });
   assert.strictEqual(missingSeries, null);
+
+  const dryRun = await prunePriceSnapshots(tempDir, {
+    maxAgeMs: 15 * 60 * 1000,
+    nowMs: thirdTime.getTime() + 1,
+    dryRun: true,
+    vacuum: false
+  });
+  assert.strictEqual(dryRun.deletedBatchCount, 2);
+  assert.strictEqual(dryRun.deletedQuoteCount, 2);
+  assert.strictEqual(dryRun.before.batchCount, 4);
+  assert.strictEqual(dryRun.after.batchCount, 4);
+
+  const pruned = await prunePriceSnapshots(tempDir, {
+    maxAgeMs: 15 * 60 * 1000,
+    nowMs: thirdTime.getTime() + 1,
+    vacuum: false
+  });
+  assert.strictEqual(pruned.deletedBatchCount, 2);
+  assert.strictEqual(pruned.deletedQuoteCount, 2);
+  assert.strictEqual(pruned.before.batchCount, 4);
+  assert.strictEqual(pruned.after.batchCount, 2);
+  assert.strictEqual(pruned.after.quoteCount, 3);
+
+  const remainingPairs = await listRecentChartPairs(tempDir, { windowMs: 30 * 60 * 1000 });
+  assert.ok(!remainingPairs.some((item) => item.quoteId === 9));
+  assert.ok(remainingPairs.some((item) => item.key === '1:forward'));
+  assert.ok(remainingPairs.some((item) => item.key === '3:forward'));
+
+  const removedSeries = await getChartSeries(tempDir, { quoteId: 9, direction: 'forward', windowMs: 30 * 60 * 1000 });
+  assert.strictEqual(removedSeries, null);
+
+  const trimmedSeries = await getChartSeries(tempDir, { quoteId: 1, direction: 'forward', windowMs: 30 * 60 * 1000 });
+  assert.deepStrictEqual(trimmedSeries.points, [
+    { time: Math.floor(thirdTime.getTime() / 1000), value: 39.5 }
+  ]);
 
   fs.rmSync(tempDir, { recursive: true, force: true });
 })().catch((error) => {

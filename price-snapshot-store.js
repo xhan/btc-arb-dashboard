@@ -114,6 +114,20 @@ function getLatestSnapshotMeta(db) {
   `).get();
 }
 
+function getSnapshotTotals(db, whereClause = '', value = undefined) {
+  const sql = `
+    SELECT
+      COUNT(*) AS batchCount,
+      COALESCE(SUM(quote_count), 0) AS quoteCount,
+      MIN(captured_at_ms) AS oldestCapturedAtMs,
+      MAX(captured_at_ms) AS newestCapturedAtMs
+    FROM snapshot_batches
+    ${whereClause}
+  `;
+  const stmt = db.prepare(sql);
+  return value === undefined ? stmt.get() : stmt.get(value);
+}
+
 function getSnapshotByBatchId(db, batchId) {
   const batch = db.prepare(`
     SELECT id, captured_at, captured_at_ms, client_captured_at, quote_count
@@ -215,6 +229,86 @@ async function appendPriceSnapshot(baseDir, payload = {}, now = new Date()) {
   });
 
   return dbPath;
+}
+
+async function prunePriceSnapshots(baseDir, options = {}) {
+  const dbPath = await openSnapshotDatabase(baseDir);
+  if (!dbPath) {
+    return {
+      dbPath: null,
+      cutoffMs: null,
+      deletedBatchCount: 0,
+      deletedQuoteCount: 0,
+      before: null,
+      after: null,
+      vacuumed: false
+    };
+  }
+
+  const maxAgeMs = Number.isFinite(options.maxAgeMs) && options.maxAgeMs > 0
+    ? options.maxAgeMs
+    : 24 * 60 * 60 * 1000;
+  const nowMs = Number.isFinite(options.nowMs) ? options.nowMs : Date.now();
+  const cutoffMs = nowMs - maxAgeMs;
+  const shouldVacuum = options.vacuum !== false;
+  const isDryRun = options.dryRun === true;
+
+  return withDatabase(dbPath, (db) => {
+    const before = getSnapshotTotals(db);
+    const stale = getSnapshotTotals(db, 'WHERE captured_at_ms < ?', cutoffMs);
+
+    if (!stale.batchCount || isDryRun) {
+      return {
+        dbPath,
+        cutoffMs,
+        deletedBatchCount: Number(stale.batchCount) || 0,
+        deletedQuoteCount: Number(stale.quoteCount) || 0,
+        before,
+        after: before,
+        vacuumed: false
+      };
+    }
+
+    const deleteQuotes = db.prepare(`
+      DELETE FROM snapshot_quotes
+      WHERE snapshot_id IN (
+        SELECT id
+        FROM snapshot_batches
+        WHERE captured_at_ms < ?
+      )
+    `);
+    const deleteBatches = db.prepare(`
+      DELETE FROM snapshot_batches
+      WHERE captured_at_ms < ?
+    `);
+
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      deleteQuotes.run(cutoffMs);
+      deleteBatches.run(cutoffMs);
+      db.exec('COMMIT');
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
+
+    let vacuumed = false;
+    if (shouldVacuum) {
+      db.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+      db.exec('VACUUM');
+      vacuumed = true;
+    }
+
+    return {
+      dbPath,
+      cutoffMs,
+      deletedBatchCount: Number(stale.batchCount) || 0,
+      deletedQuoteCount: Number(stale.quoteCount) || 0,
+      before,
+      after: getSnapshotTotals(db),
+      vacuumed
+    };
+  });
 }
 
 async function getNearestPriceSnapshot(baseDir, targetTime = new Date()) {
@@ -490,6 +584,7 @@ module.exports = {
   buildPriceSnapshotEntry,
   getPriceSnapshotDbPath,
   appendPriceSnapshot,
+  prunePriceSnapshots,
   getNearestPriceSnapshot,
   getClosestPriceSnapshot,
   listRecentChartPairs,
