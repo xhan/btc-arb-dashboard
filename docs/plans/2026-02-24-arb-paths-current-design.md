@@ -88,8 +88,9 @@
 
 当前示例：
 
-- `cbBTC` 组：`cbBTC / xBTC / BTCB / BTC.b / BTC.B`
+- `cbBTC` 组：`cbBTC / xBTC / BTCB / BTC.b`
 - `tBTC` 组：`tBTC / TBTC`
+- `USDT` 组：`USDT / USD₮0`
 
 注意：
 
@@ -167,7 +168,6 @@
 - `xBTC`
 - `BTCB`
 - `BTC.b`
-- `BTC.B`
 
 闭环去重时会优先选择这些 symbol 作为展示起点（如果存在）。
 
