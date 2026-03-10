@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>队列统计</title>
+    <style>
+        :root {
+            --bg: #f6f1e8;
+            --panel: rgba(255, 252, 247, 0.92);
+            --panel-strong: #fffaf2;
+            --text: #2b241b;
+            --muted: #7d6a57;
+            --line: rgba(92, 68, 37, 0.16);
+            --accent: #9c4f22;
+            --accent-soft: rgba(156, 79, 34, 0.12);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(201, 141, 71, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(132, 70, 31, 0.12), transparent 26%),
+                linear-gradient(180deg, #f9f3ea 0%, #f3eadf 55%, #efe3d5 100%);
+        }
+
+        .shell {
+            width: min(1100px, calc(100% - 32px));
+            margin: 32px auto 48px;
+        }
+
+        .hero,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            box-shadow: 0 18px 40px rgba(78, 54, 28, 0.08);
+            backdrop-filter: blur(8px);
+        }
+
+        .hero {
+            padding: 28px;
+            margin-bottom: 18px;
+        }
+
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(28px, 4vw, 44px);
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .hero-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            padding: 0 16px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            color: var(--text);
+            text-decoration: none;
+            background: var(--panel-strong);
+        }
+
+        .formula {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .formula-card,
+        .metric-card {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: var(--panel-strong);
+            padding: 16px;
+        }
+
+        .formula-card strong,
+        .metric-card strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .metric-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+        }
+
+        .panel {
+            padding: 22px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            font-variant-numeric: tabular-nums;
+        }
+
+        th {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 78px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .note {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: var(--panel-strong);
+        }
+
+        .loading,
+        .error {
+            padding: 18px;
+            border-radius: 16px;
+            background: var(--panel-strong);
+            border: 1px solid var(--line);
+        }
+
+        @media (max-width: 720px) {
+            .shell {
+                width: min(100% - 20px, 1100px);
+                margin-top: 20px;
+            }
+
+            .hero,
+            .panel {
+                padding: 18px;
+                border-radius: 16px;
+            }
+
+            .hero-top {
+                flex-direction: column;
+            }
+
+            th:nth-child(3),
+            td:nth-child(3),
+            th:nth-child(4),
+            td:nth-child(4) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <section class="hero">
+            <div class="hero-top">
+                <div>
+                    <div class="muted">Quote Scheduler</div>
+                    <h1>队列统计</h1>
+                </div>
+                <div class="hero-actions">
+                    <a href="/" target="_blank" rel="noopener noreferrer">返回主看板</a>
+                </div>
+            </div>
+
+            <div class="formula">
+                <div class="formula-card">
+                    <strong>interval 的含义</strong>
+                    当前 interval 是“请求发起间隔”，不是“上个请求完成后的等待时间”。
+                </div>
+                <div class="formula-card">
+                    <strong>名义一轮时间</strong>
+                    `task 数 × interval`。其中 task = main 请求 + inverse 请求。
+                </div>
+                <div class="formula-card">
+                    <strong>为什么实际可能更长</strong>
+                    如果同一个 quote 上一轮还没完成，它会被 defer 到队尾，所以真实刷新一轮可能慢于名义值。
+                </div>
+            </div>
+        </section>
+
+        <div id="summary-metrics" class="metrics"></div>
+
+        <section class="panel">
+            <div id="queue-stats-state" class="loading">加载中...</div>
+            <div id="queue-stats-table"></div>
+            <div class="note">
+                这里的“一轮时间”是调度意义上的估算值，不等于所有请求都已经返回完。不同 quote 的请求可以重叠发起；只有同一个 quote 还在请求时，才会被延后到队尾。
+            </div>
+        </section>
+    </div>
+
+    <script src="queue-stats-utils.js"></script>
+    <script src="queue-stats-app.js"></script>
+</body>
+</html>

@@ -3,16 +3,7 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const { ethers } = require('ethers');
 const { AggregatorClient } = require('@cetusprotocol/aggregator-sdk');
-const BN = require('bn.js');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
-const {
-    EKUBO_STARKNET_CHAIN_ID,
-    buildEkuboQuoteUrl,
-    extractEkuboAmountOutRaw,
-    buildEkuboQuoteResult
-} = require('./ekubo-utils');
-const { buildLifiChainIdMap, resolveLifiChainId } = require('./lifi-utils');
-const { getDisplayedToAmountRaw } = require('./lifi-quote-utils');
 const {
     normalizePriceSnapshotConfig,
     appendPriceSnapshot,
@@ -22,6 +13,7 @@ const {
 } = require('./price-snapshot-store');
 const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./price-snapshot-replay');
 const { parseUtc8Input } = require('./time-utils');
+const { createMarketClients } = require('./market-clients');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -44,13 +36,18 @@ app.get('/snapshot', (req, res) => {
 app.get('/charts', (req, res) => {
     res.sendFile(path.join(__dirname, 'charts.html'));
 });
-const CONFIG_PATH = './config.json';
-const CONFIG_MORE_PATH = './config_more.json';
-const METADATA_CACHE_PATH = './metadata-cache.json';
+app.get('/queue-stats', (req, res) => {
+    res.sendFile(path.join(__dirname, 'queue-stats.html'));
+});
+function resolveProjectFilePath(fileName) {
+    return path.join(__dirname, fileName);
+}
+
+const CONFIG_PATH = resolveProjectFilePath('config.json');
+const CONFIG_MORE_PATH = resolveProjectFilePath('config_more.json');
+const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json');
 const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
 const CHART_PAIR_WINDOW_MS = 10 * 60 * 1000;
-
-let tokenMetaCache = {};
 
 let writeQueue = Promise.resolve();
 
@@ -138,17 +135,32 @@ async function readJsonFile(filePath) {
     return JSON.parse(stripBom(data));
 }
 
+function normalizeStringArray(value) {
+    if (Array.isArray(value)) {
+        return value.map((item) => String(item || '').trim()).filter(Boolean);
+    }
+    if (typeof value === 'string') {
+        return value.split(',').map((item) => item.trim()).filter(Boolean);
+    }
+    return [];
+}
+
 async function getConfigMore() {
     try {
         const configMore = await readJsonFile(CONFIG_MORE_PATH);
         const rawClientId = typeof configMore.kyberClientId === 'string' ? configMore.kyberClientId.trim() : '';
         const rawLifiApiKey = typeof configMore.LIFIApiKey === 'string' ? configMore.LIFIApiKey.trim() : '';
         const rawLifiIntegrator = typeof configMore.LIFIIntegrator === 'string' ? configMore.LIFIIntegrator.trim() : '';
+        const rawVeloraPartner = typeof configMore.veloraPartner === 'string' ? configMore.veloraPartner.trim() : '';
+        const rawVeloraIncludeDEXS = normalizeStringArray(configMore.veloraIncludeDEXS);
 
         return {
             kyberClientId: rawClientId || 'xh-quote-dashboard',
             lifiApiKey: rawLifiApiKey,
             lifiIntegrator: rawLifiIntegrator,
+            veloraPartner: rawVeloraPartner,
+            veloraIncludeDEXS: rawVeloraIncludeDEXS,
+            veloraOtherExchangePrices: configMore.veloraOtherExchangePrices === true,
             enablePriceSnapshot: configMore.enablePriceSnapshot === true,
             priceSnapshotIntervalSec: Number.parseInt(configMore.priceSnapshotIntervalSec, 10) || 10
         };
@@ -160,6 +172,9 @@ async function getConfigMore() {
             kyberClientId: 'xh-quote-dashboard',
             lifiApiKey: '',
             lifiIntegrator: '',
+            veloraPartner: '',
+            veloraIncludeDEXS: [],
+            veloraOtherExchangePrices: false,
             enablePriceSnapshot: false,
             priceSnapshotIntervalSec: 10
         };
@@ -203,36 +218,6 @@ async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
     }
 }
 
-async function loadCache() {
-    try {
-        tokenMetaCache = await readJsonFile(METADATA_CACHE_PATH);
-        console.log('代币元数据缓存已加载');
-    } catch (error) {
-        if (error.code === 'ENOENT') {
-            console.log('ℹ️ 未找到元数据缓存文件，将自动创建一个新的。');
-        } else {
-            console.error('❌ 加载元数据缓存失败:', error);
-        }
-    }
-}
-
-async function saveCache() {
-    try {
-        await fs.writeFile(METADATA_CACHE_PATH, JSON.stringify(tokenMetaCache, null, 2), 'utf-8');
-    } catch (error) {
-        console.error('❌ 保存元数据缓存失败:', error);
-    }
-}
-
-async function getCachedMetadata(key, fetchFunction) {
-    if (tokenMetaCache[key]) {
-        return tokenMetaCache[key];
-    }
-    const metadata = await fetchFunction();
-    tokenMetaCache[key] = metadata;
-    await saveCache();
-    return metadata;
-}
 // chainlist.org RPC endpoints
 const RPC_URLS = {
     ethereum: 'https://eth.llamarpc.com',
@@ -271,22 +256,6 @@ const RPC_URLS = {
     cronos: 'https://evm.cronos.org'
 };
 
-const ZEROX_API_KEY = '7e3d32e8-2cf8-413a-9cbe-24b8b0779588';
-const ZEROX_CHAIN_IDS = {
-    'ethereum': 1,
-    'optimism': 10,
-    'bsc': 56,
-    'polygon': 137,
-    'base': 8453,
-    'arbitrum': 42161,
-    'avalanche': 43114,
-    'linea': 59144,
-    'scroll': 534352,
-    'mantle': 5000,
-    'blast': 81457,
-    'mode': 34443
-};
-
 const evmProviders = {};
 for (const chain in RPC_URLS) {
     try {
@@ -297,71 +266,22 @@ for (const chain in RPC_URLS) {
 }
 console.log("所有 EVM Provider 初始化尝试完成");
 
-const ERC20_ABI = ["function decimals() view returns (uint8)", "function symbol() view returns (string)"];
 const suiClient = new SuiClient({ url: getFullnodeUrl('mainnet') });
 const cetusAggregator = new AggregatorClient('https://api.cetus.zone/router_v2/find_routes');
 const solanaRpc = 'https://mainnet.helius-rpc.com/?api-key=f5e20297-9ca2-4afb-98f9-be16153777b5';
-const LIFI_API_BASE_URL = 'https://li.quest/v1';
-const LIFI_DEFAULT_FROM_ADDRESS = '0x1111111111111111111111111111111111111111';
-const LIFI_DEFAULT_SLIPPAGE = '0.005';
-
-let lifiChainIdMapCache = null;
-let lifiChainIdMapFetchedAt = 0;
-const LIFI_CHAIN_MAP_TTL_MS = 10 * 60 * 1000;
-
-function getLifiHeaders(configMore = {}) {
-    const headers = { 'Content-Type': 'application/json' };
-    const apiKey = configMore.lifiApiKey;
-    if (apiKey) {
-        headers['x-lifi-api-key'] = apiKey;
-    }
-    return headers;
-}
-
-async function getLifiChainIdMap(configMore = {}) {
-    const now = Date.now();
-    if (lifiChainIdMapCache && (now - lifiChainIdMapFetchedAt) < LIFI_CHAIN_MAP_TTL_MS) {
-        return lifiChainIdMapCache;
-    }
-
-    const response = await fetchWithRetry(`${LIFI_API_BASE_URL}/chains`, { headers: getLifiHeaders(configMore) });
-    const data = await response.json();
-    lifiChainIdMapCache = buildLifiChainIdMap(data?.chains);
-    lifiChainIdMapFetchedAt = now;
-    return lifiChainIdMapCache;
-}
-
-async function getLifiTokenMeta(chainId, tokenAddress, configMore = {}) {
-    const params = new URLSearchParams({
-        chain: String(chainId),
-        token: tokenAddress
-    });
-    const response = await fetchWithRetry(`${LIFI_API_BASE_URL}/token?${params.toString()}`, { headers: getLifiHeaders(configMore) });
-    const data = await response.json();
-    if (!data || !Number.isFinite(Number(data.decimals))) {
-        throw new Error(`LI.FI 无法识别代币: ${tokenAddress}`);
-    }
-    return { decimals: Number(data.decimals), symbol: data.symbol || '???' };
-}
-
-async function getEkuboTokenMeta(tokenAddress) {
-    const normalizedToken = String(tokenAddress || '').trim().toLowerCase();
-    if (!normalizedToken) {
-        throw new Error('缺少 Starknet 代币地址');
-    }
-
-    return await getCachedMetadata(`starknet-${normalizedToken}`, async () => {
-        const response = await fetchWithRetry(
-            `https://prod-api.ekubo.org/tokens/${EKUBO_STARKNET_CHAIN_ID}/${normalizedToken}`
-        );
-        const data = await response.json();
-
-        return {
-            symbol: data?.symbol || '???',
-            decimals: Number(data?.decimals) || 0
-        };
-    });
-}
+const marketClients = createMarketClients({
+    cachePath: METADATA_CACHE_PATH,
+    cetusAggregator,
+    evmProviders,
+    fetchWithRetry,
+    getConfigMore,
+    logQuoteRequest,
+    logQuoteResult,
+    readJsonFile,
+    solanaRpc,
+    suiClient,
+    writeFile: (filePath, content, encoding) => fs.writeFile(filePath, content, encoding)
+});
 
 app.post('/api/save-config', async (req, res) => {
     try {
@@ -495,20 +415,10 @@ app.get('/api/replay-arb-snapshot', async (req, res) => {
     }
 });
 
-async function getEvmTokenMeta(chain, tokenAddress, provider) {
-    return await getCachedMetadata(`${chain}-${tokenAddress}`, async () => {
-        const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-        const [decimals, symbol] = await Promise.all([contract.decimals(), contract.symbol()]);
-        return { decimals: Number(decimals), symbol };
-    });
-}
-
 app.post('/api/get-evm-meta', async (req, res) => {
     const { chain, tokenAddress } = req.body;
     try {
-        const provider = evmProviders[chain];
-        if (!provider) throw new Error(`不支持的EVM链: ${chain}`);
-        const meta = await getEvmTokenMeta(chain, tokenAddress, provider);
+        const meta = await marketClients.getEvmTokenMeta(chain, tokenAddress);
         res.json(meta);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -516,310 +426,103 @@ app.post('/api/get-evm-meta', async (req, res) => {
 });
 
 app.post('/api/get-0x-quote', async (req, res) => {
-    const { chain, fromToken, toToken, amount } = req.body;
-    const finalAmount = amount || 1;
-    let logCtx = { chain, fromToken, toToken, amount: finalAmount };
-
     try {
-        const chainId = ZEROX_CHAIN_IDS[chain.toLowerCase()];
-        if (!chainId) throw new Error(`0x 不支持此链: ${chain}`);
-
-        const provider = evmProviders[chain];
-        if (!provider) throw new Error(`不支持的EVM链或Provider未初始化: ${chain}`);
-
-        const [fromMeta, toMeta] = await Promise.all([
-            getEvmTokenMeta(chain, fromToken, provider),
-            getEvmTokenMeta(chain, toToken, provider)
-        ]);
-        logCtx = { ...logCtx, fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol };
-
-        const amountInWei = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals).toString();
-        
-        
-        
-        
-        const params = new URLSearchParams({
-            chainId: chainId.toString(),
-            sellToken: fromToken,
-            buyToken: toToken,
-            sellAmount: amountInWei
-            
-        });
-
-        const apiUrl = `https://api.0x.org/swap/permit2/price?${params.toString()}`;
-        logQuoteRequest('ZEROX', { ...logCtx, url: apiUrl });
-        
-        const response = await fetchWithRetry(apiUrl, { 
-            headers: { 
-                '0x-api-key': ZEROX_API_KEY,
-                '0x-version': 'v2',
-                'Content-Type': 'application/json'
-            } 
-        });
-
-        if (response.status === 429) throw new Error("0x 请求过快 (Rate Limit)");
-
-        const resultData = await response.json();
-        
-        
-        if (resultData.liquidityAvailable === false) {
-             throw new Error("流动性不足 (0x: Liquidity Unavailable)");
-        }
-        
-        
-        if (resultData.issues && resultData.issues.simulationIncomplete) {
-            
-        }
-
-        
-        
-        let destAmountRaw = BigInt(resultData.buyAmount);
-        
-        if (!destAmountRaw) throw new Error("0x未返回有效购买数量");
-
-        
-        if (resultData.fees && resultData.fees.zeroExFee) {
-            const fee = resultData.fees.zeroExFee;
-            const feeAmount = BigInt(fee.amount);
-            const feeTokenLower = fee.token.toLowerCase();
-            
-            if (feeTokenLower === toToken.toLowerCase()) {
-                
-                
-                destAmountRaw += feeAmount; 
-            } else if (feeTokenLower === fromToken.toLowerCase()) {
-                
-                
-                
-                
-                const sellAmountBN = BigInt(amountInWei);
-                if (sellAmountBN > feeAmount) {
-                    const effectiveSellAmount = sellAmountBN - feeAmount;
-                    
-                    destAmountRaw = (destAmountRaw * sellAmountBN) / effectiveSellAmount;
-                }
-            }
-        }
-        
-        
-
-        
-        const finalAmountOut = parseFloat(ethers.formatUnits(destAmountRaw, toMeta.decimals));
-
-        const result = {
-            fromSymbol: fromMeta.symbol,
-            toSymbol: toMeta.symbol,
-            amountOut: finalAmountOut,
-            raw_price: finalAmountOut / finalAmount,
-            source: '0x'
-        };
-        logQuoteResult('ZEROX', { ...logCtx, amountOut: result.amountOut, rawPrice: result.raw_price });
+        const result = await marketClients.providers.zerox.getQuote(req.body);
         res.json(result);
-
     } catch (error) {
-        logQuoteError('ZEROX', logCtx, error);
+        const { chain, fromToken, toToken, amount } = req.body;
+        logQuoteError('ZEROX', { chain, fromToken, toToken, amount: amount || 1 }, error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/get-lifi-quote', async (req, res) => {
-    const { chain, fromToken, toToken, amount } = req.body;
-    const finalAmount = amount || 1;
-    let logCtx = { chain, fromToken, toToken, amount: finalAmount };
-
     try {
-        if (!chain || !fromToken || !toToken) {
-            throw new Error('缺少 chain/fromToken/toToken 参数');
-        }
-
-        const configMore = await getConfigMore();
-        const chainIdMap = await getLifiChainIdMap(configMore);
-        const chainId = resolveLifiChainId(chain, chainIdMap);
-        if (!chainId) {
-            throw new Error(`LI.FI 不支持此链: ${chain}`);
-        }
-
-        const [fromMeta, toMeta] = await Promise.all([
-            getLifiTokenMeta(chainId, fromToken, configMore),
-            getLifiTokenMeta(chainId, toToken, configMore)
-        ]);
-        logCtx = { ...logCtx, fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol };
-
-        const fromAmount = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals).toString();
-        const quoteParams = new URLSearchParams({
-            fromChain: String(chainId),
-            toChain: String(chainId),
-            fromToken,
-            toToken,
-            fromAmount,
-            fromAddress: LIFI_DEFAULT_FROM_ADDRESS,
-            toAddress: LIFI_DEFAULT_FROM_ADDRESS,
-            slippage: LIFI_DEFAULT_SLIPPAGE
-        });
-
-        const integrator = configMore.lifiIntegrator;
-        if (integrator) {
-            quoteParams.set('integrator', integrator);
-        }
-
-        const lifiQuoteUrl = `${LIFI_API_BASE_URL}/quote?${quoteParams.toString()}`;
-        logQuoteRequest('LIFI', { ...logCtx, url: lifiQuoteUrl });
-        const quoteResp = await fetchWithRetry(
-            lifiQuoteUrl,
-            { headers: getLifiHeaders(configMore) }
-        );
-        const quoteData = await quoteResp.json();
-        const toAmountRaw = getDisplayedToAmountRaw(quoteData);
-        if (!toAmountRaw) {
-            throw new Error(quoteData?.message || 'LI.FI 未返回有效报价');
-        }
-
-        const finalAmountOut = parseFloat(ethers.formatUnits(toAmountRaw, toMeta.decimals));
-        const result = {
-            fromSymbol: fromMeta.symbol,
-            toSymbol: toMeta.symbol,
-            amountOut: finalAmountOut,
-            raw_price: finalAmountOut / finalAmount,
-            source: 'LI.FI'
-        };
-        logQuoteResult('LIFI', { ...logCtx, amountOut: result.amountOut, rawPrice: result.raw_price });
+        const result = await marketClients.providers.lifi.getQuote(req.body);
         res.json(result);
     } catch (error) {
-        logQuoteError('LIFI', logCtx, error);
+        const { chain, fromToken, toToken, amount } = req.body;
+        logQuoteError('LIFI', { chain, fromToken, toToken, amount: amount || 1 }, error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/get-ekubo-quote', async (req, res) => {
-    const { chain, fromToken, toToken, amount } = req.body;
-    const finalAmount = amount || 1;
-    let logCtx = { chain, fromToken, toToken, amount: finalAmount };
-
     try {
-        if (String(chain || '').trim().toLowerCase() !== 'starknet') {
-            throw new Error(`Ekubo 仅支持 Starknet: ${chain}`);
-        }
-
-        const [fromMeta, toMeta] = await Promise.all([
-            getEkuboTokenMeta(fromToken),
-            getEkuboTokenMeta(toToken)
-        ]);
-        logCtx = { ...logCtx, fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol };
-
-        const amountInRaw = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals).toString();
-        const quoteUrl = buildEkuboQuoteUrl({ amountInRaw, fromToken, toToken });
-        logQuoteRequest('EKUBO', { ...logCtx, url: quoteUrl });
-
-        const quoteResp = await fetchWithRetry(quoteUrl);
-        const quoteData = await quoteResp.json();
-        const amountOutRaw = extractEkuboAmountOutRaw(quoteData);
-
-        const result = buildEkuboQuoteResult({ amount: finalAmount, amountOutRaw, fromMeta, toMeta });
-        logQuoteResult('EKUBO', { ...logCtx, amountOut: result.amountOut, rawPrice: result.raw_price });
+        const result = await marketClients.providers.ekubo.getQuote(req.body);
         res.json(result);
     } catch (error) {
-        logQuoteError('EKUBO', logCtx, error);
+        const { chain, fromToken, toToken, amount } = req.body;
+        logQuoteError('EKUBO', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/get-jupiter-quote', async (req, res) => {
+    try {
+        const result = await marketClients.providers.jupiter.getQuote(req.body);
+        res.json(result);
+    } catch (error) {
+        const { fromToken, toToken, amount } = req.body;
+        logQuoteError('JUPITER', { chain: 'solana', fromToken, toToken, amount: amount || 1 }, error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/get-kyber-quote', async (req, res) => {
-    const { chain, fromToken, toToken, amount } = req.body;
-    const finalAmount = amount || 1; 
-    let logCtx = { chain, fromToken, toToken, amount: finalAmount };
-    
     try {
-        const provider = evmProviders[chain];
-        if (!provider) throw new Error(`不支持的EVM链或Provider未初始化: ${chain}`);
-        
-        const [fromMeta, toMeta] = await Promise.all([
-            getEvmTokenMeta(chain, fromToken, provider),
-            getEvmTokenMeta(chain, toToken, provider)
-        ]);
-        logCtx = { ...logCtx, fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol };
-        
-        const amountInWei = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals);
-        let finalAmountOut = null;
-
-        const apiUrl = `https://aggregator-api.kyberswap.com/${chain}/api/v1/routes?tokenIn=${fromToken}&tokenOut=${toToken}&amountIn=${amountInWei.toString()}`;
-        const configMore = await getConfigMore();
-        const kyberClientId = configMore.kyberClientId;
-        logQuoteRequest('KYBER', { ...logCtx, url: apiUrl });
-        const response = await fetchWithRetry(apiUrl, { headers: { 'X-Client-Id': kyberClientId } });
-        const resultData = await response.json();
-
-        if (resultData.code !== 0) throw new Error(resultData.message || `Kyber API返回错误`);
-        
-        finalAmountOut = parseFloat(ethers.formatUnits(resultData.data.routeSummary.amountOut, toMeta.decimals));
-
-        const result = { 
-            fromSymbol: fromMeta.symbol, 
-            toSymbol: toMeta.symbol, 
-            amountOut: finalAmountOut, 
-            raw_price: finalAmountOut / finalAmount,
-            source: 'Kyber'
-        };
-        logQuoteResult('KYBER', { ...logCtx, amountOut: result.amountOut, rawPrice: result.raw_price });
+        const result = await marketClients.providers.kyber.getQuote(req.body);
         res.json(result);
-
     } catch (error) { 
-        logQuoteError('KYBER', logCtx, error);
+        const { chain, fromToken, toToken, amount } = req.body;
+        logQuoteError('KYBER', { chain, fromToken, toToken, amount: amount || 1 }, error);
         res.status(500).json({ error: error.message }); 
     }
 });
 
-app.post('/api/get-cetus-quote', async (req, res) => {
-    const { fromToken, toToken, amount } = req.body;
-    const finalAmount = amount || 1;
-
+app.post('/api/get-velora-quote', async (req, res) => {
     try {
-        const [fromMeta, toMeta] = await Promise.all([
-            getCachedMetadata(`sui-${fromToken}`, async () => {
-                const meta = await suiClient.getCoinMetadata({ coinType: fromToken });
-                if (!meta) throw new Error(`无法获取SUI元数据: ${fromToken}`);
-                return { decimals: meta.decimals, symbol: meta.symbol };
-            }),
-            getCachedMetadata(`sui-${toToken}`, async () => {
-                const meta = await suiClient.getCoinMetadata({ coinType: toToken });
-                if (!meta) throw new Error(`无法获取SUI元数据: ${toToken}`);
-                return { decimals: meta.decimals, symbol: meta.symbol };
-            })
-        ]);
-        
-        const amountInSmallestBigInt = ethers.parseUnits(finalAmount.toString(), fromMeta.decimals);
-        
-        const amountInSmallest = new BN(amountInSmallestBigInt.toString());
-        const cetusResult = await cetusAggregator.findRouters({ from: fromToken, target: toToken, amount: amountInSmallest, byAmountIn: true });
-        if (cetusResult.error) throw new Error(cetusResult.error.msg);
-        
-        const finalAmountOut = Number(cetusResult.amountOut.toString()) / (10 ** toMeta.decimals);
-        const result = { fromSymbol: fromMeta.symbol, toSymbol: toMeta.symbol, amountOut: finalAmountOut, raw_price: finalAmountOut / finalAmount };
+        const result = await marketClients.providers.velora.getQuote(req.body);
         res.json(result);
-    } catch (error) { res.status(500).json({ error: error.message }); }
+    } catch (error) {
+        const { chain, fromToken, toToken, amount } = req.body;
+        logQuoteError('VELORA', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/get-cetus-quote', async (req, res) => {
+    try {
+        const result = await marketClients.providers.cetus.getQuote(req.body);
+        res.json(result);
+    } catch (error) {
+        const { chain, fromToken, toToken, amount } = req.body;
+        logQuoteError('CETUS', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/get-bybit-quote', async (req, res) => {
+    try {
+        const result = await marketClients.providers.bybit.getQuote(req.body);
+        res.json(result);
+    } catch (error) {
+        const { amount, symbol } = req.body;
+        logQuoteError('BYBIT', { chain: 'Bybit', fromSymbol: symbol, amount: amount || 1 }, error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 app.get('/api/solana-metadata', async (req, res) => {
     const { mint } = req.query;
     try {
-        const metadata = await getCachedMetadata(`solana-${mint}`, async () => {
-            const response = await fetchWithRetry(solanaRpc, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: '1', method: 'getAsset', params: { id: mint } }) });
-            const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            
-            let symbol = data.result?.content?.metadata?.symbol;
-            if (!symbol) symbol = data.result?.token_info?.symbol;
-            if (!symbol) symbol = "UNKNOWN"; 
-            
-            const decimals = data.result?.token_info?.decimals || 0;
-
-            return { decimals, symbol };
-        });
+        const metadata = await marketClients.getSolanaTokenMeta(mint);
         res.json(metadata);
     } catch (error) { res.status(500).json({ error: `无法获取 ${mint} 的元数据` }); }
 });
 
 (async () => {
-    await loadCache();
+    await marketClients.loadTokenMetaCache();
     const server = app.listen(PORT, () => {
         console.log(`聚合报价后端服务正在 http://localhost:${PORT} 上运行`);
     });

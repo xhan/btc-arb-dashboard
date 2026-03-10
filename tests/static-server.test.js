@@ -76,6 +76,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(!chartsResponse.body.includes('<section class="hero">'));
     assert.ok(!chartsResponse.body.includes('读取最近两小时的历史快照'));
     assert.ok(!chartsResponse.body.includes('当前页只负责图表查看'));
+
+    const queueStatsResponse = await request('/queue-stats');
+    assert.strictEqual(queueStatsResponse.statusCode, 200);
+    assert.ok(queueStatsResponse.body.includes('队列统计'));
+    assert.ok(queueStatsResponse.body.includes('请求发起间隔'));
+    assert.ok(queueStatsResponse.body.includes('src="queue-stats-utils.js"'));
+    assert.ok(queueStatsResponse.body.includes('src="queue-stats-app.js"'));
+
+    assert.ok(response.body.includes('href="/queue-stats"'));
   } finally {
     serverProcess.kill();
   }

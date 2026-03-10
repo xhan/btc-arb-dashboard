@@ -9,6 +9,7 @@
     let queues = {
         kyber: [],
         zerox: [],
+        velora: [],
         lifi: [],
         bybit: [],
         solana: [],
@@ -19,6 +20,7 @@
     let indices = {
         kyber: 0,
         zerox: 0,
+        velora: 0,
         lifi: 0,
         bybit: 0,
         solana: 0,
@@ -29,6 +31,7 @@
     let timers = {
         kyber: null,
         zerox: null,
+        velora: null,
         lifi: null,
         bybit: null,
         solana: null,
@@ -36,15 +39,18 @@
         starknet: null
     };
 
-    const DEFAULT_INTERVALS = {
-        kyber: 170, 
-        zerox: 110, 
-        lifi: 170,
-        bybit: 1000,
-        solana: 3500, 
-        sui: 500,
-        starknet: 1000
-    };
+    const DEFAULT_INTERVALS = window.QueueStatsUtils
+        ? { ...window.QueueStatsUtils.DEFAULT_INTERVALS }
+        : {
+            kyber: 170,
+            zerox: 110,
+            velora: 200,
+            lifi: 170,
+            bybit: 1000,
+            solana: 3500,
+            sui: 500,
+            starknet: 1000
+        };
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
 
@@ -227,17 +233,25 @@
     }
 
     function shouldQueueInverseFetch(quote) {
+        if (window.QueueStatsUtils && typeof window.QueueStatsUtils.shouldQueueInverseFetch === 'function') {
+            return window.QueueStatsUtils.shouldQueueInverseFetch(quote);
+        }
         return !!quote && !!quote.showInverse && quote.chain !== 'Bybit';
     }
 
     function getQueueTypeForQuote(quote) {
+        if (window.QueueStatsUtils && typeof window.QueueStatsUtils.getQueueTypeForQuote === 'function') {
+            return window.QueueStatsUtils.getQueueTypeForQuote(quote);
+        }
         let type = 'kyber';
         if (quote.chain === 'Bybit') type = 'bybit';
         else if (quote.chain === 'solana') type = 'solana';
         else if (quote.chain === 'sui') type = 'sui';
         else if (quote.chain === 'starknet') type = 'starknet';
         else if (isEvmChain(quote.chain)) {
-            if (quote.preferredSource === '0x' || quote.preferredSource === 'Velora') {
+            if (quote.preferredSource === 'Velora') {
+                type = 'velora';
+            } else if (quote.preferredSource === '0x') {
                 type = 'zerox';
             } else if (quote.preferredSource === 'LI.FI') {
                 type = 'lifi';
@@ -341,6 +355,7 @@
     settingsBtn.addEventListener('click', () => {
         document.getElementById('setting-kyber-interval').value = apiIntervals.kyber;
         document.getElementById('setting-zerox-interval').value = apiIntervals.zerox;
+        document.getElementById('setting-velora-interval').value = apiIntervals.velora;
         document.getElementById('setting-lifi-interval').value = apiIntervals.lifi;
         document.getElementById('setting-bybit-interval').value = apiIntervals.bybit;
         document.getElementById('setting-solana-interval').value = apiIntervals.solana;
@@ -357,6 +372,7 @@
         const newIntervals = {
             kyber: parseInt(document.getElementById('setting-kyber-interval').value) || DEFAULT_INTERVALS.kyber,
             zerox: parseInt(document.getElementById('setting-zerox-interval').value) || DEFAULT_INTERVALS.zerox,
+            velora: parseInt(document.getElementById('setting-velora-interval').value) || DEFAULT_INTERVALS.velora,
             lifi: parseInt(document.getElementById('setting-lifi-interval').value) || DEFAULT_INTERVALS.lifi,
             bybit: parseInt(document.getElementById('setting-bybit-interval').value) || DEFAULT_INTERVALS.bybit,
             solana: parseInt(document.getElementById('setting-solana-interval').value) || DEFAULT_INTERVALS.solana,
@@ -489,7 +505,7 @@
         return window.ArbDetailUtils || {
             buildDetailInputAmounts(baseAmount) {
                 const amount = Number(baseAmount);
-                return [Number.isFinite(amount) && amount > 0 ? amount : 1, 0.2, 1, 2];
+                return [Number.isFinite(amount) && amount > 0 ? amount : 1, 0.5, 1.5, 2];
             },
             summarizeDetailResult(startAmount, finalAmount) {
                 const safeStart = Number(startAmount) > 0 ? Number(startAmount) : 1;
@@ -1420,53 +1436,84 @@
         };
     }
 
+    async function getJupiterQuote(quote, signal) {
+        const response = await fetch(`${BACKEND_URL}/api/get-jupiter-quote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...quote }),
+            signal
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Jupiter API Request Failed');
+
+        return {
+            symbols: { from: data.fromSymbol, to: data.toSymbol },
+            finalAmountOut: data.amountOut,
+            rawPrice: data.raw_price,
+            usedSource: 'Jupiter',
+            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
+        };
+    }
+
+    async function getVeloraQuote(quote, signal) {
+        const response = await fetch(`${BACKEND_URL}/api/get-velora-quote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...quote }),
+            signal
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Velora API Request Failed');
+
+        return {
+            symbols: { from: data.fromSymbol, to: data.toSymbol },
+            finalAmountOut: data.amountOut,
+            rawPrice: data.raw_price,
+            usedSource: 'Velora',
+            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
+        };
+    }
+
+    async function getBybitQuote(quote, signal) {
+        const response = await fetch(`${BACKEND_URL}/api/get-bybit-quote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...quote }),
+            signal
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Bybit API Request Failed');
+
+        return {
+            symbols: { from: data.fromSymbol, to: data.toSymbol },
+            finalAmountOut: data.amountOut,
+            rawPrice: data.raw_price,
+            usedSource: 'Bybit',
+            resultText: `${quote.symbol}: ${parseFloat(data.raw_price.toFixed(10))}`
+        };
+    }
+
     async function apiGetQuote(quote, signal, targetSource) {
-        const amountToFetch = quote.amount || 1;
-        const fetchOptions = { signal };
-        
         let result = { resultText: '', rawPrice: 0, finalAmountOut: 0, symbols: {from:null, to:null}, usedSource: '' };
 
         try {
-            if (targetSource === '0x' || targetSource === 'Velora') {
+            if (targetSource === '0x') {
                  result = await get0xQuote(quote, signal);
+            } else if (targetSource === 'Velora') {
+                result = await getVeloraQuote(quote, signal);
             } else if (targetSource === 'LI.FI') {
                 result = await getLifiQuote(quote, signal);
             } else if (targetSource === 'Ekubo') {
                 result = await getEkuboQuote(quote, signal);
             } else if (targetSource === 'Jupiter') {
-                const [resFrom, resTo] = await Promise.all([
-                     fetch(`${BACKEND_URL}/api/solana-metadata?mint=${quote.fromToken}`, fetchOptions).then(res => res.ok ? res.json() : {}),
-                     fetch(`${BACKEND_URL}/api/solana-metadata?mint=${quote.toToken}`, fetchOptions).then(res => res.ok ? res.json() : {})
-                ]);
-                const inDecimals = resFrom.decimals || 0;
-                const outDecimals = resTo.decimals || 0;
-                const amountInSmallestUnit = Math.floor(amountToFetch * (10 ** inDecimals));
-                const apiUrl = `https://lite-api.jup.ag/swap/v1/quote?inputMint=${quote.fromToken}&outputMint=${quote.toToken}&amount=${amountInSmallestUnit}`;
-                const response = await fetch(apiUrl, fetchOptions);
-                const data = await response.json();
-                result.symbols = { from: resFrom.symbol || '???', to: resTo.symbol || '???' };
-                result.finalAmountOut = Number(data.outAmount) / (10 ** outDecimals);
-                result.rawPrice = result.finalAmountOut / amountToFetch;
-                result.resultText = `${result.symbols.from} ≈ ${result.finalAmountOut.toFixed(6)} ${result.symbols.to}`;
-                result.usedSource = 'Jupiter';
-
+                result = await getJupiterQuote(quote, signal);
             } else if (targetSource === 'Bybit') {
-                const parsedPair = window.QuoteCalculator && window.QuoteCalculator.splitCompactTradingPairSymbol
-                    ? window.QuoteCalculator.splitCompactTradingPairSymbol(quote.symbol)
-                    : null;
-                result.symbols = parsedPair
-                    ? { from: parsedPair.fromSymbol, to: parsedPair.toSymbol }
-                    : { from: quote.symbol, to: 'QUOTE' };
-                const apiUrl = `https://api.bybit.com/v5/market/tickers?category=spot&symbol=${quote.symbol}`;
-                const response = await fetch(apiUrl, fetchOptions);
-                const data = await response.json();
-                if (data.retCode !== 0) throw new Error(data.retMsg);
-                const price = parseFloat(data.result.list[0].lastPrice);
-                result.rawPrice = price;
-                result.finalAmountOut = price;
-                result.resultText = `${quote.symbol}: ${parseFloat(price.toFixed(10))}`;
-                result.usedSource = 'Bybit';
+                result = await getBybitQuote(quote, signal);
             } else {
+                const amountToFetch = quote.amount || 1;
                 const endpoint = quote.chain === 'sui' ? 'get-cetus-quote' : 'get-kyber-quote';
                 const response = await fetch(`${BACKEND_URL}/api/${endpoint}`, {
                     method: 'POST',
@@ -1500,8 +1547,11 @@
             if (pref === 'Auto') {
                 return ['Kyber', '0x', 'Kyber'];
             }
-            if (pref === '0x' || pref === 'Velora') {
+            if (pref === '0x') {
                 return ['0x', '0x'];
+            }
+            if (pref === 'Velora') {
+                return ['Velora', 'Velora'];
             }
             if (pref === 'LI.FI') {
                 return ['LI.FI', 'LI.FI'];
@@ -1859,7 +1909,6 @@
             
             if (isEvmChain(quote.chain)) {
                 let pref = quote.preferredSource || 'Kyber';
-                if (pref === 'Velora') pref = '0x'; 
                 content += `<div>来源：<strong>${sourceInfo}</strong></div>`;
                 content += `<div>偏好：${pref}</div>`;
             } else {
@@ -2484,9 +2533,6 @@
                 const temp = state.fromSymbol;
                 state.fromSymbol = state.toSymbol;
                 state.toSymbol = temp;
-
-                globalSymbolCache.set(`${quote.chain}-${quote.fromToken}`, state.fromSymbol);
-                globalSymbolCache.set(`${quote.chain}-${quote.toToken}`, state.toSymbol);
             }
 
             const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
@@ -2572,7 +2618,7 @@
                 } else {
                     sourceGroup.style.display = 'block';
                     const pref = quote.preferredSource || 'Kyber';
-                    sourceSelect.value = pref === 'Velora' ? '0x' : pref; 
+                    sourceSelect.value = pref;
                 }
             } else {
                 sourceGroup.style.display = 'none';
