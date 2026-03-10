@@ -227,7 +227,7 @@ function createMarketClients(options) {
         toRawAmount
       }),
       bybit: createBybitClient({
-        apiBaseUrl: 'https://api.bybit.com/v5/market/tickers',
+        apiBaseUrl: 'https://api.bybit.com/v5/market/orderbook',
         fetchWithRetry: options.fetchWithRetry,
         splitTradingPairSymbol: splitCompactTradingPairSymbol
       })

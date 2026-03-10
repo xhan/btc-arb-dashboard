@@ -169,7 +169,14 @@ const { createZeroXClient } = require('../market-clients/providers/zerox');
         json: async () => ({
           retCode: 0,
           result: {
-            list: [{ lastPrice: '0.9987' }]
+            b: [
+              ['0.9986', '1.25'],
+              ['0.9985', '2.5']
+            ],
+            a: [
+              ['0.9988', '1.1'],
+              ['0.9989', '3.2']
+            ]
           }
         })
       };
@@ -192,11 +199,23 @@ const { createZeroXClient } = require('../market-clients/providers/zerox');
     toSymbol: 'BTC',
     amountOut: 0.9987,
     raw_price: 0.9987,
+    bestBidPrice: 0.9986,
+    bestBidSize: 1.25,
+    bestAskPrice: 0.9988,
+    bestAskSize: 1.1,
+    bidsTop5: [
+      { price: 0.9986, size: 1.25 },
+      { price: 0.9985, size: 2.5 }
+    ],
+    asksTop5: [
+      { price: 0.9988, size: 1.1 },
+      { price: 0.9989, size: 3.2 }
+    ],
     source: 'Bybit'
   });
   assert.strictEqual(
     bybitRequests[0],
-    'https://api.bybit.com/v5/market/tickers?category=spot&symbol=WBTCBTC'
+    'https://api.bybit.com/v5/market/orderbook?category=spot&symbol=WBTCBTC&limit=5'
   );
 
   const veloraRequests = [];
