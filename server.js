@@ -513,6 +513,17 @@ app.post('/api/get-bybit-quote', async (req, res) => {
     }
 });
 
+app.post('/api/get-binance-quote', async (req, res) => {
+    try {
+        const result = await marketClients.providers.binance.getQuote(req.body);
+        res.json(result);
+    } catch (error) {
+        const { amount, symbol } = req.body;
+        logQuoteError('BINANCE', { chain: 'Binance', fromSymbol: symbol, amount: amount || 1 }, error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/solana-metadata', async (req, res) => {
     const { mint } = req.query;
     try {

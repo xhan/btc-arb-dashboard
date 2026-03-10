@@ -12,6 +12,7 @@
         velora: [],
         lifi: [],
         bybit: [],
+        binance: [],
         solana: [],
         sui: [],
         starknet: []
@@ -23,6 +24,7 @@
         velora: 0,
         lifi: 0,
         bybit: 0,
+        binance: 0,
         solana: 0,
         sui: 0,
         starknet: 0
@@ -34,6 +36,7 @@
         velora: null,
         lifi: null,
         bybit: null,
+        binance: null,
         solana: null,
         sui: null,
         starknet: null
@@ -47,6 +50,7 @@
             velora: 200,
             lifi: 170,
             bybit: 1000,
+            binance: 1000,
             solana: 3500,
             sui: 500,
             starknet: 1000
@@ -143,7 +147,7 @@
     const CHAIN_DISPLAY_NAMES = {
         ethereum: 'ETH', solana: 'SOL', sui: 'SUI', polygon: 'Polygon',
         arbitrum: 'Arbitrum', optimism: 'Optimism', bsc: 'BSC',
-        avalanche: 'Avalanche', base: 'Base', Bybit: 'Bybit',
+        avalanche: 'Avalanche', base: 'Base', Bybit: 'Bybit', bybit: 'Bybit', Binance: 'Binance', binance: 'Binance',
         linea: 'Linea', mantle: 'Mantle', sonic: 'Sonic', berachain: 'Berachain',
         ronin: 'Ronin', unichain: 'Unichain', hyperevm: 'HyperEVM', plasma: 'Plasma',
         scroll: 'Scroll', blast: 'Blast', mode: 'Mode', monad: 'Monad', etherlink: 'Etherlink',
@@ -188,8 +192,13 @@
     const CHAIN_ADDRESS_PLACEHOLDERS = {
         ethereum: '0x...', solana: 'Enter mint address...', sui: '0x...::module::TYPE',
         polygon: '0x...', arbitrum: '0x...', optimism: '0x...',
-        bsc: '0x...', avalanche: '0x...', base: '0x...', hemi: '0x...', katana: '0x...', starknet: '0x...', Bybit: 'N/A'
+        bsc: '0x...', avalanche: '0x...', base: '0x...', hemi: '0x...', katana: '0x...', starknet: '0x...', Bybit: 'N/A', bybit: 'N/A', Binance: 'N/A', binance: 'N/A'
     };
+
+    function isCexOrderbookChain(chain) {
+        const normalized = String(chain || '').trim().toLowerCase();
+        return normalized === 'bybit' || normalized === 'binance';
+    }
     
     const KYBER_SUPPORTED_CHAINS = [
         'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche', 
@@ -220,7 +229,7 @@
         : () => 'Kyber';
 
     function isEvmChain(chain) {
-        const nonEvm = ['solana', 'sui', 'starknet', 'bybit'];
+        const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];
         return !nonEvm.includes(chain.toLowerCase());
     }
 
@@ -236,7 +245,7 @@
         if (window.QueueStatsUtils && typeof window.QueueStatsUtils.shouldQueueInverseFetch === 'function') {
             return window.QueueStatsUtils.shouldQueueInverseFetch(quote);
         }
-        return !!quote && !!quote.showInverse && quote.chain !== 'Bybit';
+        return !!quote && !!quote.showInverse && !isCexOrderbookChain(quote.chain);
     }
 
     function getQueueTypeForQuote(quote) {
@@ -244,7 +253,9 @@
             return window.QueueStatsUtils.getQueueTypeForQuote(quote);
         }
         let type = 'kyber';
-        if (quote.chain === 'Bybit') type = 'bybit';
+        if (isCexOrderbookChain(quote.chain)) {
+            type = String(quote.chain).trim().toLowerCase() === 'binance' ? 'binance' : 'bybit';
+        }
         else if (quote.chain === 'solana') type = 'solana';
         else if (quote.chain === 'sui') type = 'sui';
         else if (quote.chain === 'starknet') type = 'starknet';
@@ -358,6 +369,7 @@
         document.getElementById('setting-velora-interval').value = apiIntervals.velora;
         document.getElementById('setting-lifi-interval').value = apiIntervals.lifi;
         document.getElementById('setting-bybit-interval').value = apiIntervals.bybit;
+        document.getElementById('setting-binance-interval').value = apiIntervals.binance;
         document.getElementById('setting-solana-interval').value = apiIntervals.solana;
         document.getElementById('setting-sui-interval').value = apiIntervals.sui;
         document.getElementById('setting-starknet-interval').value = apiIntervals.starknet;
@@ -375,6 +387,7 @@
             velora: parseInt(document.getElementById('setting-velora-interval').value) || DEFAULT_INTERVALS.velora,
             lifi: parseInt(document.getElementById('setting-lifi-interval').value) || DEFAULT_INTERVALS.lifi,
             bybit: parseInt(document.getElementById('setting-bybit-interval').value) || DEFAULT_INTERVALS.bybit,
+            binance: parseInt(document.getElementById('setting-binance-interval').value) || DEFAULT_INTERVALS.binance,
             solana: parseInt(document.getElementById('setting-solana-interval').value) || DEFAULT_INTERVALS.solana,
             sui: parseInt(document.getElementById('setting-sui-interval').value) || DEFAULT_INTERVALS.sui,
             starknet: parseInt(document.getElementById('setting-starknet-interval').value) || DEFAULT_INTERVALS.starknet
@@ -578,7 +591,7 @@
             : `${(profitRate * 10000).toFixed(2)}‱`;
     }
 
-    function formatBybitBookValue(value, maxDecimals = 10) {
+    function formatCexBookValue(value, maxDecimals = 10) {
         if (typeof value !== 'number' || !Number.isFinite(value)) return '--';
         const abs = Math.abs(value);
         let decimals = maxDecimals;
@@ -588,49 +601,63 @@
         return Number(value.toFixed(decimals)).toString();
     }
 
-    function buildBybitOrderbookSummary(symbol, orderbook) {
+    function buildCexOrderbookSummary(symbol, orderbook) {
         if (!orderbook) return `${symbol}: 等待盘口...`;
-        const ask = `ASK ${formatBybitBookValue(orderbook.bestAskPrice)} × ${formatBybitBookValue(orderbook.bestAskSize, 6)}`;
-        const bid = `BID ${formatBybitBookValue(orderbook.bestBidPrice)} × ${formatBybitBookValue(orderbook.bestBidSize, 6)}`;
+        const ask = `ASK ${formatCexBookValue(orderbook.bestAskPrice)} × ${formatCexBookValue(orderbook.bestAskSize, 6)}`;
+        const bid = `BID ${formatCexBookValue(orderbook.bestBidPrice)} × ${formatCexBookValue(orderbook.bestBidSize, 6)}`;
         return `${ask}\n${bid}`;
     }
 
-    function buildBybitOrderbookTooltipHtml(orderbook) {
+    function buildCexOrderbookTooltipHtml(orderbook) {
         if (!orderbook) {
-            return '<div class="bybit-orderbook-tooltip-empty">盘口等待数据...</div>';
+            return '<div class="cex-orderbook-tooltip-empty">盘口等待数据...</div>';
         }
+
+        const feeRate = Number(orderbook.feeRate);
+        const feeNotice = Number.isFinite(feeRate)
+            ? `<div class="cex-orderbook-fee-note">已计入手续费 ${(feeRate * 100).toFixed(2)}%</div>`
+            : '';
 
         function renderSide(title, levels) {
             if (!Array.isArray(levels) || levels.length === 0) {
                 return `
-                    <div class="bybit-orderbook-side">
-                        <div class="bybit-orderbook-title">${escapeHtml(title)}</div>
-                        <div class="bybit-orderbook-level empty">暂无数据</div>
+                    <div class="cex-orderbook-side">
+                        <div class="cex-orderbook-title">${escapeHtml(title)}</div>
+                        <div class="cex-orderbook-level empty">暂无数据</div>
                     </div>
                 `;
             }
 
             const rows = levels.map((level, index) => `
-                <div class="bybit-orderbook-level">
-                    <span>${index + 1}. ${formatBybitBookValue(level.price)}</span>
-                    <span>${formatBybitBookValue(level.size, 6)}</span>
+                <div class="cex-orderbook-level">
+                    <span>${index + 1}. ${formatCexBookValue(level.price)}</span>
+                    <span>${formatCexBookValue(level.size, 6)}</span>
                 </div>
             `).join('');
 
             return `
-                <div class="bybit-orderbook-side">
-                    <div class="bybit-orderbook-title">${escapeHtml(title)}</div>
+                <div class="cex-orderbook-side">
+                    <div class="cex-orderbook-title">${escapeHtml(title)}</div>
                     ${rows}
                 </div>
             `;
         }
 
         return `
-            <div class="bybit-orderbook-tooltip">
+            <div class="cex-orderbook-tooltip">
+                ${feeNotice}
                 ${renderSide('ASK', orderbook.asksTop5)}
                 ${renderSide('BID', orderbook.bidsTop5)}
             </div>
         `;
+    }
+
+    function getCexPairLabel(quote, state) {
+        if (!isCexOrderbookChain(quote && quote.chain)) return '';
+        if (state && state.fromSymbol && state.toSymbol) {
+            return `${state.fromSymbol}/${state.toSymbol}`;
+        }
+        return String(quote?.symbol || '').trim().toUpperCase();
     }
 
     function nudgeArbDetailInput(index, delta) {
@@ -1532,8 +1559,8 @@
         };
     }
 
-    async function getBybitQuote(quote, signal) {
-        const response = await fetch(`${BACKEND_URL}/api/get-bybit-quote`, {
+    async function getCexOrderbookQuote(quote, signal, options) {
+        const response = await fetch(`${BACKEND_URL}${options.endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...quote }),
@@ -1541,25 +1568,40 @@
         });
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Bybit API Request Failed');
+        if (!response.ok) throw new Error(data.error || `${options.source} API Request Failed`);
 
-        const bybitOrderbook = {
+        const cexOrderbook = {
             bestBidPrice: data.bestBidPrice,
             bestBidSize: data.bestBidSize,
             bestAskPrice: data.bestAskPrice,
             bestAskSize: data.bestAskSize,
             bidsTop5: data.bidsTop5,
-            asksTop5: data.asksTop5
+            asksTop5: data.asksTop5,
+            feeRate: data.feeRate
         };
 
         return {
             symbols: { from: data.fromSymbol, to: data.toSymbol },
             finalAmountOut: data.amountOut,
             rawPrice: data.raw_price,
-            usedSource: 'Bybit',
-            resultText: buildBybitOrderbookSummary(quote.symbol, bybitOrderbook),
-            bybitOrderbook
+            usedSource: options.source,
+            resultText: buildCexOrderbookSummary(quote.symbol, cexOrderbook),
+            cexOrderbook
         };
+    }
+
+    async function getBybitQuote(quote, signal) {
+        return getCexOrderbookQuote(quote, signal, {
+            endpoint: '/api/get-bybit-quote',
+            source: 'Bybit'
+        });
+    }
+
+    async function getBinanceQuote(quote, signal) {
+        return getCexOrderbookQuote(quote, signal, {
+            endpoint: '/api/get-binance-quote',
+            source: 'Binance'
+        });
     }
 
     async function apiGetQuote(quote, signal, targetSource) {
@@ -1578,6 +1620,8 @@
                 result = await getJupiterQuote(quote, signal);
             } else if (targetSource === 'Bybit') {
                 result = await getBybitQuote(quote, signal);
+            } else if (targetSource === 'Binance') {
+                result = await getBinanceQuote(quote, signal);
             } else {
                 const amountToFetch = quote.amount || 1;
                 const endpoint = quote.chain === 'sui' ? 'get-cetus-quote' : 'get-kyber-quote';
@@ -1628,7 +1672,9 @@
         if (quote.chain === 'sui') return ['Cetus'];
         if (quote.chain === 'solana') return ['Jupiter'];
         if (quote.chain === 'starknet') return ['Ekubo'];
-        if (quote.chain === 'Bybit') return ['Bybit'];
+        if (isCexOrderbookChain(quote.chain)) {
+            return [String(quote.chain).trim().toLowerCase() === 'binance' ? 'Binance' : 'Bybit'];
+        }
         return [];
     }
 
@@ -1753,12 +1799,16 @@
                     toSymbol: data.symbols.to,
                     lastResultText: data.resultText,
                     lastRawPrice: data.rawPrice,
-                    bybitOrderbook: data.bybitOrderbook || null,
+                    cexOrderbook: data.cexOrderbook || null,
                     usedSource: data.usedSource,
                     usedSourceReal: successSource
                 };
 
                 quoteTextEl.textContent = data.resultText;
+                const cexPairLabelEl = document.getElementById(`quote-pair-label-${quote.id}`);
+                if (cexPairLabelEl) {
+                    cexPairLabelEl.textContent = getCexPairLabel(quote, newState);
+                }
                 quoteTextWrapperEl.classList.remove('loading-text');
 
                 if (shouldQueueInverseFetch(quote)) {
@@ -1971,11 +2021,11 @@
         hoverTimeout = setTimeout(() => {
             if (currentHoveredQuoteId !== quoteId) return;
             
-            if (quote.chain === 'Bybit') {
+            if (isCexOrderbookChain(quote.chain)) {
                 showGlobalTooltip(
-                    buildBybitOrderbookTooltipHtml(state ? state.bybitOrderbook : null),
+                    buildCexOrderbookTooltipHtml(state ? state.cexOrderbook : null),
                     textWrapper,
-                    { className: 'bybit-orderbook-tooltip-host' }
+                    { className: 'cex-orderbook-tooltip-host' }
                 );
                 return;
             }
@@ -1997,7 +2047,7 @@
 
     function showGlobalTooltip(htmlContent, targetEl, options = {}) {
         globalTooltip.innerHTML = htmlContent;
-        globalTooltip.classList.remove('visible', 'bybit-orderbook-tooltip-host');
+        globalTooltip.classList.remove('visible', 'cex-orderbook-tooltip-host');
         globalTooltip.classList.add('visible');
         if (options.className) {
             globalTooltip.classList.add(options.className);
@@ -2212,7 +2262,7 @@
         logEntry.className = 'log-entry';
         const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
          const monitorState = quoteMonitorState.get(quote.id) || {};
-        let label = quote.chain === 'Bybit' ? quote.symbol : 
+        let label = isCexOrderbookChain(quote.chain) ? quote.symbol : 
                     (monitorState.fromSymbol && monitorState.toSymbol ? `${monitorState.fromSymbol}/${monitorState.toSymbol}` : 
                     `${quote.fromToken.slice(0,4)}.../${quote.toToken.slice(0,4)}...`);
         logEntry.innerHTML = `<div><strong>${displayName}</strong>: ${label}</div><div>${message}</div><span class="log-time">${now.toLocaleTimeString()}</span>`;
@@ -2297,12 +2347,18 @@
         itemEl.id = `quote-item-${quote.id}`;
         itemEl.className = 'quote-item';
         const initialAmount = quote.amount || 1;
-        const amountInputHTML = quote.chain !== 'Bybit' ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
-        const quoteTextClassName = quote.chain === 'Bybit' ? 'quote-text bybit-orderbook-summary' : 'quote-text';
+        const amountInputHTML = !isCexOrderbookChain(quote.chain) ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
+        const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
+        const pairLabelHtml = isCexOrderbookChain(quote.chain)
+            ? `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${escapeHtml(getCexPairLabel(quote, monitorState))}</span>`
+            : '';
         
         itemEl.innerHTML = `
             <div class="quote-left-container">
-                <span class="quote-label">${displayName}</span>
+                <span class="quote-label-stack">
+                    <span class="quote-label">${displayName}</span>
+                    ${pairLabelHtml}
+                </span>
                 <span id="trend-arrow-${quote.id}" class="trend-arrow"></span>
             </div>
             <div class="quote-result">
@@ -2593,7 +2649,7 @@
         const category = dashboardState.find(c => c.id == categoryId);
         if (!category) return false;
         const quote = category.quotes.find(q => q.id == quoteId);
-        if (!quote || quote.chain === 'Bybit') return false;
+        if (!quote || isCexOrderbookChain(quote.chain)) return false;
 
         [quote.fromToken, quote.toToken] = [quote.toToken, quote.fromToken];
 
@@ -2682,7 +2738,7 @@
             const fromSymbolLabel = monitorState.fromSymbol || 'From Token';
             const toSymbolLabel = monitorState.toSymbol || 'To Token';
             if (quoteTokenAddressesEl && quoteFromTokenLineEl && quoteToTokenLineEl) {
-                if (quote.chain === 'Bybit' || !quote.fromToken || !quote.toToken) {
+                if (isCexOrderbookChain(quote.chain) || !quote.fromToken || !quote.toToken) {
                     quoteTokenAddressesEl.style.display = 'none';
                 } else {
                     quoteFromTokenLineEl.textContent = `${fromSymbolLabel} ${quote.fromToken}`;
@@ -2706,7 +2762,7 @@
             }
 
             const inverseCheckbox = document.getElementById('show-inverse-quote');
-            if (quote.chain === 'Bybit') {
+            if (isCexOrderbookChain(quote.chain)) {
                  document.getElementById('inverse-toggle-group').style.display = 'none';
             } else {
                  document.getElementById('inverse-toggle-group').style.display = 'flex';
@@ -2714,7 +2770,7 @@
             }
 
             if (modalSwapQuoteBtn) {
-                modalSwapQuoteBtn.style.display = quote.chain === 'Bybit' ? 'none' : 'block';
+                modalSwapQuoteBtn.style.display = isCexOrderbookChain(quote.chain) ? 'none' : 'block';
             }
             if (modalDeleteQuoteBtn) {
                 modalDeleteQuoteBtn.style.display = 'block';
@@ -2889,15 +2945,15 @@
     function validateAddQuoteForm() {
         const chain = addQuoteChainSelect.value;
         if (!chain) { addQuoteSaveBtn.disabled = true; return; }
-        if (chain === 'Bybit') { addQuoteSaveBtn.disabled = !addQuoteSymbolInput.value.trim(); } 
+        if (isCexOrderbookChain(chain)) { addQuoteSaveBtn.disabled = !addQuoteSymbolInput.value.trim(); } 
         else { addQuoteSaveBtn.disabled = !addQuoteFromInput.value.trim() || !addQuoteToInput.value.trim(); }
     }
 
     addQuoteChainSelect.addEventListener('change', () => {
         const chain = addQuoteChainSelect.value;
-        addQuotePairFields.style.display = (chain && chain !== 'Bybit') ? 'block' : 'none';
-        addQuoteSymbolField.style.display = (chain === 'Bybit') ? 'block' : 'none';
-        if (chain && chain !== 'Bybit') {
+        addQuotePairFields.style.display = (chain && !isCexOrderbookChain(chain)) ? 'block' : 'none';
+        addQuoteSymbolField.style.display = isCexOrderbookChain(chain) ? 'block' : 'none';
+        if (chain && !isCexOrderbookChain(chain)) {
             const placeholder = CHAIN_ADDRESS_PLACEHOLDERS[chain.toLowerCase()] || 'Enter token address';
             addQuoteFromInput.placeholder = placeholder;
             addQuoteToInput.placeholder = placeholder;
@@ -2916,9 +2972,9 @@
             const chain = addQuoteChainSelect.value;
             const defaultSource = defaultSourceResolver(chain);
             const newQuote = { id: Date.now(), chain: chain.toLowerCase(), amount: 1, preferredSource: defaultSource }; 
-            if (chain === 'Bybit') {
-                newQuote.chain = 'Bybit';
-                newQuote.symbol = addQuoteSymbolInput.value.trim();
+            if (isCexOrderbookChain(chain)) {
+                newQuote.chain = chain;
+                newQuote.symbol = addQuoteSymbolInput.value.trim().toUpperCase();
             } else {
                 newQuote.fromToken = addQuoteFromInput.value.trim();
                 newQuote.toToken = addQuoteToInput.value.trim();
