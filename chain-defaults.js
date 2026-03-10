@@ -8,7 +8,9 @@
   const CHAIN_DEFAULT_SOURCES = new Map([
     ['katana', 'LI.FI'],
     ['hemi', 'LI.FI'],
-    ['starknet', 'Ekubo']
+    ['starknet', 'Ekubo'],
+    ['bybit', 'Bybit'],
+    ['binance', 'Binance']
   ]);
 
   function normalizeChain(chain) {

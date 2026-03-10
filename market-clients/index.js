@@ -1,5 +1,6 @@
 const { ethers } = require('ethers');
 const BN = require('bn.js');
+const { createBinanceClient } = require('./providers/binance');
 const { splitCompactTradingPairSymbol } = require('../quote-calculator');
 const { createBybitClient } = require('./providers/bybit');
 const { buildLifiChainIdMap, resolveLifiChainId } = require('./providers/lifi-utils');
@@ -228,6 +229,11 @@ function createMarketClients(options) {
       }),
       bybit: createBybitClient({
         apiBaseUrl: 'https://api.bybit.com/v5/market/orderbook',
+        fetchWithRetry: options.fetchWithRetry,
+        splitTradingPairSymbol: splitCompactTradingPairSymbol
+      }),
+      binance: createBinanceClient({
+        apiBaseUrl: 'https://api.binance.com/api/v3/depth',
         fetchWithRetry: options.fetchWithRetry,
         splitTradingPairSymbol: splitCompactTradingPairSymbol
       })

@@ -1,33 +1,32 @@
 const { createCexOrderbookClient } = require('./cex-orderbook');
 
-function createBybitClient(deps) {
+function createBinanceClient(deps) {
   return createCexOrderbookClient({
-    apiBaseUrl: deps.apiBaseUrl || 'https://api.bybit.com/v5/market/orderbook',
-    source: 'Bybit',
-    feeRate: 0,
+    apiBaseUrl: deps.apiBaseUrl || 'https://api.binance.com/api/v3/depth',
+    source: 'Binance',
+    feeRate: 0.001,
     fetchWithRetry: deps.fetchWithRetry,
     splitTradingPairSymbol: deps.splitTradingPairSymbol,
     buildParams(symbol) {
       return new URLSearchParams({
-        category: 'spot',
         symbol,
         limit: '5'
       });
     },
     assertResponseOk(data) {
-      if (data.retCode !== 0) {
-        throw new Error(data.retMsg || 'Bybit 返回错误');
+      if (data && typeof data === 'object' && !Array.isArray(data) && data.code && data.msg) {
+        throw new Error(data.msg);
       }
     },
     getBidLevels(data) {
-      return data?.result?.b;
+      return data?.bids;
     },
     getAskLevels(data) {
-      return data?.result?.a;
+      return data?.asks;
     }
   });
 }
 
 module.exports = {
-  createBybitClient
+  createBinanceClient
 };

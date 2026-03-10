@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const { createBybitClient } = require('../market-clients/providers/bybit');
+const { createBinanceClient } = require('../market-clients/providers/binance');
 const { createJupiterClient } = require('../market-clients/providers/jupiter');
 const { createKyberClient } = require('../market-clients/providers/kyber');
 const { createVeloraClient } = require('../market-clients/providers/velora');
@@ -211,11 +212,63 @@ const { createZeroXClient } = require('../market-clients/providers/zerox');
       { price: 0.9988, size: 1.1 },
       { price: 0.9989, size: 3.2 }
     ],
+    feeRate: 0,
     source: 'Bybit'
   });
   assert.strictEqual(
     bybitRequests[0],
     'https://api.bybit.com/v5/market/orderbook?category=spot&symbol=WBTCBTC&limit=5'
+  );
+
+  const binanceRequests = [];
+  const binance = createBinanceClient({
+    fetchWithRetry: async (url) => {
+      binanceRequests.push(url);
+      return {
+        json: async () => ({
+          bids: [
+            ['99900', '0.8'],
+            ['99850', '1.4']
+          ],
+          asks: [
+            ['100100', '0.6'],
+            ['100150', '1.1']
+          ]
+        })
+      };
+    },
+    splitTradingPairSymbol: (symbol) => {
+      if (symbol === 'BTCUSDT') {
+        return { fromSymbol: 'BTC', toSymbol: 'USDT' };
+      }
+      return null;
+    }
+  });
+
+  const binanceResult = await binance.getQuote({
+    chain: 'Binance',
+    symbol: 'BTCUSDT'
+  });
+
+  assert.strictEqual(binanceResult.fromSymbol, 'BTC');
+  assert.strictEqual(binanceResult.toSymbol, 'USDT');
+  assert.strictEqual(binanceResult.source, 'Binance');
+  assert.strictEqual(binanceResult.feeRate, 0.001);
+  assert.ok(Math.abs(binanceResult.bestBidPrice - 99800.1) < 1e-9);
+  assert.ok(Math.abs(binanceResult.bestAskPrice - 100200.1) < 1e-9);
+  assert.ok(Math.abs(binanceResult.amountOut - 100000.1) < 1e-9);
+  assert.ok(Math.abs(binanceResult.raw_price - 100000.1) < 1e-9);
+  assert.deepStrictEqual(binanceResult.bidsTop5, [
+    { price: 99800.1, size: 0.8 },
+    { price: 99750.15, size: 1.4 }
+  ]);
+  assert.strictEqual(binanceResult.asksTop5.length, 2);
+  assert.ok(Math.abs(binanceResult.asksTop5[0].price - 100200.1) < 1e-9);
+  assert.strictEqual(binanceResult.asksTop5[0].size, 0.6);
+  assert.deepStrictEqual(binanceResult.asksTop5[1], { price: 100250.15, size: 1.1 });
+  assert.strictEqual(
+    binanceRequests[0],
+    'https://api.binance.com/api/v3/depth?symbol=BTCUSDT&limit=5'
   );
 
   const veloraRequests = [];

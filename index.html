@@ -198,7 +198,23 @@
             pointer-events: none; 
         }
 
+        .quote-label-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1px;
+            min-width: 0;
+        }
+
         .quote-label { font-weight: 500; color: var(--text-color-light); text-transform: capitalize; white-space: nowrap; }
+        .quote-pair-label {
+            font-size: 11px;
+            line-height: 1.1;
+            color: var(--text-color-light);
+            opacity: 0.86;
+            white-space: nowrap;
+            text-transform: none;
+        }
         
         .trend-arrow {
             display: inline-flex; 
@@ -263,7 +279,7 @@
         }
 
         .quote-text { white-space: nowrap; }
-        .quote-text.bybit-orderbook-summary {
+        .quote-text.cex-orderbook-summary {
             display: inline-block;
             white-space: pre-line;
             text-align: right;
@@ -778,7 +794,7 @@
             transition: opacity 0.2s ease;
         }
         #global-tooltip.visible { display: block; }
-        #global-tooltip.bybit-orderbook-tooltip-host {
+        #global-tooltip.cex-orderbook-tooltip-host {
             min-width: 300px;
             white-space: normal;
             text-align: left;
@@ -793,31 +809,36 @@
             border-style: solid;
             border-color: var(--popover-bg) transparent transparent transparent;
         }
-        .bybit-orderbook-tooltip {
+        .cex-orderbook-tooltip {
             display: grid;
             grid-template-columns: repeat(2, minmax(120px, 1fr));
             gap: 12px;
             font-variant-numeric: tabular-nums;
         }
-        .bybit-orderbook-side {
+        .cex-orderbook-fee-note {
+            grid-column: 1 / -1;
+            opacity: 0.72;
+            font-size: 11px;
+        }
+        .cex-orderbook-side {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
-        .bybit-orderbook-title {
+        .cex-orderbook-title {
             font-weight: 700;
             font-size: 11px;
             opacity: 0.72;
             letter-spacing: 0.04em;
         }
-        .bybit-orderbook-level {
+        .cex-orderbook-level {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
         }
-        .bybit-orderbook-level.empty,
-        .bybit-orderbook-tooltip-empty {
+        .cex-orderbook-level.empty,
+        .cex-orderbook-tooltip-empty {
             opacity: 0.72;
         }
 
@@ -952,6 +973,10 @@
                 <input type="number" id="setting-bybit-interval" placeholder="1000">
             </div>
             <div class="form-group">
+                <label>Binance (默认 1000ms)</label>
+                <input type="number" id="setting-binance-interval" placeholder="1000">
+            </div>
+            <div class="form-group">
                 <label>Solana (默认 3500ms)</label>
                 <input type="number" id="setting-solana-interval" placeholder="3500">
             </div>
@@ -1082,6 +1107,10 @@
                     
                     <optgroup label="Bybit">
                         <option value="Bybit">Bybit</option>
+                    </optgroup>
+
+                    <optgroup label="Binance">
+                        <option value="Binance">Binance</option>
                     </optgroup>
                 </select>
             </div>

@@ -11,6 +11,7 @@
     velora: 200,
     lifi: 170,
     bybit: 1000,
+    binance: 1000,
     solana: 3500,
     sui: 500,
     starknet: 1000
@@ -22,12 +23,13 @@
 
   function isEvmChain(chain) {
     const normalized = normalizeChain(chain);
-    const nonEvm = new Set(['solana', 'sui', 'starknet', 'bybit']);
+    const nonEvm = new Set(['solana', 'sui', 'starknet', 'bybit', 'binance']);
     return !!normalized && !nonEvm.has(normalized);
   }
 
   function shouldQueueInverseFetch(quote) {
-    return !!quote && !!quote.showInverse && String(quote.chain || '') !== 'Bybit';
+    const normalized = normalizeChain(quote && quote.chain ? quote.chain : '');
+    return !!quote && !!quote.showInverse && normalized !== 'bybit' && normalized !== 'binance';
   }
 
   function getQueueTypeForQuote(quote) {
@@ -35,7 +37,8 @@
     const normalized = normalizeChain(chain);
     let type = 'kyber';
 
-    if (chain === 'Bybit') return 'bybit';
+    if (normalized === 'bybit') return 'bybit';
+    if (normalized === 'binance') return 'binance';
     if (normalized === 'solana') return 'solana';
     if (normalized === 'sui') return 'sui';
     if (normalized === 'starknet') return 'starknet';
