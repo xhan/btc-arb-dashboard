@@ -2,11 +2,13 @@ const assert = require('assert');
 
 const {
   DEFAULT_PATH_ALERT_SETTINGS,
+  DEFAULT_PATH_ALERT_THRESHOLD_BP,
   normalizeAlertConfig,
   evaluatePathAlert,
   advancePathAlertRuntime,
   isPathAlertConfirmDelayDisabled,
-  buildPathAlertWebhookUrl
+  buildPathAlertWebhookUrl,
+  buildPathAlertSummaryLines
 } = require('../path-alert-utils');
 
 const emptyConfig = normalizeAlertConfig();
@@ -15,6 +17,7 @@ assert.deepStrictEqual(emptyConfig.settings, DEFAULT_PATH_ALERT_SETTINGS);
 assert.deepStrictEqual(emptyConfig.alerts, []);
 assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.localSoundEnabled, true);
 assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.webhookEnabled, false);
+assert.strictEqual(DEFAULT_PATH_ALERT_THRESHOLD_BP, 1.1);
 assert.strictEqual(
   DEFAULT_PATH_ALERT_SETTINGS.webhookUrl,
   'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder'
@@ -123,6 +126,42 @@ assert.strictEqual(pathEval.available, true);
 assert.strictEqual(pathEval.targetType, 'path');
 assert.ok(Math.abs(pathEval.profitRate - ((1.0012 * 0.9997 * 1.0004) - 1)) < 1e-12);
 assert.ok(Math.abs(pathEval.profitBp - (((1.0012 * 0.9997 * 1.0004) - 1) * 10000)) < 1e-8);
+
+assert.deepStrictEqual(
+  buildPathAlertSummaryLines(pathAlert, {
+    formatLeg(leg) {
+      return `(${leg.chain}) ${leg.fromSymbol} -> ${leg.toSymbol}`;
+    },
+    findRule() {
+      return null;
+    }
+  }),
+  [
+    '(arbitrum) cbBTC -> WBTC',
+    '(Bybit) WBTC -> BTC',
+    '(ethereum) BTC -> cbBTC'
+  ]
+);
+
+assert.deepStrictEqual(
+  buildPathAlertSummaryLines({
+    target: {
+      type: 'rule',
+      ruleKind: 'fixed',
+      ruleId: 'fixed:gho-usdc'
+    }
+  }, {
+    formatLeg() {
+      return '';
+    },
+    findRule(ruleKind, ruleId) {
+      assert.strictEqual(ruleKind, 'fixed');
+      assert.strictEqual(ruleId, 'fixed:gho-usdc');
+      return { title: 'GHO <-> USDC' };
+    }
+  }),
+  ['GHO <-> USDC']
+);
 
 const askInverseAlert = {
   ...pathAlert,

@@ -122,6 +122,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-rule-definitions.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alerts-app.js"'));
+
+    const pathAlertsAppResponse = await request('/path-alerts-app.js');
+    assert.strictEqual(pathAlertsAppResponse.statusCode, 200);
+    assert.ok(pathAlertsAppResponse.body.includes('path-alert-search-input'));
+    assert.ok(pathAlertsAppResponse.body.includes('path-alert-add-leg-btn'));
+    assert.ok(pathAlertsAppResponse.body.includes('path-alert-suggestions'));
+    assert.ok(pathAlertsAppResponse.body.includes("event.key === 'ArrowDown'"));
+    assert.ok(pathAlertsAppResponse.body.includes("event.key === 'ArrowUp'"));
+    assert.ok(pathAlertsAppResponse.body.includes("event.key === 'Enter'"));
   } finally {
     serverProcess.kill();
   }

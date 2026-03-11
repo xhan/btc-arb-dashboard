@@ -1679,32 +1679,45 @@
         return { text: '监控中', className: 'path-alert-status-monitoring' };
     }
 
-    function buildPathAlertSummary(alert) {
-        if (!alert || !alert.target) return '';
-        if (alert.target.type === 'rule') {
-            const sourceList = getPathAlertRuleDefinitions(alert.target.ruleKind);
-            const rule = sourceList.find((item) => item.id === alert.target.ruleId);
-            return rule ? rule.title : alert.target.ruleId;
-        }
-        return (alert.target.legs || [])
-            .map((leg) => {
-                const match = findQuoteById(Number(leg.quoteId));
-                const state = match ? quoteMonitorState.get(Number(leg.quoteId)) : null;
-                if (state && state.fromSymbol && state.toSymbol) {
-                    if (leg.pricingMode === 'cex-ask1-inverse') {
-                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol, ' [ask1]');
+    function buildPathAlertSummaryLines(alert) {
+        if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
+            return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
+                formatLeg(leg) {
+                    const match = findQuoteById(Number(leg.quoteId));
+                    const state = match ? quoteMonitorState.get(Number(leg.quoteId)) : null;
+                    if (state && state.fromSymbol && state.toSymbol) {
+                        if (leg.pricingMode === 'cex-ask1-inverse') {
+                            return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol, ' [ask1]');
+                        }
+                        if (leg.pricingMode === 'cex-bid1') {
+                            return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol, ' [bid1]');
+                        }
+                        if (leg.direction === 'inverse') {
+                            return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol);
+                        }
+                        return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol);
                     }
-                    if (leg.pricingMode === 'cex-bid1') {
-                        return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol, ' [bid1]');
-                    }
-                    if (leg.direction === 'inverse') {
-                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol);
-                    }
-                    return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol);
+                    return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+                },
+                findRule(ruleKind, ruleId) {
+                    const sourceList = getPathAlertRuleDefinitions(ruleKind);
+                    return sourceList.find((item) => item.id === ruleId) || null;
                 }
-                return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
-            })
-            .join(' | ');
+            });
+        }
+        return [];
+    }
+
+    function buildPathAlertSummary(alert) {
+        return buildPathAlertSummaryLines(alert).join(' | ');
+    }
+
+    function renderPathAlertSummaryLinesHtml(alert) {
+        const lines = buildPathAlertSummaryLines(alert);
+        if (!lines.length) {
+            return '<div class="path-alert-item-route-line">--</div>';
+        }
+        return lines.map((line) => `<div class="path-alert-item-route-line">${escapeHtml(line)}</div>`).join('');
     }
 
     function buildPathAlertEvaluationContext() {
@@ -2044,7 +2057,7 @@
                     <div class="path-alert-item-head">
                         <div>
                             <div class="path-alert-item-title">${escapeHtml(alert.name || '未命名路径')}</div>
-                            <div class="path-alert-item-meta">${escapeHtml(buildPathAlertSummary(alert) || '--')}</div>
+                            <div class="path-alert-item-route">${renderPathAlertSummaryLinesHtml(alert)}</div>
                             <div class="path-alert-item-meta">阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s</div>
                         </div>
                         <div class="path-alert-item-actions">

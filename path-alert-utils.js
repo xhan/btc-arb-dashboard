@@ -6,6 +6,7 @@
   root.PathAlertUtils = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const DEFAULT_PATH_ALERT_WEBHOOK_URL = 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder';
+  const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
   const DEFAULT_PATH_ALERT_SETTINGS = Object.freeze({
     pathAlertEvalIntervalMs: 1000,
     defaultCooldownSec: 300,
@@ -141,6 +142,23 @@
       .replace(/\[body\]/gu, encodeURIComponent(String(body || '')));
   }
 
+  function buildPathAlertSummaryLines(alert, options = {}) {
+    if (!alert || !alert.target) return [];
+    const formatLeg = typeof options.formatLeg === 'function'
+      ? options.formatLeg
+      : (leg) => `(${leg.chain || '--'}) ${leg.fromSymbol || '--'} -> ${leg.toSymbol || '--'}`;
+    const findRule = typeof options.findRule === 'function' ? options.findRule : () => null;
+
+    if (alert.target.type === 'rule') {
+      const rule = findRule(alert.target.ruleKind, alert.target.ruleId);
+      return [rule && rule.title ? rule.title : String(alert.target.ruleId || '--')];
+    }
+
+    return Array.isArray(alert.target.legs)
+      ? alert.target.legs.map((leg) => formatLeg(leg)).filter(Boolean)
+      : [];
+  }
+
   function getLegRate(leg, state) {
     if (!leg || !state) return null;
     if (leg.pricingMode === 'cex-bid1') {
@@ -271,9 +289,11 @@
 
   return {
     DEFAULT_PATH_ALERT_WEBHOOK_URL,
+    DEFAULT_PATH_ALERT_THRESHOLD_BP,
     DEFAULT_ALERT_DELIVERY,
     DEFAULT_PATH_ALERT_SETTINGS,
     advancePathAlertRuntime,
+    buildPathAlertSummaryLines,
     buildPathAlertWebhookUrl,
     evaluatePathAlert,
     isPathAlertConfirmDelayDisabled,

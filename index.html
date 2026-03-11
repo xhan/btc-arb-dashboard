@@ -786,7 +786,7 @@
             font-weight: 700;
         }
         #path-alert-header button:hover { background-color: rgba(255,255,255,0.12); }
-        #path-alert-content { flex-grow: 1; overflow-y: auto; padding: 12px; font-size: 13px; }
+        #path-alert-content { flex-grow: 1; overflow-y: auto; padding: 10px; font-size: 12px; }
         .path-alert-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
         .path-alert-toolbar-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
         .path-alert-toolbar-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-color-light); cursor: pointer; }
@@ -806,11 +806,13 @@
         }
         .path-alert-toolbar button { padding: 6px 10px; font-weight: 600; }
         .path-alert-list { display: flex; flex-direction: column; gap: 8px; }
-        .path-alert-item { border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; background-color: rgba(0,0,0,0.015); }
+        .path-alert-item { border: 1px solid var(--border-color); border-radius: 10px; padding: 8px; background-color: rgba(0,0,0,0.015); }
         .dark-mode .path-alert-item { background-color: rgba(255,255,255,0.02); }
         .path-alert-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
         .path-alert-item-title { font-weight: 700; line-height: 1.35; }
-        .path-alert-item-meta { margin-top: 4px; color: var(--text-color-light); line-height: 1.45; }
+        .path-alert-item-route { margin-top: 4px; }
+        .path-alert-item-route-line { color: var(--text-color); line-height: 1.35; white-space: normal; word-break: break-word; }
+        .path-alert-item-meta { margin-top: 4px; color: var(--text-color-light); line-height: 1.4; font-size: 11px; }
         .path-alert-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
         .path-alert-item-actions button { padding: 4px 8px; }
         .path-alert-item-link {

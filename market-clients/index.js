@@ -170,7 +170,9 @@ function createMarketClients(options) {
   return {
     loadTokenMetaCache: tokenMetaStore.load,
     getEvmTokenMeta,
+    getSuiTokenMeta,
     getSolanaTokenMeta,
+    getStarknetTokenMeta: getEkuboTokenMeta,
     providers: {
       kyber: createKyberClient(providerDeps),
       zerox: createZeroXClient(providerDeps),

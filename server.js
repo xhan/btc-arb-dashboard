@@ -15,6 +15,7 @@ const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } =
 const { parseUtc8Input } = require('./time-utils');
 const { createMarketClients } = require('./market-clients');
 const { buildPathAlertWebhookUrl, normalizeAlertConfig } = require('./path-alert-utils');
+const { splitCompactTradingPairSymbol } = require('./quote-calculator');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -57,6 +58,43 @@ const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json', 'METAD
 const ALERT_CONFIG_PATH = resolveProjectFilePath('alert.config', 'ALERT_CONFIG_PATH');
 const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
 const CHART_PAIR_WINDOW_MS = 10 * 60 * 1000;
+const PATH_ALERT_CHAIN_LABELS = {
+    ethereum: 'ETH',
+    arbitrum: 'Arbitrum',
+    optimism: 'Optimism',
+    bsc: 'BSC',
+    polygon: 'Polygon',
+    avalanche: 'Avalanche',
+    base: 'Base',
+    linea: 'Linea',
+    mantle: 'Mantle',
+    sonic: 'Sonic',
+    berachain: 'Berachain',
+    ronin: 'Ronin',
+    unichain: 'Unichain',
+    hyperevm: 'HyperEVM',
+    plasma: 'Plasma',
+    scroll: 'Scroll',
+    blast: 'Blast',
+    mode: 'Mode',
+    monad: 'Monad',
+    etherlink: 'Etherlink',
+    fantom: 'Fantom',
+    cronos: 'Cronos',
+    moonbeam: 'Moonbeam',
+    boba: 'Boba',
+    gnosis: 'Gnosis',
+    celo: 'Celo',
+    hemi: 'Hemi',
+    katana: 'Katana',
+    solana: 'SOL',
+    sui: 'SUI',
+    starknet: 'Starknet',
+    Bybit: 'Bybit',
+    bybit: 'Bybit',
+    Binance: 'Binance',
+    binance: 'Binance'
+};
 
 let writeQueue = Promise.resolve();
 
@@ -116,6 +154,142 @@ function shortAddr(addr = '') {
     const s = String(addr);
     if (s.length <= 12) return s;
     return `${s.slice(0, 6)}...${s.slice(-4)}`;
+}
+
+function formatPathAlertChainLabel(chain) {
+    return PATH_ALERT_CHAIN_LABELS[chain] || chain || '';
+}
+
+function buildPathAlertCandidateLabel(chain, fromSymbol, toSymbol, suffix = '') {
+    return `(${formatPathAlertChainLabel(chain)}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
+}
+
+function isCexOrderbookChain(chain) {
+    const normalized = String(chain || '').trim().toLowerCase();
+    return normalized === 'bybit' || normalized === 'binance';
+}
+
+async function resolveQuoteTokenSymbols(quote) {
+    if (!quote || !quote.chain) {
+        return { fromSymbol: shortAddr(quote && quote.fromToken), toSymbol: shortAddr(quote && quote.toToken) };
+    }
+
+    if (isCexOrderbookChain(quote.chain)) {
+        const parsed = splitCompactTradingPairSymbol(quote.symbol);
+        return {
+            fromSymbol: parsed?.fromSymbol || shortAddr(quote.symbol),
+            toSymbol: parsed?.toSymbol || 'QUOTE'
+        };
+    }
+
+    try {
+        if (String(quote.chain).toLowerCase() === 'solana') {
+            const [fromMeta, toMeta] = await Promise.all([
+                marketClients.getSolanaTokenMeta(quote.fromToken),
+                marketClients.getSolanaTokenMeta(quote.toToken)
+            ]);
+            return { fromSymbol: fromMeta.symbol || shortAddr(quote.fromToken), toSymbol: toMeta.symbol || shortAddr(quote.toToken) };
+        }
+
+        if (String(quote.chain).toLowerCase() === 'sui') {
+            const [fromMeta, toMeta] = await Promise.all([
+                marketClients.getSuiTokenMeta(quote.fromToken),
+                marketClients.getSuiTokenMeta(quote.toToken)
+            ]);
+            return { fromSymbol: fromMeta.symbol || shortAddr(quote.fromToken), toSymbol: toMeta.symbol || shortAddr(quote.toToken) };
+        }
+
+        if (String(quote.chain).toLowerCase() === 'starknet') {
+            const [fromMeta, toMeta] = await Promise.all([
+                marketClients.getStarknetTokenMeta(quote.fromToken),
+                marketClients.getStarknetTokenMeta(quote.toToken)
+            ]);
+            return { fromSymbol: fromMeta.symbol || shortAddr(quote.fromToken), toSymbol: toMeta.symbol || shortAddr(quote.toToken) };
+        }
+
+        const [fromMeta, toMeta] = await Promise.all([
+            marketClients.getEvmTokenMeta(quote.chain, quote.fromToken),
+            marketClients.getEvmTokenMeta(quote.chain, quote.toToken)
+        ]);
+        return { fromSymbol: fromMeta.symbol || shortAddr(quote.fromToken), toSymbol: toMeta.symbol || shortAddr(quote.toToken) };
+    } catch {
+        return {
+            fromSymbol: shortAddr(quote.fromToken),
+            toSymbol: shortAddr(quote.toToken)
+        };
+    }
+}
+
+async function buildPathAlertQuoteCandidatesFromConfig() {
+    const config = await readJsonFile(CONFIG_PATH).catch((error) => {
+        if (error.code === 'ENOENT') return [];
+        throw error;
+    });
+    const dashboard = Array.isArray(config) ? config : (Array.isArray(config.dashboard) ? config.dashboard : []);
+    const candidates = [];
+
+    for (const category of dashboard) {
+        for (const quote of (category.quotes || [])) {
+            const resolved = await resolveQuoteTokenSymbols(quote);
+            if (isCexOrderbookChain(quote.chain)) {
+                candidates.push({
+                    key: `${quote.id}:cex-bid1`,
+                    quoteId: quote.id,
+                    direction: 'forward',
+                    pricingMode: 'cex-bid1',
+                    chain: quote.chain,
+                    fromSymbol: resolved.fromSymbol,
+                    toSymbol: resolved.toSymbol,
+                    categoryName: category.name,
+                    label: buildPathAlertCandidateLabel(quote.chain, resolved.fromSymbol, resolved.toSymbol, ' [bid1]'),
+                    searchText: `${category.name || ''} ${quote.chain || ''} ${quote.symbol || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
+                });
+                candidates.push({
+                    key: `${quote.id}:cex-ask1-inverse`,
+                    quoteId: quote.id,
+                    direction: 'forward',
+                    pricingMode: 'cex-ask1-inverse',
+                    chain: quote.chain,
+                    fromSymbol: resolved.toSymbol,
+                    toSymbol: resolved.fromSymbol,
+                    categoryName: category.name,
+                    label: buildPathAlertCandidateLabel(quote.chain, resolved.toSymbol, resolved.fromSymbol, ' [ask1]'),
+                    searchText: `${category.name || ''} ${quote.chain || ''} ${quote.symbol || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
+                });
+                continue;
+            }
+
+            candidates.push({
+                key: `${quote.id}:forward`,
+                quoteId: quote.id,
+                direction: 'forward',
+                pricingMode: 'raw',
+                chain: quote.chain,
+                fromSymbol: resolved.fromSymbol,
+                toSymbol: resolved.toSymbol,
+                categoryName: category.name,
+                label: buildPathAlertCandidateLabel(quote.chain, resolved.fromSymbol, resolved.toSymbol),
+                searchText: `${category.name || ''} ${quote.chain || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
+            });
+
+            if (quote.showInverse) {
+                candidates.push({
+                    key: `${quote.id}:inverse`,
+                    quoteId: quote.id,
+                    direction: 'inverse',
+                    pricingMode: 'raw',
+                    chain: quote.chain,
+                    fromSymbol: resolved.toSymbol,
+                    toSymbol: resolved.fromSymbol,
+                    categoryName: category.name,
+                    label: buildPathAlertCandidateLabel(quote.chain, resolved.toSymbol, resolved.fromSymbol),
+                    searchText: `${category.name || ''} ${quote.chain || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
+                });
+            }
+        }
+    }
+
+    return candidates;
 }
 
 function getQuoteLogPairLabel(chain, fromSymbol, toSymbol, fromToken, toToken) {
@@ -345,6 +519,15 @@ app.get('/api/get-alert-config', async (req, res) => {
         res.json(await getAlertConfig());
     } catch (error) {
         console.error('Alert Config Read Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/path-alert-quote-candidates', async (req, res) => {
+    try {
+        res.json(await buildPathAlertQuoteCandidatesFromConfig());
+    } catch (error) {
+        console.error('Path Alert Candidate Error:', error);
         res.status(500).json({ error: error.message });
     }
 });

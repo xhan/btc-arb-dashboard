@@ -53,7 +53,9 @@
     editorVisible: false,
     errorMessage: '',
     saveMessage: '',
-    draft: null
+    draft: null,
+    filteredCandidates: [],
+    activeCandidateIndex: -1
   };
 
   function escapeHtml(value) {
@@ -85,6 +87,12 @@
     return `(${formatChainLabel(chain)}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
   }
 
+  function getDefaultThresholdBp() {
+    return window.PathAlertUtils && Number.isFinite(window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP)
+      ? window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP
+      : 1.1;
+  }
+
   function buildAlertId() {
     return `path-alert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
@@ -106,7 +114,7 @@
       id: '',
       name: '',
       enabled: true,
-      thresholdBp: '',
+      thresholdBp: getDefaultThresholdBp(),
       triggerMode: 'immediate',
       confirmDelaySec: 0,
       cooldownSec: alertConfig.settings?.defaultCooldownSec || 300,
@@ -184,14 +192,32 @@
   }
 
   function buildAlertSummary(alert) {
-    if (!alert || !alert.target) return '--';
+    return buildAlertSummaryLines(alert).join(' | ') || '--';
+  }
+
+  function buildAlertSummaryLines(alert) {
+    if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
+      return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
+        formatLeg(leg) {
+          return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+        },
+        findRule
+      });
+    }
+    if (!alert || !alert.target) return [];
     if (alert.target.type === 'rule') {
       const rule = findRule(alert.target.ruleKind, alert.target.ruleId);
-      return rule ? rule.title : alert.target.ruleId;
+      return [rule ? rule.title : alert.target.ruleId];
     }
-    return (alert.target.legs || [])
-      .map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol))
-      .join(' | ') || '--';
+    return (alert.target.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol));
+  }
+
+  function renderSummaryLinesHtml(lines, className) {
+    const safeLines = Array.isArray(lines) ? lines.filter(Boolean) : [];
+    if (!safeLines.length) {
+      return `<div class="${className}">--</div>`;
+    }
+    return safeLines.map((line) => `<div class="${className}">${escapeHtml(line)}</div>`).join('');
   }
 
   function buildQuoteCandidates() {
@@ -268,6 +294,62 @@
     return tokens.every((token) => haystack.includes(token));
   }
 
+  function getFilteredCandidates(query) {
+    return quoteCandidates
+      .filter((candidate) => matchesCandidate(candidate, query))
+      .slice(0, 12);
+  }
+
+  function hideCandidateSuggestions() {
+    pageState.activeCandidateIndex = -1;
+    const suggestionsEl = document.getElementById('path-alert-suggestions');
+    if (!suggestionsEl) return;
+    suggestionsEl.classList.remove('visible');
+    suggestionsEl.innerHTML = '';
+  }
+
+  function renderCandidateSuggestions() {
+    const suggestionsEl = document.getElementById('path-alert-suggestions');
+    const searchInput = document.getElementById('path-alert-search-input');
+    if (!suggestionsEl || !searchInput || !pageState.draft || pageState.draft.sourceType !== 'path') {
+      return;
+    }
+
+    pageState.filteredCandidates = getFilteredCandidates(pageState.draft.searchQuery);
+    const shouldShow = document.activeElement === searchInput || Boolean(searchInput.value.trim());
+    if (!pageState.filteredCandidates.length || !shouldShow) {
+      hideCandidateSuggestions();
+      return;
+    }
+
+    if (pageState.activeCandidateIndex >= pageState.filteredCandidates.length) {
+      pageState.activeCandidateIndex = 0;
+    }
+
+    suggestionsEl.innerHTML = pageState.filteredCandidates.map((candidate, index) => `
+      <button
+        type="button"
+        class="path-alert-suggestion${index === pageState.activeCandidateIndex ? ' active' : ''}"
+        data-path-alert-candidate-key="${escapeHtml(candidate.key)}"
+      >
+        <span class="path-alert-suggestion-label">${escapeHtml(candidate.label)}</span>
+        <span class="path-alert-suggestion-meta">${escapeHtml(candidate.categoryName || '')}</span>
+      </button>
+    `).join('');
+    suggestionsEl.classList.add('visible');
+  }
+
+  function getSelectedCandidate() {
+    pageState.filteredCandidates = getFilteredCandidates(pageState.draft ? pageState.draft.searchQuery : '');
+    if (pageState.activeCandidateIndex >= 0 && pageState.activeCandidateIndex < pageState.filteredCandidates.length) {
+      return pageState.filteredCandidates[pageState.activeCandidateIndex];
+    }
+    if (!pageState.draft || !String(pageState.draft.searchQuery || '').trim()) {
+      return null;
+    }
+    return pageState.filteredCandidates[0] || null;
+  }
+
   function setStatus(message, kind = '') {
     statusEl.textContent = message || '';
     statusEl.className = kind ? `status-message ${kind}` : 'status-message';
@@ -280,6 +362,13 @@
     dashboardState = Array.isArray(raw) ? raw : Array.isArray(raw.dashboard) ? raw.dashboard : [];
     quoteById = new Map(dashboardState.flatMap((category) => (category.quotes || []).map((quote) => [quote.id, quote])));
     quoteCandidates = buildQuoteCandidates();
+  }
+
+  async function loadQuoteCandidates() {
+    const response = await fetch(`${BACKEND_URL}/api/path-alert-quote-candidates`);
+    if (!response.ok) throw new Error('获取报价腿候选失败');
+    const raw = await response.json();
+    quoteCandidates = Array.isArray(raw) ? raw : [];
   }
 
   async function loadAlertConfig() {
@@ -426,7 +515,7 @@
         <div class="alert-item-head">
           <div>
             <div class="alert-item-title">${escapeHtml(alert.name || '未命名路径')}</div>
-            <div class="alert-item-meta">${escapeHtml(buildAlertSummary(alert))}</div>
+            <div class="alert-item-route">${renderSummaryLinesHtml(buildAlertSummaryLines(alert), 'alert-item-route-line')}</div>
             <div class="alert-item-meta">
               类型 ${alert.target.type === 'rule' ? (alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则') : '路径'}
               | 阈值 ${escapeHtml(String(alert.thresholdBp))}bp
@@ -457,21 +546,21 @@
     `).join('')}</div>`;
   }
 
-  function renderCandidates(draft) {
-    const selectedKeys = new Set((draft.legs || []).map((leg) => `${leg.quoteId}:${leg.direction}:${leg.pricingMode}`));
-    const rows = quoteCandidates
-      .filter((candidate) => matchesCandidate(candidate, draft.searchQuery))
-      .slice(0, 100);
-    if (!rows.length) return '<div class="empty">没有匹配的报价腿</div>';
-    return `<div class="candidate-list">${rows.map((candidate) => {
-      const key = `${candidate.quoteId}:${candidate.direction}:${candidate.pricingMode}`;
-      return `
-        <div class="candidate-item">
-          <div class="candidate-text">${escapeHtml(candidate.label)}<br><span class="inline-hint">${escapeHtml(candidate.categoryName || '')}</span></div>
-          <button type="button" data-editor-add-candidate="${escapeHtml(candidate.key)}" ${selectedKeys.has(key) ? 'disabled' : ''}>添加</button>
+  function renderCandidateSearchArea(draft) {
+    const disabledAttr = quoteCandidates.length ? '' : 'disabled';
+    return `
+      <div class="form-group">
+        <label for="path-alert-search-input">搜索报价腿</label>
+        <div class="path-alert-search-row">
+          <div class="path-alert-search-shell">
+            <input id="path-alert-search-input" type="text" value="${escapeHtml(draft.searchQuery)}" placeholder="输入分区名、链名、代币、地址" ${disabledAttr}>
+            <div id="path-alert-suggestions" class="path-alert-suggestions"></div>
+          </div>
+          <button type="button" id="path-alert-add-leg-btn" ${disabledAttr}>添加</button>
         </div>
-      `;
-    }).join('')}</div>`;
+      </div>
+      ${quoteCandidates.length ? '' : '<div class="empty">暂无可选报价腿</div>'}
+    `;
   }
 
   function renderSelectedLegs(draft) {
@@ -503,12 +592,12 @@
     }
 
     const draft = pageState.draft;
-    const targetSummary = draft.sourceType === 'path'
-      ? ((draft.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol)).join(' | ') || '--')
-      : ((findRule(draft.sourceType, draft.selectedRuleId) || {}).title || '--');
+    const targetSummaryLines = draft.sourceType === 'path'
+      ? ((draft.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol)).filter(Boolean))
+      : [((findRule(draft.sourceType, draft.selectedRuleId) || {}).title || '--')];
     const errorHtml = pageState.errorMessage
-      ? `<div class="status-message error">${escapeHtml(pageState.errorMessage)}</div>`
-      : '';
+      ? `<div id="editor-error-slot" class="status-message error">${escapeHtml(pageState.errorMessage)}</div>`
+      : '<div id="editor-error-slot" class="status-message"></div>';
 
     editorEl.innerHTML = `
       ${errorHtml}
@@ -526,41 +615,40 @@
       <div class="editor-grid">
         <div class="editor-pane">
           ${draft.sourceType === 'path' ? `
-            <div class="form-group">
-              <label for="editor-search">搜索报价腿</label>
-              <input id="editor-search" type="text" value="${escapeHtml(draft.searchQuery)}" placeholder="输入分区名、链名、代币、地址">
-            </div>
-            ${renderCandidates(draft)}
+            ${renderCandidateSearchArea(draft)}
           ` : renderRuleChoices(draft.sourceType, draft.selectedRuleId)}
         </div>
         <div class="editor-pane">
-          <div style="font-weight:700; margin-bottom:8px;">已选路径</div>
+          <div class="editor-pane-title">已选路径</div>
           ${renderSelectedLegs(draft)}
-          <div class="summary-box">${escapeHtml(targetSummary)}</div>
+          <div class="summary-box">${renderSummaryLinesHtml(targetSummaryLines, 'summary-line')}</div>
         </div>
-      </div>
-
-      <div class="form-group">
-        <label for="editor-threshold">收益阈值 (bp)</label>
-        <input id="editor-threshold" type="number" step="0.1" value="${draft.thresholdBp === '' ? '' : escapeHtml(String(draft.thresholdBp))}" placeholder="例如：3">
-      </div>
-      <div class="form-group">
-        <label for="editor-trigger">触发方式</label>
-        <select id="editor-trigger">
-          <option value="immediate" ${draft.triggerMode === 'immediate' ? 'selected' : ''}>立即提醒</option>
-          <option value="delayed" ${draft.triggerMode === 'delayed' ? 'selected' : ''}>延迟确认</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="editor-confirm-delay">延迟确认 (秒)</label>
-        <input id="editor-confirm-delay" type="number" min="0" value="${escapeHtml(String(draft.confirmDelaySec || 0))}" ${draft.triggerMode === 'delayed' ? '' : 'disabled'}>
-      </div>
-      <div class="form-group">
-        <label for="editor-cooldown">冷却时间 (秒)</label>
-        <input id="editor-cooldown" type="number" min="1" value="${escapeHtml(String(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 300))}">
-      </div>
-      <div class="form-group">
-        <label><input id="editor-enabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}> 启用这条路径报警</label>
+        <div class="editor-pane editor-settings-pane">
+          <div class="editor-pane-title">报警条件</div>
+          <div class="form-group">
+            <label for="editor-threshold">收益阈值 (bp)</label>
+            <input id="editor-threshold" type="number" step="0.1" value="${draft.thresholdBp === '' ? '' : escapeHtml(String(draft.thresholdBp))}">
+          </div>
+          <div class="form-group">
+            <label for="editor-trigger">触发方式</label>
+            <select id="editor-trigger">
+              <option value="immediate" ${draft.triggerMode === 'immediate' ? 'selected' : ''}>立即提醒</option>
+              <option value="delayed" ${draft.triggerMode === 'delayed' ? 'selected' : ''}>延迟确认</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editor-confirm-delay">延迟确认 (秒)</label>
+            <input id="editor-confirm-delay" type="number" min="0" value="${escapeHtml(String(draft.confirmDelaySec || 0))}" ${draft.triggerMode === 'delayed' ? '' : 'disabled'}>
+          </div>
+          <div class="form-group">
+            <label for="editor-cooldown">冷却时间 (秒)</label>
+            <input id="editor-cooldown" type="number" min="1" value="${escapeHtml(String(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 300))}">
+          </div>
+          <label class="editor-checkbox-row" for="editor-enabled">
+            <input id="editor-enabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}>
+            <span>启用这条路径报警</span>
+          </label>
+        </div>
       </div>
 
       <div class="editor-actions">
@@ -571,6 +659,8 @@
         </div>
       </div>
     `;
+    syncEditorConfirmDelayState();
+    renderCandidateSuggestions();
   }
 
   async function handleSave() {
@@ -595,6 +685,73 @@
     } catch (saveError) {
       pageState.errorMessage = saveError.message || '保存失败';
       renderEditor();
+    }
+  }
+
+  function syncEditorConfirmDelayState() {
+    const triggerInput = document.getElementById('editor-trigger');
+    const confirmDelayInput = document.getElementById('editor-confirm-delay');
+    if (!triggerInput || !confirmDelayInput) return;
+    confirmDelayInput.disabled = triggerInput.value !== 'delayed';
+  }
+
+  function clearEditorError() {
+    pageState.errorMessage = '';
+    const errorEl = document.getElementById('editor-error-slot');
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.className = 'status-message';
+  }
+
+  function rerenderEditorPreservingFocus(target) {
+    const focusId = target && target.id ? target.id : '';
+    const selectionStart = typeof target?.selectionStart === 'number' ? target.selectionStart : null;
+    const selectionEnd = typeof target?.selectionEnd === 'number' ? target.selectionEnd : null;
+    renderEditor();
+    if (!focusId) return;
+    const nextTarget = document.getElementById(focusId);
+    if (!nextTarget) return;
+    nextTarget.focus();
+    if (typeof selectionStart === 'number' && typeof selectionEnd === 'number' && typeof nextTarget.setSelectionRange === 'function') {
+      nextTarget.setSelectionRange(selectionStart, selectionEnd);
+    }
+  }
+
+  function addCandidateToDraft(candidate) {
+    if (!pageState.draft || pageState.draft.sourceType !== 'path' || !candidate) return false;
+    const exists = (pageState.draft.legs || []).some((leg) => (
+      Number(leg.quoteId) === Number(candidate.quoteId)
+      && leg.direction === candidate.direction
+      && leg.pricingMode === candidate.pricingMode
+    ));
+    if (exists) return false;
+    pageState.draft.legs.push({
+      quoteId: candidate.quoteId,
+      direction: candidate.direction,
+      pricingMode: candidate.pricingMode,
+      chain: candidate.chain,
+      fromSymbol: candidate.fromSymbol,
+      toSymbol: candidate.toSymbol
+    });
+    pageState.draft.searchQuery = '';
+    pageState.filteredCandidates = [];
+    pageState.activeCandidateIndex = -1;
+    return true;
+  }
+
+  function commitCandidateSelection() {
+    const candidate = getSelectedCandidate();
+    if (!candidate) {
+      pageState.errorMessage = '没有匹配的报价腿，请换个关键词。';
+      rerenderEditorPreservingFocus(document.getElementById('path-alert-search-input'));
+      return;
+    }
+    pageState.errorMessage = '';
+    addCandidateToDraft(candidate);
+    renderEditor();
+    const searchInput = document.getElementById('path-alert-search-input');
+    if (searchInput) {
+      searchInput.focus();
     }
   }
 
@@ -656,14 +813,21 @@
     if (!pageState.draft) return;
     const target = event.target;
     if (target.id === 'editor-name') pageState.draft.name = target.value || '';
-    if (target.id === 'editor-search') pageState.draft.searchQuery = target.value || '';
+    if (target.id === 'path-alert-search-input') pageState.draft.searchQuery = target.value || '';
     if (target.id === 'editor-threshold') pageState.draft.thresholdBp = target.value === '' ? '' : Number(target.value);
     if (target.id === 'editor-trigger') pageState.draft.triggerMode = target.value === 'delayed' ? 'delayed' : 'immediate';
     if (target.id === 'editor-confirm-delay') pageState.draft.confirmDelaySec = Number(target.value || 0);
     if (target.id === 'editor-cooldown') pageState.draft.cooldownSec = Number(target.value || alertConfig.settings?.defaultCooldownSec || 300);
     if (target.id === 'editor-enabled') pageState.draft.enabled = target.checked;
-    if (pageState.errorMessage) pageState.errorMessage = '';
-    renderEditor();
+    if (pageState.errorMessage) clearEditorError();
+    if (target.id === 'path-alert-search-input') {
+      pageState.activeCandidateIndex = -1;
+      renderCandidateSuggestions();
+      return;
+    }
+    if (target.id === 'editor-trigger') {
+      syncEditorConfirmDelayState();
+    }
   }
 
   function updateEditorType(sourceType) {
@@ -671,6 +835,8 @@
     pageState.draft.sourceType = sourceType;
     pageState.draft.selectedRuleId = '';
     pageState.draft.searchQuery = '';
+    pageState.filteredCandidates = [];
+    pageState.activeCandidateIndex = -1;
     if (sourceType !== 'path') {
       pageState.draft.legs = [];
     }
@@ -690,6 +856,37 @@
     renderEditor();
   }
 
+  function handleEditorKeydown(event) {
+    const target = event.target;
+    if (!target || target.id !== 'path-alert-search-input') return;
+
+    if (!pageState.filteredCandidates.length && event.key !== 'Escape') return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      pageState.activeCandidateIndex = Math.min(pageState.filteredCandidates.length - 1, pageState.activeCandidateIndex + 1);
+      renderCandidateSuggestions();
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      pageState.activeCandidateIndex = Math.max(0, pageState.activeCandidateIndex - 1);
+      renderCandidateSuggestions();
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      commitCandidateSelection();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      hideCandidateSuggestions();
+    }
+  }
+
   function handleEditorClick(event) {
     if (!pageState.draft) return;
 
@@ -699,18 +896,17 @@
       return;
     }
 
-    const addBtn = event.target.closest('[data-editor-add-candidate]');
+    if (event.target.closest('#path-alert-add-leg-btn')) {
+      commitCandidateSelection();
+      return;
+    }
+
+    const addBtn = event.target.closest('[data-path-alert-candidate-key]');
     if (addBtn) {
-      const candidate = quoteCandidates.find((item) => item.key === addBtn.dataset.editorAddCandidate);
+      const candidate = pageState.filteredCandidates.find((item) => item.key === addBtn.dataset.pathAlertCandidateKey);
       if (!candidate) return;
-      pageState.draft.legs.push({
-        quoteId: candidate.quoteId,
-        direction: candidate.direction,
-        pricingMode: candidate.pricingMode,
-        chain: candidate.chain,
-        fromSymbol: candidate.fromSymbol,
-        toSymbol: candidate.toSymbol
-      });
+      pageState.errorMessage = '';
+      addCandidateToDraft(candidate);
       renderEditor();
       return;
     }
@@ -750,6 +946,11 @@
   async function init() {
     try {
       await Promise.all([loadDashboardConfig(), loadAlertConfig()]);
+      try {
+        await loadQuoteCandidates();
+      } catch (candidateError) {
+        console.warn('加载路径报警候选失败，回退到本地配置展示:', candidateError);
+      }
       renderList();
       applyInitialRoute();
       setStatus('');
@@ -765,8 +966,19 @@
       handleListClick(event).catch((error) => setStatus(error.message || '操作失败', 'error'));
     });
     editorEl.addEventListener('click', handleEditorClick);
+    editorEl.addEventListener('keydown', handleEditorKeydown);
     editorEl.addEventListener('input', updateDraftField);
     editorEl.addEventListener('change', updateDraftField);
+    editorEl.addEventListener('focusin', (event) => {
+      if (event.target && event.target.id === 'path-alert-search-input') {
+        renderCandidateSuggestions();
+      }
+    });
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (target && typeof target.closest === 'function' && target.closest('.path-alert-search-shell')) return;
+      hideCandidateSuggestions();
+    });
   }
 
   init();
