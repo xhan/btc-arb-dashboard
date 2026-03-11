@@ -37,6 +37,9 @@ app.get('/snapshot', (req, res) => {
 app.get('/charts', (req, res) => {
     res.sendFile(path.join(__dirname, 'charts.html'));
 });
+app.get('/path-alerts', (req, res) => {
+    res.sendFile(path.join(__dirname, 'path-alerts.html'));
+});
 app.get('/queue-stats', (req, res) => {
     res.sendFile(path.join(__dirname, 'queue-stats.html'));
 });

@@ -79,7 +79,10 @@
         };
     let pathAlertSaveTimer = null;
     let pathAlertEvalTimer = null;
+    let pathAlertPanelHidden = false;
     let pathAlertRuntimeState = new Map();
+    let pathAlertPanelCollapsed = false;
+    let pathAlertReloading = false;
     let pathAlertEditorState = {
         visible: false,
         editingId: '',
@@ -555,7 +558,9 @@
         return aliasMatch || '';
     }
 
-    const FIXED_PATH_RULES = [
+    const FIXED_PATH_RULES = (window.PathAlertRuleDefinitions && Array.isArray(window.PathAlertRuleDefinitions.FIXED_PATH_RULES))
+        ? window.PathAlertRuleDefinitions.FIXED_PATH_RULES
+        : [
         {
             id: 'fixed:wbtc-eth-arb',
             title: 'WBTC ETH <-> ARB',
@@ -574,7 +579,9 @@
             crossChain: true
         }
     ];
-    const SPECIAL_ARB_RULES = [
+    const SPECIAL_ARB_RULES = (window.PathAlertRuleDefinitions && Array.isArray(window.PathAlertRuleDefinitions.SPECIAL_ARB_RULES))
+        ? window.PathAlertRuleDefinitions.SPECIAL_ARB_RULES
+        : [
         {
             id: 'special:dex-cex-wbtc',
             title: 'DEX <-> CEX',
@@ -1059,7 +1066,10 @@
         if (addAlertBtn && arbPathContent.contains(addAlertBtn)) {
             const draft = buildPathAlertDraftFromOpportunity(addAlertBtn.dataset.arbOpportunityAlertId);
             if (draft) {
-                openPathAlertModal(draft);
+                openPathAlertsManagementPage({
+                    mode: 'create',
+                    draft
+                });
             }
             return;
         }
@@ -1536,6 +1546,9 @@
     }
 
     function getPathAlertRuleDefinitions(sourceType) {
+        if (window.PathAlertRuleDefinitions && typeof window.PathAlertRuleDefinitions.getRuleDefinitions === 'function') {
+            return window.PathAlertRuleDefinitions.getRuleDefinitions(sourceType);
+        }
         if (sourceType === 'fixed') return FIXED_PATH_RULES;
         if (sourceType === 'special') return SPECIAL_ARB_RULES;
         return [];
@@ -1674,7 +1687,23 @@
             return rule ? rule.title : alert.target.ruleId;
         }
         return (alert.target.legs || [])
-            .map((leg) => buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol))
+            .map((leg) => {
+                const match = findQuoteById(Number(leg.quoteId));
+                const state = match ? quoteMonitorState.get(Number(leg.quoteId)) : null;
+                if (state && state.fromSymbol && state.toSymbol) {
+                    if (leg.pricingMode === 'cex-ask1-inverse') {
+                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol, ' [ask1]');
+                    }
+                    if (leg.pricingMode === 'cex-bid1') {
+                        return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol, ' [bid1]');
+                    }
+                    if (leg.direction === 'inverse') {
+                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol);
+                    }
+                    return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol);
+                }
+                return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+            })
             .join(' | ');
     }
 
@@ -1782,14 +1811,30 @@
         }, 250);
     }
 
-    async function loadPathAlertConfig() {
+    function buildPathAlertsManagementHref(options = {}) {
+        if (window.PathAlertPageUtils && typeof window.PathAlertPageUtils.buildPathAlertsPageHref === 'function') {
+            return window.PathAlertPageUtils.buildPathAlertsPageHref(options);
+        }
+        return '/path-alerts';
+    }
+
+    function openPathAlertsManagementPage(options = {}) {
+        const href = buildPathAlertsManagementHref(options);
+        window.open(href, '_blank', 'noopener');
+    }
+
+    async function loadPathAlertConfig(options = {}) {
         if (!window.PathAlertUtils) return;
+        const fallbackToDefault = options.fallbackToDefault !== false;
         try {
             const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
             if (!response.ok) throw new Error('获取路径报警配置失败');
             const data = await response.json();
             pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig(data);
         } catch (error) {
+            if (!fallbackToDefault) {
+                throw error;
+            }
             console.warn('加载路径报警配置失败:', error);
             pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig();
         }
@@ -1964,7 +2009,7 @@
         const settings = pathAlertConfig.settings || {};
         const toolbar = `
             <div class="path-alert-toolbar">
-                <button type="button" id="path-alert-add-btn">+ 添加路径报警</button>
+                <button type="button" id="path-alert-reload-btn" ${pathAlertReloading ? 'disabled' : ''}>${pathAlertReloading ? '重新加载中...' : '重新加载'}</button>
                 <div class="path-alert-toolbar-meta">
                     <label class="path-alert-toolbar-toggle">
                         <input type="checkbox" data-path-alert-global-toggle="localSoundEnabled" ${settings.localSoundEnabled !== false ? 'checked' : ''}>
@@ -1990,6 +2035,10 @@
             const lastTriggeredText = runtime && runtime.lastTriggeredAt
                 ? new Date(runtime.lastTriggeredAt).toLocaleTimeString()
                 : '--';
+            const editHref = buildPathAlertsManagementHref({
+                mode: 'edit',
+                alertId: alert.id
+            });
             return `
                 <div class="path-alert-item">
                     <div class="path-alert-item-head">
@@ -1999,9 +2048,13 @@
                             <div class="path-alert-item-meta">阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s</div>
                         </div>
                         <div class="path-alert-item-actions">
-                            <button type="button" data-path-alert-toggle="${escapeHtml(alert.id)}">${alert.enabled === false ? '启用' : '停用'}</button>
-                            <button type="button" data-path-alert-edit="${escapeHtml(alert.id)}">编辑</button>
-                            <button type="button" data-path-alert-delete="${escapeHtml(alert.id)}">删</button>
+                            <a
+                                class="path-alert-item-link"
+                                href="${escapeHtml(editHref)}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-path-alert-edit-link="${escapeHtml(alert.id)}"
+                            >编辑</a>
                         </div>
                     </div>
                     <div class="path-alert-status-row">
@@ -2018,7 +2071,18 @@
 
     function togglePathAlertPanel() {
         if (!pathAlertWindow) return;
-        pathAlertWindow.style.display = pathAlertWindow.style.display === 'none' ? 'flex' : 'none';
+        pathAlertPanelHidden = !pathAlertPanelHidden;
+        pathAlertWindow.style.display = pathAlertPanelHidden ? 'none' : 'flex';
+    }
+
+    function togglePathAlertPanelCollapsed() {
+        if (!pathAlertWindow || pathAlertPanelHidden) return;
+        pathAlertPanelCollapsed = !pathAlertPanelCollapsed;
+        pathAlertWindow.classList.toggle('collapsed', pathAlertPanelCollapsed);
+        if (pathAlertMinBtn) {
+            pathAlertMinBtn.textContent = pathAlertPanelCollapsed ? '＋' : '－';
+            pathAlertMinBtn.title = pathAlertPanelCollapsed ? '展开' : '折叠';
+        }
     }
 
     function handlePathAlertPanelChange(event) {
@@ -2032,38 +2096,24 @@
     }
 
     function handlePathAlertPanelClick(event) {
-        const addBtn = event.target.closest('#path-alert-add-btn');
-        if (addBtn) {
-            openPathAlertModal();
-            return;
-        }
+        const reloadBtn = event.target.closest('#path-alert-reload-btn');
+        if (!reloadBtn) return;
+        reloadPathAlertConfigFromServer().catch((error) => {
+            console.error('重新加载路径报警配置失败:', error);
+        });
+    }
 
-        const editBtn = event.target.closest('[data-path-alert-edit]');
-        if (editBtn) {
-            const alert = pathAlertConfig.alerts.find((item) => item.id === editBtn.dataset.pathAlertEdit);
-            if (alert) {
-                openPathAlertModal(alert);
-            }
-            return;
-        }
-
-        const toggleBtn = event.target.closest('[data-path-alert-toggle]');
-        if (toggleBtn) {
-            const alert = pathAlertConfig.alerts.find((item) => item.id === toggleBtn.dataset.pathAlertToggle);
-            if (!alert) return;
-            alert.enabled = alert.enabled === false;
-            queuePathAlertConfigSave();
-            evaluatePathAlertsOnce();
-            return;
-        }
-
-        const deleteBtn = event.target.closest('[data-path-alert-delete]');
-        if (deleteBtn) {
-            pathAlertConfig.alerts = pathAlertConfig.alerts.filter((item) => item.id !== deleteBtn.dataset.pathAlertDelete);
-            pathAlertRuntimeState.delete(deleteBtn.dataset.pathAlertDelete);
-            queuePathAlertConfigSave();
+    async function reloadPathAlertConfigFromServer() {
+        if (pathAlertReloading) return;
+        pathAlertReloading = true;
+        renderPathAlertPanel();
+        try {
+            await loadPathAlertConfig({ fallbackToDefault: false });
+            pathAlertRuntimeState = new Map();
+            restartPathAlertScheduler();
+        } finally {
+            pathAlertReloading = false;
             renderPathAlertPanel();
-            updateAlertSoundState();
         }
     }
 
@@ -3944,7 +3994,9 @@
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
             }
             if (togglePathAlertBtn) {
-                togglePathAlertBtn.addEventListener('click', togglePathAlertPanel);
+                togglePathAlertBtn.addEventListener('click', () => {
+                    openPathAlertsManagementPage();
+                });
             }
             if (pathAlertContent) {
                 pathAlertContent.addEventListener('click', handlePathAlertPanelClick);
@@ -4064,7 +4116,7 @@
             if (pathAlertMinBtn) {
                 pathAlertMinBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    togglePathAlertPanel();
+                    togglePathAlertPanelCollapsed();
                 });
             }
             if (arbPathMaxBtn) {

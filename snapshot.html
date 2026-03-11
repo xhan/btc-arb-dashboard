@@ -277,10 +277,68 @@
       margin-top: 10px;
     }
 
+    .arb-opportunity[data-arb-opportunity-id] {
+      cursor: pointer;
+    }
+
+    .arb-opportunity[data-arb-opportunity-id]:hover {
+      background-color: rgba(37, 99, 235, 0.04);
+    }
+
     .arb-opportunity:first-of-type {
       border-top: none;
       margin-top: 0;
       padding-top: 0;
+    }
+
+    .arb-opportunity-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .arb-opportunity-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .arb-opportunity-chart-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      text-decoration: none;
+      color: #2563eb;
+      background-color: rgba(37, 99, 235, 0.08);
+      flex: 0 0 auto;
+    }
+
+    .arb-opportunity-chart-link:hover {
+      background-color: rgba(37, 99, 235, 0.16);
+    }
+
+    .arb-opportunity-add-alert-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: none;
+      color: #2563eb;
+      background-color: rgba(37, 99, 235, 0.08);
+      flex: 0 0 auto;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .arb-opportunity-add-alert-btn:hover {
+      background-color: rgba(37, 99, 235, 0.16);
     }
 
     .arb-path-line {
@@ -365,6 +423,8 @@
   <script src="arb-panel-renderer.js"></script>
   <script src="arb-fixed-utils.js"></script>
   <script src="charts-utils.js"></script>
+  <script src="path-alert-page-utils.js"></script>
+  <script src="path-alert-rule-definitions.js"></script>
   <script src="snapshot-app.js"></script>
 </body>
 </html>

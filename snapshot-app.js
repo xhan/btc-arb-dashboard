@@ -9,6 +9,7 @@
   const statusEl = document.getElementById('snapshot-status');
   const dashboardEl = document.getElementById('snapshot-dashboard');
   const arbContentEl = document.getElementById('snapshot-arb-content');
+  const snapshotOpportunityStore = new Map();
 
   const CHAIN_DISPLAY_NAMES = {
     ethereum: 'ETH',
@@ -44,7 +45,9 @@
     Bybit: 'Bybit'
   };
 
-  const FIXED_PATH_RULES = [
+  const FIXED_PATH_RULES = (window.PathAlertRuleDefinitions && Array.isArray(window.PathAlertRuleDefinitions.FIXED_PATH_RULES))
+    ? window.PathAlertRuleDefinitions.FIXED_PATH_RULES
+    : [
     {
       title: 'WBTC ETH <-> ARB',
       base: 'cbBTC',
@@ -139,12 +142,63 @@
     return utils.buildChartsPageHref(chartPairs);
   }
 
-  function buildOpportunityEntry(cycle, label) {
+  function buildPathAlertsManagementHref(options = {}) {
+    if (window.PathAlertPageUtils && typeof window.PathAlertPageUtils.buildPathAlertsPageHref === 'function') {
+      return window.PathAlertPageUtils.buildPathAlertsPageHref(options);
+    }
+    return '/path-alerts';
+  }
+
+  function openPathAlertsManagementPage(options = {}) {
+    window.open(buildPathAlertsManagementHref(options), '_blank', 'noopener');
+  }
+
+  function buildOpportunityEntry(cycle, label, alertPreset = null) {
     if (!cycle) return null;
-    return {
+    const opportunityId = `snapshot-opportunity-${snapshotOpportunityStore.size + 1}`;
+    const entry = {
       label,
       cycle,
-      chartHref: buildOpportunityChartHref(cycle)
+      chartHref: buildOpportunityChartHref(cycle),
+      opportunityId,
+      alertPreset
+    };
+    snapshotOpportunityStore.set(opportunityId, entry);
+    return entry;
+  }
+
+  function buildPathAlertDraftFromOpportunity(opportunityId) {
+    const entry = snapshotOpportunityStore.get(opportunityId);
+    if (!entry) return null;
+
+    if (entry.alertPreset && entry.alertPreset.type === 'rule') {
+      return {
+        name: entry.label || '路径报警',
+        target: {
+          type: 'rule',
+          ruleKind: entry.alertPreset.ruleKind,
+          ruleId: entry.alertPreset.ruleId
+        }
+      };
+    }
+
+    const legs = (entry.cycle?.legs || [])
+      .filter((leg) => !(leg && (leg.rule || leg.chain === '规则')) && Number.isFinite(Number(leg.quoteId)))
+      .map((leg) => ({
+        quoteId: Number(leg.quoteId),
+        direction: leg.inverse ? 'inverse' : 'forward',
+        pricingMode: 'raw',
+        chain: leg.chain,
+        fromSymbol: leg.from,
+        toSymbol: leg.to
+      }));
+    if (!legs.length) return null;
+    return {
+      name: entry.label || '路径报警',
+      target: {
+        type: 'path',
+        legs
+      }
     };
   }
 
@@ -229,6 +283,7 @@
     if (!window.ArbPaths || !window.ArbPanelRenderer) {
       return null;
     }
+    snapshotOpportunityStore.clear();
 
     const allQuotes = Array.isArray(snapshotQuotes) ? snapshotQuotes : [];
     const preferredStartSymbols = buildPreferredCycleStartSymbols(ALIAS_RULES, 'cbBTC');
@@ -249,7 +304,12 @@
               rule,
               ALIAS_RULES
             ),
-            rule.title
+            rule.title,
+            {
+              type: 'rule',
+              ruleKind: 'fixed',
+              ruleId: rule.id
+            }
           ))
           .filter(Boolean)
       }
@@ -418,6 +478,16 @@
     maxGapInput.value = params.get('maxGapSec') || '';
 
     loadBtn.addEventListener('click', () => loadSnapshot(true));
+    arbContentEl.addEventListener('click', (event) => {
+      const addAlertBtn = event.target.closest('[data-arb-opportunity-alert-id]');
+      if (!addAlertBtn) return;
+      const draft = buildPathAlertDraftFromOpportunity(addAlertBtn.dataset.arbOpportunityAlertId);
+      if (!draft) return;
+      openPathAlertsManagementPage({
+        mode: 'create',
+        draft
+      });
+    });
     if (openSnapshotJsonBtn) {
       openSnapshotJsonBtn.addEventListener('click', () => {
         window.open(buildSnapshotApiUrl(), '_blank', 'noopener');

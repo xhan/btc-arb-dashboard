@@ -46,6 +46,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
+    assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('id="path-alert-sound"'));
     assert.ok(response.body.includes('src="alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
@@ -53,6 +54,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="path-alert-window"'));
     assert.ok(response.body.includes('id="path-alert-modal"'));
     assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
+    assert.ok(response.body.includes('路径报警管理'));
     assert.ok(response.body.includes('#top-bar-right > button,'));
     assert.ok(response.body.includes('#top-bar-right > a {'));
     assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
@@ -69,6 +71,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes('音效'));
     assert.ok(appJsResponse.body.includes('远程'));
+    assert.ok(appJsResponse.body.includes('path-alert-reload-btn'));
+    assert.ok(appJsResponse.body.includes('/path-alerts'));
+    assert.ok(appJsResponse.body.includes('data-path-alert-edit-link'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);
@@ -78,11 +83,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);'));
     assert.ok(snapshotResponse.body.includes('src="arb-equivalence-utils.js"'));
     assert.ok(snapshotResponse.body.includes('src="charts-utils.js"'));
+    assert.ok(snapshotResponse.body.includes('.arb-opportunity-head {'));
+    assert.ok(snapshotResponse.body.includes('.arb-opportunity-chart-link {'));
+    assert.ok(snapshotResponse.body.includes('.arb-opportunity-add-alert-btn {'));
 
     const snapshotAppResponse = await request('/snapshot-app.js');
     assert.strictEqual(snapshotAppResponse.statusCode, 200);
     assert.ok(snapshotAppResponse.body.includes('buildAliasRulesFromGroups'));
     assert.ok(snapshotAppResponse.body.includes('buildOpportunityChartHref'));
+    assert.ok(snapshotAppResponse.body.includes('/path-alerts'));
 
     const chartsResponse = await request('/charts');
     assert.strictEqual(chartsResponse.statusCode, 200);
@@ -103,6 +112,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(queueStatsResponse.body.includes('src="queue-stats-app.js"'));
 
     assert.ok(response.body.includes('href="/queue-stats"'));
+
+    const pathAlertsResponse = await request('/path-alerts');
+    assert.strictEqual(pathAlertsResponse.statusCode, 200);
+    assert.ok(pathAlertsResponse.body.includes('路径报警管理'));
+    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-page"'));
+    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-list"'));
+    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-editor"'));
+    assert.ok(pathAlertsResponse.body.includes('src="path-alert-page-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="path-alert-rule-definitions.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="path-alerts-app.js"'));
   } finally {
     serverProcess.kill();
   }

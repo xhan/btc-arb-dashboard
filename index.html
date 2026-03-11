@@ -772,6 +772,8 @@
         }
 
         #path-alert-window { position: fixed; top: 80px; right: 20px; width: 390px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
+        #path-alert-window.collapsed { height: auto; min-height: 0; resize: none; }
+        #path-alert-window.collapsed #path-alert-content { display: none; }
         #path-alert-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #path-alert-header { background-color: #1a202c; }
         #path-alert-header button {
@@ -792,6 +794,7 @@
         .path-alert-toolbar-cycle { font-size: 12px; color: var(--text-color-light); }
         .path-alert-toolbar button,
         .path-alert-item button,
+        .path-alert-item-link,
         .path-alert-rule-chip,
         .path-alert-leg-action,
         .path-alert-candidate-add {
@@ -810,6 +813,14 @@
         .path-alert-item-meta { margin-top: 4px; color: var(--text-color-light); line-height: 1.45; }
         .path-alert-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
         .path-alert-item-actions button { padding: 4px 8px; }
+        .path-alert-item-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            text-decoration: none;
+            color: inherit;
+        }
         .path-alert-status-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; align-items: center; }
         .path-alert-status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
         .path-alert-status-monitoring { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
@@ -1015,7 +1026,7 @@
         </div>
         <div id="top-bar-right">
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
-             <button id="toggle-path-alert-btn" title="显示/隐藏路径报警">路径报警</button>
+             <button id="toggle-path-alert-btn" title="打开路径报警管理页">路径报警管理</button>
              <button id="toggle-calc-btn" title="显示/隐藏计算器">计算器</button>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">快照</a>
              <a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">图表</a>
@@ -1354,6 +1365,8 @@
     <script src="arb-equivalence-utils.js"></script>
     <script src="arb-special-utils.js"></script>
     <script src="path-alert-utils.js"></script>
+    <script src="path-alert-page-utils.js"></script>
+    <script src="path-alert-rule-definitions.js"></script>
     <script src="quote-calculator.js"></script>
     <script src="chain-defaults.js"></script>
     <script src="arb-panel-renderer.js"></script>
