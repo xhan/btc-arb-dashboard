@@ -1,0 +1,6 @@
+{
+  "kyberClientId": "xh-chain-baby",
+  "LIFIApiKey": "f9509549-3598-47b6-a1f3-bae66a4d8119.43696834-00aa-4bbd-88dc-881fe98c29a2",
+  "enablePriceSnapshot": true,
+  "priceSnapshotIntervalSec": 10
+}
