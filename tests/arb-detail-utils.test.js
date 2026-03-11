@@ -4,6 +4,7 @@ const {
   buildDetailInputAmounts,
   summarizeDetailResult,
   getQuoteRunState,
+  buildArbDetailChartPairs,
   findBestSummaryIndices,
   getArbDetailCardDomIds,
   shouldSyncArbDetailInput,
@@ -11,7 +12,10 @@ const {
   shouldCommitArbDetailInputOnKey,
   getArbDetailIntervalKey,
   getArbDetailRateLimitDelay,
-  buildArbOpportunityStableId
+  buildArbOpportunityStableId,
+  buildUniqueArbOpportunityId,
+  getNextArbDetailRequestVersion,
+  shouldApplyArbDetailRequestVersion
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -46,6 +50,21 @@ assert.deepStrictEqual(
     text: '暂停中',
     tone: 'paused'
   }
+);
+
+assert.deepStrictEqual(
+  buildArbDetailChartPairs({
+    legs: [
+      { chain: 'arbitrum', from: 'cbBTC', to: 'WBTC', quoteId: '12', inverse: false },
+      { chain: '规则', rule: 'spread-limit' },
+      { chain: 'ethereum', from: 'WBTC', to: 'cbBTC', quoteId: 18, inverse: true },
+      { chain: 'base', from: 'cbBTC', to: 'WBTC', quoteId: 'oops', inverse: false }
+    ]
+  }),
+  [
+    { quoteId: 12, direction: 'forward', chain: 'arbitrum', fromSymbol: 'cbBTC', toSymbol: 'WBTC' },
+    { quoteId: 18, direction: 'inverse', chain: 'ethereum', fromSymbol: 'WBTC', toSymbol: 'cbBTC' }
+  ]
 );
 
 assert.deepStrictEqual(
@@ -116,6 +135,16 @@ assert.strictEqual(
 );
 
 assert.strictEqual(
+  getArbDetailIntervalKey('Velora'),
+  'velora'
+);
+
+assert.strictEqual(
+  getArbDetailIntervalKey('Binance'),
+  'binance'
+);
+
+assert.strictEqual(
   getArbDetailIntervalKey('Unknown'),
   null
 );
@@ -157,4 +186,33 @@ assert.strictEqual(
 assert.notStrictEqual(
   buildArbOpportunityStableId('固定路径', '机会 1', stableCycleA),
   buildArbOpportunityStableId('固定路径', '机会 1', stableCycleC)
+);
+
+const uniqueIdA = buildUniqueArbOpportunityId(new Set(), '固定路径', '机会 1', stableCycleA);
+const uniqueIdB = buildUniqueArbOpportunityId(new Set([uniqueIdA]), '固定路径', '机会 1', stableCycleA);
+const uniqueIdC = buildUniqueArbOpportunityId(new Set([uniqueIdA, uniqueIdB]), '固定路径', '机会 2', stableCycleA);
+
+assert.notStrictEqual(uniqueIdA, uniqueIdB);
+assert.notStrictEqual(uniqueIdA, uniqueIdC);
+assert.ok(uniqueIdA.includes(':机会 1:'));
+assert.ok(uniqueIdC.includes(':机会 2:'));
+
+assert.strictEqual(
+  getNextArbDetailRequestVersion(0),
+  1
+);
+
+assert.strictEqual(
+  getNextArbDetailRequestVersion(3),
+  4
+);
+
+assert.strictEqual(
+  shouldApplyArbDetailRequestVersion(2, 2),
+  true
+);
+
+assert.strictEqual(
+  shouldApplyArbDetailRequestVersion(2, 3),
+  false
 );

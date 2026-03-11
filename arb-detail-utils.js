@@ -40,6 +40,20 @@
       : { text: '报价中', tone: 'running' };
   }
 
+  function buildArbDetailChartPairs(cycle) {
+    const legs = Array.isArray(cycle?.legs) ? cycle.legs : [];
+    return legs
+      .filter((leg) => !(leg && (leg.rule || leg.chain === '规则')))
+      .map((leg) => ({
+        quoteId: Number(leg?.quoteId),
+        direction: leg?.inverse ? 'inverse' : 'forward',
+        chain: String(leg?.chain || ''),
+        fromSymbol: String(leg?.from || ''),
+        toSymbol: String(leg?.to || '')
+      }))
+      .filter((item) => Number.isFinite(item.quoteId) && item.quoteId > 0);
+  }
+
   function collectBestIndices(items, selector) {
     let bestValue = null;
     const indices = [];
@@ -99,10 +113,14 @@
         return 'kyber';
       case '0x':
         return 'zerox';
+      case 'Velora':
+        return 'velora';
       case 'LI.FI':
         return 'lifi';
       case 'Bybit':
         return 'bybit';
+      case 'Binance':
+        return 'binance';
       case 'Jupiter':
         return 'solana';
       case 'Cetus':
@@ -139,10 +157,35 @@
     return `arb-opportunity:${safeSection}:${safeLabel}:${legSignature}`;
   }
 
+  function buildUniqueArbOpportunityId(existingIds, section, label, cycle) {
+    const usedIds = existingIds instanceof Set ? existingIds : new Set(existingIds || []);
+    const baseId = buildArbOpportunityStableId(section, label, cycle);
+    if (!usedIds.has(baseId)) {
+      return baseId;
+    }
+
+    let suffix = 2;
+    while (usedIds.has(`${baseId}:${suffix}`)) {
+      suffix += 1;
+    }
+    return `${baseId}:${suffix}`;
+  }
+
+  function getNextArbDetailRequestVersion(currentVersion) {
+    const safeCurrent = Number(currentVersion);
+    if (!Number.isFinite(safeCurrent) || safeCurrent < 0) return 1;
+    return safeCurrent + 1;
+  }
+
+  function shouldApplyArbDetailRequestVersion(expectedVersion, currentVersion) {
+    return Number(expectedVersion) === Number(currentVersion);
+  }
+
   return {
     buildDetailInputAmounts,
     summarizeDetailResult,
     getQuoteRunState,
+    buildArbDetailChartPairs,
     findBestSummaryIndices,
     getArbDetailCardDomIds,
     shouldSyncArbDetailInput,
@@ -150,6 +193,9 @@
     shouldCommitArbDetailInputOnKey,
     getArbDetailIntervalKey,
     getArbDetailRateLimitDelay,
-    buildArbOpportunityStableId
+    buildArbOpportunityStableId,
+    buildUniqueArbOpportunityId,
+    getNextArbDetailRequestVersion,
+    shouldApplyArbDetailRequestVersion
   };
 }));

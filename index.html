@@ -566,9 +566,9 @@
         .arb-profit { font-weight: 700; color: var(--trend-up-bg); }
         .arb-profit-neg { color: var(--trend-down-bg); }
         #arb-detail-modal .modal-box {
-            width: min(720px, 92vw);
+            width: min(960px, 94vw);
             max-width: none;
-            padding: 18px;
+            padding: 16px;
             border: 1px solid var(--border-color);
         }
         #arb-detail-header {
@@ -576,17 +576,95 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         #arb-detail-header h3 { margin: 0; }
+        #arb-detail-header-main {
+            min-width: 0;
+        }
+        #arb-detail-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        #arb-detail-chart-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            text-decoration: none;
+            color: #2563eb;
+            background-color: rgba(37, 99, 235, 0.08);
+            border: 1px solid rgba(37, 99, 235, 0.14);
+            font-size: 16px;
+            font-weight: 700;
+        }
+        #arb-detail-chart-link:hover {
+            background-color: rgba(37, 99, 235, 0.16);
+        }
+        #arb-detail-chart-link[aria-disabled="true"] {
+            opacity: 0.5;
+            pointer-events: none;
+        }
         #arb-detail-subtitle {
             color: var(--text-color-light);
-            font-size: 13px;
-            margin-bottom: 12px;
+            font-size: 12px;
+            margin-bottom: 10px;
             line-height: 1.5;
         }
+        #arb-detail-chart-preview {
+            margin-bottom: 12px;
+        }
+        .arb-detail-chart-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+        .arb-detail-chart-card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            background: linear-gradient(180deg, rgba(15,23,42,0.04), rgba(15,23,42,0.015));
+        }
+        .dark-mode .arb-detail-chart-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        }
+        .arb-detail-chart-card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .arb-detail-chart-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+        .arb-detail-chart-card-meta {
+            margin-top: 2px;
+            font-size: 11px;
+            color: var(--text-color-light);
+        }
+        .arb-detail-chart-canvas {
+            width: 100%;
+            height: 112px;
+        }
+        .arb-detail-chart-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 112px;
+            color: var(--text-color-light);
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.45;
+        }
         #arb-detail-close-btn {
-            padding: 8px 12px;
+            padding: 7px 12px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background: transparent;
@@ -597,12 +675,12 @@
         #arb-detail-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
+            gap: 8px;
         }
         .arb-detail-card {
             border: 1px solid var(--border-color);
             border-radius: 14px;
-            padding: 12px;
+            padding: 10px;
             background: linear-gradient(180deg, rgba(45,55,72,0.05), rgba(0,0,0,0.015));
             box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
         }
@@ -613,12 +691,12 @@
         .arb-detail-card-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
         .arb-detail-badge {
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border-radius: 999px;
             display: inline-flex;
             align-items: center;
@@ -626,7 +704,7 @@
             flex-shrink: 0;
             background-color: #2d3748;
             color: #fff;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             box-shadow: inset 0 -1px 0 rgba(255,255,255,0.12);
         }
@@ -643,12 +721,12 @@
         .arb-detail-input {
             flex: 1;
             min-width: 0;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border-radius: 10px;
             border: 1px solid var(--border-color);
             background: var(--bg-color);
             color: var(--text-color);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             letter-spacing: 0.01em;
         }
@@ -658,14 +736,14 @@
             flex-shrink: 0;
         }
         .arb-detail-step-btn {
-            width: 34px;
-            height: 34px;
+            width: 30px;
+            height: 30px;
             border-radius: 10px;
             border: 1px solid var(--border-color);
             background: var(--button-hover-bg);
             color: var(--text-color);
             cursor: pointer;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             line-height: 1;
         }
@@ -675,11 +753,11 @@
         .arb-detail-path-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            min-height: 120px;
+            gap: 8px;
+            min-height: 100px;
         }
         .arb-detail-leg {
-            padding-bottom: 10px;
+            padding-bottom: 8px;
             border-bottom: 1px dashed var(--border-color);
         }
         .arb-detail-leg:last-child {
@@ -690,8 +768,8 @@
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            gap: 10px;
-            line-height: 1.45;
+            gap: 8px;
+            line-height: 1.35;
         }
         .arb-detail-leg-main {
             flex: 1;
@@ -699,7 +777,7 @@
         }
         .arb-detail-leg-pair {
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12px;
         }
         .arb-detail-token {
             cursor: pointer;
@@ -716,6 +794,7 @@
             font-weight: 700;
             text-align: right;
             white-space: nowrap;
+            font-size: 12px;
         }
         .arb-detail-leg-source {
             margin-top: 2px;
@@ -725,23 +804,24 @@
             letter-spacing: 0.01em;
         }
         .arb-detail-summary {
-            margin-top: 12px;
-            padding-top: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
             border-top: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
         }
         .arb-detail-metric {
             display: inline-flex;
             align-items: center;
-            padding: 6px 10px;
+            padding: 5px 9px;
             border-radius: 999px;
             border: 1px solid var(--border-color);
             background-color: rgba(0,0,0,0.02);
             font-weight: 700;
-            line-height: 1.4;
+            line-height: 1.35;
+            font-size: 12px;
         }
         .dark-mode .arb-detail-metric {
             background-color: rgba(255,255,255,0.03);
@@ -766,6 +846,9 @@
             font-size: 12px;
         }
         @media (max-width: 980px) {
+            .arb-detail-chart-strip {
+                grid-template-columns: 1fr;
+            }
             #arb-detail-grid {
                 grid-template-columns: 1fr;
             }
@@ -1070,10 +1153,16 @@
     <div class="modal-overlay" id="arb-detail-modal">
         <div class="modal-box">
             <div id="arb-detail-header">
-                <h3>套利路径详情</h3>
-                <button id="arb-detail-close-btn" type="button">关闭</button>
+                <div id="arb-detail-header-main">
+                    <h3>套利路径详情</h3>
+                </div>
+                <div id="arb-detail-header-actions">
+                    <a id="arb-detail-chart-link" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开当前详情对应图表" aria-disabled="true">↗</a>
+                    <button id="arb-detail-close-btn" type="button">关闭</button>
+                </div>
             </div>
             <div id="arb-detail-subtitle">选择一个套利机会后，可在这里对比不同投入金额的产出。</div>
+            <div id="arb-detail-chart-preview"></div>
             <div id="arb-detail-grid"></div>
         </div>
     </div>
@@ -1361,6 +1450,7 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <script src="arb-paths.js"></script>
     <script src="arb-equivalence-utils.js"></script>
     <script src="arb-special-utils.js"></script>
@@ -1373,6 +1463,7 @@
     <script src="arb-fixed-utils.js"></script>
     <script src="arb-detail-utils.js"></script>
     <script src="charts-utils.js"></script>
+    <script src="charts-renderer.js"></script>
     <script src="queue-stats-utils.js"></script>
     <script src="app.js"></script>
 </body>
