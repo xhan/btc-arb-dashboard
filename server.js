@@ -338,6 +338,7 @@ async function getConfigMore() {
         const rawClientId = typeof configMore.kyberClientId === 'string' ? configMore.kyberClientId.trim() : '';
         const rawLifiApiKey = typeof configMore.LIFIApiKey === 'string' ? configMore.LIFIApiKey.trim() : '';
         const rawLifiIntegrator = typeof configMore.LIFIIntegrator === 'string' ? configMore.LIFIIntegrator.trim() : '';
+        const rawJupiterApiKey = typeof configMore.jupiterApiKey === 'string' ? configMore.jupiterApiKey.trim() : '';
         const rawVeloraPartner = typeof configMore.veloraPartner === 'string' ? configMore.veloraPartner.trim() : '';
         const rawVeloraIncludeDEXS = normalizeStringArray(configMore.veloraIncludeDEXS);
 
@@ -345,6 +346,7 @@ async function getConfigMore() {
             kyberClientId: rawClientId || 'xh-quote-dashboard',
             lifiApiKey: rawLifiApiKey,
             lifiIntegrator: rawLifiIntegrator,
+            jupiterApiKey: rawJupiterApiKey,
             veloraPartner: rawVeloraPartner,
             veloraIncludeDEXS: rawVeloraIncludeDEXS,
             veloraOtherExchangePrices: configMore.veloraOtherExchangePrices === true,
@@ -359,6 +361,7 @@ async function getConfigMore() {
             kyberClientId: 'xh-quote-dashboard',
             lifiApiKey: '',
             lifiIntegrator: '',
+            jupiterApiKey: '',
             veloraPartner: '',
             veloraIncludeDEXS: [],
             veloraOtherExchangePrices: false,

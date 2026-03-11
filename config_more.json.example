@@ -1,4 +1,5 @@
 {
   "kyberClientId": "your-client-id",
-  "LIFIApiKey": "your-lifi-api-key"
+  "LIFIApiKey": "your-lifi-api-key",
+  "jupiterApiKey": "your-jupiter-api-key"
 }

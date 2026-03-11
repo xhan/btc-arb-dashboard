@@ -1,5 +1,5 @@
 function createJupiterClient(deps) {
-  const apiBaseUrl = deps.apiBaseUrl || 'https://lite-api.jup.ag/swap/v1/quote';
+  const apiBaseUrl = deps.apiBaseUrl || 'https://api.jup.ag/swap/v1/quote';
 
   return {
     async getQuote(input) {
@@ -19,6 +19,11 @@ function createJupiterClient(deps) {
         amount: amountInRaw
       });
       const apiUrl = `${apiBaseUrl}?${params.toString()}`;
+      const configMore = deps.getConfigMore ? await deps.getConfigMore() : {};
+      const jupiterApiKey = typeof configMore.jupiterApiKey === 'string' ? configMore.jupiterApiKey.trim() : '';
+      if (!jupiterApiKey) {
+        throw new Error('未配置 Jupiter API Key');
+      }
 
       deps.logQuoteRequest('JUPITER', {
         chain: 'solana',
@@ -30,7 +35,9 @@ function createJupiterClient(deps) {
         url: apiUrl
       });
 
-      const response = await deps.fetchWithRetry(apiUrl);
+      const response = await deps.fetchWithRetry(apiUrl, {
+        headers: { 'x-api-key': jupiterApiKey }
+      });
       const data = await response.json();
       if (!data || !data.outAmount) {
         throw new Error(data?.error || 'Jupiter 未返回有效报价');

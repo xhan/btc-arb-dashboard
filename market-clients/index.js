@@ -221,9 +221,10 @@ function createMarketClients(options) {
         toRawAmount
       }),
       jupiter: createJupiterClient({
-        apiBaseUrl: 'https://lite-api.jup.ag/swap/v1/quote',
+        apiBaseUrl: 'https://api.jup.ag/swap/v1/quote',
         fetchWithRetry: options.fetchWithRetry,
         fromRawAmount,
+        getConfigMore: options.getConfigMore,
         getSolanaTokenMeta,
         logQuoteRequest: options.logQuoteRequest,
         logQuoteResult: options.logQuoteResult,

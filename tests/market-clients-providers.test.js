@@ -119,14 +119,15 @@ const { createZeroXClient } = require('../market-clients/providers/zerox');
 
   const jupiterRequests = [];
   const jupiter = createJupiterClient({
-    fetchWithRetry: async (url) => {
-      jupiterRequests.push(url);
+    fetchWithRetry: async (url, options) => {
+      jupiterRequests.push({ url, options });
       return {
         json: async () => ({
           outAmount: '495000000'
         })
       };
     },
+    getConfigMore: async () => ({ jupiterApiKey: 'jupiter-api-key' }),
     getSolanaTokenMeta: async (mint) => {
       if (mint === 'mint-in') return { symbol: 'SOL', decimals: 9 };
       return { symbol: 'USDC', decimals: 6 };
@@ -158,8 +159,37 @@ const { createZeroXClient } = require('../market-clients/providers/zerox');
     source: 'Jupiter'
   });
   assert.strictEqual(
-    jupiterRequests[0],
-    'https://lite-api.jup.ag/swap/v1/quote?inputMint=mint-in&outputMint=mint-out&amount=1500000000'
+    jupiterRequests[0].url,
+    'https://api.jup.ag/swap/v1/quote?inputMint=mint-in&outputMint=mint-out&amount=1500000000'
+  );
+  assert.deepStrictEqual(jupiterRequests[0].options, {
+    headers: { 'x-api-key': 'jupiter-api-key' }
+  });
+
+  const jupiterMissingKey = createJupiterClient({
+    fetchWithRetry: async () => {
+      throw new Error('should not request without api key');
+    },
+    getConfigMore: async () => ({}),
+    getSolanaTokenMeta: async (mint) => {
+      if (mint === 'mint-in') return { symbol: 'SOL', decimals: 9 };
+      return { symbol: 'USDC', decimals: 6 };
+    },
+    toRawAmount: () => '1500000000',
+    fromRawAmount: () => 495,
+    logQuoteRequest: () => {},
+    logQuoteResult: () => {}
+  });
+
+  await assert.rejects(
+    () =>
+      jupiterMissingKey.getQuote({
+        chain: 'solana',
+        fromToken: 'mint-in',
+        toToken: 'mint-out',
+        amount: 1.5
+      }),
+    /未配置 Jupiter API Key/
   );
 
   const bybitRequests = [];
