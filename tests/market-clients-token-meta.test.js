@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   createTokenMetaStore,
   fromRawAmount,
+  normalizeDecimalAmount,
   normalizeTokenMetaCacheKey,
   toRawAmount
 } = require('../market-clients/token-meta');
@@ -78,7 +79,11 @@ const {
   assert.strictEqual(concurrentWriteDetected, false, 'cache 写入应串行，避免 JSON 文件被并发写坏');
 
   assert.strictEqual(toRawAmount('1.5', 6), '1500000');
+  assert.strictEqual(toRawAmount('1.001619783852974', 8), '100161978');
+  assert.strictEqual(toRawAmount(1e-8, 8), '1');
   assert.strictEqual(fromRawAmount('1500000', 6), 1.5);
+  assert.strictEqual(normalizeDecimalAmount('1.001619783852974', 8), '1.00161978');
+  assert.strictEqual(normalizeDecimalAmount(1e-8, 8), '0.00000001');
 })().catch((error) => {
   console.error(error);
   process.exit(1);
