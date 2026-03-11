@@ -106,10 +106,13 @@
         pausedDashboard: false,
         loopToken: 0,
         isRefreshing: false,
-        editingInputIndex: null
+        editingInputIndex: null,
+        chartPreviewSignature: ''
     };
     let arbDetailFetchController = null;
     let arbDetailLastRequestAtBySource = new Map();
+    let arbDetailChartPreviewCharts = [];
+    let arbDetailChartPreviewRunId = 0;
     
     let hoverTimeout = null;        
     let currentHoveredQuoteId = null; 
@@ -185,7 +188,9 @@
     const toggleArbBtn = document.getElementById('toggle-arb-btn');
     const arbDetailModal = document.getElementById('arb-detail-modal');
     const arbDetailCloseBtn = document.getElementById('arb-detail-close-btn');
+    const arbDetailChartLink = document.getElementById('arb-detail-chart-link');
     const arbDetailSubtitle = document.getElementById('arb-detail-subtitle');
+    const arbDetailChartPreview = document.getElementById('arb-detail-chart-preview');
     const arbDetailGrid = document.getElementById('arb-detail-grid');
     const calcWindow = document.getElementById('calc-window');
     const calcContent = document.getElementById('calc-content');
@@ -646,6 +651,39 @@
                     ? { text: '暂停中', tone: 'paused' }
                     : { text: '报价中', tone: 'running' };
             },
+            buildArbDetailChartPairs(cycle) {
+                const legs = Array.isArray(cycle?.legs) ? cycle.legs : [];
+                return legs
+                    .filter((leg) => !(leg && (leg.rule || leg.chain === '规则')))
+                    .map((leg) => ({
+                        quoteId: Number(leg?.quoteId),
+                        direction: leg?.inverse ? 'inverse' : 'forward',
+                        chain: String(leg?.chain || ''),
+                        fromSymbol: String(leg?.from || ''),
+                        toSymbol: String(leg?.to || '')
+                    }))
+                    .filter((item) => Number.isFinite(item.quoteId) && item.quoteId > 0);
+            },
+            buildUniqueArbOpportunityId(existingIds, section, label, cycle) {
+                const baseId = this.buildArbOpportunityStableId(section, label, cycle);
+                const usedIds = existingIds instanceof Set ? existingIds : new Set(existingIds || []);
+                if (!usedIds.has(baseId)) {
+                    return baseId;
+                }
+                let suffix = 2;
+                while (usedIds.has(`${baseId}:${suffix}`)) {
+                    suffix += 1;
+                }
+                return `${baseId}:${suffix}`;
+            },
+            getNextArbDetailRequestVersion(currentVersion) {
+                const safeCurrent = Number(currentVersion);
+                if (!Number.isFinite(safeCurrent) || safeCurrent < 0) return 1;
+                return safeCurrent + 1;
+            },
+            shouldApplyArbDetailRequestVersion(expectedVersion, currentVersion) {
+                return Number(expectedVersion) === Number(currentVersion);
+            },
             findBestSummaryIndices(cards) {
                 let bestProfit = null;
                 let bestProfitRate = null;
@@ -684,8 +722,16 @@
         return window.ChartsUtils || {
             buildChartsPageHref() {
                 return '/charts';
+            },
+            buildChartPairLabel(pair) {
+                const chain = pair?.chain ? `(${pair.chain}) ` : '';
+                return `${chain}${pair?.fromSymbol || '--'} -> ${pair?.toSymbol || '--'}`;
             }
         };
+    }
+
+    function getChartsRenderer() {
+        return window.ChartsRenderer || null;
     }
 
     function formatDetailNumber(value, precision = 6) {
@@ -1115,13 +1161,13 @@
 
     function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
         if (!cycle) return null;
-        const opportunityId = getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
-        const chartPairs = (Array.isArray(cycle.legs) ? cycle.legs : [])
-            .filter((leg) => !isRuleLeg(leg) && leg && Number.isFinite(Number(leg.quoteId)))
-            .map((leg) => ({
-                quoteId: Number(leg.quoteId),
-                direction: leg.inverse ? 'inverse' : 'forward'
-            }));
+        const opportunityId = getArbDetailUtils().buildUniqueArbOpportunityId(
+            new Set(targetMap.keys()),
+            meta.section || '',
+            label || '',
+            cycle
+        );
+        const chartPairs = getArbDetailUtils().buildArbDetailChartPairs(cycle);
         const chartHref = getChartsUtils().buildChartsPageHref(chartPairs);
         const entry = {
             id: opportunityId,
@@ -1298,6 +1344,131 @@
         arbDetailLastRequestAtBySource.set(intervalKey, Date.now());
     }
 
+    function setArbDetailChartLinkState(chartHref) {
+        if (!arbDetailChartLink) return;
+        const href = chartHref ? String(chartHref) : '/charts';
+        arbDetailChartLink.href = href;
+        arbDetailChartLink.setAttribute('aria-disabled', chartHref ? 'false' : 'true');
+    }
+
+    function destroyArbDetailChartPreview() {
+        arbDetailChartPreviewCharts.forEach((chart) => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+        arbDetailChartPreviewCharts = [];
+        if (arbDetailChartPreview) {
+            arbDetailChartPreview.innerHTML = '';
+        }
+    }
+
+    function renderArbDetailChartPreviewMessage(message) {
+        if (!arbDetailChartPreview) return;
+        arbDetailChartPreview.innerHTML = `<div class="arb-detail-chart-message">${escapeHtml(message)}</div>`;
+    }
+
+    function buildArbDetailChartPreviewSignature(pairs) {
+        return JSON.stringify((pairs || []).map((pair) => `${pair.quoteId}:${pair.direction}`));
+    }
+
+    function buildArbDetailChartPreviewCardHtml(pair, index) {
+        const label = getChartsUtils().buildChartPairLabel(pair);
+        return `
+            <article class="arb-detail-chart-card" data-arb-detail-chart-index="${index}">
+                <div class="arb-detail-chart-card-head">
+                    <div>
+                        <div class="arb-detail-chart-card-title">${escapeHtml(label)}</div>
+                        <div class="arb-detail-chart-card-meta">等待历史图表...</div>
+                    </div>
+                </div>
+                <div class="arb-detail-chart-canvas"></div>
+            </article>
+        `;
+    }
+
+    async function syncArbDetailChartPreview(current) {
+        if (!arbDetailChartPreview) return;
+
+        const pairs = current && current.cycle
+            ? getArbDetailUtils().buildArbDetailChartPairs(current.cycle)
+            : [];
+        const signature = buildArbDetailChartPreviewSignature(pairs);
+        const chartHref = current && current.chartHref
+            ? current.chartHref
+            : (pairs.length ? getChartsUtils().buildChartsPageHref(pairs) : '');
+
+        setArbDetailChartLinkState(chartHref);
+
+        if (!pairs.length) {
+            arbDetailState.chartPreviewSignature = '';
+            destroyArbDetailChartPreview();
+            renderArbDetailChartPreviewMessage('当前路径暂无可用历史图表。');
+            return;
+        }
+
+        if (arbDetailState.chartPreviewSignature === signature && arbDetailChartPreview.childElementCount > 0) {
+            return;
+        }
+
+        arbDetailChartPreviewRunId += 1;
+        const runId = arbDetailChartPreviewRunId;
+        arbDetailState.chartPreviewSignature = signature;
+        destroyArbDetailChartPreview();
+        arbDetailChartPreview.innerHTML = `<div class="arb-detail-chart-strip">${pairs.map(buildArbDetailChartPreviewCardHtml).join('')}</div>`;
+
+        const renderer = getChartsRenderer();
+        if (!renderer || typeof renderer.mountPriceHistoryChart !== 'function') {
+            renderArbDetailChartPreviewMessage('图表模块未就绪，请刷新页面后重试。');
+            return;
+        }
+
+        await Promise.all(pairs.map(async (pair, index) => {
+            const cardEl = arbDetailChartPreview.querySelector(`[data-arb-detail-chart-index="${index}"]`);
+            if (!cardEl) return;
+
+            const metaEl = cardEl.querySelector('.arb-detail-chart-card-meta');
+            const canvasEl = cardEl.querySelector('.arb-detail-chart-canvas');
+
+            try {
+                const params = new URLSearchParams({
+                    quoteId: String(pair.quoteId),
+                    direction: pair.direction
+                });
+                const response = await fetch(`/api/chart-series?${params.toString()}`);
+                if (!response.ok) {
+                    const body = await response.text();
+                    throw new Error(body || '图表加载失败');
+                }
+
+                const series = await response.json();
+                if (!arbDetailState.visible || arbDetailChartPreviewRunId !== runId) {
+                    return;
+                }
+
+                const chartInstance = renderer.mountPriceHistoryChart(canvasEl, {
+                    mini: true,
+                    height: 112,
+                    color: '#0f766e'
+                });
+                chartInstance.update(series.points || []);
+                arbDetailChartPreviewCharts.push(chartInstance);
+
+                if (metaEl) {
+                    metaEl.textContent = `${series.source || '历史快照'} · 最近 2 小时`;
+                }
+            } catch (error) {
+                if (arbDetailChartPreviewRunId !== runId) return;
+                if (canvasEl) {
+                    canvasEl.outerHTML = `<div class="arb-detail-chart-message">${escapeHtml(error.message || '图表加载失败')}</div>`;
+                }
+                if (metaEl) {
+                    metaEl.textContent = '加载失败';
+                }
+            }
+        }));
+    }
+
     function renderArbDetailModal(forceShellRebuild = false) {
         if (!arbDetailGrid || !arbDetailModal) return;
         if (!arbDetailState.visible) {
@@ -1308,6 +1479,8 @@
         const current = arbDetailState.selectedOpportunity;
         if (!current || !current.cycle) {
             arbDetailSubtitle.textContent = '当前套利机会不可用';
+            setArbDetailChartLinkState('');
+            destroyArbDetailChartPreview();
             arbDetailGrid.innerHTML = '<div class="arb-detail-error">当前套利机会已失效，请关闭后重新选择。</div>';
             arbDetailModal.classList.add('visible');
             return;
@@ -1315,6 +1488,7 @@
 
         const legLines = buildLegLines((current.cycle.legs || []).filter(leg => !isRuleLeg(leg)));
         arbDetailSubtitle.textContent = `${current.label || '套利机会'} | ${legLines.join(' | ')}`;
+        void syncArbDetailChartPreview(current);
         if (forceShellRebuild || shouldRebuildArbDetailShell()) {
             renderArbDetailShell();
         }
@@ -1353,6 +1527,10 @@
         arbDetailState.loopToken += 1;
         arbDetailState.isRefreshing = false;
         arbDetailState.editingInputIndex = null;
+        arbDetailState.chartPreviewSignature = '';
+        arbDetailChartPreviewRunId += 1;
+        destroyArbDetailChartPreview();
+        setArbDetailChartLinkState('');
         if (arbDetailModal) {
             arbDetailModal.classList.remove('visible');
         }
@@ -1386,11 +1564,13 @@
             inputAmount: amount,
             rows: [],
             summary: null,
-            error: ''
+            error: '',
+            requestVersion: 0
         }));
         arbDetailState.loopToken += 1;
         arbDetailState.isRefreshing = false;
         arbDetailState.editingInputIndex = null;
+        arbDetailState.chartPreviewSignature = '';
         setArbDetailDashboardPause(true);
         renderArbDetailModal(true);
         startArbDetailLoop(arbDetailState.loopToken);
@@ -1405,6 +1585,18 @@
         card.rows = [];
         card.summary = null;
         card.error = '';
+        card.requestVersion = getArbDetailUtils().getNextArbDetailRequestVersion(card.requestVersion);
+    }
+
+    function restartArbDetailLoop() {
+        if (!arbDetailState.visible) return;
+        if (arbDetailFetchController) {
+            arbDetailFetchController.abort();
+            arbDetailFetchController = null;
+        }
+        arbDetailState.loopToken += 1;
+        arbDetailState.isRefreshing = false;
+        startArbDetailLoop(arbDetailState.loopToken);
     }
 
     function commitArbDetailInput(index, rawValue) {
@@ -1424,6 +1616,7 @@
 
         updateArbDetailInput(index, parsed);
         renderArbDetailModal();
+        restartArbDetailLoop();
     }
 
     async function refreshArbDetailCards(runToken) {
@@ -1440,10 +1633,12 @@
             for (const card of arbDetailState.cards) {
                 if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) return;
 
+                const requestVersion = Number(card.requestVersion) || 0;
                 const startAmount = Number(card.inputAmount);
                 let rollingAmount = startAmount;
                 const rows = [];
                 let finalSymbol = '';
+                let shouldSkipApply = false;
 
                 for (const leg of executableLegs) {
                     const match = findQuoteById(leg.quoteId);
@@ -1459,6 +1654,14 @@
                         beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)
                     });
 
+                    if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) {
+                        return;
+                    }
+                    if (!getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
+                        shouldSkipApply = true;
+                        break;
+                    }
+
                     rollingAmount = data.finalAmountOut;
                     finalSymbol = data.symbols.to || finalSymbol;
                     const isInverseLeg = Boolean(leg.inverse);
@@ -1471,6 +1674,10 @@
                         amountText: `${formatDetailNumber(data.finalAmountOut)}`,
                         sourceText: data.usedSource || match.quote.preferredSource || 'Unknown'
                     });
+                }
+
+                if (shouldSkipApply || !getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
+                    continue;
                 }
 
                 const summary = getArbDetailUtils().summarizeDetailResult(startAmount, rollingAmount);

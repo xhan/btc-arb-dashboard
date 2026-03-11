@@ -42,8 +42,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('href="/snapshot?mode=nearest"'));
     assert.ok(response.body.includes('href="/charts"'));
     assert.ok(response.body.includes('target="_blank"'));
-    assert.ok(response.body.includes('width: min(720px, 92vw);'));
+    assert.ok(response.body.includes('width: min(960px, 94vw);'));
+    assert.ok(response.body.includes('id="arb-detail-chart-link"'));
+    assert.ok(response.body.includes('id="arb-detail-chart-preview"'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
+    assert.ok(response.body.includes('src="charts-renderer.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
