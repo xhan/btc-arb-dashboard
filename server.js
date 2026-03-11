@@ -14,6 +14,7 @@ const {
 const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./price-snapshot-replay');
 const { parseUtc8Input } = require('./time-utils');
 const { createMarketClients } = require('./market-clients');
+const { buildPathAlertWebhookUrl, normalizeAlertConfig } = require('./path-alert-utils');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -39,29 +40,38 @@ app.get('/charts', (req, res) => {
 app.get('/queue-stats', (req, res) => {
     res.sendFile(path.join(__dirname, 'queue-stats.html'));
 });
-function resolveProjectFilePath(fileName) {
+function resolveProjectFilePath(fileName, envKey) {
+    const overridePath = envKey ? String(process.env[envKey] || '').trim() : '';
+    if (overridePath) {
+        return path.resolve(overridePath);
+    }
     return path.join(__dirname, fileName);
 }
 
-const CONFIG_PATH = resolveProjectFilePath('config.json');
-const CONFIG_MORE_PATH = resolveProjectFilePath('config_more.json');
-const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json');
+const CONFIG_PATH = resolveProjectFilePath('config.json', 'CONFIG_PATH');
+const CONFIG_MORE_PATH = resolveProjectFilePath('config_more.json', 'CONFIG_MORE_PATH');
+const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json', 'METADATA_CACHE_PATH');
+const ALERT_CONFIG_PATH = resolveProjectFilePath('alert.config', 'ALERT_CONFIG_PATH');
 const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
 const CHART_PAIR_WINDOW_MS = 10 * 60 * 1000;
 
 let writeQueue = Promise.resolve();
 
-async function safeWriteConfig(data) {
+async function safeWriteJsonFile(filePath, data) {
     writeQueue = writeQueue.then(async () => {
         try {
-            const tempPath = `${CONFIG_PATH}.tmp`;
+            const tempPath = `${filePath}.tmp`;
             await fs.writeFile(tempPath, JSON.stringify(data, null, 2), 'utf-8');
-            await fs.rename(tempPath, CONFIG_PATH); 
+            await fs.rename(tempPath, filePath);
         } catch (error) {
             console.error('❌ 写入配置失败:', error);
         }
     });
     return writeQueue;
+}
+
+async function safeWriteConfig(data) {
+    return safeWriteJsonFile(CONFIG_PATH, data);
 }
 
 function stripBom(text) {
@@ -181,6 +191,18 @@ async function getConfigMore() {
     }
 }
 
+async function getAlertConfig() {
+    try {
+        const parsedData = await readJsonFile(ALERT_CONFIG_PATH);
+        return normalizeAlertConfig(parsedData);
+    } catch (error) {
+        if (error instanceof SyntaxError || error.code === 'ENOENT') {
+            return normalizeAlertConfig();
+        }
+        throw error;
+    }
+}
+
 async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
     for (let i = 0; i < retries; i++) {
         try {
@@ -290,6 +312,16 @@ app.post('/api/save-config', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.post('/api/save-alert-config', async (req, res) => {
+    try {
+        const normalized = normalizeAlertConfig(req.body);
+        await safeWriteJsonFile(ALERT_CONFIG_PATH, normalized);
+        res.json({ message: '路径报警配置保存成功' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/get-config', async (req, res) => {
     try {
         const parsedData = await readJsonFile(CONFIG_PATH);
@@ -301,6 +333,36 @@ app.get('/api/get-config', async (req, res) => {
         }
         if (error.code === 'ENOENT') { return res.json([]); }
         console.error("Config Read Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/get-alert-config', async (req, res) => {
+    try {
+        res.json(await getAlertConfig());
+    } catch (error) {
+        console.error('Alert Config Read Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/send-path-alert-webhook', async (req, res) => {
+    try {
+        const alertConfig = await getAlertConfig();
+        const title = String(req.body && req.body.title || '').trim();
+        const body = String(req.body && req.body.body || '').trim();
+        const webhookUrl = buildPathAlertWebhookUrl(alertConfig.settings.webhookUrl, title, body);
+        if (!webhookUrl) {
+            return res.status(400).json({ error: '路径报警 webhook 未配置' });
+        }
+
+        const response = await fetch(webhookUrl, { method: 'GET' });
+        if (!response.ok) {
+            throw new Error(`Webhook 响应异常: ${response.status}`);
+        }
+        res.json({ message: '路径报警 webhook 已发送' });
+    } catch (error) {
+        console.error('Path Alert Webhook Error:', error);
         res.status(500).json({ error: error.message });
     }
 });

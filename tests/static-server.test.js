@@ -45,8 +45,17 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('width: min(720px, 92vw);'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
+    assert.ok(response.body.includes('src="path-alert-utils.js"'));
+    assert.ok(response.body.includes('id="path-alert-sound"'));
+    assert.ok(response.body.includes('src="alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
+    assert.ok(response.body.includes('id="path-alert-window"'));
+    assert.ok(response.body.includes('id="path-alert-modal"'));
+    assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
+    assert.ok(response.body.includes('#top-bar-right > button,'));
+    assert.ok(response.body.includes('#top-bar-right > a {'));
+    assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
 
     const appJsResponse = await request('/app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
@@ -54,6 +63,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
     assert.ok(appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
+    assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
+    assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
+    assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
+    assert.ok(appJsResponse.body.includes("if (key === 'a')"));
+    assert.ok(appJsResponse.body.includes('音效'));
+    assert.ok(appJsResponse.body.includes('远程'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);

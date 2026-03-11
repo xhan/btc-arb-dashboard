@@ -53,17 +53,20 @@
     const profitText = (options.formatProfit || defaultFormatProfit)(cycle.profitRate);
     const chartHref = entry && entry.chartHref ? String(entry.chartHref) : '/charts';
     const chartLinkHtml = `<a class="arb-opportunity-chart-link" href="${escapeAttr(chartHref)}" target="_blank" rel="noopener noreferrer" title="打开历史图表">↗</a>`;
+    const addAlertButtonHtml = entry && entry.opportunityId
+      ? `<button class="arb-opportunity-add-alert-btn" type="button" data-arb-opportunity-alert-id="${escapeAttr(entry.opportunityId)}" title="添加到路径报警">＋</button>`
+      : '';
     const labelTextHtml = entry && entry.label
       ? `<div class="arb-path-line"><strong>${entry.label}</strong></div>`
       : '';
     const labelHtml = `
       <div class="arb-opportunity-head">
         ${labelTextHtml || '<div class="arb-path-line"><strong>历史图表</strong></div>'}
-        ${chartLinkHtml}
+        <div class="arb-opportunity-head-actions">${addAlertButtonHtml}${chartLinkHtml}</div>
       </div>
     `;
     const opportunityId = entry && entry.opportunityId ? String(entry.opportunityId) : '';
-    const clickableAttrs = opportunityId
+    const clickableAttrs = opportunityId && entry && entry.clickable !== false
       ? ` data-arb-opportunity-id="${escapeAttr(opportunityId)}" role="button" tabindex="0"`
       : '';
 
