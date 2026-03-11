@@ -38,6 +38,7 @@
           ? options.formatChainLabel(leg.chain)
           : (leg.chain || '');
         const line = (options.formatLegLine || defaultFormatLegLine)({
+          ...leg,
           from: leg.from,
           to: leg.to,
           rate: leg.rate,

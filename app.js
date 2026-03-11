@@ -492,14 +492,33 @@
             crossChain: true
         }
     ];
+    const SPECIAL_ARB_RULES = [
+        {
+            title: 'DEX <-> CEX',
+            type: 'dex-cex',
+            categoryName: 'WBTC监控',
+            dexBase: 'cbBTC',
+            dexQuote: 'WBTC',
+            cexQuote: 'BTC',
+            cexChains: ['Bybit', 'Binance']
+        }
+    ];
 
-    function buildLegLines(legs) {
-        return legs.map((leg) => window.ArbPaths.formatLegLine({
+    function formatArbPathLegLine(leg) {
+        const baseLine = window.ArbPaths.formatLegLine({
             from: leg.from,
             to: leg.to,
             rate: leg.rate,
             chainLabel: formatChainLabel(leg.chain)
-        }));
+        });
+        if (leg && leg.cexLevelLabel && typeof leg.cexLevelSize === 'number' && Number.isFinite(leg.cexLevelSize)) {
+            return `${baseLine} ${leg.cexLevelLabel}×${formatCexBookValue(leg.cexLevelSize, 6)}`;
+        }
+        return baseLine;
+    }
+
+    function buildLegLines(legs) {
+        return legs.map((leg) => formatArbPathLegLine(leg));
     }
 
     function isRuleLeg(leg) {
@@ -860,7 +879,9 @@
 
     function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
         if (!cycle) return null;
-        const opportunityId = getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
+        const opportunityId = meta.clickable === false
+            ? ''
+            : getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
         const chartPairs = (Array.isArray(cycle.legs) ? cycle.legs : [])
             .filter((leg) => !isRuleLeg(leg) && leg && Number.isFinite(Number(leg.quoteId)))
             .map((leg) => ({
@@ -875,13 +896,15 @@
             chartHref,
             ...meta
         };
-        targetMap.set(opportunityId, entry);
-        arbOpportunityStore.set(opportunityId, entry);
+        if (opportunityId) {
+            targetMap.set(opportunityId, entry);
+            arbOpportunityStore.set(opportunityId, entry);
+        }
 
         return {
             label,
             cycle,
-            opportunityId,
+            opportunityId: opportunityId || undefined,
             chartHref
         };
     }
@@ -1349,6 +1372,25 @@
                 ))
                 .filter(Boolean)
         }];
+        const wbtcCategory = targetCategories.find((category) => category && category.name === 'WBTC监控');
+        const specialSections = [{
+            title: '特殊规则',
+            opportunities: (window.ArbSpecialUtils && typeof window.ArbSpecialUtils.buildSpecialArbOpportunities === 'function' && wbtcCategory)
+                ? window.ArbSpecialUtils.buildSpecialArbOpportunities({
+                    rules: SPECIAL_ARB_RULES.filter((rule) => rule.categoryName === wbtcCategory.name),
+                    quotes: Array.isArray(wbtcCategory.quotes) ? wbtcCategory.quotes : [],
+                    quoteStateById: quoteMonitorState,
+                    aliasRules
+                }).filter((opportunity) => opportunity && opportunity.cycle && opportunity.cycle.profitRate > 0)
+                .map((opportunity) => createArbOpportunityEntry(
+                    nextOpportunityMap,
+                    opportunity.cycle,
+                    opportunity.label,
+                    { section: `special:${wbtcCategory.name}`, clickable: false }
+                )).filter(Boolean)
+                : [],
+            emptyText: '暂无可用规则'
+        }];
 
         const categorySections = [];
         let lbtcSection = null;
@@ -1408,7 +1450,7 @@
         const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
         const globalEmptyText = hasGlobalFilter ? '过滤后暂无路径' : '等待数据...';
         const columns = [
-            lbtcSection ? fixedSections.concat([lbtcSection]) : fixedSections,
+            lbtcSection ? fixedSections.concat(specialSections, [lbtcSection]) : fixedSections.concat(specialSections),
             categorySections,
             [{
                 title: '全局路径',
@@ -1432,12 +1474,7 @@
             isMeaningfulPath: cycle => cycle && window.ArbPaths.isMeaningfulPath(cycle.legs),
             shouldIncludeLeg: leg => !isRuleLeg(leg),
             formatChainLabel,
-            formatLegLine: ({ from, to, rate, chainLabel }) => window.ArbPaths.formatLegLine({
-                from,
-                to,
-                rate,
-                chainLabel
-            }),
+            formatLegLine: formatArbPathLegLine,
             formatProfit: profitRate => window.ArbPaths.formatProfitWanfen(profitRate)
         });
     }

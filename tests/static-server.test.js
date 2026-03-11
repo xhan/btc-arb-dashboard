@@ -44,6 +44,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('target="_blank"'));
     assert.ok(response.body.includes('width: min(720px, 92vw);'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
+    assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('setting-binance-interval'));
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
 
