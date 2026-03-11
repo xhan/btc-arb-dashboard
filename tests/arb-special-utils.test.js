@@ -4,6 +4,7 @@ const { buildSpecialArbOpportunities } = require('../arb-special-utils');
 
 const rules = [
   {
+    id: 'special:dex-cex-wbtc',
     title: 'DEX <-> CEX',
     type: 'dex-cex',
     dexBase: 'cbBTC',
@@ -60,6 +61,7 @@ assert.strictEqual(opportunities.length, 2);
 
 const dexToCex = opportunities.find((item) => item.direction === 'dex-to-cex');
 assert.ok(dexToCex);
+assert.strictEqual(dexToCex.ruleId, 'special:dex-cex-wbtc');
 assert.strictEqual(dexToCex.label, 'DEX <-> CEX');
 assert.strictEqual(dexToCex.cycle.legs.length, 2);
 assert.strictEqual(dexToCex.cycle.legs[0].from, 'xBTC');
@@ -74,6 +76,7 @@ assert.strictEqual(dexToCex.cycle.legs[1].cexLevelSize, 1.25);
 
 const cexToDex = opportunities.find((item) => item.direction === 'cex-to-dex');
 assert.ok(cexToDex);
+assert.strictEqual(cexToDex.ruleId, 'special:dex-cex-wbtc');
 assert.strictEqual(cexToDex.label, 'DEX <-> CEX');
 assert.strictEqual(cexToDex.cycle.legs.length, 2);
 assert.strictEqual(cexToDex.cycle.legs[0].chain, 'Binance');

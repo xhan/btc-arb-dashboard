@@ -99,6 +99,7 @@
 
     if (dexSellLeg && bestCexSellLeg) {
       opportunities.push({
+        ruleId: rule.id || '',
         direction: 'dex-to-cex',
         label: rule.title,
         cycle: {
@@ -110,6 +111,7 @@
 
     if (bestCexBuyLeg && dexBuyLeg) {
       opportunities.push({
+        ruleId: rule.id || '',
         direction: 'cex-to-dex',
         label: rule.title,
         cycle: {

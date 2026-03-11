@@ -63,6 +63,34 @@
     let priceSnapshotTimer = null;
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     let arbUpdateTimer = null;
+    let pathAlertConfig = window.PathAlertUtils
+        ? window.PathAlertUtils.normalizeAlertConfig()
+        : {
+            version: 1,
+            settings: {
+                pathAlertEvalIntervalMs: 1000,
+                defaultCooldownSec: 300,
+                localSoundEnabled: true,
+                webhookEnabled: false,
+                webhookUrl: 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder',
+                webhookSecret: ''
+            },
+            alerts: []
+        };
+    let pathAlertSaveTimer = null;
+    let pathAlertEvalTimer = null;
+    let pathAlertPanelHidden = false;
+    let pathAlertRuntimeState = new Map();
+    let pathAlertPanelCollapsed = false;
+    let pathAlertReloading = false;
+    let pathAlertEditorState = {
+        visible: false,
+        editingId: '',
+        sourceType: 'path',
+        selectedRuleId: '',
+        searchQuery: '',
+        draftLegs: []
+    };
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
@@ -92,9 +120,32 @@
     const alertLogWindow = document.getElementById('alert-log-window');
     const alertLogContent = document.getElementById('alert-log-content');
     const alertSound = document.getElementById('alert-sound');
+    const pathAlertSound = document.getElementById('path-alert-sound');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const audioNoticeEl = document.getElementById('audio-notice');
     const alertModal = document.getElementById('alert-modal');
+    const pathAlertWindow = document.getElementById('path-alert-window');
+    const pathAlertContent = document.getElementById('path-alert-content');
+    const pathAlertHeader = document.getElementById('path-alert-header');
+    const pathAlertMinBtn = document.getElementById('path-alert-min-btn');
+    const togglePathAlertBtn = document.getElementById('toggle-path-alert-btn');
+    const pathAlertModal = document.getElementById('path-alert-modal');
+    const pathAlertModalTitle = document.getElementById('path-alert-modal-title');
+    const pathAlertNameInput = document.getElementById('path-alert-name');
+    const pathAlertSearchInput = document.getElementById('path-alert-search-input');
+    const pathAlertCandidateList = document.getElementById('path-alert-candidate-list');
+    const pathAlertRuleList = document.getElementById('path-alert-rule-list');
+    const pathAlertSelectedLegs = document.getElementById('path-alert-selected-legs');
+    const pathAlertPreview = document.getElementById('path-alert-preview');
+    const pathAlertThresholdBpInput = document.getElementById('path-alert-threshold-bp');
+    const pathAlertTriggerModeSelect = document.getElementById('path-alert-trigger-mode');
+    const pathAlertConfirmDelayInput = document.getElementById('path-alert-confirm-delay');
+    const pathAlertCooldownInput = document.getElementById('path-alert-cooldown');
+    const pathAlertEnabledInput = document.getElementById('path-alert-enabled');
+    const pathAlertPathEditor = document.getElementById('path-alert-path-editor');
+    const pathAlertRuleEditor = document.getElementById('path-alert-rule-editor');
+    const pathAlertCancelBtn = document.getElementById('path-alert-cancel');
+    const pathAlertSaveBtn = document.getElementById('path-alert-save');
     const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
     const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
     const quoteTokenAddressesEl = document.getElementById('quote-token-addresses');
@@ -405,38 +456,70 @@
         setTimeout(() => btn.textContent = originalText, 1500);
     });
     
+    function syncLoopingAlertSound(audioEl, shouldPlay) {
+        if (!audioEl) return;
+        if (shouldPlay) {
+            if (audioEl.paused) {
+                audioEl.loop = true;
+                audioEl.play().catch((error) => console.error('Play failed', error));
+            }
+            return;
+        }
+        if (!audioEl.paused) {
+            audioEl.pause();
+            audioEl.currentTime = 0;
+        }
+    }
+
     function updateAlertSoundState() {
         if (!isAudioUnlocked) return;
         
-        let shouldPlay = false;
+        let shouldPlayQuoteAlert = false;
         for (const state of quoteMonitorState.values()) {
             if (state.isSoundActive) {
-                shouldPlay = true;
+                shouldPlayQuoteAlert = true;
                 break;
             }
         }
-
-        if (shouldPlay) {
-            if (alertSound.paused) {
-                alertSound.loop = true;
-                alertSound.play().catch(e => console.error("Play failed", e));
-            }
-        } else {
-            if (!alertSound.paused) {
-                alertSound.pause();
-                alertSound.currentTime = 0;
+        let shouldPlayPathAlert = false;
+        for (const runtime of pathAlertRuntimeState.values()) {
+            if (runtime && runtime.isSoundActive) {
+                shouldPlayPathAlert = true;
+                break;
             }
         }
+        syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);
+        syncLoopingAlertSound(pathAlertSound, shouldPlayPathAlert);
+    }
+
+    function appendAlertLogEntry(title, message, subtitle = '') {
+        if (!alertLogWindow || !alertLogContent) return;
+        alertLogWindow.style.display = 'flex';
+        const now = new Date();
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        const subtitleHtml = subtitle ? `<div>${subtitle}</div>` : '';
+        logEntry.innerHTML = `<div><strong>${escapeHtml(title)}</strong></div>${subtitleHtml}<div>${escapeHtml(message)}</div><span class="log-time">${now.toLocaleTimeString()}</span>`;
+        alertLogContent.prepend(logEntry);
+    }
+
+    async function primeAlertAudio(audioEl) {
+        if (!audioEl) return false;
+        audioEl.muted = true;
+        await audioEl.play();
+        audioEl.pause();
+        audioEl.currentTime = 0;
+        audioEl.muted = false;
+        return true;
     }
 
     function unlockAudio() {
         if (isAudioUnlocked) return;
         audioNoticeEl.style.display = 'none';
-        alertSound.muted = true;
-        alertSound.play().then(() => {
-            alertSound.pause();
-            alertSound.currentTime = 0;
-            alertSound.muted = false;
+        Promise.allSettled([primeAlertAudio(alertSound), primeAlertAudio(pathAlertSound)]).then((results) => {
+            if (!results.some((result) => result.status === 'fulfilled' && result.value === true)) {
+                throw new Error('no audio unlocked');
+            }
             isAudioUnlocked = true;
             updateAlertSoundState();
         }).catch(error => {
@@ -475,8 +558,11 @@
         return aliasMatch || '';
     }
 
-    const FIXED_PATH_RULES = [
+    const FIXED_PATH_RULES = (window.PathAlertRuleDefinitions && Array.isArray(window.PathAlertRuleDefinitions.FIXED_PATH_RULES))
+        ? window.PathAlertRuleDefinitions.FIXED_PATH_RULES
+        : [
         {
+            id: 'fixed:wbtc-eth-arb',
             title: 'WBTC ETH <-> ARB',
             base: 'cbBTC',
             quote: 'WBTC',
@@ -485,6 +571,7 @@
             steps: 2
         },
         {
+            id: 'fixed:gho-usdc',
             title: 'GHO <-> USDC',
             base: 'GHO',
             quote: 'USDC',
@@ -492,8 +579,11 @@
             crossChain: true
         }
     ];
-    const SPECIAL_ARB_RULES = [
+    const SPECIAL_ARB_RULES = (window.PathAlertRuleDefinitions && Array.isArray(window.PathAlertRuleDefinitions.SPECIAL_ARB_RULES))
+        ? window.PathAlertRuleDefinitions.SPECIAL_ARB_RULES
+        : [
         {
+            id: 'special:dex-cex-wbtc',
             title: 'DEX <-> CEX',
             type: 'dex-cex',
             categoryName: 'WBTC监控',
@@ -726,6 +816,139 @@
         return Array.from(symbols);
     }
 
+    function getAssetEquivalenceGroups() {
+        if (window.ArbEquivalenceUtils && window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS) {
+            return window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS;
+        }
+        return {
+            cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
+            WBTC: ['WBTC', 'wBTC'],
+            tBTC: ['tBTC', 'TBTC'],
+            USDT: ['USDT', 'USD₮0']
+        };
+    }
+
+    function getAliasRules() {
+        const groups = getAssetEquivalenceGroups();
+        if (window.ArbEquivalenceUtils && typeof window.ArbEquivalenceUtils.buildAliasRulesFromGroups === 'function') {
+            return window.ArbEquivalenceUtils.buildAliasRulesFromGroups(groups);
+        }
+        return {
+            xBTC: 'cbBTC',
+            BTCB: 'cbBTC',
+            'BTC.b': 'cbBTC',
+            wBTC: 'WBTC',
+            TBTC: 'tBTC',
+            'USD₮0': 'USDT'
+        };
+    }
+
+    function buildQuoteMetaById() {
+        const quoteMetaById = new Map();
+        for (const category of dashboardState) {
+            for (const quote of (category.quotes || [])) {
+                quoteMetaById.set(quote.id, { categoryName: category.name });
+            }
+        }
+        return quoteMetaById;
+    }
+
+    function getFixedRuleById(ruleId) {
+        return FIXED_PATH_RULES.find((rule) => rule.id === ruleId) || null;
+    }
+
+    function getSpecialRuleById(ruleId) {
+        return SPECIAL_ARB_RULES.find((rule) => rule.id === ruleId) || null;
+    }
+
+    function buildLiveQuoteLabel(chain, fromSymbol, toSymbol, suffix = '') {
+        const chainText = formatChainLabel(chain);
+        return `(${chainText}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
+    }
+
+    function buildPathAlertQuoteCandidates() {
+        const candidates = [];
+        for (const category of dashboardState) {
+            for (const quote of (category.quotes || [])) {
+                const state = quoteMonitorState.get(quote.id);
+                if (!state) continue;
+
+                if (isCexOrderbookChain(quote.chain) && state.fromSymbol && state.toSymbol) {
+                    if (state.cexOrderbook && Number.isFinite(state.cexOrderbook.bestBidPrice)) {
+                        candidates.push({
+                            key: `${quote.id}:cex-bid1`,
+                            quoteId: quote.id,
+                            direction: 'forward',
+                            pricingMode: 'cex-bid1',
+                            chain: quote.chain,
+                            fromSymbol: state.fromSymbol,
+                            toSymbol: state.toSymbol,
+                            categoryName: category.name,
+                            label: buildLiveQuoteLabel(quote.chain, state.fromSymbol, state.toSymbol, ' [bid1]')
+                        });
+                    }
+                    if (state.cexOrderbook && Number.isFinite(state.cexOrderbook.bestAskPrice)) {
+                        candidates.push({
+                            key: `${quote.id}:cex-ask1-inverse`,
+                            quoteId: quote.id,
+                            direction: 'forward',
+                            pricingMode: 'cex-ask1-inverse',
+                            chain: quote.chain,
+                            fromSymbol: state.toSymbol,
+                            toSymbol: state.fromSymbol,
+                            categoryName: category.name,
+                            label: buildLiveQuoteLabel(quote.chain, state.toSymbol, state.fromSymbol, ' [ask1]')
+                        });
+                    }
+                    continue;
+                }
+
+                if (state.fromSymbol && state.toSymbol && Number.isFinite(state.lastRawPrice)) {
+                    candidates.push({
+                        key: `${quote.id}:forward`,
+                        quoteId: quote.id,
+                        direction: 'forward',
+                        pricingMode: 'raw',
+                        chain: quote.chain,
+                        fromSymbol: state.fromSymbol,
+                        toSymbol: state.toSymbol,
+                        categoryName: category.name,
+                        label: buildLiveQuoteLabel(quote.chain, state.fromSymbol, state.toSymbol)
+                    });
+                }
+
+                if (quote.showInverse && state.toSymbol && state.fromSymbol && Number.isFinite(state.inverseRawPrice)) {
+                    candidates.push({
+                        key: `${quote.id}:inverse`,
+                        quoteId: quote.id,
+                        direction: 'inverse',
+                        pricingMode: 'raw',
+                        chain: quote.chain,
+                        fromSymbol: state.toSymbol,
+                        toSymbol: state.fromSymbol,
+                        categoryName: category.name,
+                        label: buildLiveQuoteLabel(quote.chain, state.toSymbol, state.fromSymbol)
+                    });
+                }
+            }
+        }
+
+        return candidates;
+    }
+
+    function matchesPathAlertCandidate(candidate, query) {
+        const utils = getChartsUtils();
+        const queryTokens = typeof utils.tokenizeChartSearch === 'function'
+            ? utils.tokenizeChartSearch(query)
+            : String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+        if (!queryTokens.length) return true;
+        const terms = String(`${candidate.label} ${candidate.categoryName || ''} ${candidate.chain || ''}`)
+            .toLowerCase()
+            .split(/[^a-z0-9.+-]+/i)
+            .filter(Boolean);
+        return queryTokens.every((token) => terms.some((term) => term.startsWith(token)));
+    }
+
     function parseArbFilterInput(inputText) {
         const tokens = String(inputText || '')
             .split(/\s+/)
@@ -839,6 +1062,18 @@
             return;
         }
 
+        const addAlertBtn = event.target.closest('[data-arb-opportunity-alert-id]');
+        if (addAlertBtn && arbPathContent.contains(addAlertBtn)) {
+            const draft = buildPathAlertDraftFromOpportunity(addAlertBtn.dataset.arbOpportunityAlertId);
+            if (draft) {
+                openPathAlertsManagementPage({
+                    mode: 'create',
+                    draft
+                });
+            }
+            return;
+        }
+
         if (event.target.closest('.arb-opportunity-chart-link')) return;
 
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
@@ -866,6 +1101,7 @@
         if (!arbPathContent) return;
         if (typeof event.button === 'number' && event.button !== 0) return;
         if (event.target.closest('.arb-path-expand-toggle')) return;
+        if (event.target.closest('[data-arb-opportunity-alert-id]')) return;
         if (event.target.closest('.arb-opportunity-chart-link')) return;
 
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
@@ -879,9 +1115,7 @@
 
     function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
         if (!cycle) return null;
-        const opportunityId = meta.clickable === false
-            ? ''
-            : getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
+        const opportunityId = getArbDetailUtils().buildArbOpportunityStableId(meta.section || '', '', cycle);
         const chartPairs = (Array.isArray(cycle.legs) ? cycle.legs : [])
             .filter((leg) => !isRuleLeg(leg) && leg && Number.isFinite(Number(leg.quoteId)))
             .map((leg) => ({
@@ -896,16 +1130,15 @@
             chartHref,
             ...meta
         };
-        if (opportunityId) {
-            targetMap.set(opportunityId, entry);
-            arbOpportunityStore.set(opportunityId, entry);
-        }
+        targetMap.set(opportunityId, entry);
+        arbOpportunityStore.set(opportunityId, entry);
 
         return {
             label,
             cycle,
-            opportunityId: opportunityId || undefined,
-            chartHref
+            opportunityId,
+            chartHref,
+            clickable: meta.clickable !== false
         };
     }
 
@@ -1308,6 +1541,669 @@
         }
     }
 
+    function createPathAlertId() {
+        return `path-alert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function getPathAlertRuleDefinitions(sourceType) {
+        if (window.PathAlertRuleDefinitions && typeof window.PathAlertRuleDefinitions.getRuleDefinitions === 'function') {
+            return window.PathAlertRuleDefinitions.getRuleDefinitions(sourceType);
+        }
+        if (sourceType === 'fixed') return FIXED_PATH_RULES;
+        if (sourceType === 'special') return SPECIAL_ARB_RULES;
+        return [];
+    }
+
+    function buildRuleAlertEvaluation(target) {
+        const aliasRules = getAliasRules();
+        const allQuotes = dashboardState.flatMap((category) => category.quotes || []);
+        const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
+        const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
+        const allEdgesWithRules = allEdges.concat(ruleEdges);
+        const quoteMetaById = buildQuoteMetaById();
+
+        if (target.ruleKind === 'fixed') {
+            const rule = getFixedRuleById(target.ruleId);
+            if (!rule) return { available: false };
+            const cycle = window.ArbPaths.findBestFixedPath(
+                (window.ArbFixedUtils && typeof window.ArbFixedUtils.filterEdgesForFixedRule === 'function')
+                    ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
+                    : allEdgesWithRules,
+                rule,
+                aliasRules
+            );
+            return cycle
+                ? { available: true, profitRate: cycle.profitRate, label: rule.title, cycle }
+                : { available: false };
+        }
+
+        const rule = getSpecialRuleById(target.ruleId);
+        if (!rule || !window.ArbSpecialUtils || typeof window.ArbSpecialUtils.buildSpecialArbOpportunities !== 'function') {
+            return { available: false };
+        }
+
+        const category = dashboardState.find((item) => item && item.name === rule.categoryName);
+        if (!category) return { available: false };
+        const opportunities = window.ArbSpecialUtils.buildSpecialArbOpportunities({
+            rules: [rule],
+            quotes: Array.isArray(category.quotes) ? category.quotes : [],
+            quoteStateById: quoteMonitorState,
+            aliasRules
+        });
+        const best = opportunities[0];
+        return best && best.cycle
+            ? { available: true, profitRate: best.cycle.profitRate, label: rule.title, cycle: best.cycle }
+            : { available: false };
+    }
+
+    function buildPathAlertDraftFromAlert(alert) {
+        const normalized = window.PathAlertUtils
+            ? window.PathAlertUtils.normalizePathAlert(alert, pathAlertConfig.settings || { defaultCooldownSec: 300 })
+            : null;
+        if (!normalized) return null;
+        return {
+            ...normalized,
+            target: normalized.target.type === 'path'
+                ? { type: 'path', legs: normalized.target.legs.map((leg) => ({ ...leg })) }
+                : { ...normalized.target }
+        };
+    }
+
+    function buildPathAlertDraftFromOpportunity(opportunityId) {
+        const entry = arbOpportunityStore.get(opportunityId);
+        if (!entry) return null;
+        const preset = entry.alertPreset || { type: 'path' };
+        const baseDraft = {
+            id: '',
+            name: `${entry.section || '路径'} ${entry.label || ''}`.trim(),
+            enabled: true,
+            thresholdBp: '',
+            triggerMode: 'immediate',
+            confirmDelaySec: 0,
+            cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
+            delivery: { sound: true, log: true, webhookEnabled: false }
+        };
+
+        if (preset.type === 'rule') {
+            return {
+                ...baseDraft,
+                target: {
+                    type: 'rule',
+                    ruleKind: preset.ruleKind,
+                    ruleId: preset.ruleId
+                }
+            };
+        }
+
+        const legs = (entry.cycle?.legs || [])
+            .filter((leg) => !isRuleLeg(leg) && Number.isFinite(Number(leg.quoteId)))
+            .map((leg) => ({
+                quoteId: Number(leg.quoteId),
+                direction: leg.inverse ? 'inverse' : 'forward',
+                pricingMode: 'raw',
+                chain: leg.chain,
+                fromSymbol: leg.from,
+                toSymbol: leg.to
+            }));
+
+        return {
+            ...baseDraft,
+            target: {
+                type: 'path',
+                legs
+            }
+        };
+    }
+
+    function formatPathAlertEvaluationText(evaluation) {
+        if (!evaluation || evaluation.available !== true || !Number.isFinite(evaluation.profitBp)) {
+            return '--';
+        }
+        const value = evaluation.profitBp;
+        return `${value >= 0 ? '+' : ''}${value.toFixed(2)}bp`;
+    }
+
+    function getPathAlertStatusInfo(alert, runtime) {
+        if (!alert || alert.enabled === false) {
+            return { text: '已禁用', className: 'path-alert-status-disabled' };
+        }
+        if (!runtime || runtime.status === 'unavailable') {
+            return { text: '缺报价', className: 'path-alert-status-unavailable' };
+        }
+        if (runtime.status === 'pending_confirm') {
+            return { text: '待确认', className: 'path-alert-status-pending' };
+        }
+        if (runtime.status === 'cooldown') {
+            return { text: '冷却中', className: 'path-alert-status-cooldown' };
+        }
+        return { text: '监控中', className: 'path-alert-status-monitoring' };
+    }
+
+    function buildPathAlertSummary(alert) {
+        if (!alert || !alert.target) return '';
+        if (alert.target.type === 'rule') {
+            const sourceList = getPathAlertRuleDefinitions(alert.target.ruleKind);
+            const rule = sourceList.find((item) => item.id === alert.target.ruleId);
+            return rule ? rule.title : alert.target.ruleId;
+        }
+        return (alert.target.legs || [])
+            .map((leg) => {
+                const match = findQuoteById(Number(leg.quoteId));
+                const state = match ? quoteMonitorState.get(Number(leg.quoteId)) : null;
+                if (state && state.fromSymbol && state.toSymbol) {
+                    if (leg.pricingMode === 'cex-ask1-inverse') {
+                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol, ' [ask1]');
+                    }
+                    if (leg.pricingMode === 'cex-bid1') {
+                        return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol, ' [bid1]');
+                    }
+                    if (leg.direction === 'inverse') {
+                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol);
+                    }
+                    return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol);
+                }
+                return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+            })
+            .join(' | ');
+    }
+
+    function buildPathAlertEvaluationContext() {
+        return {
+            quoteStateById: quoteMonitorState,
+            resolveRuleEvaluation: buildRuleAlertEvaluation
+        };
+    }
+
+    function formatPathAlertNotificationTitle(evaluation) {
+        if (!evaluation || !Number.isFinite(evaluation.profitBp)) {
+            return '收益 -- bp';
+        }
+        return `收益 ${evaluation.profitBp >= 0 ? '+' : ''}${evaluation.profitBp.toFixed(2)} bp`;
+    }
+
+    function buildPathAlertNotificationBody(alert) {
+        return buildPathAlertSummary(alert) || (alert && alert.name) || '路径报警';
+    }
+
+    async function sendPathAlertWebhookNotification(alert, evaluation) {
+        if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: formatPathAlertNotificationTitle(evaluation),
+                    body: buildPathAlertNotificationBody(alert)
+                })
+            });
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                throw new Error((data && data.error) || '请求失败');
+            }
+        } catch (error) {
+            console.error('路径报警 webhook 发送失败:', error);
+        }
+    }
+
+    function evaluatePathAlertsOnce() {
+        if (!window.PathAlertUtils) return;
+        const context = buildPathAlertEvaluationContext();
+        const activeIds = new Set();
+        const nowMs = Date.now();
+
+        for (const alert of (pathAlertConfig.alerts || [])) {
+            activeIds.add(alert.id);
+            const evaluation = window.PathAlertUtils.evaluatePathAlert(alert, context);
+            const previous = pathAlertRuntimeState.get(alert.id) || null;
+            const next = window.PathAlertUtils.advancePathAlertRuntime(alert, previous, evaluation, nowMs);
+            next.evaluation = evaluation;
+            next.isSoundActive = Boolean(next.shouldTrigger && pathAlertConfig.settings && pathAlertConfig.settings.localSoundEnabled !== false);
+            if (next.shouldTrigger) {
+                const thresholdText = Number.isFinite(Number(alert.thresholdBp)) ? Number(alert.thresholdBp) : 0;
+                appendAlertLogEntry(
+                    `[路径报警] ${alert.name || '未命名路径'}`,
+                    `收益 ${formatPathAlertEvaluationText(evaluation)}，阈值 ${thresholdText}bp`,
+                    buildPathAlertSummary(alert)
+                );
+                sendPathAlertWebhookNotification(alert, evaluation);
+            }
+            pathAlertRuntimeState.set(alert.id, next);
+        }
+
+        for (const alertId of Array.from(pathAlertRuntimeState.keys())) {
+            if (!activeIds.has(alertId)) {
+                pathAlertRuntimeState.delete(alertId);
+            }
+        }
+
+        updateAlertSoundState();
+        renderPathAlertPanel();
+    }
+
+    function restartPathAlertScheduler() {
+        if (pathAlertEvalTimer) clearInterval(pathAlertEvalTimer);
+        pathAlertEvalTimer = null;
+        const intervalMs = Number(pathAlertConfig?.settings?.pathAlertEvalIntervalMs);
+        if (!Number.isFinite(intervalMs) || intervalMs <= 0) return;
+        pathAlertEvalTimer = setInterval(evaluatePathAlertsOnce, intervalMs);
+        evaluatePathAlertsOnce();
+    }
+
+    async function persistPathAlertConfig() {
+        const normalized = window.PathAlertUtils
+            ? window.PathAlertUtils.normalizeAlertConfig(pathAlertConfig)
+            : pathAlertConfig;
+        pathAlertConfig = normalized;
+        await fetch(`${BACKEND_URL}/api/save-alert-config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(normalized)
+        });
+        restartPathAlertScheduler();
+        renderPathAlertPanel();
+    }
+
+    function queuePathAlertConfigSave() {
+        if (pathAlertSaveTimer) clearTimeout(pathAlertSaveTimer);
+        pathAlertSaveTimer = setTimeout(() => {
+            pathAlertSaveTimer = null;
+            persistPathAlertConfig().catch((error) => console.error('保存路径报警配置失败:', error));
+        }, 250);
+    }
+
+    function buildPathAlertsManagementHref(options = {}) {
+        if (window.PathAlertPageUtils && typeof window.PathAlertPageUtils.buildPathAlertsPageHref === 'function') {
+            return window.PathAlertPageUtils.buildPathAlertsPageHref(options);
+        }
+        return '/path-alerts';
+    }
+
+    function openPathAlertsManagementPage(options = {}) {
+        const href = buildPathAlertsManagementHref(options);
+        window.open(href, '_blank', 'noopener');
+    }
+
+    async function loadPathAlertConfig(options = {}) {
+        if (!window.PathAlertUtils) return;
+        const fallbackToDefault = options.fallbackToDefault !== false;
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
+            if (!response.ok) throw new Error('获取路径报警配置失败');
+            const data = await response.json();
+            pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig(data);
+        } catch (error) {
+            if (!fallbackToDefault) {
+                throw error;
+            }
+            console.warn('加载路径报警配置失败:', error);
+            pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig();
+        }
+    }
+
+    function openPathAlertModal(prefill = null) {
+        pathAlertEditorState.visible = true;
+        const draft = prefill ? buildPathAlertDraftFromAlert(prefill) : null;
+        const nextDraft = draft || {
+            id: '',
+            name: '',
+            enabled: true,
+            thresholdBp: '',
+            triggerMode: 'immediate',
+            confirmDelaySec: 0,
+            cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
+            delivery: { sound: true, log: true, webhookEnabled: false },
+            target: { type: 'path', legs: [] }
+        };
+        pathAlertEditorState.editingId = nextDraft.id || '';
+        pathAlertEditorState.sourceType = nextDraft.target.type === 'rule' ? nextDraft.target.ruleKind : 'path';
+        pathAlertEditorState.selectedRuleId = nextDraft.target.type === 'rule' ? nextDraft.target.ruleId : '';
+        pathAlertEditorState.searchQuery = '';
+        pathAlertEditorState.draftLegs = nextDraft.target.type === 'path'
+            ? nextDraft.target.legs.map((leg) => ({ ...leg }))
+            : [];
+
+        pathAlertModalTitle.textContent = nextDraft.id ? '编辑路径报警' : '添加路径报警';
+        pathAlertNameInput.value = nextDraft.name || '';
+        pathAlertThresholdBpInput.value = nextDraft.thresholdBp === '' ? '' : nextDraft.thresholdBp;
+        pathAlertTriggerModeSelect.value = nextDraft.triggerMode || 'immediate';
+        pathAlertConfirmDelayInput.value = nextDraft.confirmDelaySec || 0;
+        pathAlertCooldownInput.value = nextDraft.cooldownSec || pathAlertConfig.settings.defaultCooldownSec;
+        pathAlertEnabledInput.checked = nextDraft.enabled !== false;
+        renderPathAlertModal();
+        pathAlertModal.classList.add('visible');
+    }
+
+    function closePathAlertModal() {
+        pathAlertEditorState.visible = false;
+        pathAlertModal.classList.remove('visible');
+    }
+
+    function renderPathAlertRuleChoices() {
+        if (!pathAlertRuleList) return;
+        const rules = getPathAlertRuleDefinitions(pathAlertEditorState.sourceType);
+        pathAlertRuleList.innerHTML = rules.length
+            ? rules.map((rule) => `
+                <button
+                    type="button"
+                    class="path-alert-rule-chip${pathAlertEditorState.selectedRuleId === rule.id ? ' active' : ''}"
+                    data-path-alert-rule-id="${escapeHtml(rule.id)}"
+                >${escapeHtml(rule.title)}</button>
+            `).join('')
+            : '<div class="path-alert-empty">暂无可选规则</div>';
+    }
+
+    function renderPathAlertCandidateList() {
+        if (!pathAlertCandidateList) return;
+        const selectedKeys = new Set(pathAlertEditorState.draftLegs.map((leg) => `${leg.quoteId}:${leg.direction}:${leg.pricingMode}`));
+        const candidates = buildPathAlertQuoteCandidates()
+            .filter((candidate) => matchesPathAlertCandidate(candidate, pathAlertEditorState.searchQuery))
+            .slice(0, 80);
+        pathAlertCandidateList.innerHTML = candidates.length
+            ? candidates.map((candidate) => {
+                const key = `${candidate.quoteId}:${candidate.direction}:${candidate.pricingMode}`;
+                return `
+                    <div class="path-alert-candidate-item">
+                        <div class="path-alert-candidate-text">${escapeHtml(candidate.label)}</div>
+                        <button
+                            type="button"
+                            class="path-alert-candidate-add"
+                            data-path-alert-candidate-key="${escapeHtml(candidate.key)}"
+                            ${selectedKeys.has(key) ? 'disabled' : ''}
+                        >添加</button>
+                    </div>
+                `;
+            }).join('')
+            : '<div class="path-alert-empty">没有匹配的报价腿</div>';
+    }
+
+    function renderPathAlertSelectedLegs() {
+        if (!pathAlertSelectedLegs) return;
+        if (pathAlertEditorState.sourceType === 'path') {
+            pathAlertSelectedLegs.innerHTML = pathAlertEditorState.draftLegs.length
+                ? pathAlertEditorState.draftLegs.map((leg, index) => `
+                    <div class="path-alert-leg-item">
+                        <div class="path-alert-leg-text">${escapeHtml(buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol))}</div>
+                        <div class="path-alert-leg-actions">
+                            <button type="button" class="path-alert-leg-action" data-path-alert-leg-move="up" data-path-alert-leg-index="${index}">↑</button>
+                            <button type="button" class="path-alert-leg-action" data-path-alert-leg-move="down" data-path-alert-leg-index="${index}">↓</button>
+                            <button type="button" class="path-alert-leg-action" data-path-alert-leg-remove="${index}">删</button>
+                        </div>
+                    </div>
+                `).join('')
+                : '<div class="path-alert-empty">还没有添加路径腿</div>';
+        } else {
+            const rule = getPathAlertRuleDefinitions(pathAlertEditorState.sourceType)
+                .find((item) => item.id === pathAlertEditorState.selectedRuleId);
+            pathAlertSelectedLegs.innerHTML = rule
+                ? `<div class="path-alert-rule-item"><div class="path-alert-rule-text">${escapeHtml(rule.title)}</div></div>`
+                : '<div class="path-alert-empty">请选择一条规则</div>';
+        }
+
+        const previewAlert = collectPathAlertFromEditor(false);
+        if (!previewAlert || !window.PathAlertUtils) {
+            pathAlertPreview.textContent = '当前收益: --';
+            return;
+        }
+        const evaluation = window.PathAlertUtils.evaluatePathAlert(previewAlert, buildPathAlertEvaluationContext());
+        pathAlertPreview.textContent = `当前收益: ${formatPathAlertEvaluationText(evaluation)} | ${buildPathAlertSummary(previewAlert) || '--'}`;
+    }
+
+    function renderPathAlertModal() {
+        if (!pathAlertModal) return;
+        const isPath = pathAlertEditorState.sourceType === 'path';
+        if (pathAlertPathEditor) pathAlertPathEditor.style.display = isPath ? '' : 'none';
+        if (pathAlertRuleEditor) pathAlertRuleEditor.style.display = isPath ? 'none' : '';
+        if (pathAlertSearchInput && pathAlertSearchInput.value !== pathAlertEditorState.searchQuery) {
+            pathAlertSearchInput.value = pathAlertEditorState.searchQuery;
+        }
+        if (pathAlertConfirmDelayInput) {
+            pathAlertConfirmDelayInput.disabled = window.PathAlertUtils
+                ? window.PathAlertUtils.isPathAlertConfirmDelayDisabled(pathAlertTriggerModeSelect && pathAlertTriggerModeSelect.value)
+                : !(pathAlertTriggerModeSelect && pathAlertTriggerModeSelect.value === 'delayed');
+        }
+        document.querySelectorAll('.path-alert-type-tab').forEach((button) => {
+            button.classList.toggle('active', button.dataset.pathAlertType === pathAlertEditorState.sourceType);
+        });
+        renderPathAlertCandidateList();
+        renderPathAlertRuleChoices();
+        renderPathAlertSelectedLegs();
+    }
+
+    function collectPathAlertFromEditor(strict = true) {
+        const sourceType = pathAlertEditorState.sourceType;
+        const baseAlert = {
+            id: pathAlertEditorState.editingId || createPathAlertId(),
+            name: pathAlertNameInput.value.trim(),
+            enabled: pathAlertEnabledInput.checked,
+            thresholdBp: pathAlertThresholdBpInput.value === '' ? '' : Number(pathAlertThresholdBpInput.value),
+            triggerMode: pathAlertTriggerModeSelect.value === 'delayed' ? 'delayed' : 'immediate',
+            confirmDelaySec: Number(pathAlertConfirmDelayInput.value || 0),
+            cooldownSec: Number(pathAlertCooldownInput.value || pathAlertConfig.settings.defaultCooldownSec),
+            delivery: { sound: true, log: true, webhookEnabled: false },
+            target: null
+        };
+
+        if (sourceType === 'path') {
+            if (!pathAlertEditorState.draftLegs.length) return null;
+            baseAlert.target = {
+                type: 'path',
+                legs: pathAlertEditorState.draftLegs.map((leg) => ({ ...leg }))
+            };
+        } else {
+            if (!pathAlertEditorState.selectedRuleId) return null;
+            baseAlert.target = {
+                type: 'rule',
+                ruleKind: sourceType,
+                ruleId: pathAlertEditorState.selectedRuleId
+            };
+        }
+
+        return window.PathAlertUtils
+            ? window.PathAlertUtils.normalizePathAlert(baseAlert, pathAlertConfig.settings)
+            : baseAlert;
+    }
+
+    function renderPathAlertPanel() {
+        if (!pathAlertContent) return;
+        const alerts = Array.isArray(pathAlertConfig.alerts) ? pathAlertConfig.alerts : [];
+        const settings = pathAlertConfig.settings || {};
+        const toolbar = `
+            <div class="path-alert-toolbar">
+                <button type="button" id="path-alert-reload-btn" ${pathAlertReloading ? 'disabled' : ''}>${pathAlertReloading ? '重新加载中...' : '重新加载'}</button>
+                <div class="path-alert-toolbar-meta">
+                    <label class="path-alert-toolbar-toggle">
+                        <input type="checkbox" data-path-alert-global-toggle="localSoundEnabled" ${settings.localSoundEnabled !== false ? 'checked' : ''}>
+                        <span>音效</span>
+                    </label>
+                    <label class="path-alert-toolbar-toggle">
+                        <input type="checkbox" data-path-alert-global-toggle="webhookEnabled" ${settings.webhookEnabled === true ? 'checked' : ''}>
+                        <span>远程</span>
+                    </label>
+                    <div class="path-alert-toolbar-cycle">周期 ${settings.pathAlertEvalIntervalMs}ms</div>
+                </div>
+            </div>
+        `;
+        if (!alerts.length) {
+            pathAlertContent.innerHTML = `${toolbar}<div class="path-alert-empty">暂无路径报警</div>`;
+            return;
+        }
+
+        const items = alerts.map((alert) => {
+            const runtime = pathAlertRuntimeState.get(alert.id) || null;
+            const evaluation = runtime && runtime.evaluation ? runtime.evaluation : null;
+            const statusInfo = getPathAlertStatusInfo(alert, runtime);
+            const lastTriggeredText = runtime && runtime.lastTriggeredAt
+                ? new Date(runtime.lastTriggeredAt).toLocaleTimeString()
+                : '--';
+            const editHref = buildPathAlertsManagementHref({
+                mode: 'edit',
+                alertId: alert.id
+            });
+            return `
+                <div class="path-alert-item">
+                    <div class="path-alert-item-head">
+                        <div>
+                            <div class="path-alert-item-title">${escapeHtml(alert.name || '未命名路径')}</div>
+                            <div class="path-alert-item-meta">${escapeHtml(buildPathAlertSummary(alert) || '--')}</div>
+                            <div class="path-alert-item-meta">阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s</div>
+                        </div>
+                        <div class="path-alert-item-actions">
+                            <a
+                                class="path-alert-item-link"
+                                href="${escapeHtml(editHref)}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-path-alert-edit-link="${escapeHtml(alert.id)}"
+                            >编辑</a>
+                        </div>
+                    </div>
+                    <div class="path-alert-status-row">
+                        <span class="path-alert-status-tag ${statusInfo.className}">${statusInfo.text}</span>
+                        <span class="path-alert-profit">${formatPathAlertEvaluationText(evaluation)}</span>
+                    </div>
+                    <div class="path-alert-item-meta">上次报警: ${escapeHtml(lastTriggeredText)}</div>
+                </div>
+            `;
+        }).join('');
+
+        pathAlertContent.innerHTML = `${toolbar}<div class="path-alert-list">${items}</div>`;
+    }
+
+    function togglePathAlertPanel() {
+        if (!pathAlertWindow) return;
+        pathAlertPanelHidden = !pathAlertPanelHidden;
+        pathAlertWindow.style.display = pathAlertPanelHidden ? 'none' : 'flex';
+    }
+
+    function togglePathAlertPanelCollapsed() {
+        if (!pathAlertWindow || pathAlertPanelHidden) return;
+        pathAlertPanelCollapsed = !pathAlertPanelCollapsed;
+        pathAlertWindow.classList.toggle('collapsed', pathAlertPanelCollapsed);
+        if (pathAlertMinBtn) {
+            pathAlertMinBtn.textContent = pathAlertPanelCollapsed ? '＋' : '－';
+            pathAlertMinBtn.title = pathAlertPanelCollapsed ? '展开' : '折叠';
+        }
+    }
+
+    function handlePathAlertPanelChange(event) {
+        const toggle = event.target.closest('[data-path-alert-global-toggle]');
+        if (!toggle || !pathAlertConfig.settings) return;
+        const key = toggle.dataset.pathAlertGlobalToggle;
+        if (!key) return;
+        pathAlertConfig.settings[key] = toggle.checked;
+        queuePathAlertConfigSave();
+        updateAlertSoundState();
+    }
+
+    function handlePathAlertPanelClick(event) {
+        const reloadBtn = event.target.closest('#path-alert-reload-btn');
+        if (!reloadBtn) return;
+        reloadPathAlertConfigFromServer().catch((error) => {
+            console.error('重新加载路径报警配置失败:', error);
+        });
+    }
+
+    async function reloadPathAlertConfigFromServer() {
+        if (pathAlertReloading) return;
+        pathAlertReloading = true;
+        renderPathAlertPanel();
+        try {
+            await loadPathAlertConfig({ fallbackToDefault: false });
+            pathAlertRuntimeState = new Map();
+            restartPathAlertScheduler();
+        } finally {
+            pathAlertReloading = false;
+            renderPathAlertPanel();
+        }
+    }
+
+    function handlePathAlertTypeTabClick(event) {
+        const tabBtn = event.target.closest('[data-path-alert-type]');
+        if (!tabBtn) return;
+        pathAlertEditorState.sourceType = tabBtn.dataset.pathAlertType;
+        pathAlertEditorState.selectedRuleId = '';
+        renderPathAlertModal();
+    }
+
+    function handlePathAlertModalClick(event) {
+        const candidateBtn = event.target.closest('[data-path-alert-candidate-key]');
+        if (candidateBtn) {
+            const candidate = buildPathAlertQuoteCandidates()
+                .find((item) => item.key === candidateBtn.dataset.pathAlertCandidateKey);
+            if (!candidate) return;
+            pathAlertEditorState.draftLegs.push({
+                quoteId: candidate.quoteId,
+                direction: candidate.direction,
+                pricingMode: candidate.pricingMode,
+                chain: candidate.chain,
+                fromSymbol: candidate.fromSymbol,
+                toSymbol: candidate.toSymbol
+            });
+            renderPathAlertModal();
+            return;
+        }
+
+        const removeBtn = event.target.closest('[data-path-alert-leg-remove]');
+        if (removeBtn) {
+            const index = Number(removeBtn.dataset.pathAlertLegRemove);
+            if (Number.isFinite(index)) {
+                pathAlertEditorState.draftLegs.splice(index, 1);
+                renderPathAlertModal();
+            }
+            return;
+        }
+
+        const moveBtn = event.target.closest('[data-path-alert-leg-move]');
+        if (moveBtn) {
+            const index = Number(moveBtn.dataset.pathAlertLegIndex);
+            const direction = moveBtn.dataset.pathAlertLegMove;
+            if (!Number.isFinite(index)) return;
+            const nextIndex = direction === 'up' ? index - 1 : index + 1;
+            if (nextIndex < 0 || nextIndex >= pathAlertEditorState.draftLegs.length) return;
+            const legs = pathAlertEditorState.draftLegs;
+            [legs[index], legs[nextIndex]] = [legs[nextIndex], legs[index]];
+            renderPathAlertModal();
+            return;
+        }
+
+        const ruleBtn = event.target.closest('[data-path-alert-rule-id]');
+        if (ruleBtn) {
+            pathAlertEditorState.selectedRuleId = ruleBtn.dataset.pathAlertRuleId;
+            if (!pathAlertNameInput.value.trim()) {
+                const rule = getPathAlertRuleDefinitions(pathAlertEditorState.sourceType)
+                    .find((item) => item.id === pathAlertEditorState.selectedRuleId);
+                if (rule) {
+                    pathAlertNameInput.value = rule.title;
+                }
+            }
+            renderPathAlertModal();
+            return;
+        }
+
+        if (event.target === pathAlertModal || event.target === pathAlertCancelBtn) {
+            closePathAlertModal();
+            return;
+        }
+
+        if (event.target === pathAlertSaveBtn) {
+            const nextAlert = collectPathAlertFromEditor(true);
+            if (!nextAlert) {
+                window.alert(pathAlertEditorState.sourceType === 'path' ? '请至少添加一条路径腿' : '请选择一条规则');
+                return;
+            }
+            if (!nextAlert.name) {
+                window.alert('请填写路径报警名称');
+                return;
+            }
+            const existingIndex = pathAlertConfig.alerts.findIndex((item) => item.id === nextAlert.id);
+            if (existingIndex >= 0) pathAlertConfig.alerts.splice(existingIndex, 1, nextAlert);
+            else pathAlertConfig.alerts.push(nextAlert);
+            closePathAlertModal();
+            queuePathAlertConfigSave();
+            evaluatePathAlertsOnce();
+        }
+    }
+
     function updateArbPanel() {
         if (!arbPathContent) return;
         if (!window.ArbPaths) {
@@ -1326,36 +2222,14 @@
             return;
         }
 
-        const assetEquivalenceGroups = (window.ArbEquivalenceUtils && window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS)
-            ? window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
-            : {
-                cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
-                WBTC: ['WBTC', 'wBTC'],
-                tBTC: ['tBTC', 'TBTC'],
-                USDT: ['USDT', 'USD₮0']
-            };
-        const aliasRules = (window.ArbEquivalenceUtils && typeof window.ArbEquivalenceUtils.buildAliasRulesFromGroups === 'function')
-            ? window.ArbEquivalenceUtils.buildAliasRulesFromGroups(assetEquivalenceGroups)
-            : {
-                xBTC: 'cbBTC',
-                BTCB: 'cbBTC',
-                'BTC.b': 'cbBTC',
-                wBTC: 'WBTC',
-                TBTC: 'tBTC',
-                'USD₮0': 'USDT'
-            };
+        const aliasRules = getAliasRules();
         const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
         const allQuotes = dashboardState.flatMap(c => c.quotes || []);
         const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
         const nextOpportunityMap = new Map();
-        const quoteMetaById = new Map();
-        for (const category of dashboardState) {
-            for (const quote of (category.quotes || [])) {
-                quoteMetaById.set(quote.id, { categoryName: category.name });
-            }
-        }
+        const quoteMetaById = buildQuoteMetaById();
 
         const fixedSections = [{
             title: '固定路径',
@@ -1370,7 +2244,7 @@
                         aliasRules
                     ),
                     rule.title,
-                    { section: 'fixed' }
+                    { section: 'fixed', alertPreset: { type: 'rule', ruleKind: 'fixed', ruleId: rule.id } }
                 ))
                 .filter(Boolean)
         }];
@@ -1388,7 +2262,11 @@
                     nextOpportunityMap,
                     opportunity.cycle,
                     opportunity.label,
-                    { section: `special:${wbtcCategory.name}`, clickable: false }
+                    {
+                        section: `special:${wbtcCategory.name}`,
+                        clickable: false,
+                        alertPreset: { type: 'rule', ruleKind: 'special', ruleId: opportunity.ruleId || '' }
+                    }
                 )).filter(Boolean)
                 : [],
             emptyText: '暂无可用规则'
@@ -1415,7 +2293,7 @@
                         nextOpportunityMap,
                         cycle,
                         `机会 ${index + 1}`,
-                        { section: category.name }
+                        { section: category.name, alertPreset: { type: 'path' } }
                     ))
                     .filter(Boolean),
                 footerHtml
@@ -1461,7 +2339,7 @@
                         nextOpportunityMap,
                         cycle,
                         `机会 ${index + 1}`,
-                        { section: '全局路径' }
+                        { section: '全局路径', alertPreset: { type: 'path' } }
                     ))
                     .filter(Boolean),
                 footerHtml: globalFooterHtml,
@@ -2180,6 +3058,11 @@
             toggleArbPanel();
             return;
         }
+        if (key === 'a') {
+            event.preventDefault();
+            togglePathAlertPanel();
+            return;
+        }
         if (key === 'c') {
             event.preventDefault();
             toggleCalcPanel();
@@ -2296,17 +3179,12 @@
     }
 
     function triggerAlert(quote, message) {
-        alertLogWindow.style.display = 'flex';
-        const now = new Date();
-        const logEntry = document.createElement('div');
-        logEntry.className = 'log-entry';
         const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
-         const monitorState = quoteMonitorState.get(quote.id) || {};
+        const monitorState = quoteMonitorState.get(quote.id) || {};
         let label = isCexOrderbookChain(quote.chain) ? quote.symbol : 
                     (monitorState.fromSymbol && monitorState.toSymbol ? `${monitorState.fromSymbol}/${monitorState.toSymbol}` : 
                     `${quote.fromToken.slice(0,4)}.../${quote.toToken.slice(0,4)}...`);
-        logEntry.innerHTML = `<div><strong>${displayName}</strong>: ${label}</div><div>${message}</div><span class="log-time">${now.toLocaleTimeString()}</span>`;
-        alertLogContent.prepend(logEntry);
+        appendAlertLogEntry(displayName, message, label);
     }
 
     function addDnDHandlers(itemEl, categoryId) {
@@ -3077,9 +3955,12 @@
                     dashboardState = [];
                 }
             }
+
+            await loadPathAlertConfig();
             
             renderDashboard();
             updateArbPanel();
+            renderPathAlertPanel();
             
             const allQuotes = dashboardState.flatMap(c => c.quotes || []);
             
@@ -3095,8 +3976,12 @@
             updateQuoteRunStateTag();
             updateSchedulers();
             startPriceSnapshotTimer();
+            restartPathAlertScheduler();
             
             makeDraggable(alertLogWindow, document.getElementById('alert-log-header'));
+            if (pathAlertWindow && pathAlertHeader) {
+                makeDraggable(pathAlertWindow, pathAlertHeader);
+            }
             if (arbPathWindow && arbPathHeader) {
                 makeDraggable(arbPathWindow, arbPathHeader);
             }
@@ -3107,6 +3992,15 @@
 
             if (toggleArbBtn) {
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
+            }
+            if (togglePathAlertBtn) {
+                togglePathAlertBtn.addEventListener('click', () => {
+                    openPathAlertsManagementPage();
+                });
+            }
+            if (pathAlertContent) {
+                pathAlertContent.addEventListener('click', handlePathAlertPanelClick);
+                pathAlertContent.addEventListener('change', handlePathAlertPanelChange);
             }
             if (arbPathContent) {
                 arbPathContent.addEventListener('pointerdown', handleArbPathContentPointerDown);
@@ -3191,11 +4085,38 @@
             if (arbGlobalFilterClearBtn) {
                 arbGlobalFilterClearBtn.addEventListener('click', handleArbGlobalFilterClear);
             }
+            if (pathAlertModal) {
+                pathAlertModal.addEventListener('click', handlePathAlertModalClick);
+            }
+            if (pathAlertSearchInput) {
+                pathAlertSearchInput.addEventListener('input', (event) => {
+                    pathAlertEditorState.searchQuery = event.target.value || '';
+                    renderPathAlertModal();
+                });
+            }
+            document.querySelectorAll('.path-alert-type-tab').forEach((button) => {
+                button.addEventListener('click', handlePathAlertTypeTabClick);
+            });
+            [pathAlertNameInput, pathAlertThresholdBpInput, pathAlertConfirmDelayInput, pathAlertCooldownInput, pathAlertEnabledInput].forEach((input) => {
+                if (!input) return;
+                input.addEventListener('input', () => renderPathAlertSelectedLegs());
+                input.addEventListener('change', () => renderPathAlertSelectedLegs());
+            });
+            if (pathAlertTriggerModeSelect) {
+                pathAlertTriggerModeSelect.addEventListener('input', () => renderPathAlertModal());
+                pathAlertTriggerModeSelect.addEventListener('change', () => renderPathAlertModal());
+            }
             document.addEventListener('keydown', handleGlobalShortcuts);
             if (arbPathMinBtn) {
                 arbPathMinBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     toggleArbPanel();
+                });
+            }
+            if (pathAlertMinBtn) {
+                pathAlertMinBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    togglePathAlertPanelCollapsed();
                 });
             }
             if (arbPathMaxBtn) {

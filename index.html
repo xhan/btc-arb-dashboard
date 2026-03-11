@@ -97,7 +97,8 @@
         
         #top-bar-left { display: flex; align-items: center; gap: 20px; }
         #top-bar-right { display: flex; align-items: center; gap: 15px; }
-        #toggle-arb-btn, #toggle-calc-btn, #snapshot-link-btn, #charts-link-btn {
+        #top-bar-right > button,
+        #top-bar-right > a {
             background-color: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-color);
@@ -105,12 +106,26 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 14px;
+            line-height: 1;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            box-sizing: border-box;
         }
-        #toggle-arb-btn:hover, #toggle-calc-btn:hover, #snapshot-link-btn:hover, #charts-link-btn:hover { background-color: rgba(0,0,0,0.05); }
-        .dark-mode #toggle-arb-btn:hover, .dark-mode #toggle-calc-btn:hover, .dark-mode #snapshot-link-btn:hover, .dark-mode #charts-link-btn:hover { background-color: rgba(255,255,255,0.08); }
+        #top-bar-right > button.icon-btn {
+            width: 34px;
+            padding: 0;
+            font-size: 16px;
+            border-radius: 8px;
+            color: var(--text-color);
+        }
+        #top-bar-right > button:hover,
+        #top-bar-right > a:hover { background-color: rgba(0,0,0,0.05); }
+        .dark-mode #top-bar-right > button:hover,
+        .dark-mode #top-bar-right > a:hover { background-color: rgba(255,255,255,0.08); }
 
         #dashboard { 
             display: grid; 
@@ -519,6 +534,7 @@
         .arb-opportunity[data-arb-opportunity-id] { cursor: pointer; }
         .arb-opportunity[data-arb-opportunity-id]:hover { background-color: rgba(37, 99, 235, 0.04); }
         .arb-opportunity-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .arb-opportunity-head-actions { display: flex; align-items: center; gap: 6px; }
         .arb-opportunity-chart-link {
             display: inline-flex;
             align-items: center;
@@ -532,6 +548,21 @@
             flex: 0 0 auto;
         }
         .arb-opportunity-chart-link:hover { background-color: rgba(37, 99, 235, 0.16); }
+        .arb-opportunity-add-alert-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            border: none;
+            color: #2563eb;
+            background-color: rgba(37, 99, 235, 0.08);
+            flex: 0 0 auto;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .arb-opportunity-add-alert-btn:hover { background-color: rgba(37, 99, 235, 0.16); }
         .arb-profit { font-weight: 700; color: var(--trend-up-bg); }
         .arb-profit-neg { color: var(--trend-down-bg); }
         #arb-detail-modal .modal-box {
@@ -740,6 +771,108 @@
             }
         }
 
+        #path-alert-window { position: fixed; top: 80px; right: 20px; width: 390px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
+        #path-alert-window.collapsed { height: auto; min-height: 0; resize: none; }
+        #path-alert-window.collapsed #path-alert-content { display: none; }
+        #path-alert-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .dark-mode #path-alert-header { background-color: #1a202c; }
+        #path-alert-header button {
+            border: 1px solid rgba(255,255,255,0.3);
+            background: transparent;
+            color: #fff;
+            border-radius: 6px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        #path-alert-header button:hover { background-color: rgba(255,255,255,0.12); }
+        #path-alert-content { flex-grow: 1; overflow-y: auto; padding: 12px; font-size: 13px; }
+        .path-alert-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .path-alert-toolbar-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+        .path-alert-toolbar-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-color-light); cursor: pointer; }
+        .path-alert-toolbar-toggle input { margin: 0; }
+        .path-alert-toolbar-cycle { font-size: 12px; color: var(--text-color-light); }
+        .path-alert-toolbar button,
+        .path-alert-item button,
+        .path-alert-item-link,
+        .path-alert-rule-chip,
+        .path-alert-leg-action,
+        .path-alert-candidate-add {
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: inherit;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .path-alert-toolbar button { padding: 6px 10px; font-weight: 600; }
+        .path-alert-list { display: flex; flex-direction: column; gap: 8px; }
+        .path-alert-item { border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; background-color: rgba(0,0,0,0.015); }
+        .dark-mode .path-alert-item { background-color: rgba(255,255,255,0.02); }
+        .path-alert-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+        .path-alert-item-title { font-weight: 700; line-height: 1.35; }
+        .path-alert-item-meta { margin-top: 4px; color: var(--text-color-light); line-height: 1.45; }
+        .path-alert-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .path-alert-item-actions button { padding: 4px 8px; }
+        .path-alert-item-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 8px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .path-alert-status-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; align-items: center; }
+        .path-alert-status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .path-alert-status-monitoring { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
+        .path-alert-status-pending { background: rgba(202, 138, 4, 0.14); color: #a16207; }
+        .path-alert-status-cooldown { background: rgba(5, 150, 105, 0.14); color: #047857; }
+        .path-alert-status-unavailable { background: rgba(107, 114, 128, 0.14); color: #4b5563; }
+        .path-alert-status-disabled { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+        .path-alert-profit { font-weight: 700; }
+        .path-alert-empty { color: var(--text-color-light); }
+        #path-alert-modal .modal-box {
+            width: min(860px, 94vw);
+            max-width: none;
+            border: 1px solid var(--border-color);
+        }
+        .path-alert-type-tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .path-alert-type-tab {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: inherit;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .path-alert-type-tab.active {
+            background-color: #2d3748;
+            border-color: #2d3748;
+            color: #fff;
+        }
+        .dark-mode .path-alert-type-tab.active { background-color: #1a202c; border-color: #1a202c; }
+        .path-alert-editor-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 14px; }
+        .path-alert-editor-pane { border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; min-height: 240px; }
+        .path-alert-candidate-list,
+        .path-alert-selected-legs,
+        .path-alert-rule-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+        .path-alert-candidate-item,
+        .path-alert-leg-item,
+        .path-alert-rule-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; }
+        .path-alert-candidate-text,
+        .path-alert-leg-text,
+        .path-alert-rule-text { min-width: 0; line-height: 1.4; }
+        .path-alert-candidate-add,
+        .path-alert-leg-action { padding: 4px 8px; }
+        .path-alert-leg-actions { display: flex; gap: 6px; }
+        .path-alert-rule-chip { padding: 6px 10px; font-weight: 600; }
+        .path-alert-rule-chip.active { background: #2d3748; border-color: #2d3748; color: #fff; }
+        .dark-mode .path-alert-rule-chip.active { background: #1a202c; border-color: #1a202c; }
+        .path-alert-preview { margin-top: 10px; font-size: 12px; color: var(--text-color-light); line-height: 1.45; }
+        @media (max-width: 980px) {
+            .path-alert-editor-grid { grid-template-columns: 1fr; }
+        }
+
         #calc-window { position: fixed; bottom: 20px; right: 390px; width: 430px; height: 280px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
         #calc-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #calc-header { background-color: #1a202c; }
@@ -893,6 +1026,7 @@
         </div>
         <div id="top-bar-right">
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
+             <button id="toggle-path-alert-btn" title="打开路径报警管理页">路径报警管理</button>
              <button id="toggle-calc-btn" title="显示/隐藏计算器">计算器</button>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">快照</a>
              <a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">图表</a>
@@ -907,6 +1041,15 @@
     <button id="add-category-btn">+ 添加新分区</button>
 
     <div id="alert-log-window"><div id="alert-log-header">提醒日志</div><div id="alert-log-content"></div></div>
+    <div id="path-alert-window">
+        <div id="path-alert-header">
+            <span>路径报警</span>
+            <div class="panel-header-actions">
+                <button id="path-alert-min-btn" title="最小化">－</button>
+            </div>
+        </div>
+        <div id="path-alert-content">等待配置...</div>
+    </div>
     <div id="arb-path-window">
         <div id="arb-path-header">
             <span>套利路径</span>
@@ -946,6 +1089,7 @@
     </div>
     
     <audio id="alert-sound" src="alert.mp3" preload="auto"></audio>
+    <audio id="path-alert-sound" src="alert_path.mp3" preload="auto"></audio>
     
     <div class="modal-overlay" id="settings-modal">
         <div class="modal-box">
@@ -1061,6 +1205,67 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="path-alert-modal">
+        <div class="modal-box">
+            <h3 id="path-alert-modal-title">添加路径报警</h3>
+            <div class="form-group">
+                <label for="path-alert-name">名称</label>
+                <input type="text" id="path-alert-name" placeholder="例如: GHO 固定路径">
+            </div>
+            <div class="path-alert-type-tabs">
+                <button type="button" class="path-alert-type-tab active" data-path-alert-type="path">手工路径</button>
+                <button type="button" class="path-alert-type-tab" data-path-alert-type="fixed">固定规则</button>
+                <button type="button" class="path-alert-type-tab" data-path-alert-type="special">特殊规则</button>
+            </div>
+            <div class="path-alert-editor-grid">
+                <div class="path-alert-editor-pane">
+                    <div id="path-alert-path-editor">
+                        <div class="form-group">
+                            <label for="path-alert-search-input">搜索报价腿</label>
+                            <input type="text" id="path-alert-search-input" placeholder="输入链名、代币、方向">
+                        </div>
+                        <div class="path-alert-candidate-list" id="path-alert-candidate-list"></div>
+                    </div>
+                    <div id="path-alert-rule-editor" style="display:none;">
+                        <div class="path-alert-rule-list" id="path-alert-rule-list"></div>
+                    </div>
+                </div>
+                <div class="path-alert-editor-pane">
+                    <div style="font-weight:700; margin-bottom:8px;">已选路径</div>
+                    <div class="path-alert-selected-legs" id="path-alert-selected-legs"></div>
+                    <div class="path-alert-preview" id="path-alert-preview">当前收益: --</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="path-alert-threshold-bp">收益阈值 (bp)</label>
+                <input type="number" id="path-alert-threshold-bp" placeholder="例如: 3" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="path-alert-trigger-mode">触发方式</label>
+                <select id="path-alert-trigger-mode">
+                    <option value="immediate">立即提醒</option>
+                    <option value="delayed">延迟确认</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="path-alert-confirm-delay">延迟确认 (秒)</label>
+                <input type="number" id="path-alert-confirm-delay" placeholder="例如: 5" min="0">
+            </div>
+            <div class="form-group">
+                <label for="path-alert-cooldown">冷却时间 (秒)</label>
+                <input type="number" id="path-alert-cooldown" placeholder="例如: 300" min="1">
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="path-alert-enabled" checked>
+                <label for="path-alert-enabled">启用这条路径报警</label>
+            </div>
+            <div class="modal-buttons">
+                <button id="path-alert-cancel">取消</button>
+                <button id="path-alert-save">保存</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="add-quote-modal">
         <div class="modal-box">
             <h3>添加新报价</h3>
@@ -1159,6 +1364,9 @@
     <script src="arb-paths.js"></script>
     <script src="arb-equivalence-utils.js"></script>
     <script src="arb-special-utils.js"></script>
+    <script src="path-alert-utils.js"></script>
+    <script src="path-alert-page-utils.js"></script>
+    <script src="path-alert-rule-definitions.js"></script>
     <script src="quote-calculator.js"></script>
     <script src="chain-defaults.js"></script>
     <script src="arb-panel-renderer.js"></script>
