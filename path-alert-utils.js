@@ -159,6 +159,49 @@
       : [];
   }
 
+  function buildPathAlertLegDuplicateKey(leg) {
+    if (!leg || typeof leg !== 'object') return '';
+    const quoteId = Number(leg.quoteId);
+    if (!Number.isFinite(quoteId) || quoteId <= 0) return '';
+    const direction = leg.direction === 'inverse' ? 'inverse' : 'forward';
+    const pricingMode = ['raw', 'cex-bid1', 'cex-ask1-inverse'].includes(leg.pricingMode)
+      ? leg.pricingMode
+      : 'raw';
+    return `${quoteId}|${direction}|${pricingMode}`;
+  }
+
+  function buildPathAlertTargetDuplicateKey(target) {
+    if (!target || typeof target !== 'object') return '';
+    if (target.type === 'rule') {
+      const ruleKind = target.ruleKind === 'special' ? 'special' : target.ruleKind === 'fixed' ? 'fixed' : '';
+      const ruleId = String(target.ruleId || '').trim();
+      return ruleKind && ruleId ? `rule:${ruleKind}:${ruleId}` : '';
+    }
+    if (target.type !== 'path' || !Array.isArray(target.legs) || !target.legs.length) {
+      return '';
+    }
+    const legKeys = target.legs.map(buildPathAlertLegDuplicateKey);
+    if (legKeys.some((key) => !key)) return '';
+    return `path:${legKeys.join('>')}`;
+  }
+
+  function findDuplicatePathAlert(alerts, alertOrTarget, options = {}) {
+    const items = Array.isArray(alerts) ? alerts : [];
+    const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
+    const duplicateKey = buildPathAlertTargetDuplicateKey(target);
+    if (!duplicateKey) return null;
+    const excludedId = String(options.excludeId || (alertOrTarget && alertOrTarget.id) || '').trim();
+
+    for (const alert of items) {
+      if (!alert || typeof alert !== 'object') continue;
+      if (excludedId && String(alert.id || '').trim() === excludedId) continue;
+      if (buildPathAlertTargetDuplicateKey(alert.target) === duplicateKey) {
+        return alert;
+      }
+    }
+    return null;
+  }
+
   function getLegRate(leg, state) {
     if (!leg || !state) return null;
     if (leg.pricingMode === 'cex-bid1') {
@@ -293,9 +336,11 @@
     DEFAULT_ALERT_DELIVERY,
     DEFAULT_PATH_ALERT_SETTINGS,
     advancePathAlertRuntime,
+    buildPathAlertTargetDuplicateKey,
     buildPathAlertSummaryLines,
     buildPathAlertWebhookUrl,
     evaluatePathAlert,
+    findDuplicatePathAlert,
     isPathAlertConfirmDelayDisabled,
     normalizeAlertConfig,
     normalizePathAlert

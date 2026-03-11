@@ -450,6 +450,30 @@
     };
   }
 
+  function getEditAlertHref(alertId) {
+    if (!window.PathAlertPageUtils || !alertId) return '/path-alerts';
+    return window.PathAlertPageUtils.buildPathAlertsPageHref({
+      mode: 'edit',
+      alertId
+    });
+  }
+
+  function findDuplicateAlertForDraft(draft) {
+    if (!draft || !window.PathAlertUtils || typeof window.PathAlertUtils.findDuplicatePathAlert !== 'function') {
+      return null;
+    }
+    return window.PathAlertUtils.findDuplicatePathAlert(
+      Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [],
+      {
+        id: String(draft.id || ''),
+        target: collectEditorTarget(draft)
+      },
+      {
+        excludeId: String(draft.id || '')
+      }
+    );
+  }
+
   function validateDraft(draft) {
     if (!draft.name.trim()) {
       return '名称不能为空';
@@ -480,6 +504,10 @@
     const missingQuoteId = draft.legs.find((leg) => !quoteById.has(Number(leg.quoteId)));
     if (missingQuoteId) {
       return `路径腿引用的 live quote 不存在：${missingQuoteId.quoteId}`;
+    }
+    const duplicateAlert = findDuplicateAlertForDraft(draft);
+    if (duplicateAlert) {
+      return `该路径报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
     }
     return '';
   }
@@ -592,15 +620,26 @@
     }
 
     const draft = pageState.draft;
+    const duplicateAlert = findDuplicateAlertForDraft(draft);
     const targetSummaryLines = draft.sourceType === 'path'
       ? ((draft.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol)).filter(Boolean))
       : [((findRule(draft.sourceType, draft.selectedRuleId) || {}).title || '--')];
     const errorHtml = pageState.errorMessage
       ? `<div id="editor-error-slot" class="status-message error">${escapeHtml(pageState.errorMessage)}</div>`
       : '<div id="editor-error-slot" class="status-message"></div>';
+    const duplicateHtml = duplicateAlert
+      ? `
+        <div class="status-message error editor-duplicate-warning">
+          <span>与已有报警重复：${escapeHtml(duplicateAlert.name || duplicateAlert.id || '未命名路径')}</span>
+          <a class="inline-link-btn" href="${escapeHtml(getEditAlertHref(duplicateAlert.id))}">编辑已有报警</a>
+        </div>
+      `
+      : '';
+    const saveDisabledAttr = duplicateAlert ? 'disabled' : '';
 
     editorEl.innerHTML = `
       ${errorHtml}
+      ${duplicateHtml}
       <div class="form-group">
         <label for="editor-name">名称</label>
         <input id="editor-name" type="text" value="${escapeHtml(draft.name)}" placeholder="例如：WBTC 固定路径">
@@ -655,7 +694,7 @@
         <div class="inline-hint">保存后，请回主看板点击重新加载。</div>
         <div class="editor-actions-right">
           <button type="button" id="editor-cancel-btn">取消</button>
-          <button type="button" class="primary" id="editor-save-btn">保存</button>
+          <button type="button" class="primary" id="editor-save-btn" ${saveDisabledAttr}>保存</button>
         </div>
       </div>
     `;

@@ -4,11 +4,14 @@ const {
   DEFAULT_PATH_ALERT_SETTINGS,
   DEFAULT_PATH_ALERT_THRESHOLD_BP,
   normalizeAlertConfig,
+  normalizePathAlert,
   evaluatePathAlert,
   advancePathAlertRuntime,
   isPathAlertConfirmDelayDisabled,
   buildPathAlertWebhookUrl,
-  buildPathAlertSummaryLines
+  buildPathAlertSummaryLines,
+  buildPathAlertTargetDuplicateKey,
+  findDuplicatePathAlert
 } = require('../path-alert-utils');
 
 const emptyConfig = normalizeAlertConfig();
@@ -161,6 +164,135 @@ assert.deepStrictEqual(
     }
   }),
   ['GHO <-> USDC']
+);
+
+const duplicateAlerts = [
+  normalizePathAlert({
+    id: 'path-1',
+    name: '路径一',
+    enabled: true,
+    thresholdBp: 1.1,
+    triggerMode: 'immediate',
+    confirmDelaySec: 0,
+    cooldownSec: 300,
+    target: {
+      type: 'path',
+      legs: [
+        {
+          quoteId: 101,
+          direction: 'forward',
+          pricingMode: 'raw',
+          chain: 'ethereum',
+          fromSymbol: 'GHO',
+          toSymbol: 'USDC'
+        },
+        {
+          quoteId: 202,
+          direction: 'inverse',
+          pricingMode: 'raw',
+          chain: 'arbitrum',
+          fromSymbol: 'USDC',
+          toSymbol: 'GHO'
+        }
+      ]
+    }
+  }, DEFAULT_PATH_ALERT_SETTINGS),
+  normalizePathAlert({
+    id: 'rule-1',
+    name: '规则一',
+    enabled: true,
+    thresholdBp: 2,
+    triggerMode: 'immediate',
+    confirmDelaySec: 0,
+    cooldownSec: 300,
+    target: {
+      type: 'rule',
+      ruleKind: 'fixed',
+      ruleId: 'fixed:gho-usdc'
+    }
+  }, DEFAULT_PATH_ALERT_SETTINGS)
+];
+
+assert.strictEqual(
+  buildPathAlertTargetDuplicateKey(duplicateAlerts[0].target),
+  'path:101|forward|raw>202|inverse|raw'
+);
+assert.strictEqual(
+  buildPathAlertTargetDuplicateKey(duplicateAlerts[1].target),
+  'rule:fixed:fixed:gho-usdc'
+);
+assert.strictEqual(
+  buildPathAlertTargetDuplicateKey({
+    type: 'path',
+    legs: []
+  }),
+  ''
+);
+
+assert.strictEqual(
+  findDuplicatePathAlert(duplicateAlerts, {
+    id: 'path-new',
+    target: {
+      type: 'path',
+      legs: [
+        {
+          quoteId: 101,
+          direction: 'forward',
+          pricingMode: 'raw'
+        },
+        {
+          quoteId: 202,
+          direction: 'inverse',
+          pricingMode: 'raw'
+        }
+      ]
+    }
+  }).id,
+  'path-1'
+);
+
+assert.strictEqual(
+  findDuplicatePathAlert(duplicateAlerts, {
+    id: 'path-new',
+    target: {
+      type: 'path',
+      legs: [
+        {
+          quoteId: 202,
+          direction: 'inverse',
+          pricingMode: 'raw'
+        },
+        {
+          quoteId: 101,
+          direction: 'forward',
+          pricingMode: 'raw'
+        }
+      ]
+    }
+  }),
+  null
+);
+
+assert.strictEqual(
+  findDuplicatePathAlert(duplicateAlerts, {
+    id: 'rule-new',
+    target: {
+      type: 'rule',
+      ruleKind: 'fixed',
+      ruleId: 'fixed:gho-usdc'
+    }
+  }).id,
+  'rule-1'
+);
+
+assert.strictEqual(
+  findDuplicatePathAlert(duplicateAlerts, {
+    id: 'path-1',
+    target: duplicateAlerts[0].target
+  }, {
+    excludeId: 'path-1'
+  }),
+  null
 );
 
 const askInverseAlert = {
