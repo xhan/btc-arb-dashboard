@@ -89,6 +89,7 @@
 当前示例：
 
 - `cbBTC` 组：`cbBTC / xBTC / BTCB / BTC.b`
+- `WBTC` 组：`WBTC / wBTC`
 - `tBTC` 组：`tBTC / TBTC`
 - `USDT` 组：`USDT / USD₮0`
 

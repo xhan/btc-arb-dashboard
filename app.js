@@ -1330,6 +1330,7 @@
             ? window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
             : {
                 cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
+                WBTC: ['WBTC', 'wBTC'],
                 tBTC: ['tBTC', 'TBTC'],
                 USDT: ['USDT', 'USD₮0']
             };
@@ -1339,6 +1340,7 @@
                 xBTC: 'cbBTC',
                 BTCB: 'cbBTC',
                 'BTC.b': 'cbBTC',
+                wBTC: 'WBTC',
                 TBTC: 'tBTC',
                 'USD₮0': 'USDT'
             };
