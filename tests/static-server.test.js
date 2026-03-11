@@ -53,6 +53,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="path-alert-sound"'));
     assert.ok(response.body.includes('src="alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
+    assert.ok(response.body.includes('Velora (默认 700ms)'));
+    assert.ok(response.body.includes('class="settings-grid"'));
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
     assert.ok(response.body.includes('id="path-alert-window"'));
     assert.ok(response.body.includes('id="path-alert-modal"'));

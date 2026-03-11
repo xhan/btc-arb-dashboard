@@ -25,7 +25,7 @@ const summary = buildQueueSummary({
   }
 });
 
-assert.strictEqual(DEFAULT_INTERVALS.velora, 200);
+assert.strictEqual(DEFAULT_INTERVALS.velora, 700);
 assert.strictEqual(DEFAULT_INTERVALS.binance, 1000);
 assert.strictEqual(summary.totalQuoteCount, 5);
 assert.strictEqual(summary.totalTaskCount, 7);

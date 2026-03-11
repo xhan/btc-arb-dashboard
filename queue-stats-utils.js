@@ -8,7 +8,7 @@
   const DEFAULT_INTERVALS = {
     kyber: 170,
     zerox: 110,
-    velora: 200,
+    velora: 700,
     lifi: 170,
     bybit: 1000,
     binance: 1000,
