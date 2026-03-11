@@ -19,13 +19,13 @@ const {
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
-  buildDetailInputAmounts(0.1),
-  [0.1, 0.2, 1, 2]
+  buildDetailInputAmounts(10),
+  [10, 5, 15, 20]
 );
 
 assert.deepStrictEqual(
   buildDetailInputAmounts(undefined),
-  [1, 0.2, 1, 2]
+  [1, 1, 2, 2]
 );
 
 assert.deepStrictEqual(

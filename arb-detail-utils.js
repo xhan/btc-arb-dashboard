@@ -11,12 +11,17 @@
     return amount;
   }
 
+  function normalizeRoundedDetailAmount(value, fallback = 1) {
+    return normalizePositiveAmount(Math.round(Number(value)), fallback);
+  }
+
   function buildDetailInputAmounts(baseAmount) {
+    const safeBaseAmount = normalizePositiveAmount(baseAmount, 1);
     return [
-      normalizePositiveAmount(baseAmount, 1),
-      0.2,
-      1,
-      2
+      safeBaseAmount,
+      normalizeRoundedDetailAmount(safeBaseAmount * 0.5, 1),
+      normalizeRoundedDetailAmount(safeBaseAmount * 1.5, 1),
+      normalizeRoundedDetailAmount(safeBaseAmount * 2, 1)
     ];
   }
 
