@@ -302,12 +302,7 @@
           "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
           "toToken": "0x18084fbA666a33d37592fA2633fD49a74DD93a88",
           "preferredSource": "Kyber",
-          "showInverse": true,
-          "alerts": {
-            "percentUp": 0.1,
-            "percentDown": 0.1,
-            "basePrice": 0.9988539863872524
-          }
+          "showInverse": true
         },
         {
           "id": 1760021802015,
