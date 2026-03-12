@@ -62,6 +62,7 @@
     let saveTimeout = null;
     let priceSnapshotTimer = null;
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
+    const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
     let arbUpdateTimer = null;
     let pathAlertConfig = window.PathAlertUtils
         ? window.PathAlertUtils.normalizeAlertConfig()
@@ -113,6 +114,7 @@
     let quoteSourceLastRequestAtByIntervalKey = new Map();
     let arbDetailChartPreviewCharts = [];
     let arbDetailChartPreviewRunId = 0;
+    let arbDetailChartAutoRefreshTimer = null;
     
     let hoverTimeout = null;        
     let currentHoveredQuoteId = null; 
@@ -189,6 +191,7 @@
     const arbDetailModal = document.getElementById('arb-detail-modal');
     const arbDetailCloseBtn = document.getElementById('arb-detail-close-btn');
     const arbDetailChartLink = document.getElementById('arb-detail-chart-link');
+    const arbDetailChartAutoRefreshToggle = document.getElementById('arb-detail-chart-auto-refresh');
     const arbDetailSubtitle = document.getElementById('arb-detail-subtitle');
     const arbDetailChartPreview = document.getElementById('arb-detail-chart-preview');
     const arbDetailGrid = document.getElementById('arb-detail-grid');
@@ -1682,6 +1685,22 @@
         }
     }
 
+    function syncArbDetailChartAutoRefreshTimer() {
+        if (arbDetailChartAutoRefreshTimer) {
+            clearInterval(arbDetailChartAutoRefreshTimer);
+            arbDetailChartAutoRefreshTimer = null;
+        }
+        if (!arbDetailState.visible || !arbDetailChartAutoRefreshToggle || !arbDetailChartAutoRefreshToggle.checked) {
+            return;
+        }
+        arbDetailChartAutoRefreshTimer = setInterval(() => {
+            if (!arbDetailState.visible) return;
+            void syncArbDetailChartPreview(arbDetailState.selectedOpportunity, {
+                forceReload: true
+            });
+        }, CHART_AUTO_REFRESH_INTERVAL_MS);
+    }
+
     function renderArbDetailChartPreviewMessage(message) {
         if (!arbDetailChartPreview) return;
         arbDetailChartPreview.innerHTML = `<div class="arb-detail-chart-message">${escapeHtml(message)}</div>`;
@@ -1706,8 +1725,9 @@
         `;
     }
 
-    async function syncArbDetailChartPreview(current) {
+    async function syncArbDetailChartPreview(current, options = {}) {
         if (!arbDetailChartPreview) return;
+        const forceReload = options.forceReload === true;
 
         const pairs = current && current.cycle
             ? getArbDetailUtils().buildArbDetailChartPairs(current.cycle)
@@ -1726,7 +1746,7 @@
             return;
         }
 
-        if (arbDetailState.chartPreviewSignature === signature && arbDetailChartPreview.childElementCount > 0) {
+        if (!forceReload && arbDetailState.chartPreviewSignature === signature && arbDetailChartPreview.childElementCount > 0) {
             return;
         }
 
@@ -1849,6 +1869,10 @@
         arbDetailState.chartPreviewSignature = '';
         arbDetailChartPreviewRunId += 1;
         destroyArbDetailChartPreview();
+        if (arbDetailChartAutoRefreshTimer) {
+            clearInterval(arbDetailChartAutoRefreshTimer);
+            arbDetailChartAutoRefreshTimer = null;
+        }
         setArbDetailChartLinkState('');
         if (arbDetailModal) {
             arbDetailModal.classList.remove('visible');
@@ -1890,8 +1914,12 @@
         arbDetailState.isRefreshing = false;
         arbDetailState.editingInputIndex = null;
         arbDetailState.chartPreviewSignature = '';
+        if (arbDetailChartAutoRefreshToggle) {
+            arbDetailChartAutoRefreshToggle.checked = true;
+        }
         setArbDetailDashboardPause(true);
         renderArbDetailModal(true);
+        syncArbDetailChartAutoRefreshTimer();
         startArbDetailLoop(arbDetailState.loopToken);
     }
 
@@ -4697,6 +4725,11 @@
             }
             if (arbDetailCloseBtn) {
                 arbDetailCloseBtn.addEventListener('click', closeArbDetailModal);
+            }
+            if (arbDetailChartAutoRefreshToggle) {
+                arbDetailChartAutoRefreshToggle.addEventListener('change', () => {
+                    syncArbDetailChartAutoRefreshTimer();
+                });
             }
             if (arbDetailModal) {
                 arbDetailModal.addEventListener('click', (event) => {

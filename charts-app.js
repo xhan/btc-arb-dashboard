@@ -3,9 +3,11 @@
   const searchInput = document.getElementById('chart-search-input');
   const addBtn = document.getElementById('chart-add-btn');
   const refreshBtn = document.getElementById('chart-refresh-btn');
+  const autoRefreshToggle = document.getElementById('chart-auto-refresh-toggle');
   const suggestionsEl = document.getElementById('chart-suggestions');
   const statusEl = document.getElementById('chart-page-status');
   const panelsEl = document.getElementById('chart-panels');
+  const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
 
   const state = {
     pairs: [],
@@ -14,7 +16,9 @@
     panels: new Map(),
     profitPanel: null,
     prefillApplied: false,
-    prefillPairs: utils ? utils.parseChartsPagePrefill(location.href) : []
+    prefillPairs: utils ? utils.parseChartsPagePrefill(location.href) : [],
+    autoRefreshTimer: null,
+    refreshPromise: null
   };
 
   function setStatus(message, tone) {
@@ -103,6 +107,19 @@
   function syncRefreshButtonState() {
     if (!refreshBtn) return;
     refreshBtn.disabled = state.panels.size === 0;
+  }
+
+  function syncChartAutoRefreshTimer() {
+    if (state.autoRefreshTimer) {
+      clearInterval(state.autoRefreshTimer);
+      state.autoRefreshTimer = null;
+    }
+    if (!autoRefreshToggle || !autoRefreshToggle.checked || state.panels.size === 0) {
+      return;
+    }
+    state.autoRefreshTimer = setInterval(() => {
+      void refreshAllPanels({ silentStatus: true });
+    }, CHART_AUTO_REFRESH_INTERVAL_MS);
   }
 
   function destroyPanelChart(panel) {
@@ -436,6 +453,7 @@
     state.panels.delete(key);
     renderProfitPanel();
     syncRefreshButtonState();
+    syncChartAutoRefreshTimer();
     renderEmptyState();
   }
 
@@ -489,6 +507,7 @@
     };
     state.panels.set(pair.key, panel);
     syncRefreshButtonState();
+    syncChartAutoRefreshTimer();
 
     root.querySelector('.chart-panel-action-btn-remove').addEventListener('click', () => {
       removePanel(pair.key);
@@ -521,28 +540,43 @@
     hideSuggestions();
   }
 
-  async function refreshAllPanels() {
+  async function refreshAllPanels(options = {}) {
+    if (state.refreshPromise) {
+      return state.refreshPromise;
+    }
+
     const panels = Array.from(state.panels.values());
     if (!panels.length) {
-      setStatus('当前没有可刷新的图表。', 'error');
+      if (!options.silentStatus) {
+        setStatus('当前没有可刷新的图表。', 'error');
+      }
       return;
     }
 
-    if (refreshBtn) {
+    if (refreshBtn && !options.silentStatus) {
       refreshBtn.disabled = true;
       refreshBtn.textContent = '刷新中...';
     }
 
-    try {
-      setStatus(`正在刷新 ${panels.length} 张图表...`);
-      await Promise.all(panels.map((panel) => loadPanelSeries(panel, { silentStatus: true })));
-      setStatus(`已刷新 ${panels.length} 张图表。`);
-    } finally {
-      if (refreshBtn) {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = '刷新全部';
+    state.refreshPromise = (async () => {
+      try {
+        if (!options.silentStatus) {
+          setStatus(`正在刷新 ${panels.length} 张图表...`);
+        }
+        await Promise.all(panels.map((panel) => loadPanelSeries(panel, { silentStatus: true })));
+        if (!options.silentStatus) {
+          setStatus(`已刷新 ${panels.length} 张图表。`);
+        }
+      } finally {
+        if (refreshBtn && !options.silentStatus) {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = '刷新全部';
+        }
+        state.refreshPromise = null;
       }
-    }
+    })();
+
+    return state.refreshPromise;
   }
 
   async function applyPrefillPairs() {
@@ -650,6 +684,12 @@
       });
     }
 
+    if (autoRefreshToggle) {
+      autoRefreshToggle.addEventListener('change', () => {
+        syncChartAutoRefreshTimer();
+      });
+    }
+
     if (suggestionsEl) {
       suggestionsEl.addEventListener('click', (event) => {
         const button = event.target.closest('[data-chart-pair-key]');
@@ -677,5 +717,6 @@
   applyPrefillPairs();
   loadPairs();
   syncRefreshButtonState();
+  syncChartAutoRefreshTimer();
   renderEmptyState();
 }());
