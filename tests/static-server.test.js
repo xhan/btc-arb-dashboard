@@ -137,6 +137,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-page"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-list"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-editor"'));
+    assert.ok(pathAlertsResponse.body.includes('src="quote-calculator.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));
     assert.ok(

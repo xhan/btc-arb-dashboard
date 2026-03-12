@@ -4,6 +4,7 @@ const path = require('path');
 const vm = require('vm');
 
 const candidateUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-candidate-utils.js'), 'utf8');
+const quoteCalculatorCode = fs.readFileSync(path.join(__dirname, '..', 'quote-calculator.js'), 'utf8');
 const appCode = fs.readFileSync(path.join(__dirname, '..', 'path-alerts-app.js'), 'utf8');
 
 function createElement() {
@@ -74,6 +75,7 @@ sandbox.window.clearTimeout = clearTimeout;
 
 vm.createContext(sandbox);
 vm.runInContext(candidateUtilsCode, sandbox);
+vm.runInContext(quoteCalculatorCode, sandbox);
 vm.runInContext(appCode, sandbox);
 
 const candidates = sandbox.window.PathAlertsAppTestHooks.buildFallbackQuoteCandidatesFromDashboard([
@@ -82,7 +84,8 @@ const candidates = sandbox.window.PathAlertsAppTestHooks.buildFallbackQuoteCandi
     name: '测试监控',
     quotes: [
       { id: 101, chain: 'ethereum', fromToken: '0xaaa', toToken: '0xbbb', showInverse: true },
-      { id: 102, chain: 'ethereum', fromToken: '0xccc', toToken: '0xddd', showInverse: true, paused: true }
+      { id: 102, chain: 'ethereum', fromToken: '0xccc', toToken: '0xddd', showInverse: true, paused: true },
+      { id: 103, chain: 'Bybit', symbol: 'BTCUSDT' }
     ]
   }
 ]);
@@ -90,3 +93,5 @@ const candidates = sandbox.window.PathAlertsAppTestHooks.buildFallbackQuoteCandi
 assert.ok(candidates.some((item) => item.key === '101:forward'));
 assert.ok(candidates.some((item) => item.key === '101:inverse'));
 assert.ok(!candidates.some((item) => item.key.startsWith('102:')));
+assert.ok(candidates.some((item) => item.key === '103:cex-bid1'));
+assert.ok(candidates.some((item) => item.key === '103:cex-ask1-inverse'));

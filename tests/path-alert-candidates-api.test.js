@@ -39,6 +39,11 @@ fs.writeFileSync(configPath, JSON.stringify({
           chain: 'Bybit',
           amount: 1,
           symbol: 'WBTCBTC'
+        },
+        {
+          id: 104,
+          chain: 'Bybit',
+          amount: 1
         }
       ]
     }
@@ -114,6 +119,9 @@ async function waitForServer(attempts = 15) {
     assert.ok(bybitAsk);
     assert.strictEqual(bybitAsk.fromSymbol, 'BTC');
     assert.strictEqual(bybitAsk.toSymbol, 'WBTC');
+
+    const malformedBybit = candidates.find((item) => item.key.startsWith('104:'));
+    assert.strictEqual(malformedBybit, undefined);
   } finally {
     serverProcess.kill();
     fs.rmSync(tempDir, { recursive: true, force: true });

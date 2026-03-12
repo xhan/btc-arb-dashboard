@@ -76,6 +76,19 @@
     return normalized === 'bybit' || normalized === 'binance';
   }
 
+  function parseCexTradingPairSymbol(symbol) {
+    if (window.QuoteCalculator && typeof window.QuoteCalculator.splitCompactTradingPairSymbol === 'function') {
+      const parsed = window.QuoteCalculator.splitCompactTradingPairSymbol(symbol);
+      if (parsed && parsed.fromSymbol && parsed.toSymbol) {
+        return parsed;
+      }
+    }
+
+    const [fromSymbol, toSymbol] = String(symbol || '').split('/').map((item) => item.trim());
+    if (!fromSymbol || !toSymbol) return null;
+    return { fromSymbol, toSymbol };
+  }
+
   function shortToken(value) {
     const text = String(value || '').trim();
     if (!text) return '--';
@@ -229,14 +242,14 @@
     for (const category of (dashboard || [])) {
       for (const quote of (category.quotes || [])) {
         if (isCexOrderbookChain(quote.chain)) {
-          const [fromSymbol, toSymbol] = String(quote.symbol || '').split('/').map((item) => item.trim());
-          if (!fromSymbol || !toSymbol) continue;
+          const parsed = parseCexTradingPairSymbol(quote.symbol);
+          if (!parsed) continue;
           records.push({
             categoryName: category.name,
             quote,
-            fromSymbol,
-            toSymbol,
-            searchText: `${category.name} ${quote.chain} ${quote.symbol} ${fromSymbol} ${toSymbol}`
+            fromSymbol: parsed.fromSymbol,
+            toSymbol: parsed.toSymbol,
+            searchText: `${category.name} ${quote.chain} ${quote.symbol} ${parsed.fromSymbol} ${parsed.toSymbol}`
           });
           continue;
         }
