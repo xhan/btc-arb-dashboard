@@ -221,34 +221,21 @@
   }
 
   function buildQuoteCandidates() {
-    const candidates = [];
-    for (const category of dashboardState) {
+    return buildFallbackQuoteCandidatesFromDashboard(dashboardState);
+  }
+
+  function buildFallbackQuoteCandidatesFromDashboard(dashboard) {
+    const records = [];
+    for (const category of (dashboard || [])) {
       for (const quote of (category.quotes || [])) {
         if (isCexOrderbookChain(quote.chain)) {
           const [fromSymbol, toSymbol] = String(quote.symbol || '').split('/').map((item) => item.trim());
           if (!fromSymbol || !toSymbol) continue;
-          candidates.push({
-            key: `${quote.id}:cex-bid1`,
-            quoteId: quote.id,
-            direction: 'forward',
-            pricingMode: 'cex-bid1',
-            chain: quote.chain,
+          records.push({
+            categoryName: category.name,
+            quote,
             fromSymbol,
             toSymbol,
-            categoryName: category.name,
-            label: buildQuoteLabel(quote.chain, fromSymbol, toSymbol, ' [bid1]'),
-            searchText: `${category.name} ${quote.chain} ${quote.symbol} ${fromSymbol} ${toSymbol}`
-          });
-          candidates.push({
-            key: `${quote.id}:cex-ask1-inverse`,
-            quoteId: quote.id,
-            direction: 'forward',
-            pricingMode: 'cex-ask1-inverse',
-            chain: quote.chain,
-            fromSymbol: toSymbol,
-            toSymbol: fromSymbol,
-            categoryName: category.name,
-            label: buildQuoteLabel(quote.chain, toSymbol, fromSymbol, ' [ask1]'),
             searchText: `${category.name} ${quote.chain} ${quote.symbol} ${fromSymbol} ${toSymbol}`
           });
           continue;
@@ -256,35 +243,20 @@
 
         const forwardFrom = shortToken(quote.fromToken);
         const forwardTo = shortToken(quote.toToken);
-        candidates.push({
-          key: `${quote.id}:forward`,
-          quoteId: quote.id,
-          direction: 'forward',
-          pricingMode: 'raw',
-          chain: quote.chain,
+        records.push({
+          categoryName: category.name,
+          quote,
           fromSymbol: forwardFrom,
           toSymbol: forwardTo,
-          categoryName: category.name,
-          label: buildQuoteLabel(quote.chain, forwardFrom, forwardTo),
           searchText: `${category.name} ${quote.chain} ${quote.fromToken || ''} ${quote.toToken || ''} ${forwardFrom} ${forwardTo}`
         });
-        if (quote.showInverse) {
-          candidates.push({
-            key: `${quote.id}:inverse`,
-            quoteId: quote.id,
-            direction: 'inverse',
-            pricingMode: 'raw',
-            chain: quote.chain,
-            fromSymbol: forwardTo,
-            toSymbol: forwardFrom,
-            categoryName: category.name,
-            label: buildQuoteLabel(quote.chain, forwardTo, forwardFrom),
-            searchText: `${category.name} ${quote.chain} ${quote.fromToken || ''} ${quote.toToken || ''} ${forwardFrom} ${forwardTo}`
-          });
-        }
       }
     }
-    return candidates;
+    return window.PathAlertCandidateUtils
+      ? window.PathAlertCandidateUtils.buildPathAlertCandidates(records, {
+        buildLabel: (chain, fromSymbol, toSymbol, suffix = '') => buildQuoteLabel(chain, fromSymbol, toSymbol, suffix)
+      })
+      : [];
   }
 
   function matchesCandidate(candidate, query) {
@@ -1020,5 +992,11 @@
     });
   }
 
-  init();
+  window.PathAlertsAppTestHooks = {
+    buildFallbackQuoteCandidatesFromDashboard
+  };
+
+  if (!window.__PATH_ALERTS_APP_DISABLE_AUTO_INIT__) {
+    init();
+  }
 }());

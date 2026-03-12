@@ -31,7 +31,8 @@ fs.writeFileSync(configPath, JSON.stringify({
           amount: 1,
           fromToken: '0xcoin::tbtc::TBTC',
           toToken: '0xcoin::wbtc::WBTC',
-          showInverse: true
+          showInverse: true,
+          paused: true
         },
         {
           id: 103,
@@ -101,10 +102,8 @@ async function waitForServer(attempts = 15) {
     assert.strictEqual(ethForward.toSymbol, 'USDC');
     assert.ok(ethForward.label.includes('(ETH) GHO -> USDC'));
 
-    const suiInverse = candidates.find((item) => item.key === '102:inverse');
-    assert.ok(suiInverse);
-    assert.strictEqual(suiInverse.fromSymbol, 'WBTC');
-    assert.strictEqual(suiInverse.toSymbol, 'TBTC');
+    const pausedSui = candidates.find((item) => item.key.startsWith('102:'));
+    assert.strictEqual(pausedSui, undefined);
 
     const bybitBid = candidates.find((item) => item.key === '103:cex-bid1');
     assert.ok(bybitBid);

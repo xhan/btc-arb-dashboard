@@ -51,11 +51,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(
       response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(response.body.includes('id="path-alert-sound"'));
     assert.ok(response.body.includes('src="alert_path.mp3"'));
@@ -86,6 +87,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('path-alert-reload-btn'));
     assert.ok(appJsResponse.body.includes('/path-alerts'));
     assert.ok(appJsResponse.body.includes('data-path-alert-edit-link'));
+    assert.ok(appJsResponse.body.includes('PriceSnapshotPayloadUtils'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);
@@ -136,8 +138,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-list"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-editor"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));
     assert.ok(
-      pathAlertsResponse.body.indexOf('src="quote-pause-utils.js"') < pathAlertsResponse.body.indexOf('src="path-alerts-app.js"')
+      pathAlertsResponse.body.indexOf('src="path-alert-candidate-utils.js"') < pathAlertsResponse.body.indexOf('src="path-alerts-app.js"')
     );
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-rule-definitions.js"'));
@@ -148,6 +151,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsAppResponse.body.includes('path-alert-search-input'));
     assert.ok(pathAlertsAppResponse.body.includes('path-alert-add-leg-btn'));
     assert.ok(pathAlertsAppResponse.body.includes('path-alert-suggestions'));
+    assert.ok(pathAlertsAppResponse.body.includes('PathAlertCandidateUtils'));
     assert.ok(pathAlertsAppResponse.body.includes("event.key === 'ArrowDown'"));
     assert.ok(pathAlertsAppResponse.body.includes("event.key === 'ArrowUp'"));
     assert.ok(pathAlertsAppResponse.body.includes("event.key === 'Enter'"));

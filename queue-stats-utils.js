@@ -1,10 +1,13 @@
 (function (root, factory) {
-  const api = factory();
+  const quotePauseUtils = typeof module !== 'undefined' && module.exports
+    ? require('./quote-pause-utils')
+    : root.QuotePauseUtils;
+  const api = factory(quotePauseUtils);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   root.QueueStatsUtils = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils) {
   const DEFAULT_INTERVALS = {
     kyber: 170,
     zerox: 110,
@@ -30,6 +33,13 @@
   function shouldQueueInverseFetch(quote) {
     const normalized = normalizeChain(quote && quote.chain ? quote.chain : '');
     return !!quote && !!quote.showInverse && normalized !== 'bybit' && normalized !== 'binance';
+  }
+
+  function isQuotePaused(quote) {
+    if (quotePauseUtils && typeof quotePauseUtils.isQuotePaused === 'function') {
+      return quotePauseUtils.isQuotePaused(quote);
+    }
+    return !!quote && quote.paused === true;
   }
 
   function getQueueTypeForQuote(quote) {
@@ -109,6 +119,7 @@
     for (const category of normalized.dashboard) {
       const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
       for (const quote of quotes) {
+        if (isQuotePaused(quote)) continue;
         const type = getQueueTypeForQuote(quote);
         const bucket = queueMap.get(type);
         if (!bucket) continue;

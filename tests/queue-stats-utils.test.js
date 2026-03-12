@@ -15,7 +15,8 @@ const summary = buildQueueSummary({
         { id: 102, chain: 'ethereum', preferredSource: 'Velora', showInverse: false },
         { id: 103, chain: 'Bybit', preferredSource: 'Bybit', showInverse: true },
         { id: 105, chain: 'Binance', preferredSource: 'Binance', showInverse: true },
-        { id: 104, chain: 'solana', preferredSource: 'Jupiter', showInverse: true }
+        { id: 104, chain: 'solana', preferredSource: 'Jupiter', showInverse: true },
+        { id: 106, chain: 'ethereum', preferredSource: 'Kyber', showInverse: true, paused: true }
       ]
     }
   ],

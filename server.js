@@ -15,6 +15,7 @@ const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } =
 const { parseUtc8Input } = require('./time-utils');
 const { createMarketClients } = require('./market-clients');
 const { buildPathAlertWebhookUrl, normalizeAlertConfig } = require('./path-alert-utils');
+const { buildPathAlertCandidates } = require('./path-alert-candidate-utils');
 const { splitCompactTradingPairSymbol } = require('./quote-calculator');
 const fs = require('fs').promises;
 const path = require('path');
@@ -226,70 +227,24 @@ async function buildPathAlertQuoteCandidatesFromConfig() {
         throw error;
     });
     const dashboard = Array.isArray(config) ? config : (Array.isArray(config.dashboard) ? config.dashboard : []);
-    const candidates = [];
+    const records = [];
 
     for (const category of dashboard) {
         for (const quote of (category.quotes || [])) {
             const resolved = await resolveQuoteTokenSymbols(quote);
-            if (isCexOrderbookChain(quote.chain)) {
-                candidates.push({
-                    key: `${quote.id}:cex-bid1`,
-                    quoteId: quote.id,
-                    direction: 'forward',
-                    pricingMode: 'cex-bid1',
-                    chain: quote.chain,
-                    fromSymbol: resolved.fromSymbol,
-                    toSymbol: resolved.toSymbol,
-                    categoryName: category.name,
-                    label: buildPathAlertCandidateLabel(quote.chain, resolved.fromSymbol, resolved.toSymbol, ' [bid1]'),
-                    searchText: `${category.name || ''} ${quote.chain || ''} ${quote.symbol || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
-                });
-                candidates.push({
-                    key: `${quote.id}:cex-ask1-inverse`,
-                    quoteId: quote.id,
-                    direction: 'forward',
-                    pricingMode: 'cex-ask1-inverse',
-                    chain: quote.chain,
-                    fromSymbol: resolved.toSymbol,
-                    toSymbol: resolved.fromSymbol,
-                    categoryName: category.name,
-                    label: buildPathAlertCandidateLabel(quote.chain, resolved.toSymbol, resolved.fromSymbol, ' [ask1]'),
-                    searchText: `${category.name || ''} ${quote.chain || ''} ${quote.symbol || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
-                });
-                continue;
-            }
-
-            candidates.push({
-                key: `${quote.id}:forward`,
-                quoteId: quote.id,
-                direction: 'forward',
-                pricingMode: 'raw',
-                chain: quote.chain,
+            records.push({
+                categoryName: category.name,
+                quote,
                 fromSymbol: resolved.fromSymbol,
                 toSymbol: resolved.toSymbol,
-                categoryName: category.name,
-                label: buildPathAlertCandidateLabel(quote.chain, resolved.fromSymbol, resolved.toSymbol),
-                searchText: `${category.name || ''} ${quote.chain || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
+                searchText: `${category.name || ''} ${quote.chain || ''} ${quote.symbol || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
             });
-
-            if (quote.showInverse) {
-                candidates.push({
-                    key: `${quote.id}:inverse`,
-                    quoteId: quote.id,
-                    direction: 'inverse',
-                    pricingMode: 'raw',
-                    chain: quote.chain,
-                    fromSymbol: resolved.toSymbol,
-                    toSymbol: resolved.fromSymbol,
-                    categoryName: category.name,
-                    label: buildPathAlertCandidateLabel(quote.chain, resolved.toSymbol, resolved.fromSymbol),
-                    searchText: `${category.name || ''} ${quote.chain || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
-                });
-            }
         }
     }
 
-    return candidates;
+    return buildPathAlertCandidates(records, {
+        buildLabel: (chain, fromSymbol, toSymbol, suffix = '') => buildPathAlertCandidateLabel(chain, fromSymbol, toSymbol, suffix)
+    });
 }
 
 function getQuoteLogPairLabel(chain, fromSymbol, toSymbol, fromToken, toToken) {

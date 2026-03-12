@@ -3638,53 +3638,16 @@
     }
 
     function buildPriceSnapshotPayload() {
-        const quotes = [];
-
-        for (const category of dashboardState) {
-            const categoryId = category?.id ?? null;
-            const categoryName = category?.name || '';
-            for (const quote of (category?.quotes || [])) {
-                const state = quoteMonitorState.get(quote.id) || {};
-                const fromSymbol = state.fromSymbol || '';
-                const toSymbol = state.toSymbol || '';
-                const inverseFromSymbol = state.inverseFromSymbol || '';
-                const inverseToSymbol = state.inverseToSymbol || '';
-                const size = quote.amount || 1;
-                const pair = fromSymbol && toSymbol
-                    ? `${fromSymbol}/${toSymbol}`
-                    : (quote.symbol || '');
-                const inversePair = inverseFromSymbol && inverseToSymbol
-                    ? `${inverseFromSymbol}/${inverseToSymbol}`
-                    : '';
-
-                quotes.push({
-                    quoteId: quote.id,
-                    categoryId,
-                    categoryName,
-                    chain: quote.chain,
-                    pair,
-                    size,
-                    preferredSource: quote.preferredSource || 'Kyber',
-                    usedSource: state.usedSource || '',
-                    fromToken: quote.fromToken || '',
-                    toToken: quote.toToken || '',
-                    fromSymbol,
-                    toSymbol,
-                    price: typeof state.lastRawPrice === 'number' ? state.lastRawPrice : null,
-                    inversePrice: typeof state.inverseRawPrice === 'number' ? state.inverseRawPrice : null,
-                    resultText: state.lastResultText || '',
-                    inversePair,
-                    inverseResultText: inversePair && typeof state.inverseRawPrice === 'number' && size
-                        ? `${size} ${inverseFromSymbol} ≈ ${(size * state.inverseRawPrice).toFixed(6)} ${inverseToSymbol}`
-                        : ''
-                });
-            }
-        }
-
-        return {
-            clientCapturedAt: new Date().toISOString(),
-            quotes
-        };
+        return window.PriceSnapshotPayloadUtils
+            ? window.PriceSnapshotPayloadUtils.buildPriceSnapshotPayload({
+                dashboardState,
+                quoteStateById: quoteMonitorState,
+                clientCapturedAt: new Date().toISOString()
+            })
+            : {
+                clientCapturedAt: new Date().toISOString(),
+                quotes: []
+            };
     }
 
     async function savePriceSnapshot() {
