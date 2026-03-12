@@ -22,7 +22,11 @@
       fromSymbol: state.fromSymbol || '',
       toSymbol: state.toSymbol || '',
       lastRawPrice: null,
-      lastResultText: ''
+      lastResultText: '',
+      inverseRawPrice: null,
+      usedSource: '',
+      hasUnreadAlert: false,
+      logShown: false
     };
   }
 

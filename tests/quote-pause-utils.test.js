@@ -26,13 +26,38 @@ assert.deepStrictEqual(
     fromSymbol: 'WBTC',
     toSymbol: 'cbBTC',
     lastRawPrice: 1.001,
-    lastResultText: 'WBTC ≈ 1.001 cbBTC'
+    lastResultText: 'WBTC ≈ 1.001 cbBTC',
+    inverseRawPrice: 0.999,
+    usedSource: 'Kyber',
+    hasUnreadAlert: true,
+    logShown: true
   }),
   {
     fromSymbol: 'WBTC',
     toSymbol: 'cbBTC',
     lastRawPrice: null,
-    lastResultText: ''
+    lastResultText: '',
+    inverseRawPrice: null,
+    usedSource: '',
+    hasUnreadAlert: false,
+    logShown: false
+  }
+);
+
+assert.deepStrictEqual(
+  quotePauseUtils.buildPausedQuoteState({
+    lastRawPrice: 1.001,
+    lastResultText: 'anonymous pair'
+  }),
+  {
+    fromSymbol: '',
+    toSymbol: '',
+    lastRawPrice: null,
+    lastResultText: '',
+    inverseRawPrice: null,
+    usedSource: '',
+    hasUnreadAlert: false,
+    logShown: false
   }
 );
 
