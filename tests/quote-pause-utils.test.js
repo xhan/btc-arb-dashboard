@@ -28,9 +28,14 @@ assert.deepStrictEqual(
     lastRawPrice: 1.001,
     lastResultText: 'WBTC ≈ 1.001 cbBTC',
     inverseRawPrice: 0.999,
+    inverseFromSymbol: 'cbBTC',
+    inverseToSymbol: 'WBTC',
     usedSource: 'Kyber',
+    usedSourceReal: 'KyberSwap',
+    cexOrderbook: { bids: [['1', '2']] },
     hasUnreadAlert: true,
-    logShown: true
+    logShown: true,
+    isSoundActive: true
   }),
   {
     fromSymbol: 'WBTC',
