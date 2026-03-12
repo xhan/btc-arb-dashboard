@@ -12,10 +12,14 @@ const {
   shouldCommitArbDetailInputOnKey,
   getArbDetailIntervalKey,
   getArbDetailRateLimitDelay,
+  getArbDetailBudgetTimestamp,
+  recordArbDetailBudgetTimestamp,
   buildArbOpportunityStableId,
   buildUniqueArbOpportunityId,
   getNextArbDetailRequestVersion,
   shouldApplyArbDetailRequestVersion,
+  shouldSyncArbDetailSnapshotForCard,
+  buildArbDetailSnapshotMonitorState,
   buildArbDetailDexLink
 } = require('../arb-detail-utils');
 
@@ -160,6 +164,37 @@ assert.strictEqual(
   0
 );
 
+const detailBudgetState = new Map();
+assert.strictEqual(
+  getArbDetailBudgetTimestamp(detailBudgetState, 'Kyber'),
+  null
+);
+
+assert.strictEqual(
+  recordArbDetailBudgetTimestamp(detailBudgetState, 'Kyber', 1000),
+  1000
+);
+
+assert.strictEqual(
+  getArbDetailBudgetTimestamp(detailBudgetState, 'Kyber'),
+  1000
+);
+
+assert.strictEqual(
+  recordArbDetailBudgetTimestamp(detailBudgetState, 'Kyber', 900),
+  1000
+);
+
+assert.strictEqual(
+  recordArbDetailBudgetTimestamp(detailBudgetState, 'Velora', 1200),
+  1200
+);
+
+assert.strictEqual(
+  getArbDetailBudgetTimestamp(detailBudgetState, 'Velora'),
+  1200
+);
+
 const stableCycleA = {
   legs: [
     { chain: 'ethereum', from: 'cbBTC', to: 'WBTC', quoteId: '1', inverse: false, rate: 1.0022 },
@@ -216,6 +251,80 @@ assert.strictEqual(
 assert.strictEqual(
   shouldApplyArbDetailRequestVersion(2, 3),
   false
+);
+
+assert.strictEqual(
+  shouldSyncArbDetailSnapshotForCard(0),
+  true
+);
+
+assert.strictEqual(
+  shouldSyncArbDetailSnapshotForCard(1),
+  false
+);
+
+assert.deepStrictEqual(
+  buildArbDetailSnapshotMonitorState(
+    {
+      inverseRawPrice: 1.02,
+      inverseFromSymbol: 'WBTC',
+      inverseToSymbol: 'cbBTC'
+    },
+    {
+      symbols: { from: 'cbBTC', to: 'WBTC' },
+      resultText: '1 cbBTC ≈ 0.998 WBTC',
+      rawPrice: 0.998,
+      cexOrderbook: null,
+      usedSource: 'Kyber'
+    },
+    {
+      successSource: 'Kyber',
+      isInverseFetch: false
+    }
+  ),
+  {
+    inverseRawPrice: 1.02,
+    inverseFromSymbol: 'WBTC',
+    inverseToSymbol: 'cbBTC',
+    fromSymbol: 'cbBTC',
+    toSymbol: 'WBTC',
+    lastResultText: '1 cbBTC ≈ 0.998 WBTC',
+    lastRawPrice: 0.998,
+    cexOrderbook: null,
+    usedSource: 'Kyber',
+    usedSourceReal: 'Kyber'
+  }
+);
+
+assert.deepStrictEqual(
+  buildArbDetailSnapshotMonitorState(
+    {
+      fromSymbol: 'cbBTC',
+      toSymbol: 'WBTC',
+      lastResultText: '1 cbBTC ≈ 0.999 WBTC',
+      lastRawPrice: 0.999
+    },
+    {
+      symbols: { from: 'WBTC', to: 'cbBTC' },
+      resultText: '0.998 WBTC ≈ 1.001 cbBTC',
+      rawPrice: 1.001,
+      cexOrderbook: null,
+      usedSource: 'Ekubo'
+    },
+    {
+      successSource: 'Ekubo',
+      isInverseFetch: true
+    }
+  ),
+  {
+    fromSymbol: 'cbBTC',
+    toSymbol: 'WBTC',
+    lastResultText: '1 cbBTC ≈ 0.999 WBTC',
+    lastRawPrice: 0.999,
+    inverseRawPrice: 1.001,
+    inverseFromSymbol: 'WBTC',
+    inverseToSymbol: 'cbBTC'
+  }
 );
 
 assert.deepStrictEqual(

@@ -110,7 +110,7 @@
         chartPreviewSignature: ''
     };
     let arbDetailFetchController = null;
-    let arbDetailLastRequestAtBySource = new Map();
+    let quoteSourceLastRequestAtByIntervalKey = new Map();
     let arbDetailChartPreviewCharts = [];
     let arbDetailChartPreviewRunId = 0;
     
@@ -741,6 +741,57 @@
             },
             shouldApplyArbDetailRequestVersion(expectedVersion, currentVersion) {
                 return Number(expectedVersion) === Number(currentVersion);
+            },
+            getArbDetailBudgetTimestamp(budgetState, source) {
+                if (!(budgetState instanceof Map)) return null;
+                const intervalKey = this.getArbDetailIntervalKey(source);
+                if (!intervalKey) return null;
+                const timestamp = Number(budgetState.get(intervalKey));
+                return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : null;
+            },
+            recordArbDetailBudgetTimestamp(budgetState, source, requestedAt = Date.now()) {
+                if (!(budgetState instanceof Map)) return null;
+                const intervalKey = this.getArbDetailIntervalKey(source);
+                if (!intervalKey) return null;
+                const nextTimestamp = Number(requestedAt);
+                if (!Number.isFinite(nextTimestamp) || nextTimestamp <= 0) {
+                    return this.getArbDetailBudgetTimestamp(budgetState, source);
+                }
+                const currentTimestamp = this.getArbDetailBudgetTimestamp(budgetState, source);
+                const appliedTimestamp = currentTimestamp && currentTimestamp > nextTimestamp
+                    ? currentTimestamp
+                    : nextTimestamp;
+                budgetState.set(intervalKey, appliedTimestamp);
+                return appliedTimestamp;
+            },
+            shouldSyncArbDetailSnapshotForCard(cardIndex) {
+                return Number(cardIndex) === 0;
+            },
+            buildArbDetailSnapshotMonitorState(previousState, quoteResult, options = {}) {
+                const baseState = previousState && typeof previousState === 'object'
+                    ? { ...previousState }
+                    : {};
+                const symbols = quoteResult && quoteResult.symbols && typeof quoteResult.symbols === 'object'
+                    ? quoteResult.symbols
+                    : {};
+                if (options.isInverseFetch) {
+                    return {
+                        ...baseState,
+                        inverseRawPrice: quoteResult?.rawPrice,
+                        inverseFromSymbol: symbols.from || '',
+                        inverseToSymbol: symbols.to || ''
+                    };
+                }
+                return {
+                    ...baseState,
+                    fromSymbol: symbols.from || '',
+                    toSymbol: symbols.to || '',
+                    lastResultText: quoteResult?.resultText || '',
+                    lastRawPrice: quoteResult?.rawPrice,
+                    cexOrderbook: quoteResult?.cexOrderbook || null,
+                    usedSource: quoteResult?.usedSource || '',
+                    usedSourceReal: options.successSource || null
+                };
             },
             buildArbDetailDexLink(config = {}) {
                 const chain = String(config.chain || '').trim();
@@ -1563,6 +1614,31 @@
         return Number.isFinite(configured) && configured > 0 ? configured : 0;
     }
 
+    function getQuoteSourceBudgetTimestamp(source) {
+        return getArbDetailUtils().getArbDetailBudgetTimestamp(
+            quoteSourceLastRequestAtByIntervalKey,
+            source
+        );
+    }
+
+    function recordQuoteSourceBudgetTimestamp(source, requestedAt = Date.now()) {
+        return getArbDetailUtils().recordArbDetailBudgetTimestamp(
+            quoteSourceLastRequestAtByIntervalKey,
+            source,
+            requestedAt
+        );
+    }
+
+    function syncArbDetailPrimaryCardQuoteState(quote, data, successSource, isInverseFetch) {
+        if (!quote) return;
+        const previousState = quoteMonitorState.get(quote.id) || {};
+        const nextState = getArbDetailUtils().buildArbDetailSnapshotMonitorState(previousState, data, {
+            successSource,
+            isInverseFetch
+        });
+        quoteMonitorState.set(quote.id, nextState);
+    }
+
     async function waitForArbDetailSourceBudget(source, signal) {
         const intervalKey = getArbDetailUtils().getArbDetailIntervalKey(source);
         if (!intervalKey) return;
@@ -1573,7 +1649,7 @@
         }
 
         const waitMs = getArbDetailUtils().getArbDetailRateLimitDelay(
-            arbDetailLastRequestAtBySource.get(intervalKey),
+            getQuoteSourceBudgetTimestamp(source),
             getArbDetailIntervalMsForSource(source)
         );
 
@@ -1585,8 +1661,6 @@
                 throw aborted;
             }
         }
-
-        arbDetailLastRequestAtBySource.set(intervalKey, Date.now());
     }
 
     function setArbDetailChartLinkState(chartHref) {
@@ -1875,7 +1949,7 @@
         arbDetailFetchController = controller;
 
         try {
-            for (const card of arbDetailState.cards) {
+            for (const [cardIndex, card] of arbDetailState.cards.entries()) {
                 if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) return;
 
                 const requestVersion = Number(card.requestVersion) || 0;
@@ -1892,7 +1966,7 @@
                     }
                     const legInputAmount = rollingAmount;
 
-                    const { data } = await fetchQuoteByStrategy(match.quote, {
+                    const { data, successSource } = await fetchQuoteByStrategy(match.quote, {
                         signal: controller.signal,
                         isInverseFetch: Boolean(leg.inverse),
                         amount: legInputAmount,
@@ -1906,6 +1980,15 @@
                     if (!getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
                         shouldSkipApply = true;
                         break;
+                    }
+
+                    if (getArbDetailUtils().shouldSyncArbDetailSnapshotForCard(cardIndex)) {
+                        syncArbDetailPrimaryCardQuoteState(
+                            match.quote,
+                            data,
+                            successSource,
+                            Boolean(leg.inverse)
+                        );
                     }
 
                     rollingAmount = data.finalAmountOut;
@@ -3095,6 +3178,7 @@
                     await sleep(600);
                 }
 
+                recordQuoteSourceBudgetTimestamp(source);
                 data = await apiGetQuote(requestQuote, signal, source);
                 if (data) {
                     successSource = source;

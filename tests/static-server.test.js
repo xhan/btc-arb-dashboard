@@ -96,6 +96,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('恢复分区'));
     assert.ok(appJsResponse.body.includes('已暂停'));
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
+    assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));
+    assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);
