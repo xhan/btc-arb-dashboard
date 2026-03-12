@@ -47,7 +47,7 @@
 
     .control-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 112px 112px;
+      grid-template-columns: minmax(0, 1fr) 112px 112px auto;
       gap: 12px;
       align-items: center;
     }
@@ -100,6 +100,27 @@
     #chart-refresh-btn:disabled {
       cursor: not-allowed;
       opacity: 0.55;
+    }
+
+    .chart-auto-refresh-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 50px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .chart-auto-refresh-toggle input {
+      margin: 0;
+      accent-color: var(--accent);
     }
 
     .chart-suggestions {
@@ -285,6 +306,10 @@
         </div>
         <button id="chart-add-btn" type="button">添加</button>
         <button id="chart-refresh-btn" type="button">刷新</button>
+        <label class="chart-auto-refresh-toggle" for="chart-auto-refresh-toggle">
+          <input id="chart-auto-refresh-toggle" type="checkbox" checked>
+          <span>5s 自动刷新</span>
+        </label>
       </div>
       <div id="chart-page-status" class="status-line">正在加载候选交易对...</div>
     </section>

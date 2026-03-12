@@ -45,6 +45,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('width: min(960px, 94vw);'));
     assert.ok(response.body.includes('id="arb-detail-chart-link"'));
     assert.ok(response.body.includes('id="arb-detail-chart-preview"'));
+    assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="charts-renderer.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
@@ -98,6 +99,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
     assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
+    assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
+    assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);
@@ -121,12 +124,19 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(chartsResponse.statusCode, 200);
     assert.ok(chartsResponse.body.includes('id="chart-search-input"'));
     assert.ok(chartsResponse.body.includes('id="chart-refresh-btn"'));
+    assert.ok(chartsResponse.body.includes('id="chart-auto-refresh-toggle"'));
     assert.ok(chartsResponse.body.includes('id="chart-panels"'));
     assert.ok(chartsResponse.body.includes('src="charts-app.js"'));
-    assert.ok(chartsResponse.body.includes('grid-template-columns: minmax(0, 1fr) 112px 112px;'));
+    assert.ok(chartsResponse.body.includes('grid-template-columns: minmax(0, 1fr) 112px 112px auto;'));
     assert.ok(!chartsResponse.body.includes('<section class="hero">'));
     assert.ok(!chartsResponse.body.includes('读取最近两小时的历史快照'));
     assert.ok(!chartsResponse.body.includes('当前页只负责图表查看'));
+
+    const chartsAppResponse = await request('/charts-app.js');
+    assert.strictEqual(chartsAppResponse.statusCode, 200);
+    assert.ok(chartsAppResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
+    assert.ok(chartsAppResponse.body.includes('syncChartAutoRefreshTimer'));
+    assert.ok(chartsAppResponse.body.includes('chart-auto-refresh-toggle'));
 
     const queueStatsResponse = await request('/queue-stats');
     assert.strictEqual(queueStatsResponse.statusCode, 200);
