@@ -145,6 +145,66 @@
     return Math.max(0, Math.ceil(safeLast + safeInterval - now));
   }
 
+  function getArbDetailBudgetTimestamp(budgetState, source) {
+    if (!(budgetState instanceof Map)) return null;
+    const intervalKey = getArbDetailIntervalKey(source);
+    if (!intervalKey) return null;
+    const timestamp = Number(budgetState.get(intervalKey));
+    return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : null;
+  }
+
+  function recordArbDetailBudgetTimestamp(budgetState, source, requestedAt = Date.now()) {
+    if (!(budgetState instanceof Map)) return null;
+    const intervalKey = getArbDetailIntervalKey(source);
+    if (!intervalKey) return null;
+
+    const nextTimestamp = Number(requestedAt);
+    if (!Number.isFinite(nextTimestamp) || nextTimestamp <= 0) {
+      return getArbDetailBudgetTimestamp(budgetState, source);
+    }
+
+    const currentTimestamp = getArbDetailBudgetTimestamp(budgetState, source);
+    const appliedTimestamp = currentTimestamp && currentTimestamp > nextTimestamp
+      ? currentTimestamp
+      : nextTimestamp;
+    budgetState.set(intervalKey, appliedTimestamp);
+    return appliedTimestamp;
+  }
+
+  function shouldSyncArbDetailSnapshotForCard(cardIndex) {
+    return Number(cardIndex) === 0;
+  }
+
+  function buildArbDetailSnapshotMonitorState(previousState, quoteResult, options = {}) {
+    const baseState = previousState && typeof previousState === 'object'
+      ? { ...previousState }
+      : {};
+    const symbols = quoteResult && quoteResult.symbols && typeof quoteResult.symbols === 'object'
+      ? quoteResult.symbols
+      : {};
+    const isInverseFetch = Boolean(options.isInverseFetch);
+
+    if (isInverseFetch) {
+      return {
+        ...baseState,
+        inverseRawPrice: quoteResult?.rawPrice,
+        inverseFromSymbol: symbols.from || '',
+        inverseToSymbol: symbols.to || ''
+      };
+    }
+
+    return {
+      ...baseState,
+      fromSymbol: symbols.from || '',
+      toSymbol: symbols.to || '',
+      lastResultText: quoteResult?.resultText || '',
+      lastRawPrice: quoteResult?.rawPrice,
+      cexOrderbook: quoteResult?.cexOrderbook || null,
+      usedSource: quoteResult?.usedSource || '',
+      usedSourceReal: options.successSource || null
+    };
+  }
+
   function buildArbDetailDexLink(config = {}) {
     const chain = String(config.chain || '').trim();
     const normalizedChain = chain.toLowerCase();
@@ -238,6 +298,10 @@
     shouldCommitArbDetailInputOnKey,
     getArbDetailIntervalKey,
     getArbDetailRateLimitDelay,
+    getArbDetailBudgetTimestamp,
+    recordArbDetailBudgetTimestamp,
+    shouldSyncArbDetailSnapshotForCard,
+    buildArbDetailSnapshotMonitorState,
     buildArbDetailDexLink,
     buildArbOpportunityStableId,
     buildUniqueArbOpportunityId,
