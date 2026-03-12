@@ -305,6 +305,42 @@
         return !!quote && !!quote.showInverse && !isCexOrderbookChain(quote.chain);
     }
 
+    function isQuotePaused(quote) {
+        if (window.QuotePauseUtils && typeof window.QuotePauseUtils.isQuotePaused === 'function') {
+            return window.QuotePauseUtils.isQuotePaused(quote);
+        }
+        return !!quote && quote.paused === true;
+    }
+
+    function getActiveQuotes(quotes) {
+        if (window.QuotePauseUtils && typeof window.QuotePauseUtils.getActiveQuotes === 'function') {
+            return window.QuotePauseUtils.getActiveQuotes(quotes);
+        }
+        return Array.isArray(quotes) ? quotes.filter((quote) => !isQuotePaused(quote)) : [];
+    }
+
+    function buildPausedMonitorState(previousState) {
+        if (window.QuotePauseUtils && typeof window.QuotePauseUtils.buildPausedQuoteState === 'function') {
+            return window.QuotePauseUtils.buildPausedQuoteState(previousState);
+        }
+        const state = previousState && typeof previousState === 'object' ? previousState : {};
+        return {
+            fromSymbol: state.fromSymbol || '',
+            toSymbol: state.toSymbol || '',
+            lastRawPrice: null,
+            lastResultText: '',
+            inverseRawPrice: null,
+            inverseFromSymbol: '',
+            inverseToSymbol: '',
+            usedSource: '',
+            usedSourceReal: '',
+            cexOrderbook: null,
+            hasUnreadAlert: false,
+            logShown: false,
+            isSoundActive: false
+        };
+    }
+
     function getQueueTypeForQuote(quote) {
         if (window.QueueStatsUtils && typeof window.QueueStatsUtils.getQueueTypeForQuote === 'function') {
             return window.QueueStatsUtils.getQueueTypeForQuote(quote);
@@ -341,6 +377,7 @@
     }
 
     function addToQueue(quote) {
+        if (!quote || isQuotePaused(quote)) return;
         const type = getQueueTypeForQuote(quote);
         const queue = queues[type];
         const taskKeys = new Set(queue.map(getQueueTaskKey));
@@ -386,6 +423,10 @@
         const quoteToFetch = category ? category.quotes.find(q => q.id === taskFromQueue.quoteId) : null;
 
         if (quoteToFetch) {
+            if (isQuotePaused(quoteToFetch)) {
+                removeFromQueue(quoteToFetch.id);
+                return;
+            }
             const currentType = getQueueTypeForQuote(quoteToFetch);
             const inverseTaskInvalid = taskFromQueue.mode === 'inverse' && !shouldQueueInverseFetch(quoteToFetch);
 
@@ -816,6 +857,138 @@
         return String(quote?.symbol || '').trim().toUpperCase();
     }
 
+    function getQuotePairLabel(quote, state) {
+        if (!quote) return '';
+        if (state && state.fromSymbol && state.toSymbol) {
+            return `${state.fromSymbol}/${state.toSymbol}`;
+        }
+        return getCexPairLabel(quote, state);
+    }
+
+    function getQuoteDisplayText(quote, state) {
+        if (isQuotePaused(quote)) return '已暂停';
+        return (state && state.lastResultText) || '...';
+    }
+
+    function updateQuotePairLabel(quote, state) {
+        const pairLabelEl = document.getElementById(`quote-pair-label-${quote.id}`);
+        if (!pairLabelEl) return;
+        const nextLabel = getQuotePairLabel(quote, state);
+        pairLabelEl.textContent = nextLabel;
+    }
+
+    function updatePauseButtonState(quote) {
+        const pauseBtn = document.querySelector(`[data-toggle-pause-id="${quote.id}"]`);
+        if (!pauseBtn) return;
+        const paused = isQuotePaused(quote);
+        pauseBtn.title = paused ? '恢复' : '暂停';
+        pauseBtn.setAttribute('aria-label', paused ? '恢复' : '暂停');
+        pauseBtn.innerHTML = paused ? '▶️' : '⏸️';
+    }
+
+    function clearQuoteTrendArrow(quoteId, previousState) {
+        const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
+        if (arrowEl) {
+            arrowEl.className = 'trend-arrow';
+            arrowEl.innerHTML = '';
+        }
+        const state = previousState && typeof previousState === 'object' ? previousState : {};
+        if (state.trendTimer) {
+            clearTimeout(state.trendTimer);
+        }
+    }
+
+    function clearQuoteAlertUi(quoteId) {
+        const itemEl = document.getElementById(`quote-item-${quoteId}`);
+        if (!itemEl) return;
+        itemEl.classList.remove('highlight', 'highlight-past');
+        const dismissBtn = itemEl.querySelector('.dismiss-highlight-btn');
+        if (dismissBtn) dismissBtn.remove();
+    }
+
+    function removeInverseQuoteElement(quoteId) {
+        const inverseEl = document.getElementById(`inverse-quote-${quoteId}`);
+        if (inverseEl) inverseEl.remove();
+    }
+
+    function abortQuoteFetch(quoteId) {
+        const controller = activeFetchControllers.get(quoteId);
+        if (!controller) return;
+        controller.abort();
+        activeFetchControllers.delete(quoteId);
+    }
+
+    function applyPausedQuoteUiState(quote, state, previousState) {
+        const itemEl = document.getElementById(`quote-item-${quote.id}`);
+        const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
+        const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
+        const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
+
+        if (itemEl) {
+            itemEl.classList.add('quote-item-paused');
+        }
+        if (quoteDataEl) {
+            quoteDataEl.classList.remove('error');
+            quoteDataEl.removeAttribute('title');
+        }
+        if (quoteTextWrapperEl) {
+            quoteTextWrapperEl.classList.remove('loading-text');
+        }
+        if (quoteTextEl) {
+            quoteTextEl.textContent = '已暂停';
+        }
+        updateQuotePairLabel(quote, state);
+        updatePauseButtonState(quote);
+        removeInverseQuoteElement(quote.id);
+        clearQuoteAlertUi(quote.id);
+        clearQuoteTrendArrow(quote.id, previousState);
+
+        if (currentlyEditingQuote && currentlyEditingQuote.quote && currentlyEditingQuote.quote.id === quote.id && alertModal.classList.contains('visible')) {
+            const modalPriceEl = document.getElementById('alert-current-price-value');
+            if (modalPriceEl) {
+                modalPriceEl.textContent = '已暂停';
+            }
+        }
+    }
+
+    function applyActiveQuoteUiState(quote, options = {}) {
+        const itemEl = document.getElementById(`quote-item-${quote.id}`);
+        const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
+        const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
+        const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
+        const state = quoteMonitorState.get(quote.id) || {};
+
+        if (itemEl) {
+            itemEl.classList.remove('quote-item-paused', 'highlight', 'highlight-past');
+        }
+        if (quoteDataEl) {
+            quoteDataEl.classList.remove('error');
+            quoteDataEl.removeAttribute('title');
+        }
+        if (quoteTextWrapperEl) {
+            quoteTextWrapperEl.classList.remove('loading-text');
+            if (options.loading) {
+                quoteTextWrapperEl.classList.add('loading-text');
+            }
+        }
+        if (quoteTextEl && options.text) {
+            quoteTextEl.textContent = options.text;
+        }
+        updateQuotePairLabel(quote, state);
+        updatePauseButtonState(quote);
+        clearQuoteAlertUi(quote.id);
+        clearQuoteTrendArrow(quote.id, state);
+        if (options.clearInverse) {
+            removeInverseQuoteElement(quote.id);
+        }
+    }
+
+    function doesArbDetailUseQuote(quoteId) {
+        const selectedOpportunity = arbDetailState.selectedOpportunity;
+        if (!selectedOpportunity || !selectedOpportunity.cycle) return false;
+        return (selectedOpportunity.cycle.legs || []).some((leg) => !isRuleLeg(leg) && Number(leg.quoteId) === Number(quoteId));
+    }
+
     function nudgeArbDetailInput(index, delta) {
         const card = arbDetailState.cards[index];
         if (!card) return;
@@ -915,7 +1088,7 @@
     function buildPathAlertQuoteCandidates() {
         const candidates = [];
         for (const category of dashboardState) {
-            for (const quote of (category.quotes || [])) {
+            for (const quote of getActiveQuotes(category.quotes || [])) {
                 const state = quoteMonitorState.get(quote.id);
                 if (!state) continue;
 
@@ -1763,7 +1936,7 @@
 
     function buildRuleAlertEvaluation(target) {
         const aliasRules = getAliasRules();
-        const allQuotes = dashboardState.flatMap((category) => category.quotes || []);
+        const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
         const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
@@ -1793,7 +1966,7 @@
         if (!category) return { available: false };
         const opportunities = window.ArbSpecialUtils.buildSpecialArbOpportunities({
             rules: [rule],
-            quotes: Array.isArray(category.quotes) ? category.quotes : [],
+            quotes: getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []),
             quoteStateById: quoteMonitorState,
             aliasRules
         });
@@ -2444,7 +2617,7 @@
 
         const aliasRules = getAliasRules();
         const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
-        const allQuotes = dashboardState.flatMap(c => c.quotes || []);
+        const allQuotes = getActiveQuotes(dashboardState.flatMap(c => c.quotes || []));
         const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
@@ -2474,7 +2647,7 @@
             opportunities: (window.ArbSpecialUtils && typeof window.ArbSpecialUtils.buildSpecialArbOpportunities === 'function' && wbtcCategory)
                 ? window.ArbSpecialUtils.buildSpecialArbOpportunities({
                     rules: SPECIAL_ARB_RULES.filter((rule) => rule.categoryName === wbtcCategory.name),
-                    quotes: Array.isArray(wbtcCategory.quotes) ? wbtcCategory.quotes : [],
+                    quotes: getActiveQuotes(Array.isArray(wbtcCategory.quotes) ? wbtcCategory.quotes : []),
                     quoteStateById: quoteMonitorState,
                     aliasRules
                 }).filter((opportunity) => opportunity && opportunity.cycle && opportunity.cycle.profitRate > 0)
@@ -2495,7 +2668,7 @@
         const categorySections = [];
         let lbtcSection = null;
         for (const category of targetCategories) {
-            const quotes = Array.isArray(category.quotes) ? category.quotes : [];
+            const quotes = getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []);
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
             const sectionKey = buildArbSectionKey('category', category.id || category.name);
             const cycles = window.ArbPaths.findTopCycles(edges.concat(ruleEdges), {
@@ -2874,6 +3047,11 @@
         const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
         const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
         if (!quoteDataEl || !quoteTextEl) return;
+        if (isQuotePaused(quote)) {
+            const previousState = quoteMonitorState.get(quote.id) || {};
+            applyPausedQuoteUiState(quote, previousState, previousState);
+            return;
+        }
         const isInverseFetch = fetchMode === 'inverse' && shouldQueueInverseFetch(quote);
 
         if (activeFetchControllers.has(quote.id)) {
@@ -2943,10 +3121,7 @@
                 };
 
                 quoteTextEl.textContent = data.resultText;
-                const cexPairLabelEl = document.getElementById(`quote-pair-label-${quote.id}`);
-                if (cexPairLabelEl) {
-                    cexPairLabelEl.textContent = getCexPairLabel(quote, newState);
-                }
+                updateQuotePairLabel(quote, newState);
                 quoteTextWrapperEl.classList.remove('loading-text');
 
                 if (shouldQueueInverseFetch(quote)) {
@@ -3316,6 +3491,7 @@
     }
 
     function checkPriceForAlerts(quote, newRawPrice, newTotalAmountOut) {
+        if (isQuotePaused(quote)) return;
         if (!quote.alerts || typeof newRawPrice !== 'number') return; 
 
         const basePrice = quote.alerts.basePrice;
@@ -3480,16 +3656,16 @@
     function createQuoteItem(quote, categoryId) {
         const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
         const monitorState = quoteMonitorState.get(quote.id) || {};
-        const lastResultText = monitorState.lastResultText || '...';
+        const lastResultText = getQuoteDisplayText(quote, monitorState);
         const itemEl = document.createElement('li');
         itemEl.id = `quote-item-${quote.id}`;
-        itemEl.className = 'quote-item';
+        itemEl.className = isQuotePaused(quote) ? 'quote-item quote-item-paused' : 'quote-item';
         const initialAmount = quote.amount || 1;
         const amountInputHTML = !isCexOrderbookChain(quote.chain) ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
         const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
-        const pairLabelHtml = isCexOrderbookChain(quote.chain)
-            ? `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${escapeHtml(getCexPairLabel(quote, monitorState))}</span>`
-            : '';
+        const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${escapeHtml(getQuotePairLabel(quote, monitorState))}</span>`;
+        const pauseButtonTitle = isQuotePaused(quote) ? '恢复' : '暂停';
+        const pauseButtonIcon = isQuotePaused(quote) ? '▶️' : '⏸️';
         
         itemEl.innerHTML = `
             <div class="quote-left-container">
@@ -3509,6 +3685,7 @@
                     </div>
                 </div>
                 <div class="quote-actions">
+                    <button class="icon-btn" title="${pauseButtonTitle}" aria-label="${pauseButtonTitle}" data-toggle-pause-id="${quote.id}" data-category-id="${categoryId}">${pauseButtonIcon}</button>
                     <button class="icon-btn" title="设置" data-edit-alert-id="${quote.id}" data-category-id="${categoryId}">⚙️</button>
                 </div>
             </div>`;
@@ -3708,7 +3885,9 @@
             if (!isNaN(newAmount) && newAmount >= 0) {
                 const timerId = setTimeout(() => {
                     quote.amount = newAmount;
-                    fetchSingleQuote(quote); 
+                    if (!isQuotePaused(quote)) {
+                        fetchSingleQuote(quote);
+                    }
                     saveData();
                     inputDebounceMap.delete(quoteId);
                 }, 600);
@@ -3742,6 +3921,49 @@
 
         quoteMonitorState.delete(quoteId);
         updateAlertSoundState();
+        saveData();
+        return true;
+    }
+
+    function syncPauseLinkedViews() {
+        updateArbPanel();
+        evaluatePathAlertsOnce();
+        if (pathAlertEditorState.visible) {
+            renderPathAlertModal();
+        }
+    }
+
+    function toggleQuotePause(categoryId, quoteId) {
+        const category = dashboardState.find((item) => item.id == categoryId);
+        if (!category) return false;
+        const quote = category.quotes.find((item) => item.id == quoteId);
+        if (!quote) return false;
+
+        const nextPaused = !isQuotePaused(quote);
+        quote.paused = nextPaused;
+
+        if (inputDebounceMap.has(quoteId)) {
+            clearTimeout(inputDebounceMap.get(quoteId));
+            inputDebounceMap.delete(quoteId);
+        }
+
+        if (nextPaused) {
+            const previousState = quoteMonitorState.get(quoteId) || {};
+            removeFromQueue(quoteId);
+            abortQuoteFetch(quoteId);
+            quoteMonitorState.set(quoteId, buildPausedMonitorState(previousState));
+            applyPausedQuoteUiState(quote, quoteMonitorState.get(quoteId) || {}, previousState);
+            if (doesArbDetailUseQuote(quoteId)) {
+                closeArbDetailModal();
+            }
+        } else {
+            applyActiveQuoteUiState(quote, { text: '刷新中...', loading: true, clearInverse: true });
+            addToQueue(quote);
+            setTimeout(() => fetchSingleQuote(quote), 0);
+        }
+
+        updateAlertSoundState();
+        syncPauseLinkedViews();
         saveData();
         return true;
     }
@@ -3820,6 +4042,9 @@
                 target.remove();
             }
             updateAlertSoundState();
+        } else if (target.dataset.togglePauseId) {
+            const toggleQuoteId = parseInt(target.dataset.togglePauseId);
+            toggleQuotePause(categoryId, toggleQuoteId);
         } else if (target.dataset.editAlertId) {
             const editQuoteId = parseInt(target.dataset.editAlertId);
             const category = dashboardState.find(c => c.id == categoryId);

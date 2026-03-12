@@ -183,6 +183,15 @@
         .quote-item:active { cursor: grabbing; }
         .quote-item.dragging { opacity: 0.4; background-color: var(--bg-color); border: 1px dashed var(--border-color); }
         .quote-item.drag-over { border-top: 2px solid #3182ce; }
+        .quote-item.quote-item-paused {
+            opacity: 0.68;
+        }
+        .quote-item.quote-item-paused .quote-text,
+        .quote-item.quote-item-paused .quote-pair-label,
+        .quote-item.quote-item-paused .quote-label,
+        .quote-item.quote-item-paused .inverse-quote-text {
+            color: var(--text-color-light);
+        }
 
         .dark-mode .quote-item { border-bottom-color: #374151; }
         
@@ -230,6 +239,7 @@
             white-space: nowrap;
             text-transform: none;
         }
+        .quote-pair-label:empty { display: none; }
         
         .trend-arrow {
             display: inline-flex; 
@@ -312,7 +322,7 @@
             cursor: pointer;
         }
         
-        .quote-text.loading-text {
+        .quote-text-wrapper.loading-text .quote-text {
             color: var(--text-color-light);
             font-size: 0.9em;
             font-style: italic;

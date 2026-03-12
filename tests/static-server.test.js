@@ -71,6 +71,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('#top-bar-right > button,'));
     assert.ok(response.body.includes('#top-bar-right > a {'));
     assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
+    assert.ok(response.body.includes('.quote-item-paused'));
 
     const appJsResponse = await request('/app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
@@ -88,6 +89,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/path-alerts'));
     assert.ok(appJsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(appJsResponse.body.includes('PriceSnapshotPayloadUtils'));
+    assert.ok(appJsResponse.body.includes('data-toggle-pause-id'));
+    assert.ok(appJsResponse.body.includes('已暂停'));
+    assert.ok(appJsResponse.body.includes('quote-item-paused'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);
