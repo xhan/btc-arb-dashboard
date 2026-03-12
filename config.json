@@ -153,7 +153,7 @@
           "amount": 1,
           "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
           "toToken": "0x8236a87084f8B84306f72007F36F2618A5634494",
-          "preferredSource": "Kyber",
+          "preferredSource": "Velora",
           "showInverse": true,
           "alerts": {
             "percentUp": 0.1,
@@ -239,7 +239,8 @@
           "amount": 1,
           "preferredSource": "Kyber",
           "fromToken": "0xd18b7ec58cdf4876f6afebd3ed1730e4ce10414b",
-          "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1"
+          "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
+          "showInverse": true
         },
         {
           "id": 1771695017195,
@@ -397,10 +398,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x9BE89D2a4cd102D8Fecc6BF9dA793be995C22541",
-          "showInverse": true,
-          "alerts": {
-            "targetAbove": 0.2001
-          }
+          "showInverse": true
         },
         {
           "id": 1766413543985,
@@ -450,7 +448,7 @@
         {
           "id": 1766414742208,
           "chain": "ethereum",
-          "amount": 0.2,
+          "amount": 0.1,
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x004E9C3EF86bc1ca1f0bB5C7662861Ee93350568"
@@ -458,7 +456,7 @@
         {
           "id": 1766414759640,
           "chain": "base",
-          "amount": 0.2,
+          "amount": 0.1,
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x93919784C523f39CACaa98Ee0a9d96c3F32b593e",
@@ -467,11 +465,11 @@
         {
           "id": 1766484079028,
           "chain": "berachain",
-          "amount": 0.2,
+          "amount": 0.1,
           "preferredSource": "Kyber",
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0xC3827A4BC8224ee2D116637023b124CED6db6e90",
-          "showInverse": true
+          "showInverse": false
         },
         {
           "id": 1771925767916,
@@ -517,7 +515,7 @@
           "id": 1771776667295,
           "chain": "ethereum",
           "amount": 100000,
-          "preferredSource": "Kyber",
+          "preferredSource": "Velora",
           "fromToken": "0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f",
           "toToken": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           "showInverse": true
@@ -544,7 +542,7 @@
           "id": 1772990044817,
           "chain": "ethereum",
           "amount": 100000,
-          "preferredSource": "Kyber",
+          "preferredSource": "Velora",
           "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "toToken": "0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f",
           "showInverse": true
@@ -567,7 +565,7 @@
         {
           "id": 1772106754885,
           "chain": "ethereum",
-          "amount": 0.5,
+          "amount": 0.4,
           "preferredSource": "Kyber",
           "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
           "toToken": "0x06ea695B91700071B161A434fED42D1DcbAD9f00",
@@ -576,19 +574,11 @@
         {
           "id": 1772107840766,
           "chain": "hemi",
-          "amount": 0.5,
+          "amount": 0.4,
           "preferredSource": "LI.FI",
           "fromToken": "0xAA40c0c7644e0b2B224509571e10ad20d9C4ef28",
           "toToken": "0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3",
           "showInverse": true
-        },
-        {
-          "id": 1772459941059,
-          "chain": "ethereum",
-          "amount": 0.2,
-          "preferredSource": "Kyber",
-          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-          "toToken": "0xC96dE26018A54D51c097160568752c4E3BD6C364"
         },
         {
           "id": 1772551950738,
@@ -603,7 +593,7 @@
           "id": 1772551989275,
           "chain": "ethereum",
           "amount": 20,
-          "preferredSource": "Kyber",
+          "preferredSource": "Velora",
           "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "toToken": "0x64351fC9810aDAd17A690E4e1717Df5e7e085160",
           "showInverse": true
@@ -621,7 +611,7 @@
           "id": 1772987668787,
           "chain": "ethereum",
           "amount": 20,
-          "preferredSource": "Kyber",
+          "preferredSource": "Velora",
           "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "toToken": "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee",
           "showInverse": true
@@ -648,13 +638,13 @@
     }
   ],
   "settings": {
-    "kyber": 200,
+    "kyber": 180,
     "zerox": 500,
-    "velora": 200,
+    "velora": 750,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
-    "solana": 4000,
+    "solana": 1100,
     "sui": 500,
     "starknet": 1000
   }

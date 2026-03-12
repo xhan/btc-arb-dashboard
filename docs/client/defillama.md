@@ -382,6 +382,28 @@ GET https://apiv5.paraswap.io/prices/?...
 - ParaSwap：hostname 的确不同，但参数模型和返回结构属于同一路系，不是完全不同产品。
 - 目前没有证据表明 DefiLlama 在做“可复用的限频突破”；更像是 partner / client-id / 请求模式 / 浏览器环境共同作用。
 
+## Rate Limit 测试结果同步
+
+### ParaSwap
+
+目前这轮服务端直连测试里，可以先按下面的结论使用：
+
+- `700ms` 间隔相对安全
+- 直接使用公开 API 也能工作
+- 即使不额外提供 `partner`，当前看也不是硬要求
+- 不需要为了 ParaSwap 特意复刻 DefiLlama 的调用方式
+
+换句话说，ParaSwap 这边优先用公开接口和更保守的请求频率即可，现阶段没必要为了“更像 DefiLlama”再堆额外 header 或参数。
+
+### Kyber
+
+Kyber 这边还没有形成最终结论，下一步优先验证：
+
+- 把 `x-client-id` 改成 DefiLlama 抓到的值再测一轮
+- 如果还要继续验证网页链路，改用 `Playwright` 发起真实浏览器请求，绕过当前服务端脚本会碰到的 Cloudflare challenge
+
+这两项现在都还是 `todo`，不应在文档里当作已验证结论。
+
 ## 压测脚本
 
 仓库里新增了一个针对 DefiLlama 行为的压测脚本：

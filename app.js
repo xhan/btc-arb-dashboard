@@ -685,7 +685,13 @@
         return window.ArbDetailUtils || {
             buildDetailInputAmounts(baseAmount) {
                 const amount = Number(baseAmount);
-                return [Number.isFinite(amount) && amount > 0 ? amount : 1, 0.5, 1.5, 2];
+                const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 1;
+                return [
+                    safeAmount,
+                    Math.max(1, Math.round(safeAmount * 0.5)),
+                    Math.max(1, Math.round(safeAmount * 1.5)),
+                    Math.max(1, Math.round(safeAmount * 2))
+                ];
             },
             summarizeDetailResult(startAmount, finalAmount) {
                 const safeStart = Number(startAmount) > 0 ? Number(startAmount) : 1;
@@ -735,6 +741,38 @@
             },
             shouldApplyArbDetailRequestVersion(expectedVersion, currentVersion) {
                 return Number(expectedVersion) === Number(currentVersion);
+            },
+            buildArbDetailDexLink(config = {}) {
+                const chain = String(config.chain || '').trim();
+                const normalizedChain = chain.toLowerCase();
+                const fromTokenAddress = String(config.fromTokenAddress || '').trim();
+                const toTokenAddress = String(config.toTokenAddress || '').trim();
+                if (!fromTokenAddress || !toTokenAddress) return null;
+                if (normalizedChain === 'bybit' || normalizedChain === 'binance') return null;
+                if (normalizedChain === 'sui') {
+                    return {
+                        label: 'cetus',
+                        url: `https://app.cetus.zone/swap/${encodeURIComponent(fromTokenAddress)}/${encodeURIComponent(toTokenAddress)}`
+                    };
+                }
+                if (normalizedChain === 'solana') {
+                    return {
+                        label: 'jup.ag',
+                        url: `https://jup.ag/?sell=${encodeURIComponent(fromTokenAddress)}&buy=${encodeURIComponent(toTokenAddress)}`
+                    };
+                }
+                if (normalizedChain === 'starknet') {
+                    const inputAmount = Number(config.inputAmount);
+                    if (!Number.isFinite(inputAmount) || inputAmount <= 0) return null;
+                    return {
+                        label: 'ekubo',
+                        url: `https://ekubo.org/starknet/swap?inputCurrency=${encodeURIComponent(fromTokenAddress)}&amount=${encodeURIComponent(String(inputAmount))}&outputCurrency=${encodeURIComponent(toTokenAddress)}`
+                    };
+                }
+                return {
+                    label: 'swap.defillama',
+                    url: `https://swap.defillama.com/?chain=${encodeURIComponent(normalizedChain)}&from=${encodeURIComponent(fromTokenAddress)}&tab=swap&to=${encodeURIComponent(toTokenAddress)}`
+                };
             },
             findBestSummaryIndices(cards) {
                 let bestProfit = null;
@@ -1392,7 +1430,7 @@
                     <div class="arb-detail-leg-line">
                         <div class="arb-detail-leg-main">
                             <div class="arb-detail-leg-pair">${buildArbDetailPairHtml(row)}</div>
-                            <div class="arb-detail-leg-source">${escapeHtml(row.sourceText)}</div>
+                            <div class="arb-detail-leg-source">${buildArbDetailSourceHtml(row)}</div>
                         </div>
                         <span class="arb-detail-leg-amount">${escapeHtml(row.amountText)}</span>
                     </div>
@@ -1419,6 +1457,16 @@
         const fromHtml = buildArbDetailTokenHtml(row.fromSymbol, row.fromTokenAddress);
         const toHtml = buildArbDetailTokenHtml(row.toSymbol, row.toTokenAddress);
         return `${chainText}${fromHtml} -> ${toHtml}`;
+    }
+
+    function buildArbDetailSourceHtml(row) {
+        const sourceText = escapeHtml(row && row.sourceText ? row.sourceText : 'Unknown');
+        const dexLink = getArbDetailUtils().buildArbDetailDexLink(row);
+        if (!dexLink || !dexLink.url) {
+            return sourceText;
+        }
+
+        return `${sourceText} · <button type="button" class="arb-detail-dex-link" data-arb-detail-dex-url="${escapeHtml(dexLink.url)}" data-arb-detail-dex-label="${escapeHtml(dexLink.label)}">${escapeHtml(dexLink.label)}</button>`;
     }
 
     function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
@@ -1842,11 +1890,12 @@
                     if (!match || !match.quote) {
                         throw new Error('报价配置不存在');
                     }
+                    const legInputAmount = rollingAmount;
 
                     const { data } = await fetchQuoteByStrategy(match.quote, {
                         signal: controller.signal,
                         isInverseFetch: Boolean(leg.inverse),
-                        amount: rollingAmount,
+                        amount: legInputAmount,
                         skipDelay: true,
                         beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)
                     });
@@ -1863,11 +1912,13 @@
                     finalSymbol = data.symbols.to || finalSymbol;
                     const isInverseLeg = Boolean(leg.inverse);
                     rows.push({
+                        chain: match.quote.chain,
                         chainLabel: formatChainLabel(match.quote.chain),
                         fromSymbol: data.symbols.from,
                         toSymbol: data.symbols.to,
                         fromTokenAddress: isInverseLeg ? match.quote.toToken : match.quote.fromToken,
                         toTokenAddress: isInverseLeg ? match.quote.fromToken : match.quote.toToken,
+                        inputAmount: legInputAmount,
                         amountText: `${formatDetailNumber(data.finalAmountOut)}`,
                         sourceText: data.usedSource || match.quote.preferredSource || 'Unknown'
                     });
@@ -4505,6 +4556,17 @@
                         if (!tokenAddress) return;
                         copyTextToClipboard(tokenAddress)
                             .then(() => showCopyToast(`已复制 ${tokenSymbol} 地址`))
+                            .catch(() => showCopyToast('复制失败'));
+                        return;
+                    }
+
+                    const dexLinkEl = event.target.closest('[data-arb-detail-dex-url]');
+                    if (dexLinkEl) {
+                        const dexUrl = dexLinkEl.dataset.arbDetailDexUrl;
+                        const dexLabel = dexLinkEl.dataset.arbDetailDexLabel || 'DEX';
+                        if (!dexUrl) return;
+                        copyTextToClipboard(dexUrl)
+                            .then(() => showCopyToast(`已复制 ${dexLabel} 链接`))
                             .catch(() => showCopyToast('复制失败'));
                         return;
                     }

@@ -77,6 +77,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(appJsResponse.statusCode, 200);
     assert.ok(appJsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
+    assert.ok(appJsResponse.body.includes('data-arb-detail-dex-url'));
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
     assert.ok(appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));

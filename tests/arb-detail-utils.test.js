@@ -15,7 +15,8 @@ const {
   buildArbOpportunityStableId,
   buildUniqueArbOpportunityId,
   getNextArbDetailRequestVersion,
-  shouldApplyArbDetailRequestVersion
+  shouldApplyArbDetailRequestVersion,
+  buildArbDetailDexLink
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -215,4 +216,62 @@ assert.strictEqual(
 assert.strictEqual(
   shouldApplyArbDetailRequestVersion(2, 3),
   false
+);
+
+assert.deepStrictEqual(
+  buildArbDetailDexLink({
+    chain: 'sui',
+    fromTokenAddress: '0x2::sui::SUI',
+    toTokenAddress: '0x123::usdc::USDC'
+  }),
+  {
+    label: 'cetus',
+    url: 'https://app.cetus.zone/swap/0x2%3A%3Asui%3A%3ASUI/0x123%3A%3Ausdc%3A%3AUSDC'
+  }
+);
+
+assert.deepStrictEqual(
+  buildArbDetailDexLink({
+    chain: 'solana',
+    fromTokenAddress: 'So11111111111111111111111111111111111111112',
+    toTokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+  }),
+  {
+    label: 'jup.ag',
+    url: 'https://jup.ag/?sell=So11111111111111111111111111111111111111112&buy=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+  }
+);
+
+assert.deepStrictEqual(
+  buildArbDetailDexLink({
+    chain: 'starknet',
+    fromTokenAddress: '0x111',
+    toTokenAddress: '0x222',
+    inputAmount: 1.25
+  }),
+  {
+    label: 'ekubo',
+    url: 'https://ekubo.org/starknet/swap?inputCurrency=0x111&amount=1.25&outputCurrency=0x222'
+  }
+);
+
+assert.deepStrictEqual(
+  buildArbDetailDexLink({
+    chain: 'arbitrum',
+    fromTokenAddress: '0xaaa',
+    toTokenAddress: '0xbbb'
+  }),
+  {
+    label: 'swap.defillama',
+    url: 'https://swap.defillama.com/?chain=arbitrum&from=0xaaa&tab=swap&to=0xbbb'
+  }
+);
+
+assert.strictEqual(
+  buildArbDetailDexLink({
+    chain: 'Binance',
+    fromTokenAddress: 'BTC',
+    toTokenAddress: 'USDT'
+  }),
+  null
 );

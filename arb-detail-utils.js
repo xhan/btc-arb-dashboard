@@ -145,6 +145,46 @@
     return Math.max(0, Math.ceil(safeLast + safeInterval - now));
   }
 
+  function buildArbDetailDexLink(config = {}) {
+    const chain = String(config.chain || '').trim();
+    const normalizedChain = chain.toLowerCase();
+    const fromTokenAddress = String(config.fromTokenAddress || '').trim();
+    const toTokenAddress = String(config.toTokenAddress || '').trim();
+    if (!fromTokenAddress || !toTokenAddress) return null;
+
+    if (normalizedChain === 'bybit' || normalizedChain === 'binance') {
+      return null;
+    }
+
+    if (normalizedChain === 'sui') {
+      return {
+        label: 'cetus',
+        url: `https://app.cetus.zone/swap/${encodeURIComponent(fromTokenAddress)}/${encodeURIComponent(toTokenAddress)}`
+      };
+    }
+
+    if (normalizedChain === 'solana') {
+      return {
+        label: 'jup.ag',
+        url: `https://jup.ag/?sell=${encodeURIComponent(fromTokenAddress)}&buy=${encodeURIComponent(toTokenAddress)}`
+      };
+    }
+
+    if (normalizedChain === 'starknet') {
+      const inputAmount = Number(config.inputAmount);
+      if (!Number.isFinite(inputAmount) || inputAmount <= 0) return null;
+      return {
+        label: 'ekubo',
+        url: `https://ekubo.org/starknet/swap?inputCurrency=${encodeURIComponent(fromTokenAddress)}&amount=${encodeURIComponent(String(inputAmount))}&outputCurrency=${encodeURIComponent(toTokenAddress)}`
+      };
+    }
+
+    return {
+      label: 'swap.defillama',
+      url: `https://swap.defillama.com/?chain=${encodeURIComponent(normalizedChain)}&from=${encodeURIComponent(fromTokenAddress)}&tab=swap&to=${encodeURIComponent(toTokenAddress)}`
+    };
+  }
+
   function buildArbOpportunityStableId(section, label, cycle) {
     const safeSection = String(section || '');
     const safeLabel = String(label || '');
@@ -198,6 +238,7 @@
     shouldCommitArbDetailInputOnKey,
     getArbDetailIntervalKey,
     getArbDetailRateLimitDelay,
+    buildArbDetailDexLink,
     buildArbOpportunityStableId,
     buildUniqueArbOpportunityId,
     getNextArbDetailRequestVersion,
