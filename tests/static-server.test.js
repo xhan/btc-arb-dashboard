@@ -90,6 +90,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(appJsResponse.body.includes('PriceSnapshotPayloadUtils'));
     assert.ok(appJsResponse.body.includes('data-toggle-pause-id'));
+    assert.ok(appJsResponse.body.includes('data-toggle-category-pause-id'));
+    assert.ok(appJsResponse.body.includes('暂停分区'));
+    assert.ok(appJsResponse.body.includes('恢复分区'));
     assert.ok(appJsResponse.body.includes('已暂停'));
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
 

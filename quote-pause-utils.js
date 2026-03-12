@@ -16,6 +16,14 @@
     return Array.isArray(quotes) ? quotes.filter((quote) => !isQuotePaused(quote)) : [];
   }
 
+  function getCategoryPauseAction(quotes) {
+    const items = Array.isArray(quotes) ? quotes : [];
+    if (items.length > 0 && getActiveQuotes(items).length === 0) {
+      return 'resume';
+    }
+    return 'pause';
+  }
+
   function buildPausedQuoteState(previousState) {
     const state = previousState && typeof previousState === 'object' ? previousState : {};
     return {
@@ -38,6 +46,7 @@
   return {
     isQuotePaused,
     getActiveQuotes,
+    getCategoryPauseAction,
     buildPausedQuoteState
   };
 });

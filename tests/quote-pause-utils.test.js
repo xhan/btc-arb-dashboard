@@ -21,6 +21,22 @@ assert.deepStrictEqual(
   ]
 );
 
+assert.strictEqual(
+  quotePauseUtils.getCategoryPauseAction([
+    { id: 1, paused: true },
+    { id: 2, paused: false }
+  ]),
+  'pause'
+);
+
+assert.strictEqual(
+  quotePauseUtils.getCategoryPauseAction([
+    { id: 1, paused: true },
+    { id: 2, paused: true }
+  ]),
+  'resume'
+);
+
 assert.deepStrictEqual(
   quotePauseUtils.buildPausedQuoteState({
     fromSymbol: 'WBTC',

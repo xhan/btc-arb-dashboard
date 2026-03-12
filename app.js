@@ -319,6 +319,17 @@
         return Array.isArray(quotes) ? quotes.filter((quote) => !isQuotePaused(quote)) : [];
     }
 
+    function getCategoryPauseAction(quotes) {
+        if (window.QuotePauseUtils && typeof window.QuotePauseUtils.getCategoryPauseAction === 'function') {
+            return window.QuotePauseUtils.getCategoryPauseAction(quotes);
+        }
+        const items = Array.isArray(quotes) ? quotes : [];
+        if (items.length > 0 && getActiveQuotes(items).length === 0) {
+            return 'resume';
+        }
+        return 'pause';
+    }
+
     function buildPausedMonitorState(previousState) {
         if (window.QuotePauseUtils && typeof window.QuotePauseUtils.buildPausedQuoteState === 'function') {
             return window.QuotePauseUtils.buildPausedQuoteState(previousState);
@@ -885,6 +896,18 @@
         pauseBtn.setAttribute('aria-label', paused ? '恢复' : '暂停');
         pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
         pauseBtn.innerHTML = paused ? '▶️' : '⏸️';
+    }
+
+    function updateCategoryPauseButtonState(categoryId) {
+        const pauseBtn = document.querySelector(`[data-toggle-category-pause-id="${categoryId}"]`);
+        if (!pauseBtn) return;
+        const category = dashboardState.find((item) => item.id == categoryId);
+        const action = getCategoryPauseAction(category && category.quotes ? category.quotes : []);
+        const allPaused = action === 'resume';
+        pauseBtn.title = allPaused ? '恢复分区' : '暂停分区';
+        pauseBtn.setAttribute('aria-label', allPaused ? '恢复分区' : '暂停分区');
+        pauseBtn.setAttribute('aria-pressed', allPaused ? 'true' : 'false');
+        pauseBtn.innerHTML = allPaused ? '▶️' : '⏸️';
     }
 
     function clearQuoteTrendArrow(quoteId, previousState) {
@@ -3721,10 +3744,16 @@
         const moduleEl = document.createElement('div');
         moduleEl.className = 'module';
         moduleEl.id = `module-${category.id}`;
+        const categoryPauseAction = getCategoryPauseAction(category.quotes || []);
+        const categoryPauseTitle = categoryPauseAction === 'resume' ? '恢复分区' : '暂停分区';
+        const categoryPauseIcon = categoryPauseAction === 'resume' ? '▶️' : '⏸️';
         moduleEl.innerHTML = `
             <div class="module-header">
                 <h2>${category.name}</h2>
-                <button class="icon-btn delete-btn" title="删除分区" data-category-id="${category.id}">×</button>
+                <div class="quote-actions">
+                    <button class="icon-btn" title="${categoryPauseTitle}" aria-label="${categoryPauseTitle}" aria-pressed="${categoryPauseAction === 'resume' ? 'true' : 'false'}" data-toggle-category-pause-id="${category.id}" data-category-id="${category.id}">${categoryPauseIcon}</button>
+                    <button class="icon-btn delete-btn" title="删除分区" data-category-id="${category.id}">×</button>
+                </div>
             </div>
             <ul class="quote-list" id="quote-list-${category.id}"></ul>
             <button class="add-quote-btn" data-category-id="${category.id}">+ 添加报价</button>`;
@@ -3921,6 +3950,7 @@
         if (quoteItem) quoteItem.remove();
 
         quoteMonitorState.delete(quoteId);
+        updateCategoryPauseButtonState(categoryId);
         updateAlertSoundState();
         saveData();
         return true;
@@ -3934,13 +3964,12 @@
         }
     }
 
-    function toggleQuotePause(categoryId, quoteId) {
-        const category = dashboardState.find((item) => item.id == categoryId);
-        if (!category) return false;
-        const quote = category.quotes.find((item) => item.id == quoteId);
-        if (!quote) return false;
+    function setQuotePausedState(categoryId, quote, nextPaused, options = {}) {
+        if (!quote || isQuotePaused(quote) === nextPaused) return false;
 
-        const nextPaused = !isQuotePaused(quote);
+        const shouldSync = options.sync !== false;
+        const shouldSave = options.save !== false;
+        const quoteId = quote.id;
         quote.paused = nextPaused;
 
         if (inputDebounceMap.has(quoteId)) {
@@ -3964,6 +3993,46 @@
                 fetchSingleQuote(quote);
             }
         }
+
+        updateCategoryPauseButtonState(categoryId);
+        if (shouldSync) {
+            updateAlertSoundState();
+            syncPauseLinkedViews();
+        }
+        if (shouldSave) {
+            saveData();
+        }
+        return true;
+    }
+
+    function toggleQuotePause(categoryId, quoteId, options = {}) {
+        const category = dashboardState.find((item) => item.id == categoryId);
+        if (!category) return false;
+        const quote = category.quotes.find((item) => item.id == quoteId);
+        if (!quote) return false;
+        return setQuotePausedState(categoryId, quote, !isQuotePaused(quote), options);
+    }
+
+    function toggleCategoryPause(categoryId) {
+        const category = dashboardState.find((item) => item.id == categoryId);
+        if (!category || !Array.isArray(category.quotes) || category.quotes.length === 0) {
+            updateCategoryPauseButtonState(categoryId);
+            return false;
+        }
+
+        const action = getCategoryPauseAction(category.quotes);
+        const nextPaused = action === 'pause';
+        let changed = false;
+
+        category.quotes.forEach((quote) => {
+            if (isQuotePaused(quote) === nextPaused) return;
+            if (setQuotePausedState(categoryId, quote, nextPaused, { sync: false, save: false })) {
+                changed = true;
+            }
+        });
+
+        updateCategoryPauseButtonState(categoryId);
+        if (!changed) return false;
 
         updateAlertSoundState();
         syncPauseLinkedViews();
@@ -4045,6 +4114,8 @@
                 target.remove();
             }
             updateAlertSoundState();
+        } else if (target.dataset.toggleCategoryPauseId) {
+            toggleCategoryPause(categoryId);
         } else if (target.dataset.togglePauseId) {
             const toggleQuoteId = parseInt(target.dataset.togglePauseId);
             toggleQuotePause(categoryId, toggleQuoteId);
@@ -4316,6 +4387,7 @@
             if (quoteListEl) {
                 quoteListEl.appendChild(createQuoteItem(newQuote, category.id));
             }
+            updateCategoryPauseButtonState(category.id);
             saveData();
             fetchSingleQuote(newQuote);
             
