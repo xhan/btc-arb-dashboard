@@ -1,0 +1,43 @@
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+const quotePauseUtils = require('../quote-pause-utils');
+
+assert.strictEqual(quotePauseUtils.isQuotePaused({ paused: true }), true);
+assert.strictEqual(quotePauseUtils.isQuotePaused({ paused: false }), false);
+assert.strictEqual(quotePauseUtils.isQuotePaused({}), false);
+
+assert.deepStrictEqual(
+  quotePauseUtils.getActiveQuotes([
+    { id: 1, paused: false },
+    { id: 2, paused: true },
+    { id: 3 }
+  ]),
+  [
+    { id: 1, paused: false },
+    { id: 3 }
+  ]
+);
+
+assert.deepStrictEqual(
+  quotePauseUtils.buildPausedQuoteState({
+    fromSymbol: 'WBTC',
+    toSymbol: 'cbBTC',
+    lastRawPrice: 1.001,
+    lastResultText: 'WBTC ≈ 1.001 cbBTC'
+  }),
+  {
+    fromSymbol: 'WBTC',
+    toSymbol: 'cbBTC',
+    lastRawPrice: null,
+    lastResultText: ''
+  }
+);
+
+const browserCode = fs.readFileSync(path.join(__dirname, '..', 'quote-pause-utils.js'), 'utf8');
+const browserSandbox = { window: {} };
+vm.createContext(browserSandbox);
+assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));
+assert.ok(browserSandbox.window.QuotePauseUtils, 'expected QuotePauseUtils to attach to window');

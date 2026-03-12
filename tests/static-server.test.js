@@ -50,6 +50,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
+    assert.ok(response.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(
+      response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="app.js"')
+    );
     assert.ok(response.body.includes('id="path-alert-sound"'));
     assert.ok(response.body.includes('src="alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
@@ -113,6 +120,10 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(queueStatsResponse.statusCode, 200);
     assert.ok(queueStatsResponse.body.includes('队列统计'));
     assert.ok(queueStatsResponse.body.includes('请求发起间隔'));
+    assert.ok(queueStatsResponse.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(
+      queueStatsResponse.body.indexOf('src="quote-pause-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')
+    );
     assert.ok(queueStatsResponse.body.includes('src="queue-stats-utils.js"'));
     assert.ok(queueStatsResponse.body.includes('src="queue-stats-app.js"'));
 
@@ -124,6 +135,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-page"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-list"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-editor"'));
+    assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(
+      pathAlertsResponse.body.indexOf('src="quote-pause-utils.js"') < pathAlertsResponse.body.indexOf('src="path-alerts-app.js"')
+    );
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-rule-definitions.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alerts-app.js"'));
