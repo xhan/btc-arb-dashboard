@@ -883,6 +883,7 @@
         const paused = isQuotePaused(quote);
         pauseBtn.title = paused ? '恢复' : '暂停';
         pauseBtn.setAttribute('aria-label', paused ? '恢复' : '暂停');
+        pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
         pauseBtn.innerHTML = paused ? '▶️' : '⏸️';
     }
 
@@ -3685,7 +3686,7 @@
                     </div>
                 </div>
                 <div class="quote-actions">
-                    <button class="icon-btn" title="${pauseButtonTitle}" aria-label="${pauseButtonTitle}" data-toggle-pause-id="${quote.id}" data-category-id="${categoryId}">${pauseButtonIcon}</button>
+                    <button class="icon-btn" title="${pauseButtonTitle}" aria-label="${pauseButtonTitle}" aria-pressed="${isQuotePaused(quote) ? 'true' : 'false'}" data-toggle-pause-id="${quote.id}" data-category-id="${categoryId}">${pauseButtonIcon}</button>
                     <button class="icon-btn" title="设置" data-edit-alert-id="${quote.id}" data-category-id="${categoryId}">⚙️</button>
                 </div>
             </div>`;
@@ -3959,7 +3960,9 @@
         } else {
             applyActiveQuoteUiState(quote, { text: '刷新中...', loading: true, clearInverse: true });
             addToQueue(quote);
-            setTimeout(() => fetchSingleQuote(quote), 0);
+            if (!activeFetchControllers.has(quoteId)) {
+                fetchSingleQuote(quote);
+            }
         }
 
         updateAlertSoundState();
