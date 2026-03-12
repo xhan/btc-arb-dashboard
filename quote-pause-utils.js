@@ -24,9 +24,14 @@
       lastRawPrice: null,
       lastResultText: '',
       inverseRawPrice: null,
+      inverseFromSymbol: '',
+      inverseToSymbol: '',
       usedSource: '',
+      usedSourceReal: '',
+      cexOrderbook: null,
       hasUnreadAlert: false,
-      logShown: false
+      logShown: false,
+      isSoundActive: false
     };
   }
 

@@ -38,9 +38,14 @@ assert.deepStrictEqual(
     lastRawPrice: null,
     lastResultText: '',
     inverseRawPrice: null,
+    inverseFromSymbol: '',
+    inverseToSymbol: '',
     usedSource: '',
+    usedSourceReal: '',
+    cexOrderbook: null,
     hasUnreadAlert: false,
-    logShown: false
+    logShown: false,
+    isSoundActive: false
   }
 );
 
@@ -55,9 +60,33 @@ assert.deepStrictEqual(
     lastRawPrice: null,
     lastResultText: '',
     inverseRawPrice: null,
+    inverseFromSymbol: '',
+    inverseToSymbol: '',
     usedSource: '',
+    usedSourceReal: '',
+    cexOrderbook: null,
     hasUnreadAlert: false,
-    logShown: false
+    logShown: false,
+    isSoundActive: false
+  }
+);
+
+assert.deepStrictEqual(
+  quotePauseUtils.buildPausedQuoteState(null),
+  {
+    fromSymbol: '',
+    toSymbol: '',
+    lastRawPrice: null,
+    lastResultText: '',
+    inverseRawPrice: null,
+    inverseFromSymbol: '',
+    inverseToSymbol: '',
+    usedSource: '',
+    usedSourceReal: '',
+    cexOrderbook: null,
+    hasUnreadAlert: false,
+    logShown: false,
+    isSoundActive: false
   }
 );
 
