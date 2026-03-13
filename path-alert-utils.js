@@ -63,10 +63,29 @@
     };
   }
 
+  function normalizePathAlertTarget(target) {
+    if (!target || typeof target !== 'object') return null;
+    if (target.type === 'path') {
+      const legs = Array.isArray(target.legs)
+        ? target.legs.map(normalizePathAlertLeg).filter(Boolean)
+        : [];
+      return {
+        type: 'path',
+        legs
+      };
+    }
+    if (target.type !== 'rule') return null;
+    return {
+      type: 'rule',
+      ruleKind: target.ruleKind === 'special' ? 'special' : 'fixed',
+      ruleId: String(target.ruleId || '')
+    };
+  }
+
   function normalizePathAlert(alert, settings) {
     if (!alert || typeof alert !== 'object') return null;
-    const target = alert.target || {};
-    if (target.type !== 'path' && target.type !== 'rule') return null;
+    const target = normalizePathAlertTarget(alert.target || {});
+    if (!target) return null;
 
     const normalized = {
       id: String(alert.id || ''),
@@ -83,23 +102,21 @@
       target: null
     };
 
-    if (target.type === 'path') {
-      const legs = Array.isArray(target.legs)
-        ? target.legs.map(normalizePathAlertLeg).filter(Boolean)
-        : [];
-      normalized.target = {
-        type: 'path',
-        legs
-      };
-      return normalized;
-    }
-
-    normalized.target = {
-      type: 'rule',
-      ruleKind: target.ruleKind === 'special' ? 'special' : 'fixed',
-      ruleId: String(target.ruleId || '')
-    };
+    normalized.target = target;
     return normalized;
+  }
+
+  function normalizeDismissedTarget(entry) {
+    if (!entry || typeof entry !== 'object') return null;
+    const target = normalizePathAlertTarget(entry.target || {});
+    if (!target) return null;
+    return {
+      target,
+      summaryLinesSnapshot: Array.isArray(entry.summaryLinesSnapshot)
+        ? entry.summaryLinesSnapshot.map((line) => String(line || '')).filter(Boolean)
+        : [],
+      dismissedAt: toPositiveInteger(entry.dismissedAt, 0)
+    };
   }
 
   function normalizeAlertConfig(input) {
@@ -123,10 +140,15 @@
       ? source.alerts.map((alert) => normalizePathAlert(alert, settings)).filter(Boolean)
       : [];
 
+    const dismissedTargets = Array.isArray(source.dismissedTargets)
+      ? source.dismissedTargets.map((entry) => normalizeDismissedTarget(entry)).filter(Boolean)
+      : [];
+
     return {
       version: 1,
       settings,
-      alerts
+      alerts,
+      dismissedTargets
     };
   }
 
@@ -170,6 +192,21 @@
     return `${quoteId}|${direction}|${pricingMode}`;
   }
 
+  function isClosedPathCycle(legs) {
+    if (!Array.isArray(legs) || legs.length < 2) return false;
+    for (let index = 0; index < legs.length; index += 1) {
+      const current = legs[index];
+      const next = legs[(index + 1) % legs.length];
+      if (!current || !next) return false;
+      const currentTo = String(current.toSymbol || '');
+      const nextFrom = String(next.fromSymbol || '');
+      if (!currentTo || !nextFrom || currentTo !== nextFrom) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   function buildPathAlertTargetDuplicateKey(target) {
     if (!target || typeof target !== 'object') return '';
     if (target.type === 'rule') {
@@ -182,7 +219,14 @@
     }
     const legKeys = target.legs.map(buildPathAlertLegDuplicateKey);
     if (legKeys.some((key) => !key)) return '';
-    return `path:${legKeys.join('>')}`;
+    if (!isClosedPathCycle(target.legs)) {
+      return `path:${legKeys.join('>')}`;
+    }
+    const rotations = legKeys.map((_, index) => (
+      legKeys.slice(index).concat(legKeys.slice(0, index)).join('>')
+    ));
+    rotations.sort();
+    return `path:${rotations[0]}`;
   }
 
   function findDuplicatePathAlert(alerts, alertOrTarget, options = {}) {
@@ -202,6 +246,91 @@
     return null;
   }
 
+  function findDismissedPathAlert(dismissedTargets, alertOrTarget) {
+    const items = Array.isArray(dismissedTargets) ? dismissedTargets : [];
+    const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
+    const duplicateKey = buildPathAlertTargetDuplicateKey(target);
+    if (!duplicateKey) return null;
+    for (const entry of items) {
+      if (!entry || typeof entry !== 'object') continue;
+      if (buildPathAlertTargetDuplicateKey(entry.target) === duplicateKey) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  function createDismissedTargetEntry(alertOrTarget, summaryLinesSnapshot = [], dismissedAt = Date.now()) {
+    const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
+    const normalizedTarget = normalizePathAlertTarget(target);
+    if (!normalizedTarget) return null;
+    return normalizeDismissedTarget({
+      target: normalizedTarget,
+      summaryLinesSnapshot,
+      dismissedAt
+    });
+  }
+
+  function buildChangedLegs(currentLegs, baselineLegs, minAbsBp = 1) {
+    if (!Array.isArray(currentLegs) || !Array.isArray(baselineLegs) || !currentLegs.length || !baselineLegs.length) {
+      return [];
+    }
+
+    const baselineByKey = new Map();
+    for (const leg of baselineLegs) {
+      const key = buildPathAlertLegDuplicateKey(leg);
+      if (!key || !Number.isFinite(leg.rate) || leg.rate <= 0) continue;
+      baselineByKey.set(key, leg.rate);
+    }
+
+    const changes = [];
+    for (const leg of currentLegs) {
+      const key = buildPathAlertLegDuplicateKey(leg);
+      if (!key || !Number.isFinite(leg.rate) || leg.rate <= 0) continue;
+      const baselineRate = baselineByKey.get(key);
+      if (!Number.isFinite(baselineRate) || baselineRate <= 0) continue;
+      const deltaBp = ((leg.rate / baselineRate) - 1) * 10000;
+      if (Math.abs(deltaBp) <= minAbsBp) continue;
+      changes.push({
+        ...leg,
+        deltaBp
+      });
+    }
+
+    return changes.sort((left, right) => {
+      const absDiff = Math.abs(right.deltaBp) - Math.abs(left.deltaBp);
+      if (absDiff !== 0) return absDiff;
+      return right.deltaBp - left.deltaBp;
+    });
+  }
+
+  function countPathAlertRealLegs(alert, evaluation) {
+    if (alert && alert.target && alert.target.type === 'path') {
+      return Array.isArray(alert.target.legs) ? alert.target.legs.length : 0;
+    }
+    const cycleLegs = Array.isArray(evaluation && evaluation.cycle && evaluation.cycle.legs)
+      ? evaluation.cycle.legs
+      : [];
+    return cycleLegs.filter((leg) => Number.isFinite(Number(leg && leg.quoteId))).length;
+  }
+
+  function sortTriggeredPathAlerts(items) {
+    const list = Array.isArray(items) ? [...items] : [];
+    return list.sort((left, right) => {
+      const leftLegCount = countPathAlertRealLegs(left && left.alert, left && left.evaluation);
+      const rightLegCount = countPathAlertRealLegs(right && right.alert, right && right.evaluation);
+      if (leftLegCount !== rightLegCount) {
+        return leftLegCount - rightLegCount;
+      }
+      const leftProfitBp = Number(left && left.evaluation && left.evaluation.profitBp);
+      const rightProfitBp = Number(right && right.evaluation && right.evaluation.profitBp);
+      if (Number.isFinite(leftProfitBp) && Number.isFinite(rightProfitBp) && leftProfitBp !== rightProfitBp) {
+        return rightProfitBp - leftProfitBp;
+      }
+      return 0;
+    });
+  }
+
   function getLegRate(leg, state) {
     if (!leg || !state) return null;
     if (leg.pricingMode === 'cex-bid1') {
@@ -217,6 +346,92 @@
       return Number.isFinite(state.inverseRawPrice) ? state.inverseRawPrice : null;
     }
     return Number.isFinite(state.lastRawPrice) ? state.lastRawPrice : null;
+  }
+
+  function buildLegSnapshot(leg, rate) {
+    if (!leg || !Number.isFinite(rate)) return null;
+    return {
+      quoteId: Number(leg.quoteId),
+      direction: leg.direction === 'inverse' || leg.inverse ? 'inverse' : 'forward',
+      pricingMode: ['raw', 'cex-bid1', 'cex-ask1-inverse'].includes(leg.pricingMode)
+        ? leg.pricingMode
+        : (leg.cexLevelLabel === 'bid1' ? 'cex-bid1' : leg.cexLevelLabel === 'ask1' ? 'cex-ask1-inverse' : 'raw'),
+      chain: String(leg.chain || ''),
+      fromSymbol: String(leg.fromSymbol || leg.from || ''),
+      toSymbol: String(leg.toSymbol || leg.to || ''),
+      inverse: Boolean(leg.inverse),
+      cexLevelLabel: String(leg.cexLevelLabel || ''),
+      cexLevelSize: Number.isFinite(Number(leg.cexLevelSize)) ? Number(leg.cexLevelSize) : null,
+      rate
+    };
+  }
+
+  function buildAllLegSnapshots(quotes, quoteStateById) {
+    const items = Array.isArray(quotes) ? quotes : [];
+    const stateMap = quoteStateById instanceof Map ? quoteStateById : new Map();
+    const snapshots = [];
+
+    for (const quote of items) {
+      if (!quote || !Number.isFinite(Number(quote.id))) continue;
+      const state = stateMap.get(Number(quote.id));
+      if (!state) continue;
+
+      if (Number.isFinite(state.lastRawPrice) && state.fromSymbol && state.toSymbol) {
+        const snapshot = buildLegSnapshot({
+          quoteId: Number(quote.id),
+          direction: 'forward',
+          pricingMode: 'raw',
+          chain: quote.chain,
+          fromSymbol: state.fromSymbol,
+          toSymbol: state.toSymbol
+        }, state.lastRawPrice);
+        if (snapshot) snapshots.push(snapshot);
+      }
+
+      if (quote.showInverse && Number.isFinite(state.inverseRawPrice) && state.fromSymbol && state.toSymbol) {
+        const snapshot = buildLegSnapshot({
+          quoteId: Number(quote.id),
+          direction: 'inverse',
+          pricingMode: 'raw',
+          chain: quote.chain,
+          fromSymbol: state.toSymbol,
+          toSymbol: state.fromSymbol,
+          inverse: true
+        }, state.inverseRawPrice);
+        if (snapshot) snapshots.push(snapshot);
+      }
+
+      if (state.cexOrderbook && Number.isFinite(state.cexOrderbook.bestBidPrice) && state.fromSymbol && state.toSymbol) {
+        const snapshot = buildLegSnapshot({
+          quoteId: Number(quote.id),
+          direction: 'forward',
+          pricingMode: 'cex-bid1',
+          chain: quote.chain,
+          fromSymbol: state.fromSymbol,
+          toSymbol: state.toSymbol,
+          cexLevelLabel: 'bid1',
+          cexLevelSize: state.cexOrderbook.bestBidSize
+        }, state.cexOrderbook.bestBidPrice);
+        if (snapshot) snapshots.push(snapshot);
+      }
+
+      if (state.cexOrderbook && Number.isFinite(state.cexOrderbook.bestAskPrice) && state.cexOrderbook.bestAskPrice > 0 && state.fromSymbol && state.toSymbol) {
+        const snapshot = buildLegSnapshot({
+          quoteId: Number(quote.id),
+          direction: 'inverse',
+          pricingMode: 'cex-ask1-inverse',
+          chain: quote.chain,
+          fromSymbol: state.toSymbol,
+          toSymbol: state.fromSymbol,
+          inverse: true,
+          cexLevelLabel: 'ask1',
+          cexLevelSize: state.cexOrderbook.bestAskSize
+        }, 1 / state.cexOrderbook.bestAskPrice);
+        if (snapshot) snapshots.push(snapshot);
+      }
+    }
+
+    return snapshots;
   }
 
   function unavailableEvaluation(targetType) {
@@ -246,18 +461,30 @@
         status: 'ok',
         targetType: 'rule',
         profitRate: resolved.profitRate,
-        profitBp: resolved.profitRate * 10000
+        profitBp: resolved.profitRate * 10000,
+        cycle: resolved.cycle || null,
+        legSnapshots: Array.isArray(resolved.cycle && resolved.cycle.legs)
+          ? resolved.cycle.legs
+            .filter((leg) => Number.isFinite(Number(leg && leg.quoteId)) && Number.isFinite(leg && leg.rate))
+            .map((leg) => buildLegSnapshot(leg, leg.rate))
+            .filter(Boolean)
+          : []
       };
     }
 
     const quoteStateById = options.quoteStateById instanceof Map ? options.quoteStateById : new Map();
     let product = 1;
+    const legSnapshots = [];
 
     for (const leg of (target.legs || [])) {
       const state = quoteStateById.get(leg.quoteId);
       const rate = getLegRate(leg, state);
       if (!Number.isFinite(rate)) {
         return unavailableEvaluation('path');
+      }
+      const snapshot = buildLegSnapshot(leg, rate);
+      if (snapshot) {
+        legSnapshots.push(snapshot);
       }
       product *= rate;
     }
@@ -268,7 +495,8 @@
       status: 'ok',
       targetType: 'path',
       profitRate,
-      profitBp: profitRate * 10000
+      profitBp: profitRate * 10000,
+      legSnapshots
     };
   }
 
@@ -280,6 +508,12 @@
       lastTriggeredAt: runtimeState && Number.isFinite(runtimeState.lastTriggeredAt) ? runtimeState.lastTriggeredAt : null,
       lastEvaluatedProfitBp: evaluation && Number.isFinite(evaluation.profitBp) ? evaluation.profitBp : null,
       lastAvailableAt: evaluation && evaluation.available ? nowMs : (runtimeState && Number.isFinite(runtimeState.lastAvailableAt) ? runtimeState.lastAvailableAt : null),
+      currentLegSnapshots: runtimeState && Array.isArray(runtimeState.currentLegSnapshots)
+        ? runtimeState.currentLegSnapshots.map((leg) => ({ ...leg }))
+        : [],
+      baselineLegSnapshots: runtimeState && Array.isArray(runtimeState.baselineLegSnapshots)
+        ? runtimeState.baselineLegSnapshots.map((leg) => ({ ...leg }))
+        : [],
       shouldTrigger: false
     };
   }
@@ -330,19 +564,77 @@
     return next;
   }
 
+  function resolvePathAlertSnapshotState(alert, previousRuntime, nextRuntime, evaluation, allLegSnapshots) {
+    const currentSnapshots = Array.isArray(evaluation && evaluation.legSnapshots)
+      ? evaluation.legSnapshots.map((leg) => ({ ...leg }))
+      : [];
+    const next = nextRuntime && typeof nextRuntime === 'object' ? nextRuntime : {};
+    const previous = previousRuntime && typeof previousRuntime === 'object' ? previousRuntime : {};
+    const currentAllSnapshots = Array.isArray(allLegSnapshots) ? allLegSnapshots.map((leg) => ({ ...leg })) : [];
+
+    next.currentLegSnapshots = currentAllSnapshots;
+
+    if (!alert || alert.enabled === false || !evaluation || evaluation.available !== true || !Number.isFinite(evaluation.profitBp)) {
+      next.baselineLegSnapshots = [];
+      return {
+        currentSnapshots,
+        baselineSnapshots: []
+      };
+    }
+
+    if (alert.triggerMode === 'delayed') {
+      const previousBaseline = Array.isArray(previous.baselineLegSnapshots)
+        ? previous.baselineLegSnapshots.map((leg) => ({ ...leg }))
+        : [];
+      if (next.status === 'pending_confirm') {
+        next.baselineLegSnapshots = previous && previous.status === 'pending_confirm' && previousBaseline.length
+          ? previousBaseline
+          : currentAllSnapshots.map((leg) => ({ ...leg }));
+      } else if (next.status === 'cooldown' || next.status === 'monitoring') {
+        next.baselineLegSnapshots = previousBaseline;
+      } else {
+        next.baselineLegSnapshots = [];
+      }
+      return {
+        currentSnapshots,
+        baselineSnapshots: Array.isArray(next.baselineLegSnapshots)
+          ? next.baselineLegSnapshots.map((leg) => ({ ...leg }))
+          : []
+      };
+    }
+
+    next.baselineLegSnapshots = Array.isArray(previous.currentLegSnapshots)
+      ? previous.currentLegSnapshots.map((leg) => ({ ...leg }))
+      : [];
+    return {
+      currentSnapshots,
+      baselineSnapshots: Array.isArray(next.baselineLegSnapshots)
+        ? next.baselineLegSnapshots.map((leg) => ({ ...leg }))
+        : []
+    };
+  }
+
   return {
     DEFAULT_PATH_ALERT_WEBHOOK_URL,
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
     DEFAULT_ALERT_DELIVERY,
     DEFAULT_PATH_ALERT_SETTINGS,
     advancePathAlertRuntime,
+    buildAllLegSnapshots,
+    buildChangedLegs,
     buildPathAlertTargetDuplicateKey,
     buildPathAlertSummaryLines,
     buildPathAlertWebhookUrl,
+    countPathAlertRealLegs,
+    createDismissedTargetEntry,
     evaluatePathAlert,
+    findDismissedPathAlert,
     findDuplicatePathAlert,
     isPathAlertConfirmDelayDisabled,
     normalizeAlertConfig,
-    normalizePathAlert
+    normalizeDismissedTarget,
+    normalizePathAlert,
+    resolvePathAlertSnapshotState,
+    sortTriggeredPathAlerts
   };
 }));

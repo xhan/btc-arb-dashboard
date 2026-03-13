@@ -102,6 +102,11 @@
       box-shadow: 0 10px 24px var(--shadow);
       padding: 14px;
     }
+    .left-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
     .panel-head {
       display: flex;
       align-items: center;
@@ -112,6 +117,29 @@
     .panel-head h2 {
       margin: 0;
       font-size: 16px;
+    }
+    .panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .panel-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .panel-controls input[type="text"] {
+      flex: 1 1 180px;
+      min-width: 180px;
+    }
+    .inline-count {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
     }
     .inline-hint, .status-message {
       color: var(--muted);
@@ -150,13 +178,60 @@
     .alert-list {
       display: flex;
       flex-direction: column;
+      gap: 12px;
+    }
+    .list-section {
+      display: flex;
+      flex-direction: column;
       gap: 8px;
+    }
+    .list-section-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .list-section-headline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .list-section-count {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .list-filter-input {
+      width: 100%;
+    }
+    .list-bulk-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .list-bulk-actions button {
+      padding: 5px 9px;
+      font-size: 12px;
     }
     .alert-item {
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 10px 12px;
       background: #fff;
+    }
+    .alert-item-shell {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .alert-item-shell input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 2px 0 0;
+      flex: 0 0 auto;
+    }
+    .alert-item-body {
+      min-width: 0;
+      flex: 1 1 auto;
     }
     .alert-item-head {
       display: flex;
@@ -167,6 +242,12 @@
     .alert-item-title {
       margin: 0 0 6px;
       font-weight: 700;
+    }
+    .alert-item-note {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
     }
     .alert-item-route {
       margin-bottom: 6px;
@@ -188,6 +269,30 @@
       gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
+    }
+    .alert-item-select {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+    .alert-item-main {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .alert-item-head {
+      align-items: flex-start;
+    }
+    .alert-item-head-left {
+      display: flex;
+      gap: 10px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .alert-item-muted-title {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 12px;
     }
     .editor-grid {
       display: grid;
@@ -390,6 +495,9 @@
       margin: 0;
       flex: 0 0 auto;
     }
+    .section-anchor {
+      scroll-margin-top: 16px;
+    }
     @media (max-width: 1100px) {
       .page-grid {
         grid-template-columns: 1fr;
@@ -419,13 +527,34 @@
     <div class="status-message" id="path-alerts-status"></div>
 
     <div class="page-grid">
-      <section class="panel">
-        <div class="panel-head">
-          <h2>规则列表</h2>
-          <div class="inline-hint">保存后，请回主看板点击重新加载</div>
-        </div>
-        <div id="path-alerts-list" class="alert-list"></div>
-      </section>
+      <div class="left-stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>规则列表</h2>
+            <div class="inline-hint">保存后，请回主看板点击重新加载</div>
+          </div>
+          <div class="panel-controls">
+            <input id="path-alerts-search-input" type="text" placeholder="搜索链名、代币、规则摘要">
+            <button id="path-alerts-dismiss-selected-btn" type="button">标记并删除所选</button>
+            <button id="path-alerts-delete-selected-btn" type="button">批量删除</button>
+            <div id="path-alerts-selection-count" class="inline-count">已选 0 条</div>
+          </div>
+          <div id="path-alerts-list" class="alert-list"></div>
+        </section>
+
+        <section class="panel section-anchor" id="dismissed-section">
+          <div class="panel-head">
+            <h2>不需要路径</h2>
+            <div class="inline-hint">标记后，后续全量导入会自动跳过</div>
+          </div>
+          <div class="panel-controls">
+            <input id="path-alerts-dismissed-search-input" type="text" placeholder="搜索已忽略路径">
+            <button id="path-alerts-dismissed-delete-selected-btn" type="button">批量删除</button>
+            <div id="path-alerts-dismissed-selection-count" class="inline-count">已选 0 条</div>
+          </div>
+          <div id="path-alerts-dismissed-list" class="alert-list"></div>
+        </section>
+      </div>
 
       <section class="panel">
         <div class="panel-head">

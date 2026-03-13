@@ -76,7 +76,8 @@
                 webhookUrl: 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder',
                 webhookSecret: ''
             },
-            alerts: []
+            alerts: [],
+            dismissedTargets: []
         };
     let pathAlertSaveTimer = null;
     let pathAlertEvalTimer = null;
@@ -84,6 +85,7 @@
     let pathAlertRuntimeState = new Map();
     let pathAlertPanelCollapsed = false;
     let pathAlertReloading = false;
+    let pathAlertBulkImporting = false;
     let pathAlertEditorState = {
         visible: false,
         editingId: '',
@@ -98,6 +100,9 @@
     let arbGlobalExcludedChainsInput = '';
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
+    let quoteStateRevision = 0;
+    let arbRuleSnapshotCacheKey = '';
+    let arbRuleSnapshotCache = null;
     let arbLastPointerOpenedOpportunityId = null;
     let arbDetailState = {
         visible: false,
@@ -559,8 +564,9 @@
         const now = new Date();
         const logEntry = document.createElement('div');
         logEntry.className = 'log-entry';
-        const subtitleHtml = subtitle ? `<div>${subtitle}</div>` : '';
-        logEntry.innerHTML = `<div><strong>${escapeHtml(title)}</strong></div>${subtitleHtml}<div>${escapeHtml(message)}</div><span class="log-time">${now.toLocaleTimeString()}</span>`;
+        const formatLogText = (value) => escapeHtml(value).replace(/\n/g, '<br>');
+        const subtitleHtml = subtitle ? `<div>${formatLogText(subtitle)}</div>` : '';
+        logEntry.innerHTML = `<div><strong>${formatLogText(title)}</strong></div>${subtitleHtml}<div>${formatLogText(message)}</div><span class="log-time">${now.toLocaleTimeString()}</span>`;
         alertLogContent.prepend(logEntry);
     }
 
@@ -596,6 +602,88 @@
             arbUpdateTimer = null;
             updateArbPanel();
         }, ARB_PANEL_UPDATE_DELAY_MS);
+    }
+
+    function invalidateArbRuleSnapshotCache() {
+        quoteStateRevision += 1;
+        arbRuleSnapshotCache = null;
+        arbRuleSnapshotCacheKey = '';
+    }
+
+    function setQuoteMonitorState(quoteId, nextState) {
+        quoteMonitorState.set(quoteId, nextState);
+        invalidateArbRuleSnapshotCache();
+    }
+
+    function buildArbRuleSnapshotCacheKey() {
+        const categorySignature = dashboardState
+            .map((category) => {
+                const quoteIds = Array.isArray(category && category.quotes)
+                    ? category.quotes
+                        .filter((quote) => quote && quote.paused !== true)
+                        .map((quote) => `${quote.id}:${quote.chain}:${quote.showInverse ? 1 : 0}`)
+                        .join(',')
+                    : '';
+                return `${category && category.name || ''}:${quoteIds}`;
+            })
+            .join('|');
+        return `${quoteStateRevision}|${categorySignature}`;
+    }
+
+    function buildQuotesByCategoryName() {
+        const result = new Map();
+        for (const category of dashboardState) {
+            if (!category || !category.name) continue;
+            result.set(category.name, getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []));
+        }
+        return result;
+    }
+
+    function getSharedArbRuleSnapshot() {
+        const cacheKey = buildArbRuleSnapshotCacheKey();
+        if (arbRuleSnapshotCache && arbRuleSnapshotCacheKey === cacheKey) {
+            return arbRuleSnapshotCache;
+        }
+
+        const aliasRules = getAliasRules();
+        const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
+        const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
+        const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
+        const allEdgesWithRules = allEdges.concat(ruleEdges);
+        const quoteMetaById = buildQuoteMetaById();
+        const quotesByCategoryName = buildQuotesByCategoryName();
+        const baseSnapshot = window.ArbRuleSnapshotUtils && typeof window.ArbRuleSnapshotUtils.buildArbRuleSnapshot === 'function'
+            ? window.ArbRuleSnapshotUtils.buildArbRuleSnapshot({
+                fixedRules: FIXED_PATH_RULES,
+                specialRules: SPECIAL_ARB_RULES,
+                allEdgesWithRules,
+                quoteMetaById,
+                quotesByCategoryName,
+                quoteStateById: quoteMonitorState,
+                aliasRules,
+                arbPathsApi: window.ArbPaths,
+                arbFixedUtils: window.ArbFixedUtils,
+                arbSpecialUtils: window.ArbSpecialUtils
+            })
+            : {
+                fixedResults: [],
+                fixedByRuleId: {},
+                specialResults: [],
+                specialByRuleId: {}
+            };
+
+        arbRuleSnapshotCacheKey = cacheKey;
+        arbRuleSnapshotCache = {
+            ...baseSnapshot,
+            aliasRules,
+            allQuotes,
+            allEdges,
+            ruleEdges,
+            allEdgesWithRules,
+            quoteMetaById,
+            quotesByCategoryName
+        };
+        return arbRuleSnapshotCache;
     }
 
     function formatChainLabel(chain) {
@@ -1478,6 +1566,24 @@
         };
     }
 
+    function getPathAlertDefaultThresholdBp() {
+        const fallback = 1.1;
+        if (!window.PathAlertUtils || !Number.isFinite(window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP)) {
+            return fallback;
+        }
+        return window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP;
+    }
+
+    function collectArbImportEntries() {
+        const panelData = buildArbPanelData();
+        if (panelData.error) {
+            return { errorText: panelData.error, entries: [] };
+        }
+        return {
+            entries: Array.isArray(panelData.importEntries) ? panelData.importEntries : []
+        };
+    }
+
     function buildArbDetailRowsHtml(card) {
         if (card.rows && card.rows.length) {
             return card.rows.map((row) => `
@@ -1640,7 +1746,7 @@
             successSource,
             isInverseFetch
         });
-        quoteMonitorState.set(quote.id, nextState);
+        setQuoteMonitorState(quote.id, nextState);
     }
 
     async function waitForArbDetailSourceBudget(source, signal) {
@@ -2220,43 +2326,27 @@
         return [];
     }
 
-    function buildRuleAlertEvaluation(target) {
-        const aliasRules = getAliasRules();
-        const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
-        const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
-        const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
-        const allEdgesWithRules = allEdges.concat(ruleEdges);
-        const quoteMetaById = buildQuoteMetaById();
-
+    function buildRuleAlertEvaluation(target, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
         if (target.ruleKind === 'fixed') {
             const rule = getFixedRuleById(target.ruleId);
             if (!rule) return { available: false };
-            const cycle = window.ArbPaths.findBestFixedPath(
-                (window.ArbFixedUtils && typeof window.ArbFixedUtils.filterEdgesForFixedRule === 'function')
-                    ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
-                    : allEdgesWithRules,
-                rule,
-                aliasRules
-            );
+            const cycles = sharedRuleSnapshot && sharedRuleSnapshot.fixedByRuleId
+                ? sharedRuleSnapshot.fixedByRuleId[target.ruleId]
+                : null;
+            const cycle = Array.isArray(cycles) && cycles.length ? cycles[0] : null;
             return cycle
                 ? { available: true, profitRate: cycle.profitRate, label: rule.title, cycle }
                 : { available: false };
         }
 
         const rule = getSpecialRuleById(target.ruleId);
-        if (!rule || !window.ArbSpecialUtils || typeof window.ArbSpecialUtils.buildSpecialArbOpportunities !== 'function') {
+        if (!rule) {
             return { available: false };
         }
-
-        const category = dashboardState.find((item) => item && item.name === rule.categoryName);
-        if (!category) return { available: false };
-        const opportunities = window.ArbSpecialUtils.buildSpecialArbOpportunities({
-            rules: [rule],
-            quotes: getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []),
-            quoteStateById: quoteMonitorState,
-            aliasRules
-        });
-        const best = opportunities[0];
+        const opportunities = sharedRuleSnapshot && sharedRuleSnapshot.specialByRuleId
+            ? sharedRuleSnapshot.specialByRuleId[target.ruleId]
+            : null;
+        const best = Array.isArray(opportunities) ? opportunities[0] : null;
         return best && best.cycle
             ? { available: true, profitRate: best.cycle.profitRate, label: rule.title, cycle: best.cycle }
             : { available: false };
@@ -2275,18 +2365,29 @@
         };
     }
 
-    function buildPathAlertDraftFromOpportunity(opportunityId) {
-        const entry = arbOpportunityStore.get(opportunityId);
+    function getPathAlertDefaultThresholdBp() {
+        return Number(window.PathAlertUtils && window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP) || 1.1;
+    }
+
+    function getPathAlertLegPricingMode(leg) {
+        if (!leg || typeof leg !== 'object') return 'raw';
+        if (leg.cexLevelLabel === 'bid1') return 'cex-bid1';
+        if (leg.cexLevelLabel === 'ask1') return 'cex-ask1-inverse';
+        return 'raw';
+    }
+
+    function buildPathAlertDraftFromOpportunityEntry(entry) {
         if (!entry) return null;
         const preset = entry.alertPreset || { type: 'path' };
+        const settings = pathAlertConfig.settings || {};
         const baseDraft = {
             id: '',
-            name: `${entry.section || '路径'} ${entry.label || ''}`.trim(),
+            name: '',
             enabled: true,
-            thresholdBp: '',
+            thresholdBp: getPathAlertDefaultThresholdBp(),
             triggerMode: 'immediate',
             confirmDelaySec: 0,
-            cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
+            cooldownSec: settings.defaultCooldownSec || 300,
             delivery: { sound: true, log: true, webhookEnabled: false }
         };
 
@@ -2306,12 +2407,13 @@
             .map((leg) => ({
                 quoteId: Number(leg.quoteId),
                 direction: leg.inverse ? 'inverse' : 'forward',
-                pricingMode: 'raw',
+                pricingMode: getPathAlertLegPricingMode(leg),
                 chain: leg.chain,
                 fromSymbol: leg.from,
                 toSymbol: leg.to
             }));
 
+        if (!legs.length) return null;
         return {
             ...baseDraft,
             target: {
@@ -2319,6 +2421,27 @@
                 legs
             }
         };
+    }
+
+    function buildPathAlertFromOpportunityEntry(entry) {
+        const draft = buildPathAlertDraftFromOpportunityEntry(entry);
+        if (!draft || !window.PathAlertUtils) return null;
+        return window.PathAlertUtils.normalizePathAlert({
+            id: createPathAlertId(),
+            name: '',
+            enabled: true,
+            thresholdBp: getPathAlertDefaultThresholdBp(),
+            triggerMode: 'immediate',
+            confirmDelaySec: 0,
+            cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
+            delivery: { sound: true, log: true, webhookEnabled: false },
+            target: draft.target
+        }, pathAlertConfig.settings || { defaultCooldownSec: 300 });
+    }
+
+    function buildPathAlertDraftFromOpportunity(opportunityId) {
+        const entry = arbOpportunityStore.get(opportunityId);
+        return entry ? buildPathAlertDraftFromOpportunityEntry(entry) : null;
     }
 
     function formatPathAlertEvaluationText(evaluation) {
@@ -2378,6 +2501,13 @@
         return buildPathAlertSummaryLines(alert).join(' | ');
     }
 
+    function buildPathAlertDisplayTitle(alert) {
+        const name = String(alert && alert.name || '').trim();
+        if (name) return name;
+        const lines = buildPathAlertSummaryLines(alert);
+        return lines[0] || '未配置路径';
+    }
+
     function renderPathAlertSummaryLinesHtml(alert) {
         const lines = buildPathAlertSummaryLines(alert);
         if (!lines.length) {
@@ -2386,33 +2516,127 @@
         return lines.map((line) => `<div class="path-alert-item-route-line">${escapeHtml(line)}</div>`).join('');
     }
 
-    function buildPathAlertEvaluationContext() {
+    function buildPathAlertLegDisplayLine(leg) {
+        if (!leg) return '--';
+        const suffix = leg.pricingMode === 'cex-bid1'
+            ? ' [bid1]'
+            : leg.pricingMode === 'cex-ask1-inverse'
+                ? ' [ask1]'
+                : '';
+        return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol, suffix);
+    }
+
+    function buildPathAlertCycleSummaryLines(alert, evaluation) {
+        if (evaluation && evaluation.cycle && Array.isArray(evaluation.cycle.legs)) {
+            const lines = buildLegLines(evaluation.cycle.legs.filter((leg) => !isRuleLeg(leg)));
+            if (lines.length) return lines;
+        }
+        return buildPathAlertSummaryLines(alert);
+    }
+
+    function buildPathAlertChangedLegLines(changedLegs, maxCount = 3) {
+        return (Array.isArray(changedLegs) ? changedLegs : [])
+            .slice(0, maxCount)
+            .map((leg) => `${buildPathAlertLegDisplayLine(leg)} ${leg.deltaBp >= 0 ? '+' : ''}${leg.deltaBp.toFixed(2)}bp`);
+    }
+
+    function getPathAlertRealLegCount(alert, evaluation) {
+        if (window.PathAlertUtils && typeof window.PathAlertUtils.countPathAlertRealLegs === 'function') {
+            return window.PathAlertUtils.countPathAlertRealLegs(alert, evaluation);
+        }
+        if (alert && alert.target && alert.target.type === 'path' && Array.isArray(alert.target.legs)) {
+            return alert.target.legs.length;
+        }
+        return 0;
+    }
+
+    function createDismissedTargetEntry(alert) {
+        if (!window.PathAlertUtils || typeof window.PathAlertUtils.createDismissedTargetEntry !== 'function') {
+            return null;
+        }
+        return window.PathAlertUtils.createDismissedTargetEntry(
+            alert,
+            buildPathAlertSummaryLines(alert),
+            Date.now()
+        );
+    }
+
+    function removePathAlertById(alertId) {
+        pathAlertConfig.alerts = (pathAlertConfig.alerts || []).filter((item) => item.id !== alertId);
+        pathAlertRuntimeState.delete(alertId);
+        updateAlertSoundState();
+        renderPathAlertPanel();
+    }
+
+    function dismissPathAlertById(alertId) {
+        const alert = (pathAlertConfig.alerts || []).find((item) => item.id === alertId);
+        if (!alert || !window.PathAlertUtils) {
+            removePathAlertById(alertId);
+            return;
+        }
+        const entry = createDismissedTargetEntry(alert);
+        if (entry && !window.PathAlertUtils.findDismissedPathAlert(pathAlertConfig.dismissedTargets, entry)) {
+            const nextDismissed = Array.isArray(pathAlertConfig.dismissedTargets)
+                ? [...pathAlertConfig.dismissedTargets]
+                : [];
+            nextDismissed.push(entry);
+            pathAlertConfig.dismissedTargets = nextDismissed;
+        }
+        removePathAlertById(alertId);
+    }
+
+    function buildPathAlertEvaluationContext(sharedRuleSnapshot) {
         return {
             quoteStateById: quoteMonitorState,
-            resolveRuleEvaluation: buildRuleAlertEvaluation
+            resolveRuleEvaluation(target) {
+                return buildRuleAlertEvaluation(target, sharedRuleSnapshot);
+            }
         };
     }
 
-    function formatPathAlertNotificationTitle(evaluation) {
-        if (!evaluation || !Number.isFinite(evaluation.profitBp)) {
-            return '收益 -- bp';
+    function formatPathAlertNotificationTitle(triggeredEntries) {
+        const list = Array.isArray(triggeredEntries) ? triggeredEntries : [];
+        if (!list.length) {
+            return '路径报警';
         }
-        return `收益 ${evaluation.profitBp >= 0 ? '+' : ''}${evaluation.profitBp.toFixed(2)} bp`;
+        if (list.length === 1) {
+            const evaluation = list[0].evaluation;
+            if (!evaluation || !Number.isFinite(evaluation.profitBp)) {
+                return '路径报警';
+            }
+            return `收益 ${evaluation.profitBp >= 0 ? '+' : ''}${evaluation.profitBp.toFixed(2)} bp`;
+        }
+        return `路径报警 ${list.length} 条`;
     }
 
-    function buildPathAlertNotificationBody(alert) {
-        return buildPathAlertSummary(alert) || (alert && alert.name) || '路径报警';
+    function buildPathAlertNotificationBody(triggeredEntries) {
+        const list = (Array.isArray(triggeredEntries) ? triggeredEntries : []).slice(0, 3);
+        if (!list.length) return '路径报警';
+        return list.map((entry, index) => {
+            const summaryLines = buildPathAlertCycleSummaryLines(entry.alert, entry.evaluation);
+            const changedLegLines = buildPathAlertChangedLegLines(entry.changedLegs, 3);
+            const parts = [
+                `${index + 1}. ${formatPathAlertEvaluationText(entry.evaluation)}`
+            ];
+            if (summaryLines.length) {
+                parts.push(summaryLines.join(' | '));
+            }
+            if (changedLegLines.length) {
+                parts.push(`变化: ${changedLegLines.join(' ; ')}`);
+            }
+            return parts.join('\n');
+        }).join('\n\n');
     }
 
-    async function sendPathAlertWebhookNotification(alert, evaluation) {
+    async function sendPathAlertWebhookNotification(triggeredEntries) {
         if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
         try {
             const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: formatPathAlertNotificationTitle(evaluation),
-                    body: buildPathAlertNotificationBody(alert)
+                    title: formatPathAlertNotificationTitle(triggeredEntries),
+                    body: buildPathAlertNotificationBody(triggeredEntries)
                 })
             });
             if (!response.ok) {
@@ -2424,27 +2648,87 @@
         }
     }
 
+    function buildAggregatedPathAlertLog(triggeredEntries) {
+        const list = (Array.isArray(triggeredEntries) ? triggeredEntries : []).slice(0, 3);
+        if (!list.length) {
+            return {
+                title: '[路径报警]',
+                subtitle: '',
+                message: '本轮无可通知路径'
+            };
+        }
+        const title = list.length === 1
+            ? `[路径报警] ${buildPathAlertDisplayTitle(list[0].alert)}`
+            : `[路径报警] ${list.length} 条命中`;
+        const subtitle = list.length === 1
+            ? buildPathAlertCycleSummaryLines(list[0].alert, list[0].evaluation).join('\n')
+            : list.map((entry, index) => `${index + 1}. ${buildPathAlertDisplayTitle(entry.alert)} ${formatPathAlertEvaluationText(entry.evaluation)}`).join('\n');
+        const message = list.map((entry, index) => {
+            const lines = [`${index + 1}. ${formatPathAlertEvaluationText(entry.evaluation)}`];
+            const summaryLines = buildPathAlertCycleSummaryLines(entry.alert, entry.evaluation);
+            if (summaryLines.length) {
+                lines.push(summaryLines.join('\n'));
+            }
+            const changedLegLines = buildPathAlertChangedLegLines(entry.changedLegs, 3);
+            if (changedLegLines.length) {
+                lines.push(`变化: ${changedLegLines.join(' | ')}`);
+            }
+            return lines.join('\n');
+        }).join('\n\n');
+        return { title, subtitle, message };
+    }
+
+    function buildTriggeredPathAlertEntry(alert, evaluation, changedLegs) {
+        return {
+            alert,
+            evaluation,
+            changedLegs: Array.isArray(changedLegs) ? changedLegs.slice(0, 3) : [],
+            realLegCount: getPathAlertRealLegCount(alert, evaluation)
+        };
+    }
+
+    function sortTriggeredPathAlertEntries(entries) {
+        if (window.PathAlertUtils && typeof window.PathAlertUtils.sortTriggeredPathAlerts === 'function') {
+            return window.PathAlertUtils.sortTriggeredPathAlerts(entries).map((entry) => ({
+                ...entry,
+                realLegCount: entry.realLegCount ?? getPathAlertRealLegCount(entry.alert, entry.evaluation)
+            }));
+        }
+        return [...entries].sort((left, right) => {
+            const legDiff = left.realLegCount - right.realLegCount;
+            if (legDiff !== 0) return legDiff;
+            return Number(right.evaluation && right.evaluation.profitBp) - Number(left.evaluation && left.evaluation.profitBp);
+        });
+    }
+
     function evaluatePathAlertsOnce() {
         if (!window.PathAlertUtils) return;
-        const context = buildPathAlertEvaluationContext();
+        const sharedRuleSnapshot = getSharedArbRuleSnapshot();
+        const context = buildPathAlertEvaluationContext(sharedRuleSnapshot);
+        const allLegSnapshots = typeof window.PathAlertUtils.buildAllLegSnapshots === 'function'
+            ? window.PathAlertUtils.buildAllLegSnapshots(sharedRuleSnapshot.allQuotes || [], quoteMonitorState)
+            : [];
         const activeIds = new Set();
         const nowMs = Date.now();
+        const triggeredEntries = [];
 
         for (const alert of (pathAlertConfig.alerts || [])) {
             activeIds.add(alert.id);
             const evaluation = window.PathAlertUtils.evaluatePathAlert(alert, context);
             const previous = pathAlertRuntimeState.get(alert.id) || null;
             const next = window.PathAlertUtils.advancePathAlertRuntime(alert, previous, evaluation, nowMs);
+            const snapshotState = typeof window.PathAlertUtils.resolvePathAlertSnapshotState === 'function'
+                ? window.PathAlertUtils.resolvePathAlertSnapshotState(alert, previous, next, evaluation, allLegSnapshots)
+                : { currentSnapshots: [], baselineSnapshots: [] };
             next.evaluation = evaluation;
             next.isSoundActive = Boolean(next.shouldTrigger && pathAlertConfig.settings && pathAlertConfig.settings.localSoundEnabled !== false);
             if (next.shouldTrigger) {
-                const thresholdText = Number.isFinite(Number(alert.thresholdBp)) ? Number(alert.thresholdBp) : 0;
-                appendAlertLogEntry(
-                    `[路径报警] ${alert.name || '未命名路径'}`,
-                    `收益 ${formatPathAlertEvaluationText(evaluation)}，阈值 ${thresholdText}bp`,
-                    buildPathAlertSummary(alert)
+                const changedLegs = window.PathAlertUtils.buildChangedLegs(
+                    snapshotState.currentSnapshots,
+                    snapshotState.baselineSnapshots,
+                    1
                 );
-                sendPathAlertWebhookNotification(alert, evaluation);
+                triggeredEntries.push(buildTriggeredPathAlertEntry(alert, evaluation, changedLegs));
             }
             pathAlertRuntimeState.set(alert.id, next);
         }
@@ -2453,6 +2737,13 @@
             if (!activeIds.has(alertId)) {
                 pathAlertRuntimeState.delete(alertId);
             }
+        }
+
+        const aggregatedEntries = sortTriggeredPathAlertEntries(triggeredEntries).slice(0, 3);
+        if (aggregatedEntries.length) {
+            const logEntry = buildAggregatedPathAlertLog(aggregatedEntries);
+            appendAlertLogEntry(logEntry.title, logEntry.message, logEntry.subtitle);
+            sendPathAlertWebhookNotification(aggregatedEntries);
         }
 
         updateAlertSoundState();
@@ -2686,9 +2977,13 @@
         if (!pathAlertContent) return;
         const alerts = Array.isArray(pathAlertConfig.alerts) ? pathAlertConfig.alerts : [];
         const settings = pathAlertConfig.settings || {};
+        const dismissedCount = Array.isArray(pathAlertConfig.dismissedTargets) ? pathAlertConfig.dismissedTargets.length : 0;
         const toolbar = `
             <div class="path-alert-toolbar">
-                <button type="button" id="path-alert-reload-btn" ${pathAlertReloading ? 'disabled' : ''}>${pathAlertReloading ? '重新加载中...' : '重新加载'}</button>
+                <div class="path-alert-toolbar-actions">
+                    <button type="button" id="path-alert-import-btn" ${pathAlertBulkImporting ? 'disabled' : ''}>${pathAlertBulkImporting ? '导入中...' : '导入当前全部机会'}</button>
+                    <button type="button" id="path-alert-reload-btn" ${pathAlertReloading ? 'disabled' : ''}>${pathAlertReloading ? '重新加载中...' : '重新加载'}</button>
+                </div>
                 <div class="path-alert-toolbar-meta">
                     <label class="path-alert-toolbar-toggle">
                         <input type="checkbox" data-path-alert-global-toggle="localSoundEnabled" ${settings.localSoundEnabled !== false ? 'checked' : ''}>
@@ -2699,6 +2994,7 @@
                         <span>远程</span>
                     </label>
                     <div class="path-alert-toolbar-cycle">周期 ${settings.pathAlertEvalIntervalMs}ms</div>
+                    <div class="path-alert-toolbar-cycle">已忽略 ${dismissedCount} 条</div>
                 </div>
             </div>
         `;
@@ -2722,7 +3018,7 @@
                 <div class="path-alert-item">
                     <div class="path-alert-item-head">
                         <div>
-                            <div class="path-alert-item-title">${escapeHtml(alert.name || '未命名路径')}</div>
+                            ${alert.name ? `<div class="path-alert-item-title">${escapeHtml(alert.name)}</div>` : ''}
                             <div class="path-alert-item-route">${renderPathAlertSummaryLinesHtml(alert)}</div>
                             <div class="path-alert-item-meta">阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s</div>
                         </div>
@@ -2734,6 +3030,8 @@
                                 rel="noopener noreferrer"
                                 data-path-alert-edit-link="${escapeHtml(alert.id)}"
                             >编辑</a>
+                            <button type="button" data-path-alert-delete="${escapeHtml(alert.id)}">删除</button>
+                            <button type="button" data-path-alert-dismiss-delete="${escapeHtml(alert.id)}">标记并删除</button>
                         </div>
                     </div>
                     <div class="path-alert-status-row">
@@ -2775,11 +3073,35 @@
     }
 
     function handlePathAlertPanelClick(event) {
+        const importBtn = event.target.closest('#path-alert-import-btn');
+        if (importBtn) {
+            importCurrentArbOpportunitiesToPathAlerts().catch((error) => {
+                console.error('批量导入路径报警失败:', error);
+                appendAlertLogEntry('[路径报警] 批量导入失败', error.message || '批量导入失败');
+            });
+            return;
+        }
+
         const reloadBtn = event.target.closest('#path-alert-reload-btn');
-        if (!reloadBtn) return;
-        reloadPathAlertConfigFromServer().catch((error) => {
-            console.error('重新加载路径报警配置失败:', error);
-        });
+        if (reloadBtn) {
+            reloadPathAlertConfigFromServer().catch((error) => {
+                console.error('重新加载路径报警配置失败:', error);
+            });
+            return;
+        }
+
+        const deleteBtn = event.target.closest('[data-path-alert-delete]');
+        if (deleteBtn) {
+            removePathAlertById(deleteBtn.dataset.pathAlertDelete);
+            queuePathAlertConfigSave();
+            return;
+        }
+
+        const dismissDeleteBtn = event.target.closest('[data-path-alert-dismiss-delete]');
+        if (dismissDeleteBtn) {
+            dismissPathAlertById(dismissDeleteBtn.dataset.pathAlertDismissDelete);
+            queuePathAlertConfigSave();
+        }
     }
 
     async function reloadPathAlertConfigFromServer() {
@@ -2792,6 +3114,51 @@
             restartPathAlertScheduler();
         } finally {
             pathAlertReloading = false;
+            renderPathAlertPanel();
+        }
+    }
+
+    async function importCurrentArbOpportunitiesToPathAlerts() {
+        if (pathAlertBulkImporting || !window.PathAlertUtils) return;
+        pathAlertBulkImporting = true;
+        renderPathAlertPanel();
+        try {
+            const result = collectArbImportEntries();
+            if (result.errorText) {
+                throw new Error(result.errorText);
+            }
+
+            const entries = Array.isArray(result.entries) ? result.entries : [];
+            const nextAlerts = Array.isArray(pathAlertConfig.alerts) ? [...pathAlertConfig.alerts] : [];
+            const dismissedTargets = Array.isArray(pathAlertConfig.dismissedTargets) ? pathAlertConfig.dismissedTargets : [];
+            let importedCount = 0;
+            let skippedExistingCount = 0;
+            let skippedDismissedCount = 0;
+
+            for (const entry of entries) {
+                const alert = buildPathAlertFromOpportunityEntry(entry);
+                if (!alert) continue;
+                if (window.PathAlertUtils.findDuplicatePathAlert(nextAlerts, alert)) {
+                    skippedExistingCount += 1;
+                    continue;
+                }
+                if (window.PathAlertUtils.findDismissedPathAlert(dismissedTargets, alert)) {
+                    skippedDismissedCount += 1;
+                    continue;
+                }
+                nextAlerts.push(alert);
+                importedCount += 1;
+            }
+
+            pathAlertConfig.alerts = nextAlerts;
+            await persistPathAlertConfig();
+            appendAlertLogEntry(
+                '[路径报警] 批量导入',
+                `新增 ${importedCount} 条，已存在跳过 ${skippedExistingCount} 条，已忽略跳过 ${skippedDismissedCount} 条`,
+                '来源：当前全量套利机会'
+            );
+        } finally {
+            pathAlertBulkImporting = false;
             renderPathAlertPanel();
         }
     }
@@ -2883,76 +3250,75 @@
         }
     }
 
-    function updateArbPanel() {
-        if (!arbPathContent) return;
+    function selectArbOpportunityEntriesByCycles(entries, cycles) {
+        const cycleSet = new Set(Array.isArray(cycles) ? cycles : []);
+        return Array.isArray(entries)
+            ? entries.filter((entry) => entry && entry.cycle && cycleSet.has(entry.cycle))
+            : [];
+    }
+
+    function buildArbPanelData() {
         if (!window.ArbPaths) {
-            arbPathContent.textContent = '路径模块未加载';
-            return;
+            return { error: '路径模块未加载' };
         }
         if (!window.ArbPanelRenderer || typeof window.ArbPanelRenderer.renderArbGrid !== 'function') {
-            arbPathContent.textContent = '路径渲染模块未加载';
-            return;
+            return { error: '路径渲染模块未加载' };
         }
-
         const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
         const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
         if (!targetCategories.length) {
-            arbPathContent.textContent = '暂无可用路径';
-            return;
+            return { error: '暂无可用路径' };
         }
 
-        const aliasRules = getAliasRules();
+        const sharedRuleSnapshot = getSharedArbRuleSnapshot();
+        const aliasRules = sharedRuleSnapshot.aliasRules;
         const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
-        const allQuotes = getActiveQuotes(dashboardState.flatMap(c => c.quotes || []));
-        const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
-        const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
-        const allEdgesWithRules = allEdges.concat(ruleEdges);
+        const allQuotes = sharedRuleSnapshot.allQuotes;
+        const allEdges = sharedRuleSnapshot.allEdges;
+        const ruleEdges = sharedRuleSnapshot.ruleEdges;
+        const allEdgesWithRules = sharedRuleSnapshot.allEdgesWithRules;
         const nextOpportunityMap = new Map();
-        const quoteMetaById = buildQuoteMetaById();
 
+        const fixedEntries = sharedRuleSnapshot.fixedResults
+                .flatMap(({ rule, cycles }) => (Array.isArray(cycles) ? cycles : [])
+                    .map((cycle, index) => createArbOpportunityEntry(
+                        nextOpportunityMap,
+                        cycle,
+                        (Array.isArray(cycles) && cycles.length > 1) ? `${rule.title} ${index + 1}` : rule.title,
+                        { section: 'fixed', alertPreset: { type: 'path' } }
+                    )))
+                .filter(Boolean);
         const fixedSections = [{
             title: '固定路径',
-            opportunities: FIXED_PATH_RULES
-                .map(rule => createArbOpportunityEntry(
-                    nextOpportunityMap,
-                    window.ArbPaths.findBestFixedPath(
-                        (window.ArbFixedUtils && typeof window.ArbFixedUtils.filterEdgesForFixedRule === 'function')
-                            ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
-                            : allEdgesWithRules,
-                        rule,
-                        aliasRules
-                    ),
-                    rule.title,
-                    { section: 'fixed', alertPreset: { type: 'rule', ruleKind: 'fixed', ruleId: rule.id } }
-                ))
-                .filter(Boolean)
+            opportunities: fixedEntries
         }];
         const wbtcCategory = targetCategories.find((category) => category && category.name === 'WBTC监控');
+        const specialOpportunities = wbtcCategory
+            ? sharedRuleSnapshot.specialResults
+                .filter(({ rule }) => rule && rule.categoryName === wbtcCategory.name)
+                .flatMap(({ opportunities }) => Array.isArray(opportunities) ? opportunities : [])
+            : [];
+        const specialEntries = specialOpportunities
+            .map((opportunity) => createArbOpportunityEntry(
+                nextOpportunityMap,
+                opportunity.cycle,
+                opportunity.label,
+                {
+                    section: `special:${wbtcCategory ? wbtcCategory.name : ''}`,
+                    clickable: false,
+                    alertPreset: { type: 'path' }
+                }
+            ))
+            .filter(Boolean);
         const specialSections = [{
             title: '特殊规则',
-            opportunities: (window.ArbSpecialUtils && typeof window.ArbSpecialUtils.buildSpecialArbOpportunities === 'function' && wbtcCategory)
-                ? window.ArbSpecialUtils.buildSpecialArbOpportunities({
-                    rules: SPECIAL_ARB_RULES.filter((rule) => rule.categoryName === wbtcCategory.name),
-                    quotes: getActiveQuotes(Array.isArray(wbtcCategory.quotes) ? wbtcCategory.quotes : []),
-                    quoteStateById: quoteMonitorState,
-                    aliasRules
-                }).filter((opportunity) => opportunity && opportunity.cycle && opportunity.cycle.profitRate > 0)
-                .map((opportunity) => createArbOpportunityEntry(
-                    nextOpportunityMap,
-                    opportunity.cycle,
-                    opportunity.label,
-                    {
-                        section: `special:${wbtcCategory.name}`,
-                        clickable: false,
-                        alertPreset: { type: 'rule', ruleKind: 'special', ruleId: opportunity.ruleId || '' }
-                    }
-                )).filter(Boolean)
-                : [],
+            opportunities: specialEntries.filter((entry) => entry && entry.cycle && entry.cycle.profitRate > 0),
             emptyText: '暂无可用规则'
         }];
 
         const categorySections = [];
         let lbtcSection = null;
+        const categoryImportEntries = [];
         for (const category of targetCategories) {
             const quotes = getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []);
             const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
@@ -2963,18 +3329,20 @@
                 acceptCycle: window.ArbPaths.isMeaningfulPath,
                 preferredStartSymbols: preferredCycleStartSymbols
             });
+            const fullEntries = cycles
+                .map((cycle, index) => createArbOpportunityEntry(
+                    nextOpportunityMap,
+                    cycle,
+                    `机会 ${index + 1}`,
+                    { section: category.name, alertPreset: { type: 'path' } }
+                ))
+                .filter(Boolean);
+            categoryImportEntries.push(...fullEntries);
             const cycleDisplayState = getCycleDisplayState(cycles, 4, arbExpandedSections.has(sectionKey));
             const footerHtml = buildArbSectionToggleHtml(sectionKey, cycleDisplayState);
             const sectionDef = {
                 title: category.name,
-                opportunities: cycleDisplayState.displayCycles
-                    .map((cycle, index) => createArbOpportunityEntry(
-                        nextOpportunityMap,
-                        cycle,
-                        `机会 ${index + 1}`,
-                        { section: category.name, alertPreset: { type: 'path' } }
-                    ))
-                    .filter(Boolean),
+                opportunities: selectArbOpportunityEntriesByCycles(fullEntries, cycleDisplayState.displayCycles),
                 footerHtml
             };
             if (category.name === 'LBTC监控') {
@@ -3004,6 +3372,14 @@
                 !cycleContainsAnyChains(cycle, excludedChains)
             )
             : globalCycles;
+        const globalEntries = globalCycles
+            .map((cycle, index) => createArbOpportunityEntry(
+                nextOpportunityMap,
+                cycle,
+                `机会 ${index + 1}`,
+                { section: '全局路径', alertPreset: { type: 'path' } }
+            ))
+            .filter(Boolean);
         updateGlobalArbFilterBar();
         const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
         const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
@@ -3013,18 +3389,35 @@
             categorySections,
             [{
                 title: '全局路径',
-                opportunities: globalCycleDisplayState.displayCycles
-                    .map((cycle, index) => createArbOpportunityEntry(
-                        nextOpportunityMap,
-                        cycle,
-                        `机会 ${index + 1}`,
-                        { section: '全局路径', alertPreset: { type: 'path' } }
-                    ))
-                    .filter(Boolean),
+                opportunities: selectArbOpportunityEntriesByCycles(globalEntries, globalCycleDisplayState.displayCycles),
                 footerHtml: globalFooterHtml,
                 emptyText: globalEmptyText
             }]
         ];
+
+        const importEntries = [
+            ...fixedEntries,
+            ...specialEntries,
+            ...categoryImportEntries,
+            ...globalEntries
+        ];
+
+        return {
+            columns,
+            nextOpportunityMap,
+            importEntries
+        };
+    }
+
+    function updateArbPanel() {
+        if (!arbPathContent) return;
+        const panelData = buildArbPanelData();
+        if (panelData.error) {
+            arbPathContent.textContent = panelData.error;
+            return;
+        }
+
+        const { columns, nextOpportunityMap } = panelData;
 
         arbOpportunityMap = nextOpportunityMap;
 
@@ -3380,7 +3773,7 @@
                         inverseFromSymbol: data.symbols.from,
                         inverseToSymbol: data.symbols.to
                     };
-                    quoteMonitorState.set(quote.id, inverseState);
+                    setQuoteMonitorState(quote.id, inverseState);
                     bindCopyHandler(
                         inverseEl,
                         () => inverseEl.textContent,
@@ -3426,7 +3819,7 @@
                     newState.inverseToSymbol = null;
                 }
 
-                quoteMonitorState.set(quote.id, newState);
+                setQuoteMonitorState(quote.id, newState);
                 scheduleArbUpdate();
                 
                 if (currentlyEditingQuote && currentlyEditingQuote.quote.id === quote.id && alertModal.classList.contains('visible')) {
@@ -3695,7 +4088,7 @@
             arrowEl.classList.remove('visible');
         }, 30000);
         
-        quoteMonitorState.set(quoteId, state);
+        setQuoteMonitorState(quoteId, state);
     }
 
     function toggleArbPanel() {
@@ -3845,7 +4238,7 @@
             if (dismissBtn) dismissBtn.remove();
         }
 
-        quoteMonitorState.set(quote.id, state);
+        setQuoteMonitorState(quote.id, state);
         updateAlertSoundState();
     }
 
@@ -4232,7 +4625,7 @@
             const previousState = quoteMonitorState.get(quoteId) || {};
             removeFromQueue(quoteId);
             abortQuoteFetch(quoteId);
-            quoteMonitorState.set(quoteId, buildPausedMonitorState(previousState));
+            setQuoteMonitorState(quoteId, buildPausedMonitorState(previousState));
             applyPausedQuoteUiState(quote, quoteMonitorState.get(quoteId) || {}, previousState);
             if (doesArbDetailUseQuote(quoteId)) {
                 closeArbDetailModal();

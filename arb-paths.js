@@ -320,32 +320,103 @@ function collectQuoteChains(edges) {
   return chains;
 }
 
-function findBestFixedPath(edges, rule, aliases) {
+function buildFixedCycleCandidate(cycle, rule, aliases) {
+  if (!cycle || !Array.isArray(cycle.legs) || !cycle.legs.length) return null;
+  const excludeChains = new Set(
+    Array.isArray(rule && rule.excludeChains)
+      ? rule.excludeChains.map((chain) => String(chain || '')).filter(Boolean)
+      : []
+  );
+  const excludedSymbols = Array.isArray(rule && rule.excludeSymbols)
+    ? rule.excludeSymbols.map((symbol) => String(symbol || '')).filter(Boolean)
+    : [];
+  const excludedCanonicalSymbols = new Set(excludedSymbols.map((symbol) => resolveAlias(symbol, aliases)));
+
+  const realLegs = cycle.legs.filter((leg) => leg && !leg.rule && leg.chain !== '规则');
+  if (!realLegs.length) return null;
+  if (excludeChains.size && realLegs.some((leg) => excludeChains.has(String(leg.chain || '')))) {
+    return null;
+  }
+  if (excludedSymbols.length) {
+    const hasExcludedSymbol = realLegs.some((leg) => {
+      const symbols = [
+        String(leg.rawFrom || ''),
+        String(leg.rawTo || ''),
+        String(leg.from || ''),
+        String(leg.to || '')
+      ].filter(Boolean);
+      return symbols.some((symbol) => (
+        excludedCanonicalSymbols.has(resolveAlias(symbol, aliases)) ||
+        excludedSymbols.includes(symbol)
+      ));
+    });
+    if (hasExcludedSymbol) {
+      return null;
+    }
+  }
+  const canonical = canonicalizeCycleRotation(cycle.legs, null);
+  if (!canonical.key) return null;
+  return {
+    legs: cycle.legs.map((leg) => ({ ...leg })),
+    profitRate: cycle.profitRate,
+    key: canonical.key
+  };
+}
+
+function sortFixedCycleCandidates(left, right) {
+  const profitDiff = Number(right && right.profitRate) - Number(left && left.profitRate);
+  if (profitDiff !== 0) return profitDiff;
+  return String(left && left.key || '').localeCompare(String(right && right.key || ''));
+}
+
+function findFixedPaths(edges, rule, aliases, options = {}) {
   if (!rule || rule.steps !== 2) return null;
   if (!rule.base || !rule.quote) return null;
+  const limit = Number(options.limit ?? rule.resultLimit);
+  const resultLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : Number.MAX_SAFE_INTEGER;
+  const candidates = [];
+  const seen = new Set();
+
+  function pushCycle(cycle) {
+    const candidate = buildFixedCycleCandidate(cycle, rule, aliases);
+    if (!candidate || seen.has(candidate.key)) return;
+    seen.add(candidate.key);
+    candidates.push(candidate);
+  }
 
   const chains = Array.isArray(rule.chains) ? rule.chains.filter(Boolean) : [];
   if (chains.length >= 2) {
     const [chainA, chainB] = chains;
-    const forward = buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases);
-    const reverse = buildTwoStepFixedPath(edges, rule, chainB, chainA, aliases);
-    return chooseBetterCycle(forward, reverse);
+    pushCycle(buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases));
+    pushCycle(buildTwoStepFixedPath(edges, rule, chainB, chainA, aliases));
+    return candidates.sort(sortFixedCycleCandidates).slice(0, resultLimit);
   }
 
-  if (!rule.crossChain) return null;
+  if (!rule.crossChain) return candidates;
 
-  const candidateChains = collectQuoteChains(edges);
-  let best = null;
+  const excludedChains = new Set(
+    Array.isArray(rule.excludeChains)
+      ? rule.excludeChains.map((chain) => String(chain || '')).filter(Boolean)
+      : []
+  );
+  const candidateChains = collectQuoteChains(edges).filter((chain) => !excludedChains.has(String(chain || '')));
   for (let i = 0; i < candidateChains.length; i += 1) {
     for (let j = 0; j < candidateChains.length; j += 1) {
       if (i === j) continue;
       const chainA = candidateChains[i];
       const chainB = candidateChains[j];
-      const cycle = buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases);
-      best = chooseBetterCycle(best, cycle);
+      pushCycle(buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases));
     }
   }
-  return best;
+  return candidates.sort(sortFixedCycleCandidates).slice(0, resultLimit);
+}
+
+function findBestFixedPath(edges, rule, aliases, options = {}) {
+  const list = findFixedPaths(edges, rule, aliases, {
+    ...options,
+    limit: 1
+  });
+  return Array.isArray(list) && list.length ? list[0] : null;
 }
 
 function selectBestDirectEdge(edges, from, to, aliases) {
@@ -358,7 +429,13 @@ function selectBestDirectEdge(edges, from, to, aliases) {
     const edgeTo = resolveAlias(edge.to, aliases);
     if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
     if (!best || edge.rate > best.rate) {
-      best = { ...edge, from: targetFrom, to: targetTo };
+      best = {
+        ...edge,
+        rawFrom: edge.from,
+        rawTo: edge.to,
+        from: targetFrom,
+        to: targetTo
+      };
     }
   }
 
@@ -379,6 +456,7 @@ function buildApi() {
     buildRuleEdges,
     findBestCycle,
     findTopCycles,
+    findFixedPaths,
     findBestFixedPath,
     selectBestDirectEdge,
     isMeaningfulPath

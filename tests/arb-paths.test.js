@@ -10,6 +10,7 @@ const {
   buildRuleEdges,
   findBestCycle,
   findTopCycles,
+  findFixedPaths,
   findBestFixedPath,
   formatProfitWanfen,
   selectBestDirectEdge,
@@ -199,10 +200,14 @@ const fixedEdges = [
 
 const fixedRule = { base: 'cbBTC', quote: 'WBTC', chains: ['ethereum', 'arbitrum'], steps: 2 };
 const fixedBest = findBestFixedPath(fixedEdges, fixedRule, null);
+const fixedAll = findFixedPaths(fixedEdges, { ...fixedRule, resultLimit: 2 }, null);
 
 assert.ok(fixedBest);
 assert.strictEqual(fixedBest.legs[0].chain, 'arbitrum');
 assert.strictEqual(fixedBest.legs[1].chain, 'ethereum');
+assert.strictEqual(fixedAll.length, 2);
+assert.strictEqual(fixedAll[0].legs[0].chain, 'arbitrum');
+assert.strictEqual(fixedAll[1].legs[0].chain, 'ethereum');
 
 const fixedAnyChainEdges = [
   { from: 'GHO', to: 'USDC', rate: 1.001, chain: 'ethereum' },
@@ -212,11 +217,36 @@ const fixedAnyChainEdges = [
 ];
 const fixedAnyChainRule = { title: 'GHO <-> USDC', base: 'GHO', quote: 'USDC', steps: 2, crossChain: true };
 const fixedAnyChainBest = findBestFixedPath(fixedAnyChainEdges, fixedAnyChainRule, null);
+const fixedAnyChainWithoutBase = findFixedPaths(fixedAnyChainEdges, {
+  ...fixedAnyChainRule,
+  excludeChains: ['base']
+}, null);
 
 assert.ok(fixedAnyChainBest);
 assert.notStrictEqual(fixedAnyChainBest.legs[0].chain, fixedAnyChainBest.legs[1].chain);
 assert.strictEqual(fixedAnyChainBest.legs[0].chain, 'ethereum');
 assert.strictEqual(fixedAnyChainBest.legs[1].chain, 'base');
+assert.strictEqual(fixedAnyChainWithoutBase.length, 1);
+assert.strictEqual(fixedAnyChainWithoutBase[0].legs[0].chain, 'ethereum');
+assert.strictEqual(fixedAnyChainWithoutBase[0].legs[1].chain, 'arbitrum');
+
+const fixedExcludeSymbolEdges = [
+  { from: 'GHO', to: 'USDC.e', rate: 1.005, chain: 'base' },
+  { from: 'USDC.e', to: 'GHO', rate: 1.002, chain: 'ethereum' },
+  { from: 'GHO', to: 'USDC', rate: 1.001, chain: 'base' },
+  { from: 'USDC', to: 'GHO', rate: 1.001, chain: 'ethereum' }
+];
+const fixedExcludeSymbolCycles = findFixedPaths(fixedExcludeSymbolEdges, {
+  title: 'GHO <-> USDC',
+  base: 'GHO',
+  quote: 'USDC',
+  steps: 2,
+  crossChain: true,
+  excludeSymbols: ['USDC.e']
+}, null);
+
+assert.strictEqual(fixedExcludeSymbolCycles.length, 1);
+assert.ok(fixedExcludeSymbolCycles.every((cycle) => cycle.legs.every((leg) => leg.rawFrom !== 'USDC.e' && leg.rawTo !== 'USDC.e')));
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'arb-paths.js'), 'utf8');
 const browserSandbox = { window: {} };
