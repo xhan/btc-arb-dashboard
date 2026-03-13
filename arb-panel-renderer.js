@@ -59,10 +59,11 @@
     const labelTextHtml = entry && entry.label
       ? `<div class="arb-path-line"><strong>${entry.label}</strong></div>`
       : '';
+    const profitHtml = `<div class="arb-opportunity-head-profit ${profitClass}">${profitText}</div>`;
     const labelHtml = `
       <div class="arb-opportunity-head">
         ${labelTextHtml || '<div class="arb-path-line"><strong>历史图表</strong></div>'}
-        <div class="arb-opportunity-head-actions">${addAlertButtonHtml}${chartLinkHtml}</div>
+        <div class="arb-opportunity-head-actions">${profitHtml}${addAlertButtonHtml}${chartLinkHtml}</div>
       </div>
     `;
     const opportunityId = entry && entry.opportunityId ? String(entry.opportunityId) : '';
@@ -70,7 +71,7 @@
       ? ` data-arb-opportunity-id="${escapeAttr(opportunityId)}" role="button" tabindex="0"`
       : '';
 
-    return `<div class="arb-opportunity"${clickableAttrs}>${labelHtml}${legHtml}<div class="${profitClass}">收益: ${profitText}</div></div>`;
+    return `<div class="arb-opportunity"${clickableAttrs}>${labelHtml}${legHtml}</div>`;
   }
 
   function renderSection(section, options) {

@@ -15,11 +15,86 @@
       chains: ['ethereum', 'arbitrum'],
       steps: 2
     },
+
     {
-      id: 'fixed:gho-usdc',
-      title: 'GHO <-> USDC',
+      id: 'fixed:wbtc-btc-no-arb',
+      title: 'WBTC - BTC (-arb)',
+      base: 'cbBTC',
+      quote: 'WBTC',
+      categoryNames: ['WBTC监控'],
+      excludeChains: ['arbitrum'],
+      steps: 2,
+      crossChain: true
+    },
+    {
+      id: 'fixed:lbtc-btc',
+      title: 'LBTC - BTC',
+      base: 'cbBTC',
+      quote: 'LBTC',
+      categoryNames: ['LBTC监控'],
+      steps: 2,
+      crossChain: true
+    },
+    {
+      id: 'fixed:wbtc-lbtc',
+      title: 'WBTC - LBTC',
+      base: 'WBTC',
+      quote: 'LBTC',
+      categoryNames: ['LBTC监控'],
+      steps: 2,
+      crossChain: true
+    },
+    {
+      id: 'fixed:tbtc-wbtc',
+      title: 'tBTC - WBTC',
+      base: 'tBTC',
+      quote: 'WBTC',
+      categoryNames: ['TBTC监控'],
+      steps: 2,
+      crossChain: true
+    },
+    {
+      id: 'fixed:tbtc-btc',
+      title: 'tBTC - BTC',
+      base: 'tBTC',
+      quote: 'cbBTC',
+      categoryNames: ['TBTC监控'],
+      steps: 2,
+      crossChain: true
+    },
+    {
+      id: 'fixed:gho-usd',
+      title: 'GHO - USD',
       base: 'GHO',
       quote: 'USDC',
+      categoryNames: ['USD监控'],
+      steps: 2,
+      crossChain: true
+    },
+    {
+      id: 'fixed:mseth',
+      title: 'msETH',
+      base: 'msETH',
+      quote: 'WETH',
+      categoryNames: ['ETH监控'],
+      steps: 2,
+      crossChain: true
+    },
+    {
+      id: 'fixed:weeth',
+      title: 'weETH',
+      base: 'weETH',
+      quote: 'WETH',
+      categoryNames: ['ETH监控'],
+      steps: 2,
+      crossChain: true
+    },
+    {
+      id: 'fixed:wsteth',
+      title: 'wstETH',
+      base: 'wstETH',
+      quote: 'WETH',
+      categoryNames: ['ETH监控'],
       steps: 2,
       crossChain: true
     }

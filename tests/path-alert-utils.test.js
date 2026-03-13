@@ -5,13 +5,21 @@ const {
   DEFAULT_PATH_ALERT_THRESHOLD_BP,
   normalizeAlertConfig,
   normalizePathAlert,
+  normalizeDismissedTarget,
   evaluatePathAlert,
   advancePathAlertRuntime,
   isPathAlertConfirmDelayDisabled,
   buildPathAlertWebhookUrl,
   buildPathAlertSummaryLines,
   buildPathAlertTargetDuplicateKey,
-  findDuplicatePathAlert
+  countPathAlertRealLegs,
+  createDismissedTargetEntry,
+  findDuplicatePathAlert,
+  findDismissedPathAlert,
+  buildAllLegSnapshots,
+  resolvePathAlertSnapshotState,
+  buildChangedLegs,
+  sortTriggeredPathAlerts
 } = require('../path-alert-utils');
 
 const emptyConfig = normalizeAlertConfig();
@@ -21,6 +29,8 @@ assert.deepStrictEqual(emptyConfig.alerts, []);
 assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.localSoundEnabled, true);
 assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.webhookEnabled, false);
 assert.strictEqual(DEFAULT_PATH_ALERT_THRESHOLD_BP, 1.1);
+assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.defaultCooldownSec, 180);
+assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.changedLegMinBp, 0.1);
 assert.strictEqual(
   DEFAULT_PATH_ALERT_SETTINGS.webhookUrl,
   'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder'
@@ -63,13 +73,52 @@ assert.strictEqual(normalizedConfig.settings.pathAlertEvalIntervalMs, 2000);
 assert.strictEqual(normalizedConfig.settings.defaultCooldownSec, 120);
 assert.strictEqual(normalizedConfig.settings.localSoundEnabled, false);
 assert.strictEqual(normalizedConfig.settings.webhookEnabled, true);
+assert.strictEqual(normalizedConfig.settings.changedLegMinBp, 0.1);
 assert.strictEqual(normalizedConfig.alerts[0].thresholdBp, 3.5);
 assert.strictEqual(normalizedConfig.alerts[0].confirmDelaySec, 8);
 assert.strictEqual(normalizedConfig.alerts[0].cooldownSec, 90);
 assert.strictEqual(normalizedConfig.alerts[0].target.legs[0].quoteId, 11);
 
+const normalizedDismissedConfig = normalizeAlertConfig({
+  dismissedTargets: [
+    {
+      target: {
+        type: 'path',
+        legs: [
+          {
+            quoteId: 31,
+            direction: 'forward',
+            pricingMode: 'raw',
+            chain: 'ethereum',
+            fromSymbol: 'A',
+            toSymbol: 'B'
+          },
+          {
+            quoteId: 32,
+            direction: 'forward',
+            pricingMode: 'raw',
+            chain: 'arbitrum',
+            fromSymbol: 'B',
+            toSymbol: 'A'
+          }
+        ]
+      },
+      summaryLinesSnapshot: ['(ETH) A -> B', '(ARB) B -> A'],
+      dismissedAt: 123456
+    }
+  ]
+});
+assert.strictEqual(normalizedDismissedConfig.dismissedTargets.length, 1);
+assert.strictEqual(normalizedDismissedConfig.dismissedTargets[0].dismissedAt, 123456);
+assert.deepStrictEqual(
+  normalizedDismissedConfig.dismissedTargets[0].summaryLinesSnapshot,
+  ['(ETH) A -> B', '(ARB) B -> A']
+);
+
 const quoteStateById = new Map([
   [11, {
+    fromSymbol: 'WBTC',
+    toSymbol: 'BTC',
     lastRawPrice: 1.0012,
     inverseRawPrice: 0.9988,
     cexOrderbook: {
@@ -80,6 +129,8 @@ const quoteStateById = new Map([
     }
   }],
   [12, {
+    fromSymbol: 'BTC',
+    toSymbol: 'cbBTC',
     lastRawPrice: 0.9996,
     inverseRawPrice: 1.0004
   }]
@@ -90,9 +141,9 @@ const pathAlert = {
   name: '路径报警',
   enabled: true,
   thresholdBp: 2,
-  triggerMode: 'immediate',
-  confirmDelaySec: 0,
-  cooldownSec: 300,
+  triggerMode: 'delayed',
+  confirmDelaySec: 13,
+  cooldownSec: 180,
   target: {
     type: 'path',
     legs: [
@@ -129,6 +180,64 @@ assert.strictEqual(pathEval.available, true);
 assert.strictEqual(pathEval.targetType, 'path');
 assert.ok(Math.abs(pathEval.profitRate - ((1.0012 * 0.9997 * 1.0004) - 1)) < 1e-12);
 assert.ok(Math.abs(pathEval.profitBp - (((1.0012 * 0.9997 * 1.0004) - 1) * 10000)) < 1e-8);
+
+const allLegSnapshots = buildAllLegSnapshots([
+  { id: 11, chain: 'Bybit', showInverse: true },
+  { id: 12, chain: 'ethereum', showInverse: true }
+], quoteStateById);
+assert.ok(allLegSnapshots.some((leg) => leg.quoteId === 11 && leg.pricingMode === 'raw' && leg.direction === 'forward'));
+assert.ok(allLegSnapshots.some((leg) => leg.quoteId === 11 && leg.pricingMode === 'cex-bid1'));
+assert.ok(allLegSnapshots.some((leg) => leg.quoteId === 11 && leg.pricingMode === 'cex-ask1-inverse'));
+assert.ok(allLegSnapshots.some((leg) => leg.quoteId === 12 && leg.direction === 'inverse'));
+
+const previousAllLegSnapshots = [
+  { quoteId: 21, direction: 'forward', pricingMode: 'raw', chain: 'base', fromSymbol: 'GHO', toSymbol: 'USDC', rate: 1.0001 },
+  { quoteId: 22, direction: 'forward', pricingMode: 'raw', chain: 'ethereum', fromSymbol: 'USDC', toSymbol: 'GHO', rate: 1.0000 },
+  { quoteId: 23, direction: 'forward', pricingMode: 'raw', chain: 'arbitrum', fromSymbol: 'GHO', toSymbol: 'USDC', rate: 1.0002 }
+];
+const currentAllLegSnapshots = [
+  { quoteId: 21, direction: 'forward', pricingMode: 'raw', chain: 'base', fromSymbol: 'GHO', toSymbol: 'USDC', rate: 1.0001 },
+  { quoteId: 22, direction: 'forward', pricingMode: 'raw', chain: 'ethereum', fromSymbol: 'USDC', toSymbol: 'GHO', rate: 1.0000 },
+  { quoteId: 23, direction: 'forward', pricingMode: 'raw', chain: 'arbitrum', fromSymbol: 'GHO', toSymbol: 'USDC', rate: 1.0015 }
+];
+const switchedRuleEvaluation = {
+  available: true,
+  profitRate: 0.00015,
+  profitBp: 1.5,
+  cycle: {
+    legs: [
+      { quoteId: 23, direction: 'forward', pricingMode: 'raw', chain: 'arbitrum', fromSymbol: 'GHO', toSymbol: 'USDC', rate: 1.0015 },
+      { quoteId: 22, direction: 'forward', pricingMode: 'raw', chain: 'ethereum', fromSymbol: 'USDC', toSymbol: 'GHO', rate: 1.0000 }
+    ]
+  },
+  legSnapshots: [
+    { quoteId: 23, direction: 'forward', pricingMode: 'raw', chain: 'arbitrum', fromSymbol: 'GHO', toSymbol: 'USDC', rate: 1.0015 },
+    { quoteId: 22, direction: 'forward', pricingMode: 'raw', chain: 'ethereum', fromSymbol: 'USDC', toSymbol: 'GHO', rate: 1.0000 }
+  ]
+};
+const immediateSnapshotState = resolvePathAlertSnapshotState(
+  { enabled: true, triggerMode: 'immediate' },
+  { status: 'monitoring', currentLegSnapshots: previousAllLegSnapshots },
+  { status: 'cooldown' },
+  switchedRuleEvaluation,
+  currentAllLegSnapshots
+);
+const immediateChangedLegs = buildChangedLegs(
+  immediateSnapshotState.currentSnapshots,
+  immediateSnapshotState.baselineSnapshots,
+  1
+);
+assert.strictEqual(immediateChangedLegs.length, 1);
+assert.strictEqual(immediateChangedLegs[0].quoteId, 23);
+
+const delayedSnapshotState = resolvePathAlertSnapshotState(
+  { enabled: true, triggerMode: 'delayed' },
+  null,
+  { status: 'pending_confirm' },
+  switchedRuleEvaluation,
+  currentAllLegSnapshots
+);
+assert.strictEqual(delayedSnapshotState.baselineSnapshots.length, currentAllLegSnapshots.length);
 
 assert.deepStrictEqual(
   buildPathAlertSummaryLines(pathAlert, {
@@ -230,6 +339,96 @@ assert.strictEqual(
 );
 
 assert.strictEqual(
+  buildPathAlertTargetDuplicateKey({
+    type: 'path',
+    legs: [
+      {
+        quoteId: 301,
+        direction: 'forward',
+        pricingMode: 'raw',
+        chain: 'ethereum',
+        fromSymbol: 'A',
+        toSymbol: 'B'
+      },
+      {
+        quoteId: 302,
+        direction: 'forward',
+        pricingMode: 'raw',
+        chain: 'arbitrum',
+        fromSymbol: 'B',
+        toSymbol: 'A'
+      }
+    ]
+  }),
+  buildPathAlertTargetDuplicateKey({
+    type: 'path',
+    legs: [
+      {
+        quoteId: 302,
+        direction: 'forward',
+        pricingMode: 'raw',
+        chain: 'arbitrum',
+        fromSymbol: 'B',
+        toSymbol: 'A'
+      },
+      {
+        quoteId: 301,
+        direction: 'forward',
+        pricingMode: 'raw',
+        chain: 'ethereum',
+        fromSymbol: 'A',
+        toSymbol: 'B'
+      }
+    ]
+  })
+);
+
+assert.notStrictEqual(
+  buildPathAlertTargetDuplicateKey({
+    type: 'path',
+    legs: [
+      {
+        quoteId: 301,
+        direction: 'forward',
+        pricingMode: 'raw',
+        chain: 'ethereum',
+        fromSymbol: 'A',
+        toSymbol: 'B'
+      },
+      {
+        quoteId: 302,
+        direction: 'forward',
+        pricingMode: 'raw',
+        chain: 'arbitrum',
+        fromSymbol: 'B',
+        toSymbol: 'A'
+      }
+    ]
+  }),
+  buildPathAlertTargetDuplicateKey({
+    type: 'path',
+    legs: [
+      {
+        quoteId: 302,
+        direction: 'inverse',
+        pricingMode: 'raw',
+        chain: 'arbitrum',
+        fromSymbol: 'A',
+        toSymbol: 'B'
+      },
+      {
+        quoteId: 301,
+        direction: 'inverse',
+        pricingMode: 'raw',
+        chain: 'ethereum',
+        fromSymbol: 'B',
+        toSymbol: 'A'
+      }
+    ]
+  })
+);
+
+assert.strictEqual(
   findDuplicatePathAlert(duplicateAlerts, {
     id: 'path-new',
     target: {
@@ -271,6 +470,190 @@ assert.strictEqual(
     }
   }),
   null
+);
+
+const dismissedTargets = [
+  normalizeDismissedTarget({
+    target: {
+      type: 'path',
+      legs: [
+        {
+          quoteId: 301,
+          direction: 'forward',
+          pricingMode: 'raw',
+          chain: 'ethereum',
+          fromSymbol: 'A',
+          toSymbol: 'B'
+        },
+        {
+          quoteId: 302,
+          direction: 'forward',
+          pricingMode: 'raw',
+          chain: 'arbitrum',
+          fromSymbol: 'B',
+          toSymbol: 'A'
+        }
+      ]
+    },
+    summaryLinesSnapshot: ['(ETH) A -> B', '(ARB) B -> A'],
+    dismissedAt: 456
+  })
+];
+
+assert.strictEqual(
+  findDismissedPathAlert(dismissedTargets, {
+    target: {
+      type: 'path',
+      legs: [
+        {
+          quoteId: 302,
+          direction: 'forward',
+          pricingMode: 'raw',
+          chain: 'arbitrum',
+          fromSymbol: 'B',
+          toSymbol: 'A'
+        },
+        {
+          quoteId: 301,
+          direction: 'forward',
+          pricingMode: 'raw',
+          chain: 'ethereum',
+          fromSymbol: 'A',
+          toSymbol: 'B'
+        }
+      ]
+    }
+  }).dismissedAt,
+  456
+);
+
+assert.strictEqual(
+  findDismissedPathAlert(dismissedTargets, {
+    target: {
+      type: 'path',
+      legs: [
+        {
+          quoteId: 302,
+          direction: 'inverse',
+          pricingMode: 'raw',
+          chain: 'arbitrum',
+          fromSymbol: 'A',
+          toSymbol: 'B'
+        },
+        {
+          quoteId: 301,
+          direction: 'inverse',
+          pricingMode: 'raw',
+          chain: 'ethereum',
+          fromSymbol: 'B',
+          toSymbol: 'A'
+        }
+      ]
+    }
+  }),
+  null
+);
+
+const createdDismissed = createDismissedTargetEntry({
+  target: {
+    type: 'rule',
+    ruleKind: 'special',
+    ruleId: 'special:dex-cex-wbtc'
+  }
+}, ['DEX <-> CEX'], 789);
+assert.strictEqual(createdDismissed.dismissedAt, 789);
+assert.deepStrictEqual(createdDismissed.summaryLinesSnapshot, ['DEX <-> CEX']);
+assert.strictEqual(createdDismissed.target.ruleKind, 'special');
+
+assert.strictEqual(countPathAlertRealLegs(pathAlert, pathEval), 3);
+assert.strictEqual(countPathAlertRealLegs({
+  target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:gho-usdc' }
+}, {
+  cycle: {
+    legs: [
+      { quoteId: 1 },
+      { quoteId: 2 },
+      { chain: '规则' }
+    ]
+  }
+}), 2);
+
+assert.deepStrictEqual(
+  sortTriggeredPathAlerts([
+    {
+      alert: { target: { type: 'path', legs: [{ quoteId: 1 }, { quoteId: 2 }, { quoteId: 3 }] } },
+      evaluation: { profitBp: 10 }
+    },
+    {
+      alert: { target: { type: 'path', legs: [{ quoteId: 1 }, { quoteId: 2 }] } },
+      evaluation: { profitBp: 1 }
+    },
+    {
+      alert: { target: { type: 'path', legs: [{ quoteId: 1 }, { quoteId: 2 }] } },
+      evaluation: { profitBp: 9 }
+    }
+  ]).map((item) => item.evaluation.profitBp),
+  [9, 1, 10]
+);
+
+assert.deepStrictEqual(
+  buildChangedLegs([
+    {
+      quoteId: 11,
+      direction: 'forward',
+      pricingMode: 'raw',
+      chain: 'arbitrum',
+      fromSymbol: 'cbBTC',
+      toSymbol: 'WBTC',
+      rate: 1.0013
+    },
+    {
+      quoteId: 11,
+      direction: 'forward',
+      pricingMode: 'cex-bid1',
+      chain: 'Bybit',
+      fromSymbol: 'WBTC',
+      toSymbol: 'BTC',
+      rate: 0.9997
+    },
+    {
+      quoteId: 12,
+      direction: 'inverse',
+      pricingMode: 'raw',
+      chain: 'ethereum',
+      fromSymbol: 'BTC',
+      toSymbol: 'cbBTC',
+      rate: 1.0001
+    }
+  ], [
+    {
+      quoteId: 11,
+      direction: 'forward',
+      pricingMode: 'raw',
+      rate: 1.0010
+    },
+    {
+      quoteId: 11,
+      direction: 'forward',
+      pricingMode: 'cex-bid1',
+      rate: 0.99968
+    },
+    {
+      quoteId: 12,
+      direction: 'inverse',
+      pricingMode: 'raw',
+      rate: 1.0004
+    }
+  ], 1).map((item) => ({
+    chain: item.chain,
+    fromSymbol: item.fromSymbol,
+    toSymbol: item.toSymbol,
+    deltaBp: Number(item.deltaBp.toFixed(2))
+  })).sort((left, right) => left.chain.localeCompare(right.chain)),
+  [
+    { chain: 'arbitrum', fromSymbol: 'cbBTC', toSymbol: 'WBTC', deltaBp: 3 },
+    { chain: 'ethereum', fromSymbol: 'BTC', toSymbol: 'cbBTC', deltaBp: -3 }
+  ]
 );
 
 assert.strictEqual(

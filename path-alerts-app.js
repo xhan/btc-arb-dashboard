@@ -40,13 +40,23 @@
 
   const statusEl = document.getElementById('path-alerts-status');
   const listEl = document.getElementById('path-alerts-list');
+  const dismissedListEl = document.getElementById('path-alerts-dismissed-list');
   const editorEl = document.getElementById('path-alerts-editor');
   const editorTitleEl = document.getElementById('path-alerts-editor-title');
   const createBtn = document.getElementById('path-alerts-create-btn');
   const closeEditorBtn = document.getElementById('path-alerts-close-editor-btn');
+  const alertSearchInput = document.getElementById('path-alerts-search-input');
+  const dismissedSearchInput = document.getElementById('path-alerts-dismissed-search-input');
+  const dismissSelectedBtn = document.getElementById('path-alerts-dismiss-selected-btn');
+  const deleteSelectedBtn = document.getElementById('path-alerts-delete-selected-btn');
+  const deleteDismissedSelectedBtn = document.getElementById('path-alerts-dismissed-delete-selected-btn');
+  const selectionCountEl = document.getElementById('path-alerts-selection-count');
+  const dismissedSelectionCountEl = document.getElementById('path-alerts-dismissed-selection-count');
 
   let dashboardState = [];
-  let alertConfig = window.PathAlertUtils ? window.PathAlertUtils.normalizeAlertConfig() : { settings: { defaultCooldownSec: 300 }, alerts: [] };
+  let alertConfig = window.PathAlertUtils
+    ? window.PathAlertUtils.normalizeAlertConfig()
+    : { settings: { defaultCooldownSec: 180 }, alerts: [], dismissedTargets: [] };
   let quoteById = new Map();
   let quoteCandidates = [];
   let pageState = {
@@ -55,7 +65,11 @@
     saveMessage: '',
     draft: null,
     filteredCandidates: [],
-    activeCandidateIndex: -1
+    activeCandidateIndex: -1,
+    alertFilterQuery: '',
+    dismissedFilterQuery: '',
+    selectedAlertIds: new Set(),
+    selectedDismissedKeys: new Set()
   };
 
   function escapeHtml(value) {
@@ -128,9 +142,9 @@
       name: '',
       enabled: true,
       thresholdBp: getDefaultThresholdBp(),
-      triggerMode: 'immediate',
-      confirmDelaySec: 0,
-      cooldownSec: alertConfig.settings?.defaultCooldownSec || 300,
+      triggerMode: 'delayed',
+      confirmDelaySec: 13,
+      cooldownSec: alertConfig.settings?.defaultCooldownSec || 180,
       sourceType: 'path',
       selectedRuleId: '',
       searchQuery: '',
@@ -146,7 +160,7 @@
       thresholdBp: draft.thresholdBp === '' ? '' : Number(draft.thresholdBp),
       triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
       confirmDelaySec: Number(draft.confirmDelaySec || 0),
-      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 300),
+      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
       sourceType: draft.sourceType === 'fixed' || draft.sourceType === 'special' ? draft.sourceType : 'path',
       selectedRuleId: String(draft.selectedRuleId || ''),
       searchQuery: String(draft.searchQuery || ''),
@@ -156,7 +170,7 @@
 
   function buildDraftFromAlert(alert) {
     const normalized = window.PathAlertUtils
-      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 300 })
+      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
       : null;
     if (!normalized) return createEmptyDraft();
     if (normalized.target.type === 'rule') {
@@ -208,6 +222,22 @@
     return buildAlertSummaryLines(alert).join(' | ') || '--';
   }
 
+  function buildDismissedIdentityKey(entry) {
+    return buildAlertIdentityKey(entry && entry.target ? entry.target : entry);
+  }
+
+  function buildAlertIdentityKey(alertOrTarget) {
+    if (!window.PathAlertUtils || typeof window.PathAlertUtils.buildPathAlertTargetDuplicateKey !== 'function') {
+      return '';
+    }
+    const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
+    return window.PathAlertUtils.buildPathAlertTargetDuplicateKey(target);
+  }
+
+  function getAlertDisplayTitle(alert) {
+    return String(alert && alert.name || '').trim();
+  }
+
   function buildAlertSummaryLines(alert) {
     if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
       return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
@@ -223,6 +253,107 @@
       return [rule ? rule.title : alert.target.ruleId];
     }
     return (alert.target.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol));
+  }
+
+  function buildDismissedSummaryLines(entry) {
+    const lines = Array.isArray(entry && entry.summaryLinesSnapshot)
+      ? entry.summaryLinesSnapshot.filter(Boolean)
+      : [];
+    if (lines.length) return lines;
+    if (!entry || !entry.target) return [];
+    return buildAlertSummaryLines({ target: entry.target });
+  }
+
+  function buildDismissedSummary(entry) {
+    return buildDismissedSummaryLines(entry).join(' | ') || '--';
+  }
+
+  function findDismissedEntryForDraft(draft) {
+    if (!draft || !window.PathAlertUtils || typeof window.PathAlertUtils.findDismissedPathAlert !== 'function') {
+      return null;
+    }
+    return window.PathAlertUtils.findDismissedPathAlert(
+      Array.isArray(alertConfig.dismissedTargets) ? alertConfig.dismissedTargets : [],
+      {
+        target: collectEditorTarget(draft)
+      }
+    );
+  }
+
+  function getFilteredAlerts() {
+    const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
+    const query = pageState.alertFilterQuery;
+    return alerts.filter((alert) => {
+      const summary = buildAlertSummary(alert);
+      const name = getAlertDisplayTitle(alert);
+      return matchesSearch(`${name} ${summary}`, query);
+    });
+  }
+
+  function getFilteredDismissedTargets() {
+    const items = Array.isArray(alertConfig.dismissedTargets) ? alertConfig.dismissedTargets : [];
+    const query = pageState.dismissedFilterQuery;
+    return items.filter((entry) => matchesSearch(buildDismissedSummary(entry), query));
+  }
+
+  function syncSelectionCounters() {
+    if (selectionCountEl) {
+      selectionCountEl.textContent = `已选 ${pageState.selectedAlertIds.size} 条`;
+    }
+    if (dismissedSelectionCountEl) {
+      dismissedSelectionCountEl.textContent = `已选 ${pageState.selectedDismissedKeys.size} 条`;
+    }
+    if (dismissSelectedBtn) {
+      dismissSelectedBtn.disabled = pageState.selectedAlertIds.size === 0;
+    }
+    if (deleteSelectedBtn) {
+      deleteSelectedBtn.disabled = pageState.selectedAlertIds.size === 0;
+    }
+    if (deleteDismissedSelectedBtn) {
+      deleteDismissedSelectedBtn.disabled = pageState.selectedDismissedKeys.size === 0;
+    }
+  }
+
+  function removeSelectedAlertIdsFromConfig(alertIds) {
+    const idSet = new Set(Array.isArray(alertIds) ? alertIds : []);
+    alertConfig.alerts = (alertConfig.alerts || []).filter((alert) => !idSet.has(alert.id));
+  }
+
+  function removeDismissedKeysFromConfig(keys) {
+    const keySet = new Set(Array.isArray(keys) ? keys : []);
+    alertConfig.dismissedTargets = (alertConfig.dismissedTargets || []).filter((entry) => !keySet.has(buildDismissedIdentityKey(entry)));
+  }
+
+  function markAlertDismissed(alert) {
+    if (!alert || !window.PathAlertUtils || typeof window.PathAlertUtils.createDismissedTargetEntry !== 'function') {
+      return false;
+    }
+    const entry = window.PathAlertUtils.createDismissedTargetEntry(alert, buildAlertSummaryLines(alert), Date.now());
+    if (!entry) return false;
+    const dismissed = Array.isArray(alertConfig.dismissedTargets) ? [...alertConfig.dismissedTargets] : [];
+    if (window.PathAlertUtils.findDismissedPathAlert(dismissed, entry)) {
+      return false;
+    }
+    dismissed.push(entry);
+    alertConfig.dismissedTargets = dismissed;
+    return true;
+  }
+
+  async function persistAndRefreshList(successMessage = '已保存，请回主看板点击重新加载。') {
+    await persistAlertConfig();
+    if (successMessage) {
+      setStatus(successMessage, 'success');
+    }
+    renderList();
+    renderDismissedList();
+    renderEditor();
+  }
+
+  function matchesSearch(text, query) {
+    const tokens = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return true;
+    const haystack = String(text || '').toLowerCase();
+    return tokens.every((token) => haystack.includes(token));
   }
 
   function renderSummaryLinesHtml(lines, className) {
@@ -459,10 +590,19 @@
     );
   }
 
-  function validateDraft(draft) {
-    if (!draft.name.trim()) {
-      return '名称不能为空';
+  function findDismissedTargetForDraft(draft) {
+    if (!draft || !window.PathAlertUtils || typeof window.PathAlertUtils.findDismissedPathAlert !== 'function') {
+      return null;
     }
+    return window.PathAlertUtils.findDismissedPathAlert(
+      Array.isArray(alertConfig.dismissedTargets) ? alertConfig.dismissedTargets : [],
+      {
+        target: collectEditorTarget(draft)
+      }
+    );
+  }
+
+  function validateDraft(draft) {
     const thresholdBp = draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
     if (!Number.isFinite(thresholdBp)) {
       return '收益阈值必须是合法数字';
@@ -480,6 +620,14 @@
       if (!findRule(draft.sourceType, draft.selectedRuleId)) {
         return '请选择有效的规则';
       }
+      const dismissedTarget = findDismissedTargetForDraft(draft);
+      if (dismissedTarget) {
+        return '该路径已被标记为不需要，请先在“不需要路径”列表取消标记。';
+      }
+      const duplicateAlert = findDuplicateAlertForDraft(draft);
+      if (duplicateAlert) {
+        return `该路径报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
+      }
       return '';
     }
 
@@ -489,6 +637,10 @@
     const missingQuoteId = draft.legs.find((leg) => !quoteById.has(Number(leg.quoteId)));
     if (missingQuoteId) {
       return `路径腿引用的 live quote 不存在：${missingQuoteId.quoteId}`;
+    }
+    const dismissedTarget = findDismissedTargetForDraft(draft);
+    if (dismissedTarget) {
+      return '该路径已被标记为不需要，请先在“不需要路径”列表取消标记。';
     }
     const duplicateAlert = findDuplicateAlertForDraft(draft);
     if (duplicateAlert) {
@@ -507,44 +659,122 @@
       thresholdBp,
       triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
       confirmDelaySec: Number(draft.confirmDelaySec || 0),
-      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 300),
+      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
       delivery: { sound: true, log: true, webhookEnabled: false },
       target: collectEditorTarget(draft)
     };
     return window.PathAlertUtils
-      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 300 })
+      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
       : alert;
   }
 
-  function renderList() {
-    const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
-    if (!alerts.length) {
-      listEl.innerHTML = '<div class="empty">暂无路径报警</div>';
-      return;
+  function createDismissedEntryFromAlert(alert) {
+    if (!window.PathAlertUtils || typeof window.PathAlertUtils.createDismissedTargetEntry !== 'function') {
+      return null;
     }
+    return window.PathAlertUtils.createDismissedTargetEntry(
+      alert,
+      buildAlertSummaryLines(alert),
+      Date.now()
+    );
+  }
 
-    listEl.innerHTML = alerts.map((alert) => `
-      <div class="alert-item">
-        <div class="alert-item-head">
-          <div>
-            <div class="alert-item-title">${escapeHtml(alert.name || '未命名路径')}</div>
-            <div class="alert-item-route">${renderSummaryLinesHtml(buildAlertSummaryLines(alert), 'alert-item-route-line')}</div>
-            <div class="alert-item-meta">
-              类型 ${alert.target.type === 'rule' ? (alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则') : '路径'}
-              | 阈值 ${escapeHtml(String(alert.thresholdBp))}bp
-              | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即提醒'}
-              | 冷却 ${escapeHtml(String(alert.cooldownSec))}s
-              | ${alert.enabled === false ? '已禁用' : '已启用'}
+  function syncSelectionSets() {
+    const alertIds = new Set((alertConfig.alerts || []).map((alert) => String(alert.id || '')));
+    pageState.selectedAlertIds = new Set(
+      Array.from(pageState.selectedAlertIds).filter((id) => alertIds.has(id))
+    );
+
+    const dismissedKeys = new Set(
+      (alertConfig.dismissedTargets || []).map((entry) => buildAlertIdentityKey(entry.target))
+    );
+    pageState.selectedDismissedKeys = new Set(
+      Array.from(pageState.selectedDismissedKeys).filter((key) => dismissedKeys.has(key))
+    );
+  }
+
+  function buildAlertSearchText(alert) {
+    return [
+      getAlertDisplayTitle(alert),
+      buildAlertSummary(alert),
+      alert.target && alert.target.type === 'rule'
+        ? (alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则')
+        : '路径'
+    ].join(' ');
+  }
+
+  function buildDismissedSearchText(entry) {
+    return buildDismissedSummary(entry);
+  }
+
+  function renderList() {
+    syncSelectionSets();
+    const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
+    const filteredAlerts = getFilteredAlerts();
+    listEl.innerHTML = filteredAlerts.length
+      ? filteredAlerts.map((alert) => {
+        const note = getAlertDisplayTitle(alert);
+        return `
+          <div class="alert-item">
+            <div class="alert-item-head">
+              <div class="alert-item-head-left">
+                <input class="alert-item-select" type="checkbox" data-alert-select="${escapeHtml(alert.id)}" ${pageState.selectedAlertIds.has(alert.id) ? 'checked' : ''}>
+                <div class="alert-item-main">
+                  ${note ? `<div class="alert-item-muted-title">备注：${escapeHtml(note)}</div>` : ''}
+                  <div class="alert-item-route">${renderSummaryLinesHtml(buildAlertSummaryLines(alert), 'alert-item-route-line')}</div>
+                  <div class="alert-item-meta">
+                    类型 ${alert.target.type === 'rule' ? (alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则') : '路径'}
+                    | 阈值 ${escapeHtml(String(alert.thresholdBp))}bp
+                    | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即提醒'}
+                    | 冷却 ${escapeHtml(String(alert.cooldownSec))}s
+                    | ${alert.enabled === false ? '已禁用' : '已启用'}
+                  </div>
+                </div>
+              </div>
+              <div class="alert-item-actions">
+                <button type="button" data-alert-toggle="${escapeHtml(alert.id)}">${alert.enabled === false ? '启用' : '停用'}</button>
+                <button type="button" data-alert-edit="${escapeHtml(alert.id)}">编辑</button>
+                <button type="button" data-alert-dismiss-delete="${escapeHtml(alert.id)}">标记并删除</button>
+                <button type="button" class="danger" data-alert-delete="${escapeHtml(alert.id)}">删除</button>
+              </div>
             </div>
           </div>
-          <div class="alert-item-actions">
-            <button type="button" data-alert-toggle="${escapeHtml(alert.id)}">${alert.enabled === false ? '启用' : '停用'}</button>
-            <button type="button" data-alert-edit="${escapeHtml(alert.id)}">编辑</button>
-            <button type="button" class="danger" data-alert-delete="${escapeHtml(alert.id)}">删除</button>
+        `;
+      }).join('')
+      : `<div class="empty">${alerts.length ? '没有匹配的路径报警' : '暂无路径报警'}</div>`;
+
+    syncSelectionCounters();
+  }
+
+  function renderDismissedList() {
+    if (!dismissedListEl) return;
+    syncSelectionSets();
+    const dismissedTargets = Array.isArray(alertConfig.dismissedTargets) ? alertConfig.dismissedTargets : [];
+    const filteredDismissed = getFilteredDismissedTargets();
+    dismissedListEl.innerHTML = filteredDismissed.length
+      ? filteredDismissed.map((entry) => {
+        const targetKey = buildDismissedIdentityKey(entry);
+        return `
+          <div class="alert-item">
+            <div class="alert-item-head">
+              <div class="alert-item-head-left">
+                <input class="alert-item-select" type="checkbox" data-dismissed-select="${escapeHtml(targetKey)}" ${pageState.selectedDismissedKeys.has(targetKey) ? 'checked' : ''}>
+                <div class="alert-item-main">
+                  <div class="alert-item-route">${renderSummaryLinesHtml(buildDismissedSummaryLines(entry), 'alert-item-route-line')}</div>
+                  <div class="alert-item-meta">标记时间 ${entry.dismissedAt ? new Date(entry.dismissedAt).toLocaleString() : '--'}</div>
+                </div>
+              </div>
+              <div class="alert-item-actions">
+                <button type="button" data-dismissed-restore="${escapeHtml(targetKey)}">取消标记</button>
+                <button type="button" class="danger" data-dismissed-delete="${escapeHtml(targetKey)}">删除</button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    `).join('');
+        `;
+      }).join('')
+      : `<div class="empty">${dismissedTargets.length ? '没有匹配的不需要路径' : '暂无不需要路径'}</div>`;
+
+    syncSelectionCounters();
   }
 
   function renderRuleChoices(sourceType, selectedRuleId) {
@@ -606,6 +836,7 @@
 
     const draft = pageState.draft;
     const duplicateAlert = findDuplicateAlertForDraft(draft);
+    const dismissedTarget = findDismissedTargetForDraft(draft);
     const targetSummaryLines = draft.sourceType === 'path'
       ? ((draft.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol)).filter(Boolean))
       : [((findRule(draft.sourceType, draft.selectedRuleId) || {}).title || '--')];
@@ -620,14 +851,23 @@
         </div>
       `
       : '';
-    const saveDisabledAttr = duplicateAlert ? 'disabled' : '';
+    const dismissedHtml = dismissedTarget
+      ? `
+        <div class="status-message error editor-duplicate-warning">
+          <span>该路径已被标记为不需要，请先恢复后再添加。</span>
+          <a class="inline-link-btn" href="#dismissed-section">查看不需要路径</a>
+        </div>
+      `
+      : '';
+    const saveDisabledAttr = duplicateAlert || dismissedTarget ? 'disabled' : '';
 
     editorEl.innerHTML = `
       ${errorHtml}
       ${duplicateHtml}
+      ${dismissedHtml}
       <div class="form-group">
-        <label for="editor-name">名称</label>
-        <input id="editor-name" type="text" value="${escapeHtml(draft.name)}" placeholder="例如：WBTC 固定路径">
+        <label for="editor-name">备注（可选）</label>
+        <input id="editor-name" type="text" value="${escapeHtml(draft.name)}" placeholder="例如：只关注 ETH / ARB 这条">
       </div>
 
       <div class="type-tabs">
@@ -666,7 +906,7 @@
           </div>
           <div class="form-group">
             <label for="editor-cooldown">冷却时间 (秒)</label>
-            <input id="editor-cooldown" type="number" min="1" value="${escapeHtml(String(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 300))}">
+            <input id="editor-cooldown" type="number" min="1" value="${escapeHtml(String(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180))}">
           </div>
           <label class="editor-checkbox-row" for="editor-enabled">
             <input id="editor-enabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}>
@@ -803,6 +1043,56 @@
     closeEditor();
   }
 
+  function removeAlertIds(ids) {
+    const targetIds = new Set((ids || []).map((id) => String(id || '')));
+    if (!targetIds.size) return;
+    alertConfig.alerts = (alertConfig.alerts || []).filter((item) => !targetIds.has(String(item.id || '')));
+    pageState.selectedAlertIds = new Set(
+      Array.from(pageState.selectedAlertIds).filter((id) => !targetIds.has(id))
+    );
+    if (pageState.draft && pageState.draft.id && targetIds.has(pageState.draft.id)) {
+      closeEditor();
+    }
+  }
+
+  function dismissAlertIds(ids) {
+    const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
+    const dismissedTargets = Array.isArray(alertConfig.dismissedTargets) ? [...alertConfig.dismissedTargets] : [];
+    const targetIds = new Set((ids || []).map((id) => String(id || '')));
+    if (!targetIds.size) return;
+    if (!window.PathAlertUtils || typeof window.PathAlertUtils.findDismissedPathAlert !== 'function') {
+      removeAlertIds(Array.from(targetIds));
+      return;
+    }
+
+    for (const alert of alerts) {
+      if (!targetIds.has(String(alert.id || ''))) continue;
+      const dismissedEntry = createDismissedEntryFromAlert(alert);
+      if (!dismissedEntry) continue;
+      if (!window.PathAlertUtils.findDismissedPathAlert(dismissedTargets, dismissedEntry)) {
+        dismissedTargets.push(dismissedEntry);
+      }
+    }
+
+    alertConfig.dismissedTargets = dismissedTargets;
+    removeAlertIds(Array.from(targetIds));
+  }
+
+  function restoreDismissedKeys(keys) {
+    const targetKeys = new Set((keys || []).map((key) => String(key || '')));
+    if (!targetKeys.size) return;
+    alertConfig.dismissedTargets = (alertConfig.dismissedTargets || []).filter((entry) => {
+      return !targetKeys.has(buildAlertIdentityKey(entry.target));
+    });
+    pageState.selectedDismissedKeys = new Set(
+      Array.from(pageState.selectedDismissedKeys).filter((key) => !targetKeys.has(key))
+    );
+  }
+
+  function removeDismissedKeys(keys) {
+    restoreDismissedKeys(keys);
+  }
+
   async function handleListClick(event) {
     const editBtn = event.target.closest('[data-alert-edit]');
     if (editBtn) {
@@ -819,18 +1109,89 @@
       alert.enabled = alert.enabled === false;
       await persistAlertConfig();
       renderList();
+      renderDismissedList();
       return;
     }
 
     const deleteBtn = event.target.closest('[data-alert-delete]');
     if (deleteBtn) {
-      alertConfig.alerts = (alertConfig.alerts || []).filter((item) => item.id !== deleteBtn.dataset.alertDelete);
+      removeAlertIds([deleteBtn.dataset.alertDelete]);
       await persistAlertConfig();
-      if (pageState.draft && pageState.draft.id === deleteBtn.dataset.alertDelete) {
-        closeEditor();
-      }
       renderList();
+      renderDismissedList();
+      return;
     }
+
+    const dismissDeleteBtn = event.target.closest('[data-alert-dismiss-delete]');
+    if (dismissDeleteBtn) {
+      dismissAlertIds([dismissDeleteBtn.dataset.alertDismissDelete]);
+      await persistAlertConfig();
+      renderList();
+      renderDismissedList();
+      return;
+    }
+
+    const selectInput = event.target.closest('[data-alert-select]');
+    if (selectInput) {
+      const id = String(selectInput.dataset.alertSelect || '');
+      if (!id) return;
+      if (selectInput.checked) pageState.selectedAlertIds.add(id);
+      else pageState.selectedAlertIds.delete(id);
+      syncSelectionCounters();
+    }
+  }
+
+  async function handleDismissedListClick(event) {
+    const restoreBtn = event.target.closest('[data-dismissed-restore]');
+    if (restoreBtn) {
+      restoreDismissedKeys([restoreBtn.dataset.dismissedRestore]);
+      await persistAlertConfig();
+      renderList();
+      renderDismissedList();
+      return;
+    }
+
+    const deleteBtn = event.target.closest('[data-dismissed-delete]');
+    if (deleteBtn) {
+      removeDismissedKeys([deleteBtn.dataset.dismissedDelete]);
+      await persistAlertConfig();
+      renderList();
+      renderDismissedList();
+      return;
+    }
+
+    const selectInput = event.target.closest('[data-dismissed-select]');
+    if (selectInput) {
+      const key = String(selectInput.dataset.dismissedSelect || '');
+      if (!key) return;
+      if (selectInput.checked) pageState.selectedDismissedKeys.add(key);
+      else pageState.selectedDismissedKeys.delete(key);
+      syncSelectionCounters();
+    }
+  }
+
+  async function handleDeleteSelectedAlerts() {
+    if (!pageState.selectedAlertIds.size) return;
+    removeAlertIds(Array.from(pageState.selectedAlertIds));
+    await persistAlertConfig();
+    renderList();
+    renderDismissedList();
+  }
+
+  async function handleDeleteSelectedDismissed() {
+    if (!pageState.selectedDismissedKeys.size) return;
+    removeDismissedKeys(Array.from(pageState.selectedDismissedKeys));
+    await persistAlertConfig();
+    renderList();
+    renderDismissedList();
+  }
+
+  async function handleDismissSelectedAlerts() {
+    if (!pageState.selectedAlertIds.size) return;
+    dismissAlertIds(Array.from(pageState.selectedAlertIds));
+    await persistAlertConfig();
+    renderList();
+    renderDismissedList();
   }
 
   function updateDraftField(event) {
@@ -841,7 +1202,7 @@
     if (target.id === 'editor-threshold') pageState.draft.thresholdBp = target.value === '' ? '' : Number(target.value);
     if (target.id === 'editor-trigger') pageState.draft.triggerMode = target.value === 'delayed' ? 'delayed' : 'immediate';
     if (target.id === 'editor-confirm-delay') pageState.draft.confirmDelaySec = Number(target.value || 0);
-    if (target.id === 'editor-cooldown') pageState.draft.cooldownSec = Number(target.value || alertConfig.settings?.defaultCooldownSec || 300);
+    if (target.id === 'editor-cooldown') pageState.draft.cooldownSec = Number(target.value || alertConfig.settings?.defaultCooldownSec || 180);
     if (target.id === 'editor-enabled') pageState.draft.enabled = target.checked;
     if (pageState.errorMessage) clearEditorError();
     if (target.id === 'path-alert-search-input') {
@@ -976,11 +1337,13 @@
         console.warn('加载路径报警候选失败，回退到本地配置展示:', candidateError);
       }
       renderList();
+      renderDismissedList();
       applyInitialRoute();
       setStatus('');
     } catch (error) {
       setStatus(error.message || '初始化失败', 'error');
       renderList();
+      renderDismissedList();
       renderEditor();
     }
 
@@ -989,6 +1352,38 @@
     listEl.addEventListener('click', (event) => {
       handleListClick(event).catch((error) => setStatus(error.message || '操作失败', 'error'));
     });
+    if (dismissedListEl) {
+      dismissedListEl.addEventListener('click', (event) => {
+        handleDismissedListClick(event).catch((error) => setStatus(error.message || '操作失败', 'error'));
+      });
+    }
+    if (alertSearchInput) {
+      alertSearchInput.addEventListener('input', (event) => {
+        pageState.alertFilterQuery = event.target.value || '';
+        renderList();
+      });
+    }
+    if (dismissedSearchInput) {
+      dismissedSearchInput.addEventListener('input', (event) => {
+        pageState.dismissedFilterQuery = event.target.value || '';
+        renderDismissedList();
+      });
+    }
+    if (dismissSelectedBtn) {
+      dismissSelectedBtn.addEventListener('click', () => {
+        handleDismissSelectedAlerts().catch((error) => setStatus(error.message || '批量标记失败', 'error'));
+      });
+    }
+    if (deleteSelectedBtn) {
+      deleteSelectedBtn.addEventListener('click', () => {
+        handleDeleteSelectedAlerts().catch((error) => setStatus(error.message || '批量删除失败', 'error'));
+      });
+    }
+    if (deleteDismissedSelectedBtn) {
+      deleteDismissedSelectedBtn.addEventListener('click', () => {
+        handleDeleteSelectedDismissed().catch((error) => setStatus(error.message || '批量删除失败', 'error'));
+      });
+    }
     editorEl.addEventListener('click', handleEditorClick);
     editorEl.addEventListener('keydown', handleEditorKeydown);
     editorEl.addEventListener('input', updateDraftField);

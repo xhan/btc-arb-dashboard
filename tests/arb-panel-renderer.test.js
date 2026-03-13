@@ -37,4 +37,5 @@ assert.ok(html.includes('href="/charts?pairs=%5B%7B%22quoteId%22%3A1%2C%22direct
 assert.ok(html.includes('↗'));
 assert.ok(html.includes('WBTC->WETH 16 @ethereum'));
 assert.ok(html.includes('WETH->WBTC 0.064 @arbitrum bid1×1.25'));
-assert.ok(html.includes('收益: 12.00'));
+assert.ok(html.includes('class="arb-opportunity-head-profit arb-profit">12.00</div>'));
+assert.ok(!html.includes('<div class="arb-profit">收益: 12.00</div>'));
