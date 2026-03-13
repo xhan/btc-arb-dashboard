@@ -148,20 +148,6 @@
           "showInverse": true
         },
         {
-          "id": 1762836033569,
-          "chain": "ethereum",
-          "amount": 1,
-          "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-          "toToken": "0x8236a87084f8B84306f72007F36F2618A5634494",
-          "preferredSource": "Velora",
-          "showInverse": true,
-          "alerts": {
-            "percentUp": 0.1,
-            "percentDown": 0.1,
-            "basePrice": 0.9957651
-          }
-        },
-        {
           "id": 1760021467952,
           "chain": "solana",
           "amount": 1,
@@ -187,11 +173,29 @@
           }
         },
         {
+          "id": 1772796212200,
+          "chain": "monad",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0xd18b7ec58cdf4876f6afebd3ed1730e4ce10414b",
+          "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
+          "showInverse": true
+        },
+        {
           "id": 1760021622661,
           "chain": "sui",
           "amount": 1,
           "fromToken": "0x876a4b7bce8aeaef60464c11f4026903e9afacab79b9b142686158aa86560b50::xbtc::XBTC",
           "toToken": "0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC",
+          "showInverse": true
+        },
+        {
+          "id": 1762836033569,
+          "chain": "ethereum",
+          "amount": 1,
+          "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+          "toToken": "0x8236a87084f8B84306f72007F36F2618A5634494",
+          "preferredSource": "Velora",
           "showInverse": true
         },
         {
@@ -230,15 +234,6 @@
           "amount": 1,
           "preferredSource": "Auto",
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-          "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
-          "showInverse": true
-        },
-        {
-          "id": 1772796212200,
-          "chain": "monad",
-          "amount": 1,
-          "preferredSource": "Kyber",
-          "fromToken": "0xd18b7ec58cdf4876f6afebd3ed1730e4ce10414b",
           "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
           "showInverse": true
         },

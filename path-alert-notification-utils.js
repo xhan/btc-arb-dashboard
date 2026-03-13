@@ -10,13 +10,38 @@
       return '--';
     }
     const value = evaluation.profitBp;
-    return `${value >= 0 ? '+' : ''}${value.toFixed(2)}bp`;
+    return `📈 ${value >= 0 ? '+' : ''}${value.toFixed(2)}bp`;
+  }
+
+  function buildLegKey(leg) {
+    const quoteId = Number(leg && leg.quoteId);
+    if (!Number.isFinite(quoteId) || quoteId <= 0) return '';
+    const direction = leg && leg.direction === 'inverse' ? 'inverse' : 'forward';
+    const pricingMode = ['raw', 'cex-bid1', 'cex-ask1-inverse'].includes(leg && leg.pricingMode)
+      ? leg.pricingMode
+      : 'raw';
+    return `${quoteId}|${direction}|${pricingMode}`;
+  }
+
+  function markSummaryLines(entry, summaryLines) {
+    const changedLegs = Array.isArray(entry && entry.changedLegs) ? entry.changedLegs : [];
+    if (!changedLegs.length) return summaryLines;
+
+    const changedKeys = new Set(changedLegs.map((leg) => buildLegKey(leg)).filter(Boolean));
+    const summaryLegKeys = Array.isArray(entry && entry.summaryLegKeys) ? entry.summaryLegKeys : [];
+    return summaryLines.map((line, index) => {
+      const key = summaryLegKeys[index];
+      return key && changedKeys.has(key) ? `⚡ ${line}` : line;
+    });
   }
 
   function buildEntryBlock(entry, options = {}) {
     const includeTitle = options.includeTitle === true;
     const title = String(entry && entry.alert && entry.alert.name || '').trim();
-    const summaryLines = Array.isArray(entry && entry.summaryLines) ? entry.summaryLines.filter(Boolean) : [];
+    const summaryLines = markSummaryLines(
+      entry,
+      Array.isArray(entry && entry.summaryLines) ? entry.summaryLines.filter(Boolean) : []
+    );
     const changedLegLines = Array.isArray(entry && entry.changedLegLines) ? entry.changedLegLines.filter(Boolean) : [];
     const lines = [];
 
@@ -28,7 +53,7 @@
 
     if (changedLegLines.length) {
       lines.push('');
-      lines.push('异动腿:');
+      lines.push('⚡ 异动腿:');
       lines.push(...changedLegLines);
     }
 
@@ -64,14 +89,14 @@
 
     if (list.length === 1) {
       return {
-        title: `[路径报警] ${buildPathAlertNotificationTitle(list)}`,
+        title: `🚨 [路径报警] ${buildPathAlertNotificationTitle(list)}`,
         subtitle: '',
         message: buildPathAlertNotificationBody(list)
       };
     }
 
     return {
-      title: `[路径报警] ${list.length} 条命中`,
+      title: `🚨 [路径报警] ${list.length} 条命中`,
       subtitle: '',
       message: buildPathAlertNotificationBody(list)
     };

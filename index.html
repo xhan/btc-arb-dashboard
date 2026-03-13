@@ -422,7 +422,7 @@
         #theme-toggle-btn { width: 36px; height: 36px; font-size: 18px; }
         #global-settings-btn { width: 36px; height: 36px; font-size: 18px; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 5000; }
         .modal-overlay.visible { display: flex; }
         .modal-box { background: var(--module-bg-color); padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); width: 90%; max-width: 400px; }
         .modal-box h3 { margin-top: 0; color: var(--text-color); } .modal-box .form-group { margin-bottom: 15px; }
@@ -517,18 +517,18 @@
             padding: 10px 12px;
         }
 
-        #alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 400px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
-        #alert-log-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; }
+        #alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 400px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
+        #alert-log-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #alert-log-header { background-color: #1a202c; }
         #alert-log-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
 
-        #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
+        #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #arb-path-header { background-color: #1a202c; }
         .panel-header-actions { display: flex; align-items: center; gap: 8px; }
-        #arb-path-max-btn, #arb-path-min-btn {
+        #arb-path-max-btn, #arb-path-min-btn, #path-alert-min-btn, #calc-min-btn, #alert-log-min-btn {
             border: 1px solid rgba(255,255,255,0.3);
             background: transparent;
             color: #fff;
@@ -537,7 +537,7 @@
             cursor: pointer;
             font-weight: 700;
         }
-        #arb-path-max-btn:hover, #arb-path-min-btn:hover { background-color: rgba(255,255,255,0.12); }
+        #arb-path-max-btn:hover, #arb-path-min-btn:hover, #path-alert-min-btn:hover, #calc-min-btn:hover, #alert-log-min-btn:hover { background-color: rgba(255,255,255,0.12); }
         #arb-global-filter-bar { padding: 8px 12px; border-bottom: 1px solid var(--border-color); background-color: rgba(0,0,0,0.015); }
         .dark-mode #arb-global-filter-bar { background-color: rgba(255,255,255,0.02); }
         .arb-global-filter-row { display: flex; gap: 6px; align-items: center; }
@@ -969,9 +969,7 @@
             }
         }
 
-        #path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
-        #path-alert-window.collapsed { height: auto; min-height: 0; resize: none; }
-        #path-alert-window.collapsed #path-alert-content { display: none; }
+        #path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #path-alert-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #path-alert-header { background-color: #1a202c; }
         #path-alert-header button {
@@ -1074,7 +1072,7 @@
             .path-alert-editor-grid { grid-template-columns: 1fr; }
         }
 
-        #calc-window { position: fixed; bottom: 20px; right: 390px; width: 430px; height: 280px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
+        #calc-window { position: fixed; bottom: 20px; right: 390px; width: 430px; height: 280px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #calc-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #calc-header { background-color: #1a202c; }
         #calc-reset-btn, #calc-min-btn {
@@ -1228,6 +1226,7 @@
         <div id="top-bar-right">
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
              <button id="toggle-path-alert-btn" title="打开路径报警管理页">路径报警管理</button>
+             <button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">提醒日志</button>
              <button id="toggle-calc-btn" title="显示/隐藏计算器">计算器</button>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">快照</a>
              <a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">图表</a>
@@ -1241,7 +1240,15 @@
     <div id="dashboard"></div>
     <button id="add-category-btn">+ 添加新分区</button>
 
-    <div id="alert-log-window"><div id="alert-log-header">提醒日志</div><div id="alert-log-content"></div></div>
+    <div id="alert-log-window">
+        <div id="alert-log-header">
+            <span>提醒日志</span>
+            <div class="panel-header-actions">
+                <button id="alert-log-min-btn" title="最小化">－</button>
+            </div>
+        </div>
+        <div id="alert-log-content"></div>
+    </div>
     <div id="path-alert-window">
         <div id="path-alert-header">
             <span>路径报警</span>

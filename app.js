@@ -86,9 +86,10 @@
     let pathAlertEvalTimer = null;
     let pathAlertPanelHidden = false;
     let pathAlertRuntimeState = new Map();
-    let pathAlertPanelCollapsed = false;
     let pathAlertReloading = false;
     let pathAlertBulkImporting = false;
+    const FLOATING_PANEL_BASE_Z_INDEX = 2100;
+    let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     let pathAlertEditorState = {
         visible: false,
         editingId: '',
@@ -131,6 +132,8 @@
     const dashboardEl = document.getElementById('dashboard');
     const addCategoryBtn = document.getElementById('add-category-btn');
     const alertLogWindow = document.getElementById('alert-log-window');
+    const alertLogHeader = document.getElementById('alert-log-header');
+    const alertLogMinBtn = document.getElementById('alert-log-min-btn');
     const alertLogContent = document.getElementById('alert-log-content');
     const alertSound = document.getElementById('alert-sound');
     const pathAlertSound = document.getElementById('path-alert-sound');
@@ -196,6 +199,7 @@
     const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
     const toggleArbBtn = document.getElementById('toggle-arb-btn');
+    const toggleAlertLogBtn = document.getElementById('toggle-alert-log-btn');
     const arbDetailModal = document.getElementById('arb-detail-modal');
     const arbDetailCloseBtn = document.getElementById('arb-detail-close-btn');
     const arbDetailChartLink = document.getElementById('arb-detail-chart-link');
@@ -561,9 +565,23 @@
         syncLoopingAlertSound(pathAlertSound, shouldPlayPathAlert);
     }
 
+    function bringFloatingPanelToFront(panel) {
+        if (!panel) return;
+        floatingPanelZCounter += 1;
+        panel.style.zIndex = String(floatingPanelZCounter);
+    }
+
+    function bindFloatingPanelFocus(panel, header) {
+        if (!panel || !header) return;
+        header.addEventListener('mousedown', () => bringFloatingPanelToFront(panel));
+        header.addEventListener('click', () => bringFloatingPanelToFront(panel));
+        panel.addEventListener('mousedown', () => bringFloatingPanelToFront(panel));
+    }
+
     function appendAlertLogEntry(title, message, subtitle = '') {
         if (!alertLogWindow || !alertLogContent) return;
         alertLogWindow.style.display = 'flex';
+        bringFloatingPanelToFront(alertLogWindow);
         const now = new Date();
         const logEntry = document.createElement('div');
         logEntry.className = 'log-entry';
@@ -745,6 +763,7 @@
             cexChains: ['Bybit', 'Binance']
         }
     ];
+    const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
 
     function formatArbPathLegLine(leg) {
         const baseLine = window.ArbPaths.formatLegLine({
@@ -2542,10 +2561,37 @@
         return buildPathAlertSummaryLines(alert);
     }
 
+    function buildPathAlertLegKey(leg) {
+        const quoteId = Number(leg && leg.quoteId);
+        if (!Number.isFinite(quoteId) || quoteId <= 0) return '';
+        const direction = (leg && (leg.direction === 'inverse' || leg.inverse)) ? 'inverse' : 'forward';
+        const pricingMode = ['raw', 'cex-bid1', 'cex-ask1-inverse'].includes(leg && leg.pricingMode)
+            ? leg.pricingMode
+            : 'raw';
+        return `${quoteId}|${direction}|${pricingMode}`;
+    }
+
+    function buildPathAlertCycleSummaryEntries(alert, evaluation) {
+        if (evaluation && evaluation.cycle && Array.isArray(evaluation.cycle.legs)) {
+            const cycleLegs = evaluation.cycle.legs.filter((leg) => !isRuleLeg(leg));
+            const entries = cycleLegs.map((leg) => ({
+                line: formatArbPathLegLine(leg),
+                key: buildPathAlertLegKey(leg)
+            }));
+            if (entries.length) return entries;
+        }
+        return buildPathAlertSummaryLines(alert).map((line) => ({ line, key: '' }));
+    }
+
     function buildPathAlertChangedLegLines(changedLegs, maxCount = 3) {
         return (Array.isArray(changedLegs) ? changedLegs : [])
             .slice(0, maxCount)
-            .map((leg) => `${buildPathAlertLegDisplayLine(leg)} ${leg.deltaBp >= 0 ? '+' : ''}${leg.deltaBp.toFixed(2)}bp`);
+            .map((leg) => {
+                const rateText = Number.isFinite(Number(leg && leg.rate))
+                    ? ` @${Number(leg.rate).toFixed(6)}`
+                    : '';
+                return `${buildPathAlertLegDisplayLine(leg)}${rateText} ${leg.deltaBp >= 0 ? '+' : ''}${leg.deltaBp.toFixed(2)}bp`;
+            });
     }
 
     function getPathAlertRealLegCount(alert, evaluation) {
@@ -2651,13 +2697,15 @@
     }
 
     function buildTriggeredPathAlertEntry(alert, evaluation, changedLegs) {
+        const summaryEntries = buildPathAlertCycleSummaryEntries(alert, evaluation);
         return {
             alert: {
                 ...alert,
                 name: buildPathAlertDisplayTitle(alert)
             },
             evaluation,
-            summaryLines: buildPathAlertCycleSummaryLines(alert, evaluation),
+            summaryLines: summaryEntries.map((item) => item.line),
+            summaryLegKeys: summaryEntries.map((item) => item.key),
             changedLegLines: buildPathAlertChangedLegLines(changedLegs, 3),
             changedLegs: Array.isArray(changedLegs) ? changedLegs.slice(0, 3) : [],
             realLegCount: getPathAlertRealLegCount(alert, evaluation)
@@ -3027,17 +3075,16 @@
     function togglePathAlertPanel() {
         if (!pathAlertWindow) return;
         pathAlertPanelHidden = !pathAlertPanelHidden;
-        pathAlertWindow.style.display = pathAlertPanelHidden ? 'none' : 'flex';
+        const isVisible = !pathAlertPanelHidden;
+        pathAlertWindow.style.display = isVisible ? 'flex' : 'none';
+        if (isVisible) bringFloatingPanelToFront(pathAlertWindow);
     }
 
-    function togglePathAlertPanelCollapsed() {
-        if (!pathAlertWindow || pathAlertPanelHidden) return;
-        pathAlertPanelCollapsed = !pathAlertPanelCollapsed;
-        pathAlertWindow.classList.toggle('collapsed', pathAlertPanelCollapsed);
-        if (pathAlertMinBtn) {
-            pathAlertMinBtn.textContent = pathAlertPanelCollapsed ? '＋' : '－';
-            pathAlertMinBtn.title = pathAlertPanelCollapsed ? '展开' : '折叠';
-        }
+    function toggleAlertLogPanel() {
+        if (!alertLogWindow) return;
+        const isHidden = window.getComputedStyle(alertLogWindow).display === 'none';
+        alertLogWindow.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) bringFloatingPanelToFront(alertLogWindow);
     }
 
     function handlePathAlertPanelChange(event) {
@@ -3331,7 +3378,12 @@
         }
 
         const globalSectionKey = buildArbSectionKey('global', 'all');
-        const globalCycles = window.ArbPaths.findTopCycles(allEdgesWithRules, {
+        const globalSourceCategories = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.resolveItemsBySelectors === 'function'
+            ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
+            : dashboardState.slice(0, 4);
+        const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
+        const globalEdges = window.ArbPaths.buildEdges(globalSourceQuotes, quoteMonitorState, null);
+        const globalCycles = window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges), {
             maxDepth: 3,
             limit: Number.MAX_SAFE_INTEGER,
             acceptCycle: window.ArbPaths.isMeaningfulPath,
@@ -4079,6 +4131,7 @@
         if (!arbPathWindow) return;
         const isHidden = window.getComputedStyle(arbPathWindow).display === 'none';
         arbPathWindow.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) bringFloatingPanelToFront(arbPathWindow);
     }
 
     function isTypingTarget(target) {
@@ -4125,7 +4178,10 @@
         if (!calcWindow) return;
         const isHidden = window.getComputedStyle(calcWindow).display === 'none';
         calcWindow.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden) renderCalculatorPanel();
+        if (isHidden) {
+            bringFloatingPanelToFront(calcWindow);
+            renderCalculatorPanel();
+        }
     }
 
     function resetCalculator() {
@@ -5028,7 +5084,7 @@
     function makeDraggable(element, handle) {
         let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
         handle.onmousedown = dragMouseDown;
-        function dragMouseDown(e) { e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; }
+        function dragMouseDown(e) { e.preventDefault(); bringFloatingPanelToFront(element); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; }
         function elementDrag(e) { e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; element.style.top = (element.offsetTop - pos2) + "px"; element.style.left = (element.offsetLeft - pos1) + "px"; }
         function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
     }
@@ -5090,16 +5146,30 @@
             startPriceSnapshotTimer();
             restartPathAlertScheduler();
             
-            makeDraggable(alertLogWindow, document.getElementById('alert-log-header'));
+            if (alertLogWindow && alertLogHeader) {
+                makeDraggable(alertLogWindow, alertLogHeader);
+                bindFloatingPanelFocus(alertLogWindow, alertLogHeader);
+            }
             if (pathAlertWindow && pathAlertHeader) {
                 makeDraggable(pathAlertWindow, pathAlertHeader);
+                bindFloatingPanelFocus(pathAlertWindow, pathAlertHeader);
             }
             if (arbPathWindow && arbPathHeader) {
                 makeDraggable(arbPathWindow, arbPathHeader);
+                bindFloatingPanelFocus(arbPathWindow, arbPathHeader);
             }
             if (calcWindow && calcHeader) {
                 makeDraggable(calcWindow, calcHeader);
+                bindFloatingPanelFocus(calcWindow, calcHeader);
                 renderCalculatorPanel();
+            }
+            [alertLogWindow, pathAlertWindow, arbPathWindow, calcWindow].forEach((panel) => {
+                if (panel) {
+                    panel.style.zIndex = String(FLOATING_PANEL_BASE_Z_INDEX);
+                }
+            });
+            if (pathAlertWindow && window.getComputedStyle(pathAlertWindow).display !== 'none') {
+                bringFloatingPanelToFront(pathAlertWindow);
             }
 
             if (toggleArbBtn) {
@@ -5109,6 +5179,9 @@
                 togglePathAlertBtn.addEventListener('click', () => {
                     openPathAlertsManagementPage();
                 });
+            }
+            if (toggleAlertLogBtn) {
+                toggleAlertLogBtn.addEventListener('click', toggleAlertLogPanel);
             }
             if (pathAlertContent) {
                 pathAlertContent.addEventListener('click', handlePathAlertPanelClick);
@@ -5244,7 +5317,13 @@
             if (pathAlertMinBtn) {
                 pathAlertMinBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    togglePathAlertPanelCollapsed();
+                    togglePathAlertPanel();
+                });
+            }
+            if (alertLogMinBtn) {
+                alertLogMinBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleAlertLogPanel();
                 });
             }
             if (arbPathMaxBtn) {
