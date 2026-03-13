@@ -214,7 +214,7 @@
         {
           "id": 1763869402435,
           "chain": "etherlink",
-          "amount": 0.5,
+          "amount": 0.2,
           "preferredSource": "Kyber",
           "fromToken": "0xbfc94cd2b1e55999cfc7347a9313e88702b83d0f",
           "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
@@ -389,7 +389,8 @@
           "showInverse": false,
           "alerts": {
             "targetAbove": 0.5002
-          }
+          },
+          "paused": true
         },
         {
           "id": 1766413984286,

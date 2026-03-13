@@ -14,6 +14,8 @@
     changedLegMinBp: 0.1,
     localSoundEnabled: true,
     webhookEnabled: false,
+    dayAppEnabled: false,
+    telegramEnabled: true,
     webhookUrl: DEFAULT_PATH_ALERT_WEBHOOK_URL,
     webhookSecret: ''
   });
@@ -138,6 +140,8 @@
       ),
       localSoundEnabled: source.settings ? source.settings.localSoundEnabled !== false : true,
       webhookEnabled: Boolean(source.settings && source.settings.webhookEnabled === true),
+      dayAppEnabled: source.settings ? source.settings.dayAppEnabled === true : DEFAULT_PATH_ALERT_SETTINGS.dayAppEnabled,
+      telegramEnabled: source.settings ? source.settings.telegramEnabled !== false : DEFAULT_PATH_ALERT_SETTINGS.telegramEnabled,
       webhookUrl: String((source.settings && source.settings.webhookUrl) || DEFAULT_PATH_ALERT_SETTINGS.webhookUrl),
       webhookSecret: String((source.settings && source.settings.webhookSecret) || '')
     };
@@ -600,10 +604,15 @@
       const previousBaseline = Array.isArray(previous.baselineLegSnapshots)
         ? previous.baselineLegSnapshots.map((leg) => ({ ...leg }))
         : [];
+      const previousCurrentSnapshots = Array.isArray(previous.currentLegSnapshots)
+        ? previous.currentLegSnapshots.map((leg) => ({ ...leg }))
+        : [];
       if (next.status === 'pending_confirm') {
         next.baselineLegSnapshots = previous && previous.status === 'pending_confirm' && previousBaseline.length
           ? previousBaseline
-          : currentAllSnapshots.map((leg) => ({ ...leg }));
+          : (previousCurrentSnapshots.length
+              ? previousCurrentSnapshots
+              : currentAllSnapshots.map((leg) => ({ ...leg })));
       } else if (next.status === 'cooldown' || next.status === 'monitoring') {
         next.baselineLegSnapshots = previousBaseline;
       } else {

@@ -74,6 +74,8 @@
                 changedLegMinBp: 0.1,
                 localSoundEnabled: true,
                 webhookEnabled: false,
+                dayAppEnabled: false,
+                telegramEnabled: true,
                 webhookUrl: 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder',
                 webhookSecret: ''
             },

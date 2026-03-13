@@ -31,6 +31,8 @@ assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.webhookEnabled, false);
 assert.strictEqual(DEFAULT_PATH_ALERT_THRESHOLD_BP, 1.1);
 assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.defaultCooldownSec, 180);
 assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.changedLegMinBp, 0.1);
+assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.dayAppEnabled, false);
+assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.telegramEnabled, true);
 assert.strictEqual(
   DEFAULT_PATH_ALERT_SETTINGS.webhookUrl,
   'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder'
@@ -74,6 +76,8 @@ assert.strictEqual(normalizedConfig.settings.defaultCooldownSec, 120);
 assert.strictEqual(normalizedConfig.settings.localSoundEnabled, false);
 assert.strictEqual(normalizedConfig.settings.webhookEnabled, true);
 assert.strictEqual(normalizedConfig.settings.changedLegMinBp, 0.1);
+assert.strictEqual(normalizedConfig.settings.dayAppEnabled, false);
+assert.strictEqual(normalizedConfig.settings.telegramEnabled, true);
 assert.strictEqual(normalizedConfig.alerts[0].thresholdBp, 3.5);
 assert.strictEqual(normalizedConfig.alerts[0].confirmDelaySec, 8);
 assert.strictEqual(normalizedConfig.alerts[0].cooldownSec, 90);
@@ -232,12 +236,12 @@ assert.strictEqual(immediateChangedLegs[0].quoteId, 23);
 
 const delayedSnapshotState = resolvePathAlertSnapshotState(
   { enabled: true, triggerMode: 'delayed' },
-  null,
+  { status: 'idle', currentLegSnapshots: previousAllLegSnapshots },
   { status: 'pending_confirm' },
   switchedRuleEvaluation,
   currentAllLegSnapshots
 );
-assert.strictEqual(delayedSnapshotState.baselineSnapshots.length, currentAllLegSnapshots.length);
+assert.deepStrictEqual(delayedSnapshotState.baselineSnapshots, previousAllLegSnapshots);
 
 assert.deepStrictEqual(
   buildPathAlertSummaryLines(pathAlert, {

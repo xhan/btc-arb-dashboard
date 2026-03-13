@@ -346,6 +346,9 @@ async function sendPathAlertDayAppWebhook(alertConfig, title, body) {
     if (!alertConfig || !alertConfig.settings || alertConfig.settings.webhookEnabled !== true) {
         return { sent: false, channel: 'dayapp', reason: 'disabled' };
     }
+    if (alertConfig.settings.dayAppEnabled !== true) {
+        return { sent: false, channel: 'dayapp', reason: 'disabled' };
+    }
     const webhookUrl = buildPathAlertWebhookUrl(alertConfig.settings.webhookUrl, title, body);
     if (!webhookUrl) {
         return { sent: false, channel: 'dayapp', reason: 'missing-config' };
@@ -359,6 +362,9 @@ async function sendPathAlertDayAppWebhook(alertConfig, title, body) {
 }
 
 async function sendPathAlertTelegramWebhook(configMore, title, body) {
+    if (!configMore || configMore.telegramEnabled === false) {
+        return { sent: false, channel: 'telegram', reason: 'disabled' };
+    }
     const botToken = String(configMore && configMore.telegramBotToken || '').trim();
     const chatId = String(configMore && configMore.telegramChatId || '').trim();
     const apiBaseUrl = String(configMore && configMore.telegramBotApiBaseUrl || DEFAULT_TELEGRAM_BOT_API_BASE_URL).trim();
@@ -563,7 +569,10 @@ app.post('/api/send-path-alert-webhook', async (req, res) => {
 
         const results = await Promise.all([
             sendPathAlertDayAppWebhook(alertConfig, title, body),
-            sendPathAlertTelegramWebhook(configMore, title, body)
+            sendPathAlertTelegramWebhook({
+                ...configMore,
+                telegramEnabled: alertConfig.settings.telegramEnabled !== false
+            }, title, body)
         ]);
         if (!results.some((item) => item.sent)) {
             return res.status(400).json({ error: '路径报警远程推送未配置' });

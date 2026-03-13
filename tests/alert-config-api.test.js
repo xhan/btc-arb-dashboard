@@ -126,6 +126,8 @@ async function waitForServer(attempts = 15) {
         defaultCooldownSec: 180,
         localSoundEnabled: true,
         webhookEnabled: true,
+        dayAppEnabled: true,
+        telegramEnabled: true,
         webhookUrl: `http://127.0.0.1:${webhookPort}/notify/[title]/[body]?sound=ladder`,
         webhookSecret: ''
       },
