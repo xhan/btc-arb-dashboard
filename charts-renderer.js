@@ -192,10 +192,7 @@
       throw new Error('缺少图表容器');
     }
 
-    const chart = createChartInstance(container, {
-      ...options,
-      mini: false
-    });
+    const chart = createChartInstance(container, options);
     const series = createProfitSeries(chart);
     let resizeObserver = null;
 

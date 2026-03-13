@@ -87,6 +87,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('.auto-refresh-toggle span::before {'));
     assert.ok(response.body.includes('overflow-x: auto;'));
     assert.ok(response.body.includes('flex-wrap: nowrap;'));
+    assert.ok(response.body.includes('.arb-detail-profit-card {'));
+    assert.ok(response.body.includes('flex: 0 0 236px;'));
+    assert.ok(response.body.includes('.arb-detail-profit-canvas {'));
+    assert.ok(response.body.includes('height: 104px;'));
 
     const appJsResponse = await request('/app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
@@ -125,6 +129,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('window.CopyUtils'));
     assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
     assert.ok(appJsResponse.body.includes('最近 1 小时'));
+    assert.ok(appJsResponse.body.includes('arb-detail-chart-card arb-detail-profit-card'));
+    assert.ok(appJsResponse.body.includes('height: 104'));
+    assert.ok(appJsResponse.body.includes('showRightPriceScale: true'));
+    assert.ok(appJsResponse.body.includes('mini: true'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);
@@ -169,6 +177,7 @@ async function waitForServer(attempts = 12) {
     const chartsRendererResponse = await request('/charts-renderer.js');
     assert.strictEqual(chartsRendererResponse.statusCode, 200);
     assert.ok(chartsRendererResponse.body.includes('showRightPriceScale'));
+    assert.ok(chartsRendererResponse.body.includes('const chart = createChartInstance(container, options);'));
 
     const queueStatsResponse = await request('/queue-stats');
     assert.strictEqual(queueStatsResponse.statusCode, 200);

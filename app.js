@@ -1838,14 +1838,14 @@
 
     function buildArbDetailProfitPreviewCardHtml() {
         return `
-            <article class="arb-detail-profit-card" data-arb-detail-profit-card="true">
-                <div class="arb-detail-profit-head">
+            <article class="arb-detail-chart-card arb-detail-profit-card" data-arb-detail-profit-card="true">
+                <div class="arb-detail-chart-card-head arb-detail-profit-head">
                     <div>
-                        <div class="arb-detail-profit-title">组合收益图</div>
-                        <div class="arb-detail-profit-meta">等待价格图表加载完成...</div>
+                        <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
+                        <div class="arb-detail-chart-card-meta arb-detail-profit-meta">等待价格图表加载完成...</div>
                     </div>
                 </div>
-                <div class="arb-detail-profit-canvas"></div>
+                <div class="arb-detail-chart-canvas arb-detail-profit-canvas"></div>
             </article>
         `;
     }
@@ -1860,10 +1860,10 @@
         const cardEl = getArbDetailProfitCardEl();
         if (!cardEl) return;
         cardEl.innerHTML = `
-            <div class="arb-detail-profit-head">
+            <div class="arb-detail-chart-card-head arb-detail-profit-head">
                 <div>
-                    <div class="arb-detail-profit-title">组合收益图</div>
-                    <div class="arb-detail-profit-meta">${escapeHtml(message)}</div>
+                    <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
+                    <div class="arb-detail-chart-card-meta arb-detail-profit-meta">${escapeHtml(message)}</div>
                 </div>
             </div>
             <div class="arb-detail-chart-message">${escapeHtml(message)}</div>
@@ -1898,20 +1898,22 @@
         }
 
         cardEl.innerHTML = `
-            <div class="arb-detail-profit-head">
+            <div class="arb-detail-chart-card-head arb-detail-profit-head">
                 <div>
-                    <div class="arb-detail-profit-title">组合收益图</div>
-                    <div class="arb-detail-profit-meta">按当前 ${validSeries.length} 张价格图逐时点乘积计算，> 1.0 为正收益。</div>
+                    <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
+                    <div class="arb-detail-chart-card-meta arb-detail-profit-meta">按当前 ${validSeries.length} 张价格图逐时点乘积计算，> 1.0 为正收益。</div>
                 </div>
             </div>
-            <div class="arb-detail-profit-canvas"></div>
+            <div class="arb-detail-chart-canvas arb-detail-profit-canvas"></div>
         `;
         const canvasEl = cardEl.querySelector('.arb-detail-profit-canvas');
         const metaEl = cardEl ? cardEl.querySelector('.arb-detail-profit-meta') : null;
         if (!canvasEl) return;
 
         const chartInstance = renderer.mountProfitHistoryChart(canvasEl, {
-            height: 136
+            mini: true,
+            height: 104,
+            showRightPriceScale: true
         });
         chartInstance.update(points);
         arbDetailChartPreviewCharts.push(chartInstance);
