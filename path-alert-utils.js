@@ -9,7 +9,8 @@
   const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
   const DEFAULT_PATH_ALERT_SETTINGS = Object.freeze({
     pathAlertEvalIntervalMs: 1000,
-    defaultCooldownSec: 300,
+    defaultCooldownSec: 180,
+    changedLegMinBp: 0.1,
     localSoundEnabled: true,
     webhookEnabled: false,
     webhookUrl: DEFAULT_PATH_ALERT_WEBHOOK_URL,
@@ -92,8 +93,8 @@
       name: String(alert.name || ''),
       enabled: alert.enabled !== false,
       thresholdBp: toFiniteNumber(alert.thresholdBp, 0),
-      triggerMode: alert.triggerMode === 'delayed' ? 'delayed' : 'immediate',
-      confirmDelaySec: toNonNegativeInteger(alert.confirmDelaySec, 0),
+      triggerMode: alert.triggerMode === 'immediate' ? 'immediate' : 'delayed',
+      confirmDelaySec: toNonNegativeInteger(alert.confirmDelaySec, 13),
       cooldownSec: toPositiveInteger(alert.cooldownSec, settings.defaultCooldownSec),
       delivery: {
         ...cloneDefaultDelivery(),
@@ -129,6 +130,10 @@
       defaultCooldownSec: toPositiveInteger(
         source.settings && source.settings.defaultCooldownSec,
         DEFAULT_PATH_ALERT_SETTINGS.defaultCooldownSec
+      ),
+      changedLegMinBp: toFiniteNumber(
+        source.settings && source.settings.changedLegMinBp,
+        DEFAULT_PATH_ALERT_SETTINGS.changedLegMinBp
       ),
       localSoundEnabled: source.settings ? source.settings.localSoundEnabled !== false : true,
       webhookEnabled: Boolean(source.settings && source.settings.webhookEnabled === true),

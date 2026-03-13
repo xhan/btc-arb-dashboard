@@ -56,7 +56,7 @@
   let dashboardState = [];
   let alertConfig = window.PathAlertUtils
     ? window.PathAlertUtils.normalizeAlertConfig()
-    : { settings: { defaultCooldownSec: 300 }, alerts: [], dismissedTargets: [] };
+    : { settings: { defaultCooldownSec: 180 }, alerts: [], dismissedTargets: [] };
   let quoteById = new Map();
   let quoteCandidates = [];
   let pageState = {
@@ -142,9 +142,9 @@
       name: '',
       enabled: true,
       thresholdBp: getDefaultThresholdBp(),
-      triggerMode: 'immediate',
-      confirmDelaySec: 0,
-      cooldownSec: alertConfig.settings?.defaultCooldownSec || 300,
+      triggerMode: 'delayed',
+      confirmDelaySec: 13,
+      cooldownSec: alertConfig.settings?.defaultCooldownSec || 180,
       sourceType: 'path',
       selectedRuleId: '',
       searchQuery: '',
@@ -160,7 +160,7 @@
       thresholdBp: draft.thresholdBp === '' ? '' : Number(draft.thresholdBp),
       triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
       confirmDelaySec: Number(draft.confirmDelaySec || 0),
-      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 300),
+      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
       sourceType: draft.sourceType === 'fixed' || draft.sourceType === 'special' ? draft.sourceType : 'path',
       selectedRuleId: String(draft.selectedRuleId || ''),
       searchQuery: String(draft.searchQuery || ''),
@@ -170,7 +170,7 @@
 
   function buildDraftFromAlert(alert) {
     const normalized = window.PathAlertUtils
-      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 300 })
+      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
       : null;
     if (!normalized) return createEmptyDraft();
     if (normalized.target.type === 'rule') {
@@ -659,12 +659,12 @@
       thresholdBp,
       triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
       confirmDelaySec: Number(draft.confirmDelaySec || 0),
-      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 300),
+      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
       delivery: { sound: true, log: true, webhookEnabled: false },
       target: collectEditorTarget(draft)
     };
     return window.PathAlertUtils
-      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 300 })
+      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
       : alert;
   }
 
@@ -906,7 +906,7 @@
           </div>
           <div class="form-group">
             <label for="editor-cooldown">冷却时间 (秒)</label>
-            <input id="editor-cooldown" type="number" min="1" value="${escapeHtml(String(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 300))}">
+            <input id="editor-cooldown" type="number" min="1" value="${escapeHtml(String(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180))}">
           </div>
           <label class="editor-checkbox-row" for="editor-enabled">
             <input id="editor-enabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}>
@@ -1202,7 +1202,7 @@
     if (target.id === 'editor-threshold') pageState.draft.thresholdBp = target.value === '' ? '' : Number(target.value);
     if (target.id === 'editor-trigger') pageState.draft.triggerMode = target.value === 'delayed' ? 'delayed' : 'immediate';
     if (target.id === 'editor-confirm-delay') pageState.draft.confirmDelaySec = Number(target.value || 0);
-    if (target.id === 'editor-cooldown') pageState.draft.cooldownSec = Number(target.value || alertConfig.settings?.defaultCooldownSec || 300);
+    if (target.id === 'editor-cooldown') pageState.draft.cooldownSec = Number(target.value || alertConfig.settings?.defaultCooldownSec || 180);
     if (target.id === 'editor-enabled') pageState.draft.enabled = target.checked;
     if (pageState.errorMessage) clearEditorError();
     if (target.id === 'path-alert-search-input') {

@@ -70,7 +70,8 @@
             version: 1,
             settings: {
                 pathAlertEvalIntervalMs: 1000,
-                defaultCooldownSec: 300,
+                defaultCooldownSec: 180,
+                changedLegMinBp: 0.1,
                 localSoundEnabled: true,
                 webhookEnabled: false,
                 webhookUrl: 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder',
@@ -2385,9 +2386,9 @@
             name: '',
             enabled: true,
             thresholdBp: getPathAlertDefaultThresholdBp(),
-            triggerMode: 'immediate',
-            confirmDelaySec: 0,
-            cooldownSec: settings.defaultCooldownSec || 300,
+            triggerMode: 'delayed',
+            confirmDelaySec: 13,
+            cooldownSec: settings.defaultCooldownSec || 180,
             delivery: { sound: true, log: true, webhookEnabled: false }
         };
 
@@ -2431,12 +2432,12 @@
             name: '',
             enabled: true,
             thresholdBp: getPathAlertDefaultThresholdBp(),
-            triggerMode: 'immediate',
-            confirmDelaySec: 0,
+            triggerMode: 'delayed',
+            confirmDelaySec: 13,
             cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
             delivery: { sound: true, log: true, webhookEnabled: false },
             target: draft.target
-        }, pathAlertConfig.settings || { defaultCooldownSec: 300 });
+        }, pathAlertConfig.settings || { defaultCooldownSec: 180 });
     }
 
     function buildPathAlertDraftFromOpportunity(opportunityId) {
@@ -2445,6 +2446,9 @@
     }
 
     function formatPathAlertEvaluationText(evaluation) {
+        if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.formatPathAlertEvaluationText === 'function') {
+            return window.PathAlertNotificationUtils.formatPathAlertEvaluationText(evaluation);
+        }
         if (!evaluation || evaluation.available !== true || !Number.isFinite(evaluation.profitBp)) {
             return '--';
         }
@@ -2595,37 +2599,20 @@
     }
 
     function formatPathAlertNotificationTitle(triggeredEntries) {
+        if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.buildPathAlertNotificationTitle === 'function') {
+            return window.PathAlertNotificationUtils.buildPathAlertNotificationTitle(triggeredEntries);
+        }
         const list = Array.isArray(triggeredEntries) ? triggeredEntries : [];
-        if (!list.length) {
-            return '路径报警';
-        }
-        if (list.length === 1) {
-            const evaluation = list[0].evaluation;
-            if (!evaluation || !Number.isFinite(evaluation.profitBp)) {
-                return '路径报警';
-            }
-            return `收益 ${evaluation.profitBp >= 0 ? '+' : ''}${evaluation.profitBp.toFixed(2)} bp`;
-        }
-        return `路径报警 ${list.length} 条`;
+        if (!list.length) return '路径报警';
+        return list.length === 1 ? (list[0].alert?.name || '路径报警') : `${list.length} 条`;
     }
 
     function buildPathAlertNotificationBody(triggeredEntries) {
+        if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.buildPathAlertNotificationBody === 'function') {
+            return window.PathAlertNotificationUtils.buildPathAlertNotificationBody(triggeredEntries);
+        }
         const list = (Array.isArray(triggeredEntries) ? triggeredEntries : []).slice(0, 3);
-        if (!list.length) return '路径报警';
-        return list.map((entry, index) => {
-            const summaryLines = buildPathAlertCycleSummaryLines(entry.alert, entry.evaluation);
-            const changedLegLines = buildPathAlertChangedLegLines(entry.changedLegs, 3);
-            const parts = [
-                `${index + 1}. ${formatPathAlertEvaluationText(entry.evaluation)}`
-            ];
-            if (summaryLines.length) {
-                parts.push(summaryLines.join(' | '));
-            }
-            if (changedLegLines.length) {
-                parts.push(`变化: ${changedLegLines.join(' ; ')}`);
-            }
-            return parts.join('\n');
-        }).join('\n\n');
+        return list.map((entry) => [formatPathAlertEvaluationText(entry.evaluation), ...entry.summaryLines].join('\n')).join('\n\n');
     }
 
     async function sendPathAlertWebhookNotification(triggeredEntries) {
@@ -2649,39 +2636,25 @@
     }
 
     function buildAggregatedPathAlertLog(triggeredEntries) {
-        const list = (Array.isArray(triggeredEntries) ? triggeredEntries : []).slice(0, 3);
-        if (!list.length) {
-            return {
-                title: '[路径报警]',
-                subtitle: '',
-                message: '本轮无可通知路径'
-            };
+        if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.buildPathAlertAggregatedLog === 'function') {
+            return window.PathAlertNotificationUtils.buildPathAlertAggregatedLog(triggeredEntries);
         }
-        const title = list.length === 1
-            ? `[路径报警] ${buildPathAlertDisplayTitle(list[0].alert)}`
-            : `[路径报警] ${list.length} 条命中`;
-        const subtitle = list.length === 1
-            ? buildPathAlertCycleSummaryLines(list[0].alert, list[0].evaluation).join('\n')
-            : list.map((entry, index) => `${index + 1}. ${buildPathAlertDisplayTitle(entry.alert)} ${formatPathAlertEvaluationText(entry.evaluation)}`).join('\n');
-        const message = list.map((entry, index) => {
-            const lines = [`${index + 1}. ${formatPathAlertEvaluationText(entry.evaluation)}`];
-            const summaryLines = buildPathAlertCycleSummaryLines(entry.alert, entry.evaluation);
-            if (summaryLines.length) {
-                lines.push(summaryLines.join('\n'));
-            }
-            const changedLegLines = buildPathAlertChangedLegLines(entry.changedLegs, 3);
-            if (changedLegLines.length) {
-                lines.push(`变化: ${changedLegLines.join(' | ')}`);
-            }
-            return lines.join('\n');
-        }).join('\n\n');
-        return { title, subtitle, message };
+        return {
+            title: '[路径报警]',
+            subtitle: '',
+            message: buildPathAlertNotificationBody(triggeredEntries)
+        };
     }
 
     function buildTriggeredPathAlertEntry(alert, evaluation, changedLegs) {
         return {
-            alert,
+            alert: {
+                ...alert,
+                name: buildPathAlertDisplayTitle(alert)
+            },
             evaluation,
+            summaryLines: buildPathAlertCycleSummaryLines(alert, evaluation),
+            changedLegLines: buildPathAlertChangedLegLines(changedLegs, 3),
             changedLegs: Array.isArray(changedLegs) ? changedLegs.slice(0, 3) : [],
             realLegCount: getPathAlertRealLegCount(alert, evaluation)
         };
@@ -2723,10 +2696,11 @@
             next.evaluation = evaluation;
             next.isSoundActive = Boolean(next.shouldTrigger && pathAlertConfig.settings && pathAlertConfig.settings.localSoundEnabled !== false);
             if (next.shouldTrigger) {
+                const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
                 const changedLegs = window.PathAlertUtils.buildChangedLegs(
                     snapshotState.currentSnapshots,
                     snapshotState.baselineSnapshots,
-                    1
+                    Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
                 );
                 triggeredEntries.push(buildTriggeredPathAlertEntry(alert, evaluation, changedLegs));
             }
@@ -2818,8 +2792,8 @@
             name: '',
             enabled: true,
             thresholdBp: '',
-            triggerMode: 'immediate',
-            confirmDelaySec: 0,
+            triggerMode: 'delayed',
+            confirmDelaySec: 13,
             cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
             delivery: { sound: true, log: true, webhookEnabled: false },
             target: { type: 'path', legs: [] }
@@ -3384,9 +3358,15 @@
         const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
         const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
         const globalEmptyText = hasGlobalFilter ? '过滤后暂无路径' : '等待数据...';
+        const fixedAndSpecialColumns = window.ArbPanelLayoutUtils
+            ? window.ArbPanelLayoutUtils.splitSectionsIntoColumns(fixedSections.concat(specialSections), 6, 2)
+            : [fixedSections.concat(specialSections), []];
+        const wbtcSection = categorySections.find((section) => section && section.title === 'WBTC监控') || { title: 'WBTC监控', opportunities: [], emptyText: '等待数据...' };
+        const tbtcSection = categorySections.find((section) => section && section.title === 'TBTC监控') || { title: 'TBTC监控', opportunities: [], emptyText: '等待数据...' };
         const columns = [
-            lbtcSection ? fixedSections.concat(specialSections, [lbtcSection]) : fixedSections.concat(specialSections),
-            categorySections,
+            fixedAndSpecialColumns[0] || [],
+            fixedAndSpecialColumns[1] || [],
+            [wbtcSection, lbtcSection || { title: 'LBTC监控', opportunities: [], emptyText: '等待数据...' }, tbtcSection],
             [{
                 title: '全局路径',
                 opportunities: selectArbOpportunityEntriesByCycles(globalEntries, globalCycleDisplayState.displayCycles),
@@ -5087,6 +5067,7 @@
             
             renderDashboard();
             updateArbPanel();
+            setArbPanelMaxHeight();
             renderPathAlertPanel();
             
             const allQuotes = dashboardState.flatMap(c => c.quotes || []);
@@ -5268,6 +5249,7 @@
                     setArbPanelMaxHeight();
                 });
             }
+            window.addEventListener('resize', setArbPanelMaxHeight);
             if (toggleCalcBtn) {
                 toggleCalcBtn.addEventListener('click', toggleCalcPanel);
             }

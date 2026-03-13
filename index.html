@@ -524,7 +524,7 @@
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
 
-        #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1080px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
+        #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 1000; overflow: hidden; resize: both; }
         #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #arb-path-header { background-color: #1a202c; }
         .panel-header-actions { display: flex; align-items: center; gap: 8px; }
@@ -554,7 +554,7 @@
         #arb-global-filter-clear-btn { padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
         #arb-global-filter-clear-btn:disabled { opacity: 0.5; cursor: default; }
         #arb-path-content { flex-grow: 1; overflow-y: auto; padding: 12px; font-size: 13px; }
-        .arb-path-grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 10px; align-items: start; }
+        .arb-path-grid { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); gap: 10px; align-items: start; }
         .arb-column { min-width: 0; }
         .arb-section { border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; margin-bottom: 8px; background-color: rgba(0,0,0,0.01); }
         .dark-mode .arb-section { background-color: rgba(255,255,255,0.02); }
@@ -565,7 +565,8 @@
         .arb-opportunity[data-arb-opportunity-id] { cursor: pointer; }
         .arb-opportunity[data-arb-opportunity-id]:hover { background-color: rgba(37, 99, 235, 0.04); }
         .arb-opportunity-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .arb-opportunity-head-actions { display: flex; align-items: center; gap: 6px; }
+        .arb-opportunity-head-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .arb-opportunity-head-profit { min-width: 72px; text-align: right; font-size: 12px; }
         .arb-opportunity-chart-link {
             display: inline-flex;
             align-items: center;
@@ -1599,8 +1600,10 @@
     <script src="arb-paths.js"></script>
     <script src="arb-equivalence-utils.js"></script>
     <script src="arb-special-utils.js"></script>
+    <script src="arb-panel-layout-utils.js"></script>
     <script src="arb-rule-snapshot-utils.js"></script>
     <script src="path-alert-utils.js"></script>
+    <script src="path-alert-notification-utils.js"></script>
     <script src="path-alert-page-utils.js"></script>
     <script src="path-alert-rule-definitions.js"></script>
     <script src="quote-calculator.js"></script>

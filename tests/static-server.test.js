@@ -47,12 +47,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="arb-detail-chart-preview"'));
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
+    assert.ok(response.body.includes('#arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px;'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="charts-renderer.js"'));
     assert.ok(response.body.includes('src="copy-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
+    assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
+    assert.ok(response.body.includes('src="path-alert-notification-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
@@ -113,6 +116,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
     assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
+    assert.ok(appJsResponse.body.includes('setArbPanelMaxHeight();'));
+    assert.ok(appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
     assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));

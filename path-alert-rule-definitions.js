@@ -15,14 +15,7 @@
       chains: ['ethereum', 'arbitrum'],
       steps: 2
     },
-    {
-      id: 'fixed:gho-usdc',
-      title: 'GHO <-> USDC',
-      base: 'GHO',
-      quote: 'USDC',
-      steps: 2,
-      crossChain: true
-    },
+
     {
       id: 'fixed:wbtc-btc-no-arb',
       title: 'WBTC - BTC (-arb)',
