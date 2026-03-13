@@ -493,7 +493,7 @@
       ]
     },
     {
-      "name": "USD",
+      "name": "USD监控",
       "id": 1766416805440,
       "quotes": [
         {
@@ -560,7 +560,7 @@
       ]
     },
     {
-      "name": "ETH",
+      "name": "ETH监控",
       "id": 1766503359354,
       "quotes": [
         {
@@ -641,9 +641,9 @@
     }
   ],
   "settings": {
-    "kyber": 180,
+    "kyber": 185,
     "zerox": 500,
-    "velora": 850,
+    "velora": 900,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
