@@ -31,9 +31,17 @@ async function run() {
         value: '',
         style: {},
         setAttribute() {},
+        focusCalled: false,
+        focus() {
+          this.focusCalled = true;
+        },
         selectCalled: false,
         select() {
           this.selectCalled = true;
+        },
+        selectionRange: null,
+        setSelectionRange(start, end) {
+          this.selectionRange = [start, end];
         },
         removeCalled: false,
         remove() {
@@ -56,7 +64,9 @@ async function run() {
   });
   assert.strictEqual(textareaNodes.length, 1);
   assert.strictEqual(textareaNodes[0].value, 'fallback-copy');
+  assert.strictEqual(textareaNodes[0].focusCalled, true);
   assert.strictEqual(textareaNodes[0].selectCalled, true);
+  assert.deepStrictEqual(textareaNodes[0].selectionRange, [0, 'fallback-copy'.length]);
   assert.strictEqual(textareaNodes[0].removeCalled, true);
 
   await assert.rejects(

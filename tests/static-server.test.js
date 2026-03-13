@@ -80,7 +80,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
     assert.ok(response.body.includes('.quote-item-paused'));
     assert.ok(response.body.includes('border: 2px solid #f59e0b;'));
-    assert.ok(response.body.includes('z-index: 4000;'));
+    assert.ok(response.body.includes('z-index: 7000;'));
     assert.ok(response.body.includes('.auto-refresh-toggle span {'));
     assert.ok(response.body.includes('.auto-refresh-toggle input[type="checkbox"] {'));
     assert.ok(response.body.includes('appearance: none;'));
@@ -126,6 +126,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
     assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-profit-card'));
+    assert.ok(appJsResponse.body.includes('resolveEventTargetElement(event)'));
+    assert.ok(appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
     assert.ok(appJsResponse.body.includes('window.CopyUtils'));
     assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
     assert.ok(appJsResponse.body.includes('最近 1 小时'));

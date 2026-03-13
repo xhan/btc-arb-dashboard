@@ -3937,6 +3937,17 @@
         throw new Error('Clipboard unavailable');
     }
 
+    function resolveEventTargetElement(event) {
+        const target = event && event.target;
+        if (target instanceof Element) {
+            return target;
+        }
+        if (target && target.parentElement instanceof Element) {
+            return target.parentElement;
+        }
+        return null;
+    }
+
     function formatCalculatorProduct(product, count) {
         if (typeof product !== 'number' || Number.isNaN(product)) return '--';
         if (count <= 1) return product.toFixed(6);
@@ -5194,13 +5205,17 @@
             }
             if (arbDetailGrid) {
                 arbDetailGrid.addEventListener('mousedown', (event) => {
-                    const stepBtn = event.target.closest('[data-arb-detail-step-index]');
+                    const eventTarget = resolveEventTargetElement(event);
+                    if (!eventTarget) return;
+                    const stepBtn = eventTarget.closest('[data-arb-detail-step-index]');
                     if (stepBtn) {
                         event.preventDefault();
                     }
                 });
                 arbDetailGrid.addEventListener('click', (event) => {
-                    const tokenEl = event.target.closest('[data-arb-detail-token-address]');
+                    const eventTarget = resolveEventTargetElement(event);
+                    if (!eventTarget) return;
+                    const tokenEl = eventTarget.closest('[data-arb-detail-token-address]');
                     if (tokenEl) {
                         const tokenAddress = tokenEl.dataset.arbDetailTokenAddress;
                         const tokenSymbol = tokenEl.dataset.arbDetailTokenSymbol || 'Token';
@@ -5211,7 +5226,7 @@
                         return;
                     }
 
-                    const dexLinkEl = event.target.closest('[data-arb-detail-dex-url]');
+                    const dexLinkEl = eventTarget.closest('[data-arb-detail-dex-url]');
                     if (dexLinkEl) {
                         const dexUrl = dexLinkEl.dataset.arbDetailDexUrl;
                         const dexLabel = dexLinkEl.dataset.arbDetailDexLabel || 'DEX';
@@ -5222,7 +5237,7 @@
                         return;
                     }
 
-                    const stepBtn = event.target.closest('[data-arb-detail-step-index]');
+                    const stepBtn = eventTarget.closest('[data-arb-detail-step-index]');
                     if (!stepBtn) return;
                     const index = Number(stepBtn.dataset.arbDetailStepIndex);
                     const step = Number(stepBtn.dataset.arbDetailStep);
@@ -5230,7 +5245,9 @@
                     nudgeArbDetailInput(index, step);
                 });
                 arbDetailGrid.addEventListener('focusin', (event) => {
-                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    const eventTarget = resolveEventTargetElement(event);
+                    if (!eventTarget) return;
+                    const input = eventTarget.closest('[data-arb-detail-input-index]');
                     if (!input) return;
                     arbDetailState.editingInputIndex = Number(input.dataset.arbDetailInputIndex);
                     input.dataset.arbDetailJustFocused = '1';
@@ -5241,21 +5258,27 @@
                     }, 0);
                 });
                 arbDetailGrid.addEventListener('mouseup', (event) => {
-                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    const eventTarget = resolveEventTargetElement(event);
+                    if (!eventTarget) return;
+                    const input = eventTarget.closest('[data-arb-detail-input-index]');
                     if (!input) return;
                     if (input.dataset.arbDetailJustFocused !== '1') return;
                     delete input.dataset.arbDetailJustFocused;
                     event.preventDefault();
                 });
                 arbDetailGrid.addEventListener('focusout', (event) => {
-                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    const eventTarget = resolveEventTargetElement(event);
+                    if (!eventTarget) return;
+                    const input = eventTarget.closest('[data-arb-detail-input-index]');
                     if (!input) return;
                     delete input.dataset.arbDetailJustFocused;
                     arbDetailState.editingInputIndex = null;
                     commitArbDetailInput(Number(input.dataset.arbDetailInputIndex), input.value);
                 });
                 arbDetailGrid.addEventListener('keydown', (event) => {
-                    const input = event.target.closest('[data-arb-detail-input-index]');
+                    const eventTarget = resolveEventTargetElement(event);
+                    if (!eventTarget) return;
+                    const input = eventTarget.closest('[data-arb-detail-input-index]');
                     if (!input) return;
                     if (!getArbDetailUtils().shouldCommitArbDetailInputOnKey(event.key)) return;
                     event.preventDefault();

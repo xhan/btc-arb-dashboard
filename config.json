@@ -163,7 +163,7 @@
         {
           "id": 1760021522815,
           "chain": "base",
-          "amount": 0.5,
+          "amount": 0.1,
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0xecAc9C5F704e954931349Da37F60E39f515c11c1",
           "preferredSource": "Kyber",
@@ -175,7 +175,7 @@
         {
           "id": 1772796212200,
           "chain": "monad",
-          "amount": 1,
+          "amount": 0.5,
           "preferredSource": "Kyber",
           "fromToken": "0xd18b7ec58cdf4876f6afebd3ed1730e4ce10414b",
           "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
@@ -309,9 +309,7 @@
           "preferredSource": "Kyber",
           "showInverse": true,
           "alerts": {
-            "percentUp": 0.1,
-            "targetAbove": 0.999,
-            "basePrice": 0.9992533697244222
+            "targetAbove": 0.999
           }
         },
         {

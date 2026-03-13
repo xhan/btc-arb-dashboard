@@ -34,7 +34,13 @@
     textarea.style.position = 'absolute';
     textarea.style.left = '-9999px';
     runtimeDocument.body.appendChild(textarea);
+    if (typeof textarea.focus === 'function') {
+      textarea.focus();
+    }
     textarea.select();
+    if (typeof textarea.setSelectionRange === 'function') {
+      textarea.setSelectionRange(0, textarea.value.length);
+    }
 
     try {
       const copied = typeof runtimeDocument.execCommand === 'function'
