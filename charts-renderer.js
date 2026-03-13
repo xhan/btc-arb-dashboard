@@ -49,6 +49,7 @@
 
     const height = Number(options.height);
     const mini = options.mini !== false;
+    const showRightPriceScale = options.showRightPriceScale === true || !mini;
     return charts.createChart(container, {
       width: Math.max(180, container.clientWidth || 180),
       height: Number.isFinite(height) && height > 0 ? height : 112,
@@ -66,7 +67,7 @@
         horzLines: { color: mini ? 'rgba(148, 163, 184, 0.10)' : 'rgba(148, 163, 184, 0.16)' }
       },
       rightPriceScale: {
-        visible: !mini,
+        visible: showRightPriceScale,
         borderColor: 'rgba(148, 163, 184, 0.18)'
       },
       timeScale: {
@@ -106,6 +107,36 @@
       return chart.addLineSeries(options);
     }
     throw new Error('图表折线初始化失败');
+  }
+
+  function createProfitSeries(chart) {
+    const charts = getChartsLib();
+    const options = {
+      baseValue: { type: 'price', price: 1 },
+      topLineColor: '#0f766e',
+      topFillColor1: 'rgba(15, 118, 110, 0.26)',
+      topFillColor2: 'rgba(15, 118, 110, 0.05)',
+      bottomLineColor: '#b91c1c',
+      bottomFillColor1: 'rgba(185, 28, 28, 0.22)',
+      bottomFillColor2: 'rgba(185, 28, 28, 0.05)',
+      lineWidth: 2,
+      priceLineVisible: true,
+      crosshairMarkerVisible: true,
+      lastValueVisible: true,
+      priceFormat: {
+        type: 'custom',
+        minMove: 0.00001,
+        formatter: formatPrice
+      }
+    };
+
+    if (chart && typeof chart.addSeries === 'function' && charts && charts.BaselineSeries) {
+      return chart.addSeries(charts.BaselineSeries, options);
+    }
+    if (chart && typeof chart.addBaselineSeries === 'function') {
+      return chart.addBaselineSeries(options);
+    }
+    return createPriceSeries(chart, '#0f766e');
   }
 
   function mountPriceHistoryChart(container, options = {}) {
@@ -156,7 +187,59 @@
     };
   }
 
+  function mountProfitHistoryChart(container, options = {}) {
+    if (!container) {
+      throw new Error('缺少图表容器');
+    }
+
+    const chart = createChartInstance(container, {
+      ...options,
+      mini: false
+    });
+    const series = createProfitSeries(chart);
+    let resizeObserver = null;
+
+    function resize() {
+      chart.applyOptions({
+        width: Math.max(180, container.clientWidth || 180),
+        height: Number.isFinite(Number(options.height)) && Number(options.height) > 0 ? Number(options.height) : 164
+      });
+      chart.timeScale().fitContent();
+    }
+
+    if (typeof ResizeObserver === 'function') {
+      resizeObserver = new ResizeObserver(resize);
+      resizeObserver.observe(container);
+    }
+
+    function update(points) {
+      const shiftedPoints = shiftPoints(points);
+      series.setData(shiftedPoints);
+      chart.timeScale().fitContent();
+      return shiftedPoints;
+    }
+
+    function destroy() {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
+      }
+      if (typeof chart.remove === 'function') {
+        chart.remove();
+      }
+    }
+
+    return {
+      chart,
+      series,
+      update,
+      resize,
+      destroy
+    };
+  }
+
   return {
-    mountPriceHistoryChart
+    mountPriceHistoryChart,
+    mountProfitHistoryChart
   };
 }));

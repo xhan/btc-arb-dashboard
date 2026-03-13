@@ -46,8 +46,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="arb-detail-chart-link"'));
     assert.ok(response.body.includes('id="arb-detail-chart-preview"'));
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
+    assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="charts-renderer.js"'));
+    assert.ok(response.body.includes('src="copy-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
@@ -73,6 +75,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('#top-bar-right > a {'));
     assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
     assert.ok(response.body.includes('.quote-item-paused'));
+    assert.ok(response.body.includes('border: 2px solid #f59e0b;'));
+    assert.ok(response.body.includes('z-index: 4000;'));
+    assert.ok(response.body.includes('.auto-refresh-toggle span {'));
+    assert.ok(response.body.includes('.auto-refresh-toggle input[type="checkbox"] {'));
+    assert.ok(response.body.includes('appearance: none;'));
+    assert.ok(response.body.includes('.auto-refresh-toggle span::before {'));
+    assert.ok(response.body.includes('overflow-x: auto;'));
+    assert.ok(response.body.includes('flex-wrap: nowrap;'));
 
     const appJsResponse = await request('/app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
@@ -101,6 +111,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
+    assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));
+    assert.ok(appJsResponse.body.includes('data-arb-detail-profit-card'));
+    assert.ok(appJsResponse.body.includes('window.CopyUtils'));
+    assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
+    assert.ok(appJsResponse.body.includes('最近 1 小时'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);
@@ -137,6 +152,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(chartsAppResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(chartsAppResponse.body.includes('syncChartAutoRefreshTimer'));
     assert.ok(chartsAppResponse.body.includes('chart-auto-refresh-toggle'));
+
+    const copyUtilsResponse = await request('/copy-utils.js');
+    assert.strictEqual(copyUtilsResponse.statusCode, 200);
+    assert.ok(copyUtilsResponse.body.includes('Clipboard fallback failed'));
+
+    const chartsRendererResponse = await request('/charts-renderer.js');
+    assert.strictEqual(chartsRendererResponse.statusCode, 200);
+    assert.ok(chartsRendererResponse.body.includes('showRightPriceScale'));
 
     const queueStatsResponse = await request('/queue-stats');
     assert.strictEqual(queueStatsResponse.statusCode, 200);

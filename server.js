@@ -572,12 +572,17 @@ app.get('/api/chart-series', async (req, res) => {
     try {
         const quoteId = Number(req.query.quoteId);
         const direction = req.query.direction === 'inverse' ? 'inverse' : req.query.direction === 'forward' ? 'forward' : '';
+        const windowSec = Number(req.query.windowSec);
         if (!Number.isFinite(quoteId) || !direction) {
             res.status(400).json({ error: '缺少合法的 quoteId 或 direction' });
             return;
         }
 
-        const series = await getChartSeries(PRICE_SNAPSHOT_DIR, { quoteId, direction });
+        const series = await getChartSeries(PRICE_SNAPSHOT_DIR, {
+            quoteId,
+            direction,
+            windowMs: Number.isFinite(windowSec) && windowSec > 0 ? windowSec * 1000 : undefined
+        });
         if (!series) {
             res.status(404).json({ error: '未找到图表数据' });
             return;

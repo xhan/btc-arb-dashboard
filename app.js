@@ -194,6 +194,7 @@
     const arbDetailChartAutoRefreshToggle = document.getElementById('arb-detail-chart-auto-refresh');
     const arbDetailSubtitle = document.getElementById('arb-detail-subtitle');
     const arbDetailChartPreview = document.getElementById('arb-detail-chart-preview');
+    const arbDetailProfitPreview = document.getElementById('arb-detail-profit-preview');
     const arbDetailGrid = document.getElementById('arb-detail-grid');
     const calcWindow = document.getElementById('calc-window');
     const calcContent = document.getElementById('calc-content');
@@ -1683,6 +1684,9 @@
         if (arbDetailChartPreview) {
             arbDetailChartPreview.innerHTML = '';
         }
+        if (arbDetailProfitPreview) {
+            arbDetailProfitPreview.innerHTML = '';
+        }
     }
 
     function syncArbDetailChartAutoRefreshTimer() {
@@ -1725,6 +1729,91 @@
         `;
     }
 
+    function buildArbDetailProfitPreviewCardHtml() {
+        return `
+            <article class="arb-detail-profit-card" data-arb-detail-profit-card="true">
+                <div class="arb-detail-profit-head">
+                    <div>
+                        <div class="arb-detail-profit-title">组合收益图</div>
+                        <div class="arb-detail-profit-meta">等待价格图表加载完成...</div>
+                    </div>
+                </div>
+                <div class="arb-detail-profit-canvas"></div>
+            </article>
+        `;
+    }
+
+    function getArbDetailProfitCardEl() {
+        return arbDetailChartPreview
+            ? arbDetailChartPreview.querySelector('[data-arb-detail-profit-card]')
+            : null;
+    }
+
+    function renderArbDetailProfitPreviewMessage(message) {
+        const cardEl = getArbDetailProfitCardEl();
+        if (!cardEl) return;
+        cardEl.innerHTML = `
+            <div class="arb-detail-profit-head">
+                <div>
+                    <div class="arb-detail-profit-title">组合收益图</div>
+                    <div class="arb-detail-profit-meta">${escapeHtml(message)}</div>
+                </div>
+            </div>
+            <div class="arb-detail-chart-message">${escapeHtml(message)}</div>
+        `;
+    }
+
+    function syncArbDetailProfitPreview(seriesList, renderer) {
+        const cardEl = getArbDetailProfitCardEl();
+        if (!cardEl) return;
+
+        const validSeries = (seriesList || []).filter((series) => Array.isArray(series) && series.length);
+        if (validSeries.length < 2) {
+            renderArbDetailProfitPreviewMessage('至少需要 2 张价格图表。');
+            return;
+        }
+
+        const utils = getChartsUtils();
+        if (!utils || typeof utils.buildProfitChartPoints !== 'function') {
+            renderArbDetailProfitPreviewMessage('收益图算法未就绪，请刷新页面后重试。');
+            return;
+        }
+
+        if (!renderer || typeof renderer.mountProfitHistoryChart !== 'function') {
+            renderArbDetailProfitPreviewMessage('图表模块未就绪，请刷新页面后重试。');
+            return;
+        }
+
+        const points = utils.buildProfitChartPoints(validSeries);
+        if (!points.length) {
+            renderArbDetailProfitPreviewMessage('当前价格图表缺少对齐时间点，暂时无法计算收益。');
+            return;
+        }
+
+        cardEl.innerHTML = `
+            <div class="arb-detail-profit-head">
+                <div>
+                    <div class="arb-detail-profit-title">组合收益图</div>
+                    <div class="arb-detail-profit-meta">按当前 ${validSeries.length} 张价格图逐时点乘积计算，> 1.0 为正收益。</div>
+                </div>
+            </div>
+            <div class="arb-detail-profit-canvas"></div>
+        `;
+        const canvasEl = cardEl.querySelector('.arb-detail-profit-canvas');
+        const metaEl = cardEl ? cardEl.querySelector('.arb-detail-profit-meta') : null;
+        if (!canvasEl) return;
+
+        const chartInstance = renderer.mountProfitHistoryChart(canvasEl, {
+            height: 136
+        });
+        chartInstance.update(points);
+        arbDetailChartPreviewCharts.push(chartInstance);
+
+        if (metaEl) {
+            metaEl.textContent = `按当前 ${validSeries.length} 张价格图逐时点乘积计算，> 1.0 为正收益。`;
+        }
+    }
+
     async function syncArbDetailChartPreview(current, options = {}) {
         if (!arbDetailChartPreview) return;
         const forceReload = options.forceReload === true;
@@ -1743,6 +1832,7 @@
             arbDetailState.chartPreviewSignature = '';
             destroyArbDetailChartPreview();
             renderArbDetailChartPreviewMessage('当前路径暂无可用历史图表。');
+            renderArbDetailProfitPreviewMessage('当前路径暂无可用历史图表。');
             return;
         }
 
@@ -1754,14 +1844,16 @@
         const runId = arbDetailChartPreviewRunId;
         arbDetailState.chartPreviewSignature = signature;
         destroyArbDetailChartPreview();
-        arbDetailChartPreview.innerHTML = `<div class="arb-detail-chart-strip">${pairs.map(buildArbDetailChartPreviewCardHtml).join('')}</div>`;
+        arbDetailChartPreview.innerHTML = `<div class="arb-detail-chart-strip">${pairs.map(buildArbDetailChartPreviewCardHtml).join('')}${buildArbDetailProfitPreviewCardHtml()}</div>`;
 
         const renderer = getChartsRenderer();
         if (!renderer || typeof renderer.mountPriceHistoryChart !== 'function') {
             renderArbDetailChartPreviewMessage('图表模块未就绪，请刷新页面后重试。');
+            renderArbDetailProfitPreviewMessage('图表模块未就绪，请刷新页面后重试。');
             return;
         }
 
+        const loadedSeries = new Array(pairs.length).fill(null);
         await Promise.all(pairs.map(async (pair, index) => {
             const cardEl = arbDetailChartPreview.querySelector(`[data-arb-detail-chart-index="${index}"]`);
             if (!cardEl) return;
@@ -1772,7 +1864,8 @@
             try {
                 const params = new URLSearchParams({
                     quoteId: String(pair.quoteId),
-                    direction: pair.direction
+                    direction: pair.direction,
+                    windowSec: '3600'
                 });
                 const response = await fetch(`/api/chart-series?${params.toString()}`);
                 if (!response.ok) {
@@ -1787,14 +1880,16 @@
 
                 const chartInstance = renderer.mountPriceHistoryChart(canvasEl, {
                     mini: true,
-                    height: 112,
+                    height: 104,
+                    showRightPriceScale: true,
                     color: '#0f766e'
                 });
                 chartInstance.update(series.points || []);
+                loadedSeries[index] = Array.isArray(series.points) ? series.points : [];
                 arbDetailChartPreviewCharts.push(chartInstance);
 
                 if (metaEl) {
-                    metaEl.textContent = `${series.source || '历史快照'} · 最近 2 小时`;
+                    metaEl.textContent = `${series.source || '历史快照'} · 最近 1 小时`;
                 }
             } catch (error) {
                 if (arbDetailChartPreviewRunId !== runId) return;
@@ -1806,6 +1901,11 @@
                 }
             }
         }));
+
+        if (!arbDetailState.visible || arbDetailChartPreviewRunId !== runId) {
+            return;
+        }
+        syncArbDetailProfitPreview(loadedSeries, renderer);
     }
 
     function renderArbDetailModal(forceShellRebuild = false) {
@@ -3396,28 +3496,16 @@
     }
 
     async function copyTextToClipboard(text) {
-        if (!text) return;
-        if (navigator.clipboard && window.isSecureContext) {
-            try {
-                await navigator.clipboard.writeText(text);
-                return;
-            } catch (error) {
-                console.warn('Clipboard write failed', error);
-            }
-        }
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.setAttribute('readonly', '');
-        textarea.style.position = 'absolute';
-        textarea.style.left = '-9999px';
-        document.body.appendChild(textarea);
-        textarea.select();
         try {
-            document.execCommand('copy');
+            if (window.CopyUtils && typeof window.CopyUtils.copyTextToClipboard === 'function') {
+                await window.CopyUtils.copyTextToClipboard(text);
+                return;
+            }
         } catch (error) {
-            console.warn('Clipboard fallback failed', error);
+            console.warn('Clipboard write failed', error);
+            throw error;
         }
-        textarea.remove();
+        throw new Error('Clipboard unavailable');
     }
 
     function formatCalculatorProduct(product, count) {

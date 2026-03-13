@@ -622,23 +622,54 @@
         .auto-refresh-toggle {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 0 10px;
-            min-height: 34px;
+            justify-content: center;
+            position: relative;
+            padding: 0 12px;
+            height: 34px;
             border-radius: 999px;
             border: 1px solid var(--border-color);
-            background: rgba(15, 23, 42, 0.03);
-            color: var(--text-color-light);
+            background: var(--module-bg-color);
+            color: var(--text-color);
             font-size: 12px;
             line-height: 1;
+            font-weight: 700;
             white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+            cursor: pointer;
+            user-select: none;
         }
         .dark-mode .auto-refresh-toggle {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.06);
         }
-        .auto-refresh-toggle input {
+        .auto-refresh-toggle input[type="checkbox"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             margin: 0;
-            accent-color: #0f766e;
+            opacity: 0;
+            appearance: none;
+            cursor: pointer;
+        }
+        .auto-refresh-toggle span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1;
+        }
+        .auto-refresh-toggle span::before {
+            content: "";
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            border: 2px solid #0f766e;
+            box-sizing: border-box;
+            background: rgba(15, 118, 110, 0.06);
+            flex: 0 0 auto;
+        }
+        .auto-refresh-toggle input[type="checkbox"]:checked + span::before {
+            background: linear-gradient(180deg, #10b981, #0f766e);
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.92);
         }
         #arb-detail-chart-link {
             display: inline-flex;
@@ -670,16 +701,23 @@
         #arb-detail-chart-preview {
             margin-bottom: 12px;
         }
+        #arb-detail-profit-preview {
+            display: none;
+        }
         .arb-detail-chart-strip {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            display: flex;
+            flex-wrap: nowrap;
             gap: 10px;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            padding-bottom: 4px;
         }
         .arb-detail-chart-card {
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 10px;
             background: linear-gradient(180deg, rgba(15,23,42,0.04), rgba(15,23,42,0.015));
+            flex: 0 0 236px;
         }
         .dark-mode .arb-detail-chart-card {
             background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
@@ -703,7 +741,7 @@
         }
         .arb-detail-chart-canvas {
             width: 100%;
-            height: 112px;
+            height: 104px;
         }
         .arb-detail-chart-message {
             display: flex;
@@ -714,6 +752,37 @@
             font-size: 12px;
             text-align: center;
             line-height: 1.45;
+        }
+        .arb-detail-profit-card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            background: linear-gradient(180deg, rgba(15,23,42,0.05), rgba(15,23,42,0.018));
+            flex: 0 0 260px;
+        }
+        .dark-mode .arb-detail-profit-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+        }
+        .arb-detail-profit-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .arb-detail-profit-title {
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+        .arb-detail-profit-meta {
+            margin-top: 2px;
+            font-size: 11px;
+            color: var(--text-color-light);
+        }
+        .arb-detail-profit-canvas {
+            width: 100%;
+            height: 136px;
         }
         #arb-detail-close-btn {
             padding: 7px 12px;
@@ -1138,11 +1207,11 @@
             font-size: 18px;
             font-weight: 700;
             box-shadow: 0 10px 30px var(--shadow-color);
-            border: 1px solid var(--border-color);
+            border: 2px solid #f59e0b;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.25s ease;
-            z-index: 1200;
+            z-index: 4000;
         }
         #copy-toast.visible { opacity: 1; }
         
@@ -1235,6 +1304,7 @@
             </div>
             <div id="arb-detail-subtitle">选择一个套利机会后，可在这里对比不同投入金额的产出。</div>
             <div id="arb-detail-chart-preview"></div>
+            <div id="arb-detail-profit-preview"></div>
             <div id="arb-detail-grid"></div>
         </div>
     </div>
@@ -1538,6 +1608,7 @@
     <script src="arb-detail-utils.js"></script>
     <script src="charts-utils.js"></script>
     <script src="charts-renderer.js"></script>
+    <script src="copy-utils.js"></script>
     <script src="quote-pause-utils.js"></script>
     <script src="price-snapshot-payload-utils.js"></script>
     <script src="queue-stats-utils.js"></script>
