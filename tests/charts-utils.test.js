@@ -40,6 +40,16 @@ assert.deepStrictEqual(shiftChartPointsToUtc8([
 ]), [
   { time: Math.floor(new Date('2026-03-01T00:05:10.000Z').getTime() / 1000), value: 0.9991 }
 ]);
+assert.deepStrictEqual(shiftChartPointsToUtc8([
+  { time: 100, value: 1.01 },
+  { time: 100, value: 1.011 },
+  { time: 110, value: null },
+  { time: undefined, value: 1.02 },
+  { time: '120', value: '1.03' }
+], 0), [
+  { time: 100, value: 1.011 },
+  { time: 120, value: 1.03 }
+]);
 assert.strictEqual(formatUtc8ChartTime(Math.floor(new Date('2026-03-01T00:05:10.000Z').getTime() / 1000)), '00:05:10');
 assert.strictEqual(formatChartPrice(0.999123456), '0.99912');
 

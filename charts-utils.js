@@ -138,10 +138,30 @@
 
   function shiftChartPointsToUtc8(points, offsetSeconds = 8 * 60 * 60) {
     if (!Array.isArray(points)) return [];
-    return points.map((point) => ({
-      time: Number(point && point.time) + offsetSeconds,
-      value: point && point.value
-    }));
+    return points.reduce((result, point) => {
+      const rawTime = point && point.time;
+      const rawValue = point && point.value;
+      if (rawTime === null || rawTime === undefined || rawValue === null || rawValue === undefined || rawValue === '') {
+        return result;
+      }
+      const time = Number(rawTime);
+      const value = Number(rawValue);
+      if (!Number.isFinite(time) || !Number.isFinite(value)) {
+        return result;
+      }
+      const shiftedTime = time + offsetSeconds;
+      const normalizedPoint = {
+        time: shiftedTime,
+        value
+      };
+      const lastPoint = result.length ? result[result.length - 1] : null;
+      if (lastPoint && lastPoint.time === shiftedTime) {
+        result[result.length - 1] = normalizedPoint;
+        return result;
+      }
+      result.push(normalizedPoint);
+      return result;
+    }, []);
   }
 
   function pad2(value) {

@@ -344,7 +344,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
           "toToken": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
-          "showInverse": false
+          "showInverse": true
         },
         {
           "id": 1772205780037,
@@ -478,7 +478,8 @@
           "preferredSource": "LI.FI",
           "fromToken": "0xCAbAE6f6Ea1ecaB08Ad02fE02ce9A44F09aebfA2",
           "toToken": "0xC96dE26018A54D51c097160568752c4E3BD6C364",
-          "showInverse": false
+          "showInverse": false,
+          "paused": false
         },
         {
           "id": 1772368453495,
@@ -492,7 +493,7 @@
       ]
     },
     {
-      "name": "U搬砖",
+      "name": "USD",
       "id": 1766416805440,
       "quotes": [
         {
@@ -559,7 +560,7 @@
       ]
     },
     {
-      "name": "WBTC-ETH",
+      "name": "ETH",
       "id": 1766503359354,
       "quotes": [
         {
@@ -569,7 +570,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
           "toToken": "0x06ea695B91700071B161A434fED42D1DcbAD9f00",
-          "showInverse": true
+          "showInverse": true,
+          "paused": true
         },
         {
           "id": 1772107840766,
@@ -578,7 +580,8 @@
           "preferredSource": "LI.FI",
           "fromToken": "0xAA40c0c7644e0b2B224509571e10ad20d9C4ef28",
           "toToken": "0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3",
-          "showInverse": true
+          "showInverse": true,
+          "paused": true
         },
         {
           "id": 1772551950738,
@@ -640,7 +643,7 @@
   "settings": {
     "kyber": 180,
     "zerox": 500,
-    "velora": 750,
+    "velora": 850,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
