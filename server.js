@@ -14,7 +14,12 @@ const {
 const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./price-snapshot-replay');
 const { parseUtc8Input } = require('./time-utils');
 const { createMarketClients } = require('./market-clients');
-const { buildPathAlertWebhookUrl, normalizeAlertConfig } = require('./path-alert-utils');
+const {
+    buildPathAlertWebhookUrl,
+    buildTelegramBotApiUrl,
+    DEFAULT_TELEGRAM_BOT_API_BASE_URL,
+    normalizeAlertConfig
+} = require('./path-alert-utils');
 const { buildPathAlertCandidates } = require('./path-alert-candidate-utils');
 const { splitCompactTradingPairSymbol } = require('./quote-calculator');
 const fs = require('fs').promises;
@@ -296,6 +301,11 @@ async function getConfigMore() {
         const rawJupiterApiKey = typeof configMore.jupiterApiKey === 'string' ? configMore.jupiterApiKey.trim() : '';
         const rawVeloraPartner = typeof configMore.veloraPartner === 'string' ? configMore.veloraPartner.trim() : '';
         const rawVeloraIncludeDEXS = normalizeStringArray(configMore.veloraIncludeDEXS);
+        const rawTelegramBotToken = typeof configMore.telegramBotToken === 'string' ? configMore.telegramBotToken.trim() : '';
+        const rawTelegramChatId = typeof configMore.telegramChatId === 'string' ? configMore.telegramChatId.trim() : '';
+        const rawTelegramBotApiBaseUrl = typeof configMore.telegramBotApiBaseUrl === 'string'
+            ? configMore.telegramBotApiBaseUrl.trim()
+            : '';
 
         return {
             kyberClientId: rawClientId || 'xh-quote-dashboard',
@@ -306,7 +316,10 @@ async function getConfigMore() {
             veloraIncludeDEXS: rawVeloraIncludeDEXS,
             veloraOtherExchangePrices: configMore.veloraOtherExchangePrices === true,
             enablePriceSnapshot: configMore.enablePriceSnapshot === true,
-            priceSnapshotIntervalSec: Number.parseInt(configMore.priceSnapshotIntervalSec, 10) || 10
+            priceSnapshotIntervalSec: Number.parseInt(configMore.priceSnapshotIntervalSec, 10) || 10,
+            telegramBotToken: rawTelegramBotToken,
+            telegramChatId: rawTelegramChatId,
+            telegramBotApiBaseUrl: rawTelegramBotApiBaseUrl || DEFAULT_TELEGRAM_BOT_API_BASE_URL
         };
     } catch (error) {
         if (error.code !== 'ENOENT') {
@@ -321,9 +334,57 @@ async function getConfigMore() {
             veloraIncludeDEXS: [],
             veloraOtherExchangePrices: false,
             enablePriceSnapshot: false,
-            priceSnapshotIntervalSec: 10
+            priceSnapshotIntervalSec: 10,
+            telegramBotToken: '',
+            telegramChatId: '',
+            telegramBotApiBaseUrl: DEFAULT_TELEGRAM_BOT_API_BASE_URL
         };
     }
+}
+
+async function sendPathAlertDayAppWebhook(alertConfig, title, body) {
+    if (!alertConfig || !alertConfig.settings || alertConfig.settings.webhookEnabled !== true) {
+        return { sent: false, channel: 'dayapp', reason: 'disabled' };
+    }
+    const webhookUrl = buildPathAlertWebhookUrl(alertConfig.settings.webhookUrl, title, body);
+    if (!webhookUrl) {
+        return { sent: false, channel: 'dayapp', reason: 'missing-config' };
+    }
+
+    const response = await fetch(webhookUrl, { method: 'GET' });
+    if (!response.ok) {
+        throw new Error(`Day.app 响应异常: ${response.status}`);
+    }
+    return { sent: true, channel: 'dayapp' };
+}
+
+async function sendPathAlertTelegramWebhook(configMore, title, body) {
+    const botToken = String(configMore && configMore.telegramBotToken || '').trim();
+    const chatId = String(configMore && configMore.telegramChatId || '').trim();
+    const apiBaseUrl = String(configMore && configMore.telegramBotApiBaseUrl || DEFAULT_TELEGRAM_BOT_API_BASE_URL).trim();
+    if (!botToken || !chatId) {
+        return { sent: false, channel: 'telegram', reason: 'missing-config' };
+    }
+
+    const url = buildTelegramBotApiUrl(botToken, 'sendMessage', process.env.TELEGRAM_BOT_API_BASE_URL || apiBaseUrl);
+    if (!url) {
+        return { sent: false, channel: 'telegram', reason: 'missing-config' };
+    }
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: `${title}\n\n${body}`
+        })
+    });
+    if (!response.ok) {
+        throw new Error(`Telegram 响应异常: ${response.status}`);
+    }
+    return { sent: true, channel: 'telegram' };
 }
 
 async function getAlertConfig() {
@@ -493,18 +554,24 @@ app.get('/api/path-alert-quote-candidates', async (req, res) => {
 app.post('/api/send-path-alert-webhook', async (req, res) => {
     try {
         const alertConfig = await getAlertConfig();
+        const configMore = await getConfigMore();
         const title = String(req.body && req.body.title || '').trim();
         const body = String(req.body && req.body.body || '').trim();
-        const webhookUrl = buildPathAlertWebhookUrl(alertConfig.settings.webhookUrl, title, body);
-        if (!webhookUrl) {
+        if (!alertConfig.settings.webhookEnabled) {
             return res.status(400).json({ error: '路径报警 webhook 未配置' });
         }
 
-        const response = await fetch(webhookUrl, { method: 'GET' });
-        if (!response.ok) {
-            throw new Error(`Webhook 响应异常: ${response.status}`);
+        const results = await Promise.all([
+            sendPathAlertDayAppWebhook(alertConfig, title, body),
+            sendPathAlertTelegramWebhook(configMore, title, body)
+        ]);
+        if (!results.some((item) => item.sent)) {
+            return res.status(400).json({ error: '路径报警远程推送未配置' });
         }
-        res.json({ message: '路径报警 webhook 已发送' });
+        res.json({
+            message: '路径报警 webhook 已发送',
+            channels: results.filter((item) => item.sent).map((item) => item.channel)
+        });
     } catch (error) {
         console.error('Path Alert Webhook Error:', error);
         res.status(500).json({ error: error.message });

@@ -6,6 +6,7 @@
   root.PathAlertUtils = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const DEFAULT_PATH_ALERT_WEBHOOK_URL = 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder';
+  const DEFAULT_TELEGRAM_BOT_API_BASE_URL = 'https://api.telegram.org';
   const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
   const DEFAULT_PATH_ALERT_SETTINGS = Object.freeze({
     pathAlertEvalIntervalMs: 1000,
@@ -140,6 +141,14 @@
     return rawTemplate
       .replace(/\[title\]/gu, encodeURIComponent(String(title || '')))
       .replace(/\[body\]/gu, encodeURIComponent(String(body || '')));
+  }
+
+  function buildTelegramBotApiUrl(botToken, method, baseUrl = DEFAULT_TELEGRAM_BOT_API_BASE_URL) {
+    const normalizedBaseUrl = String(baseUrl || DEFAULT_TELEGRAM_BOT_API_BASE_URL).trim().replace(/\/+$/u, '');
+    const normalizedBotToken = String(botToken || '').trim();
+    const normalizedMethod = String(method || '').trim();
+    if (!normalizedBaseUrl || !normalizedBotToken || !normalizedMethod) return '';
+    return `${normalizedBaseUrl}/bot${normalizedBotToken}/${normalizedMethod}`;
   }
 
   function buildPathAlertSummaryLines(alert, options = {}) {
@@ -331,6 +340,7 @@
   }
 
   return {
+    DEFAULT_TELEGRAM_BOT_API_BASE_URL,
     DEFAULT_PATH_ALERT_WEBHOOK_URL,
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
     DEFAULT_ALERT_DELIVERY,
@@ -338,6 +348,7 @@
     advancePathAlertRuntime,
     buildPathAlertTargetDuplicateKey,
     buildPathAlertSummaryLines,
+    buildTelegramBotApiUrl,
     buildPathAlertWebhookUrl,
     evaluatePathAlert,
     findDuplicatePathAlert,

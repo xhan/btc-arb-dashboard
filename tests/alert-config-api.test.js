@@ -8,9 +8,12 @@ const { spawn } = require('child_process');
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alert-config-api-'));
 const alertConfigPath = path.join(tempDir, 'alert.config');
 const configPath = path.join(tempDir, 'config.json');
+const configMorePath = path.join(tempDir, 'config_more.json');
 const port = 3458;
 const webhookPort = 3459;
+const telegramPort = 3460;
 const webhookRequests = [];
+const telegramRequests = [];
 
 const webhookServer = http.createServer((req, res) => {
   webhookRequests.push(req.url);
@@ -20,7 +23,36 @@ const webhookServer = http.createServer((req, res) => {
 
 webhookServer.listen(webhookPort, '127.0.0.1');
 
+const telegramServer = http.createServer((req, res) => {
+  let body = '';
+  req.on('data', (chunk) => (body += chunk));
+  req.on('end', () => {
+    telegramRequests.push({
+      url: req.url,
+      method: req.method,
+      headers: req.headers,
+      body
+    });
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ ok: true }));
+  });
+});
+
+telegramServer.listen(telegramPort, '127.0.0.1');
+
 fs.writeFileSync(configPath, JSON.stringify({ dashboard: [], settings: {} }, null, 2));
+fs.writeFileSync(
+  configMorePath,
+  JSON.stringify(
+    {
+      telegramBotToken: 'test-bot-token',
+      telegramChatId: '1124758403'
+    },
+    null,
+    2
+  )
+);
 
 const serverProcess = spawn('node', ['server.js'], {
   cwd: path.join(__dirname, '..'),
@@ -28,7 +60,9 @@ const serverProcess = spawn('node', ['server.js'], {
     ...process.env,
     PORT: String(port),
     CONFIG_PATH: configPath,
-    ALERT_CONFIG_PATH: alertConfigPath
+    ALERT_CONFIG_PATH: alertConfigPath,
+    CONFIG_MORE_PATH: configMorePath,
+    TELEGRAM_BOT_API_BASE_URL: `http://127.0.0.1:${telegramPort}`
   },
   stdio: 'ignore'
 });
@@ -138,9 +172,18 @@ async function waitForServer(attempts = 15) {
       webhookRequests[0],
       '/notify/%E6%94%B6%E7%9B%8A%20%2B2.50%20bp/ETH%20WBTC%20-%3E%20tBTC%20%7C%20SUI%20TBTC%20-%3E%20WBTC?sound=ladder'
     );
+    assert.strictEqual(telegramRequests.length, 1);
+    assert.strictEqual(telegramRequests[0].method, 'POST');
+    assert.strictEqual(telegramRequests[0].url, '/bottest-bot-token/sendMessage');
+    const telegramPayload = JSON.parse(telegramRequests[0].body);
+    assert.deepStrictEqual(telegramPayload, {
+      chat_id: '1124758403',
+      text: '收益 +2.50 bp\n\nETH WBTC -> tBTC | SUI TBTC -> WBTC'
+    });
   } finally {
     serverProcess.kill();
     webhookServer.close();
+    telegramServer.close();
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 })().catch((error) => {
