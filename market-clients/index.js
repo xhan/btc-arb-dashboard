@@ -25,6 +25,12 @@ const LIFI_API_BASE_URL = 'https://li.quest/v1';
 const LIFI_DEFAULT_FROM_ADDRESS = '0x1111111111111111111111111111111111111111';
 const LIFI_DEFAULT_SLIPPAGE = '0.005';
 const LIFI_CHAIN_MAP_TTL_MS = 10 * 60 * 1000;
+const EVM_TOKEN_META_MAX_ATTEMPTS = 2;
+
+function isRetryableEvmTokenMetaError(error) {
+  const code = String(error && error.code || '').toUpperCase();
+  return code === 'CALL_EXCEPTION' || code === 'NETWORK_ERROR' || code === 'SERVER_ERROR' || code === 'TIMEOUT';
+}
 
 function createMarketClients(options) {
   const tokenMetaStore = createTokenMetaStore({
@@ -55,9 +61,20 @@ function createMarketClients(options) {
     }
 
     return tokenMetaStore.remember(chain, tokenAddress, async () => {
-      const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-      const [decimals, symbol] = await Promise.all([contract.decimals(), contract.symbol()]);
-      return { decimals: Number(decimals), symbol };
+      let lastError = null;
+      for (let attempt = 1; attempt <= EVM_TOKEN_META_MAX_ATTEMPTS; attempt += 1) {
+        try {
+          const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+          const [decimals, symbol] = await Promise.all([contract.decimals(), contract.symbol()]);
+          return { decimals: Number(decimals), symbol };
+        } catch (error) {
+          lastError = error;
+          if (attempt >= EVM_TOKEN_META_MAX_ATTEMPTS || !isRetryableEvmTokenMetaError(error)) {
+            throw error;
+          }
+        }
+      }
+      throw lastError;
     });
   }
 
