@@ -379,9 +379,9 @@
       isMeaningfulPath: (cycle) => cycle && Array.isArray(cycle.legs) && window.ArbPaths.isMeaningfulPath(cycle.legs),
       shouldIncludeLeg: (leg) => !(leg && (leg.rule || leg.chain === '规则')),
       formatChainLabel,
-      formatLegLine: ({ from, to, rate, chainLabel }) => window.ArbPaths.formatLegLine({
-        from,
-        to,
+      formatLegLine: ({ from, to, rawFrom, rawTo, rate, chainLabel }) => window.ArbPaths.formatLegLine({
+        from: rawFrom || from,
+        to: rawTo || to,
         rate,
         chainLabel
       }),

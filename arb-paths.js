@@ -287,7 +287,13 @@ function selectBestEdgeByChain(edges, from, to, chain, aliases) {
     const edgeTo = resolveAlias(edge.to, aliases);
     if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
     if (!best || edge.rate > best.rate) {
-      best = { ...edge, from: targetFrom, to: targetTo };
+      best = {
+        ...edge,
+        rawFrom: edge.rawFrom || edge.from,
+        rawTo: edge.rawTo || edge.to,
+        from: targetFrom,
+        to: targetTo
+      };
     }
   }
 
@@ -431,8 +437,8 @@ function selectBestDirectEdge(edges, from, to, aliases) {
     if (!best || edge.rate > best.rate) {
       best = {
         ...edge,
-        rawFrom: edge.from,
-        rawTo: edge.to,
+        rawFrom: edge.rawFrom || edge.from,
+        rawTo: edge.rawTo || edge.to,
         from: targetFrom,
         to: targetTo
       };

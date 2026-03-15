@@ -766,9 +766,11 @@
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
 
     function formatArbPathLegLine(leg) {
+        const displayFrom = leg && leg.rawFrom ? leg.rawFrom : leg.from;
+        const displayTo = leg && leg.rawTo ? leg.rawTo : leg.to;
         const baseLine = window.ArbPaths.formatLegLine({
-            from: leg.from,
-            to: leg.to,
+            from: displayFrom,
+            to: displayTo,
             rate: leg.rate,
             chainLabel: formatChainLabel(leg.chain)
         });

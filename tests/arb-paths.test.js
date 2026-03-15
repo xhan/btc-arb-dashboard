@@ -230,6 +230,20 @@ assert.strictEqual(fixedAnyChainWithoutBase.length, 1);
 assert.strictEqual(fixedAnyChainWithoutBase[0].legs[0].chain, 'ethereum');
 assert.strictEqual(fixedAnyChainWithoutBase[0].legs[1].chain, 'arbitrum');
 
+const fixedAliasDisplayEdges = [
+  { from: 'tBTC', to: 'cbBTC', rate: 0.999598, chain: 'ethereum' },
+  { from: 'xBTC', to: 'tBTC', rate: 1.00053, chain: 'sui' }
+];
+const fixedAliasDisplayRule = { title: 'tBTC - BTC', base: 'tBTC', quote: 'cbBTC', steps: 2, crossChain: true };
+const fixedAliasDisplayBest = findBestFixedPath(fixedAliasDisplayEdges, fixedAliasDisplayRule, { xBTC: 'cbBTC' });
+assert.ok(fixedAliasDisplayBest);
+const suiLegForAliasDisplay = fixedAliasDisplayBest.legs.find((leg) => leg.chain === 'sui');
+assert.ok(suiLegForAliasDisplay);
+assert.strictEqual(suiLegForAliasDisplay.rawFrom, 'xBTC');
+assert.strictEqual(suiLegForAliasDisplay.rawTo, 'tBTC');
+assert.strictEqual(suiLegForAliasDisplay.from, 'cbBTC');
+assert.strictEqual(suiLegForAliasDisplay.to, 'tBTC');
+
 const fixedExcludeSymbolEdges = [
   { from: 'GHO', to: 'USDC.e', rate: 1.005, chain: 'base' },
   { from: 'USDC.e', to: 'GHO', rate: 1.002, chain: 'ethereum' },

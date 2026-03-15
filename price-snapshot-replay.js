@@ -193,8 +193,8 @@ function renderCycleLines(cycle) {
   const lines = [];
   for (const leg of cycle.legs) {
     lines.push(`  ${ArbPaths.formatLegLine({
-      from: leg.from,
-      to: leg.to,
+      from: leg.rawFrom || leg.from,
+      to: leg.rawTo || leg.to,
       rate: leg.rate,
       chainLabel: formatChainLabel(leg.chain)
     })}`);
