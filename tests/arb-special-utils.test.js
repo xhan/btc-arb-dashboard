@@ -85,7 +85,8 @@ assert.ok(opportunity.display_message.includes('净收益:'));
 assert.ok(!opportunity.display_message.includes('另一方向:'));
 assert.ok(opportunity.alert_message.includes('📥 (Bybit) BUY'));
 assert.ok(opportunity.alert_message.includes('扣除 提现手续费 0.0001 后'));
-assert.ok(opportunity.alert_message.includes('CUM:'));
+assert.ok(opportunity.alert_message.includes('💰'));
+assert.ok(opportunity.alert_message.includes('💎'));
 assert.ok(opportunity.alert_message.includes('另一方向:'));
 
 assert.strictEqual(opportunity.cycle.legs.length, 2);

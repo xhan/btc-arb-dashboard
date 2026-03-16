@@ -290,13 +290,14 @@
 
       primary.usedLevels.forEach((level, index) => {
         const cumulativeBp = Number(level.cumulativeProfitRate) * 10000;
+        const bpSign = cumulativeBp >= 0 ? '+' : '-';
         lines.push(
-          `📚 ${index + 1}) ${formatNumber(level.price, 8)} × ${formatNumber(level.size, 6)} | 投入 ${formatNumber(level.cumulativeInput, 6)} | ${cumulativeBp >= 0 ? '+' : ''}${formatNumber(cumulativeBp, 2)} bp | CUM: ${formatFixedNumber(level.cumulativeProfit, 6)}`
+          `${index + 1}) ${formatNumber(level.price, 8)} × ${formatNumber(level.size, 6)}  💰 ${formatNumber(level.cumulativeInput, 6)}  💹 ${bpSign} ${formatNumber(Math.abs(cumulativeBp), 2)} bp  💎 ${formatFixedNumber(level.cumulativeProfit, 6)}`
         );
       });
       lines.push('');
       lines.push(`扣除 提现手续费 ${formatNumber(this.withdrawFee, 8)} 后`);
-      lines.push(`收益 ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote} , ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
+      lines.push(`💰 ${formatNumber(primary.totalInput, 6)}  💹 ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote}  💎 ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
 
       if (secondary && Number.isFinite(secondary.netProfit)) {
         lines.push(
