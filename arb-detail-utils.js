@@ -53,8 +53,8 @@
         quoteId: Number(leg?.quoteId),
         direction: leg?.inverse ? 'inverse' : 'forward',
         chain: String(leg?.chain || ''),
-        fromSymbol: String(leg?.from || ''),
-        toSymbol: String(leg?.to || '')
+        fromSymbol: String(leg?.rawFrom || leg?.from || ''),
+        toSymbol: String(leg?.rawTo || leg?.to || '')
       }))
       .filter((item) => Number.isFinite(item.quoteId) && item.quoteId > 0);
   }

@@ -60,15 +60,15 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   buildArbDetailChartPairs({
     legs: [
-      { chain: 'arbitrum', from: 'cbBTC', to: 'WBTC', quoteId: '12', inverse: false },
+      { chain: 'arbitrum', from: 'cbBTC', to: 'WBTC', rawFrom: 'xBTC', rawTo: 'WBTC', quoteId: '12', inverse: false },
       { chain: '规则', rule: 'spread-limit' },
-      { chain: 'ethereum', from: 'WBTC', to: 'cbBTC', quoteId: 18, inverse: true },
+      { chain: 'ethereum', from: 'WBTC', to: 'cbBTC', rawFrom: 'WBTC', rawTo: 'BTCB', quoteId: 18, inverse: true },
       { chain: 'base', from: 'cbBTC', to: 'WBTC', quoteId: 'oops', inverse: false }
     ]
   }),
   [
-    { quoteId: 12, direction: 'forward', chain: 'arbitrum', fromSymbol: 'cbBTC', toSymbol: 'WBTC' },
-    { quoteId: 18, direction: 'inverse', chain: 'ethereum', fromSymbol: 'WBTC', toSymbol: 'cbBTC' }
+    { quoteId: 12, direction: 'forward', chain: 'arbitrum', fromSymbol: 'xBTC', toSymbol: 'WBTC' },
+    { quoteId: 18, direction: 'inverse', chain: 'ethereum', fromSymbol: 'WBTC', toSymbol: 'BTCB' }
   ]
 );
 
