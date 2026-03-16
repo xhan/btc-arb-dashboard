@@ -1,3 +1,8 @@
+function isCetusInsufficientLiquidityError(errorMessage) {
+  const text = String(errorMessage || '').toLowerCase();
+  return text.includes('insufficient liquidity') && text.includes('calculate result error');
+}
+
 function createCetusClient(deps) {
   return {
     async getQuote(input) {
@@ -20,7 +25,17 @@ function createCetusClient(deps) {
       });
 
       if (quoteData.error) {
-        throw new Error(quoteData.error.msg);
+        const errorMessage = quoteData.error.msg || quoteData.error.message || 'Cetus quote error';
+        if (isCetusInsufficientLiquidityError(errorMessage)) {
+          return {
+            fromSymbol: fromMeta.symbol,
+            toSymbol: toMeta.symbol,
+            amountOut: 0,
+            raw_price: 0,
+            source: 'Cetus'
+          };
+        }
+        throw new Error(errorMessage);
       }
 
       const amountOut = deps.fromRawAmount(quoteData.amountOut.toString(), toMeta.decimals);
