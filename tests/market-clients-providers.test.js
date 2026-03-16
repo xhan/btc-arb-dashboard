@@ -6,6 +6,7 @@ const { createJupiterClient } = require('../market-clients/providers/jupiter');
 const { createKyberClient } = require('../market-clients/providers/kyber');
 const { createVeloraClient } = require('../market-clients/providers/velora');
 const { createZeroXClient } = require('../market-clients/providers/zerox');
+const { createCetusClient } = require('../market-clients/providers/cetus');
 
 (async () => {
   const kyberRequests = [];
@@ -192,6 +193,117 @@ const { createZeroXClient } = require('../market-clients/providers/zerox');
     /未配置 Jupiter API Key/
   );
 
+  const cetus = createCetusClient({
+    BNLib: function FakeBN(value) {
+      this.value = value;
+      this.toString = () => String(value);
+    },
+    cetusAggregator: {
+      findRouters: async () => ({
+        amountOut: {
+          toString: () => '10005000'
+        }
+      })
+    },
+    getSuiTokenMeta: async (token) => {
+      if (token === 'coin-xbtc') return { symbol: 'xBTC', decimals: 8 };
+      return { symbol: 'TBTC', decimals: 8 };
+    },
+    toRawAmount: (amount, decimals) => {
+      if (amount === 0.1 && decimals === 8) return '10000000';
+      throw new Error('unexpected cetus toRawAmount input');
+    },
+    fromRawAmount: (raw, decimals) => {
+      if (raw === '10005000' && decimals === 8) return 0.10005;
+      throw new Error('unexpected cetus fromRawAmount input');
+    }
+  });
+
+  const cetusResult = await cetus.getQuote({
+    chain: 'sui',
+    fromToken: 'coin-xbtc',
+    toToken: 'coin-tbtc',
+    amount: 0.1
+  });
+
+  assert.deepStrictEqual(cetusResult, {
+    fromSymbol: 'xBTC',
+    toSymbol: 'TBTC',
+    amountOut: 0.10005,
+    raw_price: 1.0005,
+    source: 'Cetus'
+  });
+
+  const cetusInsufficientLiquidity = createCetusClient({
+    BNLib: function FakeBN(value) {
+      this.value = value;
+      this.toString = () => String(value);
+    },
+    cetusAggregator: {
+      findRouters: async () => ({
+        error: {
+          code: 1002,
+          msg: 'Insufficient liquidity: calculate result error'
+        }
+      })
+    },
+    getSuiTokenMeta: async (token) => {
+      if (token === 'coin-xbtc') return { symbol: 'xBTC', decimals: 8 };
+      return { symbol: 'TBTC', decimals: 8 };
+    },
+    toRawAmount: () => '100000000',
+    fromRawAmount: () => {
+      throw new Error('fromRawAmount should not be called for insufficient liquidity fallback');
+    }
+  });
+
+  const cetusInsufficientResult = await cetusInsufficientLiquidity.getQuote({
+    chain: 'sui',
+    fromToken: 'coin-xbtc',
+    toToken: 'coin-tbtc',
+    amount: 1
+  });
+
+  assert.deepStrictEqual(cetusInsufficientResult, {
+    fromSymbol: 'xBTC',
+    toSymbol: 'TBTC',
+    amountOut: 0,
+    raw_price: 0,
+    source: 'Cetus'
+  });
+
+  const cetusOtherError = createCetusClient({
+    BNLib: function FakeBN(value) {
+      this.value = value;
+      this.toString = () => String(value);
+    },
+    cetusAggregator: {
+      findRouters: async () => ({
+        error: {
+          code: 1001,
+          msg: 'route search failed'
+        }
+      })
+    },
+    getSuiTokenMeta: async (token) => {
+      if (token === 'coin-xbtc') return { symbol: 'xBTC', decimals: 8 };
+      return { symbol: 'TBTC', decimals: 8 };
+    },
+    toRawAmount: () => '100000000',
+    fromRawAmount: () => 0
+  });
+
+  await assert.rejects(
+    () =>
+      cetusOtherError.getQuote({
+        chain: 'sui',
+        fromToken: 'coin-xbtc',
+        toToken: 'coin-tbtc',
+        amount: 1
+      }),
+    /route search failed/
+  );
+
   const bybitRequests = [];
   const bybit = createBybitClient({
     fetchWithRetry: async (url) => {
@@ -242,12 +354,20 @@ const { createZeroXClient } = require('../market-clients/providers/zerox');
       { price: 0.9988, size: 1.1 },
       { price: 0.9989, size: 3.2 }
     ],
+    bidsTopDepth: [
+      { price: 0.9986, size: 1.25 },
+      { price: 0.9985, size: 2.5 }
+    ],
+    asksTopDepth: [
+      { price: 0.9988, size: 1.1 },
+      { price: 0.9989, size: 3.2 }
+    ],
     feeRate: 0,
     source: 'Bybit'
   });
   assert.strictEqual(
     bybitRequests[0],
-    'https://api.bybit.com/v5/market/orderbook?category=spot&symbol=WBTCBTC&limit=5'
+    'https://api.bybit.com/v5/market/orderbook?category=spot&symbol=WBTCBTC&limit=10'
   );
 
   const binanceRequests = [];
@@ -292,7 +412,12 @@ const { createZeroXClient } = require('../market-clients/providers/zerox');
     { price: 99800.1, size: 0.8 },
     { price: 99750.15, size: 1.4 }
   ]);
+  assert.deepStrictEqual(binanceResult.bidsTopDepth, [
+    { price: 99800.1, size: 0.8 },
+    { price: 99750.15, size: 1.4 }
+  ]);
   assert.strictEqual(binanceResult.asksTop5.length, 2);
+  assert.strictEqual(binanceResult.asksTopDepth.length, 2);
   assert.ok(Math.abs(binanceResult.asksTop5[0].price - 100200.1) < 1e-9);
   assert.strictEqual(binanceResult.asksTop5[0].size, 0.6);
   assert.deepStrictEqual(binanceResult.asksTop5[1], { price: 100250.15, size: 1.1 });

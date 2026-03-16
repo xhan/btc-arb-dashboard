@@ -562,11 +562,11 @@ const createdDismissed = createDismissedTargetEntry({
   target: {
     type: 'rule',
     ruleKind: 'special',
-    ruleId: 'special:dex-cex-wbtc'
+    ruleId: 'special:wbtc-bybit'
   }
-}, ['DEX <-> CEX'], 789);
+}, ['WBTC <-> BYBIT'], 789);
 assert.strictEqual(createdDismissed.dismissedAt, 789);
-assert.deepStrictEqual(createdDismissed.summaryLinesSnapshot, ['DEX <-> CEX']);
+assert.deepStrictEqual(createdDismissed.summaryLinesSnapshot, ['WBTC <-> BYBIT']);
 assert.strictEqual(createdDismissed.target.ruleKind, 'special');
 
 assert.strictEqual(countPathAlertRealLegs(pathAlert, pathEval), 3);

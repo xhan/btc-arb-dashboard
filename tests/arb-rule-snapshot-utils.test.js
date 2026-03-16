@@ -25,9 +25,9 @@ const snapshot = buildArbRuleSnapshot({
   ],
   specialRules: [
     {
-      id: 'special:dex-cex-wbtc',
-      title: 'DEX <-> CEX',
-      type: 'dex-cex',
+      id: 'special:wbtc-bybit',
+      title: 'WBTC <-> BYBIT',
+      type: 'wbtc-bybit',
       categoryName: 'WBTC监控'
     }
   ],
@@ -62,8 +62,8 @@ const snapshot = buildArbRuleSnapshot({
   arbSpecialUtils: {
     buildSpecialArbOpportunities() {
       return [{
-        ruleId: 'special:dex-cex-wbtc',
-        label: 'DEX <-> CEX',
+        ruleId: 'special:wbtc-bybit',
+        label: 'WBTC <-> BYBIT',
         cycle: {
           legs: [
             { from: 'cbBTC', to: 'WBTC', chain: 'arbitrum', rate: 1.002 },
@@ -80,4 +80,4 @@ assert.strictEqual(snapshot.fixedResults.length, 1);
 assert.strictEqual(snapshot.fixedResults[0].cycles.length, 2);
 assert.strictEqual(snapshot.fixedByRuleId['fixed:wbtc-eth-arb'][0].legs[0].chain, 'arbitrum');
 assert.strictEqual(snapshot.specialResults.length, 1);
-assert.strictEqual(snapshot.specialByRuleId['special:dex-cex-wbtc'][0].ruleId, 'special:dex-cex-wbtc');
+assert.strictEqual(snapshot.specialByRuleId['special:wbtc-bybit'][0].ruleId, 'special:wbtc-bybit');

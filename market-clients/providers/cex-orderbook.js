@@ -2,6 +2,9 @@ function createCexOrderbookClient(config) {
   const apiBaseUrl = config.apiBaseUrl;
   const source = config.source;
   const feeRate = Number(config.feeRate) || 0;
+  const maxDepthLevels = Number.isFinite(Number(config.maxDepthLevels)) && Number(config.maxDepthLevels) > 0
+    ? Math.floor(Number(config.maxDepthLevels))
+    : 10;
 
   function parseBookLevel(entry, side) {
     const rawPrice = Number.parseFloat(entry?.[0]);
@@ -17,9 +20,9 @@ function createCexOrderbookClient(config) {
     return { price, size };
   }
 
-  function parseBookSide(levels, side) {
+  function parseBookSide(levels, side, limit) {
     return Array.isArray(levels)
-      ? levels.map((entry) => parseBookLevel(entry, side)).filter(Boolean).slice(0, 5)
+      ? levels.map((entry) => parseBookLevel(entry, side)).filter(Boolean).slice(0, limit)
       : [];
   }
 
@@ -45,8 +48,10 @@ function createCexOrderbookClient(config) {
 
       const bidLevels = config.getBidLevels(data);
       const askLevels = config.getAskLevels(data);
-      const bidsTop5 = parseBookSide(bidLevels, 'bid');
-      const asksTop5 = parseBookSide(askLevels, 'ask');
+      const bidsTopDepth = parseBookSide(bidLevels, 'bid', maxDepthLevels);
+      const asksTopDepth = parseBookSide(askLevels, 'ask', maxDepthLevels);
+      const bidsTop5 = bidsTopDepth.slice(0, 5);
+      const asksTop5 = asksTopDepth.slice(0, 5);
       const bestBid = bidsTop5[0];
       const bestAsk = asksTop5[0];
       if (!bestBid || !bestAsk) {
@@ -66,6 +71,8 @@ function createCexOrderbookClient(config) {
         bestAskSize: bestAsk.size,
         bidsTop5,
         asksTop5,
+        bidsTopDepth,
+        asksTopDepth,
         feeRate,
         source
       };

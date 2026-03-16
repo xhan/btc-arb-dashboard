@@ -11,7 +11,7 @@ function createBybitClient(deps) {
       return new URLSearchParams({
         category: 'spot',
         symbol,
-        limit: '5'
+        limit: '10'
       });
     },
     assertResponseOk(data) {

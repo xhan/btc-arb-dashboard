@@ -102,14 +102,15 @@
 
   const SPECIAL_ARB_RULES = Object.freeze([
     {
-      id: 'special:dex-cex-wbtc',
-      title: 'DEX <-> CEX',
-      type: 'dex-cex',
+      id: 'special:wbtc-bybit',
+      title: 'WBTC <-> BYBIT',
+      type: 'wbtc-bybit',
       categoryName: 'WBTC监控',
       dexBase: 'cbBTC',
       dexQuote: 'WBTC',
       cexQuote: 'BTC',
-      cexChains: ['Bybit', 'Binance']
+      cexChain: 'Bybit',
+      alertConfirmDelaySec: 13
     }
   ]);
 

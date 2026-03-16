@@ -86,6 +86,7 @@
     let pathAlertEvalTimer = null;
     let pathAlertPanelHidden = false;
     let pathAlertRuntimeState = new Map();
+    let specialRuleAlertRuntimeState = new Map();
     let pathAlertReloading = false;
     let pathAlertBulkImporting = false;
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
@@ -753,14 +754,15 @@
         ? window.PathAlertRuleDefinitions.SPECIAL_ARB_RULES
         : [
         {
-            id: 'special:dex-cex-wbtc',
-            title: 'DEX <-> CEX',
-            type: 'dex-cex',
+            id: 'special:wbtc-bybit',
+            title: 'WBTC <-> BYBIT',
+            type: 'wbtc-bybit',
             categoryName: 'WBTC监控',
             dexBase: 'cbBTC',
             dexQuote: 'WBTC',
             cexQuote: 'BTC',
-            cexChains: ['Bybit', 'Binance']
+            cexChain: 'Bybit',
+            alertConfirmDelaySec: 13
         }
     ];
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
@@ -1586,7 +1588,9 @@
             cycle,
             opportunityId,
             chartHref,
-            clickable: meta.clickable !== false
+            clickable: meta.clickable !== false,
+            displayMessage: typeof meta.displayMessage === 'string' ? meta.displayMessage : '',
+            hideLegs: meta.hideLegs === true
         };
     }
 
@@ -2687,6 +2691,88 @@
         }
     }
 
+    async function sendSpecialRuleWebhookNotification(title, body) {
+        if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, body })
+            });
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                throw new Error((data && data.error) || '请求失败');
+            }
+        } catch (error) {
+            console.error('特殊规则 webhook 发送失败:', error);
+        }
+    }
+
+    function handleSpecialRuleAlerts(opportunities) {
+        const list = Array.isArray(opportunities) ? opportunities : [];
+        const activeKeys = new Set();
+        const nowMs = Date.now();
+
+        for (const opportunity of list) {
+            if (!opportunity || typeof opportunity !== 'object') continue;
+            const ruleKey = String(opportunity.alert_key || opportunity.ruleId || '').trim();
+            if (!ruleKey) continue;
+            activeKeys.add(ruleKey);
+            const previous = specialRuleAlertRuntimeState.get(ruleKey) || {
+                eligibleSince: null,
+                lastTriggeredAt: 0
+            };
+            const next = {
+                eligibleSince: previous.eligibleSince,
+                lastTriggeredAt: Number(previous.lastTriggeredAt) || 0
+            };
+
+            if (opportunity.alert !== true) {
+                next.eligibleSince = null;
+                specialRuleAlertRuntimeState.set(ruleKey, next);
+                continue;
+            }
+            const message = String(opportunity.alert_message || opportunity.display_message || '').trim();
+            if (!message) continue;
+
+            if (!Number.isFinite(Number(next.eligibleSince))) {
+                next.eligibleSince = nowMs;
+            }
+            const confirmDelaySec = Number(opportunity.alert_confirm_delay_sec);
+            const safeConfirmDelaySec = Number.isFinite(confirmDelaySec) && confirmDelaySec >= 0 ? confirmDelaySec : 13;
+            if ((nowMs - Number(next.eligibleSince)) < (safeConfirmDelaySec * 1000)) {
+                specialRuleAlertRuntimeState.set(ruleKey, next);
+                continue;
+            }
+
+            const cooldownSec = Number(opportunity.alert_cooldown_sec);
+            const safeCooldownSec = Number.isFinite(cooldownSec) && cooldownSec > 0 ? cooldownSec : 120;
+            if (next.lastTriggeredAt > 0 && (nowMs - next.lastTriggeredAt) < (safeCooldownSec * 1000)) {
+                specialRuleAlertRuntimeState.set(ruleKey, next);
+                continue;
+            }
+
+            const title = `🚨 [特殊规则] ${String(opportunity.label || ruleKey).trim()}`;
+            appendAlertLogEntry(title, message);
+            next.lastTriggeredAt = nowMs;
+            specialRuleAlertRuntimeState.set(ruleKey, next);
+
+            if (isAudioUnlocked && pathAlertSound && pathAlertConfig?.settings?.localSoundEnabled !== false) {
+                pathAlertSound.loop = false;
+                pathAlertSound.currentTime = 0;
+                pathAlertSound.play().catch((error) => console.error('Play failed', error));
+            }
+
+            void sendSpecialRuleWebhookNotification(title, message);
+        }
+
+        for (const key of Array.from(specialRuleAlertRuntimeState.keys())) {
+            if (!activeKeys.has(key)) {
+                specialRuleAlertRuntimeState.delete(key);
+            }
+        }
+    }
+
     function buildAggregatedPathAlertLog(triggeredEntries) {
         if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.buildPathAlertAggregatedLog === 'function') {
             return window.PathAlertNotificationUtils.buildPathAlertAggregatedLog(triggeredEntries);
@@ -3320,6 +3406,7 @@
             opportunities: fixedEntries
         }];
         const wbtcCategory = targetCategories.find((category) => category && category.name === 'WBTC监控');
+        const wbtcSpecialRules = SPECIAL_ARB_RULES.filter((rule) => rule && rule.categoryName === (wbtcCategory ? wbtcCategory.name : ''));
         const specialOpportunities = wbtcCategory
             ? sharedRuleSnapshot.specialResults
                 .filter(({ rule }) => rule && rule.categoryName === wbtcCategory.name)
@@ -3333,14 +3420,35 @@
                 {
                     section: `special:${wbtcCategory ? wbtcCategory.name : ''}`,
                     clickable: false,
-                    alertPreset: { type: 'path' }
+                    displayMessage: String(opportunity.display_message || ''),
+                    hideLegs: true,
+                    alertPreset: {
+                        type: 'rule',
+                        ruleKind: 'special',
+                        ruleId: opportunity.ruleId
+                    }
                 }
             ))
             .filter(Boolean);
+        const specialAlertEntries = specialOpportunities
+            .filter((opportunity) => opportunity && typeof opportunity === 'object')
+            .map((opportunity) => ({
+                ruleId: opportunity.ruleId,
+                label: opportunity.label,
+                alert: opportunity.alert === true,
+                alert_message: opportunity.alert_message,
+                display_message: opportunity.display_message,
+                alert_confirm_delay_sec: opportunity.alert_confirm_delay_sec,
+                alert_cooldown_sec: opportunity.alert_cooldown_sec,
+                alert_key: opportunity.alert_key
+            }));
+        const specialEmptyText = wbtcSpecialRules.length
+            ? `${wbtcSpecialRules.map((rule) => rule.title).join(' / ')} | 无收益率`
+            : '暂无可用规则';
         const specialSections = [{
             title: '特殊规则',
             opportunities: specialEntries.filter((entry) => entry && entry.cycle && entry.cycle.profitRate > 0),
-            emptyText: '暂无可用规则'
+            emptyText: specialEmptyText
         }];
 
         const categorySections = [];
@@ -3443,7 +3551,8 @@
         return {
             columns,
             nextOpportunityMap,
-            importEntries
+            importEntries,
+            specialAlertEntries
         };
     }
 
@@ -3467,6 +3576,7 @@
             formatLegLine: formatArbPathLegLine,
             formatProfit: profitRate => window.ArbPaths.formatProfitWanfen(profitRate)
         });
+        handleSpecialRuleAlerts(panelData.specialAlertEntries || []);
     }
 
     async function getEvmMetadata(chain, tokenAddress, signal) {
@@ -3605,6 +3715,8 @@
             bestAskSize: data.bestAskSize,
             bidsTop5: data.bidsTop5,
             asksTop5: data.asksTop5,
+            bidsTopDepth: data.bidsTopDepth,
+            asksTopDepth: data.asksTopDepth,
             feeRate: data.feeRate
         };
 

@@ -13,6 +13,15 @@
       .replace(/>/g, '&gt;');
   }
 
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function defaultFormatLegLine(leg) {
     return `${leg.from} -> ${leg.to} ${leg.rate}`;
   }
@@ -29,9 +38,11 @@
     if (!cycle || !isMeaningful) return '';
 
     const allLegs = Array.isArray(cycle.legs) ? cycle.legs : [];
-    const displayLegs = typeof options.shouldIncludeLeg === 'function'
-      ? allLegs.filter(options.shouldIncludeLeg)
-      : allLegs;
+    const displayLegs = entry && entry.hideLegs === true
+      ? []
+      : (typeof options.shouldIncludeLeg === 'function'
+          ? allLegs.filter(options.shouldIncludeLeg)
+          : allLegs);
     const legHtml = displayLegs
       .map((leg) => {
         const chainLabel = typeof options.formatChainLabel === 'function'
@@ -60,6 +71,17 @@
       ? `<div class="arb-path-line"><strong>${entry.label}</strong></div>`
       : '';
     const profitHtml = `<div class="arb-opportunity-head-profit ${profitClass}">${profitText}</div>`;
+    const displayMessage = entry && typeof entry.displayMessage === 'string'
+      ? entry.displayMessage.trim()
+      : '';
+    const displayMessageHtml = displayMessage
+      ? displayMessage
+        .split('\n')
+        .map((line) => String(line || '').trim())
+        .filter(Boolean)
+        .map((line) => `<div class="arb-path-line">${escapeHtml(line)}</div>`)
+        .join('')
+      : '';
     const labelHtml = `
       <div class="arb-opportunity-head">
         ${labelTextHtml || '<div class="arb-path-line"><strong>历史图表</strong></div>'}
@@ -71,7 +93,7 @@
       ? ` data-arb-opportunity-id="${escapeAttr(opportunityId)}" role="button" tabindex="0"`
       : '';
 
-    return `<div class="arb-opportunity"${clickableAttrs}>${labelHtml}${legHtml}</div>`;
+    return `<div class="arb-opportunity"${clickableAttrs}>${labelHtml}${displayMessageHtml}${legHtml}</div>`;
   }
 
   function renderSection(section, options) {
