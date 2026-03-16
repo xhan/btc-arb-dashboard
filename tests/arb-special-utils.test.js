@@ -78,6 +78,7 @@ assert.strictEqual(opportunity.direction, 'bybit-ask-to-eth');
 assert.strictEqual(opportunity.alert, true);
 assert.strictEqual(opportunity.alert_confirm_delay_sec, 13);
 assert.strictEqual(opportunity.alert_cooldown_sec, 120);
+assert.strictEqual(opportunity.alert_key, 'special:wbtc-bybit');
 assert.ok(opportunity.display_message.includes('（Bybit）BTC -> WBTC'));
 assert.ok(opportunity.display_message.includes('（ETH）WBTC -> cbBTC'));
 assert.ok(opportunity.display_message.includes('净收益:'));
@@ -99,3 +100,20 @@ assert.strictEqual(opportunity.stats.primary.direction, 'bybit-ask-to-eth');
 assert.ok(opportunity.stats.primary.netProfit > opportunity.stats.secondary.netProfit);
 assert.strictEqual(opportunity.stats.secondary.direction, 'eth-to-bybit-bid');
 assert.strictEqual(opportunity.stats.secondary.usedLevels.length, 2);
+
+const bidDominantQuoteStateById = new Map(quoteStateById);
+bidDominantQuoteStateById.set(2, {
+  fromSymbol: 'WBTC',
+  toSymbol: 'cbBTC',
+  lastRawPrice: 0.997,
+  inverseRawPrice: 1.003
+});
+const bidDominant = buildSpecialArbOpportunities({
+  rules,
+  quotes: categoryQuotes,
+  quoteStateById: bidDominantQuoteStateById,
+  aliasRules: { xBTC: 'cbBTC' }
+});
+assert.strictEqual(bidDominant.length, 1);
+assert.strictEqual(bidDominant[0].direction, 'eth-to-bybit-bid');
+assert.strictEqual(bidDominant[0].alert_key, 'special:wbtc-bybit');

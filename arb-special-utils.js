@@ -430,7 +430,8 @@
         alert: primary.netProfit > this.minNetProfit,
         alert_confirm_delay_sec: this.alertConfirmDelaySec,
         alert_cooldown_sec: this.alertCooldownSec,
-        alert_key: `${rule.id}:${primary.direction}`,
+        // Use a stable key so cooldown survives direction flips.
+        alert_key: rule.id,
         stats: {
           primary,
           secondary

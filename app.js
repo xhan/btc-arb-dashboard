@@ -2708,6 +2708,8 @@
         }
     }
 
+    const SPECIAL_RULE_ALERT_RUNTIME_TTL_MS = 30 * 60 * 1000;
+
     function handleSpecialRuleAlerts(opportunities) {
         const list = Array.isArray(opportunities) ? opportunities : [];
         const activeKeys = new Set();
@@ -2715,25 +2717,31 @@
 
         for (const opportunity of list) {
             if (!opportunity || typeof opportunity !== 'object') continue;
-            const ruleKey = String(opportunity.alert_key || opportunity.ruleId || '').trim();
-            if (!ruleKey) continue;
-            activeKeys.add(ruleKey);
-            const previous = specialRuleAlertRuntimeState.get(ruleKey) || {
+            const rawRuleKey = String(opportunity.alert_key || opportunity.ruleId || '').trim();
+            if (!rawRuleKey) continue;
+            const runtimeKey = `special:${rawRuleKey}`;
+            activeKeys.add(runtimeKey);
+            const previous = specialRuleAlertRuntimeState.get(runtimeKey) || {
                 eligibleSince: null,
-                lastTriggeredAt: 0
+                lastTriggeredAt: 0,
+                lastSeenAt: 0
             };
             const next = {
                 eligibleSince: previous.eligibleSince,
-                lastTriggeredAt: Number(previous.lastTriggeredAt) || 0
+                lastTriggeredAt: Number(previous.lastTriggeredAt) || 0,
+                lastSeenAt: nowMs
             };
 
             if (opportunity.alert !== true) {
                 next.eligibleSince = null;
-                specialRuleAlertRuntimeState.set(ruleKey, next);
+                specialRuleAlertRuntimeState.set(runtimeKey, next);
                 continue;
             }
             const message = String(opportunity.alert_message || opportunity.display_message || '').trim();
-            if (!message) continue;
+            if (!message) {
+                specialRuleAlertRuntimeState.set(runtimeKey, next);
+                continue;
+            }
 
             if (!Number.isFinite(Number(next.eligibleSince))) {
                 next.eligibleSince = nowMs;
@@ -2741,21 +2749,21 @@
             const confirmDelaySec = Number(opportunity.alert_confirm_delay_sec);
             const safeConfirmDelaySec = Number.isFinite(confirmDelaySec) && confirmDelaySec >= 0 ? confirmDelaySec : 13;
             if ((nowMs - Number(next.eligibleSince)) < (safeConfirmDelaySec * 1000)) {
-                specialRuleAlertRuntimeState.set(ruleKey, next);
+                specialRuleAlertRuntimeState.set(runtimeKey, next);
                 continue;
             }
 
             const cooldownSec = Number(opportunity.alert_cooldown_sec);
             const safeCooldownSec = Number.isFinite(cooldownSec) && cooldownSec > 0 ? cooldownSec : 120;
             if (next.lastTriggeredAt > 0 && (nowMs - next.lastTriggeredAt) < (safeCooldownSec * 1000)) {
-                specialRuleAlertRuntimeState.set(ruleKey, next);
+                specialRuleAlertRuntimeState.set(runtimeKey, next);
                 continue;
             }
 
-            const title = `🚨 [特殊规则] ${String(opportunity.label || ruleKey).trim()}`;
+            const title = `🚨 [特殊规则] ${String(opportunity.label || rawRuleKey).trim()}`;
             appendAlertLogEntry(title, message);
             next.lastTriggeredAt = nowMs;
-            specialRuleAlertRuntimeState.set(ruleKey, next);
+            specialRuleAlertRuntimeState.set(runtimeKey, next);
 
             if (isAudioUnlocked && pathAlertSound && pathAlertConfig?.settings?.localSoundEnabled !== false) {
                 pathAlertSound.loop = false;
@@ -2767,7 +2775,10 @@
         }
 
         for (const key of Array.from(specialRuleAlertRuntimeState.keys())) {
-            if (!activeKeys.has(key)) {
+            if (activeKeys.has(key)) continue;
+            const state = specialRuleAlertRuntimeState.get(key);
+            const lastSeenAt = Number(state && state.lastSeenAt) || 0;
+            if (lastSeenAt <= 0 || (nowMs - lastSeenAt) >= SPECIAL_RULE_ALERT_RUNTIME_TTL_MS) {
                 specialRuleAlertRuntimeState.delete(key);
             }
         }
