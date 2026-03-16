@@ -804,11 +804,15 @@
             buildDetailInputAmounts(baseAmount) {
                 const amount = Number(baseAmount);
                 const safeAmount = Number.isFinite(amount) && amount > 0 ? amount : 1;
+                const roundToOneDecimal = (value) => {
+                    const rounded = Math.round(Number(value) * 10) / 10;
+                    return Number.isFinite(rounded) && rounded > 0 ? rounded : 1;
+                };
                 return [
                     safeAmount,
-                    Math.max(1, Math.round(safeAmount * 0.5)),
-                    Math.max(1, Math.round(safeAmount * 1.5)),
-                    Math.max(1, Math.round(safeAmount * 2))
+                    roundToOneDecimal(safeAmount * 0.5),
+                    roundToOneDecimal(safeAmount * 1.5),
+                    roundToOneDecimal(safeAmount * 2)
                 ];
             },
             summarizeDetailResult(startAmount, finalAmount) {

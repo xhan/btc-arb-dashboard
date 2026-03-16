@@ -30,7 +30,12 @@ assert.deepStrictEqual(
 
 assert.deepStrictEqual(
   buildDetailInputAmounts(undefined),
-  [1, 1, 2, 2]
+  [1, 0.5, 1.5, 2]
+);
+
+assert.deepStrictEqual(
+  buildDetailInputAmounts(3),
+  [3, 1.5, 4.5, 6]
 );
 
 assert.deepStrictEqual(

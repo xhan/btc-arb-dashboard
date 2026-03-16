@@ -12,7 +12,8 @@
   }
 
   function normalizeRoundedDetailAmount(value, fallback = 1) {
-    return normalizePositiveAmount(Math.round(Number(value)), fallback);
+    const roundedToOneDecimal = Math.round(Number(value) * 10) / 10;
+    return normalizePositiveAmount(roundedToOneDecimal, fallback);
   }
 
   function buildDetailInputAmounts(baseAmount) {
