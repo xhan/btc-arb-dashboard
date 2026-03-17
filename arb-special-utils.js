@@ -7,6 +7,7 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi) {
   const DEFAULT_WBTC_BYBIT_RULE_CONFIG = Object.freeze({
     minNetProfit: 0.0001,
+    minNetProfitBp: 1.5,
     alertConfirmDelaySec: 13,
     alertCooldownSec: 120,
     withdrawFee: 0.0001,
@@ -181,6 +182,7 @@
     constructor(rule) {
       super(rule);
       this.minNetProfit = toPositiveNumber(rule.minNetProfit, DEFAULT_WBTC_BYBIT_RULE_CONFIG.minNetProfit);
+      this.minNetProfitBp = toPositiveNumber(rule.minNetProfitBp, DEFAULT_WBTC_BYBIT_RULE_CONFIG.minNetProfitBp);
       this.alertConfirmDelaySec = toPositiveNumber(rule.alertConfirmDelaySec, DEFAULT_WBTC_BYBIT_RULE_CONFIG.alertConfirmDelaySec);
       this.alertCooldownSec = toPositiveNumber(rule.alertCooldownSec, DEFAULT_WBTC_BYBIT_RULE_CONFIG.alertCooldownSec);
       this.withdrawFee = toPositiveNumber(rule.withdrawFee, DEFAULT_WBTC_BYBIT_RULE_CONFIG.withdrawFee);
@@ -428,7 +430,7 @@
         cycle,
         display_message: displayMessage,
         alert_message: alertMessage,
-        alert: primary.netProfit > this.minNetProfit,
+        alert: primary.netProfit > this.minNetProfit && primary.netProfitBp > this.minNetProfitBp,
         alert_confirm_delay_sec: this.alertConfirmDelaySec,
         alert_cooldown_sec: this.alertCooldownSec,
         // Use a stable key so cooldown survives direction flips.

@@ -762,6 +762,8 @@
             dexQuote: 'WBTC',
             cexQuote: 'BTC',
             cexChain: 'Bybit',
+            minNetProfit: 0.0001,
+            minNetProfitBp: 1.5,
             alertConfirmDelaySec: 13
         }
     ];

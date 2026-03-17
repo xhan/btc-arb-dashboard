@@ -13,6 +13,7 @@ const rules = [
     cexChain: 'Bybit',
     withdrawFee: 0.0001,
     minNetProfit: 0.0001,
+    minNetProfitBp: 1.5,
     alertConfirmDelaySec: 13,
     maxBookLevels: 10
   }
@@ -118,3 +119,41 @@ const bidDominant = buildSpecialArbOpportunities({
 assert.strictEqual(bidDominant.length, 1);
 assert.strictEqual(bidDominant[0].direction, 'eth-to-bybit-bid');
 assert.strictEqual(bidDominant[0].alert_key, 'special:wbtc-bybit');
+
+const lowBpRules = [
+  {
+    ...rules[0],
+    id: 'special:wbtc-bybit-low-bp'
+  }
+];
+const lowBpQuotes = [
+  { id: 11, chain: 'ethereum', showInverse: false },
+  { id: 12, chain: 'ethereum', showInverse: false },
+  { id: 13, chain: 'Bybit', showInverse: true }
+];
+const lowBpQuoteStateById = new Map([
+  [11, { fromSymbol: 'cbBTC', toSymbol: 'WBTC', lastRawPrice: 1.0002, inverseRawPrice: 0.9998 }],
+  [12, { fromSymbol: 'WBTC', toSymbol: 'cbBTC', lastRawPrice: 0.999, inverseRawPrice: 1.001001001 }],
+  [13, {
+    fromSymbol: 'WBTC',
+    toSymbol: 'BTC',
+    cexOrderbook: {
+      bestBidPrice: 0.9999,
+      bestBidSize: 3,
+      bestAskPrice: 1.001,
+      bestAskSize: 3,
+      bidsTopDepth: [{ price: 0.9999, size: 3 }],
+      asksTopDepth: [{ price: 1.001, size: 3 }]
+    }
+  }]
+]);
+const lowBpOpportunities = buildSpecialArbOpportunities({
+  rules: lowBpRules,
+  quotes: lowBpQuotes,
+  quoteStateById: lowBpQuoteStateById,
+  aliasRules: null
+});
+assert.strictEqual(lowBpOpportunities.length, 1);
+assert.ok(lowBpOpportunities[0].stats.primary.netProfit > 0.0001);
+assert.ok(lowBpOpportunities[0].stats.primary.netProfitBp < 1.5);
+assert.strictEqual(lowBpOpportunities[0].alert, false);
