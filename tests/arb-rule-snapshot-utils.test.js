@@ -81,3 +81,55 @@ assert.strictEqual(snapshot.fixedResults[0].cycles.length, 2);
 assert.strictEqual(snapshot.fixedByRuleId['fixed:wbtc-eth-arb'][0].legs[0].chain, 'arbitrum');
 assert.strictEqual(snapshot.specialResults.length, 1);
 assert.strictEqual(snapshot.specialByRuleId['special:wbtc-bybit'][0].ruleId, 'special:wbtc-bybit');
+
+const snapshotFromTemplates = buildArbRuleSnapshot({
+  fixedRules: [
+    {
+      id: 'fixed:tbtc-btc',
+      title: 'tBTC - BTC',
+      base: 'tBTC',
+      quote: 'cbBTC',
+      steps: 2,
+      crossChain: true,
+      resultLimit: 2
+    }
+  ],
+  specialRules: [],
+  fixedTemplatesByRuleId: {
+    'fixed:tbtc-btc': [
+      {
+        legs: [
+          { chain: 'ethereum', from: 'tBTC', to: 'cbBTC' },
+          { chain: 'sui', from: 'cbBTC', to: 'tBTC' }
+        ]
+      },
+      {
+        legs: [
+          { chain: 'ethereum', from: 'tBTC', to: 'cbBTC' },
+          { chain: 'base', from: 'cbBTC', to: 'tBTC' }
+        ]
+      }
+    ]
+  },
+  allEdgesWithRules: [
+    { quoteId: 11, chain: 'ethereum', from: 'tBTC', to: 'cbBTC', rate: 0.999 },
+    { quoteId: 12, chain: 'sui', from: 'xBTC', to: 'tBTC', rate: 1.002 },
+    { quoteId: 14, chain: 'sui', from: 'cbBTC', to: 'tBTC', rate: 1.0011 },
+    { quoteId: 13, chain: 'base', from: 'cbBTC', to: 'tBTC', rate: 1.0005 }
+  ],
+  quoteStateById: new Map(),
+  aliasRules: {
+    xBTC: 'cbBTC'
+  },
+  arbPathsApi: {
+    findFixedPaths() {
+      throw new Error('should not recompute fixed paths when templates are provided');
+    }
+  }
+});
+
+assert.strictEqual(snapshotFromTemplates.fixedResults.length, 1);
+assert.strictEqual(snapshotFromTemplates.fixedResults[0].cycles.length, 2);
+assert.strictEqual(snapshotFromTemplates.fixedByRuleId['fixed:tbtc-btc'][0].legs[1].chain, 'sui');
+assert.strictEqual(snapshotFromTemplates.fixedByRuleId['fixed:tbtc-btc'][0].legs[1].quoteId, 12);
+assert.ok(snapshotFromTemplates.fixedByRuleId['fixed:tbtc-btc'][0].profitRate > snapshotFromTemplates.fixedByRuleId['fixed:tbtc-btc'][1].profitRate);

@@ -108,6 +108,8 @@
     let quoteStateRevision = 0;
     let arbRuleSnapshotCacheKey = '';
     let arbRuleSnapshotCache = null;
+    let arbPathTopologyCacheKey = '';
+    let arbPathTopologyCache = null;
     let arbLastPointerOpenedOpportunityId = null;
     let arbDetailState = {
         visible: false,
@@ -662,6 +664,7 @@
     }
 
     function getSharedArbRuleSnapshot() {
+        const topologyCacheForFixed = getArbPathTopologyCache();
         const cacheKey = buildArbRuleSnapshotCacheKey();
         if (arbRuleSnapshotCache && arbRuleSnapshotCacheKey === cacheKey) {
             return arbRuleSnapshotCache;
@@ -679,6 +682,9 @@
                 fixedRules: FIXED_PATH_RULES,
                 specialRules: SPECIAL_ARB_RULES,
                 allEdgesWithRules,
+                fixedTemplatesByRuleId: topologyCacheForFixed && topologyCacheForFixed.fixedTemplatesByRuleId
+                    ? topologyCacheForFixed.fixedTemplatesByRuleId
+                    : null,
                 quoteMetaById,
                 quotesByCategoryName,
                 quoteStateById: quoteMonitorState,
@@ -706,6 +712,76 @@
             quotesByCategoryName
         };
         return arbRuleSnapshotCache;
+    }
+
+    function getArbPathTemplateCacheUtils() {
+        return window.ArbPathTemplateCacheUtils || null;
+    }
+
+    function getArbPathTopologyCache() {
+        const utils = getArbPathTemplateCacheUtils();
+        if (!utils || !window.ArbPaths) return null;
+
+        const cacheKey = utils.buildArbPathTopologyCacheKey(dashboardState, quoteMonitorState);
+        if (arbPathTopologyCache && arbPathTopologyCacheKey === cacheKey) {
+            return arbPathTopologyCache;
+        }
+
+        const aliasRules = getAliasRules();
+        const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
+        const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
+        const quoteMetaById = buildQuoteMetaById();
+        const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
+        const targetCategories = dashboardState.filter((category) => targetNames.includes(category && category.name));
+        const categoryTemplatesBySectionKey = new Map();
+        const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
+        const allTopologyEdges = utils.buildTopologyEdges(allQuotes, quoteMonitorState, null);
+        const allTopologyEdgesWithRules = allTopologyEdges.concat(ruleEdges);
+        const fixedTemplatesByRuleId = {};
+
+        for (const category of targetCategories) {
+            const sectionKey = buildArbSectionKey('category', category && (category.id || category.name));
+            const quotes = getActiveQuotes(Array.isArray(category && category.quotes) ? category.quotes : []);
+            const edges = utils.buildTopologyEdges(quotes, quoteMonitorState, null);
+            const templates = utils.buildCycleTemplates(edges.concat(ruleEdges), {
+                maxDepth: 3,
+                limit: Number.MAX_SAFE_INTEGER,
+                acceptCycle: window.ArbPaths.isMeaningfulPath,
+                preferredStartSymbols: preferredCycleStartSymbols
+            });
+            categoryTemplatesBySectionKey.set(sectionKey, templates);
+        }
+
+        const globalSourceCategories = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.resolveItemsBySelectors === 'function'
+            ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
+            : dashboardState.slice(0, 4);
+        const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
+        const globalEdges = utils.buildTopologyEdges(globalSourceQuotes, quoteMonitorState, null);
+        const globalTemplates = utils.buildCycleTemplates(globalEdges.concat(ruleEdges), {
+            maxDepth: 3,
+            limit: Number.MAX_SAFE_INTEGER,
+            acceptCycle: window.ArbPaths.isMeaningfulPath,
+            preferredStartSymbols: preferredCycleStartSymbols
+        });
+
+        for (const rule of FIXED_PATH_RULES) {
+            if (!rule) continue;
+            const filteredEdges = window.ArbFixedUtils && typeof window.ArbFixedUtils.filterEdgesForFixedRule === 'function'
+                ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allTopologyEdgesWithRules, quoteMetaById)
+                : allTopologyEdgesWithRules;
+            fixedTemplatesByRuleId[rule.id] = utils.buildFixedPathTemplates(filteredEdges, rule, aliasRules, {
+                limit: Number(rule.resultLimit) || 1
+            });
+        }
+
+        arbPathTopologyCacheKey = cacheKey;
+        arbPathTopologyCache = {
+            ruleEdges,
+            categoryTemplatesBySectionKey,
+            globalTemplates,
+            fixedTemplatesByRuleId
+        };
+        return arbPathTopologyCache;
     }
 
     function formatChainLabel(chain) {
@@ -3401,12 +3477,11 @@
         }
 
         const sharedRuleSnapshot = getSharedArbRuleSnapshot();
-        const aliasRules = sharedRuleSnapshot.aliasRules;
-        const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
-        const allQuotes = sharedRuleSnapshot.allQuotes;
-        const allEdges = sharedRuleSnapshot.allEdges;
-        const ruleEdges = sharedRuleSnapshot.ruleEdges;
-        const allEdgesWithRules = sharedRuleSnapshot.allEdgesWithRules;
+        const topologyCache = getArbPathTopologyCache();
+        const templateUtils = getArbPathTemplateCacheUtils();
+        const ruleEdges = topologyCache && Array.isArray(topologyCache.ruleEdges)
+            ? topologyCache.ruleEdges
+            : sharedRuleSnapshot.ruleEdges;
         const nextOpportunityMap = new Map();
 
         const fixedEntries = sharedRuleSnapshot.fixedResults
@@ -3472,15 +3547,28 @@
         let lbtcSection = null;
         const categoryImportEntries = [];
         for (const category of targetCategories) {
-            const quotes = getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []);
-            const edges = window.ArbPaths.buildEdges(quotes, quoteMonitorState, null);
             const sectionKey = buildArbSectionKey('category', category.id || category.name);
-            const cycles = window.ArbPaths.findTopCycles(edges.concat(ruleEdges), {
-                maxDepth: 3,
-                limit: Number.MAX_SAFE_INTEGER,
-                acceptCycle: window.ArbPaths.isMeaningfulPath,
-                preferredStartSymbols: preferredCycleStartSymbols
-            });
+            const cachedTemplates = topologyCache
+                ? topologyCache.categoryTemplatesBySectionKey.get(sectionKey) || []
+                : [];
+            const cycles = cachedTemplates.length && templateUtils
+                ? cachedTemplates
+                    .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMonitorState))
+                    .filter(Boolean)
+                    .sort((left, right) => Number(right.profitRate) - Number(left.profitRate))
+                : window.ArbPaths.findTopCycles(
+                    window.ArbPaths.buildEdges(
+                        getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []),
+                        quoteMonitorState,
+                        null
+                    ).concat(ruleEdges),
+                    {
+                        maxDepth: 3,
+                        limit: Number.MAX_SAFE_INTEGER,
+                        acceptCycle: window.ArbPaths.isMeaningfulPath,
+                        preferredStartSymbols: buildPreferredCycleStartSymbols(sharedRuleSnapshot.aliasRules, 'cbBTC')
+                    }
+                );
             const fullEntries = cycles
                 .map((cycle, index) => createArbOpportunityEntry(
                     nextOpportunityMap,
@@ -3505,17 +3593,24 @@
         }
 
         const globalSectionKey = buildArbSectionKey('global', 'all');
-        const globalSourceCategories = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.resolveItemsBySelectors === 'function'
-            ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
-            : dashboardState.slice(0, 4);
-        const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
-        const globalEdges = window.ArbPaths.buildEdges(globalSourceQuotes, quoteMonitorState, null);
-        const globalCycles = window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges), {
-            maxDepth: 3,
-            limit: Number.MAX_SAFE_INTEGER,
-            acceptCycle: window.ArbPaths.isMeaningfulPath,
-            preferredStartSymbols: preferredCycleStartSymbols
-        });
+        const globalCycles = topologyCache && templateUtils
+            ? topologyCache.globalTemplates
+                .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMonitorState))
+                .filter(Boolean)
+                .sort((left, right) => Number(right.profitRate) - Number(left.profitRate))
+            : (() => {
+                const globalSourceCategories = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.resolveItemsBySelectors === 'function'
+                    ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
+                    : dashboardState.slice(0, 4);
+                const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
+                const globalEdges = window.ArbPaths.buildEdges(globalSourceQuotes, quoteMonitorState, null);
+                return window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges), {
+                    maxDepth: 3,
+                    limit: Number.MAX_SAFE_INTEGER,
+                    acceptCycle: window.ArbPaths.isMeaningfulPath,
+                    preferredStartSymbols: buildPreferredCycleStartSymbols(sharedRuleSnapshot.aliasRules, 'cbBTC')
+                });
+            })();
         const excludedSymbols = parseArbFilterInput(arbGlobalExcludedSymbolsInput);
         const excludedChains = Array.from(new Set(
             parseArbFilterInput(arbGlobalExcludedChainsInput)

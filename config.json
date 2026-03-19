@@ -126,7 +126,7 @@
         {
           "id": 1772796055576,
           "chain": "monad",
-          "amount": 0.7,
+          "amount": 1,
           "preferredSource": "Kyber",
           "fromToken": "0xd18b7ec58cdf4876f6afebd3ed1730e4ce10414b",
           "toToken": "0x0555e30da8f98308edb960aa94c0db47230d2b9c",
@@ -153,11 +153,6 @@
           "amount": 1,
           "fromToken": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
           "toToken": "LBTCgU4b3wsFKsPwBn1rRZDx5DoFutM6RPiEt1TPDsY",
-          "alerts": {
-            "percentUp": 0.05,
-            "percentDown": 0.05,
-            "basePrice": 0.99818413
-          },
           "showInverse": true
         },
         {
@@ -537,7 +532,7 @@
           "id": 1771779390753,
           "chain": "arbitrum",
           "amount": 100000,
-          "preferredSource": "Kyber",
+          "preferredSource": "Velora",
           "fromToken": "0x7dfF72693f6A4149b17e7C6314655f6A9F7c8B33",
           "toToken": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
           "showInverse": true
@@ -629,7 +624,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "toToken": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
-          "showInverse": true
+          "showInverse": false
         },
         {
           "id": 1773199030299,
@@ -638,7 +633,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
           "toToken": "0x4200000000000000000000000000000000000006",
-          "showInverse": true
+          "showInverse": false
         }
       ]
     }
@@ -646,7 +641,7 @@
   "settings": {
     "kyber": 185,
     "zerox": 500,
-    "velora": 1200,
+    "velora": 1150,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
