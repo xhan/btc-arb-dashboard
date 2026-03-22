@@ -42,6 +42,7 @@ assert.ok(ghoUsd);
 assert.strictEqual(ghoUsd.base, 'GHO');
 assert.strictEqual(ghoUsd.quote, 'USDC');
 assert.deepStrictEqual(ghoUsd.categoryNames, ['USD监控']);
+assert.strictEqual(ghoUsd.resultLimit, 2);
 
 const msEth = byId('fixed:mseth');
 assert.ok(msEth);

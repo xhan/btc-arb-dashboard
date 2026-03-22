@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { splitSectionsIntoColumns, resolveItemsBySelectors } = require('../arb-panel-layout-utils');
+const { splitSectionsIntoColumns, resolveItemsBySelectors, selectPositiveCyclesOrBest } = require('../arb-panel-layout-utils');
 
 const sections = [
   { title: '固定路径', opportunities: Array.from({ length: 8 }, (_, index) => ({ label: `F${index + 1}` })) },
@@ -30,3 +30,22 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(resolveItemsBySelectors(items, [99, '不存在']), []);
+
+assert.deepStrictEqual(
+  selectPositiveCyclesOrBest([
+    { id: 'neg-2', profitRate: -0.002 },
+    { id: 'pos-1', profitRate: 0.001 },
+    { id: 'pos-2', profitRate: 0.003 }
+  ]).map((item) => item.id),
+  ['pos-1', 'pos-2']
+);
+
+assert.deepStrictEqual(
+  selectPositiveCyclesOrBest([
+    { id: 'neg-2', profitRate: -0.002 },
+    { id: 'neg-1', profitRate: -0.001 }
+  ]).map((item) => item.id),
+  ['neg-1']
+);
+
+assert.deepStrictEqual(selectPositiveCyclesOrBest([]), []);

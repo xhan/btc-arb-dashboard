@@ -82,6 +82,35 @@ assert.strictEqual(snapshot.fixedByRuleId['fixed:wbtc-eth-arb'][0].legs[0].chain
 assert.strictEqual(snapshot.specialResults.length, 1);
 assert.strictEqual(snapshot.specialByRuleId['special:wbtc-bybit'][0].ruleId, 'special:wbtc-bybit');
 
+const snapshotDefaultLimit = buildArbRuleSnapshot({
+  fixedRules: [
+    {
+      id: 'fixed:wbtc-default-limit',
+      title: 'WBTC default limit',
+      base: 'cbBTC',
+      quote: 'WBTC',
+      chains: ['ethereum', 'arbitrum'],
+      steps: 2
+    }
+  ],
+  specialRules: [],
+  allEdgesWithRules: fixedEdges,
+  aliasRules: null,
+  quoteMetaById: new Map(),
+  quotesByCategoryName: new Map(),
+  quoteStateById: new Map(),
+  arbPathsApi: ArbPaths,
+  arbFixedUtils: {
+    filterEdgesForFixedRule(rule, edges) {
+      assert.strictEqual(rule.id, 'fixed:wbtc-default-limit');
+      return edges;
+    }
+  }
+});
+
+assert.strictEqual(snapshotDefaultLimit.fixedResults.length, 1);
+assert.strictEqual(snapshotDefaultLimit.fixedResults[0].cycles.length, 1);
+
 const snapshotFromTemplates = buildArbRuleSnapshot({
   fixedRules: [
     {

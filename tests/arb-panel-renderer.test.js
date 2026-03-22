@@ -39,3 +39,26 @@ assert.ok(html.includes('WBTC->WETH 16 @ethereum'));
 assert.ok(html.includes('WETH->WBTC 0.064 @arbitrum bid1×1.25'));
 assert.ok(html.includes('class="arb-opportunity-head-profit arb-profit">12.00</div>'));
 assert.ok(!html.includes('<div class="arb-profit">收益: 12.00</div>'));
+
+const htmlWithoutLabel = renderArbGrid({
+  columns: [
+    [
+      {
+        title: 'GHO - USD',
+        opportunities: [
+          {
+            label: '',
+            opportunityId: 'fixed-gho-1',
+            profitRate: 0.0002,
+            legs: [
+              { from: 'GHO', to: 'USDC', rate: 1.0001, chain: 'ethereum' },
+              { from: 'USDC', to: 'GHO', rate: 1.0001, chain: 'arbitrum' }
+            ]
+          }
+        ]
+      }
+    ]
+  ]
+});
+
+assert.ok(!htmlWithoutLabel.includes('<div class="arb-path-line"><strong>历史图表</strong></div>'));

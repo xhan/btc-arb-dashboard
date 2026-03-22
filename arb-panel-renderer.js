@@ -84,7 +84,7 @@
       : '';
     const labelHtml = `
       <div class="arb-opportunity-head">
-        ${labelTextHtml || '<div class="arb-path-line"><strong>历史图表</strong></div>'}
+        ${labelTextHtml}
         <div class="arb-opportunity-head-actions">${profitHtml}${addAlertButtonHtml}${chartLinkHtml}</div>
       </div>
     `;

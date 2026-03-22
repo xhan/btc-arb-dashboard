@@ -131,6 +131,7 @@
     let hoverTimeout = null;        
     let currentHoveredQuoteId = null; 
     let currentlyEditingQuote = null; 
+    const MAX_ALERT_LOG_ENTRIES = 300;
 
     const dashboardEl = document.getElementById('dashboard');
     const addCategoryBtn = document.getElementById('add-category-btn');
@@ -592,6 +593,9 @@
         const subtitleHtml = subtitle ? `<div>${formatLogText(subtitle)}</div>` : '';
         logEntry.innerHTML = `<div><strong>${formatLogText(title)}</strong></div>${subtitleHtml}<div>${formatLogText(message)}</div><span class="log-time">${now.toLocaleTimeString()}</span>`;
         alertLogContent.prepend(logEntry);
+        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
+            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
+        }
     }
 
     async function primeAlertAudio(audioEl) {
@@ -1663,7 +1667,6 @@
             ...meta
         };
         targetMap.set(opportunityId, entry);
-        arbOpportunityStore.set(opportunityId, entry);
 
         return {
             label,
@@ -1674,6 +1677,28 @@
             displayMessage: typeof meta.displayMessage === 'string' ? meta.displayMessage : '',
             hideLegs: meta.hideLegs === true
         };
+    }
+
+    function refreshArbOpportunityStore(nextOpportunityMap) {
+        const retainedEntries = [];
+        if (arbDetailState && arbDetailState.selectedOpportunity && arbDetailState.selectedOpportunity.id) {
+            retainedEntries.push(arbDetailState.selectedOpportunity);
+        }
+        if (arbDetailState && arbDetailState.opportunityId && arbOpportunityStore.has(arbDetailState.opportunityId)) {
+            retainedEntries.push(arbOpportunityStore.get(arbDetailState.opportunityId));
+        }
+
+        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.buildRetainedArbOpportunityStore === 'function') {
+            arbOpportunityStore = window.ArbRuntimeMemoryUtils.buildRetainedArbOpportunityStore(nextOpportunityMap, retainedEntries);
+            return;
+        }
+
+        const nextStore = nextOpportunityMap instanceof Map ? new Map(nextOpportunityMap) : new Map();
+        for (const entry of retainedEntries) {
+            if (!entry || !entry.id || nextStore.has(entry.id)) continue;
+            nextStore.set(entry.id, entry);
+        }
+        arbOpportunityStore = nextStore;
     }
 
     function getPathAlertDefaultThresholdBp() {
@@ -3484,19 +3509,26 @@
             : sharedRuleSnapshot.ruleEdges;
         const nextOpportunityMap = new Map();
 
-        const fixedEntries = sharedRuleSnapshot.fixedResults
-                .flatMap(({ rule, cycles }) => (Array.isArray(cycles) ? cycles : [])
-                    .map((cycle, index) => createArbOpportunityEntry(
-                        nextOpportunityMap,
-                        cycle,
-                        (Array.isArray(cycles) && cycles.length > 1) ? `${rule.title} ${index + 1}` : rule.title,
-                        { section: 'fixed', alertPreset: { type: 'path' } }
-                    )))
-                .filter(Boolean);
-        const fixedSections = [{
-            title: '固定路径',
-            opportunities: fixedEntries
-        }];
+        const fixedSections = sharedRuleSnapshot.fixedResults
+                .map(({ rule, cycles }) => {
+                    const displayCycles = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.selectPositiveCyclesOrBest === 'function'
+                        ? window.ArbPanelLayoutUtils.selectPositiveCyclesOrBest(cycles)
+                        : (Array.isArray(cycles) ? cycles.filter((cycle) => cycle && Number(cycle.profitRate) > 0) : []);
+                    const opportunities = displayCycles
+                        .map((cycle, index, items) => createArbOpportunityEntry(
+                            nextOpportunityMap,
+                            cycle,
+                            items.length > 1 ? `机会 ${index + 1}` : '',
+                            { section: `fixed:${rule?.id || ''}`, alertPreset: { type: 'path' } }
+                        ))
+                        .filter(Boolean);
+                    return {
+                        title: String(rule?.title || '固定路径'),
+                        opportunities,
+                        emptyText: '等待数据...'
+                    };
+                });
+        const fixedEntries = fixedSections.flatMap((section) => Array.isArray(section?.opportunities) ? section.opportunities : []);
         const wbtcCategory = targetCategories.find((category) => category && category.name === 'WBTC监控');
         const wbtcSpecialRules = SPECIAL_ARB_RULES.filter((rule) => rule && rule.categoryName === (wbtcCategory ? wbtcCategory.name : ''));
         const specialOpportunities = wbtcCategory
@@ -3679,6 +3711,7 @@
         const { columns, nextOpportunityMap } = panelData;
 
         arbOpportunityMap = nextOpportunityMap;
+        refreshArbOpportunityStore(nextOpportunityMap);
 
         arbPathContent.innerHTML = window.ArbPanelRenderer.renderArbGrid({
             columns,

@@ -69,7 +69,8 @@
       quote: 'USDC',
       categoryNames: ['USD监控'],
       steps: 2,
-      crossChain: true
+      crossChain: true,
+      resultLimit: 2
     },
     {
       id: 'fixed:mseth',

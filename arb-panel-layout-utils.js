@@ -81,8 +81,26 @@
     return matches;
   }
 
+  function selectPositiveCyclesOrBest(cycles) {
+    const list = Array.isArray(cycles) ? cycles.filter(Boolean) : [];
+    if (!list.length) return [];
+
+    const positiveCycles = list.filter((cycle) => Number(cycle.profitRate) > 0);
+    if (positiveCycles.length) return positiveCycles;
+
+    let best = list[0];
+    for (let index = 1; index < list.length; index += 1) {
+      const candidate = list[index];
+      if (Number(candidate.profitRate) > Number(best.profitRate)) {
+        best = candidate;
+      }
+    }
+    return best ? [best] : [];
+  }
+
   return {
     splitSectionsIntoColumns,
-    resolveItemsBySelectors
+    resolveItemsBySelectors,
+    selectPositiveCyclesOrBest
   };
 }));
