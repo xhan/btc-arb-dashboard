@@ -217,11 +217,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0xbfc94cd2b1e55999cfc7347a9313e88702b83d0f",
           "toToken": "0xecac9c5f704e954931349da37f60e39f515c11c1",
-          "showInverse": true,
-          "alerts": {
-            "percentUp": 0.2,
-            "basePrice": 0.9947818
-          }
+          "showInverse": true
         },
         {
           "id": 1769588428781,
@@ -307,7 +303,7 @@
         {
           "id": 1760021802015,
           "chain": "arbitrum",
-          "amount": 0.5,
+          "amount": 1,
           "fromToken": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
           "toToken": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
           "preferredSource": "Kyber",
@@ -609,6 +605,15 @@
           "showInverse": true
         },
         {
+          "id": 1774195073102,
+          "chain": "arbitrum",
+          "amount": 20,
+          "preferredSource": "Kyber",
+          "fromToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "toToken": "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
+          "showInverse": true
+        },
+        {
           "id": 1772987668787,
           "chain": "ethereum",
           "amount": 20,
@@ -641,7 +646,7 @@
   "settings": {
     "kyber": 185,
     "zerox": 500,
-    "velora": 1150,
+    "velora": 1200,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
