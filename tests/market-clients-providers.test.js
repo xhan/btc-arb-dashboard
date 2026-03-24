@@ -272,6 +272,44 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
     source: 'Cetus'
   });
 
+  const cetusBestRouteNotFound = createCetusClient({
+    BNLib: function FakeBN(value) {
+      this.value = value;
+      this.toString = () => String(value);
+    },
+    cetusAggregator: {
+      findRouters: async () => ({
+        error: {
+          code: 1002,
+          msg: 'Insufficient liquidity: liquidity is not enough, the best result was not found.'
+        }
+      })
+    },
+    getSuiTokenMeta: async (token) => {
+      if (token === 'coin-xbtc') return { symbol: 'xBTC', decimals: 8 };
+      return { symbol: 'TBTC', decimals: 8 };
+    },
+    toRawAmount: () => '100000000',
+    fromRawAmount: () => {
+      throw new Error('fromRawAmount should not be called for best route not found fallback');
+    }
+  });
+
+  const cetusBestRouteNotFoundResult = await cetusBestRouteNotFound.getQuote({
+    chain: 'sui',
+    fromToken: 'coin-xbtc',
+    toToken: 'coin-tbtc',
+    amount: 1
+  });
+
+  assert.deepStrictEqual(cetusBestRouteNotFoundResult, {
+    fromSymbol: 'xBTC',
+    toSymbol: 'TBTC',
+    amountOut: 0,
+    raw_price: 0,
+    source: 'Cetus'
+  });
+
   const cetusOtherError = createCetusClient({
     BNLib: function FakeBN(value) {
       this.value = value;

@@ -1,6 +1,9 @@
 function isCetusInsufficientLiquidityError(errorMessage) {
   const text = String(errorMessage || '').toLowerCase();
-  return text.includes('insufficient liquidity') && text.includes('calculate result error');
+  return (
+    (text.includes('insufficient liquidity') && text.includes('calculate result error')) ||
+    (text.includes('liquidity is not enough') && text.includes('best result was not found'))
+  );
 }
 
 function createCetusClient(deps) {
