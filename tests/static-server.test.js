@@ -102,6 +102,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
+    assert.ok(appJsResponse.body.includes('[监控提醒]'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes('音效'));
     assert.ok(appJsResponse.body.includes('远程'));

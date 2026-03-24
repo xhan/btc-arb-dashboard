@@ -364,6 +364,54 @@
     return safeLines.map((line) => `<div class="${className}">${escapeHtml(line)}</div>`).join('');
   }
 
+  function buildAlertRouteHtml(lines) {
+    return `<div class="alert-item-route-lines">${renderSummaryLinesHtml(lines, 'alert-item-route-line')}</div>`;
+  }
+
+  function getAlertPrimaryTitle(alert) {
+    const note = getAlertDisplayTitle(alert);
+    if (note) return note;
+    if (alert && alert.target && alert.target.type === 'rule') {
+      return alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则';
+    }
+    const legCount = Array.isArray(alert && alert.target && alert.target.legs) ? alert.target.legs.length : 0;
+    return legCount > 0 ? `路径规则 (${legCount}腿)` : '路径规则';
+  }
+
+  function getDismissedPrimaryTitle(entry) {
+    const target = entry && entry.target ? entry.target : null;
+    if (!target) return '已忽略路径';
+    if (target.type === 'rule') {
+      return target.ruleKind === 'fixed' ? '已忽略固定规则' : '已忽略特殊规则';
+    }
+    const legCount = Array.isArray(target.legs) ? target.legs.length : 0;
+    return legCount > 0 ? `已忽略路径 (${legCount}腿)` : '已忽略路径';
+  }
+
+  function formatAlertMetaLine(alert) {
+    const typeLabel = alert && alert.target && alert.target.type === 'rule'
+      ? (alert.target.ruleKind === 'fixed' ? '固定' : '特殊')
+      : '路径';
+    const triggerLabel = alert && alert.triggerMode === 'delayed'
+      ? `⏱${Number(alert.confirmDelaySec || 0)}s`
+      : '⚡立即';
+    const statusLabel = alert && alert.enabled === false ? '⛔' : '✅';
+    return [
+      `🏷️${typeLabel}`,
+      `🎯${String(alert && alert.thresholdBp != null ? alert.thresholdBp : '--')}bp`,
+      triggerLabel,
+      `❄️${String(alert && alert.cooldownSec != null ? alert.cooldownSec : '--')}s`,
+      statusLabel
+    ].join(' · ');
+  }
+
+  function formatDismissedMetaLine(entry) {
+    const dismissedAtText = entry && entry.dismissedAt
+      ? new Date(entry.dismissedAt).toLocaleString()
+      : '--';
+    return `🗃️已忽略 · 🕒${dismissedAtText}`;
+  }
+
   function buildQuoteCandidates() {
     return buildFallbackQuoteCandidatesFromDashboard(dashboardState);
   }
@@ -713,29 +761,25 @@
     const filteredAlerts = getFilteredAlerts();
     listEl.innerHTML = filteredAlerts.length
       ? filteredAlerts.map((alert) => {
-        const note = getAlertDisplayTitle(alert);
+        const title = getAlertPrimaryTitle(alert);
+        const summaryLines = buildAlertSummaryLines(alert);
+        const metaText = formatAlertMetaLine(alert);
         return `
           <div class="alert-item">
-            <div class="alert-item-head">
-              <div class="alert-item-head-left">
-                <input class="alert-item-select" type="checkbox" data-alert-select="${escapeHtml(alert.id)}" ${pageState.selectedAlertIds.has(alert.id) ? 'checked' : ''}>
-                <div class="alert-item-main">
-                  ${note ? `<div class="alert-item-muted-title">备注：${escapeHtml(note)}</div>` : ''}
-                  <div class="alert-item-route">${renderSummaryLinesHtml(buildAlertSummaryLines(alert), 'alert-item-route-line')}</div>
-                  <div class="alert-item-meta">
-                    类型 ${alert.target.type === 'rule' ? (alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则') : '路径'}
-                    | 阈值 ${escapeHtml(String(alert.thresholdBp))}bp
-                    | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即提醒'}
-                    | 冷却 ${escapeHtml(String(alert.cooldownSec))}s
-                    | ${alert.enabled === false ? '已禁用' : '已启用'}
+            <div class="alert-item-shell">
+              <input class="alert-item-select" type="checkbox" data-alert-select="${escapeHtml(alert.id)}" ${pageState.selectedAlertIds.has(alert.id) ? 'checked' : ''}>
+              <div class="alert-item-main">
+                <div class="alert-item-head">
+                  <div class="alert-item-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+                  <div class="alert-item-actions">
+                    <button type="button" data-alert-toggle="${escapeHtml(alert.id)}">${alert.enabled === false ? '启用' : '停用'}</button>
+                    <button type="button" data-alert-edit="${escapeHtml(alert.id)}">编辑</button>
+                    <button type="button" data-alert-dismiss-delete="${escapeHtml(alert.id)}">标记并删除</button>
+                    <button type="button" class="danger" data-alert-delete="${escapeHtml(alert.id)}">删除</button>
                   </div>
                 </div>
-              </div>
-              <div class="alert-item-actions">
-                <button type="button" data-alert-toggle="${escapeHtml(alert.id)}">${alert.enabled === false ? '启用' : '停用'}</button>
-                <button type="button" data-alert-edit="${escapeHtml(alert.id)}">编辑</button>
-                <button type="button" data-alert-dismiss-delete="${escapeHtml(alert.id)}">标记并删除</button>
-                <button type="button" class="danger" data-alert-delete="${escapeHtml(alert.id)}">删除</button>
+                <div class="alert-item-route">${buildAlertRouteHtml(summaryLines)}</div>
+                <div class="alert-item-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
               </div>
             </div>
           </div>
@@ -754,19 +798,23 @@
     dismissedListEl.innerHTML = filteredDismissed.length
       ? filteredDismissed.map((entry) => {
         const targetKey = buildDismissedIdentityKey(entry);
+        const title = getDismissedPrimaryTitle(entry);
+        const summaryLines = buildDismissedSummaryLines(entry);
+        const metaText = formatDismissedMetaLine(entry);
         return `
           <div class="alert-item">
-            <div class="alert-item-head">
-              <div class="alert-item-head-left">
-                <input class="alert-item-select" type="checkbox" data-dismissed-select="${escapeHtml(targetKey)}" ${pageState.selectedDismissedKeys.has(targetKey) ? 'checked' : ''}>
-                <div class="alert-item-main">
-                  <div class="alert-item-route">${renderSummaryLinesHtml(buildDismissedSummaryLines(entry), 'alert-item-route-line')}</div>
-                  <div class="alert-item-meta">标记时间 ${entry.dismissedAt ? new Date(entry.dismissedAt).toLocaleString() : '--'}</div>
+            <div class="alert-item-shell">
+              <input class="alert-item-select" type="checkbox" data-dismissed-select="${escapeHtml(targetKey)}" ${pageState.selectedDismissedKeys.has(targetKey) ? 'checked' : ''}>
+              <div class="alert-item-main">
+                <div class="alert-item-head">
+                  <div class="alert-item-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+                  <div class="alert-item-actions">
+                    <button type="button" data-dismissed-restore="${escapeHtml(targetKey)}">取消标记</button>
+                    <button type="button" class="danger" data-dismissed-delete="${escapeHtml(targetKey)}">删除</button>
+                  </div>
                 </div>
-              </div>
-              <div class="alert-item-actions">
-                <button type="button" data-dismissed-restore="${escapeHtml(targetKey)}">取消标记</button>
-                <button type="button" class="danger" data-dismissed-delete="${escapeHtml(targetKey)}">删除</button>
+                <div class="alert-item-route">${buildAlertRouteHtml(summaryLines)}</div>
+                <div class="alert-item-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
               </div>
             </div>
           </div>
@@ -1401,7 +1449,10 @@
   }
 
   window.PathAlertsAppTestHooks = {
-    buildFallbackQuoteCandidatesFromDashboard
+    buildFallbackQuoteCandidatesFromDashboard,
+    buildAlertRouteHtml,
+    getAlertPrimaryTitle,
+    formatAlertMetaLine
   };
 
   if (!window.__PATH_ALERTS_APP_DISABLE_AUTO_INIT__) {

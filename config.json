@@ -108,7 +108,7 @@
         {
           "id": 1769774410399,
           "chain": "bsc",
-          "amount": 0.3,
+          "amount": 1,
           "preferredSource": "Kyber",
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
@@ -307,15 +307,12 @@
           "fromToken": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
           "toToken": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
           "preferredSource": "Kyber",
-          "showInverse": true,
-          "alerts": {
-            "targetAbove": 0.999
-          }
+          "showInverse": true
         },
         {
           "id": 1760021829626,
           "chain": "optimism",
-          "amount": 1,
+          "amount": 0.3,
           "fromToken": "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
           "toToken": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
           "preferredSource": "Kyber",
@@ -333,7 +330,7 @@
         {
           "id": 1772205780037,
           "chain": "avalanche",
-          "amount": 0.3,
+          "amount": 0.5,
           "preferredSource": "Kyber",
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0xbc78D84Ba0c46dFe32cf2895a19939c86b81a777",
@@ -346,7 +343,8 @@
           "preferredSource": "Ekubo",
           "fromToken": "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
           "toToken": "0x04daa17763b286d1e59b97c283c0b8c949994c361e426a28f743c67bdfe9a32f",
-          "showInverse": true
+          "showInverse": true,
+          "paused": false
         },
         {
           "id": 1772204809522,
@@ -623,6 +621,15 @@
           "showInverse": true
         },
         {
+          "id": 1774207253983,
+          "chain": "monad",
+          "amount": 20,
+          "preferredSource": "LI.FI",
+          "fromToken": "0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242",
+          "toToken": "0xA3D68b74bF0528fdD07263c60d6488749044914b",
+          "showInverse": true
+        },
+        {
           "id": 1773198975716,
           "chain": "ethereum",
           "amount": 20,
@@ -639,6 +646,53 @@
           "fromToken": "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
           "toToken": "0x4200000000000000000000000000000000000006",
           "showInverse": false
+        },
+        {
+          "id": 1774205631551,
+          "chain": "ethereum",
+          "amount": 10,
+          "preferredSource": "Kyber",
+          "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "toToken": "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704"
+        },
+        {
+          "id": 1774205656846,
+          "chain": "base",
+          "amount": 10,
+          "preferredSource": "Kyber",
+          "fromToken": "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+          "toToken": "0x4200000000000000000000000000000000000006",
+          "showInverse": false
+        }
+      ]
+    },
+    {
+      "name": "简单跟踪",
+      "id": 1774206634895,
+      "quotes": [
+        {
+          "id": 1774206818567,
+          "chain": "ethereum",
+          "amount": 0.1,
+          "preferredSource": "Kyber",
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0x01a8b61E7b03891a736B5DF865E0EF9C511850ad",
+          "showInverse": false,
+          "alerts": {
+            "targetAbove": 0.100114
+          }
+        },
+        {
+          "id": 1774206874519,
+          "chain": "bsc",
+          "amount": 0.1,
+          "preferredSource": "Kyber",
+          "fromToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+          "toToken": "0xA67c48F86Fc6d0176Dca38883CA8153C76a532c7",
+          "showInverse": false,
+          "alerts": {
+            "targetAbove": 0.100113
+          }
         }
       ]
     }

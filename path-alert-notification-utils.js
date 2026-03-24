@@ -102,10 +102,30 @@
     };
   }
 
+  function buildLegacyQuoteAlertRemotePayload(options = {}) {
+    const chainName = String(options.chainName || '').trim() || '未知链';
+    const label = String(options.label || '').trim();
+    const message = String(options.message || '').trim();
+    const bodyLines = [];
+
+    if (label) {
+      bodyLines.push(label);
+    }
+    if (message) {
+      bodyLines.push(message);
+    }
+
+    return {
+      title: `[监控提醒] ${chainName}`,
+      body: bodyLines.join('\n') || '监控命中'
+    };
+  }
+
   return {
     formatPathAlertEvaluationText,
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,
-    buildPathAlertAggregatedLog
+    buildPathAlertAggregatedLog,
+    buildLegacyQuoteAlertRemotePayload
   };
 }));

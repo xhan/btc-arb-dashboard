@@ -4559,6 +4559,42 @@
                     (monitorState.fromSymbol && monitorState.toSymbol ? `${monitorState.fromSymbol}/${monitorState.toSymbol}` : 
                     `${quote.fromToken.slice(0,4)}.../${quote.toToken.slice(0,4)}...`);
         appendAlertLogEntry(displayName, message, label);
+        sendLegacyQuoteWebhookNotification(displayName, label, message);
+    }
+
+    function buildLegacyQuoteAlertRemotePayload(displayName, label, message) {
+        if (
+            window.PathAlertNotificationUtils
+            && typeof window.PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload === 'function'
+        ) {
+            return window.PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({
+                chainName: displayName,
+                label,
+                message
+            });
+        }
+        return {
+            title: `[监控提醒] ${displayName || '未知链'}`,
+            body: [label, message].filter(Boolean).join('\n') || '监控命中'
+        };
+    }
+
+    async function sendLegacyQuoteWebhookNotification(displayName, label, message) {
+        if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
+        const payload = buildLegacyQuoteAlertRemotePayload(displayName, label, message);
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                throw new Error((data && data.error) || '请求失败');
+            }
+        } catch (error) {
+            console.error('老提醒远程推送失败:', error);
+        }
     }
 
     function addDnDHandlers(itemEl, categoryId) {

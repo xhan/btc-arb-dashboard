@@ -68,8 +68,8 @@
       ? `<button class="arb-opportunity-add-alert-btn" type="button" data-arb-opportunity-alert-id="${escapeAttr(entry.opportunityId)}" title="添加到路径报警">＋</button>`
       : '';
     const labelTextHtml = entry && entry.label
-      ? `<div class="arb-path-line"><strong>${entry.label}</strong></div>`
-      : '';
+      ? `<div class="arb-path-line arb-opportunity-head-label"><strong>${entry.label}</strong></div>`
+      : '<div class="arb-path-line arb-opportunity-head-label" aria-hidden="true"></div>';
     const profitHtml = `<div class="arb-opportunity-head-profit ${profitClass}">${profitText}</div>`;
     const displayMessage = entry && typeof entry.displayMessage === 'string'
       ? entry.displayMessage.trim()

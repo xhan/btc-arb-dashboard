@@ -62,3 +62,4 @@ const htmlWithoutLabel = renderArbGrid({
 });
 
 assert.ok(!htmlWithoutLabel.includes('<div class="arb-path-line"><strong>历史图表</strong></div>'));
+assert.ok(htmlWithoutLabel.includes('class="arb-path-line arb-opportunity-head-label"'));

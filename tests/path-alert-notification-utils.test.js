@@ -4,7 +4,8 @@ const {
   formatPathAlertEvaluationText,
   buildPathAlertNotificationTitle,
   buildPathAlertNotificationBody,
-  buildPathAlertAggregatedLog
+  buildPathAlertAggregatedLog,
+  buildLegacyQuoteAlertRemotePayload
 } = require('../path-alert-notification-utils');
 
 assert.strictEqual(formatPathAlertEvaluationText({ profitBp: 2.05 }), '📈 +2.05bp');
@@ -109,5 +110,29 @@ assert.deepStrictEqual(
       '（Base）cbBTC -> WBTC @1.002188',
       '（ETH）WBTC -> cbBTC @0.997992'
     ].join('\n')
+  }
+);
+
+assert.deepStrictEqual(
+  buildLegacyQuoteAlertRemotePayload({
+    chainName: 'Arbitrum',
+    label: 'WBTC/USDT',
+    message: '价格相比基准(100.000000) 上涨 0.250% (>0.1%)'
+  }),
+  {
+    title: '[监控提醒] Arbitrum',
+    body: 'WBTC/USDT\n价格相比基准(100.000000) 上涨 0.250% (>0.1%)'
+  }
+);
+
+assert.deepStrictEqual(
+  buildLegacyQuoteAlertRemotePayload({
+    chainName: 'Bybit',
+    label: '',
+    message: '总价已达到或超过目标 70000'
+  }),
+  {
+    title: '[监控提醒] Bybit',
+    body: '总价已达到或超过目标 70000'
   }
 );

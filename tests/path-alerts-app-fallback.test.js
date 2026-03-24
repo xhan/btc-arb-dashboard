@@ -95,3 +95,42 @@ assert.ok(candidates.some((item) => item.key === '101:inverse'));
 assert.ok(!candidates.some((item) => item.key.startsWith('102:')));
 assert.ok(candidates.some((item) => item.key === '103:cex-bid1'));
 assert.ok(candidates.some((item) => item.key === '103:cex-ask1-inverse'));
+
+const routeHtml = sandbox.window.PathAlertsAppTestHooks.buildAlertRouteHtml([
+  '(Base) cbBTC -> LBTC',
+  '(ETH) LBTC -> cbBTC'
+]);
+assert.ok(routeHtml.includes('alert-item-route-line'));
+assert.ok(routeHtml.includes('(Base) cbBTC -&gt; LBTC'));
+assert.ok(routeHtml.includes('(ETH) LBTC -&gt; cbBTC'));
+
+assert.strictEqual(
+  sandbox.window.PathAlertsAppTestHooks.getAlertPrimaryTitle({
+    target: {
+      type: 'path',
+      legs: [{}, {}]
+    }
+  }),
+  '路径规则 (2腿)'
+);
+
+assert.strictEqual(
+  sandbox.window.PathAlertsAppTestHooks.getAlertPrimaryTitle({
+    name: 'LBTC 回环',
+    target: {
+      type: 'path',
+      legs: [{}, {}]
+    }
+  }),
+  'LBTC 回环'
+);
+
+const alertMeta = sandbox.window.PathAlertsAppTestHooks.formatAlertMetaLine({
+  target: { type: 'path' },
+  thresholdBp: 1.2,
+  triggerMode: 'delayed',
+  confirmDelaySec: 13,
+  cooldownSec: 180,
+  enabled: false
+});
+assert.strictEqual(alertMeta, '🏷️路径 · 🎯1.2bp · ⏱13s · ❄️180s · ⛔');
