@@ -88,7 +88,6 @@
     let pathAlertRuntimeState = new Map();
     let specialRuleAlertRuntimeState = new Map();
     let pathAlertReloading = false;
-    let pathAlertBulkImporting = false;
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     let pathAlertEditorState = {
@@ -144,6 +143,9 @@
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const audioNoticeEl = document.getElementById('audio-notice');
     const alertModal = document.getElementById('alert-modal');
+    const alertTriggerModeSelect = document.getElementById('alert-trigger-mode');
+    const alertConfirmDelayInput = document.getElementById('alert-confirm-delay');
+    const alertCooldownInput = document.getElementById('alert-cooldown');
     const pathAlertWindow = document.getElementById('path-alert-window');
     const pathAlertContent = document.getElementById('path-alert-content');
     const pathAlertHeader = document.getElementById('path-alert-header');
@@ -359,6 +361,7 @@
             fromSymbol: state.fromSymbol || '',
             toSymbol: state.toSymbol || '',
             lastRawPrice: null,
+            lastTotalAmountOut: null,
             lastResultText: '',
             inverseRawPrice: null,
             inverseFromSymbol: '',
@@ -1709,16 +1712,6 @@
         return window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP;
     }
 
-    function collectArbImportEntries() {
-        const panelData = buildArbPanelData();
-        if (panelData.error) {
-            return { errorText: panelData.error, entries: [] };
-        }
-        return {
-            entries: Array.isArray(panelData.importEntries) ? panelData.importEntries : []
-        };
-    }
-
     function buildArbDetailRowsHtml(card) {
         if (card.rows && card.rows.length) {
             return card.rows.map((row) => `
@@ -2560,22 +2553,6 @@
         };
     }
 
-    function buildPathAlertFromOpportunityEntry(entry) {
-        const draft = buildPathAlertDraftFromOpportunityEntry(entry);
-        if (!draft || !window.PathAlertUtils) return null;
-        return window.PathAlertUtils.normalizePathAlert({
-            id: createPathAlertId(),
-            name: '',
-            enabled: true,
-            thresholdBp: getPathAlertDefaultThresholdBp(),
-            triggerMode: 'delayed',
-            confirmDelaySec: 13,
-            cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
-            delivery: { sound: true, log: true, webhookEnabled: false },
-            target: draft.target
-        }, pathAlertConfig.settings || { defaultCooldownSec: 180 });
-    }
-
     function buildPathAlertDraftFromOpportunity(opportunityId) {
         const entry = arbOpportunityStore.get(opportunityId);
         return entry ? buildPathAlertDraftFromOpportunityEntry(entry) : null;
@@ -2597,6 +2574,9 @@
             return { text: '已禁用', className: 'path-alert-status-disabled' };
         }
         if (!runtime || runtime.status === 'unavailable') {
+            if (alert && alert.target && alert.target.type === 'quote') {
+                return { text: '等待报价', className: 'path-alert-status-unavailable' };
+            }
             return { text: '缺报价', className: 'path-alert-status-unavailable' };
         }
         if (runtime.status === 'pending_confirm') {
@@ -2609,6 +2589,22 @@
     }
 
     function buildPathAlertSummaryLines(alert) {
+        if (alert && alert.target && alert.target.type === 'quote') {
+            const match = findQuoteById(Number(alert.target.quoteId));
+            const quote = match ? match.quote : null;
+            const monitorState = quote ? quoteMonitorState.get(Number(quote.id)) : null;
+            const label = quote
+                ? buildQuoteAlertDisplayLabel(quote, monitorState || {})
+                : `报价 #${String(alert.target.quoteId || '--')}`;
+            const ruleLine = alert.target.ruleKind === 'targetAbove'
+                ? `总价 >= ${String(alert.target.value != null ? alert.target.value : '--')}`
+                : alert.target.ruleKind === 'targetBelow'
+                    ? `总价 <= ${String(alert.target.value != null ? alert.target.value : '--')}`
+                    : alert.target.ruleKind === 'percentUp'
+                        ? `上涨 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`
+                        : `下跌 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`;
+            return [label, ruleLine];
+        }
         if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
             return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
                 formatLeg(leg) {
@@ -2644,6 +2640,9 @@
     function buildPathAlertDisplayTitle(alert) {
         const name = String(alert && alert.name || '').trim();
         if (name) return name;
+        if (alert && alert.target && alert.target.type === 'quote') {
+            return '报价规则';
+        }
         const lines = buildPathAlertSummaryLines(alert);
         return lines[0] || '未配置路径';
     }
@@ -2945,6 +2944,9 @@
 
         for (const alert of (pathAlertConfig.alerts || [])) {
             activeIds.add(alert.id);
+            if (alert && alert.target && alert.target.type === 'quote') {
+                continue;
+            }
             const evaluation = window.PathAlertUtils.evaluatePathAlert(alert, context);
             const previous = pathAlertRuntimeState.get(alert.id) || null;
             const next = window.PathAlertUtils.advancePathAlertRuntime(alert, previous, evaluation, nowMs);
@@ -3213,7 +3215,6 @@
         const toolbar = `
             <div class="path-alert-toolbar">
                 <div class="path-alert-toolbar-actions">
-                    <button type="button" id="path-alert-import-btn" ${pathAlertBulkImporting ? 'disabled' : ''}>${pathAlertBulkImporting ? '导入中...' : '导入当前全部机会'}</button>
                     <button type="button" id="path-alert-reload-btn" ${pathAlertReloading ? 'disabled' : ''}>${pathAlertReloading ? '重新加载中...' : '重新加载'}</button>
                 </div>
                 <div class="path-alert-toolbar-meta">
@@ -3250,9 +3251,11 @@
                 <div class="path-alert-item">
                     <div class="path-alert-item-head">
                         <div>
-                            ${alert.name ? `<div class="path-alert-item-title">${escapeHtml(alert.name)}</div>` : ''}
+                            <div class="path-alert-item-title">${escapeHtml(buildPathAlertDisplayTitle(alert))}</div>
                             <div class="path-alert-item-route">${renderPathAlertSummaryLinesHtml(alert)}</div>
-                            <div class="path-alert-item-meta">阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s</div>
+                            <div class="path-alert-item-meta">${alert.target && alert.target.type === 'quote'
+                                ? `报价 | ${escapeHtml(String(alert.target.value != null ? alert.target.value : '--'))} | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s`
+                                : `阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s`}</div>
                         </div>
                         <div class="path-alert-item-actions">
                             <a
@@ -3304,15 +3307,6 @@
     }
 
     function handlePathAlertPanelClick(event) {
-        const importBtn = event.target.closest('#path-alert-import-btn');
-        if (importBtn) {
-            importCurrentArbOpportunitiesToPathAlerts().catch((error) => {
-                console.error('批量导入路径报警失败:', error);
-                appendAlertLogEntry('[路径报警] 批量导入失败', error.message || '批量导入失败');
-            });
-            return;
-        }
-
         const reloadBtn = event.target.closest('#path-alert-reload-btn');
         if (reloadBtn) {
             reloadPathAlertConfigFromServer().catch((error) => {
@@ -3345,51 +3339,6 @@
             restartPathAlertScheduler();
         } finally {
             pathAlertReloading = false;
-            renderPathAlertPanel();
-        }
-    }
-
-    async function importCurrentArbOpportunitiesToPathAlerts() {
-        if (pathAlertBulkImporting || !window.PathAlertUtils) return;
-        pathAlertBulkImporting = true;
-        renderPathAlertPanel();
-        try {
-            const result = collectArbImportEntries();
-            if (result.errorText) {
-                throw new Error(result.errorText);
-            }
-
-            const entries = Array.isArray(result.entries) ? result.entries : [];
-            const nextAlerts = Array.isArray(pathAlertConfig.alerts) ? [...pathAlertConfig.alerts] : [];
-            const dismissedTargets = Array.isArray(pathAlertConfig.dismissedTargets) ? pathAlertConfig.dismissedTargets : [];
-            let importedCount = 0;
-            let skippedExistingCount = 0;
-            let skippedDismissedCount = 0;
-
-            for (const entry of entries) {
-                const alert = buildPathAlertFromOpportunityEntry(entry);
-                if (!alert) continue;
-                if (window.PathAlertUtils.findDuplicatePathAlert(nextAlerts, alert)) {
-                    skippedExistingCount += 1;
-                    continue;
-                }
-                if (window.PathAlertUtils.findDismissedPathAlert(dismissedTargets, alert)) {
-                    skippedDismissedCount += 1;
-                    continue;
-                }
-                nextAlerts.push(alert);
-                importedCount += 1;
-            }
-
-            pathAlertConfig.alerts = nextAlerts;
-            await persistPathAlertConfig();
-            appendAlertLogEntry(
-                '[路径报警] 批量导入',
-                `新增 ${importedCount} 条，已存在跳过 ${skippedExistingCount} 条，已忽略跳过 ${skippedDismissedCount} 条`,
-                '来源：当前全量套利机会'
-            );
-        } finally {
-            pathAlertBulkImporting = false;
             renderPathAlertPanel();
         }
     }
@@ -3528,7 +3477,6 @@
                         emptyText: '等待数据...'
                     };
                 });
-        const fixedEntries = fixedSections.flatMap((section) => Array.isArray(section?.opportunities) ? section.opportunities : []);
         const wbtcCategory = targetCategories.find((category) => category && category.name === 'WBTC监控');
         const wbtcSpecialRules = SPECIAL_ARB_RULES.filter((rule) => rule && rule.categoryName === (wbtcCategory ? wbtcCategory.name : ''));
         const specialOpportunities = wbtcCategory
@@ -3577,7 +3525,6 @@
 
         const categorySections = [];
         let lbtcSection = null;
-        const categoryImportEntries = [];
         for (const category of targetCategories) {
             const sectionKey = buildArbSectionKey('category', category.id || category.name);
             const cachedTemplates = topologyCache
@@ -3609,7 +3556,6 @@
                     { section: category.name, alertPreset: { type: 'path' } }
                 ))
                 .filter(Boolean);
-            categoryImportEntries.push(...fullEntries);
             const cycleDisplayState = getCycleDisplayState(cycles, 4, arbExpandedSections.has(sectionKey));
             const footerHtml = buildArbSectionToggleHtml(sectionKey, cycleDisplayState);
             const sectionDef = {
@@ -3685,17 +3631,9 @@
             }]
         ];
 
-        const importEntries = [
-            ...fixedEntries,
-            ...specialEntries,
-            ...categoryImportEntries,
-            ...globalEntries
-        ];
-
         return {
             columns,
             nextOpportunityMap,
-            importEntries,
             specialAlertEntries
         };
     }
@@ -4090,6 +4028,7 @@
                     toSymbol: data.symbols.to,
                     lastResultText: data.resultText,
                     lastRawPrice: data.rawPrice,
+                    lastTotalAmountOut: data.finalAmountOut,
                     cexOrderbook: data.cexOrderbook || null,
                     usedSource: data.usedSource,
                     usedSourceReal: successSource
@@ -4125,7 +4064,7 @@
                 }
 
                 updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
-                checkPriceForAlerts(quote, data.rawPrice, data.finalAmountOut);
+                checkPriceForAlerts(quote);
             }
             
         } catch (error) {
@@ -4468,79 +4407,108 @@
         arbPathWindow.style.height = `${maxHeight}px`;
     }
 
-    function checkPriceForAlerts(quote, newRawPrice, newTotalAmountOut) {
-        if (isQuotePaused(quote)) return;
-        if (!quote.alerts || typeof newRawPrice !== 'number') return; 
+    function getQuoteAlertConfigUtils() {
+        return window.QuoteAlertConfigUtils || null;
+    }
 
-        const basePrice = quote.alerts.basePrice;
-        const state = quoteMonitorState.get(quote.id) || {};
-        let alertMessage = null;
-        let isNowTriggered = false;
+    function getDefaultQuoteAlertSettings() {
+        return {
+            triggerMode: 'delayed',
+            confirmDelaySec: 13,
+            cooldownSec: 120
+        };
+    }
 
-        if (typeof basePrice === 'number' && basePrice > 0) {
-            const percentageChange = ((newRawPrice - basePrice) / basePrice) * 100;
-            if (quote.alerts.percentUp && percentageChange >= quote.alerts.percentUp) {
-                alertMessage = `价格相比基准(${basePrice.toFixed(6)}) 上涨 ${percentageChange.toFixed(3)}% (>${quote.alerts.percentUp}%)`;
-                isNowTriggered = true;
-            } else if (quote.alerts.percentDown && percentageChange <= -quote.alerts.percentDown) {
-                alertMessage = `价格相比基准(${basePrice.toFixed(6)}) 下跌 ${Math.abs(percentageChange).toFixed(3)}% (>${quote.alerts.percentDown}%)`;
-                isNowTriggered = true;
-            }
+    function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMonitorState.get(quote.id) || {}) {
+        if (!quote) return '--';
+        if (isCexOrderbookChain(quote.chain)) {
+            return String(quote.symbol || '').trim() || '--';
         }
-       
-        if (typeof newTotalAmountOut === 'number') {
-            if (quote.alerts.targetAbove) {
-                if (newTotalAmountOut >= quote.alerts.targetAbove) {
-                    if (!alertMessage) alertMessage = `总价已达到或超过目标 ${quote.alerts.targetAbove}`;
-                    isNowTriggered = true;
-                }
-            }
-            if (quote.alerts.targetBelow) {
-                if (newTotalAmountOut <= quote.alerts.targetBelow) {
-                    if (!alertMessage) alertMessage = `总价已达到或低于目标 ${quote.alerts.targetBelow}`;
-                    isNowTriggered = true;
-                }
-            }
+        if (monitorState.fromSymbol && monitorState.toSymbol) {
+            return `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
         }
+        return `${String(quote.fromToken || '').slice(0, 4)}.../${String(quote.toToken || '').slice(0, 4)}...`;
+    }
 
-        const itemEl = document.getElementById(`quote-item-${quote.id}`);
-        const resultDiv = itemEl ? itemEl.querySelector('.quote-result') : null;
+    function getQuoteAlertsForQuoteId(quoteId) {
+        const normalizedQuoteId = Number(quoteId);
+        return (pathAlertConfig.alerts || []).filter((alert) => (
+            alert
+            && alert.target
+            && alert.target.type === 'quote'
+            && Number(alert.target.quoteId) === normalizedQuoteId
+        ));
+    }
 
-        if (isNowTriggered) {
-            state.hasUnreadAlert = true;
-            state.isSoundActive = true;
-            
-            if (itemEl) {
-                itemEl.classList.add('highlight');
-                itemEl.classList.remove('highlight-past');
+    function buildLegacyQuoteAlertModalState(quote) {
+        const quoteAlerts = getQuoteAlertsForQuoteId(quote && quote.id);
+        const utils = getQuoteAlertConfigUtils();
+        const defaults = getDefaultQuoteAlertSettings();
+        const fields = quoteAlerts.length && utils && typeof utils.buildLegacyQuoteAlertFields === 'function'
+            ? utils.buildLegacyQuoteAlertFields(quoteAlerts)
+            : (quote && quote.alerts && typeof quote.alerts === 'object' ? { ...quote.alerts } : {});
+        const firstAlert = quoteAlerts[0] || null;
+        return {
+            fields,
+            settings: {
+                triggerMode: firstAlert && firstAlert.triggerMode === 'immediate' ? 'immediate' : defaults.triggerMode,
+                confirmDelaySec: firstAlert && Number.isFinite(Number(firstAlert.confirmDelaySec))
+                    ? Number(firstAlert.confirmDelaySec)
+                    : defaults.confirmDelaySec,
+                cooldownSec: firstAlert && Number.isFinite(Number(firstAlert.cooldownSec))
+                    ? Number(firstAlert.cooldownSec)
+                    : defaults.cooldownSec
             }
+        };
+    }
 
-            if (!state.logShown && alertMessage) {
-                triggerAlert(quote, alertMessage, {
-                    currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, newTotalAmountOut)
-                });
-                state.logShown = true;
-            }
-        } else {
-            state.isSoundActive = false;
-            
-            if (itemEl) {
-                itemEl.classList.remove('highlight');
-                if (state.hasUnreadAlert) {
-                    itemEl.classList.add('highlight-past');
-                } else {
-                    itemEl.classList.remove('highlight-past');
-                }
-            }
-            state.logShown = false;
+    function normalizeQuoteAlertsForStorage(nextAlerts) {
+        if (!window.PathAlertUtils || typeof window.PathAlertUtils.normalizePathAlert !== 'function') {
+            return nextAlerts;
         }
+        const settings = pathAlertConfig.settings || { defaultCooldownSec: 180 };
+        return nextAlerts
+            .map((alert) => window.PathAlertUtils.normalizePathAlert(alert, settings))
+            .filter(Boolean);
+    }
 
+    function replaceQuoteAlertsForQuote(quote, legacyAlerts, runtimeSettings = {}) {
+        const utils = getQuoteAlertConfigUtils();
+        if (!utils || !quote) return false;
+        const normalizedQuoteId = Number(quote.id);
+        const existingAlerts = Array.isArray(pathAlertConfig.alerts) ? pathAlertConfig.alerts : [];
+        const removedIds = [];
+        const retainedAlerts = existingAlerts.filter((alert) => {
+            const isCurrentQuoteAlert = alert && alert.target && alert.target.type === 'quote' && Number(alert.target.quoteId) === normalizedQuoteId;
+            if (isCurrentQuoteAlert) {
+                removedIds.push(alert.id);
+            }
+            return !isCurrentQuoteAlert;
+        });
+        removedIds.forEach((alertId) => pathAlertRuntimeState.delete(alertId));
+
+        const nextAlerts = typeof utils.buildQuoteAlertsFromLegacyConfig === 'function'
+            ? utils.buildQuoteAlertsFromLegacyConfig({
+                quoteId: quote.id,
+                quoteLabel: `${CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain} ${buildQuoteAlertDisplayLabel(quote)}`.trim(),
+                triggerMode: runtimeSettings.triggerMode,
+                confirmDelaySec: runtimeSettings.confirmDelaySec,
+                cooldownSec: runtimeSettings.cooldownSec,
+                oldAlerts: legacyAlerts
+            })
+            : [];
+
+        pathAlertConfig.alerts = retainedAlerts.concat(normalizeQuoteAlertsForStorage(nextAlerts));
+        return true;
+    }
+
+    function syncLegacyQuoteAlertDismissButton(resultDiv, state, quoteId) {
         if (resultDiv && !resultDiv.querySelector('.dismiss-highlight-btn')) {
             if (state.hasUnreadAlert) {
                 const dismissBtn = document.createElement('button');
                 dismissBtn.className = 'icon-btn dismiss-highlight-btn';
                 dismissBtn.title = '确认报警/清除状态';
-                dismissBtn.dataset.dismissHighlightId = quote.id;
+                dismissBtn.dataset.dismissHighlightId = quoteId;
                 dismissBtn.innerHTML = '✔️';
                 const settingsBtn = resultDiv.querySelector('[data-edit-alert-id]');
                 if (settingsBtn) settingsBtn.parentElement.insertBefore(dismissBtn, settingsBtn);
@@ -4549,24 +4517,101 @@
             const dismissBtn = resultDiv.querySelector('.dismiss-highlight-btn');
             if (dismissBtn) dismissBtn.remove();
         }
-
-        setQuoteMonitorState(quote.id, state);
-        updateAlertSoundState();
     }
 
-    function buildLegacyQuoteAlertCurrentValueText(quote, currentValue) {
-        if (!quote || typeof currentValue !== 'number' || !Number.isFinite(currentValue)) return '';
-        return `${formatDetailNumber(quote.amount || 1)} -> ${formatDetailNumber(currentValue)}`;
+    function buildQuoteAlertMessage(alert, evaluation) {
+        if (!alert || !alert.target || !evaluation) return '';
+        const target = alert.target;
+        if (target.ruleKind === 'targetAbove') {
+            return `总价已达到或超过目标 ${formatDetailNumber(target.value)}`;
+        }
+        if (target.ruleKind === 'targetBelow') {
+            return `总价已达到或低于目标 ${formatDetailNumber(target.value)}`;
+        }
+        if (target.ruleKind === 'percentUp') {
+            return `价格相比基准(${formatDetailNumber(evaluation.basePrice)}) 上涨 ${Number(evaluation.changePercent || 0).toFixed(3)}% (>${formatDetailNumber(target.value)}%)`;
+        }
+        if (target.ruleKind === 'percentDown') {
+            return `价格相比基准(${formatDetailNumber(evaluation.basePrice)}) 下跌 ${Math.abs(Number(evaluation.changePercent || 0)).toFixed(3)}% (>${formatDetailNumber(target.value)}%)`;
+        }
+        return '';
+    }
+
+    function buildLegacyQuoteAlertCurrentValueText(quote, alert, evaluation) {
+        if (!quote || !alert || !alert.target || !evaluation) return '';
+        if (alert.target.ruleKind === 'targetAbove' || alert.target.ruleKind === 'targetBelow') {
+            return Number.isFinite(Number(evaluation.currentValue))
+                ? `${formatDetailNumber(quote.amount || 1)} -> ${formatDetailNumber(evaluation.currentValue)}`
+                : '';
+        }
+        return Number.isFinite(Number(evaluation.basePrice)) && Number.isFinite(Number(evaluation.currentValue))
+            ? `${formatDetailNumber(evaluation.basePrice)} -> ${formatDetailNumber(evaluation.currentValue)}`
+            : '';
+    }
+
+    function playPathAlertSoundOnce() {
+        if (!isAudioUnlocked || !pathAlertSound || pathAlertConfig?.settings?.localSoundEnabled === false) return;
+        pathAlertSound.loop = false;
+        pathAlertSound.currentTime = 0;
+        pathAlertSound.play().catch((error) => console.error('Play failed', error));
     }
 
     function triggerAlert(quote, message, options = {}) {
         const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
-        const monitorState = quoteMonitorState.get(quote.id) || {};
-        let label = isCexOrderbookChain(quote.chain) ? quote.symbol : 
-                    (monitorState.fromSymbol && monitorState.toSymbol ? `${monitorState.fromSymbol}/${monitorState.toSymbol}` : 
-                    `${quote.fromToken.slice(0,4)}.../${quote.toToken.slice(0,4)}...`);
+        const label = buildQuoteAlertDisplayLabel(quote);
         appendAlertLogEntry(displayName, message, label);
+        playPathAlertSoundOnce();
         sendLegacyQuoteWebhookNotification(displayName, label, message, options.currentValueText || '');
+    }
+
+    function checkPriceForAlerts(quote) {
+        if (isQuotePaused(quote)) return;
+
+        const state = quoteMonitorState.get(quote.id) || {};
+        const quoteAlerts = getQuoteAlertsForQuoteId(quote.id);
+        const itemEl = document.getElementById(`quote-item-${quote.id}`);
+        const resultDiv = itemEl ? itemEl.querySelector('.quote-result') : null;
+        let hasTriggeredThisTick = false;
+
+        for (const alert of quoteAlerts) {
+            const previous = pathAlertRuntimeState.get(alert.id) || null;
+            const evaluation = window.PathAlertUtils
+                ? window.PathAlertUtils.evaluatePathAlert(alert, { quoteStateById })
+                : null;
+            const next = window.PathAlertUtils
+                ? window.PathAlertUtils.advancePathAlertRuntime(alert, previous, evaluation, Date.now())
+                : null;
+            if (!next) continue;
+            next.evaluation = evaluation;
+            next.isSoundActive = false;
+            pathAlertRuntimeState.set(alert.id, next);
+
+            if (!next.shouldTrigger) continue;
+            hasTriggeredThisTick = true;
+            triggerAlert(quote, buildQuoteAlertMessage(alert, evaluation), {
+                currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, alert, evaluation)
+            });
+        }
+
+        state.isSoundActive = false;
+        if (hasTriggeredThisTick) {
+            state.hasUnreadAlert = true;
+            if (itemEl) {
+                itemEl.classList.add('highlight');
+                itemEl.classList.remove('highlight-past');
+            }
+        } else if (itemEl) {
+            itemEl.classList.remove('highlight');
+            if (state.hasUnreadAlert) {
+                itemEl.classList.add('highlight-past');
+            } else {
+                itemEl.classList.remove('highlight-past');
+            }
+        }
+
+        syncLegacyQuoteAlertDismissButton(resultDiv, state, quote.id);
+        setQuoteMonitorState(quote.id, state);
+        updateAlertSoundState();
     }
 
     function buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText) {
@@ -5049,6 +5094,7 @@
         const state = quoteMonitorState.get(quoteId);
         if (state) {
             state.lastRawPrice = null;
+            state.lastTotalAmountOut = null;
             state.isSoundActive = false;
             state.logShown = false;
             state.hasUnreadAlert = false;
@@ -5124,14 +5170,19 @@
             const quote = category.quotes.find(q => q.id == editQuoteId);
             if (!quote) return;
             currentlyEditingQuote = { quote: quote, categoryId: categoryId };
-            const currentAlerts = quote.alerts || {};
+            const modalAlertState = buildLegacyQuoteAlertModalState(quote);
+            const currentAlerts = modalAlertState.fields || {};
             const monitorState = quoteMonitorState.get(quote.id) || {};
             
             let pairLabel = quote.symbol;
             if(!pairLabel && monitorState.fromSymbol && monitorState.toSymbol){
                 pairLabel = `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
             }
-            document.getElementById('modal-title').textContent = `设置: ${CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain} (${pairLabel || '...'})`;
+            document.getElementById('modal-title').textContent = `设置 · ${CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain}`;
+            const modalSubtitleEl = document.getElementById('modal-subtitle');
+            if (modalSubtitleEl) {
+                modalSubtitleEl.textContent = pairLabel || '...';
+            }
 
             const fromSymbolLabel = monitorState.fromSymbol || 'From Token';
             const toSymbolLabel = monitorState.toSymbol || 'To Token';
@@ -5180,6 +5231,15 @@
             document.getElementById('alert-percent-down').value = currentAlerts.percentDown || '';
             document.getElementById('alert-target-above').value = currentAlerts.targetAbove || '';
             document.getElementById('alert-target-below').value = currentAlerts.targetBelow || '';
+            if (alertTriggerModeSelect) {
+                alertTriggerModeSelect.value = modalAlertState.settings.triggerMode || 'delayed';
+            }
+            if (alertConfirmDelayInput) {
+                alertConfirmDelayInput.value = modalAlertState.settings.confirmDelaySec ?? 13;
+            }
+            if (alertCooldownInput) {
+                alertCooldownInput.value = modalAlertState.settings.cooldownSec ?? getDefaultQuoteAlertSettings().cooldownSec;
+            }
             
             const basePriceEl = document.getElementById('alert-current-price-value');
             const currentRaw = monitorState.lastRawPrice;
@@ -5268,6 +5328,10 @@
                 const tAbove = parseFloat(document.getElementById('alert-target-above').value);
                 const tBelow = parseFloat(document.getElementById('alert-target-below').value);
                 const resetBasePrice = document.getElementById('reset-base-price').checked;
+                const triggerMode = alertTriggerModeSelect && alertTriggerModeSelect.value === 'immediate' ? 'immediate' : 'delayed';
+                const confirmDelaySec = Number(alertConfirmDelayInput && alertConfirmDelayInput.value || 13);
+                const cooldownSec = Number(alertCooldownInput && alertCooldownInput.value || getDefaultQuoteAlertSettings().cooldownSec);
+                const modalAlertState = buildLegacyQuoteAlertModalState(quote);
 
                 const newAlerts = {
                     percentUp: pUp || null,
@@ -5279,7 +5343,7 @@
                 if (newAlerts.percentUp || newAlerts.percentDown) {
                     const monitorState = quoteMonitorState.get(quote.id) || {};
                     const currentRawPrice = monitorState.lastRawPrice;
-                    const oldBasePrice = quote.alerts && quote.alerts.basePrice;
+                    const oldBasePrice = modalAlertState.fields && modalAlertState.fields.basePrice;
 
                     if (resetBasePrice || typeof oldBasePrice !== 'number') {
                          if (typeof currentRawPrice === 'number') {
@@ -5294,6 +5358,11 @@
                 
                 if(Object.keys(newAlerts).length === 0) delete quote.alerts;
                 else quote.alerts = newAlerts;
+                replaceQuoteAlertsForQuote(quote, newAlerts, {
+                    triggerMode,
+                    confirmDelaySec,
+                    cooldownSec
+                });
 
                 const state = quoteMonitorState.get(quote.id);
                 if (state) {
@@ -5303,6 +5372,7 @@
                 }
 
                 saveData();
+                queuePathAlertConfigSave();
                 alertModal.classList.remove('visible');
                 currentlyEditingQuote = null;
             }

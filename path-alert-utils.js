@@ -78,6 +78,29 @@
         legs
       };
     }
+    if (target.type === 'quote') {
+      const quoteId = Number(target.quoteId);
+      if (!Number.isFinite(quoteId)) return null;
+      const ruleKind = ['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(target.ruleKind)
+        ? target.ruleKind
+        : '';
+      if (!ruleKind) return null;
+      const value = Number(target.value);
+      if (!Number.isFinite(value)) return null;
+      const normalized = {
+        type: 'quote',
+        quoteId,
+        ruleKind,
+        value
+      };
+      if (ruleKind === 'percentUp' || ruleKind === 'percentDown') {
+        const basePrice = Number(target.basePrice);
+        if (Number.isFinite(basePrice)) {
+          normalized.basePrice = basePrice;
+        }
+      }
+      return normalized;
+    }
     if (target.type !== 'rule') return null;
     return {
       type: 'rule',
@@ -193,6 +216,9 @@
       const rule = findRule(alert.target.ruleKind, alert.target.ruleId);
       return [rule && rule.title ? rule.title : String(alert.target.ruleId || '--')];
     }
+    if (alert.target.type === 'quote') {
+      return [String(alert.name || '').trim() || `Quote ${alert.target.quoteId}`];
+    }
 
     return Array.isArray(alert.target.legs)
       ? alert.target.legs.map((leg) => formatLeg(leg)).filter(Boolean)
@@ -227,6 +253,11 @@
 
   function buildPathAlertTargetDuplicateKey(target) {
     if (!target || typeof target !== 'object') return '';
+    if (target.type === 'quote') {
+      const quoteId = Number(target.quoteId);
+      const ruleKind = String(target.ruleKind || '').trim();
+      return Number.isFinite(quoteId) && ruleKind ? `quote:${quoteId}:${ruleKind}` : '';
+    }
     if (target.type === 'rule') {
       const ruleKind = target.ruleKind === 'special' ? 'special' : target.ruleKind === 'fixed' ? 'fixed' : '';
       const ruleId = String(target.ruleId || '').trim();
@@ -323,6 +354,9 @@
   }
 
   function countPathAlertRealLegs(alert, evaluation) {
+    if (alert && alert.target && alert.target.type === 'quote') {
+      return 1;
+    }
     if (alert && alert.target && alert.target.type === 'path') {
       return Array.isArray(alert.target.legs) ? alert.target.legs.length : 0;
     }
@@ -458,13 +492,71 @@
       status: 'unavailable',
       targetType,
       profitRate: null,
-      profitBp: null
+      profitBp: null,
+      meetsTriggerCondition: false
+    };
+  }
+
+  function evaluateQuoteAlert(target, quoteStateById) {
+    const state = quoteStateById.get(target.quoteId);
+    if (!state || typeof state !== 'object') {
+      return unavailableEvaluation('quote');
+    }
+
+    if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
+      const currentValue = Number(state.lastTotalAmountOut);
+      if (!Number.isFinite(currentValue)) {
+        return unavailableEvaluation('quote');
+      }
+      const meetsTriggerCondition = target.ruleKind === 'targetAbove'
+        ? currentValue >= target.value
+        : currentValue <= target.value;
+      return {
+        available: true,
+        status: 'ok',
+        targetType: 'quote',
+        profitRate: null,
+        profitBp: null,
+        currentValue,
+        thresholdValue: target.value,
+        meetsTriggerCondition,
+        legSnapshots: []
+      };
+    }
+
+    const currentValue = Number(state.lastRawPrice);
+    const basePrice = Number(target.basePrice);
+    if (!Number.isFinite(currentValue) || !Number.isFinite(basePrice) || basePrice <= 0) {
+      return unavailableEvaluation('quote');
+    }
+
+    const changePercent = ((currentValue - basePrice) / basePrice) * 100;
+    const meetsTriggerCondition = target.ruleKind === 'percentUp'
+      ? changePercent >= target.value
+      : changePercent <= -target.value;
+    return {
+      available: true,
+      status: 'ok',
+      targetType: 'quote',
+      profitRate: null,
+      profitBp: null,
+      currentValue,
+      thresholdValue: target.value,
+      basePrice,
+      changePercent,
+      meetsTriggerCondition,
+      legSnapshots: []
     };
   }
 
   function evaluatePathAlert(alert, options = {}) {
     const target = alert && alert.target ? alert.target : null;
     if (!target) return unavailableEvaluation('');
+
+    const quoteStateById = options.quoteStateById instanceof Map ? options.quoteStateById : new Map();
+    if (target.type === 'quote') {
+      return evaluateQuoteAlert(target, quoteStateById);
+    }
 
     if (target.type === 'rule') {
       if (typeof options.resolveRuleEvaluation !== 'function') {
@@ -490,7 +582,6 @@
       };
     }
 
-    const quoteStateById = options.quoteStateById instanceof Map ? options.quoteStateById : new Map();
     let product = 1;
     const legSnapshots = [];
 
@@ -544,15 +635,16 @@
       return next;
     }
 
-    if (!evaluation || evaluation.available !== true || !Number.isFinite(evaluation.profitBp)) {
+    if (!evaluation || evaluation.available !== true) {
       next.status = 'unavailable';
       next.eligibleSince = null;
       return next;
     }
 
-    const thresholdBp = toFiniteNumber(alert.thresholdBp, 0);
-    const meetsThreshold = evaluation.profitBp >= thresholdBp;
-    if (!meetsThreshold) {
+    const meetsTriggerCondition = typeof evaluation.meetsTriggerCondition === 'boolean'
+      ? evaluation.meetsTriggerCondition
+      : evaluation.profitBp >= toFiniteNumber(alert.thresholdBp, 0);
+    if (!meetsTriggerCondition) {
       next.status = 'idle';
       next.eligibleSince = null;
       return next;
@@ -592,7 +684,14 @@
 
     next.currentLegSnapshots = currentAllSnapshots;
 
-    if (!alert || alert.enabled === false || !evaluation || evaluation.available !== true || !Number.isFinite(evaluation.profitBp)) {
+    if (
+      !alert
+      || alert.enabled === false
+      || !evaluation
+      || evaluation.available !== true
+      || (evaluation.targetType === 'quote')
+      || (!Number.isFinite(evaluation.profitBp) && evaluation.meetsTriggerCondition !== true)
+    ) {
       next.baselineLegSnapshots = [];
       return {
         currentSnapshots,

@@ -56,6 +56,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-notification-utils.js"'));
+    assert.ok(response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
@@ -73,6 +74,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
     assert.ok(response.body.includes('id="path-alert-window"'));
     assert.ok(response.body.includes('id="path-alert-modal"'));
+    assert.ok(response.body.includes('id="alert-trigger-mode"'));
+    assert.ok(response.body.includes('id="alert-confirm-delay"'));
+    assert.ok(response.body.includes('id="alert-cooldown"'));
+    assert.ok(response.body.includes('class="quote-alert-inline-grid"'));
+    assert.ok(response.body.includes('id="modal-subtitle"'));
+    assert.ok(response.body.includes('placeholder="例如: 120"'));
     assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
     assert.ok(response.body.includes('路径报警管理'));
     assert.ok(response.body.includes('#top-bar-right > button,'));
@@ -102,12 +109,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
+    assert.ok(appJsResponse.body.includes('QuoteAlertConfigUtils'));
+    assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
+    assert.ok(!appJsResponse.body.includes('migrateLegacyQuoteAlertsIntoPathAlertConfig'));
+    assert.ok(appJsResponse.body.includes('cooldownSec: 120'));
+    assert.ok(appJsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
     assert.ok(appJsResponse.body.includes('[监控提醒]'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes('音效'));
     assert.ok(appJsResponse.body.includes('远程'));
     assert.ok(appJsResponse.body.includes('path-alert-reload-btn'));
-    assert.ok(appJsResponse.body.includes('path-alert-import-btn'));
+    assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
+    assert.ok(!appJsResponse.body.includes('导入当前全部机会'));
     assert.ok(appJsResponse.body.includes('/path-alerts'));
     assert.ok(appJsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(appJsResponse.body.includes('data-path-alert-delete'));
@@ -209,6 +222,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('不需要路径'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-calculator.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));
     assert.ok(
       pathAlertsResponse.body.indexOf('src="path-alert-candidate-utils.js"') < pathAlertsResponse.body.indexOf('src="path-alerts-app.js"')

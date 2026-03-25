@@ -147,6 +147,10 @@
       cooldownSec: alertConfig.settings?.defaultCooldownSec || 180,
       sourceType: 'path',
       selectedRuleId: '',
+      selectedQuoteId: '',
+      quoteRuleKind: 'targetAbove',
+      quoteValue: '',
+      quoteBasePrice: '',
       searchQuery: '',
       legs: []
     };
@@ -161,8 +165,14 @@
       triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
       confirmDelaySec: Number(draft.confirmDelaySec || 0),
       cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
-      sourceType: draft.sourceType === 'fixed' || draft.sourceType === 'special' ? draft.sourceType : 'path',
+      sourceType: ['path', 'fixed', 'special', 'quote'].includes(draft.sourceType) ? draft.sourceType : 'path',
       selectedRuleId: String(draft.selectedRuleId || ''),
+      selectedQuoteId: String(draft.selectedQuoteId || ''),
+      quoteRuleKind: ['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(draft.quoteRuleKind)
+        ? draft.quoteRuleKind
+        : 'targetAbove',
+      quoteValue: draft.quoteValue === '' ? '' : Number(draft.quoteValue),
+      quoteBasePrice: draft.quoteBasePrice === '' ? '' : Number(draft.quoteBasePrice),
       searchQuery: String(draft.searchQuery || ''),
       legs: Array.isArray(draft.legs) ? draft.legs.map((leg) => ({ ...leg })) : []
     };
@@ -173,6 +183,25 @@
       ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
       : null;
     if (!normalized) return createEmptyDraft();
+    if (normalized.target.type === 'quote') {
+      return {
+        id: normalized.id,
+        name: normalized.name,
+        enabled: normalized.enabled !== false,
+        thresholdBp: '',
+        triggerMode: normalized.triggerMode,
+        confirmDelaySec: normalized.confirmDelaySec,
+        cooldownSec: normalized.cooldownSec,
+        sourceType: 'quote',
+        selectedRuleId: '',
+        selectedQuoteId: String(normalized.target.quoteId || ''),
+        quoteRuleKind: normalized.target.ruleKind,
+        quoteValue: normalized.target.value,
+        quoteBasePrice: normalized.target.basePrice === undefined ? '' : normalized.target.basePrice,
+        searchQuery: '',
+        legs: []
+      };
+    }
     if (normalized.target.type === 'rule') {
       return {
         id: normalized.id,
@@ -184,6 +213,10 @@
         cooldownSec: normalized.cooldownSec,
         sourceType: normalized.target.ruleKind,
         selectedRuleId: normalized.target.ruleId,
+        selectedQuoteId: '',
+        quoteRuleKind: 'targetAbove',
+        quoteValue: '',
+        quoteBasePrice: '',
         searchQuery: '',
         legs: []
       };
@@ -198,6 +231,10 @@
       cooldownSec: normalized.cooldownSec,
       sourceType: 'path',
       selectedRuleId: '',
+      selectedQuoteId: '',
+      quoteRuleKind: 'targetAbove',
+      quoteValue: '',
+      quoteBasePrice: '',
       searchQuery: '',
       legs: normalized.target.legs.map((leg) => ({ ...leg }))
     };
@@ -238,8 +275,46 @@
     return String(alert && alert.name || '').trim();
   }
 
+  function buildQuoteAlertQuoteLabel(target) {
+    const quote = quoteById.get(Number(target && target.quoteId));
+    if (!quote) {
+      return `报价 #${String(target && target.quoteId || '--')}`;
+    }
+    if (isCexOrderbookChain(quote.chain)) {
+      return `(${formatChainLabel(quote.chain)}) ${quote.symbol || '--'}`;
+    }
+    return buildQuoteLabel(
+      quote.chain,
+      shortToken(quote.fromToken),
+      shortToken(quote.toToken)
+    );
+  }
+
+  function buildQuoteAlertRuleLine(target) {
+    if (!target || target.type !== 'quote') return '--';
+    if (target.ruleKind === 'targetAbove') {
+      return `总价 >= ${String(target.value != null ? target.value : '--')}`;
+    }
+    if (target.ruleKind === 'targetBelow') {
+      return `总价 <= ${String(target.value != null ? target.value : '--')}`;
+    }
+    if (target.ruleKind === 'percentUp') {
+      return `上涨 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
+    }
+    if (target.ruleKind === 'percentDown') {
+      return `下跌 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
+    }
+    return '--';
+  }
+
   function buildAlertSummaryLines(alert) {
     if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
+      if (alert && alert.target && alert.target.type === 'quote') {
+        return [
+          buildQuoteAlertQuoteLabel(alert.target),
+          buildQuoteAlertRuleLine(alert.target)
+        ];
+      }
       return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
         formatLeg(leg) {
           return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
@@ -371,6 +446,9 @@
   function getAlertPrimaryTitle(alert) {
     const note = getAlertDisplayTitle(alert);
     if (note) return note;
+    if (alert && alert.target && alert.target.type === 'quote') {
+      return '报价规则';
+    }
     if (alert && alert.target && alert.target.type === 'rule') {
       return alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则';
     }
@@ -389,16 +467,21 @@
   }
 
   function formatAlertMetaLine(alert) {
-    const typeLabel = alert && alert.target && alert.target.type === 'rule'
-      ? (alert.target.ruleKind === 'fixed' ? '固定' : '特殊')
-      : '路径';
+    const typeLabel = alert && alert.target && alert.target.type === 'quote'
+      ? '报价'
+      : alert && alert.target && alert.target.type === 'rule'
+        ? (alert.target.ruleKind === 'fixed' ? '固定' : '特殊')
+        : '路径';
     const triggerLabel = alert && alert.triggerMode === 'delayed'
       ? `⏱${Number(alert.confirmDelaySec || 0)}s`
       : '⚡立即';
     const statusLabel = alert && alert.enabled === false ? '⛔' : '✅';
+    const valueText = alert && alert.target && alert.target.type === 'quote'
+      ? String(alert.target.value != null ? alert.target.value : '--')
+      : `${String(alert && alert.thresholdBp != null ? alert.thresholdBp : '--')}bp`;
     return [
       `🏷️${typeLabel}`,
-      `🎯${String(alert && alert.thresholdBp != null ? alert.thresholdBp : '--')}bp`,
+      `🎯${valueText}`,
       triggerLabel,
       `❄️${String(alert && alert.cooldownSec != null ? alert.cooldownSec : '--')}s`,
       statusLabel
@@ -594,6 +677,18 @@
 
   function collectEditorTarget(draft = pageState.draft) {
     if (!draft) return null;
+    if (draft.sourceType === 'quote') {
+      const target = {
+        type: 'quote',
+        quoteId: Number(draft.selectedQuoteId),
+        ruleKind: draft.quoteRuleKind,
+        value: Number(draft.quoteValue)
+      };
+      if (draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown') {
+        target.basePrice = Number(draft.quoteBasePrice);
+      }
+      return target;
+    }
     if (draft.sourceType === 'fixed' || draft.sourceType === 'special') {
       return {
         type: 'rule',
@@ -651,10 +746,6 @@
   }
 
   function validateDraft(draft) {
-    const thresholdBp = draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
-    if (!Number.isFinite(thresholdBp)) {
-      return '收益阈值必须是合法数字';
-    }
     const confirmDelaySec = Number(draft.confirmDelaySec);
     if (!Number.isFinite(confirmDelaySec) || confirmDelaySec < 0) {
       return '延迟确认必须是大于等于 0 的数字';
@@ -662,6 +753,34 @@
     const cooldownSec = Number(draft.cooldownSec);
     if (!Number.isFinite(cooldownSec) || cooldownSec <= 0) {
       return '冷却时间必须大于 0';
+    }
+
+    if (draft.sourceType === 'quote') {
+      if (!quoteById.has(Number(draft.selectedQuoteId))) {
+        return '请选择有效的报价';
+      }
+      if (!['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(draft.quoteRuleKind)) {
+        return '请选择有效的报价规则';
+      }
+      if (!Number.isFinite(Number(draft.quoteValue))) {
+        return '报价阈值必须是合法数字';
+      }
+      if (
+        (draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown')
+        && (!Number.isFinite(Number(draft.quoteBasePrice)) || Number(draft.quoteBasePrice) <= 0)
+      ) {
+        return '百分比规则必须填写有效基准价';
+      }
+      const duplicateAlert = findDuplicateAlertForDraft(draft);
+      if (duplicateAlert) {
+        return `该路径报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
+      }
+      return '';
+    }
+
+    const thresholdBp = draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
+    if (!Number.isFinite(thresholdBp)) {
+      return '收益阈值必须是合法数字';
     }
 
     if (draft.sourceType === 'fixed' || draft.sourceType === 'special') {
@@ -699,7 +818,9 @@
 
   function buildAlertFromDraft() {
     const draft = pageState.draft;
-    const thresholdBp = draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
+    const thresholdBp = draft.sourceType === 'quote'
+      ? 0
+      : draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
     const alert = {
       id: draft.id || buildAlertId(),
       name: draft.name.trim(),
@@ -745,7 +866,9 @@
     return [
       getAlertDisplayTitle(alert),
       buildAlertSummary(alert),
-      alert.target && alert.target.type === 'rule'
+      alert.target && alert.target.type === 'quote'
+        ? '报价规则'
+        : alert.target && alert.target.type === 'rule'
         ? (alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则')
         : '路径'
     ].join(' ');
@@ -854,7 +977,49 @@
     `;
   }
 
+  function renderQuoteTargetEditor(draft) {
+    const quoteOptions = Array.from(quoteById.values()).map((quote) => {
+      const label = isCexOrderbookChain(quote.chain)
+        ? `(${formatChainLabel(quote.chain)}) ${quote.symbol || '--'}`
+        : buildQuoteLabel(quote.chain, shortToken(quote.fromToken), shortToken(quote.toToken));
+      return `<option value="${escapeHtml(String(quote.id))}" ${String(draft.selectedQuoteId || '') === String(quote.id) ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+    }).join('');
+
+    return `
+      <div class="form-group">
+        <label for="editor-quote-id">报价</label>
+        <select id="editor-quote-id">
+          <option value="">请选择</option>
+          ${quoteOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editor-quote-rule-kind">规则</label>
+        <select id="editor-quote-rule-kind">
+          <option value="targetAbove" ${draft.quoteRuleKind === 'targetAbove' ? 'selected' : ''}>总价高于</option>
+          <option value="targetBelow" ${draft.quoteRuleKind === 'targetBelow' ? 'selected' : ''}>总价低于</option>
+          <option value="percentUp" ${draft.quoteRuleKind === 'percentUp' ? 'selected' : ''}>相对基准上涨</option>
+          <option value="percentDown" ${draft.quoteRuleKind === 'percentDown' ? 'selected' : ''}>相对基准下跌</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editor-quote-value">${draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown' ? '阈值 (%)' : '阈值'}</label>
+        <input id="editor-quote-value" type="number" step="0.000001" value="${draft.quoteValue === '' ? '' : escapeHtml(String(draft.quoteValue))}">
+      </div>
+      ${(draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown') ? `
+        <div class="form-group">
+          <label for="editor-quote-base-price">基准价</label>
+          <input id="editor-quote-base-price" type="number" step="0.000001" value="${draft.quoteBasePrice === '' ? '' : escapeHtml(String(draft.quoteBasePrice))}">
+        </div>
+      ` : ''}
+    `;
+  }
+
   function renderSelectedLegs(draft) {
+    if (draft.sourceType === 'quote') {
+      const target = collectEditorTarget(draft);
+      return `<div class="rule-list"><div class="rule-item active">${escapeHtml(buildQuoteAlertQuoteLabel(target))}</div><div class="rule-item active">${escapeHtml(buildQuoteAlertRuleLine(target))}</div></div>`;
+    }
     if (draft.sourceType !== 'path') {
       const rule = findRule(draft.sourceType, draft.selectedRuleId);
       return rule
@@ -887,6 +1052,8 @@
     const dismissedTarget = findDismissedTargetForDraft(draft);
     const targetSummaryLines = draft.sourceType === 'path'
       ? ((draft.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol)).filter(Boolean))
+      : draft.sourceType === 'quote'
+        ? [buildQuoteAlertQuoteLabel(collectEditorTarget(draft)), buildQuoteAlertRuleLine(collectEditorTarget(draft))]
       : [((findRule(draft.sourceType, draft.selectedRuleId) || {}).title || '--')];
     const errorHtml = pageState.errorMessage
       ? `<div id="editor-error-slot" class="status-message error">${escapeHtml(pageState.errorMessage)}</div>`
@@ -920,15 +1087,18 @@
 
       <div class="type-tabs">
         <button type="button" class="type-tab${draft.sourceType === 'path' ? ' active' : ''}" data-editor-type="path">手工路径</button>
+        <button type="button" class="type-tab${draft.sourceType === 'quote' ? ' active' : ''}" data-editor-type="quote">报价规则</button>
         <button type="button" class="type-tab${draft.sourceType === 'fixed' ? ' active' : ''}" data-editor-type="fixed">固定规则</button>
         <button type="button" class="type-tab${draft.sourceType === 'special' ? ' active' : ''}" data-editor-type="special">特殊规则</button>
       </div>
 
       <div class="editor-grid">
         <div class="editor-pane">
-          ${draft.sourceType === 'path' ? `
-            ${renderCandidateSearchArea(draft)}
-          ` : renderRuleChoices(draft.sourceType, draft.selectedRuleId)}
+          ${draft.sourceType === 'path'
+            ? renderCandidateSearchArea(draft)
+            : draft.sourceType === 'quote'
+              ? renderQuoteTargetEditor(draft)
+              : renderRuleChoices(draft.sourceType, draft.selectedRuleId)}
         </div>
         <div class="editor-pane">
           <div class="editor-pane-title">已选路径</div>
@@ -937,10 +1107,12 @@
         </div>
         <div class="editor-pane editor-settings-pane">
           <div class="editor-pane-title">报警条件</div>
-          <div class="form-group">
-            <label for="editor-threshold">收益阈值 (bp)</label>
-            <input id="editor-threshold" type="number" step="0.1" value="${draft.thresholdBp === '' ? '' : escapeHtml(String(draft.thresholdBp))}">
-          </div>
+          ${draft.sourceType === 'quote' ? '' : `
+            <div class="form-group">
+              <label for="editor-threshold">收益阈值 (bp)</label>
+              <input id="editor-threshold" type="number" step="0.1" value="${draft.thresholdBp === '' ? '' : escapeHtml(String(draft.thresholdBp))}">
+            </div>
+          `}
           <div class="form-group">
             <label for="editor-trigger">触发方式</label>
             <select id="editor-trigger">
@@ -1252,6 +1424,10 @@
     if (target.id === 'editor-confirm-delay') pageState.draft.confirmDelaySec = Number(target.value || 0);
     if (target.id === 'editor-cooldown') pageState.draft.cooldownSec = Number(target.value || alertConfig.settings?.defaultCooldownSec || 180);
     if (target.id === 'editor-enabled') pageState.draft.enabled = target.checked;
+    if (target.id === 'editor-quote-id') pageState.draft.selectedQuoteId = target.value || '';
+    if (target.id === 'editor-quote-rule-kind') pageState.draft.quoteRuleKind = target.value || 'targetAbove';
+    if (target.id === 'editor-quote-value') pageState.draft.quoteValue = target.value === '' ? '' : Number(target.value);
+    if (target.id === 'editor-quote-base-price') pageState.draft.quoteBasePrice = target.value === '' ? '' : Number(target.value);
     if (pageState.errorMessage) clearEditorError();
     if (target.id === 'path-alert-search-input') {
       pageState.activeCandidateIndex = -1;
@@ -1261,12 +1437,19 @@
     if (target.id === 'editor-trigger') {
       syncEditorConfirmDelayState();
     }
+    if (target.id === 'editor-quote-rule-kind') {
+      rerenderEditorPreservingFocus(target);
+    }
   }
 
   function updateEditorType(sourceType) {
     if (!pageState.draft) return;
     pageState.draft.sourceType = sourceType;
     pageState.draft.selectedRuleId = '';
+    pageState.draft.selectedQuoteId = '';
+    pageState.draft.quoteRuleKind = 'targetAbove';
+    pageState.draft.quoteValue = '';
+    pageState.draft.quoteBasePrice = '';
     pageState.draft.searchQuery = '';
     pageState.filteredCandidates = [];
     pageState.activeCandidateIndex = -1;

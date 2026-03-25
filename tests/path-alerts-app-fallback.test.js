@@ -125,6 +125,18 @@ assert.strictEqual(
   'LBTC 回环'
 );
 
+assert.strictEqual(
+  sandbox.window.PathAlertsAppTestHooks.getAlertPrimaryTitle({
+    target: {
+      type: 'quote',
+      quoteId: 101,
+      ruleKind: 'targetAbove',
+      value: 0.100113
+    }
+  }),
+  '报价规则'
+);
+
 const alertMeta = sandbox.window.PathAlertsAppTestHooks.formatAlertMetaLine({
   target: { type: 'path' },
   thresholdBp: 1.2,
@@ -134,3 +146,11 @@ const alertMeta = sandbox.window.PathAlertsAppTestHooks.formatAlertMetaLine({
   enabled: false
 });
 assert.strictEqual(alertMeta, '🏷️路径 · 🎯1.2bp · ⏱13s · ❄️180s · ⛔');
+
+const quoteAlertMeta = sandbox.window.PathAlertsAppTestHooks.formatAlertMetaLine({
+  target: { type: 'quote', ruleKind: 'targetAbove', value: 0.100113 },
+  triggerMode: 'immediate',
+  cooldownSec: 180,
+  enabled: true
+});
+assert.strictEqual(quoteAlertMeta, '🏷️报价 · 🎯0.100113 · ⚡立即 · ❄️180s · ✅');

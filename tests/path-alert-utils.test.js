@@ -67,6 +67,20 @@ const normalizedConfig = normalizeAlertConfig({
           }
         ]
       }
+    },
+    {
+      id: 'quote-1',
+      name: '报价高于',
+      enabled: true,
+      triggerMode: 'delayed',
+      confirmDelaySec: '5',
+      cooldownSec: '180',
+      target: {
+        type: 'quote',
+        quoteId: '101',
+        ruleKind: 'targetAbove',
+        value: '0.100113'
+      }
     }
   ]
 });
@@ -82,6 +96,10 @@ assert.strictEqual(normalizedConfig.alerts[0].thresholdBp, 3.5);
 assert.strictEqual(normalizedConfig.alerts[0].confirmDelaySec, 8);
 assert.strictEqual(normalizedConfig.alerts[0].cooldownSec, 90);
 assert.strictEqual(normalizedConfig.alerts[0].target.legs[0].quoteId, 11);
+assert.strictEqual(normalizedConfig.alerts[1].target.type, 'quote');
+assert.strictEqual(normalizedConfig.alerts[1].target.quoteId, 101);
+assert.strictEqual(normalizedConfig.alerts[1].target.ruleKind, 'targetAbove');
+assert.strictEqual(normalizedConfig.alerts[1].target.value, 0.100113);
 
 const normalizedDismissedConfig = normalizeAlertConfig({
   dismissedTargets: [
@@ -137,6 +155,12 @@ const quoteStateById = new Map([
     toSymbol: 'cbBTC',
     lastRawPrice: 0.9996,
     inverseRawPrice: 1.0004
+  }],
+  [101, {
+    fromSymbol: 'BTCB',
+    toSymbol: 'syBTC',
+    lastRawPrice: 1.00115,
+    lastTotalAmountOut: 0.100115
   }]
 ]);
 
@@ -738,6 +762,80 @@ assert.strictEqual(ruleEval.available, true);
 assert.strictEqual(ruleEval.targetType, 'rule');
 assert.ok(Math.abs(ruleEval.profitBp - 3.4) < 1e-12);
 
+const quoteAboveEval = evaluatePathAlert({
+  id: 'quote-above',
+  name: '报价高于',
+  enabled: true,
+  triggerMode: 'immediate',
+  confirmDelaySec: 0,
+  cooldownSec: 300,
+  target: {
+    type: 'quote',
+    quoteId: 101,
+    ruleKind: 'targetAbove',
+    value: 0.100113
+  }
+}, { quoteStateById });
+assert.strictEqual(quoteAboveEval.available, true);
+assert.strictEqual(quoteAboveEval.targetType, 'quote');
+assert.strictEqual(quoteAboveEval.meetsTriggerCondition, true);
+assert.strictEqual(quoteAboveEval.currentValue, 0.100115);
+
+const quoteBelowEval = evaluatePathAlert({
+  id: 'quote-below',
+  name: '报价低于',
+  enabled: true,
+  triggerMode: 'immediate',
+  confirmDelaySec: 0,
+  cooldownSec: 300,
+  target: {
+    type: 'quote',
+    quoteId: 101,
+    ruleKind: 'targetBelow',
+    value: 0.1002
+  }
+}, { quoteStateById });
+assert.strictEqual(quoteBelowEval.available, true);
+assert.strictEqual(quoteBelowEval.meetsTriggerCondition, true);
+assert.strictEqual(quoteBelowEval.currentValue, 0.100115);
+
+const quotePercentUpEval = evaluatePathAlert({
+  id: 'quote-percent-up',
+  name: '上涨提醒',
+  enabled: true,
+  triggerMode: 'immediate',
+  confirmDelaySec: 0,
+  cooldownSec: 300,
+  target: {
+    type: 'quote',
+    quoteId: 101,
+    ruleKind: 'percentUp',
+    value: 0.1,
+    basePrice: 1
+  }
+}, { quoteStateById });
+assert.strictEqual(quotePercentUpEval.available, true);
+assert.strictEqual(quotePercentUpEval.meetsTriggerCondition, true);
+assert.ok(Math.abs(quotePercentUpEval.changePercent - 0.115) < 1e-12);
+assert.strictEqual(quotePercentUpEval.currentValue, 1.00115);
+
+const quotePercentMissingBaseEval = evaluatePathAlert({
+  id: 'quote-percent-missing-base',
+  name: '上涨提醒',
+  enabled: true,
+  triggerMode: 'immediate',
+  confirmDelaySec: 0,
+  cooldownSec: 300,
+  target: {
+    type: 'quote',
+    quoteId: 101,
+    ruleKind: 'percentUp',
+    value: 0.1
+  }
+}, { quoteStateById });
+assert.strictEqual(quotePercentMissingBaseEval.available, false);
+assert.strictEqual(quotePercentMissingBaseEval.status, 'unavailable');
+
 const immediateAlert = {
   id: 'immediate',
   name: '立即报警',
@@ -818,6 +916,30 @@ delayedRuntime = advancePathAlertRuntime(delayedAlert, delayedRuntime, {
 assert.strictEqual(delayedRuntime.shouldTrigger, false);
 assert.strictEqual(delayedRuntime.status, 'idle');
 assert.strictEqual(delayedRuntime.eligibleSince, null);
+
+const quoteRuntimeAlert = {
+  id: 'quote-runtime',
+  name: '报价高于',
+  enabled: true,
+  triggerMode: 'immediate',
+  confirmDelaySec: 0,
+  cooldownSec: 300,
+  target: {
+    type: 'quote',
+    quoteId: 101,
+    ruleKind: 'targetAbove',
+    value: 0.100113
+  }
+};
+let quoteRuntime = advancePathAlertRuntime(quoteRuntimeAlert, null, {
+  available: true,
+  targetType: 'quote',
+  meetsTriggerCondition: true,
+  currentValue: 0.100115
+}, 20_000);
+assert.strictEqual(quoteRuntime.shouldTrigger, true);
+assert.strictEqual(quoteRuntime.status, 'cooldown');
+assert.strictEqual(quoteRuntime.cooldownUntil, 320_000);
 
 assert.strictEqual(isPathAlertConfirmDelayDisabled('immediate'), true);
 assert.strictEqual(isPathAlertConfirmDelayDisabled('delayed'), false);

@@ -427,7 +427,7 @@
         .modal-box { background: var(--module-bg-color); padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); width: 90%; max-width: 400px; }
         .modal-box h3 { margin-top: 0; color: var(--text-color); } .modal-box .form-group { margin-bottom: 15px; }
         .modal-box label { display: block; margin-bottom: 5px; color: var(--text-color-light); font-weight: 500;}
-        .modal-box input, .modal-box select { width: calc(100% - 22px); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); }
+        .modal-box input, .modal-box select { width: calc(100% - 22px); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
         .settings-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -460,6 +460,26 @@
             border: 1px dashed var(--border-color);
         }
         .base-price-value { font-weight: bold; color: var(--text-color); font-family: monospace; font-size: 1.1em; }
+        .quote-settings-subtitle {
+            margin: -8px 0 12px;
+            color: var(--text-color-light);
+            font-size: 0.9em;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .quote-alert-inline-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .quote-alert-inline-grid .form-group {
+            margin-bottom: 0;
+        }
+        .quote-alert-inline-grid input,
+        .quote-alert-inline-grid select {
+            width: 100%;
+        }
 
         .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
         .modal-buttons button { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
@@ -515,6 +535,14 @@
         }
         .alert-modal-footer .quote-settings-actions button {
             padding: 10px 12px;
+        }
+        @media (max-width: 560px) {
+            .modal-box {
+                padding: 22px;
+            }
+            .quote-alert-inline-grid {
+                gap: 8px;
+            }
         }
 
         #alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 400px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
@@ -1368,6 +1396,7 @@
     <div class="modal-overlay" id="alert-modal">
         <div class="modal-box">
             <h3 id="modal-title">设置</h3>
+            <div id="modal-subtitle" class="quote-settings-subtitle"></div>
             <div id="quote-token-addresses" class="quote-token-addresses" style="display:none;">
                 <div id="quote-from-token-line" class="quote-token-address-line"></div>
                 <div id="quote-to-token-line" class="quote-token-address-line"></div>
@@ -1405,16 +1434,37 @@
                 <label for="reset-base-price">更新基准价格为当前价格</label>
             </div>
 
-            <div class="form-group">
-                <label>上涨超过 (%) <span id="alert-up-base-display" style="font-weight: normal; color: var(--text-color-light); font-size: 0.85em; margin-left: 8px;"></span></label>
-                <input type="number" id="alert-percent-up" placeholder="例如: 0.1">
+            <div class="quote-alert-inline-grid">
+                <div class="form-group">
+                    <label>上涨超过 (%) <span id="alert-up-base-display" style="font-weight: normal; color: var(--text-color-light); font-size: 0.85em; margin-left: 8px;"></span></label>
+                    <input type="number" id="alert-percent-up" placeholder="例如: 0.1">
+                </div>
+                <div class="form-group">
+                    <label>下跌超过 (%) <span id="alert-down-base-display" style="font-weight: normal; color: var(--text-color-light); font-size: 0.85em; margin-left: 8px;"></span></label>
+                    <input type="number" id="alert-percent-down" placeholder="例如: 0.1">
+                </div>
+            </div>
+            <div class="quote-alert-inline-grid">
+                <div class="form-group"><label>价格高于</label><input type="number" id="alert-target-above" placeholder="例如: 70000"></div>
+                <div class="form-group"><label>价格低于</label><input type="number" id="alert-target-below" placeholder="例如: 65000"></div>
             </div>
             <div class="form-group">
-                <label>下跌超过 (%) <span id="alert-down-base-display" style="font-weight: normal; color: var(--text-color-light); font-size: 0.85em; margin-left: 8px;"></span></label>
-                <input type="number" id="alert-percent-down" placeholder="例如: 0.1">
+                <label for="alert-trigger-mode">触发方式</label>
+                <select id="alert-trigger-mode">
+                    <option value="immediate">立即提醒</option>
+                    <option value="delayed">延迟确认</option>
+                </select>
             </div>
-            <div class="form-group"><label>价格高于</label><input type="number" id="alert-target-above" placeholder="例如: 70000"></div>
-            <div class="form-group"><label>价格低于</label><input type="number" id="alert-target-below" placeholder="例如: 65000"></div>
+            <div class="quote-alert-inline-grid">
+                <div class="form-group">
+                    <label for="alert-confirm-delay">延迟确认 (秒)</label>
+                    <input type="number" id="alert-confirm-delay" placeholder="例如: 13" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="alert-cooldown">冷却时间 (秒)</label>
+                    <input type="number" id="alert-cooldown" placeholder="例如: 120" min="1">
+                </div>
+            </div>
             <div class="alert-modal-footer">
                 <div class="quote-settings-actions">
                     <button id="modal-swap-quote" type="button">反转价格对</button>
@@ -1593,6 +1643,7 @@
     <script src="arb-rule-snapshot-utils.js"></script>
     <script src="path-alert-utils.js"></script>
     <script src="path-alert-notification-utils.js"></script>
+    <script src="quote-alert-config-utils.js"></script>
     <script src="path-alert-page-utils.js"></script>
     <script src="path-alert-rule-definitions.js"></script>
     <script src="quote-calculator.js"></script>
