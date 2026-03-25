@@ -105,11 +105,13 @@
   function buildLegacyQuoteAlertRemotePayload(options = {}) {
     const chainName = String(options.chainName || '').trim() || '未知链';
     const label = String(options.label || '').trim();
+    const currentValueText = String(options.currentValueText || '').trim();
     const message = String(options.message || '').trim();
     const bodyLines = [];
+    const heading = [label, currentValueText].filter(Boolean).join('  ');
 
-    if (label) {
-      bodyLines.push(label);
+    if (heading) {
+      bodyLines.push(heading);
     }
     if (message) {
       bodyLines.push(message);

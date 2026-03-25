@@ -4516,7 +4516,9 @@
             }
 
             if (!state.logShown && alertMessage) {
-                triggerAlert(quote, alertMessage);
+                triggerAlert(quote, alertMessage, {
+                    currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, newTotalAmountOut)
+                });
                 state.logShown = true;
             }
         } else {
@@ -4552,17 +4554,22 @@
         updateAlertSoundState();
     }
 
-    function triggerAlert(quote, message) {
+    function buildLegacyQuoteAlertCurrentValueText(quote, currentValue) {
+        if (!quote || typeof currentValue !== 'number' || !Number.isFinite(currentValue)) return '';
+        return `${formatDetailNumber(quote.amount || 1)} -> ${formatDetailNumber(currentValue)}`;
+    }
+
+    function triggerAlert(quote, message, options = {}) {
         const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
         const monitorState = quoteMonitorState.get(quote.id) || {};
         let label = isCexOrderbookChain(quote.chain) ? quote.symbol : 
                     (monitorState.fromSymbol && monitorState.toSymbol ? `${monitorState.fromSymbol}/${monitorState.toSymbol}` : 
                     `${quote.fromToken.slice(0,4)}.../${quote.toToken.slice(0,4)}...`);
         appendAlertLogEntry(displayName, message, label);
-        sendLegacyQuoteWebhookNotification(displayName, label, message);
+        sendLegacyQuoteWebhookNotification(displayName, label, message, options.currentValueText || '');
     }
 
-    function buildLegacyQuoteAlertRemotePayload(displayName, label, message) {
+    function buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText) {
         if (
             window.PathAlertNotificationUtils
             && typeof window.PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload === 'function'
@@ -4570,18 +4577,19 @@
             return window.PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({
                 chainName: displayName,
                 label,
+                currentValueText,
                 message
             });
         }
         return {
             title: `[监控提醒] ${displayName || '未知链'}`,
-            body: [label, message].filter(Boolean).join('\n') || '监控命中'
+            body: [[label, currentValueText].filter(Boolean).join('  '), message].filter(Boolean).join('\n') || '监控命中'
         };
     }
 
-    async function sendLegacyQuoteWebhookNotification(displayName, label, message) {
+    async function sendLegacyQuoteWebhookNotification(displayName, label, message, currentValueText) {
         if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
-        const payload = buildLegacyQuoteAlertRemotePayload(displayName, label, message);
+        const payload = buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText);
         try {
             const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
                 method: 'POST',

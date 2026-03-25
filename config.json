@@ -264,7 +264,7 @@
         {
           "id": 1760021761184,
           "chain": "base",
-          "amount": 1,
+          "amount": 0.5,
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
           "preferredSource": "Kyber",
@@ -443,7 +443,8 @@
           "amount": 0.1,
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-          "toToken": "0x004E9C3EF86bc1ca1f0bB5C7662861Ee93350568"
+          "toToken": "0x004E9C3EF86bc1ca1f0bB5C7662861Ee93350568",
+          "paused": true
         },
         {
           "id": 1766414759640,
@@ -452,7 +453,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x93919784C523f39CACaa98Ee0a9d96c3F32b593e",
-          "showInverse": true
+          "showInverse": true,
+          "paused": true
         },
         {
           "id": 1766484079028,
@@ -461,7 +463,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0xC3827A4BC8224ee2D116637023b124CED6db6e90",
-          "showInverse": false
+          "showInverse": false,
+          "paused": true
         },
         {
           "id": 1771925767916,
@@ -679,7 +682,7 @@
           "toToken": "0x01a8b61E7b03891a736B5DF865E0EF9C511850ad",
           "showInverse": false,
           "alerts": {
-            "targetAbove": 0.100114
+            "targetAbove": 0.100126
           }
         },
         {
@@ -691,7 +694,7 @@
           "toToken": "0xA67c48F86Fc6d0176Dca38883CA8153C76a532c7",
           "showInverse": false,
           "alerts": {
-            "targetAbove": 0.100113
+            "targetAbove": 0.100126
           }
         }
       ]

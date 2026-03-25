@@ -116,23 +116,25 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   buildLegacyQuoteAlertRemotePayload({
     chainName: 'Arbitrum',
-    label: 'WBTC/USDT',
+    label: 'BTCB/syBTC',
+    currentValueText: '0.1 -> 0.100115',
     message: '价格相比基准(100.000000) 上涨 0.250% (>0.1%)'
   }),
   {
     title: '[监控提醒] Arbitrum',
-    body: 'WBTC/USDT\n价格相比基准(100.000000) 上涨 0.250% (>0.1%)'
+    body: 'BTCB/syBTC  0.1 -> 0.100115\n价格相比基准(100.000000) 上涨 0.250% (>0.1%)'
   }
 );
 
 assert.deepStrictEqual(
   buildLegacyQuoteAlertRemotePayload({
     chainName: 'Bybit',
-    label: '',
+    label: 'BTCB/syBTC',
+    currentValueText: '0.1 -> 0.100115',
     message: '总价已达到或超过目标 70000'
   }),
   {
     title: '[监控提醒] Bybit',
-    body: '总价已达到或超过目标 70000'
+    body: 'BTCB/syBTC  0.1 -> 0.100115\n总价已达到或超过目标 70000'
   }
 );
