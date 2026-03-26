@@ -105,7 +105,7 @@
     {
       id: 'special:wbtc-bybit',
       title: 'WBTC <-> BYBIT',
-      type: 'wbtc-bybit',
+      type: 'pair-bybit',
       categoryName: 'WBTC监控',
       dexBase: 'cbBTC',
       dexQuote: 'WBTC',
@@ -113,6 +113,20 @@
       cexChain: 'Bybit',
       minNetProfit: 0.0001,
       minNetProfitBp: 1.5,
+      alertConfirmDelaySec: 13
+    },
+    {
+      id: 'special:usde-bybit',
+      title: 'USDe <-> BYBIT',
+      type: 'pair-bybit',
+      categoryName: 'USD监控',
+      dexBase: 'USDT',
+      dexQuote: 'USDe',
+      cexQuote: 'USDT',
+      cexChain: 'Bybit',
+      minNetProfit: 8,
+      minNetProfitBp: 0,
+      withdrawFee: 0,
       alertConfirmDelaySec: 13
     }
   ]);

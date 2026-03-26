@@ -7,6 +7,12 @@ const {
   formatRequestAmountDisplay,
   summarizeResults
 } = require('./velora-market-api');
+const {
+  createProxyAgentCache,
+  getAgentForProxy,
+  parseProxyList,
+  selectProxyByIndex
+} = require('./rate-test-proxy-utils');
 
 function parseArgs(argv) {
   const result = {};
@@ -26,6 +32,13 @@ function parseArgs(argv) {
   }
   return result;
 }
+
+/*
+ * 参数补充:
+ * --proxies <list> 代理列表，逗号分隔。支持 name=url 或 url
+ * 示例:
+ * --proxies hk01=http://127.0.0.1:18081,hk02=http://127.0.0.1:18082
+ */
 
 function toInt(value, defaultValue) {
   const num = Number.parseInt(value, 10);
@@ -54,16 +67,19 @@ function formatResultLine(result, index, total) {
   const amountText = result.destAmountDisplay
     ? `${result.request.destToken.symbol}=${result.destAmountDisplay}`
     : result.errorMessage || '-';
+  const proxyText = result.proxyId ? ` proxy=${result.proxyId}` : '';
 
-  return `[${nowTime()}] ${index}/${total} ${requestText} ${statusLabel} status=${result.status} ms=${result.ms} ${amountText}`;
+  return `[${nowTime()}] ${index}/${total} ${requestText} ${statusLabel} status=${result.status} ms=${result.ms}${proxyText} ${amountText}`;
 }
 
-async function runScenario({ requests, total, intervalMs, timeoutMs, headers }) {
+async function runScenario({ requests, total, intervalMs, timeoutMs, headers, proxies }) {
   const startedAt = Date.now();
   const tasks = [];
+  const proxyAgents = await createProxyAgentCache(proxies);
 
   for (let i = 0; i < total; i += 1) {
     const request = requests[i % requests.length];
+    const proxy = selectProxyByIndex(proxies, i);
 
     tasks.push((async () => {
       const due = startedAt + i * intervalMs;
@@ -72,7 +88,12 @@ async function runScenario({ requests, total, intervalMs, timeoutMs, headers }) 
         await sleep(waitMs);
       }
 
-      const result = await fetchPriceQuote(request, { timeoutMs, headers });
+      const result = await fetchPriceQuote(request, {
+        timeoutMs,
+        headers,
+        agent: getAgentForProxy(proxy, proxyAgents)
+      });
+      result.proxyId = proxy ? proxy.id : 'direct';
       console.log(formatResultLine(result, i + 1, total));
       return result;
     })());
@@ -88,6 +109,7 @@ async function main() {
   const timeoutMs = toInt(args['timeout-ms'], 10000);
   const requests = buildDefaultQuoteRequests();
   const headers = {};
+  const proxies = parseProxyList(args.proxies || '');
 
   if (args['x-partner']) {
     headers['X-Partner'] = args['x-partner'];
@@ -108,6 +130,7 @@ async function main() {
   console.log('intervalMs:', intervalMs);
   console.log('timeoutMs:', timeoutMs);
   console.log('pairs:', requests.length);
+  console.log('proxies:', proxies.length > 0 ? proxies.map((item) => `${item.label}=${item.url}`).join(', ') : 'direct');
   if (headers['X-Partner']) {
     console.log('xPartner:', headers['X-Partner']);
   }
@@ -120,7 +143,8 @@ async function main() {
     total,
     intervalMs,
     timeoutMs,
-    headers
+    headers,
+    proxies
   });
 
   const summary = summarizeResults(results);

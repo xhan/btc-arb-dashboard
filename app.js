@@ -863,7 +863,7 @@
             dexQuote: 'USDe',
             cexQuote: 'USDT',
             cexChain: 'Bybit',
-            minNetProfit: 10,
+            minNetProfit: 8,
             minNetProfitBp: 0,
             withdrawFee: 0,
             alertConfirmDelaySec: 13

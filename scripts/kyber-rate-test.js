@@ -15,15 +15,24 @@
  * --rps <n>          请求速率（每秒请求数），默认: 2
  * --cnt <n>          请求总数，默认: 60
  * --x-client-id <id> X-Client-Id，默认: xh-quote-dashboard
+ * --proxies <list>   代理列表，逗号分隔。支持 name=url 或 url
  *
  * 示例:
  * node scripts/build-kyber-urls.js
  * node scripts/kyber-rate-test.js --rps 3 --cnt 120 --x-client-id kyber-client-quote
+ * node scripts/kyber-rate-test.js --rps 3 --cnt 120 --proxies hk01=http://127.0.0.1:18081,hk02=http://127.0.0.1:18082
  */
 
+const fetchLib = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 const { readUrlsJsonFile } = require('./kyber-url-list');
+const {
+  createProxyAgentCache,
+  getAgentForProxy,
+  parseProxyList,
+  selectProxyByIndex
+} = require('./rate-test-proxy-utils');
 
 function parseArgs(argv) {
   const result = {};
@@ -51,13 +60,13 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function sendRequest(url, headers, timeoutMs) {
+async function sendRequest(url, headers, timeoutMs, agent) {
   const startedAt = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, { headers, signal: controller.signal });
+    const response = await fetchLib(url, { headers, signal: controller.signal, agent });
     const text = await response.text();
     let msg = '';
 
@@ -86,13 +95,15 @@ async function sendRequest(url, headers, timeoutMs) {
   }
 }
 
-async function runScenario({ rps, total, urls, clientId, timeoutMs }) {
+async function runScenario({ rps, total, urls, clientId, timeoutMs, proxies }) {
   const intervalMs = Math.max(1, Math.round(1000 / rps));
   const startedAt = Date.now();
   const tasks = [];
+  const proxyAgents = await createProxyAgentCache(proxies);
 
   for (let i = 0; i < total; i += 1) {
     const url = urls[i % urls.length];
+    const proxy = selectProxyByIndex(proxies, i);
 
     tasks.push((async () => {
       const due = startedAt + i * intervalMs;
@@ -103,18 +114,24 @@ async function runScenario({ rps, total, urls, clientId, timeoutMs }) {
         'X-Client-Id': clientId
       };
 
-      return sendRequest(url, headers, timeoutMs);
+      const result = await sendRequest(url, headers, timeoutMs, getAgentForProxy(proxy, proxyAgents));
+      return {
+        ...result,
+        proxyId: proxy ? proxy.id : 'direct'
+      };
     })());
   }
 
   const results = await Promise.all(tasks);
   const statusCount = {};
   const failByReason = {};
+  const byProxy = {};
 
   for (const r of results) {
     statusCount[r.status] = (statusCount[r.status] || 0) + 1;
+    byProxy[r.proxyId] = (byProxy[r.proxyId] || 0) + 1;
     if (!r.ok) {
-      const key = `${r.status}:${r.msg}`;
+      const key = `${r.proxyId}:${r.status}:${r.msg}`;
       failByReason[key] = (failByReason[key] || 0) + 1;
     }
   }
@@ -128,6 +145,7 @@ async function runScenario({ rps, total, urls, clientId, timeoutMs }) {
     total,
     avgMs,
     statusCount,
+    byProxy,
     failCount: fail.length,
     failRate: Number((fail.length / Math.max(1, results.length)).toFixed(4)),
     failByReason,
@@ -141,6 +159,7 @@ async function main() {
   const total = toInt(args.cnt, 60);
   const timeoutMs = 8000;
   const clientId = args['x-client-id'] || 'xh-quote-dashboard';
+  const proxies = parseProxyList(args.proxies || '');
   const urlsPath = path.resolve('scripts/urls.json');
   const urls = readUrlsJsonFile(fs, urlsPath);
 
@@ -154,6 +173,7 @@ async function main() {
   console.log('--- Kyber URL List Rate Test ---');
   console.log('urls:', urlsPath);
   console.log('clientId:', clientId);
+  console.log('proxies:', proxies.length > 0 ? proxies.map((item) => `${item.label}=${item.url}`).join(', ') : 'direct');
   console.log('usableUrls:', urls.length);
   console.log('rps:', rps);
   console.log('cnt:', total);
@@ -163,12 +183,14 @@ async function main() {
     total,
     urls,
     clientId,
-    timeoutMs
+    timeoutMs,
+    proxies
   });
 
   console.log('\n== result ==');
   console.log('intervalMs:', result.intervalMs, 'total:', result.total, 'avgMs:', result.avgMs);
   console.log('statusCount:', result.statusCount);
+  console.log('byProxy:', result.byProxy);
   console.log('failCount:', result.failCount, 'failRate:', result.failRate);
 
   if (result.failCount > 0) {

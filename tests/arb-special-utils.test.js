@@ -157,3 +157,68 @@ assert.strictEqual(lowBpOpportunities.length, 1);
 assert.ok(lowBpOpportunities[0].stats.primary.netProfit > 0.0001);
 assert.ok(lowBpOpportunities[0].stats.primary.netProfitBp < 1.5);
 assert.strictEqual(lowBpOpportunities[0].alert, false);
+
+const usdeRules = [
+  {
+    id: 'special:usde-bybit',
+    title: 'USDe <-> BYBIT',
+    type: 'pair-bybit',
+    dexBase: 'USDT',
+    dexQuote: 'USDe',
+    cexQuote: 'USDT',
+    cexChain: 'Bybit',
+    withdrawFee: 0,
+    minNetProfit: 8,
+    minNetProfitBp: 0,
+    alertConfirmDelaySec: 13,
+    maxBookLevels: 10
+  }
+];
+
+const usdeQuotes = [
+  { id: 201, chain: 'ethereum', showInverse: true },
+  { id: 202, chain: 'Bybit', showInverse: true }
+];
+
+const usdeQuoteStateById = new Map([
+  [201, {
+    fromSymbol: 'USDT',
+    toSymbol: 'USDe',
+    lastRawPrice: 1.002,
+    inverseRawPrice: 0.998003992
+  }],
+  [202, {
+    fromSymbol: 'USDe',
+    toSymbol: 'USDT',
+    cexOrderbook: {
+      bestBidPrice: 0.9998,
+      bestBidSize: 10000,
+      bestAskPrice: 1.0002,
+      bestAskSize: 10000,
+      bidsTopDepth: [
+        { price: 0.9998, size: 8000 },
+        { price: 0.9996, size: 6000 }
+      ],
+      asksTopDepth: [
+        { price: 1.0002, size: 5000 },
+        { price: 1.0004, size: 5000 }
+      ]
+    }
+  }]
+]);
+
+const usdeOpportunities = buildSpecialArbOpportunities({
+  rules: usdeRules,
+  quotes: usdeQuotes,
+  quoteStateById: usdeQuoteStateById,
+  aliasRules: null
+});
+
+assert.strictEqual(usdeOpportunities.length, 1);
+assert.strictEqual(usdeOpportunities[0].ruleId, 'special:usde-bybit');
+assert.strictEqual(usdeOpportunities[0].label, 'USDe <-> BYBIT');
+assert.strictEqual(usdeOpportunities[0].direction, 'eth-to-bybit-bid');
+assert.strictEqual(usdeOpportunities[0].alert, true);
+assert.ok(usdeOpportunities[0].stats.primary.netProfit > 8);
+assert.ok(usdeOpportunities[0].display_message.includes('（ETH）USDT -> USDe'));
+assert.ok(usdeOpportunities[0].display_message.includes('（Bybit）USDe -> USDT'));

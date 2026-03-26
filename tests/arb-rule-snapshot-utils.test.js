@@ -27,8 +27,14 @@ const snapshot = buildArbRuleSnapshot({
     {
       id: 'special:wbtc-bybit',
       title: 'WBTC <-> BYBIT',
-      type: 'wbtc-bybit',
+      type: 'pair-bybit',
       categoryName: 'WBTC监控'
+    },
+    {
+      id: 'special:usde-bybit',
+      title: 'USDe <-> BYBIT',
+      type: 'pair-bybit',
+      categoryName: 'USD监控'
     }
   ],
   allEdgesWithRules: fixedEdges,
@@ -40,7 +46,8 @@ const snapshot = buildArbRuleSnapshot({
     [4, { categoryName: 'WBTC监控' }]
   ]),
   quotesByCategoryName: new Map([
-    ['WBTC监控', [{ id: 101, chain: 'Bybit' }]]
+    ['WBTC监控', [{ id: 101, chain: 'Bybit' }]],
+    ['USD监控', [{ id: 202, chain: 'Bybit' }]]
   ]),
   quoteStateById: new Map([
     [101, {
@@ -49,6 +56,14 @@ const snapshot = buildArbRuleSnapshot({
       cexOrderbook: {
         bestBidPrice: 0.9997,
         bestAskPrice: 1.0003
+      }
+    }],
+    [202, {
+      fromSymbol: 'USDe',
+      toSymbol: 'USDT',
+      cexOrderbook: {
+        bestBidPrice: 0.9999,
+        bestAskPrice: 1.0002
       }
     }]
   ]),
@@ -61,15 +76,29 @@ const snapshot = buildArbRuleSnapshot({
   },
   arbSpecialUtils: {
     buildSpecialArbOpportunities() {
+      const rule = arguments[0].rules[0];
+      if (rule.id === 'special:wbtc-bybit') {
+        return [{
+          ruleId: 'special:wbtc-bybit',
+          label: 'WBTC <-> BYBIT',
+          cycle: {
+            legs: [
+              { from: 'cbBTC', to: 'WBTC', chain: 'arbitrum', rate: 1.002 },
+              { from: 'WBTC', to: 'BTC', chain: 'Bybit', rate: 0.9997 }
+            ],
+            profitRate: 0.0016994
+          }
+        }];
+      }
       return [{
-        ruleId: 'special:wbtc-bybit',
-        label: 'WBTC <-> BYBIT',
+        ruleId: 'special:usde-bybit',
+        label: 'USDe <-> BYBIT',
         cycle: {
           legs: [
-            { from: 'cbBTC', to: 'WBTC', chain: 'arbitrum', rate: 1.002 },
-            { from: 'WBTC', to: 'BTC', chain: 'Bybit', rate: 0.9997 }
+            { from: 'USDT', to: 'USDe', chain: 'ethereum', rate: 1.0015 },
+            { from: 'USDe', to: 'USDT', chain: 'Bybit', rate: 0.9999 }
           ],
-          profitRate: 0.0016994
+          profitRate: 0.00139985
         }
       }];
     }
@@ -79,8 +108,9 @@ const snapshot = buildArbRuleSnapshot({
 assert.strictEqual(snapshot.fixedResults.length, 1);
 assert.strictEqual(snapshot.fixedResults[0].cycles.length, 2);
 assert.strictEqual(snapshot.fixedByRuleId['fixed:wbtc-eth-arb'][0].legs[0].chain, 'arbitrum');
-assert.strictEqual(snapshot.specialResults.length, 1);
+assert.strictEqual(snapshot.specialResults.length, 2);
 assert.strictEqual(snapshot.specialByRuleId['special:wbtc-bybit'][0].ruleId, 'special:wbtc-bybit');
+assert.strictEqual(snapshot.specialByRuleId['special:usde-bybit'][0].ruleId, 'special:usde-bybit');
 
 const snapshotDefaultLimit = buildArbRuleSnapshot({
   fixedRules: [

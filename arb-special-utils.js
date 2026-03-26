@@ -5,7 +5,7 @@
   }
   root.ArbSpecialUtils = factory(root.ArbPaths);
 }(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi) {
-  const DEFAULT_WBTC_BYBIT_RULE_CONFIG = Object.freeze({
+  const DEFAULT_BYBIT_PAIR_RULE_CONFIG = Object.freeze({
     minNetProfit: 0.0001,
     minNetProfitBp: 1.5,
     alertConfirmDelaySec: 13,
@@ -38,6 +38,11 @@
   function toPositiveNumber(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  }
+
+  function toNonNegativeNumber(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
   }
 
   function formatNumber(value, decimals = 6) {
@@ -178,15 +183,15 @@
     }
   }
 
-  class WbtcBybitSpecialRuleRunner extends BaseSpecialRuleRunner {
+  class BybitPairSpecialRuleRunner extends BaseSpecialRuleRunner {
     constructor(rule) {
       super(rule);
-      this.minNetProfit = toPositiveNumber(rule.minNetProfit, DEFAULT_WBTC_BYBIT_RULE_CONFIG.minNetProfit);
-      this.minNetProfitBp = toPositiveNumber(rule.minNetProfitBp, DEFAULT_WBTC_BYBIT_RULE_CONFIG.minNetProfitBp);
-      this.alertConfirmDelaySec = toPositiveNumber(rule.alertConfirmDelaySec, DEFAULT_WBTC_BYBIT_RULE_CONFIG.alertConfirmDelaySec);
-      this.alertCooldownSec = toPositiveNumber(rule.alertCooldownSec, DEFAULT_WBTC_BYBIT_RULE_CONFIG.alertCooldownSec);
-      this.withdrawFee = toPositiveNumber(rule.withdrawFee, DEFAULT_WBTC_BYBIT_RULE_CONFIG.withdrawFee);
-      this.maxBookLevels = toPositiveNumber(rule.maxBookLevels, DEFAULT_WBTC_BYBIT_RULE_CONFIG.maxBookLevels);
+      this.minNetProfit = toNonNegativeNumber(rule.minNetProfit, DEFAULT_BYBIT_PAIR_RULE_CONFIG.minNetProfit);
+      this.minNetProfitBp = toNonNegativeNumber(rule.minNetProfitBp, DEFAULT_BYBIT_PAIR_RULE_CONFIG.minNetProfitBp);
+      this.alertConfirmDelaySec = toNonNegativeNumber(rule.alertConfirmDelaySec, DEFAULT_BYBIT_PAIR_RULE_CONFIG.alertConfirmDelaySec);
+      this.alertCooldownSec = toNonNegativeNumber(rule.alertCooldownSec, DEFAULT_BYBIT_PAIR_RULE_CONFIG.alertCooldownSec);
+      this.withdrawFee = toNonNegativeNumber(rule.withdrawFee, DEFAULT_BYBIT_PAIR_RULE_CONFIG.withdrawFee);
+      this.maxBookLevels = toPositiveNumber(rule.maxBookLevels, DEFAULT_BYBIT_PAIR_RULE_CONFIG.maxBookLevels);
     }
 
     buildDirectionResult(options = {}) {
@@ -244,8 +249,8 @@
       const netProfitBp = netProfitRate * 10000;
       const weightedCexRate = weightedCexRateNotional / totalInput;
       const directionLabel = direction === 'eth-to-bybit-bid'
-        ? 'ETH cbBTC->WBTC + Bybit BID'
-        : 'Bybit ASK -> ETH WBTC->cbBTC';
+        ? `ETH ${dexLeg.from}->${dexLeg.to} + Bybit BID`
+        : `Bybit ASK -> ETH ${dexLeg.from}->${dexLeg.to}`;
 
       return {
         direction,
@@ -446,8 +451,8 @@
   function createSpecialRuleRunner(rule) {
     if (!rule || typeof rule !== 'object') return null;
     const type = String(rule.type || '').trim();
-    if (type === 'wbtc-bybit' || type === 'dex-cex') {
-      return new WbtcBybitSpecialRuleRunner(rule);
+    if (type === 'pair-bybit' || type === 'wbtc-bybit' || type === 'dex-cex') {
+      return new BybitPairSpecialRuleRunner(rule);
     }
     return null;
   }

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { FIXED_PATH_RULES } = require('../path-alert-rule-definitions');
+const { FIXED_PATH_RULES, SPECIAL_ARB_RULES } = require('../path-alert-rule-definitions');
 
 function byId(id) {
   return FIXED_PATH_RULES.find((rule) => rule.id === id);
@@ -61,3 +61,14 @@ assert.ok(wstEth);
 assert.strictEqual(wstEth.base, 'wstETH');
 assert.strictEqual(wstEth.quote, 'WETH');
 assert.deepStrictEqual(wstEth.categoryNames, ['ETH监控']);
+
+const usdeBybit = SPECIAL_ARB_RULES.find((rule) => rule.id === 'special:usde-bybit');
+assert.ok(usdeBybit);
+assert.strictEqual(usdeBybit.title, 'USDe <-> BYBIT');
+assert.strictEqual(usdeBybit.type, 'pair-bybit');
+assert.strictEqual(usdeBybit.categoryName, 'USD监控');
+assert.strictEqual(usdeBybit.dexBase, 'USDT');
+assert.strictEqual(usdeBybit.dexQuote, 'USDe');
+assert.strictEqual(usdeBybit.cexQuote, 'USDT');
+assert.strictEqual(usdeBybit.minNetProfit, 8);
+assert.strictEqual(usdeBybit.minNetProfitBp, 0);

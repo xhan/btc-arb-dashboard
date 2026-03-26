@@ -122,8 +122,9 @@ function buildDefaultQuoteRequests() {
   }));
 }
 
-function getFetchImpl(customFetch) {
+function getFetchImpl(customFetch, options = {}) {
   if (typeof customFetch === 'function') return customFetch;
+  if (options.agent) return fetchLib;
   if (typeof fetch === 'function') return fetch.bind(globalThis);
   return fetchLib;
 }
@@ -154,7 +155,7 @@ function formatRequestAmountDisplay(request) {
 }
 
 async function fetchPriceQuote(request, options = {}) {
-  const fetchImpl = getFetchImpl(options.fetchImpl);
+  const fetchImpl = getFetchImpl(options.fetchImpl, options);
   const controller = new AbortController();
   const timeoutMs = Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : 10000;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -165,7 +166,8 @@ async function fetchPriceQuote(request, options = {}) {
   try {
     const response = await fetchImpl(url, {
       headers,
-      signal: controller.signal
+      signal: controller.signal,
+      agent: options.agent
     });
     const text = await response.text();
     let data = null;
