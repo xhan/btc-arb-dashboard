@@ -1,6 +1,10 @@
 const assert = require('assert');
 
-const { filterEdgesForFixedRule } = require('../arb-fixed-utils');
+const {
+  buildFixedRuleEdgeIndex,
+  resolveEdgesForFixedRule,
+  filterEdgesForFixedRule
+} = require('../arb-fixed-utils');
 
 const rule = {
   title: 'WBTC ETH <-> ARB',
@@ -27,3 +31,30 @@ assert.ok(filtered.some((edge) => edge.quoteId === 1));
 assert.ok(!filtered.some((edge) => edge.quoteId === 2));
 assert.ok(filtered.some((edge) => edge.quoteId === 3));
 assert.ok(filtered.some((edge) => edge.rule === true));
+
+const edgeIndex = buildFixedRuleEdgeIndex(edges, quoteMetaById);
+
+assert.ok(edgeIndex);
+assert.strictEqual(edgeIndex.ruleEdges.length, 1);
+assert.strictEqual(edgeIndex.edgesByCategoryName.get('WBTC监控').length, 2);
+assert.strictEqual(edgeIndex.edgesByCategoryName.get('TBTC监控').length, 1);
+
+const resolvedSingleCategory = resolveEdgesForFixedRule(rule, edgeIndex);
+assert.deepStrictEqual(
+  resolvedSingleCategory.map((edge) => edge.quoteId ?? 'rule'),
+  [1, 3, 'rule']
+);
+
+const resolvedMultiCategory = resolveEdgesForFixedRule({
+  title: 'BTC buckets',
+  categoryNames: ['TBTC监控', 'WBTC监控']
+}, edgeIndex);
+assert.deepStrictEqual(
+  resolvedMultiCategory.map((edge) => edge.quoteId ?? 'rule'),
+  [1, 2, 3, 'rule']
+);
+
+assert.strictEqual(
+  resolveEdgesForFixedRule({ title: 'All edges', categoryNames: [] }, edgeIndex),
+  edgeIndex.allEdges
+);

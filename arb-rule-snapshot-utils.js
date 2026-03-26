@@ -19,13 +19,18 @@
     const fixedTemplatesByRuleId = options.fixedTemplatesByRuleId && typeof options.fixedTemplatesByRuleId === 'object'
       ? options.fixedTemplatesByRuleId
       : null;
+    const fixedRuleEdgeIndex = arbFixedUtils && typeof arbFixedUtils.buildFixedRuleEdgeIndex === 'function'
+      ? arbFixedUtils.buildFixedRuleEdgeIndex(allEdgesWithRules, quoteMetaById)
+      : null;
 
     const fixedResults = [];
     const fixedByRuleId = {};
     for (const rule of fixedRules) {
       if (!rule) continue;
       let cycles = [];
-      const filteredEdges = arbFixedUtils && typeof arbFixedUtils.filterEdgesForFixedRule === 'function'
+      const filteredEdges = fixedRuleEdgeIndex && arbFixedUtils && typeof arbFixedUtils.resolveEdgesForFixedRule === 'function'
+        ? arbFixedUtils.resolveEdgesForFixedRule(rule, fixedRuleEdgeIndex)
+        : arbFixedUtils && typeof arbFixedUtils.filterEdgesForFixedRule === 'function'
         ? arbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
         : allEdgesWithRules;
       const fixedTemplates = fixedTemplatesByRuleId && Array.isArray(fixedTemplatesByRuleId[rule.id])
