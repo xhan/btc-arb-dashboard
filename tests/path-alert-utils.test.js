@@ -96,10 +96,12 @@ assert.strictEqual(normalizedConfig.alerts[0].thresholdBp, 3.5);
 assert.strictEqual(normalizedConfig.alerts[0].confirmDelaySec, 8);
 assert.strictEqual(normalizedConfig.alerts[0].cooldownSec, 90);
 assert.strictEqual(normalizedConfig.alerts[0].target.legs[0].quoteId, 11);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(normalizedConfig.alerts[0], 'delivery'), false);
 assert.strictEqual(normalizedConfig.alerts[1].target.type, 'quote');
 assert.strictEqual(normalizedConfig.alerts[1].target.quoteId, 101);
 assert.strictEqual(normalizedConfig.alerts[1].target.ruleKind, 'targetAbove');
 assert.strictEqual(normalizedConfig.alerts[1].target.value, 0.100113);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(normalizedConfig.alerts[1], 'delivery'), false);
 
 const normalizedDismissedConfig = normalizeAlertConfig({
   dismissedTargets: [

@@ -20,12 +20,6 @@
     webhookSecret: ''
   });
 
-  const DEFAULT_ALERT_DELIVERY = Object.freeze({
-    sound: true,
-    log: true,
-    webhookEnabled: false
-  });
-
   function toFiniteNumber(value, fallback) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
@@ -43,10 +37,6 @@
 
   function cloneDefaultSettings() {
     return { ...DEFAULT_PATH_ALERT_SETTINGS };
-  }
-
-  function cloneDefaultDelivery() {
-    return { ...DEFAULT_ALERT_DELIVERY };
   }
 
   function normalizePathAlertLeg(leg) {
@@ -122,10 +112,6 @@
       triggerMode: alert.triggerMode === 'immediate' ? 'immediate' : 'delayed',
       confirmDelaySec: toNonNegativeInteger(alert.confirmDelaySec, 13),
       cooldownSec: toPositiveInteger(alert.cooldownSec, settings.defaultCooldownSec),
-      delivery: {
-        ...cloneDefaultDelivery(),
-        ...(alert.delivery && typeof alert.delivery === 'object' ? alert.delivery : {})
-      },
       target: null
     };
 
@@ -740,7 +726,6 @@
     DEFAULT_TELEGRAM_BOT_API_BASE_URL,
     DEFAULT_PATH_ALERT_WEBHOOK_URL,
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
-    DEFAULT_ALERT_DELIVERY,
     DEFAULT_PATH_ALERT_SETTINGS,
     advancePathAlertRuntime,
     buildAllLegSnapshots,

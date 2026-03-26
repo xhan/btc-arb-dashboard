@@ -82,7 +82,6 @@
         triggerMode,
         confirmDelaySec: Number.isFinite(confirmDelaySec) && confirmDelaySec >= 0 ? confirmDelaySec : 13,
         cooldownSec: Number.isFinite(cooldownSec) && cooldownSec > 0 ? cooldownSec : 180,
-        delivery: { sound: true, log: true, webhookEnabled: false },
         target
       });
     }

@@ -104,6 +104,20 @@ assert.ok(routeHtml.includes('alert-item-route-line'));
 assert.ok(routeHtml.includes('(Base) cbBTC -&gt; LBTC'));
 assert.ok(routeHtml.includes('(ETH) LBTC -&gt; cbBTC'));
 
+const quoteRouteHtml = sandbox.window.PathAlertsAppTestHooks.buildAlertRouteHtml(
+  sandbox.window.PathAlertsAppTestHooks.buildAlertSummaryLines({
+    name: 'BSC BTCB/syBTC 价格高于',
+    target: {
+      type: 'quote',
+      quoteId: 101,
+      ruleKind: 'targetAbove',
+      value: 0.100113
+    }
+  })
+);
+assert.ok(quoteRouteHtml.includes('BSC BTCB/syBTC 价格高于'));
+assert.ok(quoteRouteHtml.includes('阈值 0.100113'));
+
 assert.strictEqual(
   sandbox.window.PathAlertsAppTestHooks.getAlertPrimaryTitle({
     target: {

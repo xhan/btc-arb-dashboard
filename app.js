@@ -5,6 +5,8 @@
     
     let isAudioUnlocked = false; 
     let onConfirmAction = null;
+    const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
+    const PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN = 'main-dashboard';
 
     let queues = {
         kyber: [],
@@ -88,6 +90,7 @@
     let pathAlertRuntimeState = new Map();
     let specialRuleAlertRuntimeState = new Map();
     let pathAlertReloading = false;
+    let pathAlertExternalReloadTimer = null;
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     let pathAlertEditorState = {
@@ -625,6 +628,8 @@
         });
     }
     document.body.addEventListener('click', unlockAudio, { once: true });
+    document.body.addEventListener('pointerdown', unlockAudio, { once: true });
+    document.body.addEventListener('touchstart', unlockAudio, { once: true });
     document.body.addEventListener('keydown', unlockAudio, { once: true });
 
     function scheduleArbUpdate() {
@@ -2499,6 +2504,17 @@
         return Number(window.PathAlertUtils && window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP) || 1.1;
     }
 
+    function buildQuoteAlertThresholdLine(target) {
+        if (!target || target.type !== 'quote') return '--';
+        if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
+            return `阈值 ${String(target.value != null ? target.value : '--')}`;
+        }
+        if (target.ruleKind === 'percentUp' || target.ruleKind === 'percentDown') {
+            return `阈值 ${String(target.value != null ? target.value : '--')}% | 基准 ${String(target.basePrice != null ? target.basePrice : '--')}`;
+        }
+        return '--';
+    }
+
     function getPathAlertLegPricingMode(leg) {
         if (!leg || typeof leg !== 'object') return 'raw';
         if (leg.cexLevelLabel === 'bid1') return 'cex-bid1';
@@ -2517,8 +2533,7 @@
             thresholdBp: getPathAlertDefaultThresholdBp(),
             triggerMode: 'delayed',
             confirmDelaySec: 13,
-            cooldownSec: settings.defaultCooldownSec || 180,
-            delivery: { sound: true, log: true, webhookEnabled: false }
+            cooldownSec: settings.defaultCooldownSec || 180
         };
 
         if (preset.type === 'rule') {
@@ -2590,6 +2605,13 @@
 
     function buildPathAlertSummaryLines(alert) {
         if (alert && alert.target && alert.target.type === 'quote') {
+            const displayTitle = String(alert.name || '').trim();
+            if (displayTitle) {
+                return [
+                    displayTitle,
+                    buildQuoteAlertThresholdLine(alert.target)
+                ];
+            }
             const match = findQuoteById(Number(alert.target.quoteId));
             const quote = match ? match.quote : null;
             const monitorState = quote ? quoteMonitorState.get(Number(quote.id)) : null;
@@ -2993,6 +3015,39 @@
         evaluatePathAlertsOnce();
     }
 
+    function emitPathAlertConfigSync(source) {
+        const payload = JSON.stringify({
+            source: String(source || ''),
+            ts: Date.now()
+        });
+        try {
+            localStorage.setItem(PATH_ALERT_CONFIG_SYNC_KEY, payload);
+        } catch (error) {
+            console.warn('[path-alert-config] sync emit failed', error);
+        }
+    }
+
+    function scheduleExternalPathAlertReload(reason) {
+        if (pathAlertExternalReloadTimer) clearTimeout(pathAlertExternalReloadTimer);
+        pathAlertExternalReloadTimer = setTimeout(() => {
+            pathAlertExternalReloadTimer = null;
+            reloadPathAlertConfigFromServer().catch((error) => {
+                console.error('[path-alert-config] external reload failed', reason, error);
+            });
+        }, 60);
+    }
+
+    function handlePathAlertConfigSyncStorage(event) {
+        if (!event || event.key !== PATH_ALERT_CONFIG_SYNC_KEY || !event.newValue) return;
+        try {
+            const payload = JSON.parse(event.newValue);
+            if (payload && payload.source === PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN) return;
+        } catch (error) {
+            console.warn('[path-alert-config] invalid sync payload', error);
+        }
+        scheduleExternalPathAlertReload('storage');
+    }
+
     async function persistPathAlertConfig() {
         const normalized = window.PathAlertUtils
             ? window.PathAlertUtils.normalizeAlertConfig(pathAlertConfig)
@@ -3005,6 +3060,7 @@
         });
         restartPathAlertScheduler();
         renderPathAlertPanel();
+        emitPathAlertConfigSync(PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN);
     }
 
     function queuePathAlertConfigSave() {
@@ -3055,7 +3111,6 @@
             triggerMode: 'delayed',
             confirmDelaySec: 13,
             cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
-            delivery: { sound: true, log: true, webhookEnabled: false },
             target: { type: 'path', legs: [] }
         };
         pathAlertEditorState.editingId = nextDraft.id || '';
@@ -3183,7 +3238,6 @@
             triggerMode: pathAlertTriggerModeSelect.value === 'delayed' ? 'delayed' : 'immediate',
             confirmDelaySec: Number(pathAlertConfirmDelayInput.value || 0),
             cooldownSec: Number(pathAlertCooldownInput.value || pathAlertConfig.settings.defaultCooldownSec),
-            delivery: { sound: true, log: true, webhookEnabled: false },
             target: null
         };
 
@@ -4419,6 +4473,41 @@
         };
     }
 
+    function reconcileLegacyQuoteAlertsIntoPathAlertConfig() {
+        const utils = getQuoteAlertConfigUtils();
+        if (!utils || typeof utils.buildQuoteAlertsFromLegacyConfig !== 'function') return false;
+        const existingAlerts = Array.isArray(pathAlertConfig.alerts) ? [...pathAlertConfig.alerts] : [];
+        const existingIds = new Set(existingAlerts.map((alert) => String(alert && alert.id || '')));
+        const additions = [];
+
+        for (const category of dashboardState) {
+            for (const quote of (category.quotes || [])) {
+                if (!quote || !quote.alerts || typeof quote.alerts !== 'object') continue;
+                const generated = utils.buildQuoteAlertsFromLegacyConfig({
+                    quoteId: quote.id,
+                    quoteLabel: `${CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain} ${buildQuoteAlertDisplayLabel(quote)}`.trim(),
+                    triggerMode: getDefaultQuoteAlertSettings().triggerMode,
+                    confirmDelaySec: getDefaultQuoteAlertSettings().confirmDelaySec,
+                    cooldownSec: getDefaultQuoteAlertSettings().cooldownSec,
+                    oldAlerts: quote.alerts
+                });
+                for (const alert of normalizeQuoteAlertsForStorage(generated)) {
+                    if (existingIds.has(alert.id)) continue;
+                    existingIds.add(alert.id);
+                    additions.push(alert);
+                }
+            }
+        }
+
+        if (!additions.length) return false;
+        pathAlertConfig.alerts = existingAlerts.concat(additions);
+        console.info('[quote-alert] reconciled legacy alerts into alert.config', {
+            count: additions.length,
+            alertIds: additions.map((alert) => alert.id)
+        });
+        return true;
+    }
+
     function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMonitorState.get(quote.id) || {}) {
         if (!quote) return '--';
         if (isCexOrderbookChain(quote.chain)) {
@@ -4550,15 +4639,34 @@
     }
 
     function playPathAlertSoundOnce() {
-        if (!isAudioUnlocked || !pathAlertSound || pathAlertConfig?.settings?.localSoundEnabled === false) return;
-        pathAlertSound.loop = false;
-        pathAlertSound.currentTime = 0;
-        pathAlertSound.play().catch((error) => console.error('Play failed', error));
+        if (pathAlertConfig?.settings?.localSoundEnabled === false) {
+            console.info('[quote-alert] sound skipped: local sound disabled');
+            return;
+        }
+        if (!pathAlertSound) {
+            console.warn('[quote-alert] sound skipped: path alert audio element missing');
+            return;
+        }
+        if (!isAudioUnlocked) {
+            console.warn('[quote-alert] sound skipped: audio not unlocked');
+            return;
+        }
+        const oneShotAudio = new Audio(pathAlertSound.currentSrc || pathAlertSound.src);
+        oneShotAudio.loop = false;
+        oneShotAudio.volume = pathAlertSound.volume;
+        oneShotAudio.play().catch((error) => console.error('[quote-alert] sound play failed', error));
     }
 
     function triggerAlert(quote, message, options = {}) {
         const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
         const label = buildQuoteAlertDisplayLabel(quote);
+        console.info('[quote-alert] trigger', {
+            quoteId: quote.id,
+            chain: displayName,
+            label,
+            message,
+            currentValueText: options.currentValueText || ''
+        });
         appendAlertLogEntry(displayName, message, label);
         playPathAlertSoundOnce();
         sendLegacyQuoteWebhookNotification(displayName, label, message, options.currentValueText || '');
@@ -5508,6 +5616,9 @@
             }
 
             await loadPathAlertConfig();
+            if (reconcileLegacyQuoteAlertsIntoPathAlertConfig()) {
+                await persistPathAlertConfig();
+            }
             
             renderDashboard();
             updateArbPanel();
@@ -5528,6 +5639,7 @@
             updateQuoteRunStateTag();
             updateSchedulers();
             startPriceSnapshotTimer();
+            window.addEventListener('storage', handlePathAlertConfigSyncStorage);
             restartPathAlertScheduler();
             
             if (alertLogWindow && alertLogHeader) {

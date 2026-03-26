@@ -1,5 +1,7 @@
 (function () {
   const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
+  const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
+  const PATH_ALERT_CONFIG_SYNC_SOURCE_MANAGE = 'path-alerts-manage';
   const CHAIN_DISPLAY_NAMES = {
     ethereum: 'ETH',
     arbitrum: 'Arbitrum',
@@ -71,6 +73,18 @@
     selectedAlertIds: new Set(),
     selectedDismissedKeys: new Set()
   };
+
+  function emitPathAlertConfigSync() {
+    const payload = JSON.stringify({
+      source: PATH_ALERT_CONFIG_SYNC_SOURCE_MANAGE,
+      ts: Date.now()
+    });
+    try {
+      localStorage.setItem(PATH_ALERT_CONFIG_SYNC_KEY, payload);
+    } catch (error) {
+      console.warn('[path-alert-config] sync emit failed', error);
+    }
+  }
 
   function escapeHtml(value) {
     return String(value || '')
@@ -290,6 +304,17 @@
     );
   }
 
+  function buildQuoteAlertThresholdLine(target) {
+    if (!target || target.type !== 'quote') return '--';
+    if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
+      return `阈值 ${String(target.value != null ? target.value : '--')}`;
+    }
+    if (target.ruleKind === 'percentUp' || target.ruleKind === 'percentDown') {
+      return `阈值 ${String(target.value != null ? target.value : '--')}% | 基准 ${String(target.basePrice != null ? target.basePrice : '--')}`;
+    }
+    return '--';
+  }
+
   function buildQuoteAlertRuleLine(target) {
     if (!target || target.type !== 'quote') return '--';
     if (target.ruleKind === 'targetAbove') {
@@ -308,13 +333,20 @@
   }
 
   function buildAlertSummaryLines(alert) {
-    if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
-      if (alert && alert.target && alert.target.type === 'quote') {
+    if (alert && alert.target && alert.target.type === 'quote') {
+      const displayTitle = getAlertDisplayTitle(alert);
+      if (displayTitle) {
         return [
-          buildQuoteAlertQuoteLabel(alert.target),
-          buildQuoteAlertRuleLine(alert.target)
+          displayTitle,
+          buildQuoteAlertThresholdLine(alert.target)
         ];
       }
+      return [
+        buildQuoteAlertQuoteLabel(alert.target),
+        buildQuoteAlertRuleLine(alert.target)
+      ];
+    }
+    if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
       return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
         formatLeg(leg) {
           return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
@@ -641,7 +673,8 @@
       throw new Error((data && data.error) || '保存路径报警配置失败');
     }
     alertConfig = payload;
-    setStatus('已保存，请回主看板点击重新加载。', 'success');
+    emitPathAlertConfigSync();
+    setStatus('已保存，主看板会自动同步。', 'success');
   }
 
   function updateHistory(mode, options = {}) {
@@ -829,7 +862,6 @@
       triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
       confirmDelaySec: Number(draft.confirmDelaySec || 0),
       cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
-      delivery: { sound: true, log: true, webhookEnabled: false },
       target: collectEditorTarget(draft)
     };
     return window.PathAlertUtils
@@ -1633,6 +1665,7 @@
 
   window.PathAlertsAppTestHooks = {
     buildFallbackQuoteCandidatesFromDashboard,
+    buildAlertSummaryLines,
     buildAlertRouteHtml,
     getAlertPrimaryTitle,
     formatAlertMetaLine
