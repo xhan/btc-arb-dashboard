@@ -2907,11 +2907,7 @@
             next.lastTriggeredAt = nowMs;
             specialRuleAlertRuntimeState.set(runtimeKey, next);
 
-            if (isAudioUnlocked && pathAlertSound && pathAlertConfig?.settings?.localSoundEnabled !== false) {
-                pathAlertSound.loop = false;
-                pathAlertSound.currentTime = 0;
-                pathAlertSound.play().catch((error) => console.error('Play failed', error));
-            }
+            playPathAlertSoundOnce();
 
             void sendSpecialRuleWebhookNotification(title, message);
         }

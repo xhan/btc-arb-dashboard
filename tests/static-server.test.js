@@ -118,6 +118,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })'));
     assert.ok(appJsResponse.body.includes('path-alert-config-sync'));
     assert.ok(appJsResponse.body.includes('new Audio(pathAlertSound.currentSrc || pathAlertSound.src)'));
+    assert.ok(
+      /appendAlertLogEntry\(title, message\);[\s\S]{0,400}playPathAlertSoundOnce\(\);[\s\S]{0,200}sendSpecialRuleWebhookNotification\(title, message\)/.test(appJsResponse.body)
+    );
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(appJsResponse.body.includes('[监控提醒]'));
