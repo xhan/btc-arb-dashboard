@@ -162,3 +162,51 @@ assert.strictEqual(snapshotFromTemplates.fixedResults[0].cycles.length, 2);
 assert.strictEqual(snapshotFromTemplates.fixedByRuleId['fixed:tbtc-btc'][0].legs[1].chain, 'sui');
 assert.strictEqual(snapshotFromTemplates.fixedByRuleId['fixed:tbtc-btc'][0].legs[1].quoteId, 12);
 assert.ok(snapshotFromTemplates.fixedByRuleId['fixed:tbtc-btc'][0].profitRate > snapshotFromTemplates.fixedByRuleId['fixed:tbtc-btc'][1].profitRate);
+
+const snapshotKeepsCategoryScopedEdges = buildArbRuleSnapshot({
+  fixedRules: [
+    {
+      id: 'fixed:wbtc-eth-arb',
+      title: 'WBTC ETH <-> ARB',
+      base: 'cbBTC',
+      quote: 'WBTC',
+      chains: ['ethereum', 'arbitrum'],
+      steps: 2,
+      categoryNames: ['WBTC监控']
+    }
+  ],
+  specialRules: [],
+  fixedTemplatesByRuleId: {
+    'fixed:wbtc-eth-arb': [
+      {
+        legs: [
+          { chain: 'ethereum', from: 'cbBTC', to: 'WBTC' },
+          { chain: 'arbitrum', from: 'WBTC', to: 'cbBTC' }
+        ]
+      }
+    ]
+  },
+  allEdgesWithRules: [
+    { quoteId: 201, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.001 },
+    { quoteId: 202, chain: 'arbitrum', from: 'WBTC', to: 'cbBTC', rate: 0.9995 },
+    { quoteId: 301, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.02 },
+    { quoteId: 302, chain: 'arbitrum', from: 'WBTC', to: 'cbBTC', rate: 1.01 }
+  ],
+  quoteMetaById: new Map([
+    [201, { categoryName: 'WBTC监控' }],
+    [202, { categoryName: 'WBTC监控' }],
+    [301, { categoryName: 'TBTC监控' }],
+    [302, { categoryName: 'TBTC监控' }]
+  ]),
+  quoteStateById: new Map(),
+  aliasRules: null,
+  arbPathsApi: ArbPaths,
+  arbFixedUtils: require('../arb-fixed-utils')
+});
+
+assert.strictEqual(snapshotKeepsCategoryScopedEdges.fixedResults.length, 1);
+assert.strictEqual(snapshotKeepsCategoryScopedEdges.fixedResults[0].cycles.length, 1);
+assert.deepStrictEqual(
+  snapshotKeepsCategoryScopedEdges.fixedByRuleId['fixed:wbtc-eth-arb'][0].legs.map((leg) => leg.quoteId),
+  [201, 202]
+);

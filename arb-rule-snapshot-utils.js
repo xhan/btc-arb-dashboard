@@ -25,21 +25,21 @@
     for (const rule of fixedRules) {
       if (!rule) continue;
       let cycles = [];
+      const filteredEdges = arbFixedUtils && typeof arbFixedUtils.filterEdgesForFixedRule === 'function'
+        ? arbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
+        : allEdgesWithRules;
       const fixedTemplates = fixedTemplatesByRuleId && Array.isArray(fixedTemplatesByRuleId[rule.id])
         ? fixedTemplatesByRuleId[rule.id]
         : null;
 
       if (fixedTemplates && arbPathTemplateCacheUtils && typeof arbPathTemplateCacheUtils.evaluateFixedPathTemplate === 'function') {
         cycles = fixedTemplates
-          .map((template) => arbPathTemplateCacheUtils.evaluateFixedPathTemplate(template, allEdgesWithRules, aliasRules))
+          .map((template) => arbPathTemplateCacheUtils.evaluateFixedPathTemplate(template, filteredEdges, aliasRules))
           .filter(Boolean)
           .sort((left, right) => Number(right && right.profitRate) - Number(left && left.profitRate))
           .slice(0, Math.max(1, Number(rule.resultLimit) || 1));
       } else {
         if (!arbPathsApi || typeof arbPathsApi.findFixedPaths !== 'function') continue;
-        const filteredEdges = arbFixedUtils && typeof arbFixedUtils.filterEdgesForFixedRule === 'function'
-          ? arbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
-          : allEdgesWithRules;
         cycles = arbPathsApi.findFixedPaths(filteredEdges, rule, aliasRules, {
           limit: Number(rule.resultLimit) || 1
         });
