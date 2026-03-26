@@ -4576,7 +4576,7 @@
         for (const alert of quoteAlerts) {
             const previous = pathAlertRuntimeState.get(alert.id) || null;
             const evaluation = window.PathAlertUtils
-                ? window.PathAlertUtils.evaluatePathAlert(alert, { quoteStateById })
+                ? window.PathAlertUtils.evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })
                 : null;
             const next = window.PathAlertUtils
                 ? window.PathAlertUtils.advancePathAlertRuntime(alert, previous, evaluation, Date.now())
