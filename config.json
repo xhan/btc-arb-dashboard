@@ -61,11 +61,6 @@
           "chain": "Bybit",
           "amount": 1,
           "symbol": "WBTCBTC",
-          "alerts": {
-            "percentUp": 0.05,
-            "targetAbove": 0.9993,
-            "basePrice": 0.9992
-          },
           "showInverse": true
         },
         {
@@ -82,10 +77,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0x50b7545627a5162F82A992c33b87aDc75187B218",
           "toToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-          "showInverse": true,
-          "alerts": {
-            "targetAbove": 1.00015
-          }
+          "showInverse": true
         },
         {
           "id": 1765263440178,
@@ -162,10 +154,7 @@
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0xecAc9C5F704e954931349Da37F60E39f515c11c1",
           "preferredSource": "Kyber",
-          "showInverse": true,
-          "alerts": {
-            "targetAbove": 0.9989
-          }
+          "showInverse": true
         },
         {
           "id": 1772796212200,
@@ -231,7 +220,7 @@
         {
           "id": 1771695017195,
           "chain": "katana",
-          "amount": 0.8,
+          "amount": 0.7,
           "preferredSource": "LI.FI",
           "fromToken": "0x0913DA6Da4b42f538B445599b46Bb4622342Cf52",
           "toToken": "0xecAc9C5F704e954931349Da37F60E39f515c11c1",
@@ -286,10 +275,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0x876a4b7bce8aeaef60464c11f4026903e9afacab79b9b142686158aa86560b50::xbtc::XBTC",
           "toToken": "0x77045f1b9f811a7a8fb9ebd085b5b0c55c5cb0d1520ff55f7037f89b5da9f5f1::TBTC::TBTC",
-          "showInverse": true,
-          "alerts": {
-            "targetAbove": 1.0025
-          }
+          "showInverse": true
         },
         {
           "id": 1763038314615,
@@ -312,7 +298,7 @@
         {
           "id": 1760021829626,
           "chain": "optimism",
-          "amount": 0.3,
+          "amount": 0.5,
           "fromToken": "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
           "toToken": "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
           "preferredSource": "Kyber",
@@ -353,7 +339,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
           "toToken": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
-          "showInverse": true
+          "showInverse": true,
+          "paused": false
         },
         {
           "id": 1773659724114,
@@ -378,9 +365,6 @@
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0xC96dE26018A54D51c097160568752c4E3BD6C364",
           "showInverse": false,
-          "alerts": {
-            "targetAbove": 0.5002
-          },
           "paused": true
         },
         {
@@ -498,7 +482,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "toToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
-          "showInverse": false
+          "showInverse": true
         },
         {
           "id": 1766416837020,
@@ -529,7 +513,7 @@
           "id": 1771779390753,
           "chain": "arbitrum",
           "amount": 100000,
-          "preferredSource": "Velora",
+          "preferredSource": "Kyber",
           "fromToken": "0x7dfF72693f6A4149b17e7C6314655f6A9F7c8B33",
           "toToken": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
           "showInverse": true
@@ -680,10 +664,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x01a8b61E7b03891a736B5DF865E0EF9C511850ad",
-          "showInverse": false,
-          "alerts": {
-            "targetAbove": 0.100126
-          }
+          "showInverse": false
         },
         {
           "id": 1774206874519,
@@ -692,10 +673,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
           "toToken": "0xA67c48F86Fc6d0176Dca38883CA8153C76a532c7",
-          "showInverse": false,
-          "alerts": {
-            "targetAbove": 0.100126
-          }
+          "showInverse": false
         }
       ]
     }
@@ -703,7 +681,7 @@
   "settings": {
     "kyber": 185,
     "zerox": 500,
-    "velora": 1200,
+    "velora": 1100,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,

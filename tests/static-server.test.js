@@ -111,7 +111,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
     assert.ok(appJsResponse.body.includes('QuoteAlertConfigUtils'));
     assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
-    assert.ok(appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));
+    assert.ok(!appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));
+    assert.ok(!appJsResponse.body.includes('quote.alerts'));
     assert.ok(appJsResponse.body.includes('cooldownSec: 120'));
     assert.ok(appJsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })'));

@@ -844,7 +844,7 @@
         {
             id: 'special:wbtc-bybit',
             title: 'WBTC <-> BYBIT',
-            type: 'wbtc-bybit',
+            type: 'pair-bybit',
             categoryName: 'WBTC监控',
             dexBase: 'cbBTC',
             dexQuote: 'WBTC',
@@ -852,6 +852,20 @@
             cexChain: 'Bybit',
             minNetProfit: 0.0001,
             minNetProfitBp: 1.5,
+            alertConfirmDelaySec: 13
+        },
+        {
+            id: 'special:usde-bybit',
+            title: 'USDe <-> BYBIT',
+            type: 'pair-bybit',
+            categoryName: 'USD监控',
+            dexBase: 'USDT',
+            dexQuote: 'USDe',
+            cexQuote: 'USDT',
+            cexChain: 'Bybit',
+            minNetProfit: 10,
+            minNetProfitBp: 0,
+            withdrawFee: 0,
             alertConfirmDelaySec: 13
         }
     ];
@@ -3531,20 +3545,18 @@
                         emptyText: '等待数据...'
                     };
                 });
-        const wbtcCategory = targetCategories.find((category) => category && category.name === 'WBTC监控');
-        const wbtcSpecialRules = SPECIAL_ARB_RULES.filter((rule) => rule && rule.categoryName === (wbtcCategory ? wbtcCategory.name : ''));
-        const specialOpportunities = wbtcCategory
-            ? sharedRuleSnapshot.specialResults
-                .filter(({ rule }) => rule && rule.categoryName === wbtcCategory.name)
-                .flatMap(({ opportunities }) => Array.isArray(opportunities) ? opportunities : [])
-            : [];
+        const specialRuleTitles = SPECIAL_ARB_RULES
+            .filter((rule) => rule && typeof rule.title === 'string' && rule.title.trim())
+            .map((rule) => rule.title.trim());
+        const specialOpportunities = sharedRuleSnapshot.specialResults
+            .flatMap(({ opportunities }) => Array.isArray(opportunities) ? opportunities : []);
         const specialEntries = specialOpportunities
             .map((opportunity) => createArbOpportunityEntry(
                 nextOpportunityMap,
                 opportunity.cycle,
                 opportunity.label,
                 {
-                    section: `special:${wbtcCategory ? wbtcCategory.name : ''}`,
+                    section: 'special',
                     clickable: false,
                     displayMessage: String(opportunity.display_message || ''),
                     hideLegs: true,
@@ -3568,8 +3580,8 @@
                 alert_cooldown_sec: opportunity.alert_cooldown_sec,
                 alert_key: opportunity.alert_key
             }));
-        const specialEmptyText = wbtcSpecialRules.length
-            ? `${wbtcSpecialRules.map((rule) => rule.title).join(' / ')} | 无收益率`
+        const specialEmptyText = specialRuleTitles.length
+            ? `${specialRuleTitles.join(' / ')} | 无收益率`
             : '暂无可用规则';
         const specialSections = [{
             title: '特殊规则',
@@ -4473,41 +4485,6 @@
         };
     }
 
-    function reconcileLegacyQuoteAlertsIntoPathAlertConfig() {
-        const utils = getQuoteAlertConfigUtils();
-        if (!utils || typeof utils.buildQuoteAlertsFromLegacyConfig !== 'function') return false;
-        const existingAlerts = Array.isArray(pathAlertConfig.alerts) ? [...pathAlertConfig.alerts] : [];
-        const existingIds = new Set(existingAlerts.map((alert) => String(alert && alert.id || '')));
-        const additions = [];
-
-        for (const category of dashboardState) {
-            for (const quote of (category.quotes || [])) {
-                if (!quote || !quote.alerts || typeof quote.alerts !== 'object') continue;
-                const generated = utils.buildQuoteAlertsFromLegacyConfig({
-                    quoteId: quote.id,
-                    quoteLabel: `${CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain} ${buildQuoteAlertDisplayLabel(quote)}`.trim(),
-                    triggerMode: getDefaultQuoteAlertSettings().triggerMode,
-                    confirmDelaySec: getDefaultQuoteAlertSettings().confirmDelaySec,
-                    cooldownSec: getDefaultQuoteAlertSettings().cooldownSec,
-                    oldAlerts: quote.alerts
-                });
-                for (const alert of normalizeQuoteAlertsForStorage(generated)) {
-                    if (existingIds.has(alert.id)) continue;
-                    existingIds.add(alert.id);
-                    additions.push(alert);
-                }
-            }
-        }
-
-        if (!additions.length) return false;
-        pathAlertConfig.alerts = existingAlerts.concat(additions);
-        console.info('[quote-alert] reconciled legacy alerts into alert.config', {
-            count: additions.length,
-            alertIds: additions.map((alert) => alert.id)
-        });
-        return true;
-    }
-
     function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMonitorState.get(quote.id) || {}) {
         if (!quote) return '--';
         if (isCexOrderbookChain(quote.chain)) {
@@ -4535,7 +4512,7 @@
         const defaults = getDefaultQuoteAlertSettings();
         const fields = quoteAlerts.length && utils && typeof utils.buildLegacyQuoteAlertFields === 'function'
             ? utils.buildLegacyQuoteAlertFields(quoteAlerts)
-            : (quote && quote.alerts && typeof quote.alerts === 'object' ? { ...quote.alerts } : {});
+            : {};
         const firstAlert = quoteAlerts[0] || null;
         return {
             fields,
@@ -5229,8 +5206,6 @@
         }
         updateAlertSoundState();
 
-        if (quote.alerts && quote.alerts.basePrice) quote.alerts.basePrice = 1 / quote.alerts.basePrice;
-
         const quoteTextEl = document.getElementById(`quote-text-${quoteId}`);
         const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quoteId}`);
         if (quoteTextEl && quoteTextWrapperEl) {
@@ -5464,8 +5439,6 @@
 
                 Object.keys(newAlerts).forEach(key => { if (newAlerts[key] === null) delete newAlerts[key]; });
                 
-                if(Object.keys(newAlerts).length === 0) delete quote.alerts;
-                else quote.alerts = newAlerts;
                 replaceQuoteAlertsForQuote(quote, newAlerts, {
                     triggerMode,
                     confirmDelaySec,
@@ -5616,9 +5589,6 @@
             }
 
             await loadPathAlertConfig();
-            if (reconcileLegacyQuoteAlertsIntoPathAlertConfig()) {
-                await persistPathAlertConfig();
-            }
             
             renderDashboard();
             updateArbPanel();
