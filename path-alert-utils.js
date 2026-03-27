@@ -8,6 +8,7 @@
   const DEFAULT_PATH_ALERT_WEBHOOK_URL = 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder';
   const DEFAULT_TELEGRAM_BOT_API_BASE_URL = 'https://api.telegram.org';
   const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
+  const PATH_ALERT_MUTE_DURATION_MS = 60 * 60 * 1000;
   const DEFAULT_PATH_ALERT_SETTINGS = Object.freeze({
     pathAlertEvalIntervalMs: 1000,
     defaultCooldownSec: 180,
@@ -129,6 +130,23 @@
         ? entry.summaryLinesSnapshot.map((line) => String(line || '')).filter(Boolean)
         : [],
       dismissedAt: toPositiveInteger(entry.dismissedAt, 0)
+    };
+  }
+
+  function normalizeMutedPathTarget(entry) {
+    if (!entry || typeof entry !== 'object') return null;
+    const target = normalizePathAlertTarget(entry.target || {});
+    if (!target || target.type !== 'path') return null;
+    const mutedAt = toPositiveInteger(entry.mutedAt, 0);
+    const expiresAt = toPositiveInteger(entry.expiresAt, 0);
+    if (!mutedAt || !expiresAt || expiresAt <= mutedAt) return null;
+    return {
+      target,
+      summaryLinesSnapshot: Array.isArray(entry.summaryLinesSnapshot)
+        ? entry.summaryLinesSnapshot.map((line) => String(line || '')).filter(Boolean)
+        : [],
+      mutedAt,
+      expiresAt
     };
   }
 
@@ -304,6 +322,54 @@
       summaryLinesSnapshot,
       dismissedAt
     });
+  }
+
+  function createMutedPathTargetEntry(
+    alertOrTarget,
+    summaryLinesSnapshot = [],
+    mutedAt = Date.now(),
+    durationMs = PATH_ALERT_MUTE_DURATION_MS
+  ) {
+    const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
+    const normalizedTarget = normalizePathAlertTarget(target);
+    const safeMutedAt = toPositiveInteger(mutedAt, Date.now());
+    const safeDurationMs = toPositiveInteger(durationMs, PATH_ALERT_MUTE_DURATION_MS);
+    if (!normalizedTarget || normalizedTarget.type !== 'path') return null;
+    return normalizeMutedPathTarget({
+      target: normalizedTarget,
+      summaryLinesSnapshot,
+      mutedAt: safeMutedAt,
+      expiresAt: safeMutedAt + safeDurationMs
+    });
+  }
+
+  function pruneExpiredMutedPathTargets(entries, nowMs = Date.now()) {
+    const items = Array.isArray(entries) ? entries : [];
+    return items
+      .map((entry) => normalizeMutedPathTarget(entry))
+      .filter((entry) => entry && nowMs < entry.expiresAt);
+  }
+
+  function findMutedPathAlert(mutedTargets, alertOrTarget, nowMs = Date.now()) {
+    const items = pruneExpiredMutedPathTargets(mutedTargets, nowMs);
+    const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
+    const duplicateKey = buildPathAlertTargetDuplicateKey(target);
+    if (!duplicateKey) return null;
+    for (const entry of items) {
+      if (!entry || typeof entry !== 'object') continue;
+      if (buildPathAlertTargetDuplicateKey(entry.target) === duplicateKey) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  function formatMutedCountdown(remainingMs) {
+    const safeRemainingMs = Math.max(0, Number(remainingMs) || 0);
+    const totalSeconds = Math.floor(safeRemainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
   function buildChangedLegs(currentLegs, baselineLegs, minAbsBp = 1) {
@@ -724,6 +790,7 @@
 
   return {
     DEFAULT_TELEGRAM_BOT_API_BASE_URL,
+    PATH_ALERT_MUTE_DURATION_MS,
     DEFAULT_PATH_ALERT_WEBHOOK_URL,
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
     DEFAULT_PATH_ALERT_SETTINGS,
@@ -736,13 +803,18 @@
     buildPathAlertWebhookUrl,
     countPathAlertRealLegs,
     createDismissedTargetEntry,
+    createMutedPathTargetEntry,
     evaluatePathAlert,
     findDismissedPathAlert,
+    findMutedPathAlert,
     findDuplicatePathAlert,
+    formatMutedCountdown,
     isPathAlertConfirmDelayDisabled,
     normalizeAlertConfig,
     normalizeDismissedTarget,
+    normalizeMutedPathTarget,
     normalizePathAlert,
+    pruneExpiredMutedPathTargets,
     resolvePathAlertSnapshotState,
     sortTriggeredPathAlerts
   };

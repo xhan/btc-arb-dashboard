@@ -551,6 +551,49 @@
         #alert-log-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
+        .path-alert-log-entry { display: flex; flex-direction: column; gap: 8px; }
+        .path-alert-log-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+        .path-alert-log-profit { color: var(--text-color-light); font-size: 12px; margin-top: 2px; }
+        .path-alert-log-actions { flex-shrink: 0; }
+        .path-alert-log-mute-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-color-light);
+            border-radius: 0;
+            padding: 0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .path-alert-log-mute-btn:hover { color: var(--text-color); }
+        .path-alert-log-mute-btn:disabled { opacity: 0.55; cursor: default; text-decoration: none; }
+        .path-alert-log-route { display: flex; flex-direction: column; gap: 2px; }
+        .path-alert-log-line { line-height: 1.35; }
+        .path-alert-log-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .path-alert-log-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(56, 161, 105, 0.14);
+            color: #2f855a;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .path-alert-log-tag-muted {
+            background: rgba(221, 107, 32, 0.16);
+            color: #c05621;
+        }
+        .dark-mode .path-alert-log-tag {
+            background: rgba(72, 187, 120, 0.2);
+            color: #9ae6b4;
+        }
+        .dark-mode .path-alert-log-tag-muted {
+            background: rgba(245, 101, 101, 0.18);
+            color: #feb2b2;
+        }
 
         #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }

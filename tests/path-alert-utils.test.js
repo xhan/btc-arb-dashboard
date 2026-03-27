@@ -19,7 +19,12 @@ const {
   buildAllLegSnapshots,
   resolvePathAlertSnapshotState,
   buildChangedLegs,
-  sortTriggeredPathAlerts
+  sortTriggeredPathAlerts,
+  PATH_ALERT_MUTE_DURATION_MS,
+  createMutedPathTargetEntry,
+  findMutedPathAlert,
+  pruneExpiredMutedPathTargets,
+  formatMutedCountdown
 } = require('../path-alert-utils');
 
 const emptyConfig = normalizeAlertConfig();
@@ -138,6 +143,41 @@ assert.deepStrictEqual(
   normalizedDismissedConfig.dismissedTargets[0].summaryLinesSnapshot,
   ['(ETH) A -> B', '(ARB) B -> A']
 );
+
+assert.strictEqual(PATH_ALERT_MUTE_DURATION_MS, 60 * 60 * 1000);
+
+const mutedPathEntry = createMutedPathTargetEntry(
+  {
+    target: {
+      type: 'path',
+      legs: [
+        { quoteId: 21, direction: 'forward', pricingMode: 'raw', chain: 'ethereum', fromSymbol: 'tBTC', toSymbol: 'BTC.b' },
+        { quoteId: 22, direction: 'forward', pricingMode: 'raw', chain: 'base', fromSymbol: 'cbBTC', toSymbol: 'tBTC' }
+      ]
+    }
+  },
+  ['(ETH) tBTC -> BTC.b', '(Base) cbBTC -> tBTC'],
+  1000
+);
+assert.strictEqual(mutedPathEntry.mutedAt, 1000);
+assert.strictEqual(mutedPathEntry.expiresAt, 1000 + PATH_ALERT_MUTE_DURATION_MS);
+assert.deepStrictEqual(
+  mutedPathEntry.summaryLinesSnapshot,
+  ['(ETH) tBTC -> BTC.b', '(Base) cbBTC -> tBTC']
+);
+
+assert.ok(findMutedPathAlert([mutedPathEntry], {
+  target: {
+    type: 'path',
+    legs: [
+      { quoteId: 21, direction: 'forward', pricingMode: 'raw', chain: 'ethereum', fromSymbol: 'tBTC', toSymbol: 'BTC.b' },
+      { quoteId: 22, direction: 'forward', pricingMode: 'raw', chain: 'base', fromSymbol: 'cbBTC', toSymbol: 'tBTC' }
+    ]
+  }
+}, 2000));
+assert.strictEqual(findMutedPathAlert([mutedPathEntry], mutedPathEntry, 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), null);
+assert.deepStrictEqual(pruneExpiredMutedPathTargets([mutedPathEntry], 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), []);
+assert.strictEqual(formatMutedCountdown(59 * 60 * 1000 + 9000), '59:09');
 
 const quoteStateById = new Map([
   [11, {
