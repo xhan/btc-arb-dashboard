@@ -124,7 +124,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(appJsResponse.body.includes('[监控提醒]'));
+    assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
+    assert.ok(appJsResponse.body.includes('忽略 1 小时'));
+    assert.ok(appJsResponse.body.includes('沉默中'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
+    assert.ok(appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));
+    assert.ok(appJsResponse.body.includes("USDE: 'USDe'"));
     assert.ok(appJsResponse.body.includes('音效'));
     assert.ok(appJsResponse.body.includes('远程'));
     assert.ok(appJsResponse.body.includes('path-alert-reload-btn'));

@@ -88,6 +88,8 @@
     let pathAlertEvalTimer = null;
     let pathAlertPanelHidden = false;
     let pathAlertRuntimeState = new Map();
+    let mutedPathTargets = [];
+    let mutedPathLogTimer = null;
     let specialRuleAlertRuntimeState = new Map();
     let pathAlertReloading = false;
     let pathAlertExternalReloadTimer = null;
@@ -134,6 +136,7 @@
     let currentHoveredQuoteId = null; 
     let currentlyEditingQuote = null; 
     const MAX_ALERT_LOG_ENTRIES = 300;
+    const PATH_ALERT_MUTE_DURATION_MS = Number(window.PathAlertUtils && window.PathAlertUtils.PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
 
     const dashboardEl = document.getElementById('dashboard');
     const addCategoryBtn = document.getElementById('add-category-btn');
@@ -599,6 +602,174 @@
         const subtitleHtml = subtitle ? `<div>${formatLogText(subtitle)}</div>` : '';
         logEntry.innerHTML = `<div><strong>${formatLogText(title)}</strong></div>${subtitleHtml}<div>${formatLogText(message)}</div><span class="log-time">${now.toLocaleTimeString()}</span>`;
         alertLogContent.prepend(logEntry);
+        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
+            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
+        }
+    }
+
+    function pruneMutedPathTargetsInPlace(nowMs = Date.now()) {
+        if (!window.PathAlertUtils || typeof window.PathAlertUtils.pruneExpiredMutedPathTargets !== 'function') {
+            return mutedPathTargets;
+        }
+        mutedPathTargets = window.PathAlertUtils.pruneExpiredMutedPathTargets(mutedPathTargets, nowMs);
+        return mutedPathTargets;
+    }
+
+    function getMutedPathTargetEntry(alertOrTarget, nowMs = Date.now()) {
+        pruneMutedPathTargetsInPlace(nowMs);
+        if (!window.PathAlertUtils || typeof window.PathAlertUtils.findMutedPathAlert !== 'function') {
+            return null;
+        }
+        return window.PathAlertUtils.findMutedPathAlert(mutedPathTargets, alertOrTarget, nowMs);
+    }
+
+    function buildMutedPathTargetKey(alertOrTarget) {
+        if (!window.PathAlertUtils || typeof window.PathAlertUtils.buildPathAlertTargetDuplicateKey !== 'function') {
+            return '';
+        }
+        const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
+        return window.PathAlertUtils.buildPathAlertTargetDuplicateKey(target);
+    }
+
+    function mutePathAlertTarget(entry, nowMs = Date.now()) {
+        const muteTarget = entry && entry.mutedTargetCandidate ? entry.mutedTargetCandidate : null;
+        if (!muteTarget) return null;
+        if (!window.PathAlertUtils || typeof window.PathAlertUtils.createMutedPathTargetEntry !== 'function') return null;
+        const mutedEntry = window.PathAlertUtils.createMutedPathTargetEntry(
+            muteTarget,
+            entry.summaryLines,
+            nowMs,
+            PATH_ALERT_MUTE_DURATION_MS
+        );
+        if (!mutedEntry) return null;
+        const targetKey = buildMutedPathTargetKey(mutedEntry);
+        if (!targetKey) return null;
+        pruneMutedPathTargetsInPlace(nowMs);
+        mutedPathTargets = mutedPathTargets.filter((item) => buildMutedPathTargetKey(item) !== targetKey);
+        mutedPathTargets.push(mutedEntry);
+        updateMutedPathAlertLogCards(targetKey, nowMs);
+        syncMutedPathLogTimer();
+        return mutedEntry;
+    }
+
+    function buildMutedPathStatusText(mutedEntry, nowMs = Date.now()) {
+        if (!mutedEntry) return '';
+        const remainingMs = Math.max(0, Number(mutedEntry.expiresAt) - nowMs);
+        const countdown = window.PathAlertUtils && typeof window.PathAlertUtils.formatMutedCountdown === 'function'
+            ? window.PathAlertUtils.formatMutedCountdown(remainingMs)
+            : '--:--';
+        return `沉默中 · ${countdown}`;
+    }
+
+    function updateMutedPathAlertLogCards(targetKey = '', nowMs = Date.now()) {
+        if (!alertLogContent) return;
+        pruneMutedPathTargetsInPlace(nowMs);
+        const cards = alertLogContent.querySelectorAll('.path-alert-log-entry[data-muted-target-key]');
+        cards.forEach((card) => {
+            if (targetKey && card.dataset.mutedTargetKey !== targetKey) return;
+            const resolvedEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === card.dataset.mutedTargetKey) || null;
+            const statusEl = card.querySelector('[data-path-alert-muted-status]');
+            const buttonEl = card.querySelector('[data-path-alert-log-mute]');
+            if (resolvedEntry) {
+                if (statusEl) {
+                    statusEl.textContent = buildMutedPathStatusText(resolvedEntry, nowMs);
+                    statusEl.className = 'path-alert-log-tag path-alert-log-tag-muted';
+                }
+                if (buttonEl) {
+                    buttonEl.textContent = '已忽略 1 小时';
+                    buttonEl.disabled = true;
+                }
+            } else {
+                if (statusEl) {
+                    statusEl.textContent = '已触发';
+                    statusEl.className = 'path-alert-log-tag';
+                }
+                if (buttonEl) {
+                    buttonEl.textContent = '忽略 1 小时';
+                    buttonEl.disabled = false;
+                }
+            }
+        });
+    }
+
+    function syncMutedPathLogTimer() {
+        pruneMutedPathTargetsInPlace(Date.now());
+        if (!mutedPathTargets.length) {
+            if (mutedPathLogTimer) {
+                clearInterval(mutedPathLogTimer);
+                mutedPathLogTimer = null;
+            }
+            return;
+        }
+        if (mutedPathLogTimer) return;
+        mutedPathLogTimer = setInterval(() => {
+            pruneMutedPathTargetsInPlace(Date.now());
+            updateMutedPathAlertLogCards('', Date.now());
+            if (!mutedPathTargets.length && mutedPathLogTimer) {
+                clearInterval(mutedPathLogTimer);
+                mutedPathLogTimer = null;
+            }
+        }, 1000);
+    }
+
+    function buildPathAlertLogCardHtml(entry, nowMs = Date.now()) {
+        const mutedEntry = entry && entry.mutedTargetCandidate
+            ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
+            : null;
+        const targetKey = entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '';
+        const title = `🚨 [路径报警] ${escapeHtml(entry.alert && entry.alert.name || '路径报警')}`;
+        const profitText = escapeHtml(formatPathAlertEvaluationText(entry.evaluation));
+        const routeLinesHtml = (Array.isArray(entry.summaryLines) ? entry.summaryLines : [])
+            .map((line) => `<div class="path-alert-log-line">${escapeHtml(line)}</div>`)
+            .join('');
+        const statusText = mutedEntry ? buildMutedPathStatusText(mutedEntry, nowMs) : '已触发';
+        const statusClass = mutedEntry ? 'path-alert-log-tag path-alert-log-tag-muted' : 'path-alert-log-tag';
+        const muteButtonHtml = entry && entry.mutedTargetCandidate
+            ? `<button
+                    type="button"
+                    class="path-alert-log-mute-btn"
+                    data-path-alert-log-mute="${escapeHtml(entry.alert.id || '')}"
+                    ${mutedEntry ? 'disabled' : ''}
+                >${mutedEntry ? '已忽略 1 小时' : '忽略 1 小时'}</button>`
+            : '';
+        return `
+            <div
+                class="log-entry path-alert-log-entry"
+                data-path-alert-log-entry="${escapeHtml(entry.alert && entry.alert.id || '')}"
+                data-muted-target-key="${escapeHtml(targetKey)}"
+            >
+                <div class="path-alert-log-head">
+                    <div>
+                        <div><strong>${title}</strong></div>
+                        <div class="path-alert-log-profit">📈 ${profitText}</div>
+                    </div>
+                    <div class="path-alert-log-actions">${muteButtonHtml}</div>
+                </div>
+                <div class="path-alert-log-route">${routeLinesHtml || '<div class="path-alert-log-line">--</div>'}</div>
+                <div class="path-alert-log-foot">
+                    <span class="${statusClass}" data-path-alert-muted-status>${escapeHtml(statusText)}</span>
+                    <span class="log-time">${new Date(nowMs).toLocaleTimeString()}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function appendPathAlertLogEntries(entries, nowMs = Date.now()) {
+        if (!alertLogWindow || !alertLogContent) return;
+        const list = Array.isArray(entries) ? entries : [];
+        if (!list.length) return;
+        alertLogWindow.style.display = 'flex';
+        bringFloatingPanelToFront(alertLogWindow);
+        for (let index = list.length - 1; index >= 0; index -= 1) {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = buildPathAlertLogCardHtml(list[index], nowMs);
+            const card = wrapper.firstElementChild;
+            if (card) {
+                alertLogContent.prepend(card);
+            }
+        }
+        updateMutedPathAlertLogCards('', nowMs);
+        syncMutedPathLogTimer();
         if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
             window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
         }
@@ -1382,6 +1553,7 @@
             cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
             WBTC: ['WBTC', 'wBTC'],
             tBTC: ['tBTC', 'TBTC'],
+            USDe: ['USDe', 'USDE'],
             USDT: ['USDT', 'USD₮0']
         };
     }
@@ -1397,6 +1569,7 @@
             'BTC.b': 'cbBTC',
             wBTC: 'WBTC',
             TBTC: 'tBTC',
+            USDE: 'USDe',
             'USD₮0': 'USDT'
         };
     }
@@ -2719,6 +2892,37 @@
         return `${quoteId}|${direction}|${pricingMode}`;
     }
 
+    function buildMutedPathTargetFromCycleLegs(legs) {
+        const normalizedLegs = (Array.isArray(legs) ? legs : [])
+            .filter((leg) => !isRuleLeg(leg) && Number.isFinite(Number(leg && leg.quoteId)))
+            .map((leg) => ({
+                quoteId: Number(leg.quoteId),
+                direction: leg.inverse ? 'inverse' : 'forward',
+                pricingMode: getPathAlertLegPricingMode(leg),
+                chain: leg.chain,
+                fromSymbol: leg.from,
+                toSymbol: leg.to
+            }));
+        if (!normalizedLegs.length) return null;
+        return {
+            target: {
+                type: 'path',
+                legs: normalizedLegs
+            }
+        };
+    }
+
+    function buildMutedPathTargetCandidate(alert, evaluation) {
+        if (!alert || !alert.target) return null;
+        if (alert.target.type === 'path') {
+            return alert;
+        }
+        if (alert.target.type === 'rule' && alert.target.ruleKind === 'fixed' && evaluation && evaluation.cycle) {
+            return buildMutedPathTargetFromCycleLegs(evaluation.cycle.legs);
+        }
+        return null;
+    }
+
     function buildPathAlertCycleSummaryEntries(alert, evaluation) {
         if (evaluation && evaluation.cycle && Array.isArray(evaluation.cycle.legs)) {
             const cycleLegs = evaluation.cycle.legs.filter((leg) => !isRuleLeg(leg));
@@ -2945,7 +3149,8 @@
             summaryLegKeys: summaryEntries.map((item) => item.key),
             changedLegLines: buildPathAlertChangedLegLines(changedLegs, 3),
             changedLegs: Array.isArray(changedLegs) ? changedLegs.slice(0, 3) : [],
-            realLegCount: getPathAlertRealLegCount(alert, evaluation)
+            realLegCount: getPathAlertRealLegCount(alert, evaluation),
+            mutedTargetCandidate: buildMutedPathTargetCandidate(alert, evaluation)
         };
     }
 
@@ -2965,6 +3170,7 @@
 
     function evaluatePathAlertsOnce() {
         if (!window.PathAlertUtils) return;
+        pruneMutedPathTargetsInPlace(Date.now());
         const sharedRuleSnapshot = getSharedArbRuleSnapshot();
         const context = buildPathAlertEvaluationContext(sharedRuleSnapshot);
         const allLegSnapshots = typeof window.PathAlertUtils.buildAllLegSnapshots === 'function'
@@ -2972,7 +3178,8 @@
             : [];
         const activeIds = new Set();
         const nowMs = Date.now();
-        const triggeredEntries = [];
+        const logTriggeredEntries = [];
+        const remoteTriggeredEntries = [];
 
         for (const alert of (pathAlertConfig.alerts || [])) {
             activeIds.add(alert.id);
@@ -2986,7 +3193,7 @@
                 ? window.PathAlertUtils.resolvePathAlertSnapshotState(alert, previous, next, evaluation, allLegSnapshots)
                 : { currentSnapshots: [], baselineSnapshots: [] };
             next.evaluation = evaluation;
-            next.isSoundActive = Boolean(next.shouldTrigger && pathAlertConfig.settings && pathAlertConfig.settings.localSoundEnabled !== false);
+            let isMuted = false;
             if (next.shouldTrigger) {
                 const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
                 const changedLegs = window.PathAlertUtils.buildChangedLegs(
@@ -2994,8 +3201,20 @@
                     snapshotState.baselineSnapshots,
                     Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
                 );
-                triggeredEntries.push(buildTriggeredPathAlertEntry(alert, evaluation, changedLegs));
+                const triggeredEntry = buildTriggeredPathAlertEntry(alert, evaluation, changedLegs);
+                const mutedEntry = triggeredEntry.mutedTargetCandidate
+                    ? getMutedPathTargetEntry(triggeredEntry.mutedTargetCandidate, nowMs)
+                    : null;
+                if (mutedEntry) {
+                    triggeredEntry.mutedEntry = mutedEntry;
+                    isMuted = true;
+                }
+                logTriggeredEntries.push(triggeredEntry);
+                if (!isMuted) {
+                    remoteTriggeredEntries.push(triggeredEntry);
+                }
             }
+            next.isSoundActive = Boolean(next.shouldTrigger && !isMuted && pathAlertConfig.settings && pathAlertConfig.settings.localSoundEnabled !== false);
             pathAlertRuntimeState.set(alert.id, next);
         }
 
@@ -3005,10 +3224,12 @@
             }
         }
 
-        const aggregatedEntries = sortTriggeredPathAlertEntries(triggeredEntries).slice(0, 3);
+        const sortedLogEntries = sortTriggeredPathAlertEntries(logTriggeredEntries).slice(0, 3);
+        if (sortedLogEntries.length) {
+            appendPathAlertLogEntries(sortedLogEntries, nowMs);
+        }
+        const aggregatedEntries = sortTriggeredPathAlertEntries(remoteTriggeredEntries).slice(0, 3);
         if (aggregatedEntries.length) {
-            const logEntry = buildAggregatedPathAlertLog(aggregatedEntries);
-            appendAlertLogEntry(logEntry.title, logEntry.message, logEntry.subtitle);
             sendPathAlertWebhookNotification(aggregatedEntries);
         }
 
@@ -3358,6 +3579,30 @@
         const isHidden = window.getComputedStyle(alertLogWindow).display === 'none';
         alertLogWindow.style.display = isHidden ? 'flex' : 'none';
         if (isHidden) bringFloatingPanelToFront(alertLogWindow);
+    }
+
+    function handleAlertLogClick(event) {
+        const muteBtn = event.target.closest('[data-path-alert-log-mute]');
+        if (!muteBtn || muteBtn.disabled) return;
+        const alertId = String(muteBtn.dataset.pathAlertLogMute || '').trim();
+        if (!alertId) return;
+        const runtime = pathAlertRuntimeState.get(alertId);
+        if (!runtime || !runtime.evaluation) return;
+        const alert = (pathAlertConfig.alerts || []).find((item) => item && item.id === alertId);
+        if (!alert || !alert.target) return;
+        const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
+        const triggeredEntry = buildTriggeredPathAlertEntry(
+            alert,
+            runtime.evaluation,
+            window.PathAlertUtils && typeof window.PathAlertUtils.buildChangedLegs === 'function'
+                ? window.PathAlertUtils.buildChangedLegs(
+                    Array.isArray(runtime.currentLegSnapshots) ? runtime.currentLegSnapshots : [],
+                    Array.isArray(runtime.baselineLegSnapshots) ? runtime.baselineLegSnapshots : [],
+                    Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
+                )
+                : []
+        );
+        mutePathAlertTarget(triggeredEntry, Date.now());
     }
 
     function handlePathAlertPanelChange(event) {
@@ -5644,6 +5889,9 @@
             }
             if (toggleAlertLogBtn) {
                 toggleAlertLogBtn.addEventListener('click', toggleAlertLogPanel);
+            }
+            if (alertLogContent) {
+                alertLogContent.addEventListener('click', handleAlertLogClick);
             }
             if (pathAlertContent) {
                 pathAlertContent.addEventListener('click', handlePathAlertPanelClick);

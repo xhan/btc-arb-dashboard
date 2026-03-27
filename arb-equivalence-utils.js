@@ -3,6 +3,7 @@ function buildApi() {
     cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
     WBTC: ['WBTC', 'wBTC'],
     tBTC: ['tBTC', 'TBTC'],
+    USDe: ['USDe', 'USDE'],
     USDT: ['USDT', 'USD₮0']
   };
 
