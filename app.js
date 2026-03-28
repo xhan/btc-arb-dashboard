@@ -63,7 +63,7 @@
         };
     let pathAlertSaveTimer = null;
     let pathAlertEvalTimer = null;
-    let pathAlertPanelHidden = false;
+    let pathAlertPanelHidden = true;
     let pathAlertRuntimeState = new Map();
     let mutedPathTargets = [];
     let mutedPathLogTimer = null;

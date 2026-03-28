@@ -80,6 +80,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('quote-channel-tag'));
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
     assert.ok(response.body.includes('id="path-alert-window"'));
+    assert.ok(response.body.includes('#path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none;'));
     assert.ok(response.body.includes('id="path-alert-modal"'));
     assert.ok(response.body.includes('id="alert-trigger-mode"'));
     assert.ok(response.body.includes('id="alert-confirm-delay"'));
@@ -117,6 +118,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
+    assert.ok(appJsResponse.body.includes('let pathAlertPanelHidden = true;'));
     assert.ok(appJsResponse.body.includes('QuoteAlertConfigUtils'));
     assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
     assert.ok(!appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));
