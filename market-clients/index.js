@@ -78,7 +78,7 @@ function createMarketClients(options) {
     });
   }
 
-  async function getLifiChainIdMap(configMore = {}) {
+  async function getLifiChainIdMap(configMore = {}, requestContext) {
     const now = Date.now();
     if (lifiChainIdMapCache && (now - lifiChainIdMapFetchedAt) < LIFI_CHAIN_MAP_TTL_MS) {
       return lifiChainIdMapCache;
@@ -86,7 +86,7 @@ function createMarketClients(options) {
 
     const response = await options.fetchWithRetry(`${LIFI_API_BASE_URL}/chains`, {
       headers: getLifiHeaders(configMore)
-    });
+    }, requestContext);
     const data = await response.json();
 
     lifiChainIdMapCache = buildLifiChainIdMap(data?.chains);
@@ -94,7 +94,7 @@ function createMarketClients(options) {
     return lifiChainIdMapCache;
   }
 
-  async function getLifiTokenMeta(chain, chainId, tokenAddress, configMore = {}) {
+  async function getLifiTokenMeta(chain, chainId, tokenAddress, configMore = {}, requestContext) {
     return tokenMetaStore.remember(chain, tokenAddress, async () => {
       const params = new URLSearchParams({
         chain: String(chainId),
@@ -102,7 +102,7 @@ function createMarketClients(options) {
       });
       const response = await options.fetchWithRetry(`${LIFI_API_BASE_URL}/token?${params.toString()}`, {
         headers: getLifiHeaders(configMore)
-      });
+      }, requestContext);
       const data = await response.json();
       if (!data || !Number.isFinite(Number(data.decimals))) {
         throw new Error(`LI.FI 无法识别代币: ${tokenAddress}`);
@@ -114,7 +114,7 @@ function createMarketClients(options) {
     });
   }
 
-  async function getEkuboTokenMeta(tokenAddress) {
+  async function getEkuboTokenMeta(tokenAddress, requestContext) {
     const normalizedToken = String(tokenAddress || '').trim().toLowerCase();
     if (!normalizedToken) {
       throw new Error('缺少 Starknet 代币地址');
@@ -123,7 +123,7 @@ function createMarketClients(options) {
     return tokenMetaStore.remember('starknet', normalizedToken, async () => {
       const response = await options.fetchWithRetry(
         `https://prod-api.ekubo.org/tokens/${EKUBO_STARKNET_CHAIN_ID}/${normalizedToken}`
-      );
+      , undefined, requestContext);
       const data = await response.json();
       return {
         symbol: data?.symbol || '???',
@@ -145,7 +145,7 @@ function createMarketClients(options) {
     });
   }
 
-  async function getSolanaTokenMeta(mint) {
+  async function getSolanaTokenMeta(mint, requestContext) {
     return tokenMetaStore.remember('solana', mint, async () => {
       const response = await options.fetchWithRetry(options.solanaRpc, {
         method: 'POST',
@@ -156,7 +156,7 @@ function createMarketClients(options) {
           method: 'getAsset',
           params: { id: mint }
         })
-      });
+      }, requestContext);
       const data = await response.json();
       if (data.error) {
         throw new Error(data.error.message);

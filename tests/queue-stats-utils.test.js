@@ -62,3 +62,61 @@ assert.strictEqual(binance.inverseTasks, 0);
 assert.strictEqual(solana.taskCount, 2);
 assert.strictEqual(formatDurationMs(650), '650ms');
 assert.strictEqual(formatDurationMs(24000), '24.00s');
+
+const channelSummary = buildQueueSummary(
+  {
+    dashboard: [
+      {
+        id: 2,
+        quotes: [
+          { id: 201, chain: 'ethereum', preferredSource: 'Kyber', showInverse: true, requestChannelId: 'hk-1' },
+          { id: 202, chain: 'ethereum', preferredSource: 'Kyber', showInverse: false },
+          { id: 203, chain: 'solana', preferredSource: 'Jupiter', showInverse: false, requestChannelId: 'sg-1' },
+          { id: 204, chain: 'sui', preferredSource: 'Cetus', showInverse: false, requestChannelId: 'ignored' }
+        ]
+      }
+    ],
+    settings: {
+      kyber: 170,
+      solana: 3500,
+      sui: 500
+    }
+  },
+  {
+    channels: [
+      {
+        id: 'hk-1',
+        name: 'HK-1',
+        intervals: {
+          kyber: 90
+        }
+      },
+      {
+        id: 'sg-1',
+        name: 'SG-1',
+        intervals: {
+          solana: 1800
+        }
+      }
+    ]
+  }
+);
+
+const kyberDefault = channelSummary.queues.find((item) => item.key === 'kyber:default');
+const kyberHk = channelSummary.queues.find((item) => item.key === 'kyber:hk-1');
+const solanaSg = channelSummary.queues.find((item) => item.key === 'solana:sg-1');
+const suiDefault = channelSummary.queues.find((item) => item.key === 'sui');
+
+assert.ok(kyberDefault, '应保留 kyber 默认通道队列');
+assert.ok(kyberHk, '应为绑定通道的 kyber quote 生成独立队列');
+assert.ok(solanaSg, '应为绑定通道的 solana quote 生成独立队列');
+assert.ok(suiDefault, 'sui 仍应使用默认单队列');
+assert.strictEqual(kyberDefault.quoteCount, 1);
+assert.strictEqual(kyberDefault.taskCount, 1);
+assert.strictEqual(kyberHk.quoteCount, 1);
+assert.strictEqual(kyberHk.taskCount, 2);
+assert.strictEqual(kyberHk.intervalMs, 90);
+assert.strictEqual(kyberHk.nominalLapMs, 180);
+assert.strictEqual(solanaSg.intervalMs, 1800);
+assert.strictEqual(suiDefault.quoteCount, 1);
+assert.strictEqual(suiDefault.intervalMs, 500);

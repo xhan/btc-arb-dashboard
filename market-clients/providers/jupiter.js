@@ -3,13 +3,14 @@ function createJupiterClient(deps) {
 
   return {
     async getQuote(input) {
+      const requestContext = input && input.requestContext ? input.requestContext : undefined;
       const fromToken = input.fromToken;
       const toToken = input.toToken;
       const finalAmount = Number(input.amount) || 1;
 
       const [fromMeta, toMeta] = await Promise.all([
-        deps.getSolanaTokenMeta(fromToken),
-        deps.getSolanaTokenMeta(toToken)
+        deps.getSolanaTokenMeta(fromToken, requestContext),
+        deps.getSolanaTokenMeta(toToken, requestContext)
       ]);
 
       const amountInRaw = deps.toRawAmount(finalAmount, fromMeta.decimals);
@@ -19,7 +20,9 @@ function createJupiterClient(deps) {
         amount: amountInRaw
       });
       const apiUrl = `${apiBaseUrl}?${params.toString()}`;
-      const configMore = deps.getConfigMore ? await deps.getConfigMore() : {};
+      const configMore = requestContext && requestContext.configMore
+        ? requestContext.configMore
+        : (deps.getConfigMore ? await deps.getConfigMore() : {});
       const jupiterApiKey = typeof configMore.jupiterApiKey === 'string' ? configMore.jupiterApiKey.trim() : '';
       if (!jupiterApiKey) {
         throw new Error('未配置 Jupiter API Key');
@@ -37,7 +40,7 @@ function createJupiterClient(deps) {
 
       const response = await deps.fetchWithRetry(apiUrl, {
         headers: { 'x-api-key': jupiterApiKey }
-      });
+      }, requestContext);
       const data = await response.json();
       if (!data || !data.outAmount) {
         throw new Error(data?.error || 'Jupiter 未返回有效报价');

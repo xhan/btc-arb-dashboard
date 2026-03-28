@@ -230,7 +230,35 @@
             min-width: 0;
         }
 
+        .quote-label-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
         .quote-label { font-weight: 500; color: var(--text-color-light); text-transform: capitalize; white-space: nowrap; }
+        .quote-channel-tag {
+            display: none;
+            align-items: center;
+            padding: 1px 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(49, 130, 206, 0.28);
+            background: rgba(49, 130, 206, 0.1);
+            color: #2b6cb0;
+            font-size: 10px;
+            line-height: 1.2;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        body.show-request-channel-tags .quote-channel-tag {
+            display: inline-flex;
+        }
+        .dark-mode .quote-channel-tag {
+            border-color: rgba(144, 205, 244, 0.3);
+            background: rgba(144, 205, 244, 0.12);
+            color: #90cdf4;
+        }
         .quote-pair-label {
             font-size: 11px;
             line-height: 1.1;
@@ -1459,6 +1487,14 @@
                 </div>
             </div>
 
+            <div class="form-group" id="request-channel-select-group" style="display:none;">
+                <label>请求通道</label>
+                <select id="quote-request-channel"></select>
+                <div style="font-size:0.8em; color:var(--text-color-light); margin-top:4px;">
+                    只影响请求出口和请求间隔，不改变数据源偏好。Sui / CEX 第一版固定使用默认通道。
+                </div>
+            </div>
+
             <div class="checkbox-group" id="inverse-toggle-group">
                 <input type="checkbox" id="show-inverse-quote">
                 <label for="show-inverse-quote">显示反向报价 (小字号)</label>
@@ -1699,6 +1735,7 @@
     <script src="copy-utils.js"></script>
     <script src="quote-pause-utils.js"></script>
     <script src="price-snapshot-payload-utils.js"></script>
+    <script src="request-channel-utils.js"></script>
     <script src="queue-stats-utils.js"></script>
     <script src="app.js"></script>
 </body>

@@ -5,14 +5,10 @@ const path = require('path');
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-assert.ok(/velora:\s*\[\]/.test(appJs), 'queues 应包含 velora');
-assert.ok(/velora:\s*0/.test(appJs), 'indices 应包含 velora');
-assert.ok(/velora:\s*null/.test(appJs), 'timers 应包含 velora');
 assert.ok(/velora:\s*700/.test(appJs), 'DEFAULT_INTERVALS 应包含 velora 默认 700ms');
-assert.ok(
-  /quote\.preferredSource === 'Velora'[\s\S]*type = 'velora';/.test(appJs),
-  'Velora 应映射到独立队列'
-);
+assert.ok(appJs.includes('window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions)'), '报价应通过共享请求通道工具决定队列');
+assert.ok(appJs.includes("quote.preferredSource === 'Velora'"), 'Velora source 映射逻辑应保留');
+assert.ok(appJs.includes("type = 'velora';"), 'Velora 仍应映射到独立 source 队列');
 assert.ok(
   appJs.includes("document.getElementById('setting-velora-interval').value = apiIntervals.velora;"),
   '设置弹窗应回填 Velora 间隔'

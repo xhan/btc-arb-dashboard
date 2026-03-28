@@ -1,6 +1,7 @@
 function createLifiClient(deps) {
   return {
     async getQuote(input) {
+      const requestContext = input && input.requestContext ? input.requestContext : undefined;
       const chain = String(input.chain || '').trim();
       const fromToken = input.fromToken;
       const toToken = input.toToken;
@@ -10,16 +11,18 @@ function createLifiClient(deps) {
         throw new Error('缺少 chain/fromToken/toToken 参数');
       }
 
-      const configMore = await deps.getConfigMore();
-      const chainIdMap = await deps.getLifiChainIdMap(configMore);
+      const configMore = requestContext && requestContext.configMore
+        ? requestContext.configMore
+        : await deps.getConfigMore();
+      const chainIdMap = await deps.getLifiChainIdMap(configMore, requestContext);
       const chainId = deps.resolveLifiChainId(chain, chainIdMap);
       if (!chainId) {
         throw new Error(`LI.FI 不支持此链: ${chain}`);
       }
 
       const [fromMeta, toMeta] = await Promise.all([
-        deps.getLifiTokenMeta(chain, chainId, fromToken, configMore),
-        deps.getLifiTokenMeta(chain, chainId, toToken, configMore)
+        deps.getLifiTokenMeta(chain, chainId, fromToken, configMore, requestContext),
+        deps.getLifiTokenMeta(chain, chainId, toToken, configMore, requestContext)
       ]);
 
       const fromAmount = deps.toRawAmount(finalAmount, fromMeta.decimals);
@@ -51,7 +54,7 @@ function createLifiClient(deps) {
 
       const response = await deps.fetchWithRetry(quoteUrl, {
         headers: deps.getLifiHeaders(configMore)
-      });
+      }, requestContext);
       const quoteData = await response.json();
       const toAmountRaw = deps.getDisplayedToAmountRaw(quoteData);
       if (!toAmountRaw) {

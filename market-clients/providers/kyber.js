@@ -1,6 +1,7 @@
 function createKyberClient(deps) {
   return {
     async getQuote(input) {
+      const requestContext = input && input.requestContext ? input.requestContext : undefined;
       const chain = String(input.chain || '').toLowerCase();
       const fromToken = input.fromToken;
       const toToken = input.toToken;
@@ -18,7 +19,9 @@ function createKyberClient(deps) {
 
       const amountInRaw = deps.toRawAmount(finalAmount, fromMeta.decimals);
       const apiUrl = `https://aggregator-api.kyberswap.com/${chain}/api/v1/routes?tokenIn=${fromToken}&tokenOut=${toToken}&amountIn=${amountInRaw}`;
-      const configMore = await deps.getConfigMore();
+      const configMore = requestContext && requestContext.configMore
+        ? requestContext.configMore
+        : await deps.getConfigMore();
 
       deps.logQuoteRequest('KYBER', {
         chain,
@@ -32,7 +35,7 @@ function createKyberClient(deps) {
 
       const response = await deps.fetchWithRetry(apiUrl, {
         headers: { 'X-Client-Id': configMore.kyberClientId }
-      });
+      }, requestContext);
       const resultData = await response.json();
 
       if (resultData.code !== 0) {

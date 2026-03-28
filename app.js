@@ -8,41 +8,9 @@
     const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
     const PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN = 'main-dashboard';
 
-    let queues = {
-        kyber: [],
-        zerox: [],
-        velora: [],
-        lifi: [],
-        bybit: [],
-        binance: [],
-        solana: [],
-        sui: [],
-        starknet: []
-    };
-
-    let indices = {
-        kyber: 0,
-        zerox: 0,
-        velora: 0,
-        lifi: 0,
-        bybit: 0,
-        binance: 0,
-        solana: 0,
-        sui: 0,
-        starknet: 0
-    };
-
-    let timers = {
-        kyber: null,
-        zerox: null,
-        velora: null,
-        lifi: null,
-        bybit: null,
-        binance: null,
-        solana: null,
-        sui: null,
-        starknet: null
-    };
+    let queues = {};
+    let indices = {};
+    let timers = {};
 
     const DEFAULT_INTERVALS = window.QueueStatsUtils
         ? { ...window.QueueStatsUtils.DEFAULT_INTERVALS }
@@ -59,6 +27,15 @@
         };
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
+    let requestChannelPayload = { channels: [] };
+    let showRequestChannelTags = true;
+    let requestChannelOptions = window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelOptions === 'function'
+        ? window.RequestChannelUtils.getRequestChannelOptions(requestChannelPayload, apiIntervals)
+        : {
+            channels: [{ id: 'default', name: '默认通道', isDefault: true, httpProxy: '', intervals: { ...apiIntervals } }],
+            byId: new Map([['default', { id: 'default', name: '默认通道', isDefault: true, httpProxy: '', intervals: { ...apiIntervals } }]]),
+            defaultChannelId: 'default'
+        };
 
     let activeFetchControllers = new Map(); 
     let saveTimeout = null;
@@ -226,6 +203,8 @@
     const calcResetBtn = document.getElementById('calc-reset-btn');
     const calcMinBtn = document.getElementById('calc-min-btn');
     const toggleCalcBtn = document.getElementById('toggle-calc-btn');
+    const requestChannelSelectGroup = document.getElementById('request-channel-select-group');
+    const quoteRequestChannelSelect = document.getElementById('quote-request-channel');
     let copyToastTimer = null;
     let calculatorEntries = [];
     
@@ -381,9 +360,69 @@
         };
     }
 
+    function refreshRequestChannelOptions() {
+        if (window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelOptions === 'function') {
+            requestChannelOptions = window.RequestChannelUtils.getRequestChannelOptions(requestChannelPayload, apiIntervals);
+            return;
+        }
+        requestChannelOptions = {
+            channels: [{ id: 'default', name: '默认通道', isDefault: true, httpProxy: '', intervals: { ...apiIntervals } }],
+            byId: new Map([['default', { id: 'default', name: '默认通道', isDefault: true, httpProxy: '', intervals: { ...apiIntervals } }]]),
+            defaultChannelId: 'default'
+        };
+    }
+
+    function getRequestChannelDisplayForQuote(quote) {
+        return window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelDisplayForQuote === 'function'
+            ? window.RequestChannelUtils.getRequestChannelDisplayForQuote(quote, requestChannelOptions)
+            : null;
+    }
+
+    function buildRequestChannelTagHtml(quote) {
+        const channel = getRequestChannelDisplayForQuote(quote);
+        if (!channel) {
+            return '';
+        }
+        return `<span class="quote-channel-tag" id="quote-channel-tag-${quote.id}">${escapeHtml(channel.name)}</span>`;
+    }
+
+    function updateRequestChannelTagForQuote(quote) {
+        if (!quote) return;
+        const itemEl = document.getElementById(`quote-item-${quote.id}`);
+        if (!itemEl) return;
+
+        const labelRow = itemEl.querySelector('.quote-label-row');
+        if (!labelRow) return;
+
+        const existingTag = itemEl.querySelector(`#quote-channel-tag-${quote.id}`);
+        const channel = getRequestChannelDisplayForQuote(quote);
+        if (!channel) {
+            if (existingTag) existingTag.remove();
+            return;
+        }
+
+        if (existingTag) {
+            existingTag.textContent = channel.name;
+            return;
+        }
+
+        const labelEl = labelRow.querySelector('.quote-label');
+        if (!labelEl) return;
+        labelEl.insertAdjacentHTML('afterend', buildRequestChannelTagHtml(quote));
+    }
+
+    function syncRequestChannelTagVisibility() {
+        document.body.classList.toggle('show-request-channel-tags', showRequestChannelTags);
+    }
+
+    function toggleRequestChannelTags() {
+        showRequestChannelTags = !showRequestChannelTags;
+        syncRequestChannelTagVisibility();
+    }
+
     function getQueueTypeForQuote(quote) {
         if (window.QueueStatsUtils && typeof window.QueueStatsUtils.getQueueTypeForQuote === 'function') {
-            return window.QueueStatsUtils.getQueueTypeForQuote(quote);
+            return window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions);
         }
         let type = 'kyber';
         if (isCexOrderbookChain(quote.chain)) {
@@ -404,6 +443,51 @@
         return type;
     }
 
+    function getQueueIntervalMs(type) {
+        if (window.RequestChannelUtils && typeof window.RequestChannelUtils.getEffectiveIntervalForQueue === 'function') {
+            return window.RequestChannelUtils.getEffectiveIntervalForQueue(type, apiIntervals, requestChannelOptions);
+        }
+        const configured = Number(apiIntervals[type]);
+        return Number.isFinite(configured) && configured >= 0 ? configured : 0;
+    }
+
+    function ensureQueueState(type) {
+        if (!Array.isArray(queues[type])) {
+            queues[type] = [];
+        }
+        if (!Number.isInteger(indices[type])) {
+            indices[type] = 0;
+        }
+        if (!(type in timers)) {
+            timers[type] = null;
+        }
+        return queues[type];
+    }
+
+    function buildManagedQueueKeys() {
+        const keys = new Set();
+        const defaultChannelId = requestChannelOptions && requestChannelOptions.defaultChannelId
+            ? requestChannelOptions.defaultChannelId
+            : 'default';
+
+        Object.keys(DEFAULT_INTERVALS).forEach((sourceKey) => {
+            if (window.RequestChannelUtils && typeof window.RequestChannelUtils.buildQueueKey === 'function') {
+                keys.add(window.RequestChannelUtils.buildQueueKey(sourceKey, defaultChannelId));
+                return;
+            }
+            keys.add(sourceKey);
+        });
+
+        dashboardState.forEach((category) => {
+            (category.quotes || []).forEach((quote) => {
+                if (isQuotePaused(quote)) return;
+                keys.add(getQueueTypeForQuote(quote));
+            });
+        });
+
+        return keys;
+    }
+
     function buildQueueTasksForQuote(quote) {
         const tasks = [{ quoteId: quote.id, mode: 'main' }];
         if (shouldQueueInverseFetch(quote)) {
@@ -419,7 +503,7 @@
     function addToQueue(quote) {
         if (!quote || isQuotePaused(quote)) return;
         const type = getQueueTypeForQuote(quote);
-        const queue = queues[type];
+        const queue = ensureQueueState(type);
         const taskKeys = new Set(queue.map(getQueueTaskKey));
         const tasks = buildQueueTasksForQuote(quote);
 
@@ -439,7 +523,7 @@
     }
 
     function deferCurrentQueueTask(type) {
-        const queue = queues[type];
+        const queue = ensureQueueState(type);
         if (!queue || queue.length <= 1) return;
 
         const currentIndex = indices[type];
@@ -453,7 +537,7 @@
     }
 
     function processQueue(type) {
-        const queue = queues[type];
+        const queue = ensureQueueState(type);
         if (queue.length === 0) return;
 
         indices[type] = (indices[type] + 1) % queue.length;
@@ -487,16 +571,29 @@
     }
 
     function updateSchedulers() {
-        Object.keys(timers).forEach(type => {
+        const managedKeys = buildManagedQueueKeys();
+        const allKeys = new Set([...Object.keys(timers), ...managedKeys]);
+
+        allKeys.forEach((type) => {
             if (timers[type]) clearInterval(timers[type]);
             timers[type] = null;
+
+            if (!managedKeys.has(type) && (!queues[type] || queues[type].length === 0)) {
+                delete queues[type];
+                delete indices[type];
+                delete timers[type];
+                return;
+            }
+
+            ensureQueueState(type);
 
             if (arbDetailState.pausedDashboard) {
                 return;
             }
 
-            if (apiIntervals[type] > 0) {
-                timers[type] = setInterval(() => processQueue(type), apiIntervals[type]);
+            const intervalMs = getQueueIntervalMs(type);
+            if (intervalMs > 0) {
+                timers[type] = setInterval(() => processQueue(type), intervalMs);
             }
         });
     }
@@ -532,6 +629,7 @@
         };
         
         apiIntervals = newIntervals;
+        refreshRequestChannelOptions();
         updateSchedulers();
         saveData(); 
         settingsModal.classList.remove('visible');
@@ -2526,6 +2624,7 @@
                         signal: controller.signal,
                         isInverseFetch: Boolean(leg.inverse),
                         amount: legInputAmount,
+                        requestChannelId: 'default',
                         skipDelay: true,
                         beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)
                     });
@@ -4232,9 +4331,12 @@
         const requestedAmount = Number.isFinite(amountOverride) && amountOverride > 0
             ? amountOverride
             : (quote.amount || 1);
+        const requestChannelId = typeof options.requestChannelId === 'string' && options.requestChannelId.trim()
+            ? options.requestChannelId.trim()
+            : quote.requestChannelId;
         const requestQuote = isInverseFetch
-            ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: requestedAmount }
-            : { ...quote, amount: requestedAmount };
+            ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: requestedAmount, requestChannelId }
+            : { ...quote, amount: requestedAmount, requestChannelId };
         const strategy = buildQuoteStrategy(quote);
         let fetchError = null;
         let successSource = null;
@@ -4695,6 +4797,11 @@
         }
         if (key === 'c') {
             event.preventDefault();
+            toggleRequestChannelTags();
+            return;
+        }
+        if (key === 'd') {
+            event.preventDefault();
             toggleCalcPanel();
             return;
         }
@@ -5071,13 +5178,17 @@
         const amountInputHTML = !isCexOrderbookChain(quote.chain) ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
         const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
         const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${escapeHtml(getQuotePairLabel(quote, monitorState))}</span>`;
+        const requestChannelTagHtml = buildRequestChannelTagHtml(quote);
         const pauseButtonTitle = isQuotePaused(quote) ? '恢复' : '暂停';
         const pauseButtonIcon = isQuotePaused(quote) ? '▶️' : '⏸️';
         
         itemEl.innerHTML = `
             <div class="quote-left-container">
                 <span class="quote-label-stack">
-                    <span class="quote-label">${displayName}</span>
+                    <span class="quote-label-row">
+                        <span class="quote-label">${displayName}</span>
+                        ${requestChannelTagHtml}
+                    </span>
                     ${pairLabelHtml}
                 </span>
                 <span id="trend-arrow-${quote.id}" class="trend-arrow"></span>
@@ -5225,6 +5336,49 @@
             console.warn('加载价格快照配置失败:', error);
             priceSnapshotConfig = { enabled: false, intervalSec: 10 };
         }
+    }
+
+    async function loadRequestChannels() {
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/get-request-channels`);
+            if (!response.ok) throw new Error('获取请求通道失败');
+            const data = await response.json();
+            requestChannelPayload = data && typeof data === 'object' ? data : { channels: [] };
+        } catch (error) {
+            console.warn('加载请求通道失败:', error);
+            requestChannelPayload = { channels: [] };
+        }
+        refreshRequestChannelOptions();
+        dashboardState.forEach((category) => {
+            (category.quotes || []).forEach((quote) => updateRequestChannelTagForQuote(quote));
+        });
+    }
+
+    function shouldShowRequestChannelForQuote(quote) {
+        return !!(window.RequestChannelUtils
+            && typeof window.RequestChannelUtils.supportsRequestChannelForQuote === 'function'
+            && window.RequestChannelUtils.supportsRequestChannelForQuote(quote));
+    }
+
+    function renderQuoteRequestChannelOptions(quote) {
+        if (!requestChannelSelectGroup || !quoteRequestChannelSelect) return;
+
+        if (!shouldShowRequestChannelForQuote(quote)) {
+            requestChannelSelectGroup.style.display = 'none';
+            quoteRequestChannelSelect.innerHTML = '';
+            return;
+        }
+
+        requestChannelSelectGroup.style.display = 'block';
+        const currentChannelId = window.RequestChannelUtils && typeof window.RequestChannelUtils.resolveRequestChannelIdForQuote === 'function'
+            ? window.RequestChannelUtils.resolveRequestChannelIdForQuote(quote, requestChannelOptions)
+            : (quote.requestChannelId || 'default');
+
+        quoteRequestChannelSelect.innerHTML = (requestChannelOptions.channels || []).map((channel) => {
+            const suffix = channel.isDefault ? ' (默认)' : '';
+            return `<option value="${escapeHtml(channel.id)}">${escapeHtml(channel.name)}${suffix}</option>`;
+        }).join('');
+        quoteRequestChannelSelect.value = currentChannelId;
     }
 
     function buildPriceSnapshotPayload() {
@@ -5548,6 +5702,8 @@
                 sourceGroup.style.display = 'none';
             }
 
+            renderQuoteRequestChannelOptions(quote);
+
             const inverseCheckbox = document.getElementById('show-inverse-quote');
             if (isCexOrderbookChain(quote.chain)) {
                  document.getElementById('inverse-toggle-group').style.display = 'none';
@@ -5659,6 +5815,28 @@
                     quote.showInverse = showInverse;
                     addToQueue(quote);
                     setTimeout(() => fetchSingleQuote(quote), 0); 
+                }
+
+                if (shouldShowRequestChannelForQuote(quote) && quoteRequestChannelSelect) {
+                    const nextChannelId = quoteRequestChannelSelect.value || 'default';
+                    const previousChannelId = quote.requestChannelId || 'default';
+                    if (previousChannelId !== nextChannelId) {
+                        removeFromQueue(quote.id);
+                        if (nextChannelId === 'default') {
+                            delete quote.requestChannelId;
+                        } else {
+                            quote.requestChannelId = nextChannelId;
+                        }
+                        updateRequestChannelTagForQuote(quote);
+                        addToQueue(quote);
+                        setTimeout(() => fetchSingleQuote(quote), 0);
+                    }
+                } else if (quote.requestChannelId) {
+                    removeFromQueue(quote.id);
+                    delete quote.requestChannelId;
+                    updateRequestChannelTagForQuote(quote);
+                    addToQueue(quote);
+                    setTimeout(() => fetchSingleQuote(quote), 0);
                 }
 
                 const pUp = parseFloat(document.getElementById('alert-percent-up').value);
@@ -5811,6 +5989,7 @@
     
     async function init() {
         audioNoticeEl.style.display = 'block';
+        syncRequestChannelTagVisibility();
         await loadPriceSnapshotConfig();
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
@@ -5842,6 +6021,8 @@
                     dashboardState = [];
                 }
             }
+            refreshRequestChannelOptions();
+            await loadRequestChannels();
 
             await loadPathAlertConfig();
             

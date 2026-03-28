@@ -18,7 +18,10 @@ function createVeloraClient(deps) {
 
   return {
     async getQuote(input) {
-      const configMore = deps.getConfigMore ? await deps.getConfigMore() : {};
+      const requestContext = input && input.requestContext ? input.requestContext : undefined;
+      const configMore = requestContext && requestContext.configMore
+        ? requestContext.configMore
+        : (deps.getConfigMore ? await deps.getConfigMore() : {});
       const chain = String(input.chain || '').toLowerCase();
       const fromToken = input.fromToken;
       const toToken = input.toToken;
@@ -71,7 +74,7 @@ function createVeloraClient(deps) {
 
       const response = await deps.fetchWithRetry(apiUrl, {
         headers: deps.headers || {}
-      });
+      }, requestContext);
       const data = await response.json();
       const destAmountRaw = data?.priceRoute?.destAmount;
       if (!destAmountRaw) {

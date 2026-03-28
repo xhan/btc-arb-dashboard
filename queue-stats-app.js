@@ -35,7 +35,8 @@
   function renderTable(summary) {
     const rows = summary.queues.map((item) => `
       <tr>
-        <td><span class="badge">${escapeHtml(item.key)}</span></td>
+        <td><span class="badge">${escapeHtml(item.channelName || item.channelId || 'default')}</span></td>
+        <td>${escapeHtml(item.sourceKey || item.key)}</td>
         <td>${escapeHtml(item.intervalMs)}ms</td>
         <td>${escapeHtml(item.quoteCount)}</td>
         <td>${escapeHtml(item.mainTasks)}</td>
@@ -49,7 +50,8 @@
       <table>
         <thead>
           <tr>
-            <th>队列</th>
+            <th>通道</th>
+            <th>Source</th>
             <th>Interval</th>
             <th>Quote 数</th>
             <th>Main Task</th>
@@ -65,12 +67,21 @@
 
   async function init() {
     try {
-      const response = await fetch('/api/get-config');
-      if (!response.ok) {
-        throw new Error(`读取配置失败: ${response.status}`);
+      const [configResponse, requestChannelsResponse] = await Promise.all([
+        fetch('/api/get-config'),
+        fetch('/api/get-request-channels')
+      ]);
+      if (!configResponse.ok) {
+        throw new Error(`读取配置失败: ${configResponse.status}`);
       }
-      const data = await response.json();
-      const summary = utils.buildQueueSummary(data);
+      if (!requestChannelsResponse.ok) {
+        throw new Error(`读取请求通道失败: ${requestChannelsResponse.status}`);
+      }
+      const [data, requestChannels] = await Promise.all([
+        configResponse.json(),
+        requestChannelsResponse.json()
+      ]);
+      const summary = utils.buildQueueSummary(data, requestChannels);
 
       stateEl.remove();
       renderMetrics(summary);

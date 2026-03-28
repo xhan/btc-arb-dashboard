@@ -2,23 +2,28 @@
   const quotePauseUtils = typeof module !== 'undefined' && module.exports
     ? require('./quote-pause-utils')
     : root.QuotePauseUtils;
-  const api = factory(quotePauseUtils);
+  const requestChannelUtils = typeof module !== 'undefined' && module.exports
+    ? require('./request-channel-utils')
+    : root.RequestChannelUtils;
+  const api = factory(quotePauseUtils, requestChannelUtils);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   root.QueueStatsUtils = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils) {
-  const DEFAULT_INTERVALS = {
-    kyber: 170,
-    zerox: 110,
-    velora: 700,
-    lifi: 170,
-    bybit: 1000,
-    binance: 1000,
-    solana: 3500,
-    sui: 500,
-    starknet: 1000
-  };
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils, requestChannelUtils) {
+  const DEFAULT_INTERVALS = requestChannelUtils && requestChannelUtils.DEFAULT_INTERVALS
+    ? { ...requestChannelUtils.DEFAULT_INTERVALS }
+    : {
+      kyber: 170,
+      zerox: 110,
+      velora: 700,
+      lifi: 170,
+      bybit: 1000,
+      binance: 1000,
+      solana: 3500,
+      sui: 500,
+      starknet: 1000
+    };
 
   function normalizeChain(chain) {
     return typeof chain === 'string' ? chain.trim().toLowerCase() : '';
@@ -42,7 +47,10 @@
     return !!quote && quote.paused === true;
   }
 
-  function getQueueTypeForQuote(quote) {
+  function getQueueTypeForQuote(quote, requestChannels) {
+    if (requestChannels && requestChannelUtils && typeof requestChannelUtils.getQueueKeyForQuote === 'function') {
+      return requestChannelUtils.getQueueKeyForQuote(quote, requestChannels);
+    }
     const chain = String(quote && quote.chain ? quote.chain : '');
     const normalized = normalizeChain(chain);
     let type = 'kyber';
@@ -67,6 +75,9 @@
   }
 
   function normalizeIntervals(settings) {
+    if (requestChannelUtils && typeof requestChannelUtils.normalizeIntervals === 'function') {
+      return requestChannelUtils.normalizeIntervals(settings);
+    }
     const intervals = { ...DEFAULT_INTERVALS };
     const source = settings && typeof settings === 'object' ? settings : {};
 
@@ -78,6 +89,54 @@
     });
 
     return intervals;
+  }
+
+  function getRequestChannelOptions(rawRequestChannels, defaultIntervals) {
+    if (!requestChannelUtils || typeof requestChannelUtils.getRequestChannelOptions !== 'function') {
+      return null;
+    }
+    return requestChannelUtils.getRequestChannelOptions(rawRequestChannels, defaultIntervals);
+  }
+
+  function createQueueBucket(key, intervals, requestChannels) {
+    const parsed = requestChannelUtils && typeof requestChannelUtils.parseQueueKey === 'function'
+      ? requestChannelUtils.parseQueueKey(key)
+      : {
+        sourceKey: key,
+        channelId: 'default'
+      };
+    const channel = requestChannels && requestChannels.byId instanceof Map
+      ? requestChannels.byId.get(parsed.channelId)
+      : null;
+    const intervalMs = requestChannelUtils && typeof requestChannelUtils.getEffectiveIntervalForQueue === 'function'
+      ? requestChannelUtils.getEffectiveIntervalForQueue(key, intervals, requestChannels)
+      : intervals[key];
+
+    return {
+      key,
+      sourceKey: parsed.sourceKey || key,
+      channelId: parsed.channelId || 'default',
+      channelName: channel ? channel.name : (parsed.channelId || 'default'),
+      intervalMs,
+      quoteCount: 0,
+      mainTasks: 0,
+      inverseTasks: 0,
+      taskCount: 0,
+      nominalLapMs: 0,
+      disabled: intervalMs <= 0
+    };
+  }
+
+  function buildDefaultQueueKeys(requestChannels) {
+    return Object.keys(DEFAULT_INTERVALS).map((sourceKey) => {
+      if (requestChannelUtils && typeof requestChannelUtils.isChannelAwareSourceKey === 'function' && requestChannelUtils.isChannelAwareSourceKey(sourceKey)) {
+        return requestChannelUtils.buildQueueKey(
+          sourceKey,
+          requestChannels ? requestChannels.defaultChannelId : 'default'
+        );
+      }
+      return sourceKey;
+    });
   }
 
   function normalizeConfigData(rawData) {
@@ -101,26 +160,25 @@
     };
   }
 
-  function buildQueueSummary(rawData) {
+  function buildQueueSummary(rawData, rawRequestChannels) {
     const normalized = normalizeConfigData(rawData);
     const intervals = normalizeIntervals(normalized.settings);
-    const queues = Object.keys(DEFAULT_INTERVALS).map((key) => ({
-      key,
-      intervalMs: intervals[key],
-      quoteCount: 0,
-      mainTasks: 0,
-      inverseTasks: 0,
-      taskCount: 0,
-      nominalLapMs: 0,
-      disabled: intervals[key] <= 0
-    }));
+    const requestChannels = getRequestChannelOptions(rawRequestChannels, intervals);
+    const useChannelAwareQueue = !!rawRequestChannels && !!requestChannels;
+    const queues = (useChannelAwareQueue ? buildDefaultQueueKeys(requestChannels) : Object.keys(DEFAULT_INTERVALS))
+      .map((key) => createQueueBucket(key, intervals, requestChannels));
     const queueMap = new Map(queues.map((item) => [item.key, item]));
 
     for (const category of normalized.dashboard) {
       const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
       for (const quote of quotes) {
         if (isQuotePaused(quote)) continue;
-        const type = getQueueTypeForQuote(quote);
+        const type = getQueueTypeForQuote(quote, useChannelAwareQueue ? requestChannels : null);
+        if (!queueMap.has(type)) {
+          const bucket = createQueueBucket(type, intervals, requestChannels);
+          queues.push(bucket);
+          queueMap.set(type, bucket);
+        }
         const bucket = queueMap.get(type);
         if (!bucket) continue;
 
@@ -141,6 +199,7 @@
 
     return {
       intervals,
+      requestChannels,
       queues,
       totalQuoteCount: queues.reduce((sum, item) => sum + item.quoteCount, 0),
       totalTaskCount: queues.reduce((sum, item) => sum + item.taskCount, 0)

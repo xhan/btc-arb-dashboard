@@ -60,8 +60,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
+    assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(
       response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="request-channel-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
@@ -71,6 +75,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('setting-binance-interval'));
     assert.ok(response.body.includes('Velora (默认 700ms)'));
     assert.ok(response.body.includes('class="settings-grid"'));
+    assert.ok(response.body.includes('id="quote-request-channel"'));
+    assert.ok(response.body.includes('请求通道'));
+    assert.ok(response.body.includes('quote-channel-tag'));
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
     assert.ok(response.body.includes('id="path-alert-window"'));
     assert.ok(response.body.includes('id="path-alert-modal"'));
@@ -107,6 +114,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
     assert.ok(appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
+    assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
     assert.ok(appJsResponse.body.includes('QuoteAlertConfigUtils'));
@@ -128,6 +136,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('忽略 1 小时'));
     assert.ok(appJsResponse.body.includes('沉默中'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
+    assert.ok(appJsResponse.body.includes("if (key === 'c')"));
+    assert.ok(appJsResponse.body.includes("if (key === 'd')"));
+    assert.ok(appJsResponse.body.includes('toggleRequestChannelTags()'));
+    assert.ok(appJsResponse.body.includes('let showRequestChannelTags = true;'));
     assert.ok(appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));
     assert.ok(appJsResponse.body.includes("USDE: 'USDe'"));
     assert.ok(appJsResponse.body.includes('音效'));
@@ -214,8 +226,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(queueStatsResponse.body.includes('队列统计'));
     assert.ok(queueStatsResponse.body.includes('请求发起间隔'));
     assert.ok(queueStatsResponse.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(queueStatsResponse.body.includes('src="request-channel-utils.js"'));
     assert.ok(
       queueStatsResponse.body.indexOf('src="quote-pause-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')
+    );
+    assert.ok(
+      queueStatsResponse.body.indexOf('src="request-channel-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')
     );
     assert.ok(queueStatsResponse.body.includes('src="queue-stats-utils.js"'));
     assert.ok(queueStatsResponse.body.includes('src="queue-stats-app.js"'));

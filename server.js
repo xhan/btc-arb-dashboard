@@ -14,6 +14,16 @@ const {
 const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./price-snapshot-replay');
 const { parseUtc8Input } = require('./time-utils');
 const { createMarketClients } = require('./market-clients');
+const { DEFAULT_INTERVALS, normalizeIntervals } = require('./request-channel-utils');
+const {
+    normalizeRequestChannelsConfig,
+    resolveRequestChannelContext,
+    sanitizeRequestChannelsForClient
+} = require('./request-channel-config');
+const {
+    applyRequestChannelToFetchOptions,
+    createRequestChannelAgentCache
+} = require('./request-channel-http');
 const {
     buildPathAlertWebhookUrl,
     buildTelegramBotApiUrl,
@@ -60,6 +70,7 @@ function resolveProjectFilePath(fileName, envKey) {
 
 const CONFIG_PATH = resolveProjectFilePath('config.json', 'CONFIG_PATH');
 const CONFIG_MORE_PATH = resolveProjectFilePath('config_more.json', 'CONFIG_MORE_PATH');
+const REQUEST_CHANNELS_PATH = resolveProjectFilePath('request_channels.json', 'REQUEST_CHANNELS_PATH');
 const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json', 'METADATA_CACHE_PATH');
 const ALERT_CONFIG_PATH = resolveProjectFilePath('alert.config', 'ALERT_CONFIG_PATH');
 const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
@@ -103,6 +114,7 @@ const PATH_ALERT_CHAIN_LABELS = {
 };
 
 let writeQueue = Promise.resolve();
+const requestChannelAgentCache = createRequestChannelAgentCache();
 
 async function safeWriteJsonFile(filePath, data) {
     writeQueue = writeQueue.then(async () => {
@@ -342,6 +354,53 @@ async function getConfigMore() {
     }
 }
 
+function getConfigSettings(rawData) {
+    if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
+        return rawData.settings && typeof rawData.settings === 'object'
+            ? rawData.settings
+            : {};
+    }
+    return {};
+}
+
+async function getRequestChannelsConfig() {
+    const [configMore, configData, requestChannelsData] = await Promise.all([
+        getConfigMore(),
+        readJsonFile(CONFIG_PATH).catch((error) => {
+            if (error.code === 'ENOENT' || error instanceof SyntaxError) {
+                return { dashboard: [], settings: {} };
+            }
+            throw error;
+        }),
+        readJsonFile(REQUEST_CHANNELS_PATH).catch((error) => {
+            if (error.code === 'ENOENT' || error instanceof SyntaxError) {
+                return { channels: [] };
+            }
+            throw error;
+        })
+    ]);
+
+    const intervals = typeof normalizeIntervals === 'function'
+        ? normalizeIntervals(getConfigSettings(configData))
+        : { ...DEFAULT_INTERVALS };
+
+    return normalizeRequestChannelsConfig(requestChannelsData, intervals, configMore);
+}
+
+async function buildQuoteRequestInput(body, sourceKey) {
+    const requestChannelsConfig = await getRequestChannelsConfig();
+    const requestContext = resolveRequestChannelContext({
+        requestChannelId: body && body.requestChannelId,
+        sourceKey,
+        requestChannelsConfig
+    });
+
+    return {
+        ...(body && typeof body === 'object' ? body : {}),
+        requestContext
+    };
+}
+
 async function sendPathAlertDayAppWebhook(alertConfig, title, body) {
     if (!alertConfig || !alertConfig.settings || alertConfig.settings.webhookEnabled !== true) {
         return { sent: false, channel: 'dayapp', reason: 'disabled' };
@@ -405,10 +464,15 @@ async function getAlertConfig() {
     }
 }
 
-async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+async function fetchWithRetry(url, options, requestContext, retries = 3, delay = 1000) {
     for (let i = 0; i < retries; i++) {
         try {
-            const response = await fetch(url, options);
+            const requestOptions = await applyRequestChannelToFetchOptions(
+                options && typeof options === 'object' ? options : {},
+                requestContext,
+                requestChannelAgentCache
+            );
+            const response = await fetch(url, requestOptions);
             if (!response.ok) {
                  const errorText = await response.text();
                  
@@ -544,6 +608,15 @@ app.get('/api/get-alert-config', async (req, res) => {
         res.json(await getAlertConfig());
     } catch (error) {
         console.error('Alert Config Read Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/get-request-channels', async (req, res) => {
+    try {
+        res.json(sanitizeRequestChannelsForClient(await getRequestChannelsConfig()));
+    } catch (error) {
+        console.error('Request Channel Read Error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -714,7 +787,7 @@ app.post('/api/get-evm-meta', async (req, res) => {
 
 app.post('/api/get-0x-quote', async (req, res) => {
     try {
-        const result = await marketClients.providers.zerox.getQuote(req.body);
+        const result = await marketClients.providers.zerox.getQuote(await buildQuoteRequestInput(req.body, 'zerox'));
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
@@ -725,7 +798,7 @@ app.post('/api/get-0x-quote', async (req, res) => {
 
 app.post('/api/get-lifi-quote', async (req, res) => {
     try {
-        const result = await marketClients.providers.lifi.getQuote(req.body);
+        const result = await marketClients.providers.lifi.getQuote(await buildQuoteRequestInput(req.body, 'lifi'));
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
@@ -736,7 +809,7 @@ app.post('/api/get-lifi-quote', async (req, res) => {
 
 app.post('/api/get-ekubo-quote', async (req, res) => {
     try {
-        const result = await marketClients.providers.ekubo.getQuote(req.body);
+        const result = await marketClients.providers.ekubo.getQuote(await buildQuoteRequestInput(req.body, 'starknet'));
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
@@ -747,7 +820,7 @@ app.post('/api/get-ekubo-quote', async (req, res) => {
 
 app.post('/api/get-jupiter-quote', async (req, res) => {
     try {
-        const result = await marketClients.providers.jupiter.getQuote(req.body);
+        const result = await marketClients.providers.jupiter.getQuote(await buildQuoteRequestInput(req.body, 'solana'));
         res.json(result);
     } catch (error) {
         const { fromToken, toToken, amount } = req.body;
@@ -758,7 +831,7 @@ app.post('/api/get-jupiter-quote', async (req, res) => {
 
 app.post('/api/get-kyber-quote', async (req, res) => {
     try {
-        const result = await marketClients.providers.kyber.getQuote(req.body);
+        const result = await marketClients.providers.kyber.getQuote(await buildQuoteRequestInput(req.body, 'kyber'));
         res.json(result);
     } catch (error) { 
         const { chain, fromToken, toToken, amount } = req.body;
@@ -769,7 +842,7 @@ app.post('/api/get-kyber-quote', async (req, res) => {
 
 app.post('/api/get-velora-quote', async (req, res) => {
     try {
-        const result = await marketClients.providers.velora.getQuote(req.body);
+        const result = await marketClients.providers.velora.getQuote(await buildQuoteRequestInput(req.body, 'velora'));
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
@@ -780,7 +853,7 @@ app.post('/api/get-velora-quote', async (req, res) => {
 
 app.post('/api/get-cetus-quote', async (req, res) => {
     try {
-        const result = await marketClients.providers.cetus.getQuote(req.body);
+        const result = await marketClients.providers.cetus.getQuote(await buildQuoteRequestInput(req.body, 'sui'));
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;

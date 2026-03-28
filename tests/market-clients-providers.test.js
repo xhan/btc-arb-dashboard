@@ -3,7 +3,9 @@ const assert = require('assert');
 const { createBybitClient } = require('../market-clients/providers/bybit');
 const { createBinanceClient } = require('../market-clients/providers/binance');
 const { createJupiterClient } = require('../market-clients/providers/jupiter');
+const { createEkuboClient } = require('../market-clients/providers/ekubo');
 const { createKyberClient } = require('../market-clients/providers/kyber');
+const { createLifiClient } = require('../market-clients/providers/lifi');
 const { createVeloraClient } = require('../market-clients/providers/velora');
 const { createZeroXClient } = require('../market-clients/providers/zerox');
 const { createCetusClient } = require('../market-clients/providers/cetus');
@@ -11,8 +13,8 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 (async () => {
   const kyberRequests = [];
   const kyber = createKyberClient({
-    fetchWithRetry: async (url, options) => {
-      kyberRequests.push({ url, options });
+    fetchWithRetry: async (url, options, requestContext) => {
+      kyberRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
           code: 0,
@@ -64,10 +66,37 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
     headers: { 'X-Client-Id': 'kyber-client' }
   });
 
+  const kyberChannelRequests = [];
+  const kyberChannelResult = await kyber.getQuote({
+    chain: 'ethereum',
+    fromToken: '0xfrom',
+    toToken: '0xto',
+    amount: 1,
+    requestContext: {
+      channelId: 'hk-1',
+      httpProxy: 'http://127.0.0.1:18001',
+      configMore: {
+        kyberClientId: 'hk-client'
+      }
+    }
+  });
+  kyberChannelRequests.push(kyberRequests[1]);
+  assert.strictEqual(kyberChannelResult.source, 'Kyber');
+  assert.deepStrictEqual(kyberChannelRequests[0].options, {
+    headers: { 'X-Client-Id': 'hk-client' }
+  });
+  assert.deepStrictEqual(kyberChannelRequests[0].requestContext, {
+    channelId: 'hk-1',
+    httpProxy: 'http://127.0.0.1:18001',
+    configMore: {
+      kyberClientId: 'hk-client'
+    }
+  });
+
   const zeroXRequests = [];
   const zeroX = createZeroXClient({
-    fetchWithRetry: async (url, options) => {
-      zeroXRequests.push({ url, options });
+    fetchWithRetry: async (url, options, requestContext) => {
+      zeroXRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
           buyAmount: '494000000000000000',
@@ -117,11 +146,12 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
       'Content-Type': 'application/json'
     }
   });
+  assert.strictEqual(zeroXRequests[0].requestContext, undefined);
 
   const jupiterRequests = [];
   const jupiter = createJupiterClient({
-    fetchWithRetry: async (url, options) => {
-      jupiterRequests.push({ url, options });
+    fetchWithRetry: async (url, options, requestContext) => {
+      jupiterRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
           outAmount: '495000000'
@@ -166,6 +196,45 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
   assert.deepStrictEqual(jupiterRequests[0].options, {
     headers: { 'x-api-key': 'jupiter-api-key' }
   });
+
+  const jupiterChannelRequests = [];
+  const jupiterChannel = createJupiterClient({
+    fetchWithRetry: async (url, options, requestContext) => {
+      jupiterChannelRequests.push({ url, options, requestContext });
+      return {
+        json: async () => ({
+          outAmount: '495000000'
+        })
+      };
+    },
+    getConfigMore: async () => ({ jupiterApiKey: 'default-jupiter-api-key' }),
+    getSolanaTokenMeta: async (mint, requestContext) => {
+      assert.strictEqual(requestContext.channelId, 'sg-1');
+      if (mint === 'mint-in') return { symbol: 'SOL', decimals: 9 };
+      return { symbol: 'USDC', decimals: 6 };
+    },
+    toRawAmount: () => '1500000000',
+    fromRawAmount: () => 495,
+    logQuoteRequest: () => {},
+    logQuoteResult: () => {}
+  });
+  await jupiterChannel.getQuote({
+    chain: 'solana',
+    fromToken: 'mint-in',
+    toToken: 'mint-out',
+    amount: 1.5,
+    requestContext: {
+      channelId: 'sg-1',
+      httpProxy: 'http://127.0.0.1:18002',
+      configMore: {
+        jupiterApiKey: 'sg-jupiter-api-key'
+      }
+    }
+  });
+  assert.deepStrictEqual(jupiterChannelRequests[0].options, {
+    headers: { 'x-api-key': 'sg-jupiter-api-key' }
+  });
+  assert.strictEqual(jupiterChannelRequests[0].requestContext.channelId, 'sg-1');
 
   const jupiterMissingKey = createJupiterClient({
     fetchWithRetry: async () => {
@@ -466,8 +535,8 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 
   const veloraRequests = [];
   const velora = createVeloraClient({
-    fetchWithRetry: async (url) => {
-      veloraRequests.push(url);
+    fetchWithRetry: async (url, options, requestContext) => {
+      veloraRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
           priceRoute: {
@@ -512,7 +581,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
     raw_price: 1995,
     source: 'Velora'
   });
-  const veloraUrl = new URL(veloraRequests[0]);
+  const veloraUrl = new URL(veloraRequests[0].url);
   assert.strictEqual(veloraUrl.origin, 'https://api.paraswap.io');
   assert.strictEqual(veloraUrl.pathname, '/prices/');
   assert.strictEqual(veloraUrl.searchParams.get('srcToken'), '0xeth');
@@ -526,6 +595,159 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
   assert.strictEqual(veloraUrl.searchParams.get('partner'), 'xh-dashboard');
   assert.strictEqual(veloraUrl.searchParams.get('includeDEXS'), 'UniswapV3,SushiSwap');
   assert.strictEqual(veloraUrl.searchParams.get('otherExchangePrices'), 'true');
+
+  const veloraChannelRequests = [];
+  const veloraChannel = createVeloraClient({
+    fetchWithRetry: async (url, options, requestContext) => {
+      veloraChannelRequests.push({ url, options, requestContext });
+      return {
+        json: async () => ({
+          priceRoute: {
+            destAmount: '1995000000'
+          }
+        })
+      };
+    },
+    getConfigMore: async () => ({
+      veloraPartner: 'default-partner',
+      veloraIncludeDEXS: [],
+      veloraOtherExchangePrices: false
+    }),
+    getEvmProvider: () => ({}),
+    getEvmTokenMeta: async (chain, tokenAddress) => {
+      if (tokenAddress === '0xeth') return { symbol: 'ETH', decimals: 18 };
+      return { symbol: 'USDC', decimals: 6 };
+    },
+    toRawAmount: () => '1000000000000000000',
+    fromRawAmount: () => 1995,
+    logQuoteRequest: () => {},
+    logQuoteResult: () => {}
+  });
+  await veloraChannel.getQuote({
+    chain: 'ethereum',
+    fromToken: '0xeth',
+    toToken: '0xusdc',
+    amount: 1,
+    requestContext: {
+      channelId: 'hk-1',
+      httpProxy: 'http://127.0.0.1:18001',
+      configMore: {
+        veloraPartner: 'hk-partner',
+        veloraIncludeDEXS: ['UniswapV3'],
+        veloraOtherExchangePrices: true
+      }
+    }
+  });
+  const veloraChannelUrl = new URL(veloraChannelRequests[0].url);
+  assert.strictEqual(veloraChannelUrl.searchParams.get('partner'), 'hk-partner');
+  assert.strictEqual(veloraChannelUrl.searchParams.get('includeDEXS'), 'UniswapV3');
+  assert.strictEqual(veloraChannelUrl.searchParams.get('otherExchangePrices'), 'true');
+  assert.strictEqual(veloraChannelRequests[0].requestContext.channelId, 'hk-1');
+
+  const lifiRequests = [];
+  const lifi = createLifiClient({
+    apiBaseUrl: 'https://li.quest/v1',
+    defaultFromAddress: '0x1111111111111111111111111111111111111111',
+    defaultSlippage: '0.005',
+    fetchWithRetry: async (url, options, requestContext) => {
+      lifiRequests.push({ url, options, requestContext });
+      return {
+        json: async () => ({
+          estimate: {
+            toAmount: '1234000000'
+          }
+        })
+      };
+    },
+    fromRawAmount: (raw) => {
+      if (raw === '1234000000') return 1234;
+      throw new Error('unexpected lifi fromRawAmount input');
+    },
+    getConfigMore: async () => ({
+      lifiApiKey: 'default-lifi-key',
+      lifiIntegrator: 'default-integrator'
+    }),
+    getDisplayedToAmountRaw: (quoteData) => quoteData.estimate.toAmount,
+    getLifiChainIdMap: async (configMore, requestContext) => {
+      assert.strictEqual(requestContext.channelId, 'us-1');
+      assert.strictEqual(configMore.lifiApiKey, 'us-lifi-key');
+      return { ethereum: 1 };
+    },
+    getLifiHeaders: (configMore) => ({
+      'Content-Type': 'application/json',
+      'x-lifi-api-key': configMore.lifiApiKey
+    }),
+    getLifiTokenMeta: async (chain, chainId, tokenAddress, configMore, requestContext) => {
+      assert.strictEqual(requestContext.channelId, 'us-1');
+      assert.strictEqual(configMore.lifiIntegrator, 'us-integrator');
+      if (tokenAddress === '0xfrom') return { symbol: 'USDT', decimals: 6 };
+      return { symbol: 'ETH', decimals: 18 };
+    },
+    logQuoteRequest: () => {},
+    logQuoteResult: () => {},
+    resolveLifiChainId: (chain, map) => map[chain],
+    toRawAmount: (amount, decimals) => {
+      if (amount === 1000 && decimals === 6) return '1000000000';
+      throw new Error('unexpected lifi toRawAmount input');
+    }
+  });
+  const lifiResult = await lifi.getQuote({
+    chain: 'ethereum',
+    fromToken: '0xfrom',
+    toToken: '0xto',
+    amount: 1000,
+    requestContext: {
+      channelId: 'us-1',
+      httpProxy: 'http://127.0.0.1:18003',
+      configMore: {
+        lifiApiKey: 'us-lifi-key',
+        lifiIntegrator: 'us-integrator'
+      }
+    }
+  });
+  assert.strictEqual(lifiResult.source, 'LI.FI');
+  assert.strictEqual(lifiRequests[0].options.headers['x-lifi-api-key'], 'us-lifi-key');
+  assert.strictEqual(lifiRequests[0].requestContext.channelId, 'us-1');
+
+  const ekuboRequests = [];
+  const ekubo = createEkuboClient({
+    buildEkuboQuoteResult: ({ amount }) => ({
+      fromSymbol: 'ETH',
+      toSymbol: 'USDC',
+      amountOut: 2000,
+      raw_price: 2000 / amount,
+      source: 'Ekubo'
+    }),
+    buildEkuboQuoteUrl: () => 'https://prod-api.ekubo.org/quote',
+    extractEkuboAmountOutRaw: () => '2000000000',
+    fetchWithRetry: async (url, options, requestContext) => {
+      ekuboRequests.push({ url, options, requestContext });
+      return {
+        json: async () => ({ amountOut: '2000000000' })
+      };
+    },
+    getEkuboTokenMeta: async (tokenAddress, requestContext) => {
+      assert.strictEqual(requestContext.channelId, 'stark-1');
+      if (tokenAddress === '0xeth') return { symbol: 'ETH', decimals: 18 };
+      return { symbol: 'USDC', decimals: 6 };
+    },
+    logQuoteRequest: () => {},
+    logQuoteResult: () => {},
+    toRawAmount: () => '1000000000000000000'
+  });
+  const ekuboResult = await ekubo.getQuote({
+    chain: 'starknet',
+    fromToken: '0xeth',
+    toToken: '0xusdc',
+    amount: 1,
+    requestContext: {
+      channelId: 'stark-1',
+      httpProxy: 'http://127.0.0.1:18004',
+      configMore: {}
+    }
+  });
+  assert.strictEqual(ekuboResult.source, 'Ekubo');
+  assert.strictEqual(ekuboRequests[0].requestContext.channelId, 'stark-1');
 })().catch((error) => {
   console.error(error);
   process.exit(1);

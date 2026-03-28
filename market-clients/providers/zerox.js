@@ -17,6 +17,7 @@ const ZEROX_CHAIN_IDS = {
 function createZeroXClient(deps) {
   return {
     async getQuote(input) {
+      const requestContext = input && input.requestContext ? input.requestContext : undefined;
       const chain = String(input.chain || '').toLowerCase();
       const fromToken = input.fromToken;
       const toToken = input.toToken;
@@ -62,7 +63,7 @@ function createZeroXClient(deps) {
           '0x-version': 'v2',
           'Content-Type': 'application/json'
         }
-      });
+      }, requestContext);
       const resultData = await response.json();
 
       if (resultData.liquidityAvailable === false) {

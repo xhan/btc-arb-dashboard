@@ -1,6 +1,7 @@
 function createEkuboClient(deps) {
   return {
     async getQuote(input) {
+      const requestContext = input && input.requestContext ? input.requestContext : undefined;
       const chain = String(input.chain || '').trim().toLowerCase();
       const fromToken = input.fromToken;
       const toToken = input.toToken;
@@ -11,8 +12,8 @@ function createEkuboClient(deps) {
       }
 
       const [fromMeta, toMeta] = await Promise.all([
-        deps.getEkuboTokenMeta(fromToken),
-        deps.getEkuboTokenMeta(toToken)
+        deps.getEkuboTokenMeta(fromToken, requestContext),
+        deps.getEkuboTokenMeta(toToken, requestContext)
       ]);
 
       const amountInRaw = deps.toRawAmount(finalAmount, fromMeta.decimals);
@@ -28,7 +29,7 @@ function createEkuboClient(deps) {
         url: quoteUrl
       });
 
-      const response = await deps.fetchWithRetry(quoteUrl);
+      const response = await deps.fetchWithRetry(quoteUrl, undefined, requestContext);
       const quoteData = await response.json();
       const amountOutRaw = deps.extractEkuboAmountOutRaw(quoteData);
       const result = deps.buildEkuboQuoteResult({

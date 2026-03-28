@@ -10,8 +10,9 @@
           "amount": 1,
           "fromToken": "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf",
           "toToken": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
-          "preferredSource": "Kyber",
-          "showInverse": true
+          "preferredSource": "Velora",
+          "showInverse": true,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1760021311236,
@@ -366,7 +367,8 @@
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0xC96dE26018A54D51c097160568752c4E3BD6C364",
           "showInverse": false,
-          "paused": true
+          "paused": false,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1766413984286,
@@ -411,7 +413,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
           "toToken": "0xbc78D84Ba0c46dFe32cf2895a19939c86b81a777",
-          "showInverse": false
+          "showInverse": false,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1766414038503,
@@ -683,7 +686,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x01a8b61E7b03891a736B5DF865E0EF9C511850ad",
-          "showInverse": false
+          "showInverse": false,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1774206874519,
@@ -692,7 +696,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
           "toToken": "0xA67c48F86Fc6d0176Dca38883CA8153C76a532c7",
-          "showInverse": false
+          "showInverse": false,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1774600991130,
@@ -701,7 +706,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
-          "showInverse": false
+          "showInverse": false,
+          "requestChannelId": "ch1"
         }
       ]
     }
