@@ -11,7 +11,8 @@
     alertConfirmDelaySec: 13,
     alertCooldownSec: 120,
     withdrawFee: 0.0001,
-    maxBookLevels: 10
+    maxBookLevels: 10,
+    displayTargets: []
   });
 
   function isCexChain(chain) {
@@ -59,6 +60,13 @@
   function formatFixedNumber(value, decimals = 6) {
     if (!Number.isFinite(value)) return '--';
     return Number(value).toFixed(decimals);
+  }
+
+  function normalizeDisplayTargets(targets) {
+    if (!Array.isArray(targets)) return [];
+    return targets
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value > 0);
   }
 
   function buildEdges(quotes, quoteStateById) {
@@ -192,6 +200,7 @@
       this.alertCooldownSec = toNonNegativeNumber(rule.alertCooldownSec, DEFAULT_BYBIT_PAIR_RULE_CONFIG.alertCooldownSec);
       this.withdrawFee = toNonNegativeNumber(rule.withdrawFee, DEFAULT_BYBIT_PAIR_RULE_CONFIG.withdrawFee);
       this.maxBookLevels = toPositiveNumber(rule.maxBookLevels, DEFAULT_BYBIT_PAIR_RULE_CONFIG.maxBookLevels);
+      this.displayTargets = normalizeDisplayTargets(rule.displayTargets);
     }
 
     buildDirectionResult(options = {}) {
@@ -233,6 +242,7 @@
         usedLevels.push({
           price,
           size,
+          unitProfitRate,
           cumulativeInput: totalInput,
           cumulativeProfitRate,
           cumulativeProfit: totalGrossProfit
@@ -269,42 +279,75 @@
       };
     }
 
+    buildDisplayTargetResults(primary, rule) {
+      const targets = this.displayTargets;
+      if (!targets.length) return [];
+
+      return targets.map((targetAmount) => {
+        const matchedLevel = primary.usedLevels.find((level) => Number(level.cumulativeInput) >= targetAmount);
+        if (!matchedLevel) return null;
+        const grossProfit = Number(matchedLevel.cumulativeProfit);
+        const netProfit = grossProfit - this.withdrawFee;
+        const netProfitBp = (netProfit / targetAmount) * 10000;
+        return {
+          targetAmount,
+          netProfit,
+          netProfitBp
+        };
+      }).filter(Boolean);
+    }
+
+    buildDepthSummary(primary) {
+      return primary.usedLevels.map((level, index) => ({
+        index: index + 1,
+        price: level.price,
+        size: level.size,
+        unitProfitBp: Number(level.unitProfitRate) * 10000
+      }));
+    }
+
+    buildInputSymbol(primary, rule) {
+      return primary.direction === 'eth-to-bybit-bid' ? rule.dexQuote : rule.cexQuote;
+    }
+
+    buildDexLine(primary, rule) {
+      if (primary.direction === 'eth-to-bybit-bid') {
+        return `（ETH）${rule.dexBase} -> ${rule.dexQuote} @${formatNumber(primary.dexLeg.rate, 6)}`;
+      }
+      return `（ETH）${rule.dexQuote} -> ${rule.dexBase} @${formatNumber(primary.dexLeg.rate, 6)}`;
+    }
+
+    buildCexLine(primary, rule) {
+      const topPrice = formatNumber(primary.usedLevels[0] && primary.usedLevels[0].price, 6);
+      if (primary.direction === 'eth-to-bybit-bid') {
+        return `（Bybit）${rule.dexQuote} -> ${rule.cexQuote} @${topPrice} bid1`;
+      }
+      return `（Bybit）${rule.cexQuote} -> ${rule.dexQuote} @${topPrice} ask1`;
+    }
+
     buildDisplayMessage(primary, secondary, rule) {
       const lines = [];
-      if (primary.direction === 'eth-to-bybit-bid') {
-        lines.push(`（ETH）${rule.dexBase} -> ${rule.dexQuote} @${formatNumber(primary.dexLeg.rate, 6)}`);
-        lines.push(`（Bybit）${rule.dexQuote} -> ${rule.cexQuote}`);
-      } else {
-        lines.push(`（Bybit）${rule.cexQuote} -> ${rule.dexQuote}`);
-        lines.push(`（ETH）${rule.dexQuote} -> ${rule.dexBase} @${formatNumber(primary.dexLeg.rate, 6)}`);
-      }
-      lines.push(`净收益: ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote}`);
-      lines.push(`净收益率: ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
-      lines.push(`可成交量: ${formatNumber(primary.totalInput, 6)} ${rule.dexQuote} (${primary.usedLevels.length}档)`);
+      lines.push(this.buildDexLine(primary, rule));
+      lines.push(this.buildCexLine(primary, rule));
+      lines.push(`深度: ${this.buildDepthSummary(primary).map((item) => `${item.index}) ${formatNumber(item.size, 6)} @${formatNumber(item.price, 6)} (${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp)`).join('  ')}`);
+      this.buildDisplayTargetResults(primary, rule).forEach((item) => {
+        const amountText = `${formatNumber(item.targetAmount, 6)} ${this.buildInputSymbol(primary, rule)}`;
+        lines.push(`${amountText}: ${formatSignedNumber(item.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(item.netProfitBp, 2)} bp`);
+      });
+      lines.push(`最大正收益量: ${formatNumber(primary.totalInput, 6)} ${this.buildInputSymbol(primary, rule)} -> ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
       return lines.join('\n');
     }
 
     buildAlertMessage(primary, secondary, rule) {
       const lines = [];
-      if (primary.direction === 'eth-to-bybit-bid') {
-        lines.push(`（ETH）${rule.dexBase} -> ${rule.dexQuote} @${formatNumber(primary.dexLeg.rate, 6)}`);
-        lines.push('📤 (Bybit) SELL');
-      } else {
-        lines.push('📥 (Bybit) BUY');
-        lines.push(`（ETH）${rule.dexQuote} -> ${rule.dexBase} @${formatNumber(primary.dexLeg.rate, 6)}`);
-      }
-      lines.push('');
-
-      primary.usedLevels.forEach((level, index) => {
-        const cumulativeBp = Number(level.cumulativeProfitRate) * 10000;
-        const bpSign = cumulativeBp >= 0 ? '+' : '-';
-        lines.push(
-          `${index + 1}) ${formatNumber(level.price, 8)} × ${formatNumber(level.size, 6)}  💰 ${formatNumber(level.cumulativeInput, 6)}  💹 ${bpSign} ${formatNumber(Math.abs(cumulativeBp), 2)} bp  💎 ${formatFixedNumber(level.cumulativeProfit, 6)}`
-        );
+      lines.push(this.buildDexLine(primary, rule));
+      lines.push(this.buildCexLine(primary, rule));
+      lines.push(`深度: ${this.buildDepthSummary(primary).map((item) => `${item.index}) ${formatNumber(item.size, 6)} @${formatNumber(item.price, 6)} (${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp)`).join('  ')}`);
+      this.buildDisplayTargetResults(primary, rule).forEach((item) => {
+        const amountText = `${formatNumber(item.targetAmount, 6)} ${this.buildInputSymbol(primary, rule)}`;
+        lines.push(`${amountText}: ${formatSignedNumber(item.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(item.netProfitBp, 2)} bp`);
       });
-      lines.push('');
-      lines.push(`扣除 提现手续费 ${formatNumber(this.withdrawFee, 8)} 后`);
-      lines.push(`💰 ${formatNumber(primary.totalInput, 6)}  💹 ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote}  💎 ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
+      lines.push(`最大正收益量: ${formatNumber(primary.totalInput, 6)} ${this.buildInputSymbol(primary, rule)} -> ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
 
       if (secondary && Number.isFinite(secondary.netProfit)) {
         lines.push(

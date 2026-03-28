@@ -1121,6 +1121,7 @@
             cexChain: 'Bybit',
             minNetProfit: 0.0001,
             minNetProfitBp: 1.5,
+            displayTargets: [1, 2, 3],
             alertConfirmDelaySec: 13
         },
         {
@@ -1134,6 +1135,7 @@
             cexChain: 'Bybit',
             minNetProfit: 8,
             minNetProfitBp: 0,
+            displayTargets: [100000, 200000],
             withdrawFee: 0,
             alertConfirmDelaySec: 13
         }

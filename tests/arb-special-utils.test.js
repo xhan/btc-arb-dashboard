@@ -14,6 +14,7 @@ const rules = [
     withdrawFee: 0.0001,
     minNetProfit: 0.0001,
     minNetProfitBp: 1.5,
+    displayTargets: [1, 2, 3],
     alertConfirmDelaySec: 13,
     maxBookLevels: 10
   }
@@ -80,14 +81,19 @@ assert.strictEqual(opportunity.alert, true);
 assert.strictEqual(opportunity.alert_confirm_delay_sec, 13);
 assert.strictEqual(opportunity.alert_cooldown_sec, 120);
 assert.strictEqual(opportunity.alert_key, 'special:wbtc-bybit');
-assert.ok(opportunity.display_message.includes('（Bybit）BTC -> WBTC'));
 assert.ok(opportunity.display_message.includes('（ETH）WBTC -> cbBTC'));
-assert.ok(opportunity.display_message.includes('净收益:'));
-assert.ok(!opportunity.display_message.includes('另一方向:'));
-assert.ok(opportunity.alert_message.includes('📥 (Bybit) BUY'));
-assert.ok(opportunity.alert_message.includes('扣除 提现手续费 0.0001 后'));
-assert.ok(opportunity.alert_message.includes('💰'));
-assert.ok(opportunity.alert_message.includes('💎'));
+assert.ok(opportunity.display_message.includes('（Bybit）BTC -> WBTC @0.9998 ask1'));
+assert.ok(opportunity.display_message.includes('1 BTC:'));
+assert.ok(opportunity.display_message.includes('2 BTC:'));
+assert.ok(!opportunity.display_message.includes('正收益档位:'));
+assert.ok(!opportunity.display_message.includes('3 BTC:'));
+assert.ok(opportunity.display_message.includes('深度: 1)'));
+assert.ok(opportunity.display_message.includes('bp)'));
+assert.ok(opportunity.alert_message.includes('（ETH）WBTC -> cbBTC'));
+assert.ok(opportunity.alert_message.includes('（Bybit）BTC -> WBTC @0.9998 ask1'));
+assert.ok(!opportunity.alert_message.includes('📥 (Bybit) BUY'));
+assert.ok(!opportunity.alert_message.includes('扣除 提现手续费'));
+assert.ok(opportunity.alert_message.includes('最大正收益量:'));
 assert.ok(opportunity.alert_message.includes('另一方向:'));
 
 assert.strictEqual(opportunity.cycle.legs.length, 2);
@@ -170,6 +176,7 @@ const usdeRules = [
     withdrawFee: 0,
     minNetProfit: 8,
     minNetProfitBp: 0,
+    displayTargets: [100000, 200000],
     alertConfirmDelaySec: 13,
     maxBookLevels: 10
   }
@@ -192,16 +199,16 @@ const usdeQuoteStateById = new Map([
     toSymbol: 'USDT',
     cexOrderbook: {
       bestBidPrice: 0.9998,
-      bestBidSize: 10000,
+      bestBidSize: 120000,
       bestAskPrice: 1.0002,
-      bestAskSize: 10000,
+      bestAskSize: 120000,
       bidsTopDepth: [
-        { price: 0.9998, size: 8000 },
-        { price: 0.9996, size: 6000 }
+        { price: 0.9998, size: 120000 },
+        { price: 0.9996, size: 30000 }
       ],
       asksTopDepth: [
-        { price: 1.0002, size: 5000 },
-        { price: 1.0004, size: 5000 }
+        { price: 1.0002, size: 120000 },
+        { price: 1.0004, size: 30000 }
       ]
     }
   }]
@@ -221,4 +228,9 @@ assert.strictEqual(usdeOpportunities[0].direction, 'eth-to-bybit-bid');
 assert.strictEqual(usdeOpportunities[0].alert, true);
 assert.ok(usdeOpportunities[0].stats.primary.netProfit > 8);
 assert.ok(usdeOpportunities[0].display_message.includes('（ETH）USDT -> USDe'));
-assert.ok(usdeOpportunities[0].display_message.includes('（Bybit）USDe -> USDT'));
+assert.ok(usdeOpportunities[0].display_message.includes('（Bybit）USDe -> USDT @0.9998 bid1'));
+assert.ok(usdeOpportunities[0].display_message.includes('100000 USDe:'));
+assert.ok(!usdeOpportunities[0].display_message.includes('200000 USDe:'));
+assert.ok(usdeOpportunities[0].display_message.includes('深度: 1) 120000 @0.9998'));
+assert.ok(usdeOpportunities[0].alert_message.includes('（Bybit）USDe -> USDT @0.9998 bid1'));
+assert.ok(usdeOpportunities[0].alert_message.includes('最大正收益量:'));
