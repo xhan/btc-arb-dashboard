@@ -113,7 +113,7 @@
       cexChain: 'Bybit',
       minNetProfit: 0.0001,
       minNetProfitBp: 1.5,
-      alertConfirmDelaySec: 13
+      alertConfirmDelaySec: 9
     },
     {
       id: 'special:usde-bybit',
@@ -127,7 +127,7 @@
       minNetProfit: 8,
       minNetProfitBp: 0.5,
       withdrawFee: 0,
-      alertConfirmDelaySec: 13
+      alertConfirmDelaySec: 9
     }
   ]);
 

@@ -432,7 +432,9 @@
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x004E9C3EF86bc1ca1f0bB5C7662861Ee93350568",
-          "paused": true
+          "paused": false,
+          "showInverse": false,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1766414759640,
@@ -442,7 +444,8 @@
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x93919784C523f39CACaa98Ee0a9d96c3F32b593e",
           "showInverse": true,
-          "paused": true
+          "paused": false,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1766484079028,
@@ -452,7 +455,8 @@
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0xC3827A4BC8224ee2D116637023b124CED6db6e90",
           "showInverse": false,
-          "paused": true
+          "paused": false,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1771925767916,
@@ -483,7 +487,7 @@
           "id": 1766416823874,
           "chain": "ethereum",
           "amount": 130000,
-          "preferredSource": "Kyber",
+          "preferredSource": "Velora",
           "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "toToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
           "showInverse": true
@@ -502,7 +506,8 @@
           "preferredSource": "Velora",
           "fromToken": "0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f",
           "toToken": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1771776862295,
@@ -511,7 +516,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x6Bb7a212910682DCFdbd5BCBb3e28FB4E8da10Ee",
           "toToken": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1771779390753,
@@ -520,7 +526,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x7dfF72693f6A4149b17e7C6314655f6A9F7c8B33",
           "toToken": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1772990044817,
@@ -529,7 +536,8 @@
           "preferredSource": "Velora",
           "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "toToken": "0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1772990129706,
@@ -538,7 +546,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
           "toToken": "0x7dfF72693f6A4149b17e7C6314655f6A9F7c8B33",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch1"
         }
       ]
     },
@@ -573,7 +582,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x4200000000000000000000000000000000000006",
           "toToken": "0x7Ba6F01772924a82D9626c126347A28299E98c98",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1772551989275,
@@ -582,7 +592,8 @@
           "preferredSource": "Velora",
           "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "toToken": "0x64351fC9810aDAd17A690E4e1717Df5e7e085160",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1774627017180,
@@ -591,7 +602,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x4200000000000000000000000000000000000006",
           "toToken": "0x1610e3c85dd44Af31eD7f33a63642012Dca0C5A5",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1774627751426,
@@ -600,7 +612,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x9895D81bB462A195b4922ED7De0e3ACD007c32CB",
           "toToken": "0x7230a9D42D622E18FDf7207041EcA18465F9F1bE",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1772987556925,
@@ -609,7 +622,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x4200000000000000000000000000000000000006",
           "toToken": "0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1774195073102,
@@ -618,7 +632,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
           "toToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-          "showInverse": false
+          "showInverse": false,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1772987668787,
@@ -627,7 +642,8 @@
           "preferredSource": "Velora",
           "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "toToken": "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1774207253983,
@@ -645,7 +661,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "toToken": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
-          "showInverse": false
+          "showInverse": false,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1773199030299,
@@ -654,7 +671,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
           "toToken": "0x4200000000000000000000000000000000000006",
-          "showInverse": false
+          "showInverse": false,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1774205631551,
@@ -662,7 +680,9 @@
           "amount": 10,
           "preferredSource": "Kyber",
           "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-          "toToken": "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704"
+          "toToken": "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704",
+          "showInverse": false,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1774205656846,
@@ -671,7 +691,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
           "toToken": "0x4200000000000000000000000000000000000006",
-          "showInverse": false
+          "showInverse": false,
+          "requestChannelId": "ch2"
         }
       ]
     },
