@@ -39,7 +39,7 @@ function createCexOrderbookClient(config) {
       const params = config.buildParams(symbol);
       const apiUrl = `${apiBaseUrl}?${params.toString()}`;
 
-      const response = await config.fetchWithRetry(apiUrl);
+      const response = await config.fetchOnce(apiUrl);
       const data = await response.json();
 
       if (typeof config.assertResponseOk === 'function') {

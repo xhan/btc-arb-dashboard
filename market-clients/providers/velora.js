@@ -72,7 +72,7 @@ function createVeloraClient(deps) {
         url: apiUrl
       });
 
-      const response = await deps.fetchWithRetry(apiUrl, {
+      const response = await deps.fetchOnce(apiUrl, {
         headers: deps.headers || {}
       }, requestContext);
       const data = await response.json();

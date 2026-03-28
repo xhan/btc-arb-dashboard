@@ -41,7 +41,7 @@ const ethersModule = require('ethers');
       cachePath: '/tmp/market-diff-test-metadata-cache.json',
       readJsonFile: async () => ({}),
       writeFile: fs.writeFile,
-      fetchWithRetry: async () => {
+      fetchOnce: async () => {
         throw new Error('unexpected fetch');
       },
       evmProviders: { ethereum: {} },

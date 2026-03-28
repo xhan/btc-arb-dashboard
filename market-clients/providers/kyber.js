@@ -33,7 +33,7 @@ function createKyberClient(deps) {
         url: apiUrl
       });
 
-      const response = await deps.fetchWithRetry(apiUrl, {
+      const response = await deps.fetchOnce(apiUrl, {
         headers: { 'X-Client-Id': configMore.kyberClientId }
       }, requestContext);
       const resultData = await response.json();

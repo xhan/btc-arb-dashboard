@@ -5,7 +5,7 @@ function createBybitClient(deps) {
     apiBaseUrl: deps.apiBaseUrl || 'https://api.bybit.com/v5/market/orderbook',
     source: 'Bybit',
     feeRate: 0,
-    fetchWithRetry: deps.fetchWithRetry,
+    fetchOnce: deps.fetchOnce,
     splitTradingPairSymbol: deps.splitTradingPairSymbol,
     buildParams(symbol) {
       return new URLSearchParams({

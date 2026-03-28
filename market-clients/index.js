@@ -84,7 +84,7 @@ function createMarketClients(options) {
       return lifiChainIdMapCache;
     }
 
-    const response = await options.fetchWithRetry(`${LIFI_API_BASE_URL}/chains`, {
+    const response = await options.fetchOnce(`${LIFI_API_BASE_URL}/chains`, {
       headers: getLifiHeaders(configMore)
     }, requestContext);
     const data = await response.json();
@@ -100,7 +100,7 @@ function createMarketClients(options) {
         chain: String(chainId),
         token: tokenAddress
       });
-      const response = await options.fetchWithRetry(`${LIFI_API_BASE_URL}/token?${params.toString()}`, {
+      const response = await options.fetchOnce(`${LIFI_API_BASE_URL}/token?${params.toString()}`, {
         headers: getLifiHeaders(configMore)
       }, requestContext);
       const data = await response.json();
@@ -121,7 +121,7 @@ function createMarketClients(options) {
     }
 
     return tokenMetaStore.remember('starknet', normalizedToken, async () => {
-      const response = await options.fetchWithRetry(
+      const response = await options.fetchOnce(
         `https://prod-api.ekubo.org/tokens/${EKUBO_STARKNET_CHAIN_ID}/${normalizedToken}`
       , undefined, requestContext);
       const data = await response.json();
@@ -147,7 +147,7 @@ function createMarketClients(options) {
 
   async function getSolanaTokenMeta(mint, requestContext) {
     return tokenMetaStore.remember('solana', mint, async () => {
-      const response = await options.fetchWithRetry(options.solanaRpc, {
+      const response = await options.fetchOnce(options.solanaRpc, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,7 +174,7 @@ function createMarketClients(options) {
   }
 
   const providerDeps = {
-    fetchWithRetry: options.fetchWithRetry,
+    fetchOnce: options.fetchOnce,
     fromRawAmount,
     getConfigMore: options.getConfigMore,
     getEvmProvider,
@@ -195,7 +195,7 @@ function createMarketClients(options) {
       zerox: createZeroXClient(providerDeps),
       velora: createVeloraClient({
         apiBaseUrl: 'https://api.paraswap.io/prices/',
-        fetchWithRetry: options.fetchWithRetry,
+        fetchOnce: options.fetchOnce,
         fromRawAmount,
         getConfigMore: options.getConfigMore,
         getEvmProvider,
@@ -208,7 +208,7 @@ function createMarketClients(options) {
         apiBaseUrl: LIFI_API_BASE_URL,
         defaultFromAddress: LIFI_DEFAULT_FROM_ADDRESS,
         defaultSlippage: LIFI_DEFAULT_SLIPPAGE,
-        fetchWithRetry: options.fetchWithRetry,
+        fetchOnce: options.fetchOnce,
         fromRawAmount,
         getConfigMore: options.getConfigMore,
         getDisplayedToAmountRaw,
@@ -224,7 +224,7 @@ function createMarketClients(options) {
         buildEkuboQuoteResult,
         buildEkuboQuoteUrl,
         extractEkuboAmountOutRaw,
-        fetchWithRetry: options.fetchWithRetry,
+        fetchOnce: options.fetchOnce,
         getEkuboTokenMeta,
         logQuoteRequest: options.logQuoteRequest,
         logQuoteResult: options.logQuoteResult,
@@ -239,7 +239,7 @@ function createMarketClients(options) {
       }),
       jupiter: createJupiterClient({
         apiBaseUrl: 'https://api.jup.ag/swap/v1/quote',
-        fetchWithRetry: options.fetchWithRetry,
+        fetchOnce: options.fetchOnce,
         fromRawAmount,
         getConfigMore: options.getConfigMore,
         getSolanaTokenMeta,
@@ -249,12 +249,12 @@ function createMarketClients(options) {
       }),
       bybit: createBybitClient({
         apiBaseUrl: 'https://api.bybit.com/v5/market/orderbook',
-        fetchWithRetry: options.fetchWithRetry,
+        fetchOnce: options.fetchOnce,
         splitTradingPairSymbol: splitCompactTradingPairSymbol
       }),
       binance: createBinanceClient({
         apiBaseUrl: 'https://api.binance.com/api/v3/depth',
-        fetchWithRetry: options.fetchWithRetry,
+        fetchOnce: options.fetchOnce,
         splitTradingPairSymbol: splitCompactTradingPairSymbol
       })
     }

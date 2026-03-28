@@ -13,7 +13,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 (async () => {
   const kyberRequests = [];
   const kyber = createKyberClient({
-    fetchWithRetry: async (url, options, requestContext) => {
+    fetchOnce: async (url, options, requestContext) => {
       kyberRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
@@ -95,7 +95,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 
   const zeroXRequests = [];
   const zeroX = createZeroXClient({
-    fetchWithRetry: async (url, options, requestContext) => {
+    fetchOnce: async (url, options, requestContext) => {
       zeroXRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
@@ -150,7 +150,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 
   const jupiterRequests = [];
   const jupiter = createJupiterClient({
-    fetchWithRetry: async (url, options, requestContext) => {
+    fetchOnce: async (url, options, requestContext) => {
       jupiterRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
@@ -199,7 +199,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 
   const jupiterChannelRequests = [];
   const jupiterChannel = createJupiterClient({
-    fetchWithRetry: async (url, options, requestContext) => {
+    fetchOnce: async (url, options, requestContext) => {
       jupiterChannelRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
@@ -237,7 +237,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
   assert.strictEqual(jupiterChannelRequests[0].requestContext.channelId, 'sg-1');
 
   const jupiterMissingKey = createJupiterClient({
-    fetchWithRetry: async () => {
+    fetchOnce: async () => {
       throw new Error('should not request without api key');
     },
     getConfigMore: async () => ({}),
@@ -413,7 +413,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 
   const bybitRequests = [];
   const bybit = createBybitClient({
-    fetchWithRetry: async (url) => {
+    fetchOnce: async (url) => {
       bybitRequests.push(url);
       return {
         json: async () => ({
@@ -479,7 +479,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 
   const binanceRequests = [];
   const binance = createBinanceClient({
-    fetchWithRetry: async (url) => {
+    fetchOnce: async (url) => {
       binanceRequests.push(url);
       return {
         json: async () => ({
@@ -535,7 +535,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 
   const veloraRequests = [];
   const velora = createVeloraClient({
-    fetchWithRetry: async (url, options, requestContext) => {
+    fetchOnce: async (url, options, requestContext) => {
       veloraRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
@@ -598,7 +598,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
 
   const veloraChannelRequests = [];
   const veloraChannel = createVeloraClient({
-    fetchWithRetry: async (url, options, requestContext) => {
+    fetchOnce: async (url, options, requestContext) => {
       veloraChannelRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
@@ -649,7 +649,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
     apiBaseUrl: 'https://li.quest/v1',
     defaultFromAddress: '0x1111111111111111111111111111111111111111',
     defaultSlippage: '0.005',
-    fetchWithRetry: async (url, options, requestContext) => {
+    fetchOnce: async (url, options, requestContext) => {
       lifiRequests.push({ url, options, requestContext });
       return {
         json: async () => ({
@@ -720,7 +720,7 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
     }),
     buildEkuboQuoteUrl: () => 'https://prod-api.ekubo.org/quote',
     extractEkuboAmountOutRaw: () => '2000000000',
-    fetchWithRetry: async (url, options, requestContext) => {
+    fetchOnce: async (url, options, requestContext) => {
       ekuboRequests.push({ url, options, requestContext });
       return {
         json: async () => ({ amountOut: '2000000000' })

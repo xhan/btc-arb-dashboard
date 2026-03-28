@@ -5,7 +5,7 @@ function createBinanceClient(deps) {
     apiBaseUrl: deps.apiBaseUrl || 'https://api.binance.com/api/v3/depth',
     source: 'Binance',
     feeRate: 0.001,
-    fetchWithRetry: deps.fetchWithRetry,
+    fetchOnce: deps.fetchOnce,
     splitTradingPairSymbol: deps.splitTradingPairSymbol,
     buildParams(symbol) {
       return new URLSearchParams({

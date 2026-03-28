@@ -21,9 +21,9 @@ const {
     sanitizeRequestChannelsForClient
 } = require('./request-channel-config');
 const {
-    applyRequestChannelToFetchOptions,
     createRequestChannelAgentCache
 } = require('./request-channel-http');
+const { createFetchOnce } = require('./fetch-once');
 const {
     buildPathAlertWebhookUrl,
     buildTelegramBotApiUrl,
@@ -115,6 +115,13 @@ const PATH_ALERT_CHAIN_LABELS = {
 
 let writeQueue = Promise.resolve();
 const requestChannelAgentCache = createRequestChannelAgentCache();
+const fetchOnce = createFetchOnce({
+    fetchImpl: fetch,
+    agentCache: requestChannelAgentCache,
+    logFailure: (url, error) => {
+        logMessage('HTTP_FAIL', `请求失败: ${url} | error=${error.message}`, 'warn');
+    }
+});
 
 async function safeWriteJsonFile(filePath, data) {
     writeQueue = writeQueue.then(async () => {
@@ -464,48 +471,6 @@ async function getAlertConfig() {
     }
 }
 
-async function fetchWithRetry(url, options, requestContext, retries = 3, delay = 1000) {
-    for (let i = 0; i < retries; i++) {
-        try {
-            const requestOptions = await applyRequestChannelToFetchOptions(
-                options && typeof options === 'object' ? options : {},
-                requestContext,
-                requestChannelAgentCache
-            );
-            const response = await fetch(url, requestOptions);
-            if (!response.ok) {
-                 const errorText = await response.text();
-                 
-                 try {
-                     const errorKv = JSON.parse(errorText);
-                     if (errorKv.reason) throw new Error(errorKv.reason);
-                     if (errorKv.message) throw new Error(errorKv.message);
-                     
-                     if (errorKv.code && errorKv.validationErrors) {
-                         const details = errorKv.validationErrors.map(e => e.reason || e.field).join(', ');
-                         throw new Error(`0x校验错误: ${details}`);
-                     }
-                 } catch(e) {
-                     
-                 }
-                 throw new Error(`API响应错误: ${response.status} ${response.statusText} - ${errorText}`);
-            }
-            return response; 
-        } catch (error) {
-            if (error.name === 'AbortError') throw error;
-            if (i === retries - 1) {
-                 logMessage('HTTP_FINAL_FAIL', `请求最终失败: ${url} | error=${error.message}`, 'warn');
-            }
-            if (i < retries - 1) {
-                await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2; 
-            } else {
-                throw error; 
-            }
-        }
-    }
-}
-
 // chainlist.org RPC endpoints
 const RPC_URLS = {
     ethereum: 'https://eth.llamarpc.com',
@@ -561,7 +526,7 @@ const marketClients = createMarketClients({
     cachePath: METADATA_CACHE_PATH,
     cetusAggregator,
     evmProviders,
-    fetchWithRetry,
+    fetchOnce,
     getConfigMore,
     logQuoteRequest,
     logQuoteResult,

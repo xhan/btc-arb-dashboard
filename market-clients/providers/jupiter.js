@@ -38,7 +38,7 @@ function createJupiterClient(deps) {
         url: apiUrl
       });
 
-      const response = await deps.fetchWithRetry(apiUrl, {
+      const response = await deps.fetchOnce(apiUrl, {
         headers: { 'x-api-key': jupiterApiKey }
       }, requestContext);
       const data = await response.json();

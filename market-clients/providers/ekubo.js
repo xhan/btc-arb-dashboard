@@ -29,7 +29,7 @@ function createEkuboClient(deps) {
         url: quoteUrl
       });
 
-      const response = await deps.fetchWithRetry(quoteUrl, undefined, requestContext);
+      const response = await deps.fetchOnce(quoteUrl, undefined, requestContext);
       const quoteData = await response.json();
       const amountOutRaw = deps.extractEkuboAmountOutRaw(quoteData);
       const result = deps.buildEkuboQuoteResult({

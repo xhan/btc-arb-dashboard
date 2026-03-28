@@ -52,7 +52,7 @@ function createLifiClient(deps) {
         url: quoteUrl
       });
 
-      const response = await deps.fetchWithRetry(quoteUrl, {
+      const response = await deps.fetchOnce(quoteUrl, {
         headers: deps.getLifiHeaders(configMore)
       }, requestContext);
       const quoteData = await response.json();

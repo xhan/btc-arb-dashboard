@@ -57,7 +57,7 @@ function createZeroXClient(deps) {
         url: apiUrl
       });
 
-      const response = await deps.fetchWithRetry(apiUrl, {
+      const response = await deps.fetchOnce(apiUrl, {
         headers: {
           '0x-api-key': ZEROX_API_KEY,
           '0x-version': 'v2',
