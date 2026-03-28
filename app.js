@@ -516,6 +516,23 @@
         }
     }
 
+    function queueQuoteRefresh(quote, options = {}) {
+        if (!quote || isQuotePaused(quote)) return false;
+        if (options.abortActive !== false) {
+            abortQuoteFetch(quote.id);
+        }
+        applyActiveQuoteUiState(quote, {
+            text: options.text || '排队中...',
+            loading: options.loading !== false,
+            clearInverse: options.clearInverse !== false
+        });
+        addToQueue(quote);
+        if (options.updateSchedulers !== false) {
+            updateSchedulers();
+        }
+        return true;
+    }
+
     function removeFromQueue(quoteId) {
         Object.keys(queues).forEach(type => {
             queues[type] = queues[type].filter(task => task.quoteId !== quoteId);
@@ -5455,7 +5472,7 @@
                 const timerId = setTimeout(() => {
                     quote.amount = newAmount;
                     if (!isQuotePaused(quote)) {
-                        fetchSingleQuote(quote);
+                        queueQuoteRefresh(quote);
                     }
                     saveData();
                     inputDebounceMap.delete(quoteId);
@@ -5522,15 +5539,12 @@
             abortQuoteFetch(quoteId);
             setQuoteMonitorState(quoteId, buildPausedMonitorState(previousState));
             applyPausedQuoteUiState(quote, quoteMonitorState.get(quoteId) || {}, previousState);
+            updateSchedulers();
             if (doesArbDetailUseQuote(quoteId)) {
                 closeArbDetailModal();
             }
         } else {
-            applyActiveQuoteUiState(quote, { text: '刷新中...', loading: true, clearInverse: true });
-            addToQueue(quote);
-            if (!activeFetchControllers.has(quoteId)) {
-                fetchSingleQuote(quote);
-            }
+            queueQuoteRefresh(quote);
         }
 
         updateCategoryPauseButtonState(categoryId);
@@ -5627,7 +5641,8 @@
         }
 
         saveData();
-        fetchSingleQuote(quote);
+        removeFromQueue(quote.id);
+        queueQuoteRefresh(quote);
         return true;
     }
 
@@ -5797,48 +5812,45 @@
         } else if (e.target.id === 'modal-save') {
             if (currentlyEditingQuote && currentlyEditingQuote.quote) {
                 const { quote } = currentlyEditingQuote;
+                let shouldQueueRefreshQuote = false;
                 
                 if (isEvmChain(quote.chain)) {
                     if (quote.chain.toLowerCase() !== 'plasma') {
                         const newSource = document.getElementById('quote-source-pref').value;
                         if (quote.preferredSource !== newSource) {
-                            removeFromQueue(quote.id);
                             quote.preferredSource = newSource;
-                            addToQueue(quote);
-                            
-                            setTimeout(() => fetchSingleQuote(quote), 0); 
+                            shouldQueueRefreshQuote = true;
                         }
                     }
                 }
 
                 const showInverse = document.getElementById('show-inverse-quote').checked;
                 if (quote.showInverse !== showInverse) {
-                    removeFromQueue(quote.id);
                     quote.showInverse = showInverse;
-                    addToQueue(quote);
-                    setTimeout(() => fetchSingleQuote(quote), 0); 
+                    shouldQueueRefreshQuote = true;
                 }
 
                 if (shouldShowRequestChannelForQuote(quote) && quoteRequestChannelSelect) {
                     const nextChannelId = quoteRequestChannelSelect.value || 'default';
                     const previousChannelId = quote.requestChannelId || 'default';
                     if (previousChannelId !== nextChannelId) {
-                        removeFromQueue(quote.id);
                         if (nextChannelId === 'default') {
                             delete quote.requestChannelId;
                         } else {
                             quote.requestChannelId = nextChannelId;
                         }
                         updateRequestChannelTagForQuote(quote);
-                        addToQueue(quote);
-                        setTimeout(() => fetchSingleQuote(quote), 0);
+                        shouldQueueRefreshQuote = true;
                     }
                 } else if (quote.requestChannelId) {
-                    removeFromQueue(quote.id);
                     delete quote.requestChannelId;
                     updateRequestChannelTagForQuote(quote);
-                    addToQueue(quote);
-                    setTimeout(() => fetchSingleQuote(quote), 0);
+                    shouldQueueRefreshQuote = true;
+                }
+
+                if (shouldQueueRefreshQuote) {
+                    removeFromQueue(quote.id);
+                    queueQuoteRefresh(quote);
                 }
 
                 const pUp = parseFloat(document.getElementById('alert-percent-up').value);
@@ -5973,9 +5985,7 @@
             }
             updateCategoryPauseButtonState(category.id);
             saveData();
-            fetchSingleQuote(newQuote);
-            
-            addToQueue(newQuote);
+            queueQuoteRefresh(newQuote);
             
             resetAndCloseAddQuoteModal();
         }
