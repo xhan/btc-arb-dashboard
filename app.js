@@ -5244,13 +5244,13 @@
         moduleEl.innerHTML = `
             <div class="module-header">
                 <h2>${category.name}</h2>
-                <div class="quote-actions">
+                <div class="module-header-actions">
+                    <button class="icon-btn add-quote-btn" title="添加报价" aria-label="添加报价" data-category-id="${category.id}">+</button>
                     <button class="icon-btn" title="${categoryPauseTitle}" aria-label="${categoryPauseTitle}" aria-pressed="${categoryPauseAction === 'resume' ? 'true' : 'false'}" data-toggle-category-pause-id="${category.id}" data-category-id="${category.id}">${categoryPauseIcon}</button>
                     <button class="icon-btn delete-btn" title="删除分区" data-category-id="${category.id}">×</button>
                 </div>
             </div>
-            <ul class="quote-list" id="quote-list-${category.id}"></ul>
-            <button class="add-quote-btn" data-category-id="${category.id}">+ 添加报价</button>`;
+            <ul class="quote-list" id="quote-list-${category.id}"></ul>`;
         const quoteListEl = moduleEl.querySelector('.quote-list');
         if (category.quotes) {
             category.quotes.forEach(quote => {
