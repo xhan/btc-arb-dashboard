@@ -246,8 +246,8 @@
           "id": 1760021727906,
           "chain": "ethereum",
           "amount": 1,
-          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-          "toToken": "0x18084fbA666a33d37592fA2633fD49a74DD93a88",
+          "fromToken": "0x18084fbA666a33d37592fA2633fD49a74DD93a88",
+          "toToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "preferredSource": "Kyber",
           "showInverse": true
         },
