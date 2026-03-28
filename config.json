@@ -54,7 +54,7 @@
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
           "preferredSource": "Kyber",
-          "showInverse": false
+          "showInverse": true
         },
         {
           "id": 1760021919113,
@@ -104,7 +104,8 @@
           "preferredSource": "Kyber",
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
-          "showInverse": true
+          "showInverse": true,
+          "paused": true
         },
         {
           "id": 1771637092856,
@@ -478,7 +479,7 @@
         {
           "id": 1766416823874,
           "chain": "ethereum",
-          "amount": 100000,
+          "amount": 130000,
           "preferredSource": "Kyber",
           "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "toToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
@@ -581,6 +582,24 @@
           "showInverse": true
         },
         {
+          "id": 1774627017180,
+          "chain": "optimism",
+          "amount": 20,
+          "preferredSource": "Kyber",
+          "fromToken": "0x4200000000000000000000000000000000000006",
+          "toToken": "0x1610e3c85dd44Af31eD7f33a63642012Dca0C5A5",
+          "showInverse": true
+        },
+        {
+          "id": 1774627751426,
+          "chain": "plasma",
+          "amount": 20,
+          "preferredSource": "Kyber",
+          "fromToken": "0x9895D81bB462A195b4922ED7De0e3ACD007c32CB",
+          "toToken": "0x7230a9D42D622E18FDf7207041EcA18465F9F1bE",
+          "showInverse": true
+        },
+        {
           "id": 1772987556925,
           "chain": "base",
           "amount": 20,
@@ -594,9 +613,9 @@
           "chain": "arbitrum",
           "amount": 20,
           "preferredSource": "Kyber",
-          "fromToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-          "toToken": "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
-          "showInverse": true
+          "fromToken": "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
+          "toToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "showInverse": false
         },
         {
           "id": 1772987668787,
@@ -673,6 +692,15 @@
           "preferredSource": "Kyber",
           "fromToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
           "toToken": "0xA67c48F86Fc6d0176Dca38883CA8153C76a532c7",
+          "showInverse": false
+        },
+        {
+          "id": 1774600991130,
+          "chain": "ethereum",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+          "toToken": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
           "showInverse": false
         }
       ]

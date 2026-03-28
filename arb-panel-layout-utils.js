@@ -98,9 +98,72 @@
     return best ? [best] : [];
   }
 
+  function getCycleDisplayState(cycles, maxPositiveCount, expanded = false) {
+    const list = Array.isArray(cycles) ? cycles : [];
+    const maxCount = Math.max(1, Number(maxPositiveCount) || 1);
+    if (!list.length) {
+      return {
+        displayCycles: [],
+        positiveCount: 0,
+        hiddenPositiveCount: 0,
+        canToggleExpand: false,
+        expanded: false
+      };
+    }
+
+    const positiveCycles = list.filter((cycle) => (
+      cycle &&
+      typeof cycle.profitRate === 'number' &&
+      cycle.profitRate > 0
+    ));
+
+    if (positiveCycles.length) {
+      const canToggleExpand = positiveCycles.length > maxCount;
+      const shouldExpand = canToggleExpand && expanded;
+      const displayCycles = shouldExpand ? positiveCycles : positiveCycles.slice(0, maxCount);
+      return {
+        displayCycles,
+        positiveCount: positiveCycles.length,
+        hiddenPositiveCount: Math.max(0, positiveCycles.length - displayCycles.length),
+        canToggleExpand,
+        expanded: shouldExpand
+      };
+    }
+
+    return {
+      displayCycles: list.slice(0, 1),
+      positiveCount: 0,
+      hiddenPositiveCount: 0,
+      canToggleExpand: false,
+      expanded: false
+    };
+  }
+
+  function mapEntriesForDisplayCycles(allCycles, displayCycles, mapEntry) {
+    const sourceCycles = Array.isArray(allCycles) ? allCycles : [];
+    const visibleCycles = Array.isArray(displayCycles) ? displayCycles : [];
+    if (!sourceCycles.length || !visibleCycles.length || typeof mapEntry !== 'function') {
+      return [];
+    }
+
+    const visibleSet = new Set(visibleCycles);
+    const entries = [];
+    for (let index = 0; index < sourceCycles.length; index += 1) {
+      const cycle = sourceCycles[index];
+      if (!visibleSet.has(cycle)) continue;
+      const entry = mapEntry(cycle, index, sourceCycles);
+      if (entry) {
+        entries.push(entry);
+      }
+    }
+    return entries;
+  }
+
   return {
     splitSectionsIntoColumns,
     resolveItemsBySelectors,
-    selectPositiveCyclesOrBest
+    selectPositiveCyclesOrBest,
+    getCycleDisplayState,
+    mapEntriesForDisplayCycles
   };
 }));

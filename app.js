@@ -1715,6 +1715,9 @@
     }
 
     function getCycleDisplayState(cycles, maxPositiveCount, expanded = false) {
+        if (window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.getCycleDisplayState === 'function') {
+            return window.ArbPanelLayoutUtils.getCycleDisplayState(cycles, maxPositiveCount, expanded);
+        }
         const list = Array.isArray(cycles) ? cycles : [];
         const maxCount = Math.max(1, Number(maxPositiveCount) || 1);
         if (!list.length) {
@@ -1726,13 +1729,11 @@
                 expanded: false
             };
         }
-
         const positiveCycles = list.filter(cycle =>
             cycle &&
             typeof cycle.profitRate === 'number' &&
             cycle.profitRate > 0
         );
-
         if (positiveCycles.length) {
             const canToggleExpand = positiveCycles.length > maxCount;
             const shouldExpand = canToggleExpand && expanded;
@@ -1745,7 +1746,6 @@
                 expanded: shouldExpand
             };
         }
-
         return {
             displayCycles: list.slice(0, 1),
             positiveCount: 0,
@@ -3855,19 +3855,26 @@
                         preferredStartSymbols: buildPreferredCycleStartSymbols(sharedRuleSnapshot.aliasRules, 'cbBTC')
                     }
                 );
-            const fullEntries = cycles
-                .map((cycle, index) => createArbOpportunityEntry(
+            const cycleDisplayState = getCycleDisplayState(cycles, 4, arbExpandedSections.has(sectionKey));
+            const displayEntries = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'
+                ? window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles(cycles, cycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
                     nextOpportunityMap,
                     cycle,
                     `机会 ${index + 1}`,
                     { section: category.name, alertPreset: { type: 'path' } }
                 ))
-                .filter(Boolean);
-            const cycleDisplayState = getCycleDisplayState(cycles, 4, arbExpandedSections.has(sectionKey));
+                : cycleDisplayState.displayCycles
+                    .map((cycle, index) => createArbOpportunityEntry(
+                        nextOpportunityMap,
+                        cycle,
+                        `机会 ${index + 1}`,
+                        { section: category.name, alertPreset: { type: 'path' } }
+                    ))
+                    .filter(Boolean);
             const footerHtml = buildArbSectionToggleHtml(sectionKey, cycleDisplayState);
             const sectionDef = {
                 title: category.name,
-                opportunities: selectArbOpportunityEntriesByCycles(fullEntries, cycleDisplayState.displayCycles),
+                opportunities: displayEntries,
                 footerHtml
             };
             if (category.name === 'LBTC监控') {
@@ -3909,16 +3916,23 @@
                 !cycleContainsAnyChains(cycle, excludedChains)
             )
             : globalCycles;
-        const globalEntries = globalCycles
-            .map((cycle, index) => createArbOpportunityEntry(
+        updateGlobalArbFilterBar();
+        const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
+        const globalEntries = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'
+            ? window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles(globalCycles, globalCycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
                 nextOpportunityMap,
                 cycle,
                 `机会 ${index + 1}`,
                 { section: '全局路径', alertPreset: { type: 'path' } }
             ))
-            .filter(Boolean);
-        updateGlobalArbFilterBar();
-        const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
+            : globalCycleDisplayState.displayCycles
+                .map((cycle, index) => createArbOpportunityEntry(
+                    nextOpportunityMap,
+                    cycle,
+                    `机会 ${index + 1}`,
+                    { section: '全局路径', alertPreset: { type: 'path' } }
+                ))
+                .filter(Boolean);
         const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
         const globalEmptyText = hasGlobalFilter ? '过滤后暂无路径' : '等待数据...';
         const fixedAndSpecialColumns = window.ArbPanelLayoutUtils
@@ -3932,7 +3946,7 @@
             [wbtcSection, lbtcSection || { title: 'LBTC监控', opportunities: [], emptyText: '等待数据...' }, tbtcSection],
             [{
                 title: '全局路径',
-                opportunities: selectArbOpportunityEntriesByCycles(globalEntries, globalCycleDisplayState.displayCycles),
+                opportunities: globalEntries,
                 footerHtml: globalFooterHtml,
                 emptyText: globalEmptyText
             }]

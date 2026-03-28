@@ -1,5 +1,11 @@
 const assert = require('assert');
-const { splitSectionsIntoColumns, resolveItemsBySelectors, selectPositiveCyclesOrBest } = require('../arb-panel-layout-utils');
+const {
+  splitSectionsIntoColumns,
+  resolveItemsBySelectors,
+  selectPositiveCyclesOrBest,
+  getCycleDisplayState,
+  mapEntriesForDisplayCycles
+} = require('../arb-panel-layout-utils');
 
 const sections = [
   { title: '固定路径', opportunities: Array.from({ length: 8 }, (_, index) => ({ label: `F${index + 1}` })) },
@@ -49,3 +55,36 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(selectPositiveCyclesOrBest([]), []);
+
+const cycleDisplayState = getCycleDisplayState([
+  { id: 'neg-1', profitRate: -0.001 },
+  { id: 'pos-1', profitRate: 0.002 },
+  { id: 'pos-2', profitRate: 0.003 },
+  { id: 'pos-3', profitRate: 0.004 }
+], 2, false);
+
+assert.deepStrictEqual(cycleDisplayState.displayCycles.map((item) => item.id), ['pos-1', 'pos-2']);
+assert.strictEqual(cycleDisplayState.positiveCount, 3);
+assert.strictEqual(cycleDisplayState.hiddenPositiveCount, 1);
+assert.strictEqual(cycleDisplayState.canToggleExpand, true);
+assert.strictEqual(cycleDisplayState.expanded, false);
+
+const displaySourceCycles = [
+  { id: 'neg-1', profitRate: -0.001 },
+  { id: 'pos-1', profitRate: 0.002 },
+  { id: 'pos-2', profitRate: 0.003 },
+  { id: 'pos-3', profitRate: 0.004 }
+];
+const displayStateForEntries = getCycleDisplayState(displaySourceCycles, 2, false);
+let callbackCount = 0;
+const mappedEntries = mapEntriesForDisplayCycles(
+  displaySourceCycles,
+  displayStateForEntries.displayCycles,
+  (cycle, index) => {
+    callbackCount += 1;
+    return `机会 ${index + 1}:${cycle.id}`;
+  }
+);
+
+assert.strictEqual(callbackCount, 2);
+assert.deepStrictEqual(mappedEntries, ['机会 2:pos-1', '机会 3:pos-2']);

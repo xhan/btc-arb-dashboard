@@ -125,7 +125,7 @@
       cexQuote: 'USDT',
       cexChain: 'Bybit',
       minNetProfit: 8,
-      minNetProfitBp: 0,
+      minNetProfitBp: 0.5,
       withdrawFee: 0,
       alertConfirmDelaySec: 13
     }
