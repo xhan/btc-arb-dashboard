@@ -3,10 +3,10 @@
     {
       "id": "ch1",
       "name": "JP1",
-      "httpProxy": "http://127.0.0.1:18001",
+      "httpProxy": "http://127.0.0.1:18003",
       "intervals": {
         "kyber": 400,        
-        "velora": 1200
+        "velora": 1300
 
       },
       "configMore": {
@@ -21,7 +21,7 @@
       "httpProxy": "http://127.0.0.1:18002",
       "intervals": {
         "kyber": 400,
-        "velora": 1200
+        "velora": 1300
       },
       "configMore": {
         "kyberClientId": "DogCanWinYou",
