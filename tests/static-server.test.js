@@ -114,6 +114,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-arb-detail-dex-url'));
     assert.ok(appJsResponse.body.includes('class="icon-btn add-quote-btn"'));
     assert.ok(!appJsResponse.body.includes('>+ 添加报价</button>'));
+    assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
+    assert.ok(appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
     assert.ok(appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));

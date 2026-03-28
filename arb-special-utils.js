@@ -284,15 +284,22 @@
       if (!targets.length) return [];
 
       return targets.map((targetAmount) => {
-        const matchedLevel = primary.usedLevels.find((level) => Number(level.cumulativeInput) >= targetAmount);
-        if (!matchedLevel) return null;
-        const grossProfit = Number(matchedLevel.cumulativeProfit);
-        const netProfit = grossProfit - this.withdrawFee;
-        const netProfitBp = (netProfit / targetAmount) * 10000;
+        if (targetAmount > primary.totalInput) return null;
+        let remaining = targetAmount;
+        let grossProfit = 0;
+        for (const level of primary.usedLevels) {
+          if (remaining <= 0) break;
+          const fillAmount = Math.min(remaining, Number(level.size) || 0);
+          if (fillAmount <= 0) continue;
+          grossProfit += fillAmount * Number(level.unitProfitRate || 0);
+          remaining -= fillAmount;
+        }
+        if (remaining > 0) return null;
+        const grossProfitBp = (grossProfit / targetAmount) * 10000;
         return {
           targetAmount,
-          netProfit,
-          netProfitBp
+          profit: grossProfit,
+          profitBp: grossProfitBp
         };
       }).filter(Boolean);
     }
@@ -332,7 +339,7 @@
       lines.push(`深度: ${this.buildDepthSummary(primary).map((item) => `${item.index}) ${formatNumber(item.size, 6)} @${formatNumber(item.price, 6)} (${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp)`).join('  ')}`);
       this.buildDisplayTargetResults(primary, rule).forEach((item) => {
         const amountText = `${formatNumber(item.targetAmount, 6)} ${this.buildInputSymbol(primary, rule)}`;
-        lines.push(`${amountText}: ${formatSignedNumber(item.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(item.netProfitBp, 2)} bp`);
+        lines.push(`${amountText}: ${formatSignedNumber(item.profit, 8)} ${rule.cexQuote} / ${formatSignedNumber(item.profitBp, 2)} bp`);
       });
       lines.push(`最大正收益量: ${formatNumber(primary.totalInput, 6)} ${this.buildInputSymbol(primary, rule)} -> ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
       return lines.join('\n');
@@ -340,16 +347,24 @@
 
     buildAlertMessage(primary, secondary, rule) {
       const lines = [];
+      const targetResults = this.buildDisplayTargetResults(primary, rule);
       lines.push(this.buildDexLine(primary, rule));
       lines.push(this.buildCexLine(primary, rule));
-      lines.push(`深度: ${this.buildDepthSummary(primary).map((item) => `${item.index}) ${formatNumber(item.size, 6)} @${formatNumber(item.price, 6)} (${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp)`).join('  ')}`);
-      this.buildDisplayTargetResults(primary, rule).forEach((item) => {
-        const amountText = `${formatNumber(item.targetAmount, 6)} ${this.buildInputSymbol(primary, rule)}`;
-        lines.push(`${amountText}: ${formatSignedNumber(item.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(item.netProfitBp, 2)} bp`);
+      lines.push('');
+      this.buildDepthSummary(primary).forEach((item) => {
+        lines.push(`${item.index}) ${formatNumber(item.size, 6)} @${formatNumber(item.price, 6)} (${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp)`);
       });
+      if (targetResults.length) {
+        lines.push('');
+        targetResults.forEach((item) => {
+          lines.push(`${formatNumber(item.targetAmount, 6)} : ${formatSignedNumber(item.profit, 8)}    | ${formatSignedNumber(item.profitBp, 2)} bp`);
+        });
+      }
+      lines.push('');
       lines.push(`最大正收益量: ${formatNumber(primary.totalInput, 6)} ${this.buildInputSymbol(primary, rule)} -> ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
 
       if (secondary && Number.isFinite(secondary.netProfit)) {
+        lines.push('');
         lines.push(
           `另一方向: ${secondary.directionLabel} | ${formatSignedNumber(secondary.netProfit, 8)} ${rule.cexQuote} , ${formatSignedNumber(secondary.netProfitBp, 2)} bp`
         );

@@ -2753,6 +2753,27 @@
         }
     }
 
+    function blurArbGlobalFilterInputs() {
+        const activeElement = document.activeElement;
+        if (activeElement === arbGlobalFilterInput || activeElement === arbGlobalChainFilterInput) {
+            activeElement.blur();
+        }
+    }
+
+    function handleArbGlobalFilterKeydown(event) {
+        if (!event || event.key !== 'Enter') return;
+        event.preventDefault();
+        blurArbGlobalFilterInputs();
+    }
+
+    function handleArbPathHeaderClick(event) {
+        if (!event) return;
+        if (event.target && typeof event.target.closest === 'function' && event.target.closest('button')) {
+            return;
+        }
+        blurArbGlobalFilterInputs();
+    }
+
     function createPathAlertId() {
         return `path-alert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     }
@@ -6208,12 +6229,17 @@
             }
             if (arbGlobalFilterInput) {
                 arbGlobalFilterInput.addEventListener('input', handleArbGlobalFilterInput);
+                arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown);
             }
             if (arbGlobalChainFilterInput) {
                 arbGlobalChainFilterInput.addEventListener('input', handleArbGlobalChainFilterInput);
+                arbGlobalChainFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown);
             }
             if (arbGlobalFilterClearBtn) {
                 arbGlobalFilterClearBtn.addEventListener('click', handleArbGlobalFilterClear);
+            }
+            if (arbPathHeader) {
+                arbPathHeader.addEventListener('click', handleArbPathHeaderClick);
             }
             if (pathAlertModal) {
                 pathAlertModal.addEventListener('click', handlePathAlertModalClick);
