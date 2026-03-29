@@ -3,29 +3,29 @@
     {
       "id": "ch1",
       "name": "JP1",
-      "httpProxy": "http://127.0.0.1:18003",
+      "httpProxy": "http://127.0.0.1:18012",
       "intervals": {
         "kyber": 400,        
-        "velora": 1300
+        "velora": 1350
 
       },
       "configMore": {
         "kyberClientId": "DexMasterKingOOO",        
-        "veloraPartner": "DexMasterKingOOO"
+        "veloraPartner": "llamaswap"
 
       }
     },
     {
       "id": "ch2",
-      "name": "JP2",
-      "httpProxy": "http://127.0.0.1:18002",
+      "name": "YN1",
+      "httpProxy": "http://127.0.0.1:18021",
       "intervals": {
         "kyber": 400,
-        "velora": 1300
+        "velora": 1350
       },
       "configMore": {
         "kyberClientId": "DogCanWinYou",
-        "veloraPartner": "DogCanWinYou"
+        "veloraPartner": "llamaswap"
       }
     }    
   ]

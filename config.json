@@ -259,7 +259,8 @@
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
           "preferredSource": "Kyber",
-          "showInverse": true
+          "showInverse": true,
+          "requestChannelId": "ch2"
         },
         {
           "id": 1773199914429,
