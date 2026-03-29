@@ -107,19 +107,38 @@
     const label = String(options.label || '').trim();
     const currentValueText = String(options.currentValueText || '').trim();
     const message = String(options.message || '').trim();
+    const actionLink = options.actionLink && typeof options.actionLink === 'object' ? options.actionLink : null;
+    const actionLinkLabel = String(actionLink && actionLink.label || '').trim();
+    const actionLinkUrl = String(actionLink && actionLink.url || '').trim();
     const bodyLines = [];
     const heading = [label, currentValueText].filter(Boolean).join('  ');
+    const telegramHtmlLines = [];
+
+    function escapeTelegramHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
 
     if (heading) {
       bodyLines.push(heading);
+      telegramHtmlLines.push(escapeTelegramHtml(heading));
     }
     if (message) {
       bodyLines.push(message);
+      telegramHtmlLines.push(escapeTelegramHtml(message));
+    }
+    if (actionLinkLabel && actionLinkUrl) {
+      bodyLines.push(`${actionLinkLabel}: ${actionLinkUrl}`);
+      telegramHtmlLines.push(`<a href="${escapeTelegramHtml(actionLinkUrl)}">${escapeTelegramHtml(actionLinkLabel)}</a>`);
     }
 
     return {
       title: `[监控提醒] ${chainName}`,
-      body: bodyLines.join('\n') || '监控命中'
+      body: bodyLines.join('\n') || '监控命中',
+      telegramHtmlBody: telegramHtmlLines.join('\n') || '监控命中'
     };
   }
 

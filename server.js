@@ -427,7 +427,7 @@ async function sendPathAlertDayAppWebhook(alertConfig, title, body) {
     return { sent: true, channel: 'dayapp' };
 }
 
-async function sendPathAlertTelegramWebhook(configMore, title, body) {
+async function sendPathAlertTelegramWebhook(configMore, title, body, telegramHtmlBody = '') {
     if (!configMore || configMore.telegramEnabled === false) {
         return { sent: false, channel: 'telegram', reason: 'disabled' };
     }
@@ -443,6 +443,7 @@ async function sendPathAlertTelegramWebhook(configMore, title, body) {
         return { sent: false, channel: 'telegram', reason: 'missing-config' };
     }
 
+    const hasTelegramHtmlBody = String(telegramHtmlBody || '').trim().length > 0;
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -450,7 +451,8 @@ async function sendPathAlertTelegramWebhook(configMore, title, body) {
         },
         body: JSON.stringify({
             chat_id: chatId,
-            text: `${title}\n\n${body}`
+            text: `${title}\n\n${hasTelegramHtmlBody ? String(telegramHtmlBody || '').trim() : body}`,
+            ...(hasTelegramHtmlBody ? { parse_mode: 'HTML' } : {})
         })
     });
     if (!response.ok) {
@@ -601,6 +603,7 @@ app.post('/api/send-path-alert-webhook', async (req, res) => {
         const configMore = await getConfigMore();
         const title = String(req.body && req.body.title || '').trim();
         const body = String(req.body && req.body.body || '').trim();
+        const telegramHtmlBody = String(req.body && req.body.telegramHtmlBody || '').trim();
         if (!alertConfig.settings.webhookEnabled) {
             return res.status(400).json({ error: '路径报警 webhook 未配置' });
         }
@@ -610,7 +613,7 @@ app.post('/api/send-path-alert-webhook', async (req, res) => {
             sendPathAlertTelegramWebhook({
                 ...configMore,
                 telegramEnabled: alertConfig.settings.telegramEnabled !== false
-            }, title, body)
+            }, title, body, telegramHtmlBody)
         ]);
         if (!results.some((item) => item.sent)) {
             return res.status(400).json({ error: '路径报警远程推送未配置' });

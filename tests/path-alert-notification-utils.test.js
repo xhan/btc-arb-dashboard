@@ -122,7 +122,8 @@ assert.deepStrictEqual(
   }),
   {
     title: '[监控提醒] Arbitrum',
-    body: 'BTCB/syBTC  0.1 -> 0.100115\n价格相比基准(100.000000) 上涨 0.250% (>0.1%)'
+    body: 'BTCB/syBTC  0.1 -> 0.100115\n价格相比基准(100.000000) 上涨 0.250% (>0.1%)',
+    telegramHtmlBody: 'BTCB/syBTC  0.1 -&gt; 0.100115\n价格相比基准(100.000000) 上涨 0.250% (&gt;0.1%)'
   }
 );
 
@@ -135,6 +136,25 @@ assert.deepStrictEqual(
   }),
   {
     title: '[监控提醒] Bybit',
-    body: 'BTCB/syBTC  0.1 -> 0.100115\n总价已达到或超过目标 70000'
+    body: 'BTCB/syBTC  0.1 -> 0.100115\n总价已达到或超过目标 70000',
+    telegramHtmlBody: 'BTCB/syBTC  0.1 -&gt; 0.100115\n总价已达到或超过目标 70000'
+  }
+);
+
+assert.deepStrictEqual(
+  buildLegacyQuoteAlertRemotePayload({
+    chainName: 'ETH',
+    label: 'cbBTC/BTC.b',
+    currentValueText: '1 -> 1.000224',
+    message: '总价已达到或超过目标 1.00017',
+    actionLink: {
+      label: 'swap.defillama',
+      url: 'https://swap.defillama.com/?chain=ethereum&from=0x1&tab=swap&to=0x2'
+    }
+  }),
+  {
+    title: '[监控提醒] ETH',
+    body: 'cbBTC/BTC.b  1 -> 1.000224\n总价已达到或超过目标 1.00017\nswap.defillama: https://swap.defillama.com/?chain=ethereum&from=0x1&tab=swap&to=0x2',
+    telegramHtmlBody: 'cbBTC/BTC.b  1 -&gt; 1.000224\n总价已达到或超过目标 1.00017\n<a href="https://swap.defillama.com/?chain=ethereum&amp;from=0x1&amp;tab=swap&amp;to=0x2">swap.defillama</a>'
   }
 );

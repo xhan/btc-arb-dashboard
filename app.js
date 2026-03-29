@@ -732,6 +732,64 @@
         }
     }
 
+
+    function buildLegacyQuoteAlertDexLink(quote) {
+        if (!quote) return null;
+        return getArbDetailUtils().buildArbDetailDexLink({
+            chain: quote.chain,
+            fromTokenAddress: quote.fromToken,
+            toTokenAddress: quote.toToken,
+            inputAmount: quote.amount
+        });
+    }
+
+    function buildLegacyQuoteAlertActionLink(quote) {
+        const dexLink = buildLegacyQuoteAlertDexLink(quote);
+        if (!dexLink || !dexLink.url) return null;
+        return {
+            label: dexLink.label || '交易链接',
+            url: dexLink.url
+        };
+    }
+
+    function buildLegacyQuoteAlertLogHtml(quote, displayName, label, message, currentValueText = '') {
+        const heading = [label, currentValueText].filter(Boolean).join('  ');
+        const actionLink = buildLegacyQuoteAlertActionLink(quote);
+        const dexLinkHtml = actionLink && actionLink.url
+            ? `<a
+                    href="${escapeHtml(actionLink.url)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="quote-alert-log-link"
+                    data-quote-alert-dex-link="${escapeHtml(actionLink.url)}"
+                >${escapeHtml(actionLink.label || '交易链接')}</a>`
+            : '';
+        return `
+            <div class="log-entry quote-alert-log-entry">
+                <div><strong>${escapeHtml(displayName || '')}</strong></div>
+                ${heading ? `<div>${escapeHtml(heading)}</div>` : ''}
+                <div>${escapeHtml(message || '')}</div>
+                ${dexLinkHtml ? `<div class="quote-alert-log-link-row">${dexLinkHtml}</div>` : ''}
+                <span class="log-time">${new Date().toLocaleTimeString()}</span>
+            </div>
+        `;
+    }
+
+    function appendLegacyQuoteAlertLogEntry(quote, displayName, label, message, currentValueText = '') {
+        if (!alertLogWindow || !alertLogContent) return;
+        alertLogWindow.style.display = 'flex';
+        bringFloatingPanelToFront(alertLogWindow);
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = buildLegacyQuoteAlertLogHtml(quote, displayName, label, message, currentValueText);
+        const card = wrapper.firstElementChild;
+        if (card) {
+            alertLogContent.prepend(card);
+        }
+        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
+            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
+        }
+    }
+
     function pruneMutedPathTargetsInPlace(nowMs = Date.now()) {
         if (!window.PathAlertUtils || typeof window.PathAlertUtils.pruneExpiredMutedPathTargets !== 'function') {
             return mutedPathTargets;
@@ -5333,16 +5391,18 @@
     function triggerAlert(quote, message, options = {}) {
         const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
         const label = buildQuoteAlertDisplayLabel(quote);
+        const currentValueText = options.currentValueText || '';
+        const actionLink = buildLegacyQuoteAlertActionLink(quote);
         console.info('[quote-alert] trigger', {
             quoteId: quote.id,
             chain: displayName,
             label,
             message,
-            currentValueText: options.currentValueText || ''
+            currentValueText
         });
-        appendAlertLogEntry(displayName, message, label);
+        appendLegacyQuoteAlertLogEntry(quote, displayName, label, message, currentValueText);
         playPathAlertSoundOnce();
-        sendLegacyQuoteWebhookNotification(displayName, label, message, options.currentValueText || '');
+        sendLegacyQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink);
     }
 
     function checkPriceForAlerts(quote) {
@@ -5395,7 +5455,7 @@
         updateAlertSoundState();
     }
 
-    function buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText) {
+    function buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null) {
         if (
             window.PathAlertNotificationUtils
             && typeof window.PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload === 'function'
@@ -5404,18 +5464,20 @@
                 chainName: displayName,
                 label,
                 currentValueText,
-                message
+                message,
+                actionLink
             });
         }
         return {
             title: `[监控提醒] ${displayName || '未知链'}`,
-            body: [[label, currentValueText].filter(Boolean).join('  '), message].filter(Boolean).join('\n') || '监控命中'
+            body: [[label, currentValueText].filter(Boolean).join('  '), message].filter(Boolean).join('\n') || '监控命中',
+            telegramHtmlBody: ''
         };
     }
 
-    async function sendLegacyQuoteWebhookNotification(displayName, label, message, currentValueText) {
+    async function sendLegacyQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null) {
         if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
-        const payload = buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText);
+        const payload = buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink);
         try {
             const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
                 method: 'POST',

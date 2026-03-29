@@ -182,6 +182,20 @@ async function waitForServer(attempts = 15) {
       chat_id: '1124758403',
       text: '收益 +2.50 bp\n\nETH WBTC -> tBTC | SUI TBTC -> WBTC'
     });
+
+    const webhookResponseWithTelegramHtml = await request('POST', '/api/send-path-alert-webhook', JSON.stringify({
+      title: '[监控提醒] ETH',
+      body: 'cbBTC/BTC.b  1 -> 1.000224\n总价已达到或超过目标 1.00017\nswap.defillama: https://swap.defillama.com/?chain=ethereum&from=0x1&tab=swap&to=0x2',
+      telegramHtmlBody: 'cbBTC/BTC.b  1 -&gt; 1.000224\n总价已达到或超过目标 1.00017\n<a href="https://swap.defillama.com/?chain=ethereum&amp;from=0x1&amp;tab=swap&amp;to=0x2">swap.defillama</a>'
+    }));
+    assert.strictEqual(webhookResponseWithTelegramHtml.statusCode, 200);
+    assert.strictEqual(telegramRequests.length, 2);
+    const telegramHtmlPayload = JSON.parse(telegramRequests[1].body);
+    assert.deepStrictEqual(telegramHtmlPayload, {
+      chat_id: '1124758403',
+      text: '[监控提醒] ETH\n\ncbBTC/BTC.b  1 -&gt; 1.000224\n总价已达到或超过目标 1.00017\n<a href="https://swap.defillama.com/?chain=ethereum&amp;from=0x1&amp;tab=swap&amp;to=0x2">swap.defillama</a>',
+      parse_mode: 'HTML'
+    });
   } finally {
     serverProcess.kill();
     webhookServer.close();
