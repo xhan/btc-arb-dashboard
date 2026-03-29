@@ -73,6 +73,7 @@
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
+    const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;
     let pathAlertEditorState = {
         visible: false,
         editingId: '',
@@ -2086,7 +2087,10 @@
         if (!panel || !arbPathWindow) return;
         const arbStyle = window.getComputedStyle(arbPathWindow);
         if (arbStyle.width) {
-            panel.style.width = arbStyle.width;
+            const arbWidth = parseFloat(arbStyle.width);
+            panel.style.width = Number.isFinite(arbWidth)
+                ? `${Math.round(arbWidth * DATA_TERMINAL_DEFAULT_WIDTH_SCALE)}px`
+                : arbStyle.width;
         }
         if (arbStyle.height) {
             panel.style.height = arbStyle.height;

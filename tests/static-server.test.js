@@ -48,6 +48,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
     assert.ok(response.body.includes('#arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px;'));
+    assert.ok(response.body.includes('#data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 807px;'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="charts-renderer.js"'));
     assert.ok(response.body.includes('src="copy-utils.js"'));
@@ -185,6 +186,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function mountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function unmountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
+    assert.ok(appJsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
     assert.ok(appJsResponse.body.includes('clearTimeout(dataTerminalState.timer);'));
     assert.ok(appJsResponse.body.includes('dataTerminalState.domRefs = null;'));
     assert.ok(appJsResponse.body.includes('Token -&gt; Token'));
