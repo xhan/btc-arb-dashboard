@@ -732,7 +732,6 @@
         }
     }
 
-
     function buildLegacyQuoteAlertDexLink(quote) {
         if (!quote) return null;
         return getArbDetailUtils().buildArbDetailDexLink({

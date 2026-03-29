@@ -291,9 +291,28 @@ function logQuoteResult(source, ctx) {
     verboseLog(`${source}_RES`, `${pair} 结果=OK price=${priceText} amountOut=${amountOutText}`);
 }
 
+function getQuoteLogChannelLabel(ctx) {
+    const channelId = String(ctx && ctx.channelId || '').trim() || 'default';
+    const channelName = String(ctx && ctx.channelName || '').trim();
+    if (channelName && channelName !== channelId) {
+        return `${channelName}/${channelId}`;
+    }
+    return channelId;
+}
+
+function withQuoteLogRequestChannel(ctx, input) {
+    const requestContext = input && input.requestContext ? input.requestContext : null;
+    return {
+        ...(ctx && typeof ctx === 'object' ? ctx : {}),
+        channelId: requestContext && requestContext.channelId ? requestContext.channelId : undefined,
+        channelName: requestContext && requestContext.channelName ? requestContext.channelName : undefined
+    };
+}
+
 function logQuoteError(source, ctx, error) {
     const pair = getQuoteLogPairLabel(ctx.chain, ctx.fromSymbol, ctx.toSymbol, ctx.fromToken, ctx.toToken);
-    logMessage(`${source}_ERR`, `${pair} ${error.message}`, 'warn');
+    const channel = getQuoteLogChannelLabel(ctx);
+    logMessage(`${source}_ERR`, `[channel=${channel}] ${pair} ${error.message}`, 'warn');
 }
 
 async function readJsonFile(filePath) {
@@ -754,78 +773,92 @@ app.post('/api/get-evm-meta', async (req, res) => {
 });
 
 app.post('/api/get-0x-quote', async (req, res) => {
+    let input = null;
     try {
-        const result = await marketClients.providers.zerox.getQuote(await buildQuoteRequestInput(req.body, 'zerox'));
+        input = await buildQuoteRequestInput(req.body, 'zerox');
+        const result = await marketClients.providers.zerox.getQuote(input);
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('ZEROX', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        logQuoteError('ZEROX', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/get-lifi-quote', async (req, res) => {
+    let input = null;
     try {
-        const result = await marketClients.providers.lifi.getQuote(await buildQuoteRequestInput(req.body, 'lifi'));
+        input = await buildQuoteRequestInput(req.body, 'lifi');
+        const result = await marketClients.providers.lifi.getQuote(input);
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('LIFI', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        logQuoteError('LIFI', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/get-ekubo-quote', async (req, res) => {
+    let input = null;
     try {
-        const result = await marketClients.providers.ekubo.getQuote(await buildQuoteRequestInput(req.body, 'starknet'));
+        input = await buildQuoteRequestInput(req.body, 'starknet');
+        const result = await marketClients.providers.ekubo.getQuote(input);
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('EKUBO', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        logQuoteError('EKUBO', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/get-jupiter-quote', async (req, res) => {
+    let input = null;
     try {
-        const result = await marketClients.providers.jupiter.getQuote(await buildQuoteRequestInput(req.body, 'solana'));
+        input = await buildQuoteRequestInput(req.body, 'solana');
+        const result = await marketClients.providers.jupiter.getQuote(input);
         res.json(result);
     } catch (error) {
         const { fromToken, toToken, amount } = req.body;
-        logQuoteError('JUPITER', { chain: 'solana', fromToken, toToken, amount: amount || 1 }, error);
+        logQuoteError('JUPITER', withQuoteLogRequestChannel({ chain: 'solana', fromToken, toToken, amount: amount || 1 }, input), error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/get-kyber-quote', async (req, res) => {
+    let input = null;
     try {
-        const result = await marketClients.providers.kyber.getQuote(await buildQuoteRequestInput(req.body, 'kyber'));
+        input = await buildQuoteRequestInput(req.body, 'kyber');
+        const result = await marketClients.providers.kyber.getQuote(input);
         res.json(result);
     } catch (error) { 
         const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('KYBER', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        logQuoteError('KYBER', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
         res.status(500).json({ error: error.message }); 
     }
 });
 
 app.post('/api/get-velora-quote', async (req, res) => {
+    let input = null;
     try {
-        const result = await marketClients.providers.velora.getQuote(await buildQuoteRequestInput(req.body, 'velora'));
+        input = await buildQuoteRequestInput(req.body, 'velora');
+        const result = await marketClients.providers.velora.getQuote(input);
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('VELORA', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        logQuoteError('VELORA', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/get-cetus-quote', async (req, res) => {
+    let input = null;
     try {
-        const result = await marketClients.providers.cetus.getQuote(await buildQuoteRequestInput(req.body, 'sui'));
+        input = await buildQuoteRequestInput(req.body, 'sui');
+        const result = await marketClients.providers.cetus.getQuote(input);
         res.json(result);
     } catch (error) {
         const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('CETUS', { chain, fromToken, toToken, amount: amount || 1 }, error);
+        logQuoteError('CETUS', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
         res.status(500).json({ error: error.message });
     }
 });
