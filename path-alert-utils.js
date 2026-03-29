@@ -136,7 +136,7 @@
   function normalizeMutedPathTarget(entry) {
     if (!entry || typeof entry !== 'object') return null;
     const target = normalizePathAlertTarget(entry.target || {});
-    if (!target || target.type !== 'path') return null;
+    if (!target) return null;
     const mutedAt = toPositiveInteger(entry.mutedAt, 0);
     const expiresAt = toPositiveInteger(entry.expiresAt, 0);
     if (!mutedAt || !expiresAt || expiresAt <= mutedAt) return null;
@@ -334,7 +334,7 @@
     const normalizedTarget = normalizePathAlertTarget(target);
     const safeMutedAt = toPositiveInteger(mutedAt, Date.now());
     const safeDurationMs = toPositiveInteger(durationMs, PATH_ALERT_MUTE_DURATION_MS);
-    if (!normalizedTarget || normalizedTarget.type !== 'path') return null;
+    if (!normalizedTarget || (normalizedTarget.type !== 'path' && normalizedTarget.type !== 'quote')) return null;
     return normalizeMutedPathTarget({
       target: normalizedTarget,
       summaryLinesSnapshot,

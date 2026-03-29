@@ -110,8 +110,9 @@
     const actionLink = options.actionLink && typeof options.actionLink === 'object' ? options.actionLink : null;
     const actionLinkLabel = String(actionLink && actionLink.label || '').trim();
     const actionLinkUrl = String(actionLink && actionLink.url || '').trim();
-    const bodyLines = [];
     const heading = [label, currentValueText].filter(Boolean).join('  ');
+    const title = [chainName, heading].filter(Boolean).join(' ');
+    const bodyLines = [];
     const telegramHtmlLines = [];
 
     function escapeTelegramHtml(value) {
@@ -122,10 +123,6 @@
         .replace(/"/g, '&quot;');
     }
 
-    if (heading) {
-      bodyLines.push(heading);
-      telegramHtmlLines.push(escapeTelegramHtml(heading));
-    }
     if (message) {
       bodyLines.push(message);
       telegramHtmlLines.push(escapeTelegramHtml(message));
@@ -136,7 +133,7 @@
     }
 
     return {
-      title: `[监控提醒] ${chainName}`,
+      title: title || chainName,
       body: bodyLines.join('\n') || '监控命中',
       telegramHtmlBody: telegramHtmlLines.join('\n') || '监控命中'
     };

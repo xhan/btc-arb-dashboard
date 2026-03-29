@@ -751,9 +751,41 @@
         };
     }
 
-    function buildLegacyQuoteAlertLogHtml(quote, displayName, label, message, currentValueText = '') {
-        const heading = [label, currentValueText].filter(Boolean).join('  ');
+    function buildLegacyQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
+        const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
+        const label = buildQuoteAlertDisplayLabel(quote);
+        const currentValueText = options.currentValueText || '';
         const actionLink = buildLegacyQuoteAlertActionLink(quote);
+        return {
+            alert,
+            quote,
+            displayName,
+            label,
+            message,
+            currentValueText,
+            actionLink,
+            summaryLines: [[displayName, label].filter(Boolean).join(' '), message].filter(Boolean),
+            mutedTargetCandidate: alert && alert.target && alert.target.type === 'quote' ? alert : null
+        };
+    }
+
+    function findDashboardQuoteById(quoteId) {
+        const numericQuoteId = Number(quoteId);
+        if (!Number.isFinite(numericQuoteId)) return null;
+        const category = dashboardState.find((item) => Array.isArray(item && item.quotes) && item.quotes.some((quote) => Number(quote && quote.id) === numericQuoteId));
+        return category ? category.quotes.find((quote) => Number(quote && quote.id) === numericQuoteId) || null : null;
+    }
+
+    function buildLegacyQuoteAlertLogHtml(entry, nowMs = Date.now()) {
+        const quote = entry && entry.quote ? entry.quote : null;
+        const heading = [entry && entry.label, entry && entry.currentValueText].filter(Boolean).join('  ');
+        const actionLink = entry && entry.actionLink ? entry.actionLink : buildLegacyQuoteAlertActionLink(quote);
+        const mutedEntry = entry && entry.mutedTargetCandidate
+            ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
+            : null;
+        const targetKey = entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '';
+        const statusText = mutedEntry ? buildMutedPathStatusText(mutedEntry, nowMs) : '已触发';
+        const statusClass = mutedEntry ? 'path-alert-log-tag path-alert-log-tag-muted' : 'path-alert-log-tag';
         const dexLinkHtml = actionLink && actionLink.url
             ? `<a
                     href="${escapeHtml(actionLink.url)}"
@@ -763,27 +795,49 @@
                     data-quote-alert-dex-link="${escapeHtml(actionLink.url)}"
                 >${escapeHtml(actionLink.label || '交易链接')}</a>`
             : '';
+        const muteButtonHtml = entry && entry.mutedTargetCandidate
+            ? `<button
+                    type="button"
+                    class="path-alert-log-mute-btn"
+                    data-quote-alert-log-mute="${escapeHtml(entry.alert && entry.alert.id || '')}"
+                    ${mutedEntry ? 'disabled' : ''}
+                >${mutedEntry ? '已忽略 1 小时' : '忽略 1 小时'}</button>`
+            : '';
         return `
-            <div class="log-entry quote-alert-log-entry">
-                <div><strong>${escapeHtml(displayName || '')}</strong></div>
-                ${heading ? `<div>${escapeHtml(heading)}</div>` : ''}
-                <div>${escapeHtml(message || '')}</div>
-                ${dexLinkHtml ? `<div class="quote-alert-log-link-row">${dexLinkHtml}</div>` : ''}
-                <span class="log-time">${new Date().toLocaleTimeString()}</span>
+            <div
+                class="log-entry quote-alert-log-entry"
+                data-quote-alert-log-entry="${escapeHtml(entry && entry.alert && entry.alert.id || '')}"
+                data-muted-target-key="${escapeHtml(targetKey)}"
+            >
+                <div class="path-alert-log-head">
+                    <div>
+                        <div><strong>${escapeHtml(entry && entry.displayName || '')}</strong></div>
+                        ${heading ? `<div>${escapeHtml(heading)}</div>` : ''}
+                        <div>${escapeHtml(entry && entry.message || '')}</div>
+                        ${dexLinkHtml ? `<div class="quote-alert-log-link-row">${dexLinkHtml}</div>` : ''}
+                    </div>
+                    <div class="path-alert-log-actions">${muteButtonHtml}</div>
+                </div>
+                <div class="path-alert-log-foot">
+                    <span class="${statusClass}" data-path-alert-muted-status>${escapeHtml(statusText)}</span>
+                    <span class="log-time">${new Date(nowMs).toLocaleTimeString()}</span>
+                </div>
             </div>
         `;
     }
 
-    function appendLegacyQuoteAlertLogEntry(quote, displayName, label, message, currentValueText = '') {
+    function appendLegacyQuoteAlertLogEntry(entry, nowMs = Date.now()) {
         if (!alertLogWindow || !alertLogContent) return;
         alertLogWindow.style.display = 'flex';
         bringFloatingPanelToFront(alertLogWindow);
         const wrapper = document.createElement('div');
-        wrapper.innerHTML = buildLegacyQuoteAlertLogHtml(quote, displayName, label, message, currentValueText);
+        wrapper.innerHTML = buildLegacyQuoteAlertLogHtml(entry, nowMs);
         const card = wrapper.firstElementChild;
         if (card) {
             alertLogContent.prepend(card);
         }
+        updateMutedPathAlertLogCards('', nowMs);
+        syncMutedPathLogTimer();
         if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
             window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
         }
@@ -846,12 +900,12 @@
     function updateMutedPathAlertLogCards(targetKey = '', nowMs = Date.now()) {
         if (!alertLogContent) return;
         pruneMutedPathTargetsInPlace(nowMs);
-        const cards = alertLogContent.querySelectorAll('.path-alert-log-entry[data-muted-target-key]');
+        const cards = alertLogContent.querySelectorAll('.log-entry[data-muted-target-key]');
         cards.forEach((card) => {
             if (targetKey && card.dataset.mutedTargetKey !== targetKey) return;
             const resolvedEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === card.dataset.mutedTargetKey) || null;
             const statusEl = card.querySelector('[data-path-alert-muted-status]');
-            const buttonEl = card.querySelector('[data-path-alert-log-mute]');
+            const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]');
             if (resolvedEntry) {
                 if (statusEl) {
                     statusEl.textContent = buildMutedPathStatusText(resolvedEntry, nowMs);
@@ -4067,13 +4121,33 @@
 
     function handleAlertLogClick(event) {
         const muteBtn = event.target.closest('[data-path-alert-log-mute]');
-        if (!muteBtn || muteBtn.disabled) return;
-        const alertId = String(muteBtn.dataset.pathAlertLogMute || '').trim();
+        const quoteMuteBtn = event.target.closest('[data-quote-alert-log-mute]');
+        const buttonEl = muteBtn || quoteMuteBtn;
+        if (!buttonEl || buttonEl.disabled) return;
+        const alertId = String(
+            (muteBtn && muteBtn.dataset.pathAlertLogMute)
+            || (quoteMuteBtn && quoteMuteBtn.dataset.quoteAlertLogMute)
+            || ''
+        ).trim();
         if (!alertId) return;
         const runtime = pathAlertRuntimeState.get(alertId);
         if (!runtime || !runtime.evaluation) return;
         const alert = (pathAlertConfig.alerts || []).find((item) => item && item.id === alertId);
         if (!alert || !alert.target) return;
+        if (alert.target.type === 'quote') {
+            const quote = findDashboardQuoteById(alert.target.quoteId);
+            if (!quote) return;
+            const triggeredEntry = buildLegacyQuoteAlertTriggeredEntry(
+                alert,
+                quote,
+                buildQuoteAlertMessage(alert, runtime.evaluation),
+                {
+                    currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, alert, runtime.evaluation)
+                }
+            );
+            mutePathAlertTarget(triggeredEntry, Date.now());
+            return;
+        }
         const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
         const triggeredEntry = buildTriggeredPathAlertEntry(
             alert,
@@ -5387,21 +5461,32 @@
         oneShotAudio.play().catch((error) => console.error('[quote-alert] sound play failed', error));
     }
 
-    function triggerAlert(quote, message, options = {}) {
-        const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
-        const label = buildQuoteAlertDisplayLabel(quote);
-        const currentValueText = options.currentValueText || '';
-        const actionLink = buildLegacyQuoteAlertActionLink(quote);
+    function triggerAlert(quote, alert, message, options = {}) {
+        const entry = buildLegacyQuoteAlertTriggeredEntry(alert, quote, message, options);
+        const mutedEntry = entry.mutedTargetCandidate
+            ? getMutedPathTargetEntry(entry.mutedTargetCandidate, Date.now())
+            : null;
         console.info('[quote-alert] trigger', {
             quoteId: quote.id,
-            chain: displayName,
-            label,
+            chain: entry.displayName,
+            label: entry.label,
             message,
-            currentValueText
+            currentValueText: entry.currentValueText,
+            muted: Boolean(mutedEntry)
         });
-        appendLegacyQuoteAlertLogEntry(quote, displayName, label, message, currentValueText);
+        if (mutedEntry) {
+            entry.mutedEntry = mutedEntry;
+        }
+        appendLegacyQuoteAlertLogEntry(entry, Date.now());
+        if (mutedEntry) {
+            console.info('[quote-alert] muted trigger skipped', {
+                alertId: alert && alert.id,
+                quoteId: quote.id
+            });
+            return;
+        }
         playPathAlertSoundOnce();
-        sendLegacyQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink);
+        sendLegacyQuoteWebhookNotification(entry.displayName, entry.label, message, entry.currentValueText, entry.actionLink);
     }
 
     function checkPriceForAlerts(quote) {
@@ -5428,7 +5513,7 @@
 
             if (!next.shouldTrigger) continue;
             hasTriggeredThisTick = true;
-            triggerAlert(quote, buildQuoteAlertMessage(alert, evaluation), {
+            triggerAlert(quote, alert, buildQuoteAlertMessage(alert, evaluation), {
                 currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, alert, evaluation)
             });
         }
@@ -5468,8 +5553,8 @@
             });
         }
         return {
-            title: `[监控提醒] ${displayName || '未知链'}`,
-            body: [[label, currentValueText].filter(Boolean).join('  '), message].filter(Boolean).join('\n') || '监控命中',
+            title: [[displayName || '未知链', [label, currentValueText].filter(Boolean).join('  ')].filter(Boolean).join(' ')].filter(Boolean).join('\n') || '监控命中',
+            body: [message].filter(Boolean).join('\n') || '监控命中',
             telegramHtmlBody: ''
         };
     }

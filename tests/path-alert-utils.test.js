@@ -179,6 +179,28 @@ assert.strictEqual(findMutedPathAlert([mutedPathEntry], mutedPathEntry, 1000 + P
 assert.deepStrictEqual(pruneExpiredMutedPathTargets([mutedPathEntry], 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), []);
 assert.strictEqual(formatMutedCountdown(59 * 60 * 1000 + 9000), '59:09');
 
+const mutedQuoteEntry = createMutedPathTargetEntry(
+  {
+    target: {
+      type: 'quote',
+      quoteId: 101,
+      ruleKind: 'targetAbove',
+      value: 1.00025
+    }
+  },
+  ['ETH tBTC/cbBTC']
+);
+assert.ok(mutedQuoteEntry);
+assert.strictEqual(mutedQuoteEntry.target.type, 'quote');
+assert.ok(findMutedPathAlert([mutedQuoteEntry], {
+  target: {
+    type: 'quote',
+    quoteId: 101,
+    ruleKind: 'targetAbove',
+    value: 1.00025
+  }
+}, 2000));
+
 const quoteStateById = new Map([
   [11, {
     fromSymbol: 'WBTC',
