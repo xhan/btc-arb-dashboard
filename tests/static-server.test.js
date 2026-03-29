@@ -61,6 +61,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
+    assert.ok(response.body.includes('src="data-terminal-utils.js"'));
     assert.ok(
       response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
     );
@@ -89,6 +90,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="modal-subtitle"'));
     assert.ok(response.body.includes('placeholder="例如: 120"'));
     assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
+    assert.ok(response.body.includes('id="toggle-data-terminal-btn"'));
+    assert.ok(response.body.includes('数据终端'));
     assert.ok(response.body.includes('路径报警管理'));
     assert.ok(response.body.includes('#top-bar-right > button,'));
     assert.ok(response.body.includes('#top-bar-right > a {'));
@@ -144,6 +147,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes("if (key === 'c')"));
     assert.ok(appJsResponse.body.includes("if (key === 'd')"));
+    assert.ok(appJsResponse.body.includes("if (key === 's')"));
+    assert.ok(appJsResponse.body.includes('toggleDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('toggleRequestChannelTags()'));
     assert.ok(appJsResponse.body.includes('let showRequestChannelTags = true;'));
     assert.ok(appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));
@@ -174,6 +179,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-arb-detail-profit-card'));
     assert.ok(appJsResponse.body.includes('resolveEventTargetElement(event)'));
     assert.ok(appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
+    assert.ok(appJsResponse.body.includes('function mountDataTerminalPanel()'));
+    assert.ok(appJsResponse.body.includes('function unmountDataTerminalPanel()'));
+    assert.ok(appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
+    assert.ok(appJsResponse.body.includes('clearTimeout(dataTerminalState.timer);'));
+    assert.ok(appJsResponse.body.includes('dataTerminalState.domRefs = null;'));
+    assert.ok(appJsResponse.body.includes('Token -&gt; Token'));
     assert.ok(appJsResponse.body.includes('window.CopyUtils'));
     assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
     assert.ok(appJsResponse.body.includes('最近 1 小时'));

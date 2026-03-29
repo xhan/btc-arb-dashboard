@@ -72,6 +72,7 @@
     let pathAlertExternalReloadTimer = null;
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
+    const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
     let pathAlertEditorState = {
         visible: false,
         editingId: '',
@@ -86,6 +87,14 @@
     let arbGlobalExcludedChainsInput = '';
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
+    let dataTerminalState = {
+        visible: false,
+        query: '',
+        allowAliases: true,
+        showDiff: false,
+        timer: null,
+        domRefs: null
+    };
     let quoteStateRevision = 0;
     let arbRuleSnapshotCacheKey = '';
     let arbRuleSnapshotCache = null;
@@ -187,6 +196,7 @@
     const arbPathHeader = document.getElementById('arb-path-header');
     const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
+    const toggleDataTerminalBtn = document.getElementById('toggle-data-terminal-btn');
     const toggleArbBtn = document.getElementById('toggle-arb-btn');
     const toggleAlertLogBtn = document.getElementById('toggle-alert-log-btn');
     const arbDetailModal = document.getElementById('arb-detail-modal');
@@ -1389,6 +1399,10 @@
         return window.ChartsRenderer || null;
     }
 
+    function getDataTerminalUtils() {
+        return window.DataTerminalUtils || null;
+    }
+
     function formatDetailNumber(value, precision = 6) {
         return (typeof value === 'number' && Number.isFinite(value))
             ? Number(value.toFixed(precision))
@@ -1803,6 +1817,280 @@
             .map(token => token.trim())
             .filter(Boolean);
         return Array.from(new Set(tokens));
+    }
+
+    function clearDataTerminalTimer() {
+        if (dataTerminalState.timer) {
+            clearTimeout(dataTerminalState.timer);
+            dataTerminalState.timer = null;
+        }
+    }
+
+    function hasDataTerminalActiveQuery() {
+        const utils = getDataTerminalUtils();
+        if (!utils || typeof utils.parseDataTerminalQuery !== 'function') {
+            return String(dataTerminalState.query || '').trim().length > 0;
+        }
+        return utils.parseDataTerminalQuery(dataTerminalState.query).length > 0;
+    }
+
+    function buildDataTerminalRecords() {
+        const records = [];
+
+        for (const category of dashboardState) {
+            for (const quote of getActiveQuotes(Array.isArray(category && category.quotes) ? category.quotes : [])) {
+                const state = quoteMonitorState.get(quote.id) || {};
+                records.push({
+                    categoryName: category && category.name,
+                    quote,
+                    fromSymbol: state.fromSymbol,
+                    toSymbol: state.toSymbol,
+                    lastRawPrice: state.lastRawPrice,
+                    inverseRawPrice: state.inverseRawPrice,
+                    cexOrderbook: state.cexOrderbook || null
+                });
+            }
+        }
+
+        return records;
+    }
+
+    function buildDataTerminalRowHtml(row) {
+        const chainLabel = formatChainLabel(row.chain);
+        const amountText = formatDetailNumber(Number(row.amount), 6);
+        return `
+            <div class="data-terminal-row">
+                <span class="data-terminal-chain">${escapeHtml(chainLabel)}</span>
+                <span class="data-terminal-pair">${escapeHtml(`${row.fromSymbol} -> ${row.toSymbol}`)}</span>
+                <span class="data-terminal-rate">${escapeHtml(row.displayValue)}</span>
+                <span class="data-terminal-amount">${escapeHtml(String(amountText))}</span>
+            </div>
+        `;
+    }
+
+    function buildDataTerminalColumnHtml(rows, emptyMessage) {
+        const bodyHtml = rows.length
+            ? rows.map((row) => buildDataTerminalRowHtml(row)).join('')
+            : `<div class="data-terminal-column-empty">${escapeHtml(emptyMessage)}</div>`;
+        return `
+            <section class="data-terminal-column">
+                <div class="data-terminal-head">
+                    <span>链</span>
+                    <span>Token -&gt; Token</span>
+                    <span>汇率</span>
+                    <span>数量</span>
+                </div>
+                ${bodyHtml}
+            </section>
+        `;
+    }
+
+    function buildDataTerminalPanelHtml(viewModel) {
+        if (!viewModel || viewModel.mode === 'empty') {
+            return `<div class="data-terminal-empty">${escapeHtml(viewModel && viewModel.emptyMessage ? viewModel.emptyMessage : '输入 1 或 2 个代币开始搜索')}</div>`;
+        }
+
+        return `
+            <div class="data-terminal-grid">
+                ${buildDataTerminalColumnHtml(viewModel.leftRows || [], viewModel.emptyMessage || '暂无匹配交易对')}
+                ${buildDataTerminalColumnHtml(viewModel.rightRows || [], viewModel.emptyMessage || '暂无匹配交易对')}
+            </div>
+        `;
+    }
+
+    function renderDataTerminalPanel() {
+        if (!dataTerminalState.visible || !dataTerminalState.domRefs) return;
+        const refs = dataTerminalState.domRefs;
+        const utils = getDataTerminalUtils();
+        if (!refs.content) return;
+        if (!utils || typeof utils.buildDataTerminalCandidates !== 'function' || typeof utils.buildDataTerminalViewModel !== 'function') {
+            refs.content.innerHTML = '<div class="data-terminal-empty">数据终端模块未加载</div>';
+            return;
+        }
+
+        if (refs.searchInput && refs.searchInput.value !== dataTerminalState.query) {
+            refs.searchInput.value = dataTerminalState.query;
+        }
+        if (refs.aliasToggle) {
+            refs.aliasToggle.checked = dataTerminalState.allowAliases;
+        }
+        if (refs.diffToggle) {
+            refs.diffToggle.checked = dataTerminalState.showDiff;
+        }
+
+        const candidates = utils.buildDataTerminalCandidates(buildDataTerminalRecords());
+        const viewModel = utils.buildDataTerminalViewModel(candidates, {
+            query: dataTerminalState.query,
+            aliasRules: getAliasRules(),
+            allowAliases: dataTerminalState.allowAliases,
+            showDiff: dataTerminalState.showDiff
+        });
+
+        refs.content.innerHTML = buildDataTerminalPanelHtml(viewModel);
+
+        if (!hasDataTerminalActiveQuery()) {
+            clearDataTerminalTimer();
+        }
+    }
+
+    function scheduleDataTerminalUpdate() {
+        if (!dataTerminalState.visible || !dataTerminalState.domRefs || !hasDataTerminalActiveQuery()) {
+            return;
+        }
+        if (dataTerminalState.timer) return;
+        dataTerminalState.timer = setTimeout(() => {
+            dataTerminalState.timer = null;
+            renderDataTerminalPanel();
+        }, DATA_TERMINAL_UPDATE_DELAY_MS);
+    }
+
+    function handleDataTerminalHeaderClick(event) {
+        if (!event) return;
+        if (event.target && typeof event.target.closest === 'function' && event.target.closest('button')) {
+            return;
+        }
+        const refs = dataTerminalState.domRefs;
+        if (refs && refs.searchInput && document.activeElement === refs.searchInput) {
+            refs.searchInput.blur();
+        }
+    }
+
+    function positionDataTerminalWindow(panel) {
+        if (!panel) return;
+        panel.style.left = '20px';
+        panel.style.bottom = '20px';
+        panel.style.top = '';
+
+        if (!arbPathWindow || window.getComputedStyle(arbPathWindow).display === 'none') {
+            return;
+        }
+
+        const rect = arbPathWindow.getBoundingClientRect();
+        panel.style.left = `${Math.max(20, rect.left + 24)}px`;
+        panel.style.top = `${Math.max(80, rect.top + 24)}px`;
+        panel.style.bottom = '';
+    }
+
+    function syncDataTerminalPanelDefaultSize(panel) {
+        if (!panel || !arbPathWindow) return;
+        const arbStyle = window.getComputedStyle(arbPathWindow);
+        if (arbStyle.width) {
+            panel.style.width = arbStyle.width;
+        }
+        if (arbStyle.height) {
+            panel.style.height = arbStyle.height;
+        }
+    }
+
+    function mountDataTerminalPanel() {
+        if (dataTerminalState.visible && dataTerminalState.domRefs && dataTerminalState.domRefs.window) {
+            bringFloatingPanelToFront(dataTerminalState.domRefs.window);
+            return;
+        }
+
+        const panel = document.createElement('div');
+        panel.id = 'data-terminal-window';
+        panel.innerHTML = `
+            <div id="data-terminal-header">
+                <span>数据终端</span>
+                <div class="panel-header-actions">
+                    <button id="data-terminal-min-btn" type="button" title="关闭">－</button>
+                </div>
+            </div>
+            <div id="data-terminal-controls">
+                <div class="data-terminal-controls-row">
+                    <input id="data-terminal-search-input" type="text" placeholder="输入 1 或 2 个代币，空格或逗号分隔">
+                    <label class="data-terminal-toggle" for="data-terminal-alias-toggle">
+                        <input id="data-terminal-alias-toggle" type="checkbox" checked>
+                        <span>允许别名</span>
+                    </label>
+                    <label class="data-terminal-toggle" for="data-terminal-diff-toggle">
+                        <input id="data-terminal-diff-toggle" type="checkbox">
+                        <span>显示和 1 的差值</span>
+                    </label>
+                </div>
+            </div>
+            <div id="data-terminal-content"></div>
+        `;
+        panel.style.zIndex = String(FLOATING_PANEL_BASE_Z_INDEX);
+        syncDataTerminalPanelDefaultSize(panel);
+        positionDataTerminalWindow(panel);
+        document.body.appendChild(panel);
+
+        const refs = {
+            window: panel,
+            header: panel.querySelector('#data-terminal-header'),
+            minBtn: panel.querySelector('#data-terminal-min-btn'),
+            searchInput: panel.querySelector('#data-terminal-search-input'),
+            aliasToggle: panel.querySelector('#data-terminal-alias-toggle'),
+            diffToggle: panel.querySelector('#data-terminal-diff-toggle'),
+            content: panel.querySelector('#data-terminal-content')
+        };
+
+        dataTerminalState.visible = true;
+        dataTerminalState.domRefs = refs;
+
+        if (refs.searchInput) {
+            refs.searchInput.value = dataTerminalState.query;
+            refs.searchInput.addEventListener('input', (event) => {
+                dataTerminalState.query = event.target.value || '';
+                renderDataTerminalPanel();
+            });
+            refs.searchInput.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                event.target.blur();
+            });
+        }
+        if (refs.aliasToggle) {
+            refs.aliasToggle.checked = dataTerminalState.allowAliases;
+            refs.aliasToggle.addEventListener('change', (event) => {
+                dataTerminalState.allowAliases = event.target.checked;
+                renderDataTerminalPanel();
+            });
+        }
+        if (refs.diffToggle) {
+            refs.diffToggle.checked = dataTerminalState.showDiff;
+            refs.diffToggle.addEventListener('change', (event) => {
+                dataTerminalState.showDiff = event.target.checked;
+                renderDataTerminalPanel();
+            });
+        }
+        if (refs.minBtn) {
+            refs.minBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleDataTerminalPanel();
+            });
+        }
+        if (refs.header) {
+            refs.header.addEventListener('click', handleDataTerminalHeaderClick);
+            makeDraggable(panel, refs.header);
+            bindFloatingPanelFocus(panel, refs.header);
+        }
+
+        renderDataTerminalPanel();
+        bringFloatingPanelToFront(panel);
+        if (refs.searchInput && !String(dataTerminalState.query || '').trim()) {
+            refs.searchInput.focus();
+        }
+    }
+
+    function unmountDataTerminalPanel() {
+        clearDataTerminalTimer();
+        const refs = dataTerminalState.domRefs;
+        if (refs && refs.window && refs.window.parentNode) {
+            refs.window.parentNode.removeChild(refs.window);
+        }
+        dataTerminalState.visible = false;
+        dataTerminalState.domRefs = null;
+    }
+
+    function toggleDataTerminalPanel() {
+        if (dataTerminalState.visible) {
+            unmountDataTerminalPanel();
+            return;
+        }
+        mountDataTerminalPanel();
     }
 
     function cycleContainsAnySymbols(cycle, symbols) {
@@ -4518,6 +4806,7 @@
 
                 setQuoteMonitorState(quote.id, newState);
                 scheduleArbUpdate();
+                scheduleDataTerminalUpdate();
                 
                 if (currentlyEditingQuote && currentlyEditingQuote.quote.id === quote.id && alertModal.classList.contains('visible')) {
                      const modalPriceEl = document.getElementById('alert-current-price-value');
@@ -4828,6 +5117,11 @@
         if (key === 't') {
             event.preventDefault();
             toggleArbPanel();
+            return;
+        }
+        if (key === 's') {
+            event.preventDefault();
+            toggleDataTerminalPanel();
             return;
         }
         if (key === 'a') {
@@ -5492,6 +5786,7 @@
             if (!isNaN(newAmount) && newAmount >= 0) {
                 const timerId = setTimeout(() => {
                     quote.amount = newAmount;
+                    renderDataTerminalPanel();
                     if (!isQuotePaused(quote)) {
                         queueQuoteRefresh(quote);
                     }
@@ -5529,12 +5824,14 @@
         quoteMonitorState.delete(quoteId);
         updateCategoryPauseButtonState(categoryId);
         updateAlertSoundState();
+        renderDataTerminalPanel();
         saveData();
         return true;
     }
 
     function syncPauseLinkedViews() {
         updateArbPanel();
+        renderDataTerminalPanel();
         evaluatePathAlertsOnce();
         if (pathAlertEditorState.visible) {
             renderPathAlertModal();
@@ -5664,6 +5961,7 @@
         saveData();
         removeFromQueue(quote.id);
         queueQuoteRefresh(quote);
+        renderDataTerminalPanel();
         return true;
     }
 
@@ -5801,6 +6099,7 @@
                         updateAlertSoundState();
                         dashboardState.splice(categoryIndex, 1);
                         document.getElementById(`module-${categoryId}`).remove();
+                        renderDataTerminalPanel();
                         saveData();
                     });
                 }
@@ -5912,6 +6211,8 @@
                     confirmDelaySec,
                     cooldownSec
                 });
+
+                renderDataTerminalPanel();
 
                 const state = quoteMonitorState.get(quote.id);
                 if (state) {
@@ -6109,6 +6410,9 @@
 
             if (toggleArbBtn) {
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
+            }
+            if (toggleDataTerminalBtn) {
+                toggleDataTerminalBtn.addEventListener('click', toggleDataTerminalPanel);
             }
             if (togglePathAlertBtn) {
                 togglePathAlertBtn.addEventListener('click', () => {

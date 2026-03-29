@@ -647,10 +647,13 @@
         }
 
         #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
+        #data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 1242px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        #data-terminal-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #arb-path-header { background-color: #1a202c; }
+        .dark-mode #data-terminal-header { background-color: #1a202c; }
         .panel-header-actions { display: flex; align-items: center; gap: 8px; }
-        #arb-path-max-btn, #arb-path-min-btn, #path-alert-min-btn, #calc-min-btn, #alert-log-min-btn {
+        #arb-path-max-btn, #arb-path-min-btn, #path-alert-min-btn, #calc-min-btn, #alert-log-min-btn, #data-terminal-min-btn {
             border: 1px solid rgba(255,255,255,0.3);
             background: transparent;
             color: #fff;
@@ -659,7 +662,7 @@
             cursor: pointer;
             font-weight: 700;
         }
-        #arb-path-max-btn:hover, #arb-path-min-btn:hover, #path-alert-min-btn:hover, #calc-min-btn:hover, #alert-log-min-btn:hover { background-color: rgba(255,255,255,0.12); }
+        #arb-path-max-btn:hover, #arb-path-min-btn:hover, #path-alert-min-btn:hover, #calc-min-btn:hover, #alert-log-min-btn:hover, #data-terminal-min-btn:hover { background-color: rgba(255,255,255,0.12); }
         #arb-global-filter-bar { padding: 8px 12px; border-bottom: 1px solid var(--border-color); background-color: rgba(0,0,0,0.015); }
         .dark-mode #arb-global-filter-bar { background-color: rgba(255,255,255,0.02); }
         .arb-global-filter-row { display: flex; gap: 6px; align-items: center; }
@@ -720,6 +723,127 @@
         .arb-opportunity-add-alert-btn:hover { background-color: rgba(37, 99, 235, 0.16); }
         .arb-profit { font-weight: 700; color: var(--trend-up-bg); }
         .arb-profit-neg { color: var(--trend-down-bg); }
+        #data-terminal-controls {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(0,0,0,0.015);
+        }
+        .dark-mode #data-terminal-controls {
+            background-color: rgba(255,255,255,0.02);
+        }
+        .data-terminal-controls-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #data-terminal-search-input {
+            flex: 1;
+            min-width: 0;
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: transparent;
+            color: inherit;
+            height: 30px;
+        }
+        .data-terminal-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            background: rgba(255,255,255,0.45);
+            color: inherit;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .dark-mode .data-terminal-toggle {
+            background: rgba(255,255,255,0.04);
+        }
+        .data-terminal-toggle input {
+            margin: 0;
+            width: auto;
+            cursor: pointer;
+        }
+        #data-terminal-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 13px;
+        }
+        .data-terminal-empty {
+            height: 100%;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color-light);
+            font-size: 13px;
+        }
+        .data-terminal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            align-items: start;
+        }
+        .data-terminal-column {
+            min-width: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px;
+            background-color: rgba(0,0,0,0.01);
+        }
+        .dark-mode .data-terminal-column {
+            background-color: rgba(255,255,255,0.02);
+        }
+        .data-terminal-head,
+        .data-terminal-row {
+            display: grid;
+            grid-template-columns: 60px minmax(0, 1fr) 84px 72px;
+            gap: 8px;
+            align-items: center;
+        }
+        .data-terminal-head {
+            padding: 0 0 6px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color-light);
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .data-terminal-column-empty {
+            color: var(--text-color-light);
+            line-height: 1.5;
+            min-height: 72px;
+            display: flex;
+            align-items: center;
+            padding-top: 8px;
+        }
+        .data-terminal-row {
+            padding: 6px 0;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+        .data-terminal-row + .data-terminal-row {
+            border-top: 1px dashed var(--border-color);
+        }
+        .data-terminal-chain,
+        .data-terminal-rate,
+        .data-terminal-amount {
+            white-space: nowrap;
+        }
+        .data-terminal-pair {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .data-terminal-rate,
+        .data-terminal-amount {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
         #arb-detail-modal .modal-box {
             width: min(960px, 94vw);
             max-width: none;
@@ -1347,6 +1471,7 @@
             <span id="quote-run-state-tag" class="running">报价中</span>
         </div>
         <div id="top-bar-right">
+             <button id="toggle-data-terminal-btn" title="显示/隐藏数据终端">数据终端</button>
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
              <button id="toggle-path-alert-btn" title="打开路径报警管理页">路径报警管理</button>
              <button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">提醒日志</button>
@@ -1759,6 +1884,7 @@
     <script src="quote-pause-utils.js"></script>
     <script src="price-snapshot-payload-utils.js"></script>
     <script src="request-channel-utils.js"></script>
+    <script src="data-terminal-utils.js"></script>
     <script src="queue-stats-utils.js"></script>
     <script src="app.js"></script>
 </body>
