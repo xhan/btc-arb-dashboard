@@ -61,6 +61,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(response.body.includes('src="quote-display-utils.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
@@ -94,6 +95,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('class="quote-alert-inline-grid"'));
     assert.ok(response.body.includes('id="modal-subtitle"'));
     assert.ok(response.body.includes('placeholder="例如: 120"'));
+    assert.ok(response.body.includes('id="toggle-quote-display-btn"'));
+    assert.ok(response.body.includes('价格: 汇率'));
     assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
     assert.ok(response.body.includes('id="toggle-data-terminal-btn"'));
     assert.ok(response.body.includes('数据终端'));
@@ -155,7 +158,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes("if (key === 'c')"));
     assert.ok(appJsResponse.body.includes("if (key === 'd')"));
+    assert.ok(appJsResponse.body.includes("if (key === 'p')"));
     assert.ok(appJsResponse.body.includes("if (key === 's')"));
+    assert.ok(appJsResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
+    assert.ok(appJsResponse.body.includes('toggleQuoteDisplayMode()'));
     assert.ok(appJsResponse.body.includes('toggleDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('toggleRequestChannelTags()'));
     assert.ok(appJsResponse.body.includes('let showRequestChannelTags = true;'));

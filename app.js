@@ -74,6 +74,7 @@
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
     const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;
+    const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
     let pathAlertEditorState = {
         visible: false,
         editingId: '',
@@ -88,6 +89,7 @@
     let arbGlobalExcludedChainsInput = '';
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
+    let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
     let dataTerminalState = {
         visible: false,
         query: '',
@@ -200,6 +202,7 @@
     const arbPathHeader = document.getElementById('arb-path-header');
     const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
+    const toggleQuoteDisplayBtn = document.getElementById('toggle-quote-display-btn');
     const toggleDataTerminalBtn = document.getElementById('toggle-data-terminal-btn');
     const toggleArbBtn = document.getElementById('toggle-arb-btn');
     const toggleAlertLogBtn = document.getElementById('toggle-alert-log-btn');
@@ -369,6 +372,7 @@
             lastTotalAmountOut: null,
             lastResultText: '',
             inverseRawPrice: null,
+            inverseTotalAmountOut: null,
             inverseFromSymbol: '',
             inverseToSymbol: '',
             usedSource: '',
@@ -1423,6 +1427,7 @@
                     return {
                         ...baseState,
                         inverseRawPrice: quoteResult?.rawPrice,
+                        inverseTotalAmountOut: quoteResult?.finalAmountOut,
                         inverseFromSymbol: symbols.from || '',
                         inverseToSymbol: symbols.to || ''
                     };
@@ -1433,6 +1438,7 @@
                     toSymbol: symbols.to || '',
                     lastResultText: quoteResult?.resultText || '',
                     lastRawPrice: quoteResult?.rawPrice,
+                    lastTotalAmountOut: quoteResult?.finalAmountOut,
                     cexOrderbook: quoteResult?.cexOrderbook || null,
                     usedSource: quoteResult?.usedSource || '',
                     usedSourceReal: options.successSource || null
@@ -1522,6 +1528,10 @@
 
     function getDataTerminalUtils() {
         return window.DataTerminalUtils || null;
+    }
+
+    function getQuoteDisplayUtils() {
+        return window.QuoteDisplayUtils || null;
     }
 
     function formatDetailNumber(value, precision = 6) {
@@ -1616,7 +1626,38 @@
 
     function getQuoteDisplayText(quote, state) {
         if (isQuotePaused(quote)) return '已暂停';
-        return (state && state.lastResultText) || '...';
+        if (isCexOrderbookChain(quote && quote.chain)) {
+            return (state && state.lastResultText) || '...';
+        }
+        const utils = getQuoteDisplayUtils();
+        if (!utils || typeof utils.buildQuoteDisplayText !== 'function') {
+            return (state && state.lastResultText) || '...';
+        }
+        return utils.buildQuoteDisplayText({
+            mode: quoteDisplayMode,
+            amount: quote && quote.amount ? quote.amount : 1,
+            fromSymbol: state && state.fromSymbol,
+            toSymbol: state && state.toSymbol,
+            totalAmountOut: state && state.lastTotalAmountOut,
+            rate: state && state.lastRawPrice,
+            fallbackText: (state && state.lastResultText) || '...'
+        });
+    }
+
+    function getInverseQuoteDisplayText(quote, state, fallbackText = '反向报价排队中...') {
+        const utils = getQuoteDisplayUtils();
+        if (!utils || typeof utils.buildQuoteDisplayText !== 'function') {
+            return fallbackText;
+        }
+        return utils.buildQuoteDisplayText({
+            mode: quoteDisplayMode,
+            amount: quote && quote.amount ? quote.amount : 1,
+            fromSymbol: state && state.inverseFromSymbol,
+            toSymbol: state && state.inverseToSymbol,
+            totalAmountOut: state && state.inverseTotalAmountOut,
+            rate: state && state.inverseRawPrice,
+            fallbackText
+        });
     }
 
     function updateQuotePairLabel(quote, state) {
@@ -1624,6 +1665,38 @@
         if (!pairLabelEl) return;
         const nextLabel = getQuotePairLabel(quote, state);
         pairLabelEl.textContent = nextLabel;
+    }
+
+    function renderQuoteDisplayToggle() {
+        if (!toggleQuoteDisplayBtn) return;
+        const isRateMode = quoteDisplayMode === DEFAULT_QUOTE_DISPLAY_MODE;
+        toggleQuoteDisplayBtn.textContent = isRateMode ? '价格: 汇率' : '价格: 数量';
+        toggleQuoteDisplayBtn.title = isRateMode
+            ? '切换看板报价显示为数量 (P)'
+            : '切换看板报价显示为汇率 (P)';
+    }
+
+    function rerenderQuoteDisplayTexts() {
+        for (const category of dashboardState) {
+            const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
+            for (const quote of quotes) {
+                const state = quoteMonitorState.get(quote.id) || {};
+                const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
+                if (quoteTextEl) {
+                    quoteTextEl.textContent = getQuoteDisplayText(quote, state);
+                }
+                const inverseEl = document.getElementById(`inverse-quote-${quote.id}`);
+                if (inverseEl && Number.isFinite(Number(state.inverseRawPrice))) {
+                    inverseEl.textContent = getInverseQuoteDisplayText(quote, state, inverseEl.textContent || '...');
+                }
+            }
+        }
+    }
+
+    function toggleQuoteDisplayMode() {
+        quoteDisplayMode = quoteDisplayMode === DEFAULT_QUOTE_DISPLAY_MODE ? 'amount' : DEFAULT_QUOTE_DISPLAY_MODE;
+        renderQuoteDisplayToggle();
+        rerenderQuoteDisplayTexts();
     }
 
     function updatePauseButtonState(quote) {
@@ -4868,10 +4941,12 @@
                     const inverseState = {
                         ...previousState,
                         inverseRawPrice: data.rawPrice,
+                        inverseTotalAmountOut: data.finalAmountOut,
                         inverseFromSymbol: data.symbols.from,
                         inverseToSymbol: data.symbols.to
                     };
                     setQuoteMonitorState(quote.id, inverseState);
+                    inverseEl.textContent = getInverseQuoteDisplayText(quote, inverseState, inverseEl.textContent);
                     bindCopyHandler(
                         inverseEl,
                         () => inverseEl.textContent,
@@ -4899,7 +4974,7 @@
                     usedSourceReal: successSource
                 };
 
-                quoteTextEl.textContent = data.resultText;
+                quoteTextEl.textContent = getQuoteDisplayText(quote, newState);
                 updateQuotePairLabel(quote, newState);
                 quoteTextWrapperEl.classList.remove('loading-text');
 
@@ -4914,6 +4989,7 @@
                 } else {
                     if (inverseEl) inverseEl.remove();
                     newState.inverseRawPrice = null;
+                    newState.inverseTotalAmountOut = null;
                     newState.inverseFromSymbol = null;
                     newState.inverseToSymbol = null;
                 }
@@ -5236,6 +5312,11 @@
         if (key === 's') {
             event.preventDefault();
             toggleDataTerminalPanel();
+            return;
+        }
+        if (key === 'p') {
+            event.preventDefault();
+            toggleQuoteDisplayMode();
             return;
         }
         if (key === 'a') {
@@ -6072,6 +6153,8 @@
         if (state) {
             state.lastRawPrice = null;
             state.lastTotalAmountOut = null;
+            state.inverseRawPrice = null;
+            state.inverseTotalAmountOut = null;
             state.isSoundActive = false;
             state.logShown = false;
             state.hasUnreadAlert = false;
@@ -6553,8 +6636,12 @@
                 bringFloatingPanelToFront(pathAlertWindow);
             }
 
+            renderQuoteDisplayToggle();
             if (toggleArbBtn) {
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
+            }
+            if (toggleQuoteDisplayBtn) {
+                toggleQuoteDisplayBtn.addEventListener('click', toggleQuoteDisplayMode);
             }
             if (toggleDataTerminalBtn) {
                 toggleDataTerminalBtn.addEventListener('click', toggleDataTerminalPanel);
