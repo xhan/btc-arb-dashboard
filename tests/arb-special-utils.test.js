@@ -15,7 +15,7 @@ const rules = [
     minNetProfit: 0.0001,
     minNetProfitBp: 1.5,
     displayTargets: [1, 2, 3],
-    alertConfirmDelaySec: 13,
+    alertConfirmDelaySec: 10,
     maxBookLevels: 10
   }
 ];
@@ -78,7 +78,7 @@ assert.strictEqual(opportunity.ruleId, 'special:wbtc-bybit');
 assert.strictEqual(opportunity.label, 'WBTC <-> BYBIT');
 assert.strictEqual(opportunity.direction, 'bybit-ask-to-eth');
 assert.strictEqual(opportunity.alert, true);
-assert.strictEqual(opportunity.alert_confirm_delay_sec, 13);
+assert.strictEqual(opportunity.alert_confirm_delay_sec, 10);
 assert.strictEqual(opportunity.alert_cooldown_sec, 120);
 assert.strictEqual(opportunity.alert_key, 'special:wbtc-bybit');
 assert.ok(opportunity.display_message.includes('（ETH）WBTC -> cbBTC'));
@@ -179,7 +179,7 @@ const usdeRules = [
     minNetProfit: 8,
     minNetProfitBp: 0,
     displayTargets: [100000, 200000],
-    alertConfirmDelaySec: 13,
+    alertConfirmDelaySec: 10,
     maxBookLevels: 10
   }
 ];

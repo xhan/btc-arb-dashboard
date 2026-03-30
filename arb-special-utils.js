@@ -8,7 +8,7 @@
   const DEFAULT_BYBIT_PAIR_RULE_CONFIG = Object.freeze({
     minNetProfit: 0.0001,
     minNetProfitBp: 1.5,
-    alertConfirmDelaySec: 13,
+    alertConfirmDelaySec: 10,
     alertCooldownSec: 120,
     withdrawFee: 0.0001,
     maxBookLevels: 10,

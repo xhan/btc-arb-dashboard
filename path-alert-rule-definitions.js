@@ -115,7 +115,7 @@
       minNetProfit: 0.0001,
       minNetProfitBp: 1.5,
       displayTargets: [1, 2, 3],
-      alertConfirmDelaySec: 9
+      alertConfirmDelaySec: 10
     },
     {
       id: 'special:usde-bybit',
@@ -130,7 +130,7 @@
       minNetProfitBp: 0.5,
       displayTargets: [100000, 200000],
       withdrawFee: 0,
-      alertConfirmDelaySec: 9
+      alertConfirmDelaySec: 10
     }
   ]);
 

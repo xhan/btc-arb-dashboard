@@ -56,6 +56,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
+    assert.ok(response.body.includes('src="special-rule-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-notification-utils.js"'));
     assert.ok(response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
@@ -71,6 +72,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="special-rule-alert-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(response.body.includes('id="path-alert-sound"'));
     assert.ok(response.body.includes('src="alert_path.mp3"'));
