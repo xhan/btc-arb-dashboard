@@ -32,7 +32,12 @@ const {
 } = require('./path-alert-utils');
 const { buildPathAlertCandidates } = require('./path-alert-candidate-utils');
 const { splitCompactTradingPairSymbol } = require('./quote-calculator');
+const {
+    createCetusAggregatorClient,
+    normalizeCetusAggregatorConfig
+} = require('./cetus-aggregator-config');
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 
 const app = express();
@@ -66,6 +71,11 @@ function resolveProjectFilePath(fileName, envKey) {
         return path.resolve(overridePath);
     }
     return path.join(__dirname, fileName);
+}
+
+function readJsonFileSync(filePath) {
+    const data = fsSync.readFileSync(filePath, 'utf-8');
+    return JSON.parse(stripBom(data));
 }
 
 const CONFIG_PATH = resolveProjectFilePath('config.json', 'CONFIG_PATH');
@@ -345,12 +355,15 @@ async function getConfigMore() {
         const rawTelegramBotApiBaseUrl = typeof configMore.telegramBotApiBaseUrl === 'string'
             ? configMore.telegramBotApiBaseUrl.trim()
             : '';
+        const cetusAggregatorConfig = normalizeCetusAggregatorConfig(configMore);
 
         return {
             kyberClientId: rawClientId || 'xh-quote-dashboard',
             lifiApiKey: rawLifiApiKey,
             lifiIntegrator: rawLifiIntegrator,
             jupiterApiKey: rawJupiterApiKey,
+            cetusAggregatorEndpoint: cetusAggregatorConfig.endpoint,
+            cetusAggregatorApiKey: cetusAggregatorConfig.apiKey,
             veloraPartner: rawVeloraPartner,
             veloraIncludeDEXS: rawVeloraIncludeDEXS,
             veloraOtherExchangePrices: configMore.veloraOtherExchangePrices === true,
@@ -369,6 +382,8 @@ async function getConfigMore() {
             lifiApiKey: '',
             lifiIntegrator: '',
             jupiterApiKey: '',
+            cetusAggregatorEndpoint: normalizeCetusAggregatorConfig().endpoint,
+            cetusAggregatorApiKey: '',
             veloraPartner: '',
             veloraIncludeDEXS: [],
             veloraOtherExchangePrices: false,
@@ -378,6 +393,17 @@ async function getConfigMore() {
             telegramChatId: '',
             telegramBotApiBaseUrl: DEFAULT_TELEGRAM_BOT_API_BASE_URL
         };
+    }
+}
+
+function loadStartupCetusAggregatorConfig() {
+    try {
+        return normalizeCetusAggregatorConfig(readJsonFileSync(CONFIG_MORE_PATH));
+    } catch (error) {
+        if (error.code !== 'ENOENT') {
+            console.warn(`⚠️ 读取 Cetus Aggregator 配置失败，使用默认值: ${error.message}`);
+        }
+        return normalizeCetusAggregatorConfig();
     }
 }
 
@@ -553,7 +579,7 @@ for (const chain in RPC_URLS) {
 console.log("所有 EVM Provider 初始化尝试完成");
 
 const suiClient = new SuiClient({ url: getFullnodeUrl('mainnet') });
-const cetusAggregator = new AggregatorClient('https://api.cetus.zone/router_v2/find_routes');
+const cetusAggregator = createCetusAggregatorClient(loadStartupCetusAggregatorConfig(), AggregatorClient);
 const solanaRpc = 'https://mainnet.helius-rpc.com/?api-key=f5e20297-9ca2-4afb-98f9-be16153777b5';
 const marketClients = createMarketClients({
     cachePath: METADATA_CACHE_PATH,
