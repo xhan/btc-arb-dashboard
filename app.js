@@ -218,6 +218,12 @@
     const quoteRequestChannelSelect = document.getElementById('quote-request-channel');
     let copyToastTimer = null;
     let calculatorEntries = [];
+    const THEME_ORDER = ['light', 'warm', 'dark'];
+    const THEME_META = {
+        light: { icon: '☀️', title: '切换主题（当前：浅色）' },
+        warm: { icon: '🌤️', title: '切换主题（当前：暖色）' },
+        dark: { icon: '🌙', title: '切换主题（当前：深色）' }
+    };
     
     const CHAIN_DISPLAY_NAMES = {
         ethereum: 'ETH', solana: 'SOL', sui: 'SUI', polygon: 'Polygon',
@@ -5903,13 +5909,33 @@
         }, priceSnapshotConfig.intervalSec * 1000);
     }
 
+    function normalizeTheme(theme) {
+        return THEME_ORDER.includes(theme) ? theme : 'light';
+    }
+
+    function applyTheme(theme) {
+        const nextTheme = normalizeTheme(theme);
+        document.body.classList.remove('dark-mode', 'warm-mode');
+        if (nextTheme === 'dark') document.body.classList.add('dark-mode');
+        if (nextTheme === 'warm') document.body.classList.add('warm-mode');
+        document.body.dataset.theme = nextTheme;
+        if (themeToggleBtn) {
+            themeToggleBtn.innerHTML = THEME_META[nextTheme].icon;
+            themeToggleBtn.title = THEME_META[nextTheme].title;
+            themeToggleBtn.setAttribute('aria-label', THEME_META[nextTheme].title);
+        }
+        localStorage.setItem('theme', nextTheme);
+    }
+
+    function getNextTheme(currentTheme) {
+        const index = THEME_ORDER.indexOf(normalizeTheme(currentTheme));
+        return THEME_ORDER[(index + 1) % THEME_ORDER.length];
+    }
+
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
     
     themeToggleBtn.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        themeToggleBtn.innerHTML = isDarkMode ? '☀️' : '🌙';
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        applyTheme(getNextTheme(document.body.dataset.theme));
     });
 
     addCategoryBtn.addEventListener('click', () => {
@@ -6475,11 +6501,7 @@
         audioNoticeEl.style.display = 'block';
         syncRequestChannelTagVisibility();
         await loadPriceSnapshotConfig();
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-mode');
-            themeToggleBtn.innerHTML = '☀️';
-        }
+        applyTheme(localStorage.getItem('theme'));
         
         try {
             const response = await fetch(`${BACKEND_URL}/api/get-config`);
