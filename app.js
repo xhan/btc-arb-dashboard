@@ -67,7 +67,6 @@
     let pathAlertRuntimeState = new Map();
     let mutedPathTargets = [];
     let mutedPathLogTimer = null;
-    let specialRuleAlertRuntimeState = new Map();
     let pathAlertReloading = false;
     let pathAlertExternalReloadTimer = null;
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
@@ -81,7 +80,8 @@
         sourceType: 'path',
         selectedRuleId: '',
         searchQuery: '',
-        draftLegs: []
+        draftLegs: [],
+        draftSpecialRuleConfig: null
     };
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
     let arbExpandedSections = new Set();
@@ -126,9 +126,20 @@
     let currentlyEditingQuote = null; 
     const MAX_ALERT_LOG_ENTRIES = 300;
     const PATH_ALERT_MUTE_DURATION_MS = Number(window.PathAlertUtils && window.PathAlertUtils.PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
-    const SPECIAL_RULE_ALERT_RUNTIME_TTL_MS = Number(
-        window.SpecialRuleAlertUtils && window.SpecialRuleAlertUtils.DEFAULT_RUNTIME_TTL_MS
-    ) || (30 * 60 * 1000);
+    const alertDebugController = window.AlertDebugUtils
+        && typeof window.AlertDebugUtils.createAlertDebugController === 'function'
+        ? window.AlertDebugUtils.createAlertDebugController({
+            logger(message) {
+                console.info(message);
+            }
+        })
+        : null;
+    window.enableAlertDebug = function (enabled) {
+        if (!alertDebugController || typeof alertDebugController.enable !== 'function') {
+            return false;
+        }
+        return alertDebugController.enable(enabled === true);
+    };
 
     const dashboardEl = document.getElementById('dashboard');
     const addCategoryBtn = document.getElementById('add-category-btn');
@@ -1274,7 +1285,8 @@
             minNetProfit: 0.0001,
             minNetProfitBp: 1.5,
             displayTargets: [1, 2, 3],
-            alertConfirmDelaySec: 10
+            alertConfirmDelaySec: 10,
+            alertCooldownSec: 120
         },
         {
             id: 'special:usde-bybit',
@@ -1289,7 +1301,8 @@
             minNetProfitBp: 0,
             displayTargets: [100000, 200000],
             withdrawFee: 0,
-            alertConfirmDelaySec: 10
+            alertConfirmDelaySec: 10,
+            alertCooldownSec: 120
         }
     ];
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
@@ -3272,7 +3285,46 @@
         return [];
     }
 
-    function buildRuleAlertEvaluation(target, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
+    function getSpecialRuleAlertDefaultConfig(rule) {
+        const fallback = rule && typeof rule === 'object' ? rule : {};
+        if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
+            return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(fallback);
+        }
+        return {
+            minNetProfit: Number.isFinite(Number(fallback.minNetProfit)) ? Number(fallback.minNetProfit) : 0,
+            minNetProfitBp: Number.isFinite(Number(fallback.minNetProfitBp)) ? Number(fallback.minNetProfitBp) : 0
+        };
+    }
+
+    function resolveSpecialRuleAlertConfig(alert, rule) {
+        const fallback = getSpecialRuleAlertDefaultConfig(rule);
+        if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
+            return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(
+                alert && alert.specialRuleConfig,
+                fallback
+            );
+        }
+        return fallback;
+    }
+
+    function normalizePathAlertConfigWithSpecialRules(config) {
+        const normalized = window.PathAlertUtils
+            ? window.PathAlertUtils.normalizeAlertConfig(config)
+            : config;
+        if (!window.SpecialRuleAlertConfigUtils || typeof window.SpecialRuleAlertConfigUtils.mergeSpecialRuleAlerts !== 'function') {
+            return normalized;
+        }
+        return window.SpecialRuleAlertConfigUtils.mergeSpecialRuleAlerts(normalized, SPECIAL_ARB_RULES);
+    }
+
+    function splitAlertMessageLines(message) {
+        return String(message || '')
+            .split('\n')
+            .map((line) => String(line || '').trim())
+            .filter(Boolean);
+    }
+
+    function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
         if (target.ruleKind === 'fixed') {
             const rule = getFixedRuleById(target.ruleId);
             if (!rule) return { available: false };
@@ -3293,9 +3345,28 @@
             ? sharedRuleSnapshot.specialByRuleId[target.ruleId]
             : null;
         const best = Array.isArray(opportunities) ? opportunities[0] : null;
-        return best && best.cycle
-            ? { available: true, profitRate: best.cycle.profitRate, label: rule.title, cycle: best.cycle }
-            : { available: false };
+        if (!best || !best.cycle) {
+            return { available: false };
+        }
+        const primaryStats = best.stats && best.stats.primary ? best.stats.primary : null;
+        const specialRuleConfig = resolveSpecialRuleAlertConfig(alert, rule);
+        const minNetProfit = Number(specialRuleConfig.minNetProfit);
+        const minNetProfitBp = Number(specialRuleConfig.minNetProfitBp);
+        const meetsTriggerCondition = primaryStats
+            ? (
+                Number(primaryStats.netProfit) > (Number.isFinite(minNetProfit) ? minNetProfit : 0)
+                && Number(primaryStats.netProfitBp) > (Number.isFinite(minNetProfitBp) ? minNetProfitBp : 0)
+            )
+            : best.alert === true;
+        return {
+            available: true,
+            profitRate: best.cycle.profitRate,
+            label: rule.title,
+            cycle: best.cycle,
+            meetsTriggerCondition,
+            displayMessage: String(best.display_message || ''),
+            alertMessage: String(best.alert_message || '')
+        };
     }
 
     function buildPathAlertDraftFromAlert(alert) {
@@ -3307,7 +3378,10 @@
             ...normalized,
             target: normalized.target.type === 'path'
                 ? { type: 'path', legs: normalized.target.legs.map((leg) => ({ ...leg })) }
-                : { ...normalized.target }
+                : { ...normalized.target },
+            specialRuleConfig: normalized.target.type === 'rule' && normalized.target.ruleKind === 'special'
+                ? { ...(normalized.specialRuleConfig || {}) }
+                : null
         };
     }
 
@@ -3548,6 +3622,9 @@
     }
 
     function buildPathAlertCycleSummaryEntries(alert, evaluation) {
+        if (evaluation && typeof evaluation.displayMessage === 'string' && evaluation.displayMessage.trim()) {
+            return splitAlertMessageLines(evaluation.displayMessage).map((line) => ({ line, key: '' }));
+        }
         if (evaluation && evaluation.cycle && Array.isArray(evaluation.cycle.legs)) {
             const cycleLegs = evaluation.cycle.legs.filter((leg) => !isRuleLeg(leg));
             const entries = cycleLegs.map((leg) => ({
@@ -3618,8 +3695,8 @@
     function buildPathAlertEvaluationContext(sharedRuleSnapshot) {
         return {
             quoteStateById: quoteMonitorState,
-            resolveRuleEvaluation(target) {
-                return buildRuleAlertEvaluation(target, sharedRuleSnapshot);
+            resolveRuleEvaluation(target, alert) {
+                return buildRuleAlertEvaluation(target, alert, sharedRuleSnapshot);
             }
         };
     }
@@ -3638,7 +3715,13 @@
             return window.PathAlertNotificationUtils.buildPathAlertNotificationBody(triggeredEntries);
         }
         const list = (Array.isArray(triggeredEntries) ? triggeredEntries : []).slice(0, 3);
-        return list.map((entry) => [formatPathAlertEvaluationText(entry.evaluation), ...entry.summaryLines].join('\n')).join('\n\n');
+        return list.map((entry) => {
+            const customAlertMessage = String(entry && entry.customAlertMessage || '').trim();
+            if (customAlertMessage) {
+                return customAlertMessage;
+            }
+            return [formatPathAlertEvaluationText(entry.evaluation), ...entry.summaryLines].join('\n');
+        }).join('\n\n');
     }
 
     async function sendPathAlertWebhookNotification(triggeredEntries) {
@@ -3661,63 +3744,34 @@
         }
     }
 
-    async function sendSpecialRuleWebhookNotification(title, body) {
-        if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, body })
-            });
-            if (!response.ok) {
-                const data = await response.json().catch(() => null);
-                throw new Error((data && data.error) || '请求失败');
-            }
-        } catch (error) {
-            console.error('特殊规则 webhook 发送失败:', error);
-        }
+    function recordAlertDebug(kind, id, snapshot) {
+        if (!alertDebugController || typeof alertDebugController.record !== 'function') return;
+        alertDebugController.record(kind, id, snapshot);
     }
 
-    function handleSpecialRuleAlerts(opportunities) {
-        const list = Array.isArray(opportunities) ? opportunities : [];
-        const activeKeys = new Set();
-        const nowMs = Date.now();
+    function inferRuntimeDebugReason(previous, next) {
+        if (!next || typeof next !== 'object') return 'skip';
+        if (next.shouldTrigger) return 'trigger';
+        const previousEligibleSince = Number(previous && previous.eligibleSince);
+        const nextEligibleSince = Number(next.eligibleSince);
+        const hadEligibleSince = Number.isFinite(previousEligibleSince);
+        const hasEligibleSince = Number.isFinite(nextEligibleSince);
+        if (!hadEligibleSince && hasEligibleSince) return 'condition_on';
+        if (hadEligibleSince && !hasEligibleSince) return 'condition_off';
+        if (next.status === 'cooldown') return 'cooldown_block';
+        return next.status || 'idle';
+    }
 
-        for (const opportunity of list) {
-            if (!opportunity || typeof opportunity !== 'object') continue;
-            const rawRuleKey = String(opportunity.alert_key || opportunity.ruleId || '').trim();
-            if (!rawRuleKey) continue;
-            const runtimeKey = `special:${rawRuleKey}`;
-            activeKeys.add(runtimeKey);
-            const message = String(opportunity.alert_message || opportunity.display_message || '').trim();
-            const previous = specialRuleAlertRuntimeState.get(runtimeKey);
-            const runtimeResult = window.SpecialRuleAlertUtils
-                && typeof window.SpecialRuleAlertUtils.advanceSpecialRuleAlertRuntime === 'function'
-                ? window.SpecialRuleAlertUtils.advanceSpecialRuleAlertRuntime(previous, opportunity, nowMs)
-                : { shouldTrigger: false, state: previous || { eligibleSince: null, lastTriggeredAt: 0, lastSeenAt: nowMs } };
-            const next = runtimeResult && runtimeResult.state ? runtimeResult.state : { eligibleSince: null, lastTriggeredAt: 0, lastSeenAt: nowMs };
-            specialRuleAlertRuntimeState.set(runtimeKey, next);
-            if (runtimeResult && runtimeResult.shouldTrigger !== true) {
-                continue;
-            }
-            if (!message) continue;
-
-            const title = `🚨 [特殊规则] ${String(opportunity.label || rawRuleKey).trim()}`;
-            appendAlertLogEntry(title, message);
-
-            playPathAlertSoundOnce();
-
-            void sendSpecialRuleWebhookNotification(title, message);
-        }
-
-        if (window.SpecialRuleAlertUtils && typeof window.SpecialRuleAlertUtils.pruneSpecialRuleAlertRuntimeState === 'function') {
-            window.SpecialRuleAlertUtils.pruneSpecialRuleAlertRuntimeState(
-                specialRuleAlertRuntimeState,
-                activeKeys,
-                nowMs,
-                SPECIAL_RULE_ALERT_RUNTIME_TTL_MS
-            );
-        }
+    function buildRuntimeDebugSnapshot(previous, next) {
+        if (!next || typeof next !== 'object') return null;
+        return {
+            now: Date.now(),
+            status: next.shouldTrigger ? 'trigger' : (next.status || 'idle'),
+            reason: inferRuntimeDebugReason(previous, next),
+            eligibleSince: next.eligibleSince,
+            lastTriggeredAt: next.lastTriggeredAt,
+            cooldownUntil: next.cooldownUntil
+        };
     }
 
     function buildAggregatedPathAlertLog(triggeredEntries) {
@@ -3741,6 +3795,7 @@
             evaluation,
             summaryLines: summaryEntries.map((item) => item.line),
             summaryLegKeys: summaryEntries.map((item) => item.key),
+            customAlertMessage: String(evaluation && evaluation.alertMessage || '').trim(),
             changedLegLines: buildPathAlertChangedLegLines(changedLegs, 3),
             changedLegs: Array.isArray(changedLegs) ? changedLegs.slice(0, 3) : [],
             realLegCount: getPathAlertRealLegCount(alert, evaluation),
@@ -3787,6 +3842,14 @@
                 ? window.PathAlertUtils.resolvePathAlertSnapshotState(alert, previous, next, evaluation, allLegSnapshots)
                 : { currentSnapshots: [], baselineSnapshots: [] };
             next.evaluation = evaluation;
+            const debugKind = alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special'
+                ? 'special'
+                : 'path';
+            recordAlertDebug(
+                debugKind,
+                alert.id,
+                buildRuntimeDebugSnapshot(previous, next)
+            );
             let isMuted = false;
             if (next.shouldTrigger) {
                 const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
@@ -3874,9 +3937,7 @@
     }
 
     async function persistPathAlertConfig() {
-        const normalized = window.PathAlertUtils
-            ? window.PathAlertUtils.normalizeAlertConfig(pathAlertConfig)
-            : pathAlertConfig;
+        const normalized = normalizePathAlertConfigWithSpecialRules(pathAlertConfig);
         pathAlertConfig = normalized;
         await fetch(`${BACKEND_URL}/api/save-alert-config`, {
             method: 'POST',
@@ -3915,13 +3976,13 @@
             const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
             if (!response.ok) throw new Error('获取路径报警配置失败');
             const data = await response.json();
-            pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig(data);
+            pathAlertConfig = normalizePathAlertConfigWithSpecialRules(data);
         } catch (error) {
             if (!fallbackToDefault) {
                 throw error;
             }
             console.warn('加载路径报警配置失败:', error);
-            pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig();
+            pathAlertConfig = normalizePathAlertConfigWithSpecialRules();
         }
     }
 
@@ -3945,6 +4006,9 @@
         pathAlertEditorState.draftLegs = nextDraft.target.type === 'path'
             ? nextDraft.target.legs.map((leg) => ({ ...leg }))
             : [];
+        pathAlertEditorState.draftSpecialRuleConfig = nextDraft.target.type === 'rule' && nextDraft.target.ruleKind === 'special'
+            ? resolveSpecialRuleAlertConfig(nextDraft, getSpecialRuleById(nextDraft.target.ruleId))
+            : null;
 
         pathAlertModalTitle.textContent = nextDraft.id ? '编辑路径报警' : '添加路径报警';
         pathAlertNameInput.value = nextDraft.name || '';
@@ -4079,11 +4143,37 @@
                 ruleKind: sourceType,
                 ruleId: pathAlertEditorState.selectedRuleId
             };
+            if (sourceType === 'special') {
+                baseAlert.specialRuleConfig = resolveSpecialRuleAlertConfig(
+                    { specialRuleConfig: pathAlertEditorState.draftSpecialRuleConfig },
+                    getSpecialRuleById(pathAlertEditorState.selectedRuleId)
+                );
+            }
         }
 
         return window.PathAlertUtils
             ? window.PathAlertUtils.normalizePathAlert(baseAlert, pathAlertConfig.settings)
             : baseAlert;
+    }
+
+    function buildPathAlertMetaText(alert) {
+        const triggerText = alert.triggerMode === 'delayed'
+            ? `延迟 ${String(alert.confirmDelaySec)}s`
+            : '立即';
+        const cooldownText = `冷却 ${String(alert.cooldownSec)}s`;
+        if (alert && alert.target && alert.target.type === 'quote') {
+            return `报价 | ${escapeHtml(String(alert.target.value != null ? alert.target.value : '--'))} | ${triggerText} | ${cooldownText}`;
+        }
+        if (alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special') {
+            const specialRuleConfig = resolveSpecialRuleAlertConfig(alert, getSpecialRuleById(alert.target.ruleId));
+            return [
+                `净收益 > ${escapeHtml(String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--'))}`,
+                `净收益率 > ${escapeHtml(String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--'))}bp`,
+                triggerText,
+                cooldownText
+            ].join(' | ');
+        }
+        return `阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${triggerText} | ${cooldownText}`;
     }
 
     function renderPathAlertPanel() {
@@ -4132,9 +4222,7 @@
                         <div>
                             <div class="path-alert-item-title">${escapeHtml(buildPathAlertDisplayTitle(alert))}</div>
                             <div class="path-alert-item-route">${renderPathAlertSummaryLinesHtml(alert)}</div>
-                            <div class="path-alert-item-meta">${alert.target && alert.target.type === 'quote'
-                                ? `报价 | ${escapeHtml(String(alert.target.value != null ? alert.target.value : '--'))} | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s`
-                                : `阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${alert.triggerMode === 'delayed' ? `延迟 ${escapeHtml(String(alert.confirmDelaySec))}s` : '立即'} | 冷却 ${escapeHtml(String(alert.cooldownSec))}s`}</div>
+                            <div class="path-alert-item-meta">${buildPathAlertMetaText(alert)}</div>
                         </div>
                         <div class="path-alert-item-actions">
                             <a
@@ -4271,6 +4359,7 @@
         if (!tabBtn) return;
         pathAlertEditorState.sourceType = tabBtn.dataset.pathAlertType;
         pathAlertEditorState.selectedRuleId = '';
+        pathAlertEditorState.draftSpecialRuleConfig = null;
         renderPathAlertModal();
     }
 
@@ -4318,6 +4407,9 @@
         const ruleBtn = event.target.closest('[data-path-alert-rule-id]');
         if (ruleBtn) {
             pathAlertEditorState.selectedRuleId = ruleBtn.dataset.pathAlertRuleId;
+            pathAlertEditorState.draftSpecialRuleConfig = pathAlertEditorState.sourceType === 'special'
+                ? getSpecialRuleAlertDefaultConfig(getSpecialRuleById(pathAlertEditorState.selectedRuleId))
+                : null;
             if (!pathAlertNameInput.value.trim()) {
                 const rule = getPathAlertRuleDefinitions(pathAlertEditorState.sourceType)
                     .find((item) => item.id === pathAlertEditorState.selectedRuleId);
@@ -4423,18 +4515,6 @@
                 }
             ))
             .filter(Boolean);
-        const specialAlertEntries = specialOpportunities
-            .filter((opportunity) => opportunity && typeof opportunity === 'object')
-            .map((opportunity) => ({
-                ruleId: opportunity.ruleId,
-                label: opportunity.label,
-                alert: opportunity.alert === true,
-                alert_message: opportunity.alert_message,
-                display_message: opportunity.display_message,
-                alert_confirm_delay_sec: opportunity.alert_confirm_delay_sec,
-                alert_cooldown_sec: opportunity.alert_cooldown_sec,
-                alert_key: opportunity.alert_key
-            }));
         const specialEmptyText = specialRuleTitles.length
             ? `${specialRuleTitles.join(' / ')} | 无收益率`
             : '暂无可用规则';
@@ -4568,8 +4648,7 @@
 
         return {
             columns,
-            nextOpportunityMap,
-            specialAlertEntries
+            nextOpportunityMap
         };
     }
 
@@ -4594,7 +4673,6 @@
             formatLegLine: formatArbPathLegLine,
             formatProfit: profitRate => window.ArbPaths.formatProfitWanfen(profitRate)
         });
-        handleSpecialRuleAlerts(panelData.specialAlertEntries || []);
     }
 
     async function getEvmMetadata(chain, tokenAddress, signal) {
@@ -5574,6 +5652,11 @@
             next.evaluation = evaluation;
             next.isSoundActive = false;
             pathAlertRuntimeState.set(alert.id, next);
+            recordAlertDebug(
+                'quote',
+                alert.id,
+                buildRuntimeDebugSnapshot(previous, next)
+            );
 
             if (!next.shouldTrigger) continue;
             hasTriggeredThisTick = true;

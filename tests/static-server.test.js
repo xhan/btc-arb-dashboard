@@ -55,7 +55,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
+    assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
+    assert.ok(response.body.includes('src="alert-debug-utils.js"'));
     assert.ok(response.body.includes('src="special-rule-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-notification-utils.js"'));
     assert.ok(response.body.includes('src="quote-alert-config-utils.js"'));
@@ -73,6 +75,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="alert-debug-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="special-rule-alert-config-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="special-rule-alert-utils.js"') < response.body.indexOf('src="app.js"')
@@ -143,9 +151,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })'));
     assert.ok(appJsResponse.body.includes('path-alert-config-sync'));
     assert.ok(appJsResponse.body.includes('new Audio(pathAlertSound.currentSrc || pathAlertSound.src)'));
-    assert.ok(
-      /appendAlertLogEntry\(title, message\);[\s\S]{0,400}playPathAlertSoundOnce\(\);[\s\S]{0,200}sendSpecialRuleWebhookNotification\(title, message\)/.test(appJsResponse.body)
-    );
+    assert.ok(appJsResponse.body.includes('mergeSpecialRuleAlerts(normalized, SPECIAL_ARB_RULES)'));
+    assert.ok(appJsResponse.body.includes('customAlertMessage: String(evaluation && evaluation.alertMessage || \'\').trim()'));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] muted trigger skipped'"));
@@ -201,6 +208,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('dataTerminalState.domRefs = null;'));
     assert.ok(appJsResponse.body.includes('Token -&gt; Token'));
     assert.ok(appJsResponse.body.includes('window.CopyUtils'));
+    assert.ok(appJsResponse.body.includes('window.enableAlertDebug ='));
     assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
     assert.ok(appJsResponse.body.includes('最近 1 小时'));
     assert.ok(appJsResponse.body.includes('arb-detail-chart-card arb-detail-profit-card'));
@@ -286,6 +294,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(
       pathAlertsResponse.body.indexOf('src="path-alert-candidate-utils.js"') < pathAlertsResponse.body.indexOf('src="path-alerts-app.js"')
     );

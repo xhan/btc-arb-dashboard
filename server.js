@@ -72,7 +72,8 @@ const CONFIG_PATH = resolveProjectFilePath('config.json', 'CONFIG_PATH');
 const CONFIG_MORE_PATH = resolveProjectFilePath('config_more.json', 'CONFIG_MORE_PATH');
 const REQUEST_CHANNELS_PATH = resolveProjectFilePath('request_channels.json', 'REQUEST_CHANNELS_PATH');
 const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json', 'METADATA_CACHE_PATH');
-const ALERT_CONFIG_PATH = resolveProjectFilePath('alert.config', 'ALERT_CONFIG_PATH');
+const ALERT_CONFIG_PATH = resolveProjectFilePath('alert.json', 'ALERT_CONFIG_PATH');
+const LEGACY_ALERT_CONFIG_PATH = resolveProjectFilePath('alert.config', 'LEGACY_ALERT_CONFIG_PATH');
 const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
 const CHART_PAIR_WINDOW_MS = 10 * 60 * 1000;
 const PATH_ALERT_CHAIN_LABELS = {
@@ -485,8 +486,19 @@ async function getAlertConfig() {
         const parsedData = await readJsonFile(ALERT_CONFIG_PATH);
         return normalizeAlertConfig(parsedData);
     } catch (error) {
-        if (error instanceof SyntaxError || error.code === 'ENOENT') {
+        if (error instanceof SyntaxError) {
             return normalizeAlertConfig();
+        }
+        if (error.code === 'ENOENT') {
+            try {
+                const legacyData = await readJsonFile(LEGACY_ALERT_CONFIG_PATH);
+                return normalizeAlertConfig(legacyData);
+            } catch (legacyError) {
+                if (legacyError instanceof SyntaxError || legacyError.code === 'ENOENT') {
+                    return normalizeAlertConfig();
+                }
+                throw legacyError;
+            }
         }
         throw error;
     }

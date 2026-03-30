@@ -144,6 +144,34 @@ assert.deepStrictEqual(
   ['(ETH) A -> B', '(ARB) B -> A']
 );
 
+const normalizedSpecialRuleConfig = normalizeAlertConfig({
+  settings: { defaultCooldownSec: 180 },
+  alerts: [
+    {
+      id: 'rule-alert-special-usde-bybit',
+      name: 'USDe <-> BYBIT',
+      enabled: true,
+      thresholdBp: 0,
+      triggerMode: 'delayed',
+      confirmDelaySec: 15,
+      cooldownSec: 120,
+      target: {
+        type: 'rule',
+        ruleKind: 'special',
+        ruleId: 'special:usde-bybit'
+      },
+      specialRuleConfig: {
+        minNetProfit: 8,
+        minNetProfitBp: 0.5
+      }
+    }
+  ]
+});
+assert.deepStrictEqual(normalizedSpecialRuleConfig.alerts[0].specialRuleConfig, {
+  minNetProfit: 8,
+  minNetProfitBp: 0.5
+});
+
 assert.strictEqual(PATH_ALERT_MUTE_DURATION_MS, 60 * 60 * 1000);
 
 const mutedPathEntry = createMutedPathTargetEntry(
@@ -1015,3 +1043,40 @@ assert.strictEqual(
   ),
   'https://api.day.app/key/%E6%94%B6%E7%9B%8A%20%2B2.50%20bp/ETH%20WBTC%20-%3E%20tBTC%20%7C%20SUI%20TBTC%20-%3E%20WBTC?sound=ladder'
 );
+
+const specialRuleEvaluation = evaluatePathAlert(
+  {
+    id: 'special-usde',
+    enabled: true,
+    thresholdBp: 0,
+    triggerMode: 'delayed',
+    confirmDelaySec: 15,
+    cooldownSec: 120,
+    target: {
+      type: 'rule',
+      ruleKind: 'special',
+      ruleId: 'special:usde-bybit'
+    }
+  },
+  {
+    resolveRuleEvaluation() {
+      return {
+        available: true,
+        profitRate: 0.0003,
+        meetsTriggerCondition: true,
+        cycle: {
+          legs: [
+            { quoteId: 1, rate: 1.0003 }
+          ]
+        },
+        displayMessage: 'display line',
+        alertMessage: 'alert line'
+      };
+    }
+  }
+);
+assert.strictEqual(specialRuleEvaluation.available, true);
+assert.strictEqual(specialRuleEvaluation.profitBp, 3);
+assert.strictEqual(specialRuleEvaluation.meetsTriggerCondition, true);
+assert.strictEqual(specialRuleEvaluation.displayMessage, 'display line');
+assert.strictEqual(specialRuleEvaluation.alertMessage, 'alert line');

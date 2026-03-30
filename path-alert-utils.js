@@ -1,10 +1,10 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(require('./special-rule-alert-config-utils'));
     return;
   }
-  root.PathAlertUtils = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  root.PathAlertUtils = factory(root.SpecialRuleAlertConfigUtils || null);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (specialRuleAlertConfigUtils) {
   const DEFAULT_PATH_ALERT_WEBHOOK_URL = 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder';
   const DEFAULT_TELEGRAM_BOT_API_BASE_URL = 'https://api.telegram.org';
   const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
@@ -34,6 +34,12 @@
   function toNonNegativeInteger(value, fallback) {
     const parsed = Number.parseInt(value, 10);
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  }
+
+  function toBasisPoints(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return null;
+    return Number((parsed * 10000).toFixed(10));
   }
 
   function cloneDefaultSettings() {
@@ -117,6 +123,14 @@
     };
 
     normalized.target = target;
+    if (
+      target.type === 'rule'
+      && target.ruleKind === 'special'
+      && specialRuleAlertConfigUtils
+      && typeof specialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function'
+    ) {
+      normalized.specialRuleConfig = specialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(alert.specialRuleConfig);
+    }
     return normalized;
   }
 
@@ -623,7 +637,12 @@
         status: 'ok',
         targetType: 'rule',
         profitRate: resolved.profitRate,
-        profitBp: resolved.profitRate * 10000,
+        profitBp: toBasisPoints(resolved.profitRate),
+        meetsTriggerCondition: typeof resolved.meetsTriggerCondition === 'boolean'
+          ? resolved.meetsTriggerCondition
+          : undefined,
+        displayMessage: String(resolved.displayMessage || ''),
+        alertMessage: String(resolved.alertMessage || ''),
         cycle: resolved.cycle || null,
         legSnapshots: Array.isArray(resolved.cycle && resolved.cycle.legs)
           ? resolved.cycle.legs
@@ -656,7 +675,7 @@
       status: 'ok',
       targetType: 'path',
       profitRate,
-      profitBp: profitRate * 10000,
+      profitBp: toBasisPoints(profitRate),
       legSnapshots
     };
   }

@@ -150,6 +150,36 @@
       : null;
   }
 
+  function getSpecialRuleAlertDefaultConfig(rule) {
+    const safeRule = rule && typeof rule === 'object' ? rule : {};
+    if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
+      return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(safeRule);
+    }
+    return {
+      minNetProfit: Number.isFinite(Number(safeRule.minNetProfit)) ? Number(safeRule.minNetProfit) : 0,
+      minNetProfitBp: Number.isFinite(Number(safeRule.minNetProfitBp)) ? Number(safeRule.minNetProfitBp) : 0
+    };
+  }
+
+  function resolveSpecialRuleAlertConfig(config, rule) {
+    const fallback = getSpecialRuleAlertDefaultConfig(rule);
+    if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
+      return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(config, fallback);
+    }
+    return fallback;
+  }
+
+  function normalizeAlertConfigWithSpecialRules(config) {
+    const normalized = window.PathAlertUtils
+      ? window.PathAlertUtils.normalizeAlertConfig(config)
+      : config;
+    if (!window.SpecialRuleAlertConfigUtils || typeof window.SpecialRuleAlertConfigUtils.mergeSpecialRuleAlerts !== 'function') {
+      return normalized;
+    }
+    const rules = getRuleDefinitions('special');
+    return window.SpecialRuleAlertConfigUtils.mergeSpecialRuleAlerts(normalized, rules);
+  }
+
   function createEmptyDraft() {
     return {
       id: '',
@@ -165,6 +195,7 @@
       quoteRuleKind: 'targetAbove',
       quoteValue: '',
       quoteBasePrice: '',
+      specialRuleConfig: null,
       searchQuery: '',
       legs: []
     };
@@ -187,6 +218,9 @@
         : 'targetAbove',
       quoteValue: draft.quoteValue === '' ? '' : Number(draft.quoteValue),
       quoteBasePrice: draft.quoteBasePrice === '' ? '' : Number(draft.quoteBasePrice),
+      specialRuleConfig: draft.specialRuleConfig && typeof draft.specialRuleConfig === 'object'
+        ? { ...draft.specialRuleConfig }
+        : null,
       searchQuery: String(draft.searchQuery || ''),
       legs: Array.isArray(draft.legs) ? draft.legs.map((leg) => ({ ...leg })) : []
     };
@@ -217,6 +251,7 @@
       };
     }
     if (normalized.target.type === 'rule') {
+      const rule = findRule(normalized.target.ruleKind, normalized.target.ruleId);
       return {
         id: normalized.id,
         name: normalized.name,
@@ -231,6 +266,9 @@
         quoteRuleKind: 'targetAbove',
         quoteValue: '',
         quoteBasePrice: '',
+        specialRuleConfig: normalized.target.ruleKind === 'special'
+          ? resolveSpecialRuleAlertConfig(normalized.specialRuleConfig, rule)
+          : null,
         searchQuery: '',
         legs: []
       };
@@ -508,9 +546,14 @@
       ? `⏱${Number(alert.confirmDelaySec || 0)}s`
       : '⚡立即';
     const statusLabel = alert && alert.enabled === false ? '⛔' : '✅';
-    const valueText = alert && alert.target && alert.target.type === 'quote'
+    let valueText = alert && alert.target && alert.target.type === 'quote'
       ? String(alert.target.value != null ? alert.target.value : '--')
       : `${String(alert && alert.thresholdBp != null ? alert.thresholdBp : '--')}bp`;
+    if (alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special') {
+      const rule = findRule('special', alert.target.ruleId);
+      const specialRuleConfig = resolveSpecialRuleAlertConfig(alert.specialRuleConfig, rule);
+      valueText = `>${String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--')} / >${String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--')}bp`;
+    }
     return [
       `🏷️${typeLabel}`,
       `🎯${valueText}`,
@@ -654,15 +697,11 @@
     const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
     if (!response.ok) throw new Error('获取路径报警配置失败');
     const raw = await response.json();
-    alertConfig = window.PathAlertUtils
-      ? window.PathAlertUtils.normalizeAlertConfig(raw)
-      : raw;
+    alertConfig = normalizeAlertConfigWithSpecialRules(raw);
   }
 
   async function persistAlertConfig() {
-    const payload = window.PathAlertUtils
-      ? window.PathAlertUtils.normalizeAlertConfig(alertConfig)
-      : alertConfig;
+    const payload = normalizeAlertConfigWithSpecialRules(alertConfig);
     const response = await fetch(`${BACKEND_URL}/api/save-alert-config`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -812,13 +851,23 @@
     }
 
     const thresholdBp = draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
-    if (!Number.isFinite(thresholdBp)) {
+    if (draft.sourceType !== 'special' && !Number.isFinite(thresholdBp)) {
       return '收益阈值必须是合法数字';
     }
 
     if (draft.sourceType === 'fixed' || draft.sourceType === 'special') {
-      if (!findRule(draft.sourceType, draft.selectedRuleId)) {
+      const rule = findRule(draft.sourceType, draft.selectedRuleId);
+      if (!rule) {
         return '请选择有效的规则';
+      }
+      if (draft.sourceType === 'special') {
+        const specialRuleConfig = resolveSpecialRuleAlertConfig(draft.specialRuleConfig, rule);
+        if (!Number.isFinite(Number(specialRuleConfig.minNetProfit)) || Number(specialRuleConfig.minNetProfit) < 0) {
+          return '净收益阈值必须是大于等于 0 的数字';
+        }
+        if (!Number.isFinite(Number(specialRuleConfig.minNetProfitBp)) || Number(specialRuleConfig.minNetProfitBp) < 0) {
+          return '净收益率阈值必须是大于等于 0 的数字';
+        }
       }
       const dismissedTarget = findDismissedTargetForDraft(draft);
       if (dismissedTarget) {
@@ -851,7 +900,7 @@
 
   function buildAlertFromDraft() {
     const draft = pageState.draft;
-    const thresholdBp = draft.sourceType === 'quote'
+    const thresholdBp = draft.sourceType === 'quote' || draft.sourceType === 'special'
       ? 0
       : draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
     const alert = {
@@ -864,6 +913,12 @@
       cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
       target: collectEditorTarget(draft)
     };
+    if (draft.sourceType === 'special') {
+      alert.specialRuleConfig = resolveSpecialRuleAlertConfig(
+        draft.specialRuleConfig,
+        findRule('special', draft.selectedRuleId)
+      );
+    }
     return window.PathAlertUtils
       ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
       : alert;
@@ -1139,10 +1194,20 @@
         </div>
         <div class="editor-pane editor-settings-pane">
           <div class="editor-pane-title">报警条件</div>
-          ${draft.sourceType === 'quote' ? '' : `
+          ${draft.sourceType === 'quote' || draft.sourceType === 'special' ? '' : `
             <div class="form-group">
               <label for="editor-threshold">收益阈值 (bp)</label>
               <input id="editor-threshold" type="number" step="0.1" value="${draft.thresholdBp === '' ? '' : escapeHtml(String(draft.thresholdBp))}">
+            </div>
+          `}
+          ${draft.sourceType !== 'special' ? '' : `
+            <div class="form-group">
+              <label for="editor-special-min-profit">净收益阈值</label>
+              <input id="editor-special-min-profit" type="number" min="0" step="0.0001" value="${escapeHtml(String(resolveSpecialRuleAlertConfig(draft.specialRuleConfig, findRule('special', draft.selectedRuleId)).minNetProfit ?? 0))}">
+            </div>
+            <div class="form-group">
+              <label for="editor-special-min-profit-bp">净收益率阈值 (bp)</label>
+              <input id="editor-special-min-profit-bp" type="number" min="0" step="0.1" value="${escapeHtml(String(resolveSpecialRuleAlertConfig(draft.specialRuleConfig, findRule('special', draft.selectedRuleId)).minNetProfitBp ?? 0))}">
             </div>
           `}
           <div class="form-group">
@@ -1449,6 +1514,9 @@
   function updateDraftField(event) {
     if (!pageState.draft) return;
     const target = event.target;
+    if (!pageState.draft.specialRuleConfig || typeof pageState.draft.specialRuleConfig !== 'object') {
+      pageState.draft.specialRuleConfig = null;
+    }
     if (target.id === 'editor-name') pageState.draft.name = target.value || '';
     if (target.id === 'path-alert-search-input') pageState.draft.searchQuery = target.value || '';
     if (target.id === 'editor-threshold') pageState.draft.thresholdBp = target.value === '' ? '' : Number(target.value);
@@ -1456,6 +1524,18 @@
     if (target.id === 'editor-confirm-delay') pageState.draft.confirmDelaySec = Number(target.value || 0);
     if (target.id === 'editor-cooldown') pageState.draft.cooldownSec = Number(target.value || alertConfig.settings?.defaultCooldownSec || 180);
     if (target.id === 'editor-enabled') pageState.draft.enabled = target.checked;
+    if (target.id === 'editor-special-min-profit') {
+      pageState.draft.specialRuleConfig = {
+        ...resolveSpecialRuleAlertConfig(pageState.draft.specialRuleConfig, findRule('special', pageState.draft.selectedRuleId)),
+        minNetProfit: Number(target.value || 0)
+      };
+    }
+    if (target.id === 'editor-special-min-profit-bp') {
+      pageState.draft.specialRuleConfig = {
+        ...resolveSpecialRuleAlertConfig(pageState.draft.specialRuleConfig, findRule('special', pageState.draft.selectedRuleId)),
+        minNetProfitBp: Number(target.value || 0)
+      };
+    }
     if (target.id === 'editor-quote-id') pageState.draft.selectedQuoteId = target.value || '';
     if (target.id === 'editor-quote-rule-kind') pageState.draft.quoteRuleKind = target.value || 'targetAbove';
     if (target.id === 'editor-quote-value') pageState.draft.quoteValue = target.value === '' ? '' : Number(target.value);
@@ -1478,6 +1558,7 @@
     if (!pageState.draft) return;
     pageState.draft.sourceType = sourceType;
     pageState.draft.selectedRuleId = '';
+    pageState.draft.specialRuleConfig = null;
     pageState.draft.selectedQuoteId = '';
     pageState.draft.quoteRuleKind = 'targetAbove';
     pageState.draft.quoteValue = '';
@@ -1577,6 +1658,9 @@
     const ruleBtn = event.target.closest('[data-editor-rule-id]');
     if (ruleBtn) {
       pageState.draft.selectedRuleId = ruleBtn.dataset.editorRuleId || '';
+      pageState.draft.specialRuleConfig = pageState.draft.sourceType === 'special'
+        ? resolveSpecialRuleAlertConfig(null, findRule('special', pageState.draft.selectedRuleId))
+        : null;
       renderEditor();
       return;
     }

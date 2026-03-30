@@ -38,6 +38,7 @@
   function buildEntryBlock(entry, options = {}) {
     const includeTitle = options.includeTitle === true;
     const title = String(entry && entry.alert && entry.alert.name || '').trim();
+    const customAlertMessage = String(entry && entry.customAlertMessage || '').trim();
     const summaryLines = markSummaryLines(
       entry,
       Array.isArray(entry && entry.summaryLines) ? entry.summaryLines.filter(Boolean) : []
@@ -47,6 +48,10 @@
 
     if (includeTitle && title) {
       lines.push(title);
+    }
+    if (customAlertMessage) {
+      lines.push(customAlertMessage);
+      return lines.join('\n');
     }
     lines.push(formatPathAlertEvaluationText(entry && entry.evaluation));
     lines.push(...summaryLines);
@@ -64,7 +69,10 @@
     const list = Array.isArray(triggeredEntries) ? triggeredEntries : [];
     if (!list.length) return '路径报警';
     if (list.length === 1) {
-      return String(list[0] && list[0].alert && list[0].alert.name || '').trim() || '路径报警';
+      const entry = list[0] || null;
+      const title = String(entry && entry.alert && entry.alert.name || '').trim() || '路径报警';
+      const isSpecialRule = Boolean(entry && entry.alert && entry.alert.target && entry.alert.target.type === 'rule' && entry.alert.target.ruleKind === 'special');
+      return isSpecialRule ? `🚨 [特殊规则] ${title}` : title;
     }
     return `${list.length} 条`;
   }

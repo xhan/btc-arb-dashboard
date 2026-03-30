@@ -6,7 +6,8 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'alert-config-api-'));
-const alertConfigPath = path.join(tempDir, 'alert.config');
+const alertConfigPath = path.join(tempDir, 'alert.json');
+const legacyAlertConfigPath = path.join(tempDir, 'alert.config');
 const configPath = path.join(tempDir, 'config.json');
 const configMorePath = path.join(tempDir, 'config_more.json');
 const port = 3458;
@@ -43,6 +44,21 @@ telegramServer.listen(telegramPort, '127.0.0.1');
 
 fs.writeFileSync(configPath, JSON.stringify({ dashboard: [], settings: {} }, null, 2));
 fs.writeFileSync(
+  legacyAlertConfigPath,
+  JSON.stringify(
+    {
+      version: 1,
+      settings: {
+        pathAlertEvalIntervalMs: 1500,
+        defaultCooldownSec: 180
+      },
+      alerts: []
+    },
+    null,
+    2
+  )
+);
+fs.writeFileSync(
   configMorePath,
   JSON.stringify(
     {
@@ -61,6 +77,7 @@ const serverProcess = spawn('node', ['server.js'], {
     PORT: String(port),
     CONFIG_PATH: configPath,
     ALERT_CONFIG_PATH: alertConfigPath,
+    LEGACY_ALERT_CONFIG_PATH: legacyAlertConfigPath,
     CONFIG_MORE_PATH: configMorePath,
     TELEGRAM_BOT_API_BASE_URL: `http://127.0.0.1:${telegramPort}`
   },
@@ -114,7 +131,7 @@ async function waitForServer(attempts = 15) {
     assert.strictEqual(defaultResponse.statusCode, 200);
     const defaultConfig = JSON.parse(defaultResponse.body);
     assert.strictEqual(defaultConfig.version, 1);
-    assert.strictEqual(defaultConfig.settings.pathAlertEvalIntervalMs, 1000);
+    assert.strictEqual(defaultConfig.settings.pathAlertEvalIntervalMs, 1500);
     assert.strictEqual(defaultConfig.settings.localSoundEnabled, true);
     assert.strictEqual(defaultConfig.settings.webhookEnabled, false);
     assert.deepStrictEqual(defaultConfig.alerts, []);
@@ -152,6 +169,7 @@ async function waitForServer(attempts = 15) {
     const saveResponse = await request('POST', '/api/save-alert-config', JSON.stringify(payload));
     assert.strictEqual(saveResponse.statusCode, 200);
 
+    assert.strictEqual(fs.existsSync(alertConfigPath), true);
     const savedText = fs.readFileSync(alertConfigPath, 'utf-8');
     const savedJson = JSON.parse(savedText);
     assert.strictEqual(savedJson.settings.pathAlertEvalIntervalMs, 2500);
