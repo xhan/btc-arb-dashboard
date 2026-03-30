@@ -610,12 +610,13 @@
         {
           "id": 1774627751426,
           "chain": "plasma",
-          "amount": 20,
+          "amount": 40,
           "preferredSource": "Kyber",
           "fromToken": "0x9895D81bB462A195b4922ED7De0e3ACD007c32CB",
           "toToken": "0x7230a9D42D622E18FDf7207041EcA18465F9F1bE",
           "showInverse": true,
-          "requestChannelId": "ch2"
+          "requestChannelId": "ch2",
+          "paused": true
         },
         {
           "id": 1772987556925,
@@ -736,13 +737,13 @@
     }
   ],
   "settings": {
-    "kyber": 220,
+    "kyber": 205,
     "zerox": 500,
     "velora": 1100,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
-    "solana": 1100,
+    "solana": 1000,
     "sui": 500,
     "starknet": 1000
   }
