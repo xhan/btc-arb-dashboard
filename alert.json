@@ -2,9 +2,9 @@
   "version": 1,
   "settings": {
     "pathAlertEvalIntervalMs": 1000,
-    "defaultCooldownSec": 180,
+    "defaultCooldownSec": 120,
     "changedLegMinBp": 0.1,
-    "localSoundEnabled": false,
+    "localSoundEnabled": true,
     "webhookEnabled": true,
     "dayAppEnabled": false,
     "telegramEnabled": true,
@@ -19,7 +19,7 @@
       "thresholdBp": 1.2,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -33,7 +33,7 @@
       "thresholdBp": 3,
       "triggerMode": "immediate",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -47,7 +47,7 @@
       "thresholdBp": 1.1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -61,7 +61,7 @@
       "thresholdBp": 1,
       "triggerMode": "immediate",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -75,7 +75,7 @@
       "thresholdBp": 1.1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -89,7 +89,7 @@
       "thresholdBp": 1.1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -103,7 +103,7 @@
       "thresholdBp": 1.1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -117,7 +117,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -131,7 +131,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -145,7 +145,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 180,
+      "cooldownSec": 120,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -163,6 +163,7 @@
       "target": {
         "type": "quote",
         "quoteId": 1774206818567,
+        "direction": "forward",
         "ruleKind": "targetAbove",
         "value": 1.00215
       }
@@ -178,6 +179,7 @@
       "target": {
         "type": "quote",
         "quoteId": 1774206874519,
+        "direction": "forward",
         "ruleKind": "targetAbove",
         "value": 1.00215
       }
@@ -193,6 +195,7 @@
       "target": {
         "type": "quote",
         "quoteId": 1774600991130,
+        "direction": "forward",
         "ruleKind": "targetAbove",
         "value": 1.00017
       }
@@ -208,6 +211,7 @@
       "target": {
         "type": "quote",
         "quoteId": 1760021727906,
+        "direction": "forward",
         "ruleKind": "targetAbove",
         "value": 1.00025
       }
@@ -223,6 +227,7 @@
       "target": {
         "type": "quote",
         "quoteId": 1766413776518,
+        "direction": "forward",
         "ruleKind": "targetAbove",
         "value": 1.002
       }
@@ -260,7 +265,7 @@
       },
       "specialRuleConfig": {
         "minNetProfit": 8,
-        "minNetProfitBp": 0.5
+        "minNetProfitBp": 0.6
       }
     }
   ],
