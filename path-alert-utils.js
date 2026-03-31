@@ -9,6 +9,7 @@
   const DEFAULT_TELEGRAM_BOT_API_BASE_URL = 'https://api.telegram.org';
   const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
   const PATH_ALERT_MUTE_DURATION_MS = 60 * 60 * 1000;
+  const PATH_ALERT_MUTE_EXTEND_DURATION_MS = 2 * 60 * 60 * 1000;
   const DEFAULT_PATH_ALERT_SETTINGS = Object.freeze({
     pathAlertEvalIntervalMs: 1000,
     defaultCooldownSec: 180,
@@ -78,6 +79,7 @@
     if (target.type === 'quote') {
       const quoteId = Number(target.quoteId);
       if (!Number.isFinite(quoteId)) return null;
+      const direction = target.direction === 'inverse' ? 'inverse' : 'forward';
       const ruleKind = ['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(target.ruleKind)
         ? target.ruleKind
         : '';
@@ -87,6 +89,7 @@
       const normalized = {
         type: 'quote',
         quoteId,
+        direction,
         ruleKind,
         value
       };
@@ -273,8 +276,9 @@
     if (!target || typeof target !== 'object') return '';
     if (target.type === 'quote') {
       const quoteId = Number(target.quoteId);
+      const direction = target.direction === 'inverse' ? 'inverse' : 'forward';
       const ruleKind = String(target.ruleKind || '').trim();
-      return Number.isFinite(quoteId) && ruleKind ? `quote:${quoteId}:${ruleKind}` : '';
+      return Number.isFinite(quoteId) && ruleKind ? `quote:${quoteId}:${direction}:${ruleKind}` : '';
     }
     if (target.type === 'rule') {
       const ruleKind = target.ruleKind === 'special' ? 'special' : target.ruleKind === 'fixed' ? 'fixed' : '';
@@ -354,6 +358,18 @@
       summaryLinesSnapshot,
       mutedAt: safeMutedAt,
       expiresAt: safeMutedAt + safeDurationMs
+    });
+  }
+
+  function extendMutedPathTargetEntry(entry, nowMs = Date.now(), durationMs = PATH_ALERT_MUTE_EXTEND_DURATION_MS) {
+    const normalizedEntry = normalizeMutedPathTarget(entry);
+    if (!normalizedEntry) return null;
+    const safeNowMs = toPositiveInteger(nowMs, Date.now());
+    const safeDurationMs = toPositiveInteger(durationMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
+    const baseExpiresAt = Math.max(normalizedEntry.expiresAt, safeNowMs);
+    return normalizeMutedPathTarget({
+      ...normalizedEntry,
+      expiresAt: baseExpiresAt + safeDurationMs
     });
   }
 
@@ -568,9 +584,12 @@
     if (!state || typeof state !== 'object') {
       return unavailableEvaluation('quote');
     }
+    const currentRate = target.direction === 'inverse'
+      ? Number(state.inverseRawPrice)
+      : Number(state.lastRawPrice);
 
     if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
-      const currentValue = Number(state.lastTotalAmountOut);
+      const currentValue = currentRate;
       if (!Number.isFinite(currentValue)) {
         return unavailableEvaluation('quote');
       }
@@ -590,7 +609,7 @@
       };
     }
 
-    const currentValue = Number(state.lastRawPrice);
+    const currentValue = currentRate;
     const basePrice = Number(target.basePrice);
     if (!Number.isFinite(currentValue) || !Number.isFinite(basePrice) || basePrice <= 0) {
       return unavailableEvaluation('quote');
@@ -810,6 +829,7 @@
   return {
     DEFAULT_TELEGRAM_BOT_API_BASE_URL,
     PATH_ALERT_MUTE_DURATION_MS,
+    PATH_ALERT_MUTE_EXTEND_DURATION_MS,
     DEFAULT_PATH_ALERT_WEBHOOK_URL,
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
     DEFAULT_PATH_ALERT_SETTINGS,
@@ -823,6 +843,7 @@
     countPathAlertRealLegs,
     createDismissedTargetEntry,
     createMutedPathTargetEntry,
+    extendMutedPathTargetEntry,
     evaluatePathAlert,
     findDismissedPathAlert,
     findMutedPathAlert,

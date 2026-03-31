@@ -4,7 +4,7 @@
     "pathAlertEvalIntervalMs": 1000,
     "defaultCooldownSec": 180,
     "changedLegMinBp": 0.1,
-    "localSoundEnabled": true,
+    "localSoundEnabled": false,
     "webhookEnabled": true,
     "dayAppEnabled": false,
     "telegramEnabled": true,
@@ -164,7 +164,7 @@
         "type": "quote",
         "quoteId": 1774206818567,
         "ruleKind": "targetAbove",
-        "value": 0.100215
+        "value": 1.00215
       }
     },
     {
@@ -179,7 +179,7 @@
         "type": "quote",
         "quoteId": 1774206874519,
         "ruleKind": "targetAbove",
-        "value": 0.100215
+        "value": 1.00215
       }
     },
     {
@@ -225,6 +225,42 @@
         "quoteId": 1766413776518,
         "ruleKind": "targetAbove",
         "value": 1.002
+      }
+    },
+    {
+      "id": "rule-alert-special-wbtc-bybit",
+      "name": "WBTC <-> BYBIT",
+      "enabled": true,
+      "thresholdBp": 0,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 10,
+      "cooldownSec": 120,
+      "target": {
+        "type": "rule",
+        "ruleKind": "special",
+        "ruleId": "special:wbtc-bybit"
+      },
+      "specialRuleConfig": {
+        "minNetProfit": 0.0001,
+        "minNetProfitBp": 1.5
+      }
+    },
+    {
+      "id": "rule-alert-special-usde-bybit",
+      "name": "USDe <-> BYBIT",
+      "enabled": true,
+      "thresholdBp": 0,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 10,
+      "cooldownSec": 120,
+      "target": {
+        "type": "rule",
+        "ruleKind": "special",
+        "ruleId": "special:usde-bybit"
+      },
+      "specialRuleConfig": {
+        "minNetProfit": 8,
+        "minNetProfitBp": 0.5
       }
     }
   ],

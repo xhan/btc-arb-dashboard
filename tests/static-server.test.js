@@ -97,18 +97,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="path-alert-window"'));
     assert.ok(response.body.includes('#path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none;'));
     assert.ok(response.body.includes('id="path-alert-modal"'));
-    assert.ok(response.body.includes('id="alert-trigger-mode"'));
-    assert.ok(response.body.includes('id="alert-confirm-delay"'));
-    assert.ok(response.body.includes('id="alert-cooldown"'));
-    assert.ok(response.body.includes('class="quote-alert-inline-grid"'));
+    assert.ok(response.body.includes('id="open-quote-alerts-manage"'));
+    assert.ok(!response.body.includes('class="quote-alert-inline-grid"'));
     assert.ok(response.body.includes('id="modal-subtitle"'));
-    assert.ok(response.body.includes('placeholder="例如: 120"'));
+    assert.ok(response.body.includes('交易对报警已统一迁到「报警管理」页'));
     assert.ok(response.body.includes('id="toggle-quote-display-btn"'));
     assert.ok(response.body.includes('价格: 汇率'));
     assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
     assert.ok(response.body.includes('id="toggle-data-terminal-btn"'));
     assert.ok(response.body.includes('数据终端'));
-    assert.ok(response.body.includes('路径报警管理'));
+    assert.ok(response.body.includes('报警管理'));
     assert.ok(response.body.includes('#top-bar-right > button,'));
     assert.ok(response.body.includes('#top-bar-right > a {'));
     assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
@@ -142,11 +140,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
     assert.ok(appJsResponse.body.includes('let pathAlertPanelHidden = true;'));
-    assert.ok(appJsResponse.body.includes('QuoteAlertConfigUtils'));
     assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
+    assert.ok(appJsResponse.body.includes("target.direction === 'inverse'"));
     assert.ok(!appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));
     assert.ok(!appJsResponse.body.includes('quote.alerts'));
-    assert.ok(appJsResponse.body.includes('cooldownSec: 120'));
+    assert.ok(appJsResponse.body.includes("function getQuoteAlertDirection(target)"));
     assert.ok(appJsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })'));
     assert.ok(appJsResponse.body.includes('path-alert-config-sync'));
@@ -161,6 +159,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('buildLegacyQuoteAlertLogHtml'));
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('忽略 1 小时'));
+    assert.ok(appJsResponse.body.includes('延长 2 小时'));
     assert.ok(appJsResponse.body.includes('沉默中'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes("if (key === 'c')"));
@@ -180,6 +179,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
     assert.ok(!appJsResponse.body.includes('导入当前全部机会'));
     assert.ok(appJsResponse.body.includes('/path-alerts'));
+    assert.ok(appJsResponse.body.includes('openPathAlertsManagementPage({'));
     assert.ok(appJsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(appJsResponse.body.includes('data-path-alert-delete'));
     assert.ok(appJsResponse.body.includes('data-path-alert-dismiss-delete'));
@@ -280,7 +280,7 @@ async function waitForServer(attempts = 12) {
 
     const pathAlertsResponse = await request('/path-alerts');
     assert.strictEqual(pathAlertsResponse.statusCode, 200);
-    assert.ok(pathAlertsResponse.body.includes('路径报警管理'));
+    assert.ok(pathAlertsResponse.body.includes('报警管理'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-page"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-list"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-dismissed-list"'));
@@ -289,7 +289,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-dismissed-search-input"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-dismiss-selected-btn"'));
     assert.ok(pathAlertsResponse.body.includes('批量删除'));
-    assert.ok(pathAlertsResponse.body.includes('不需要路径'));
+    assert.ok(pathAlertsResponse.body.includes('已忽略规则'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-calculator.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));

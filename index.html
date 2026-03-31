@@ -526,20 +526,30 @@
             line-height: 1.3;
             word-break: break-word;
         }
-        .quote-alert-inline-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
+        .quote-settings-note {
+            margin-bottom: 12px;
+            color: var(--text-color-light);
+            font-size: 13px;
+            line-height: 1.5;
         }
-        .quote-alert-inline-grid .form-group {
-            margin-bottom: 0;
+        .quote-settings-manage-row {
+            margin-bottom: 12px;
         }
-        .quote-alert-inline-grid input,
-        .quote-alert-inline-grid select {
+        .quote-settings-manage-row button {
             width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #dbeafe;
+            color: #1d4ed8;
         }
-
+        .quote-settings-manage-row button:hover { filter: brightness(0.98); }
+        .dark-mode .quote-settings-manage-row button {
+            background: #1e3a5f;
+            color: #bfdbfe;
+        }
         .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
         .modal-buttons button { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
         .modal-buttons button:disabled { background-color: #a0aec0; cursor: not-allowed; }
@@ -598,9 +608,6 @@
         @media (max-width: 560px) {
             .modal-box {
                 padding: 22px;
-            }
-            .quote-alert-inline-grid {
-                gap: 8px;
             }
         }
 
@@ -1490,7 +1497,7 @@
              <button id="toggle-quote-display-btn" title="切换看板报价显示模式 (P)">价格: 汇率</button>
              <button id="toggle-data-terminal-btn" title="显示/隐藏数据终端">数据终端</button>
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
-             <button id="toggle-path-alert-btn" title="打开路径报警管理页">路径报警管理</button>
+             <button id="toggle-path-alert-btn" title="打开报警管理页">报警管理</button>
              <button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">提醒日志</button>
              <button id="toggle-calc-btn" title="显示/隐藏计算器">计算器</button>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">快照</a>
@@ -1666,48 +1673,13 @@
             </div>
 
             <hr style="border:0; border-top:1px solid var(--border-color); margin: 15px 0;">
-            
-            <div style="margin-bottom:10px; font-weight:bold;">监控与提醒</div>
 
-            <div class="base-price-info">
-                当前价格: <span id="alert-current-price-value" class="base-price-value">--</span>
+            <div style="margin-bottom:10px; font-weight:bold;">报警管理</div>
+            <div class="quote-settings-note">
+                交易对报警已统一迁到「报警管理」页。支持正向/反向、汇率阈值、延迟确认和冷却时间。
             </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="reset-base-price">
-                <label for="reset-base-price">更新基准价格为当前价格</label>
-            </div>
-
-            <div class="quote-alert-inline-grid">
-                <div class="form-group">
-                    <label>上涨超过 (%) <span id="alert-up-base-display" style="font-weight: normal; color: var(--text-color-light); font-size: 0.85em; margin-left: 8px;"></span></label>
-                    <input type="number" id="alert-percent-up" placeholder="例如: 0.1">
-                </div>
-                <div class="form-group">
-                    <label>下跌超过 (%) <span id="alert-down-base-display" style="font-weight: normal; color: var(--text-color-light); font-size: 0.85em; margin-left: 8px;"></span></label>
-                    <input type="number" id="alert-percent-down" placeholder="例如: 0.1">
-                </div>
-            </div>
-            <div class="quote-alert-inline-grid">
-                <div class="form-group"><label>价格高于</label><input type="number" id="alert-target-above" placeholder="例如: 70000"></div>
-                <div class="form-group"><label>价格低于</label><input type="number" id="alert-target-below" placeholder="例如: 65000"></div>
-            </div>
-            <div class="form-group">
-                <label for="alert-trigger-mode">触发方式</label>
-                <select id="alert-trigger-mode">
-                    <option value="immediate">立即提醒</option>
-                    <option value="delayed">延迟确认</option>
-                </select>
-            </div>
-            <div class="quote-alert-inline-grid">
-                <div class="form-group">
-                    <label for="alert-confirm-delay">延迟确认 (秒)</label>
-                    <input type="number" id="alert-confirm-delay" placeholder="例如: 13" min="0">
-                </div>
-                <div class="form-group">
-                    <label for="alert-cooldown">冷却时间 (秒)</label>
-                    <input type="number" id="alert-cooldown" placeholder="例如: 120" min="1">
-                </div>
+            <div class="quote-settings-manage-row">
+                <button id="open-quote-alerts-manage" type="button">打开这个交易对的报警管理</button>
             </div>
             <div class="alert-modal-footer">
                 <div class="quote-settings-actions">

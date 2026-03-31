@@ -1,0 +1,87 @@
+const assert = require('assert');
+
+const { createAlertDebugController } = require('../alert-debug-utils');
+
+const logs = [];
+const controller = createAlertDebugController({
+  logger(message) {
+    logs.push(message);
+  },
+  formatTime(value) {
+    return `T${value}`;
+  }
+});
+
+assert.strictEqual(controller.isEnabled(), false);
+controller.record('special', 'special:wbtc-bybit', {
+  status: 'pending_confirm',
+  reason: 'condition_on',
+  eligibleSince: 1000
+});
+assert.strictEqual(logs.length, 0);
+
+assert.strictEqual(controller.enable(true), true);
+assert.strictEqual(controller.isEnabled(), true);
+assert.strictEqual(logs.length, 1);
+assert.strictEqual(logs[0], '[alert-debug] enabled');
+
+controller.record('special', 'special:wbtc-bybit', {
+  now: 1500,
+  status: 'pending_confirm',
+  reason: 'condition_on',
+  eligibleSince: 1000
+});
+assert.strictEqual(logs.length, 2);
+assert.ok(logs[1].includes('[alert-debug][special] special:wbtc-bybit'));
+assert.ok(logs[1].includes('pending'));
+assert.ok(logs[1].includes('reason=condition_on'));
+assert.ok(logs[1].includes('now=T1500 (1500)'));
+assert.ok(logs[1].includes('eligible_since=T1000 (1000)'));
+assert.ok(logs[1].includes('last_triggered_at=null'));
+assert.ok(logs[1].includes('cooldown_until=null'));
+
+controller.record('special', 'special:wbtc-bybit', {
+  status: 'pending_confirm',
+  reason: 'condition_on',
+  eligibleSince: 1000
+});
+assert.strictEqual(logs.length, 2);
+
+controller.record('special', 'special:wbtc-bybit', {
+  now: 11000,
+  status: 'trigger',
+  reason: 'trigger',
+  eligibleSince: 1000,
+  lastTriggeredAt: 11000
+});
+assert.strictEqual(logs.length, 3);
+assert.ok(logs[2].includes('trigger'));
+assert.ok(logs[2].includes('last_triggered_at=T11000 (11000)'));
+
+controller.record('special', 'special:wbtc-bybit', {
+  now: 12000,
+  status: 'idle',
+  reason: 'condition_off',
+  eligibleSince: 0,
+  lastTriggeredAt: 0,
+  cooldownUntil: 0
+});
+assert.strictEqual(logs.length, 4);
+assert.ok(logs[3].includes('idle'));
+assert.ok(logs[3].includes('reason=condition_off'));
+assert.ok(logs[3].includes('eligible_since=null'));
+assert.ok(logs[3].includes('last_triggered_at=null'));
+assert.ok(logs[3].includes('cooldown_until=null'));
+
+assert.strictEqual(controller.enable(false), false);
+assert.strictEqual(controller.isEnabled(), false);
+assert.strictEqual(logs.length, 5);
+assert.strictEqual(logs[4], '[alert-debug] disabled');
+
+controller.record('quote', 'quote-runtime', {
+  now: 120000,
+  status: 'cooldown',
+  reason: 'cooldown_block',
+  cooldownUntil: 130000
+});
+assert.strictEqual(logs.length, 5);

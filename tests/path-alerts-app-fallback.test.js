@@ -148,7 +148,7 @@ assert.strictEqual(
       value: 0.100113
     }
   }),
-  '报价规则'
+  '报价 #101'
 );
 
 const alertMeta = sandbox.window.PathAlertsAppTestHooks.formatAlertMetaLine({
@@ -167,4 +167,4 @@ const quoteAlertMeta = sandbox.window.PathAlertsAppTestHooks.formatAlertMetaLine
   cooldownSec: 180,
   enabled: true
 });
-assert.strictEqual(quoteAlertMeta, '🏷️报价 · 🎯0.100113 · ⚡立即 · ❄️180s · ✅');
+assert.strictEqual(quoteAlertMeta, '🏷️交易对 · 🎯0.100113 · ⚡立即 · ❄️180s · ✅');

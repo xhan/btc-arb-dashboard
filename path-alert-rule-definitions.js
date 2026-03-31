@@ -98,7 +98,8 @@
       quote: 'WETH',
       categoryNames: ['ETH监控'],
       steps: 2,
-      crossChain: true
+      crossChain: true,
+      resultLimit: 2
     }
   ]);
 

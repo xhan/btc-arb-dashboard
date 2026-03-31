@@ -21,7 +21,9 @@ const {
   buildChangedLegs,
   sortTriggeredPathAlerts,
   PATH_ALERT_MUTE_DURATION_MS,
+  PATH_ALERT_MUTE_EXTEND_DURATION_MS,
   createMutedPathTargetEntry,
+  extendMutedPathTargetEntry,
   findMutedPathAlert,
   pruneExpiredMutedPathTargets,
   formatMutedCountdown
@@ -173,6 +175,7 @@ assert.deepStrictEqual(normalizedSpecialRuleConfig.alerts[0].specialRuleConfig, 
 });
 
 assert.strictEqual(PATH_ALERT_MUTE_DURATION_MS, 60 * 60 * 1000);
+assert.strictEqual(PATH_ALERT_MUTE_EXTEND_DURATION_MS, 2 * 60 * 60 * 1000);
 
 const mutedPathEntry = createMutedPathTargetEntry(
   {
@@ -206,12 +209,21 @@ assert.ok(findMutedPathAlert([mutedPathEntry], {
 assert.strictEqual(findMutedPathAlert([mutedPathEntry], mutedPathEntry, 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), null);
 assert.deepStrictEqual(pruneExpiredMutedPathTargets([mutedPathEntry], 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), []);
 assert.strictEqual(formatMutedCountdown(59 * 60 * 1000 + 9000), '59:09');
+const extendedMutedPathEntry = extendMutedPathTargetEntry(mutedPathEntry, 2000, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
+assert.ok(extendedMutedPathEntry);
+assert.strictEqual(extendedMutedPathEntry.mutedAt, 1000);
+assert.strictEqual(extendedMutedPathEntry.expiresAt, 1000 + PATH_ALERT_MUTE_DURATION_MS + PATH_ALERT_MUTE_EXTEND_DURATION_MS);
+assert.deepStrictEqual(
+  extendedMutedPathEntry.summaryLinesSnapshot,
+  ['(ETH) tBTC -> BTC.b', '(Base) cbBTC -> tBTC']
+);
 
 const mutedQuoteEntry = createMutedPathTargetEntry(
   {
     target: {
       type: 'quote',
       quoteId: 101,
+      direction: 'forward',
       ruleKind: 'targetAbove',
       value: 1.00025
     }
@@ -224,6 +236,7 @@ assert.ok(findMutedPathAlert([mutedQuoteEntry], {
   target: {
     type: 'quote',
     quoteId: 101,
+    direction: 'forward',
     ruleKind: 'targetAbove',
     value: 1.00025
   }
@@ -252,9 +265,52 @@ const quoteStateById = new Map([
     fromSymbol: 'BTCB',
     toSymbol: 'syBTC',
     lastRawPrice: 1.00115,
+    inverseRawPrice: 0.998851320788,
     lastTotalAmountOut: 0.100115
   }]
 ]);
+
+const forwardQuoteAlert = normalizePathAlert({
+  id: 'quote-forward',
+  enabled: true,
+  triggerMode: 'delayed',
+  confirmDelaySec: 5,
+  cooldownSec: 180,
+  target: {
+    type: 'quote',
+    quoteId: 101,
+    direction: 'forward',
+    ruleKind: 'targetAbove',
+    value: 1.001
+  }
+}, DEFAULT_PATH_ALERT_SETTINGS);
+const forwardQuoteEval = evaluatePathAlert(forwardQuoteAlert, { quoteStateById });
+assert.strictEqual(forwardQuoteEval.available, true);
+assert.strictEqual(forwardQuoteEval.currentValue, 1.00115);
+assert.strictEqual(forwardQuoteEval.meetsTriggerCondition, true);
+
+const inverseQuoteAlert = normalizePathAlert({
+  id: 'quote-inverse',
+  enabled: true,
+  triggerMode: 'delayed',
+  confirmDelaySec: 5,
+  cooldownSec: 180,
+  target: {
+    type: 'quote',
+    quoteId: 101,
+    direction: 'inverse',
+    ruleKind: 'targetBelow',
+    value: 0.999
+  }
+}, DEFAULT_PATH_ALERT_SETTINGS);
+const inverseQuoteEval = evaluatePathAlert(inverseQuoteAlert, { quoteStateById });
+assert.strictEqual(inverseQuoteEval.available, true);
+assert.strictEqual(inverseQuoteEval.currentValue, 0.998851320788);
+assert.strictEqual(inverseQuoteEval.meetsTriggerCondition, true);
+assert.strictEqual(
+  buildPathAlertTargetDuplicateKey(inverseQuoteAlert.target),
+  'quote:101:inverse:targetBelow'
+);
 
 const pathAlert = {
   id: 'path-wbtc',
@@ -871,7 +927,7 @@ const quoteAboveEval = evaluatePathAlert({
 assert.strictEqual(quoteAboveEval.available, true);
 assert.strictEqual(quoteAboveEval.targetType, 'quote');
 assert.strictEqual(quoteAboveEval.meetsTriggerCondition, true);
-assert.strictEqual(quoteAboveEval.currentValue, 0.100115);
+assert.strictEqual(quoteAboveEval.currentValue, 1.00115);
 
 const quoteBelowEval = evaluatePathAlert({
   id: 'quote-below',
@@ -888,8 +944,8 @@ const quoteBelowEval = evaluatePathAlert({
   }
 }, { quoteStateById });
 assert.strictEqual(quoteBelowEval.available, true);
-assert.strictEqual(quoteBelowEval.meetsTriggerCondition, true);
-assert.strictEqual(quoteBelowEval.currentValue, 0.100115);
+assert.strictEqual(quoteBelowEval.meetsTriggerCondition, false);
+assert.strictEqual(quoteBelowEval.currentValue, 1.00115);
 
 const quotePercentUpEval = evaluatePathAlert({
   id: 'quote-percent-up',

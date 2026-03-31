@@ -147,7 +147,8 @@
           "amount": 1,
           "fromToken": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
           "toToken": "LBTCgU4b3wsFKsPwBn1rRZDx5DoFutM6RPiEt1TPDsY",
-          "showInverse": true
+          "showInverse": true,
+          "paused": true
         },
         {
           "id": 1760021522815,
@@ -352,6 +353,15 @@
           "preferredSource": "Kyber",
           "fromToken": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
           "toToken": "0x18084fba666a33d37592fa2633fd49a74dd93a88",
+          "showInverse": true
+        },
+        {
+          "id": 1774887729254,
+          "chain": "solana",
+          "amount": 0.5,
+          "preferredSource": "Kyber",
+          "fromToken": "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
+          "toToken": "6DNSN2BJsaPFdFFc1zP37kkeNe4Usc1Sqkzr9C9vPWcU",
           "showInverse": true
         }
       ]
@@ -610,13 +620,13 @@
         {
           "id": 1774627751426,
           "chain": "plasma",
-          "amount": 40,
+          "amount": 20,
           "preferredSource": "Kyber",
           "fromToken": "0x9895D81bB462A195b4922ED7De0e3ACD007c32CB",
           "toToken": "0x7230a9D42D622E18FDf7207041EcA18465F9F1bE",
           "showInverse": true,
           "requestChannelId": "ch2",
-          "paused": true
+          "paused": false
         },
         {
           "id": 1772987556925,
@@ -664,7 +674,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
           "toToken": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
-          "showInverse": false,
+          "showInverse": true,
           "requestChannelId": "ch2"
         },
         {
@@ -676,6 +686,15 @@
           "toToken": "0x4200000000000000000000000000000000000006",
           "showInverse": false,
           "requestChannelId": "ch2"
+        },
+        {
+          "id": 1774893582206,
+          "chain": "arbitrum",
+          "amount": 20,
+          "preferredSource": "Kyber",
+          "fromToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+          "toToken": "0x5979D7b546E38E414F7E9822514be443A4800529",
+          "showInverse": true
         },
         {
           "id": 1774205631551,
@@ -737,7 +756,7 @@
     }
   ],
   "settings": {
-    "kyber": 205,
+    "kyber": 210,
     "zerox": 500,
     "velora": 1100,
     "lifi": 650,

@@ -30,7 +30,7 @@
   function sanitizePathAlertDraft(draft) {
     if (!draft || typeof draft !== 'object') return null;
     const target = draft.target || {};
-    if (target.type !== 'path' && target.type !== 'rule') return null;
+    if (target.type !== 'path' && target.type !== 'rule' && target.type !== 'quote') return null;
 
     const name = String(draft.name || '').trim();
     if (target.type === 'path') {
@@ -44,6 +44,32 @@
           type: 'path',
           legs
         }
+      };
+    }
+
+    if (target.type === 'quote') {
+      const quoteId = Number(target.quoteId);
+      const direction = target.direction === 'inverse' ? 'inverse' : 'forward';
+      const ruleKind = ['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(target.ruleKind)
+        ? target.ruleKind
+        : '';
+      const value = Number(target.value);
+      if (!Number.isFinite(quoteId) || !ruleKind || !Number.isFinite(value)) return null;
+      const normalizedTarget = {
+        type: 'quote',
+        quoteId,
+        direction,
+        ruleKind,
+        value
+      };
+      if (ruleKind === 'percentUp' || ruleKind === 'percentDown') {
+        const basePrice = Number(target.basePrice);
+        if (!Number.isFinite(basePrice) || basePrice <= 0) return null;
+        normalizedTarget.basePrice = basePrice;
+      }
+      return {
+        name,
+        target: normalizedTarget
       };
     }
 
@@ -65,6 +91,10 @@
     const params = new URLSearchParams();
     if (mode !== 'manage') {
       params.set('mode', mode);
+    }
+    const filterQuoteId = String(options.filterQuoteId || '').trim();
+    if (filterQuoteId) {
+      params.set('filterQuoteId', filterQuoteId);
     }
 
     if (mode === 'edit') {
@@ -96,6 +126,7 @@
       return {
         mode: 'manage',
         alertId: '',
+        filterQuoteId: '',
         draft: null
       };
     }
@@ -104,6 +135,7 @@
     const alertId = mode === 'edit'
       ? String(url.searchParams.get('alertId') || '').trim()
       : '';
+    const filterQuoteId = String(url.searchParams.get('filterQuoteId') || '').trim();
 
     let draft = null;
     if (mode === 'create') {
@@ -120,6 +152,7 @@
     return {
       mode,
       alertId,
+      filterQuoteId,
       draft
     };
   }

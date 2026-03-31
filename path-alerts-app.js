@@ -66,6 +66,7 @@
     errorMessage: '',
     saveMessage: '',
     draft: null,
+    filterQuoteId: '',
     filteredCandidates: [],
     activeCandidateIndex: -1,
     alertFilterQuery: '',
@@ -192,6 +193,7 @@
       sourceType: 'path',
       selectedRuleId: '',
       selectedQuoteId: '',
+      quoteDirection: 'forward',
       quoteRuleKind: 'targetAbove',
       quoteValue: '',
       quoteBasePrice: '',
@@ -213,6 +215,7 @@
       sourceType: ['path', 'fixed', 'special', 'quote'].includes(draft.sourceType) ? draft.sourceType : 'path',
       selectedRuleId: String(draft.selectedRuleId || ''),
       selectedQuoteId: String(draft.selectedQuoteId || ''),
+      quoteDirection: draft.quoteDirection === 'inverse' ? 'inverse' : 'forward',
       quoteRuleKind: ['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(draft.quoteRuleKind)
         ? draft.quoteRuleKind
         : 'targetAbove',
@@ -243,6 +246,7 @@
         sourceType: 'quote',
         selectedRuleId: '',
         selectedQuoteId: String(normalized.target.quoteId || ''),
+        quoteDirection: normalized.target.direction === 'inverse' ? 'inverse' : 'forward',
         quoteRuleKind: normalized.target.ruleKind,
         quoteValue: normalized.target.value,
         quoteBasePrice: normalized.target.basePrice === undefined ? '' : normalized.target.basePrice,
@@ -263,6 +267,7 @@
         sourceType: normalized.target.ruleKind,
         selectedRuleId: normalized.target.ruleId,
         selectedQuoteId: '',
+        quoteDirection: 'forward',
         quoteRuleKind: 'targetAbove',
         quoteValue: '',
         quoteBasePrice: '',
@@ -284,6 +289,7 @@
       sourceType: 'path',
       selectedRuleId: '',
       selectedQuoteId: '',
+      quoteDirection: 'forward',
       quoteRuleKind: 'targetAbove',
       quoteValue: '',
       quoteBasePrice: '',
@@ -299,6 +305,15 @@
     if (prefill.target && prefill.target.type === 'rule') {
       draft.sourceType = prefill.target.ruleKind;
       draft.selectedRuleId = prefill.target.ruleId;
+      return draft;
+    }
+    if (prefill.target && prefill.target.type === 'quote') {
+      draft.sourceType = 'quote';
+      draft.selectedQuoteId = String(prefill.target.quoteId || '');
+      draft.quoteDirection = prefill.target.direction === 'inverse' ? 'inverse' : 'forward';
+      draft.quoteRuleKind = prefill.target.ruleKind || 'targetAbove';
+      draft.quoteValue = Number.isFinite(Number(prefill.target.value)) ? Number(prefill.target.value) : '';
+      draft.quoteBasePrice = Number.isFinite(Number(prefill.target.basePrice)) ? Number(prefill.target.basePrice) : '';
       return draft;
     }
     if (prefill.target && prefill.target.type === 'path') {
@@ -327,28 +342,46 @@
     return String(alert && alert.name || '').trim();
   }
 
+  function getQuoteDirection(target) {
+    return target && target.direction === 'inverse' ? 'inverse' : 'forward';
+  }
+
+  function buildQuoteDirectionLabel(target) {
+    return getQuoteDirection(target) === 'inverse' ? '反向' : '正向';
+  }
+
   function buildQuoteAlertQuoteLabel(target) {
     const quote = quoteById.get(Number(target && target.quoteId));
     if (!quote) {
       return `报价 #${String(target && target.quoteId || '--')}`;
     }
+    const direction = getQuoteDirection(target);
     if (isCexOrderbookChain(quote.chain)) {
-      return `(${formatChainLabel(quote.chain)}) ${quote.symbol || '--'}`;
+      const parsed = parseCexTradingPairSymbol(quote.symbol);
+      if (parsed) {
+        const fromSymbol = direction === 'inverse' ? parsed.toSymbol : parsed.fromSymbol;
+        const toSymbol = direction === 'inverse' ? parsed.fromSymbol : parsed.toSymbol;
+        return `${buildQuoteDirectionLabel(target)} ${buildQuoteLabel(quote.chain, fromSymbol, toSymbol)}`;
+      }
+      return `${buildQuoteDirectionLabel(target)} (${formatChainLabel(quote.chain)}) ${quote.symbol || '--'}`;
     }
-    return buildQuoteLabel(
+    const fromToken = direction === 'inverse' ? quote.toToken : quote.fromToken;
+    const toToken = direction === 'inverse' ? quote.fromToken : quote.toToken;
+    return `${buildQuoteDirectionLabel(target)} ${buildQuoteLabel(
       quote.chain,
-      shortToken(quote.fromToken),
-      shortToken(quote.toToken)
-    );
+      shortToken(fromToken),
+      shortToken(toToken)
+    )}`;
   }
 
   function buildQuoteAlertThresholdLine(target) {
     if (!target || target.type !== 'quote') return '--';
+    const directionLabel = buildQuoteDirectionLabel(target);
     if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
-      return `阈值 ${String(target.value != null ? target.value : '--')}`;
+      return `${directionLabel} · 汇率阈值 ${String(target.value != null ? target.value : '--')}`;
     }
     if (target.ruleKind === 'percentUp' || target.ruleKind === 'percentDown') {
-      return `阈值 ${String(target.value != null ? target.value : '--')}% | 基准 ${String(target.basePrice != null ? target.basePrice : '--')}`;
+      return `${directionLabel} · 阈值 ${String(target.value != null ? target.value : '--')}% | 基准汇率 ${String(target.basePrice != null ? target.basePrice : '--')}`;
     }
     return '--';
   }
@@ -356,16 +389,16 @@
   function buildQuoteAlertRuleLine(target) {
     if (!target || target.type !== 'quote') return '--';
     if (target.ruleKind === 'targetAbove') {
-      return `总价 >= ${String(target.value != null ? target.value : '--')}`;
+      return `汇率 >= ${String(target.value != null ? target.value : '--')}`;
     }
     if (target.ruleKind === 'targetBelow') {
-      return `总价 <= ${String(target.value != null ? target.value : '--')}`;
+      return `汇率 <= ${String(target.value != null ? target.value : '--')}`;
     }
     if (target.ruleKind === 'percentUp') {
-      return `上涨 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
+      return `相对基准上涨 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
     }
     if (target.ruleKind === 'percentDown') {
-      return `下跌 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
+      return `相对基准下跌 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
     }
     return '--';
   }
@@ -429,6 +462,12 @@
     const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
     const query = pageState.alertFilterQuery;
     return alerts.filter((alert) => {
+      if (
+        pageState.filterQuoteId
+        && (!alert || !alert.target || alert.target.type !== 'quote' || String(alert.target.quoteId) !== String(pageState.filterQuoteId))
+      ) {
+        return false;
+      }
       const summary = buildAlertSummary(alert);
       const name = getAlertDisplayTitle(alert);
       return matchesSearch(`${name} ${summary}`, query);
@@ -438,7 +477,15 @@
   function getFilteredDismissedTargets() {
     const items = Array.isArray(alertConfig.dismissedTargets) ? alertConfig.dismissedTargets : [];
     const query = pageState.dismissedFilterQuery;
-    return items.filter((entry) => matchesSearch(buildDismissedSummary(entry), query));
+    return items.filter((entry) => {
+      if (
+        pageState.filterQuoteId
+        && (!entry || !entry.target || entry.target.type !== 'quote' || String(entry.target.quoteId) !== String(pageState.filterQuoteId))
+      ) {
+        return false;
+      }
+      return matchesSearch(buildDismissedSummary(entry), query);
+    });
   }
 
   function syncSelectionCounters() {
@@ -484,7 +531,7 @@
     return true;
   }
 
-  async function persistAndRefreshList(successMessage = '已保存，请回主看板点击重新加载。') {
+  async function persistAndRefreshList(successMessage = '已保存，主看板会自动同步。') {
     await persistAlertConfig();
     if (successMessage) {
       setStatus(successMessage, 'success');
@@ -517,7 +564,7 @@
     const note = getAlertDisplayTitle(alert);
     if (note) return note;
     if (alert && alert.target && alert.target.type === 'quote') {
-      return '报价规则';
+      return buildQuoteAlertQuoteLabel(alert.target);
     }
     if (alert && alert.target && alert.target.type === 'rule') {
       return alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则';
@@ -528,17 +575,20 @@
 
   function getDismissedPrimaryTitle(entry) {
     const target = entry && entry.target ? entry.target : null;
-    if (!target) return '已忽略路径';
+    if (!target) return '已忽略规则';
+    if (target.type === 'quote') {
+      return '已忽略交易对报警';
+    }
     if (target.type === 'rule') {
       return target.ruleKind === 'fixed' ? '已忽略固定规则' : '已忽略特殊规则';
     }
     const legCount = Array.isArray(target.legs) ? target.legs.length : 0;
-    return legCount > 0 ? `已忽略路径 (${legCount}腿)` : '已忽略路径';
+    return legCount > 0 ? `已忽略手工路径 (${legCount}腿)` : '已忽略手工路径';
   }
 
   function formatAlertMetaLine(alert) {
     const typeLabel = alert && alert.target && alert.target.type === 'quote'
-      ? '报价'
+      ? '交易对'
       : alert && alert.target && alert.target.type === 'rule'
         ? (alert.target.ruleKind === 'fixed' ? '固定' : '特殊')
         : '路径';
@@ -695,7 +745,7 @@
 
   async function loadAlertConfig() {
     const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
-    if (!response.ok) throw new Error('获取路径报警配置失败');
+    if (!response.ok) throw new Error('获取报警配置失败');
     const raw = await response.json();
     alertConfig = normalizeAlertConfigWithSpecialRules(raw);
   }
@@ -709,7 +759,7 @@
     });
     if (!response.ok) {
       const data = await response.json().catch(() => null);
-      throw new Error((data && data.error) || '保存路径报警配置失败');
+      throw new Error((data && data.error) || '保存报警配置失败');
     }
     alertConfig = payload;
     emitPathAlertConfigSync();
@@ -721,7 +771,8 @@
     const href = window.PathAlertPageUtils.buildPathAlertsPageHref({
       mode,
       alertId: options.alertId || '',
-      draft: options.draft || null
+      draft: options.draft || null,
+      filterQuoteId: pageState.filterQuoteId || ''
     });
     history.replaceState(null, '', href);
   }
@@ -731,7 +782,7 @@
     pageState.errorMessage = '';
     pageState.saveMessage = '';
     pageState.draft = cloneDraft(draft);
-    editorTitleEl.textContent = pageState.draft.id ? '编辑路径报警' : '新建路径报警';
+    editorTitleEl.textContent = pageState.draft.id ? '编辑报警' : '新建报警';
     updateHistory(mode, mode === 'edit'
       ? { alertId: pageState.draft.id }
       : { draft: pageState.draft.id ? null : { name: pageState.draft.name, target: collectEditorTarget(pageState.draft) } });
@@ -753,6 +804,7 @@
       const target = {
         type: 'quote',
         quoteId: Number(draft.selectedQuoteId),
+        direction: draft.quoteDirection === 'inverse' ? 'inverse' : 'forward',
         ruleKind: draft.quoteRuleKind,
         value: Number(draft.quoteValue)
       };
@@ -785,8 +837,17 @@
     if (!window.PathAlertPageUtils || !alertId) return '/path-alerts';
     return window.PathAlertPageUtils.buildPathAlertsPageHref({
       mode: 'edit',
-      alertId
+      alertId,
+      filterQuoteId: pageState.filterQuoteId || ''
     });
+  }
+
+  function createQuoteScopedDraft(direction = 'forward') {
+    const draft = createEmptyDraft();
+    draft.sourceType = 'quote';
+    draft.selectedQuoteId = pageState.filterQuoteId || '';
+    draft.quoteDirection = direction === 'inverse' ? 'inverse' : 'forward';
+    return draft;
   }
 
   function findDuplicateAlertForDraft(draft) {
@@ -831,21 +892,24 @@
       if (!quoteById.has(Number(draft.selectedQuoteId))) {
         return '请选择有效的报价';
       }
+      if (!['forward', 'inverse'].includes(draft.quoteDirection)) {
+        return '请选择有效的监控方向';
+      }
       if (!['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(draft.quoteRuleKind)) {
-        return '请选择有效的报价规则';
+        return '请选择有效的交易对报警规则';
       }
       if (!Number.isFinite(Number(draft.quoteValue))) {
-        return '报价阈值必须是合法数字';
+        return '汇率阈值必须是合法数字';
       }
       if (
         (draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown')
         && (!Number.isFinite(Number(draft.quoteBasePrice)) || Number(draft.quoteBasePrice) <= 0)
       ) {
-        return '百分比规则必须填写有效基准价';
+        return '百分比规则必须填写有效基准汇率';
       }
       const duplicateAlert = findDuplicateAlertForDraft(draft);
       if (duplicateAlert) {
-        return `该路径报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
+        return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
       }
       return '';
     }
@@ -871,11 +935,11 @@
       }
       const dismissedTarget = findDismissedTargetForDraft(draft);
       if (dismissedTarget) {
-        return '该路径已被标记为不需要，请先在“不需要路径”列表取消标记。';
+        return '该规则已被标记为忽略，请先在“已忽略规则”列表取消标记。';
       }
       const duplicateAlert = findDuplicateAlertForDraft(draft);
       if (duplicateAlert) {
-        return `该路径报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
+        return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
       }
       return '';
     }
@@ -889,11 +953,11 @@
     }
     const dismissedTarget = findDismissedTargetForDraft(draft);
     if (dismissedTarget) {
-      return '该路径已被标记为不需要，请先在“不需要路径”列表取消标记。';
+      return '该规则已被标记为忽略，请先在“已忽略规则”列表取消标记。';
     }
     const duplicateAlert = findDuplicateAlertForDraft(draft);
     if (duplicateAlert) {
-      return `该路径报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
+      return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
     }
     return '';
   }
@@ -954,7 +1018,7 @@
       getAlertDisplayTitle(alert),
       buildAlertSummary(alert),
       alert.target && alert.target.type === 'quote'
-        ? '报价规则'
+        ? '交易对报警'
         : alert.target && alert.target.type === 'rule'
         ? (alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则')
         : '路径'
@@ -995,7 +1059,7 @@
           </div>
         `;
       }).join('')
-      : `<div class="empty">${alerts.length ? '没有匹配的路径报警' : '暂无路径报警'}</div>`;
+      : `<div class="empty">${alerts.length ? '没有匹配的报警' : (pageState.filterQuoteId ? '这个交易对还没有报警' : '暂无报警')}</div>`;
 
     syncSelectionCounters();
   }
@@ -1030,7 +1094,7 @@
           </div>
         `;
       }).join('')
-      : `<div class="empty">${dismissedTargets.length ? '没有匹配的不需要路径' : '暂无不需要路径'}</div>`;
+      : `<div class="empty">${dismissedTargets.length ? '没有匹配的已忽略项' : '暂无已忽略项'}</div>`;
 
     syncSelectionCounters();
   }
@@ -1075,27 +1139,34 @@
     return `
       <div class="form-group">
         <label for="editor-quote-id">报价</label>
-        <select id="editor-quote-id">
+        <select id="editor-quote-id" ${pageState.filterQuoteId ? 'disabled' : ''}>
           <option value="">请选择</option>
           ${quoteOptions}
         </select>
       </div>
       <div class="form-group">
+        <label for="editor-quote-direction">方向</label>
+        <select id="editor-quote-direction">
+          <option value="forward" ${draft.quoteDirection === 'forward' ? 'selected' : ''}>正向</option>
+          <option value="inverse" ${draft.quoteDirection === 'inverse' ? 'selected' : ''}>反向</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label for="editor-quote-rule-kind">规则</label>
         <select id="editor-quote-rule-kind">
-          <option value="targetAbove" ${draft.quoteRuleKind === 'targetAbove' ? 'selected' : ''}>总价高于</option>
-          <option value="targetBelow" ${draft.quoteRuleKind === 'targetBelow' ? 'selected' : ''}>总价低于</option>
+          <option value="targetAbove" ${draft.quoteRuleKind === 'targetAbove' ? 'selected' : ''}>汇率高于</option>
+          <option value="targetBelow" ${draft.quoteRuleKind === 'targetBelow' ? 'selected' : ''}>汇率低于</option>
           <option value="percentUp" ${draft.quoteRuleKind === 'percentUp' ? 'selected' : ''}>相对基准上涨</option>
           <option value="percentDown" ${draft.quoteRuleKind === 'percentDown' ? 'selected' : ''}>相对基准下跌</option>
         </select>
       </div>
       <div class="form-group">
-        <label for="editor-quote-value">${draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown' ? '阈值 (%)' : '阈值'}</label>
+        <label for="editor-quote-value">${draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown' ? '阈值 (%)' : '汇率阈值'}</label>
         <input id="editor-quote-value" type="number" step="0.000001" value="${draft.quoteValue === '' ? '' : escapeHtml(String(draft.quoteValue))}">
       </div>
       ${(draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown') ? `
         <div class="form-group">
-          <label for="editor-quote-base-price">基准价</label>
+          <label for="editor-quote-base-price">基准汇率</label>
           <input id="editor-quote-base-price" type="number" step="0.000001" value="${draft.quoteBasePrice === '' ? '' : escapeHtml(String(draft.quoteBasePrice))}">
         </div>
       ` : ''}
@@ -1130,7 +1201,7 @@
 
   function renderEditor() {
     if (!pageState.editorVisible || !pageState.draft) {
-      editorEl.innerHTML = '<div class="empty">选择一条已有规则进行编辑，或点击“新建路径报警”。</div>';
+      editorEl.innerHTML = '<div class="empty">选择一条已有规则进行编辑，或点击“新建报警”。</div>';
       return;
     }
 
@@ -1157,7 +1228,7 @@
       ? `
         <div class="status-message error editor-duplicate-warning">
           <span>该路径已被标记为不需要，请先恢复后再添加。</span>
-          <a class="inline-link-btn" href="#dismissed-section">查看不需要路径</a>
+          <a class="inline-link-btn" href="#dismissed-section">查看已忽略规则</a>
         </div>
       `
       : '';
@@ -1174,7 +1245,7 @@
 
       <div class="type-tabs">
         <button type="button" class="type-tab${draft.sourceType === 'path' ? ' active' : ''}" data-editor-type="path">手工路径</button>
-        <button type="button" class="type-tab${draft.sourceType === 'quote' ? ' active' : ''}" data-editor-type="quote">报价规则</button>
+        <button type="button" class="type-tab${draft.sourceType === 'quote' ? ' active' : ''}" data-editor-type="quote">交易对报警</button>
         <button type="button" class="type-tab${draft.sourceType === 'fixed' ? ' active' : ''}" data-editor-type="fixed">固定规则</button>
         <button type="button" class="type-tab${draft.sourceType === 'special' ? ' active' : ''}" data-editor-type="special">特殊规则</button>
       </div>
@@ -1188,7 +1259,7 @@
               : renderRuleChoices(draft.sourceType, draft.selectedRuleId)}
         </div>
         <div class="editor-pane">
-          <div class="editor-pane-title">已选路径</div>
+          <div class="editor-pane-title">${draft.sourceType === 'path' ? '已选路径' : '已选目标'}</div>
           ${renderSelectedLegs(draft)}
           <div class="summary-box">${renderSummaryLinesHtml(targetSummaryLines, 'summary-line')}</div>
         </div>
@@ -1227,13 +1298,13 @@
           </div>
           <label class="editor-checkbox-row" for="editor-enabled">
             <input id="editor-enabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}>
-            <span>启用这条路径报警</span>
+            <span>启用这条报警</span>
           </label>
         </div>
       </div>
 
       <div class="editor-actions">
-        <div class="inline-hint">保存后，请回主看板点击重新加载。</div>
+        <div class="inline-hint">保存后，主看板会自动同步。</div>
         <div class="editor-actions-right">
           <button type="button" id="editor-cancel-btn">取消</button>
           <button type="button" class="primary" id="editor-save-btn" ${saveDisabledAttr}>保存</button>
@@ -1339,12 +1410,13 @@
   function applyInitialRoute() {
     const parsed = window.PathAlertPageUtils
       ? window.PathAlertPageUtils.parsePathAlertsPagePrefill(location.href)
-      : { mode: 'manage', alertId: '', draft: null };
+      : { mode: 'manage', alertId: '', filterQuoteId: '', draft: null };
+    pageState.filterQuoteId = String(parsed.filterQuoteId || '').trim();
     if (parsed.mode === 'edit') {
       const alert = (alertConfig.alerts || []).find((item) => item.id === parsed.alertId);
       if (!alert) {
-        setStatus(`未找到路径报警：${parsed.alertId || '--'}`, 'error');
-        openEditorWithDraft(createEmptyDraft(), 'create');
+        setStatus(`未找到报警：${parsed.alertId || '--'}`, 'error');
+        openEditorWithDraft(pageState.filterQuoteId ? createQuoteScopedDraft() : createEmptyDraft(), 'create');
         return;
       }
       openEditorWithDraft(buildDraftFromAlert(alert), 'edit');
@@ -1354,7 +1426,16 @@
       if (location.search.includes('draft=') && !parsed.draft) {
         setStatus('导入草稿无效，请重新从机会列表发起。', 'error');
       }
-      openEditorWithDraft(buildDraftFromPrefill(parsed.draft), 'create');
+      const prefilledDraft = buildDraftFromPrefill(parsed.draft);
+      if (pageState.filterQuoteId && prefilledDraft.sourceType !== 'quote') {
+        prefilledDraft.sourceType = 'quote';
+        prefilledDraft.selectedQuoteId = pageState.filterQuoteId;
+      }
+      openEditorWithDraft(prefilledDraft, 'create');
+      return;
+    }
+    if (pageState.filterQuoteId && !getFilteredAlerts().length) {
+      openEditorWithDraft(createQuoteScopedDraft(), 'create');
       return;
     }
     closeEditor();
@@ -1537,6 +1618,7 @@
       };
     }
     if (target.id === 'editor-quote-id') pageState.draft.selectedQuoteId = target.value || '';
+    if (target.id === 'editor-quote-direction') pageState.draft.quoteDirection = target.value === 'inverse' ? 'inverse' : 'forward';
     if (target.id === 'editor-quote-rule-kind') pageState.draft.quoteRuleKind = target.value || 'targetAbove';
     if (target.id === 'editor-quote-value') pageState.draft.quoteValue = target.value === '' ? '' : Number(target.value);
     if (target.id === 'editor-quote-base-price') pageState.draft.quoteBasePrice = target.value === '' ? '' : Number(target.value);
@@ -1549,7 +1631,7 @@
     if (target.id === 'editor-trigger') {
       syncEditorConfirmDelayState();
     }
-    if (target.id === 'editor-quote-rule-kind') {
+    if (target.id === 'editor-quote-id' || target.id === 'editor-quote-direction' || target.id === 'editor-quote-rule-kind') {
       rerenderEditorPreservingFocus(target);
     }
   }
@@ -1559,7 +1641,8 @@
     pageState.draft.sourceType = sourceType;
     pageState.draft.selectedRuleId = '';
     pageState.draft.specialRuleConfig = null;
-    pageState.draft.selectedQuoteId = '';
+    pageState.draft.selectedQuoteId = pageState.filterQuoteId || '';
+    pageState.draft.quoteDirection = 'forward';
     pageState.draft.quoteRuleKind = 'targetAbove';
     pageState.draft.quoteValue = '';
     pageState.draft.quoteBasePrice = '';
@@ -1694,7 +1777,9 @@
       renderEditor();
     }
 
-    createBtn.addEventListener('click', () => openEditorWithDraft(createEmptyDraft(), 'create'));
+    createBtn.addEventListener('click', () => {
+      openEditorWithDraft(pageState.filterQuoteId ? createQuoteScopedDraft() : createEmptyDraft(), 'create');
+    });
     closeEditorBtn.addEventListener('click', closeEditor);
     listEl.addEventListener('click', (event) => {
       handleListClick(event).catch((error) => setStatus(error.message || '操作失败', 'error'));

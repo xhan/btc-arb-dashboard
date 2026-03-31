@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>路径报警管理</title>
+  <title>报警管理</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -560,11 +560,11 @@
   <div id="path-alerts-page" class="page-shell">
     <div class="page-header">
       <div>
-        <h1>路径报警管理</h1>
-        <div class="page-subtitle">这里只管理配置。实时收益、状态和实际报警执行，仍在主看板的路径报警窗口查看。</div>
+        <h1>报警管理</h1>
+        <div class="page-subtitle">这里统一管理手工路径、固定规则、特殊规则和交易对汇率报警。实时状态仍在主看板查看。</div>
       </div>
       <div class="page-actions">
-        <button id="path-alerts-create-btn" class="primary" type="button">+ 新建路径报警</button>
+        <button id="path-alerts-create-btn" class="primary" type="button">+ 新建报警</button>
         <a class="page-link" href="/" target="_blank" rel="noopener noreferrer">返回主看板</a>
       </div>
     </div>
@@ -576,7 +576,7 @@
         <section class="panel">
           <div class="panel-head">
             <h2>规则列表</h2>
-            <div class="inline-hint">保存后，请回主看板点击重新加载</div>
+            <div class="inline-hint">保存后，主看板会自动同步</div>
           </div>
           <div class="panel-controls">
             <input id="path-alerts-search-input" type="text" placeholder="搜索链名、代币、规则摘要">
@@ -589,11 +589,11 @@
 
         <section class="panel section-anchor" id="dismissed-section">
           <div class="panel-head">
-            <h2>不需要路径</h2>
-            <div class="inline-hint">标记后，后续全量导入会自动跳过</div>
+            <h2>已忽略规则</h2>
+            <div class="inline-hint">标记后，后续导入或新增时会自动提示并跳过重复项</div>
           </div>
           <div class="panel-controls">
-            <input id="path-alerts-dismissed-search-input" type="text" placeholder="搜索已忽略路径">
+            <input id="path-alerts-dismissed-search-input" type="text" placeholder="搜索已忽略规则">
             <button id="path-alerts-dismissed-delete-selected-btn" type="button">批量删除</button>
             <div id="path-alerts-dismissed-selection-count" class="inline-count">已选 0 条</div>
           </div>
@@ -603,7 +603,7 @@
 
       <section class="panel">
         <div class="panel-head">
-          <h2 id="path-alerts-editor-title">新建路径报警</h2>
+          <h2 id="path-alerts-editor-title">新建报警</h2>
           <button id="path-alerts-close-editor-btn" type="button">关闭编辑</button>
         </div>
         <div id="path-alerts-editor"></div>

@@ -125,6 +125,9 @@
     let currentHoveredQuoteId = null; 
     let currentlyEditingQuote = null; 
     const MAX_ALERT_LOG_ENTRIES = 300;
+    const PATH_ALERT_MUTE_EXTEND_DURATION_MS = window.PathAlertUtils
+        ? window.PathAlertUtils.PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000)
+        : (2 * 60 * 60 * 1000);
     const PATH_ALERT_MUTE_DURATION_MS = Number(window.PathAlertUtils && window.PathAlertUtils.PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
     const alertDebugController = window.AlertDebugUtils
         && typeof window.AlertDebugUtils.createAlertDebugController === 'function'
@@ -152,9 +155,6 @@
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const audioNoticeEl = document.getElementById('audio-notice');
     const alertModal = document.getElementById('alert-modal');
-    const alertTriggerModeSelect = document.getElementById('alert-trigger-mode');
-    const alertConfirmDelayInput = document.getElementById('alert-confirm-delay');
-    const alertCooldownInput = document.getElementById('alert-cooldown');
     const pathAlertWindow = document.getElementById('path-alert-window');
     const pathAlertContent = document.getElementById('path-alert-content');
     const pathAlertHeader = document.getElementById('path-alert-header');
@@ -778,7 +778,8 @@
 
     function buildLegacyQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
         const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
-        const label = buildQuoteAlertDisplayLabel(quote);
+        const direction = getQuoteAlertDirection(alert && alert.target);
+        const label = buildQuoteAlertDisplayLabel(quote, quoteMonitorState.get(quote.id) || {}, direction);
         const currentValueText = options.currentValueText || '';
         const actionLink = buildLegacyQuoteAlertActionLink(quote);
         return {
@@ -825,8 +826,7 @@
                     type="button"
                     class="path-alert-log-mute-btn"
                     data-quote-alert-log-mute="${escapeHtml(entry.alert && entry.alert.id || '')}"
-                    ${mutedEntry ? 'disabled' : ''}
-                >${mutedEntry ? '已忽略 1 小时' : '忽略 1 小时'}</button>`
+                >${mutedEntry ? '延长 2 小时' : '忽略 1 小时'}</button>`
             : '';
         return `
             <div
@@ -896,16 +896,19 @@
         const muteTarget = entry && entry.mutedTargetCandidate ? entry.mutedTargetCandidate : null;
         if (!muteTarget) return null;
         if (!window.PathAlertUtils || typeof window.PathAlertUtils.createMutedPathTargetEntry !== 'function') return null;
-        const mutedEntry = window.PathAlertUtils.createMutedPathTargetEntry(
-            muteTarget,
-            entry.summaryLines,
-            nowMs,
-            PATH_ALERT_MUTE_DURATION_MS
-        );
-        if (!mutedEntry) return null;
-        const targetKey = buildMutedPathTargetKey(mutedEntry);
+        const targetKey = buildMutedPathTargetKey(muteTarget);
         if (!targetKey) return null;
         pruneMutedPathTargetsInPlace(nowMs);
+        const existingEntry = mutedPathTargets.find((item) => buildMutedPathTargetKey(item) === targetKey) || null;
+        const mutedEntry = existingEntry && typeof window.PathAlertUtils.extendMutedPathTargetEntry === 'function'
+            ? window.PathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS)
+            : window.PathAlertUtils.createMutedPathTargetEntry(
+                muteTarget,
+                entry.summaryLines,
+                nowMs,
+                PATH_ALERT_MUTE_DURATION_MS
+            );
+        if (!mutedEntry) return null;
         mutedPathTargets = mutedPathTargets.filter((item) => buildMutedPathTargetKey(item) !== targetKey);
         mutedPathTargets.push(mutedEntry);
         updateMutedPathAlertLogCards(targetKey, nowMs);
@@ -937,8 +940,8 @@
                     statusEl.className = 'path-alert-log-tag path-alert-log-tag-muted';
                 }
                 if (buttonEl) {
-                    buttonEl.textContent = '已忽略 1 小时';
-                    buttonEl.disabled = true;
+                    buttonEl.textContent = '延长 2 小时';
+                    buttonEl.disabled = false;
                 }
             } else {
                 if (statusEl) {
@@ -990,8 +993,7 @@
                     type="button"
                     class="path-alert-log-mute-btn"
                     data-path-alert-log-mute="${escapeHtml(entry.alert.id || '')}"
-                    ${mutedEntry ? 'disabled' : ''}
-                >${mutedEntry ? '已忽略 1 小时' : '忽略 1 小时'}</button>`
+                >${mutedEntry ? '延长 2 小时' : '忽略 1 小时'}</button>`
             : '';
         return `
             <div
@@ -1791,12 +1793,6 @@
         clearQuoteAlertUi(quote.id);
         clearQuoteTrendArrow(quote.id, previousState);
 
-        if (currentlyEditingQuote && currentlyEditingQuote.quote && currentlyEditingQuote.quote.id === quote.id && alertModal.classList.contains('visible')) {
-            const modalPriceEl = document.getElementById('alert-current-price-value');
-            if (modalPriceEl) {
-                modalPriceEl.textContent = '已暂停';
-            }
-        }
     }
 
     function applyActiveQuoteUiState(quote, options = {}) {
@@ -3391,11 +3387,12 @@
 
     function buildQuoteAlertThresholdLine(target) {
         if (!target || target.type !== 'quote') return '--';
+        const directionLabel = getQuoteAlertDirection(target) === 'inverse' ? '反向' : '正向';
         if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
-            return `阈值 ${String(target.value != null ? target.value : '--')}`;
+            return `${directionLabel} · 汇率阈值 ${String(target.value != null ? target.value : '--')}`;
         }
         if (target.ruleKind === 'percentUp' || target.ruleKind === 'percentDown') {
-            return `阈值 ${String(target.value != null ? target.value : '--')}% | 基准 ${String(target.basePrice != null ? target.basePrice : '--')}`;
+            return `${directionLabel} · 阈值 ${String(target.value != null ? target.value : '--')}% | 基准汇率 ${String(target.basePrice != null ? target.basePrice : '--')}`;
         }
         return '--';
     }
@@ -3501,15 +3498,15 @@
             const quote = match ? match.quote : null;
             const monitorState = quote ? quoteMonitorState.get(Number(quote.id)) : null;
             const label = quote
-                ? buildQuoteAlertDisplayLabel(quote, monitorState || {})
+                ? buildQuoteAlertDisplayLabel(quote, monitorState || {}, getQuoteAlertDirection(alert.target))
                 : `报价 #${String(alert.target.quoteId || '--')}`;
             const ruleLine = alert.target.ruleKind === 'targetAbove'
-                ? `总价 >= ${String(alert.target.value != null ? alert.target.value : '--')}`
+                ? `汇率 >= ${String(alert.target.value != null ? alert.target.value : '--')}`
                 : alert.target.ruleKind === 'targetBelow'
-                    ? `总价 <= ${String(alert.target.value != null ? alert.target.value : '--')}`
+                    ? `汇率 <= ${String(alert.target.value != null ? alert.target.value : '--')}`
                     : alert.target.ruleKind === 'percentUp'
-                        ? `上涨 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`
-                        : `下跌 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`;
+                        ? `相对基准上涨 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`
+                        : `相对基准下跌 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`;
             return [label, ruleLine];
         }
         if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
@@ -3547,11 +3544,8 @@
     function buildPathAlertDisplayTitle(alert) {
         const name = String(alert && alert.name || '').trim();
         if (name) return name;
-        if (alert && alert.target && alert.target.type === 'quote') {
-            return '报价规则';
-        }
         const lines = buildPathAlertSummaryLines(alert);
-        return lines[0] || '未配置路径';
+        return lines[0] || (alert && alert.target && alert.target.type === 'quote' ? '交易对报警' : '未配置路径');
     }
 
     function renderPathAlertSummaryLinesHtml(alert) {
@@ -5076,13 +5070,6 @@
                 scheduleArbUpdate();
                 scheduleDataTerminalUpdate();
                 
-                if (currentlyEditingQuote && currentlyEditingQuote.quote.id === quote.id && alertModal.classList.contains('visible')) {
-                     const modalPriceEl = document.getElementById('alert-current-price-value');
-                     if (modalPriceEl) {
-                         modalPriceEl.textContent = data.rawPrice.toFixed(6);
-                     }
-                }
-
                 updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
                 checkPriceForAlerts(quote);
             }
@@ -5442,27 +5429,30 @@
         arbPathWindow.style.height = `${maxHeight}px`;
     }
 
-    function getQuoteAlertConfigUtils() {
-        return window.QuoteAlertConfigUtils || null;
+    function getQuoteAlertDirection(target) {
+        return target && target.direction === 'inverse' ? 'inverse' : 'forward';
     }
 
-    function getDefaultQuoteAlertSettings() {
-        return {
-            triggerMode: 'delayed',
-            confirmDelaySec: 13,
-            cooldownSec: 120
-        };
-    }
-
-    function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMonitorState.get(quote.id) || {}) {
+    function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMonitorState.get(quote.id) || {}, direction = 'forward') {
         if (!quote) return '--';
+        const isInverse = direction === 'inverse';
         if (isCexOrderbookChain(quote.chain)) {
+            const parsed = parseCexTradingPairSymbol(quote.symbol);
+            if (parsed) {
+                const fromSymbol = isInverse ? parsed.toSymbol : parsed.fromSymbol;
+                const toSymbol = isInverse ? parsed.fromSymbol : parsed.toSymbol;
+                return `${fromSymbol}/${toSymbol}`;
+            }
             return String(quote.symbol || '').trim() || '--';
         }
         if (monitorState.fromSymbol && monitorState.toSymbol) {
-            return `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
+            return isInverse
+                ? `${monitorState.toSymbol}/${monitorState.fromSymbol}`
+                : `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
         }
-        return `${String(quote.fromToken || '').slice(0, 4)}.../${String(quote.toToken || '').slice(0, 4)}...`;
+        const fromToken = isInverse ? quote.toToken : quote.fromToken;
+        const toToken = isInverse ? quote.fromToken : quote.toToken;
+        return `${String(fromToken || '').slice(0, 4)}.../${String(toToken || '').slice(0, 4)}...`;
     }
 
     function getQuoteAlertsForQuoteId(quoteId) {
@@ -5473,68 +5463,6 @@
             && alert.target.type === 'quote'
             && Number(alert.target.quoteId) === normalizedQuoteId
         ));
-    }
-
-    function buildLegacyQuoteAlertModalState(quote) {
-        const quoteAlerts = getQuoteAlertsForQuoteId(quote && quote.id);
-        const utils = getQuoteAlertConfigUtils();
-        const defaults = getDefaultQuoteAlertSettings();
-        const fields = quoteAlerts.length && utils && typeof utils.buildLegacyQuoteAlertFields === 'function'
-            ? utils.buildLegacyQuoteAlertFields(quoteAlerts)
-            : {};
-        const firstAlert = quoteAlerts[0] || null;
-        return {
-            fields,
-            settings: {
-                triggerMode: firstAlert && firstAlert.triggerMode === 'immediate' ? 'immediate' : defaults.triggerMode,
-                confirmDelaySec: firstAlert && Number.isFinite(Number(firstAlert.confirmDelaySec))
-                    ? Number(firstAlert.confirmDelaySec)
-                    : defaults.confirmDelaySec,
-                cooldownSec: firstAlert && Number.isFinite(Number(firstAlert.cooldownSec))
-                    ? Number(firstAlert.cooldownSec)
-                    : defaults.cooldownSec
-            }
-        };
-    }
-
-    function normalizeQuoteAlertsForStorage(nextAlerts) {
-        if (!window.PathAlertUtils || typeof window.PathAlertUtils.normalizePathAlert !== 'function') {
-            return nextAlerts;
-        }
-        const settings = pathAlertConfig.settings || { defaultCooldownSec: 180 };
-        return nextAlerts
-            .map((alert) => window.PathAlertUtils.normalizePathAlert(alert, settings))
-            .filter(Boolean);
-    }
-
-    function replaceQuoteAlertsForQuote(quote, legacyAlerts, runtimeSettings = {}) {
-        const utils = getQuoteAlertConfigUtils();
-        if (!utils || !quote) return false;
-        const normalizedQuoteId = Number(quote.id);
-        const existingAlerts = Array.isArray(pathAlertConfig.alerts) ? pathAlertConfig.alerts : [];
-        const removedIds = [];
-        const retainedAlerts = existingAlerts.filter((alert) => {
-            const isCurrentQuoteAlert = alert && alert.target && alert.target.type === 'quote' && Number(alert.target.quoteId) === normalizedQuoteId;
-            if (isCurrentQuoteAlert) {
-                removedIds.push(alert.id);
-            }
-            return !isCurrentQuoteAlert;
-        });
-        removedIds.forEach((alertId) => pathAlertRuntimeState.delete(alertId));
-
-        const nextAlerts = typeof utils.buildQuoteAlertsFromLegacyConfig === 'function'
-            ? utils.buildQuoteAlertsFromLegacyConfig({
-                quoteId: quote.id,
-                quoteLabel: `${CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain} ${buildQuoteAlertDisplayLabel(quote)}`.trim(),
-                triggerMode: runtimeSettings.triggerMode,
-                confirmDelaySec: runtimeSettings.confirmDelaySec,
-                cooldownSec: runtimeSettings.cooldownSec,
-                oldAlerts: legacyAlerts
-            })
-            : [];
-
-        pathAlertConfig.alerts = retainedAlerts.concat(normalizeQuoteAlertsForStorage(nextAlerts));
-        return true;
     }
 
     function syncLegacyQuoteAlertDismissButton(resultDiv, state, quoteId) {
@@ -5558,16 +5486,16 @@
         if (!alert || !alert.target || !evaluation) return '';
         const target = alert.target;
         if (target.ruleKind === 'targetAbove') {
-            return `总价已达到或超过目标 ${formatDetailNumber(target.value)}`;
+            return `汇率已达到或超过目标 ${formatDetailNumber(target.value)}`;
         }
         if (target.ruleKind === 'targetBelow') {
-            return `总价已达到或低于目标 ${formatDetailNumber(target.value)}`;
+            return `汇率已达到或低于目标 ${formatDetailNumber(target.value)}`;
         }
         if (target.ruleKind === 'percentUp') {
-            return `价格相比基准(${formatDetailNumber(evaluation.basePrice)}) 上涨 ${Number(evaluation.changePercent || 0).toFixed(3)}% (>${formatDetailNumber(target.value)}%)`;
+            return `汇率相比基准(${formatDetailNumber(evaluation.basePrice)}) 上涨 ${Number(evaluation.changePercent || 0).toFixed(3)}% (>${formatDetailNumber(target.value)}%)`;
         }
         if (target.ruleKind === 'percentDown') {
-            return `价格相比基准(${formatDetailNumber(evaluation.basePrice)}) 下跌 ${Math.abs(Number(evaluation.changePercent || 0)).toFixed(3)}% (>${formatDetailNumber(target.value)}%)`;
+            return `汇率相比基准(${formatDetailNumber(evaluation.basePrice)}) 下跌 ${Math.abs(Number(evaluation.changePercent || 0)).toFixed(3)}% (>${formatDetailNumber(target.value)}%)`;
         }
         return '';
     }
@@ -5576,11 +5504,11 @@
         if (!quote || !alert || !alert.target || !evaluation) return '';
         if (alert.target.ruleKind === 'targetAbove' || alert.target.ruleKind === 'targetBelow') {
             return Number.isFinite(Number(evaluation.currentValue))
-                ? `${formatDetailNumber(quote.amount || 1)} -> ${formatDetailNumber(evaluation.currentValue)}`
+                ? `当前汇率 ${formatDetailNumber(evaluation.currentValue)}`
                 : '';
         }
         return Number.isFinite(Number(evaluation.basePrice)) && Number.isFinite(Number(evaluation.currentValue))
-            ? `${formatDetailNumber(evaluation.basePrice)} -> ${formatDetailNumber(evaluation.currentValue)}`
+            ? `基准汇率 ${formatDetailNumber(evaluation.basePrice)} -> ${formatDetailNumber(evaluation.currentValue)}`
             : '';
     }
 
@@ -6313,8 +6241,6 @@
             const quote = category.quotes.find(q => q.id == editQuoteId);
             if (!quote) return;
             currentlyEditingQuote = { quote: quote, categoryId: categoryId };
-            const modalAlertState = buildLegacyQuoteAlertModalState(quote);
-            const currentAlerts = modalAlertState.fields || {};
             const monitorState = quoteMonitorState.get(quote.id) || {};
             
             let pairLabel = quote.symbol;
@@ -6369,32 +6295,6 @@
             if (modalDeleteQuoteBtn) {
                 modalDeleteQuoteBtn.style.display = 'block';
             }
-            
-            document.getElementById('reset-base-price').checked = false;
-
-            document.getElementById('alert-percent-up').value = currentAlerts.percentUp || '';
-            document.getElementById('alert-percent-down').value = currentAlerts.percentDown || '';
-            document.getElementById('alert-target-above').value = currentAlerts.targetAbove || '';
-            document.getElementById('alert-target-below').value = currentAlerts.targetBelow || '';
-            if (alertTriggerModeSelect) {
-                alertTriggerModeSelect.value = modalAlertState.settings.triggerMode || 'delayed';
-            }
-            if (alertConfirmDelayInput) {
-                alertConfirmDelayInput.value = modalAlertState.settings.confirmDelaySec ?? 13;
-            }
-            if (alertCooldownInput) {
-                alertCooldownInput.value = modalAlertState.settings.cooldownSec ?? getDefaultQuoteAlertSettings().cooldownSec;
-            }
-            
-            const basePriceEl = document.getElementById('alert-current-price-value');
-            const currentRaw = monitorState.lastRawPrice;
-            basePriceEl.textContent = (typeof currentRaw === 'number') ? currentRaw.toFixed(6) : '获取中...';
-            
-            const savedBasePrice = currentAlerts.basePrice;
-            const basePriceText = (typeof savedBasePrice === 'number') ? `(基准: ${savedBasePrice.toFixed(6)})` : '';
-            
-            document.getElementById('alert-up-base-display').textContent = basePriceText;
-            document.getElementById('alert-down-base-display').textContent = basePriceText;
 
             alertModal.classList.add('visible');
 
@@ -6444,6 +6344,12 @@
                     deleteQuoteFromCategory(categoryId, quote.id);
                 });
             }
+        } else if (e.target.id === 'open-quote-alerts-manage') {
+            if (currentlyEditingQuote && currentlyEditingQuote.quote) {
+                openPathAlertsManagementPage({
+                    filterQuoteId: currentlyEditingQuote.quote.id
+                });
+            }
         } else if (e.target.id === 'modal-save') {
             if (currentlyEditingQuote && currentlyEditingQuote.quote) {
                 const { quote } = currentlyEditingQuote;
@@ -6488,56 +6394,7 @@
                     queueQuoteRefresh(quote);
                 }
 
-                const pUp = parseFloat(document.getElementById('alert-percent-up').value);
-                const pDown = parseFloat(document.getElementById('alert-percent-down').value);
-                const tAbove = parseFloat(document.getElementById('alert-target-above').value);
-                const tBelow = parseFloat(document.getElementById('alert-target-below').value);
-                const resetBasePrice = document.getElementById('reset-base-price').checked;
-                const triggerMode = alertTriggerModeSelect && alertTriggerModeSelect.value === 'immediate' ? 'immediate' : 'delayed';
-                const confirmDelaySec = Number(alertConfirmDelayInput && alertConfirmDelayInput.value || 13);
-                const cooldownSec = Number(alertCooldownInput && alertCooldownInput.value || getDefaultQuoteAlertSettings().cooldownSec);
-                const modalAlertState = buildLegacyQuoteAlertModalState(quote);
-
-                const newAlerts = {
-                    percentUp: pUp || null,
-                    percentDown: pDown || null,
-                    targetAbove: tAbove || null,
-                    targetBelow: tBelow || null,
-                };
-
-                if (newAlerts.percentUp || newAlerts.percentDown) {
-                    const monitorState = quoteMonitorState.get(quote.id) || {};
-                    const currentRawPrice = monitorState.lastRawPrice;
-                    const oldBasePrice = modalAlertState.fields && modalAlertState.fields.basePrice;
-
-                    if (resetBasePrice || typeof oldBasePrice !== 'number') {
-                         if (typeof currentRawPrice === 'number') {
-                             newAlerts.basePrice = currentRawPrice;
-                         }
-                    } else {
-                         newAlerts.basePrice = oldBasePrice;
-                    }
-                }
-
-                Object.keys(newAlerts).forEach(key => { if (newAlerts[key] === null) delete newAlerts[key]; });
-                
-                replaceQuoteAlertsForQuote(quote, newAlerts, {
-                    triggerMode,
-                    confirmDelaySec,
-                    cooldownSec
-                });
-
-                renderDataTerminalPanel();
-
-                const state = quoteMonitorState.get(quote.id);
-                if (state) {
-                    state.hasUnreadAlert = false; 
-                    state.isSoundActive = false;
-                    state.logShown = false;
-                }
-
                 saveData();
-                queuePathAlertConfigSave();
                 alertModal.classList.remove('visible');
                 currentlyEditingQuote = null;
             }
