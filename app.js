@@ -182,6 +182,10 @@
     const quoteTokenAddressesEl = document.getElementById('quote-token-addresses');
     const quoteFromTokenLineEl = document.getElementById('quote-from-token-line');
     const quoteToTokenLineEl = document.getElementById('quote-to-token-line');
+    const quoteSourceSelect = document.getElementById('quote-source-pref');
+    const kyberDirectPoolsGroup = document.getElementById('kyber-direct-pools-group');
+    const kyberDirectPoolsNote = document.getElementById('kyber-direct-pools-note');
+    const kyberOnlyDirectPoolsInput = document.getElementById('kyber-only-direct-pools');
     
     const manualSaveBtn = document.getElementById('manual-save-btn');
     const manualSaveText = document.getElementById('manual-save-text');
@@ -5915,6 +5919,23 @@
             && window.RequestChannelUtils.supportsRequestChannelForQuote(quote));
     }
 
+    function shouldShowKyberOnlyDirectPoolsControl(quote, selectedSource) {
+        if (!quote || !isEvmChain(quote.chain) || quote.chain.toLowerCase() === 'plasma') {
+            return false;
+        }
+        return selectedSource === 'Kyber' || selectedSource === 'Auto';
+    }
+
+    function syncKyberOnlyDirectPoolsControl(quote, selectedSource) {
+        const shouldShow = shouldShowKyberOnlyDirectPoolsControl(quote, selectedSource);
+        if (kyberDirectPoolsGroup) {
+            kyberDirectPoolsGroup.style.display = shouldShow ? 'flex' : 'none';
+        }
+        if (kyberDirectPoolsNote) {
+            kyberDirectPoolsNote.style.display = shouldShow ? 'block' : 'none';
+        }
+    }
+
     function renderQuoteRequestChannelOptions(quote) {
         if (!requestChannelSelectGroup || !quoteRequestChannelSelect) return;
 
@@ -6266,17 +6287,23 @@
             }
             
             const sourceGroup = document.getElementById('source-select-group');
-            const sourceSelect = document.getElementById('quote-source-pref');
             if (isEvmChain(quote.chain)) {
                 if (quote.chain.toLowerCase() === 'plasma') {
                     sourceGroup.style.display = 'none';
+                    syncKyberOnlyDirectPoolsControl(quote, '');
                 } else {
                     sourceGroup.style.display = 'block';
                     const pref = quote.preferredSource || 'Kyber';
-                    sourceSelect.value = pref;
+                    quoteSourceSelect.value = pref;
+                    syncKyberOnlyDirectPoolsControl(quote, pref);
                 }
             } else {
                 sourceGroup.style.display = 'none';
+                syncKyberOnlyDirectPoolsControl(quote, '');
+            }
+
+            if (kyberOnlyDirectPoolsInput) {
+                kyberOnlyDirectPoolsInput.checked = quote.kyberOnlyDirectPools === true;
             }
 
             renderQuoteRequestChannelOptions(quote);
@@ -6357,12 +6384,22 @@
                 
                 if (isEvmChain(quote.chain)) {
                     if (quote.chain.toLowerCase() !== 'plasma') {
-                        const newSource = document.getElementById('quote-source-pref').value;
+                        const newSource = quoteSourceSelect.value;
                         if (quote.preferredSource !== newSource) {
                             quote.preferredSource = newSource;
                             shouldQueueRefreshQuote = true;
                         }
                     }
+                }
+
+                const kyberOnlyDirectPools = kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;
+                if (quote.kyberOnlyDirectPools !== kyberOnlyDirectPools) {
+                    if (kyberOnlyDirectPools) {
+                        quote.kyberOnlyDirectPools = true;
+                    } else {
+                        delete quote.kyberOnlyDirectPools;
+                    }
+                    shouldQueueRefreshQuote = true;
                 }
 
                 const showInverse = document.getElementById('show-inverse-quote').checked;
@@ -6404,6 +6441,13 @@
     document.getElementById('confirm-ok').addEventListener('click', () => { if (typeof onConfirmAction === 'function') { onConfirmAction(); } closeConfirmModal(); });
     document.getElementById('confirm-cancel').addEventListener('click', closeConfirmModal);
     confirmModal.addEventListener('click', (e) => { if (e.target === confirmModal) closeConfirmModal(); });
+
+    if (quoteSourceSelect) {
+        quoteSourceSelect.addEventListener('change', () => {
+            const currentQuote = currentlyEditingQuote && currentlyEditingQuote.quote ? currentlyEditingQuote.quote : null;
+            syncKyberOnlyDirectPoolsControl(currentQuote, quoteSourceSelect.value);
+        });
+    }
     
     addCategoryModal.addEventListener('click', (e) => {
          if (e.target.id === 'add-category-cancel' || (e.target === addCategoryModal && !e.target.closest('.modal-box'))) {

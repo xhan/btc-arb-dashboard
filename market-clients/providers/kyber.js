@@ -1,4 +1,18 @@
 function createKyberClient(deps) {
+  function buildKyberRouteUrl(input) {
+    const params = new URLSearchParams({
+      tokenIn: input.fromToken,
+      tokenOut: input.toToken,
+      amountIn: input.amountInRaw
+    });
+
+    if (input.onlyDirectPools === true) {
+      params.set('onlyDirectPools', 'true');
+    }
+
+    return `https://aggregator-api.kyberswap.com/${input.chain}/api/v1/routes?${params.toString()}`;
+  }
+
   return {
     async getQuote(input) {
       const requestContext = input && input.requestContext ? input.requestContext : undefined;
@@ -18,7 +32,13 @@ function createKyberClient(deps) {
       ]);
 
       const amountInRaw = deps.toRawAmount(finalAmount, fromMeta.decimals);
-      const apiUrl = `https://aggregator-api.kyberswap.com/${chain}/api/v1/routes?tokenIn=${fromToken}&tokenOut=${toToken}&amountIn=${amountInRaw}`;
+      const apiUrl = buildKyberRouteUrl({
+        chain,
+        fromToken,
+        toToken,
+        amountInRaw,
+        onlyDirectPools: input && input.kyberOnlyDirectPools === true
+      });
       const configMore = requestContext && requestContext.configMore
         ? requestContext.configMore
         : await deps.getConfigMore();
