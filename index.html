@@ -275,6 +275,17 @@
             white-space: nowrap;
             text-transform: none;
         }
+        .quote-direct-badge {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            margin-left: 5px;
+            border-radius: 999px;
+            background: #38a169;
+            box-shadow: 0 0 0 1px rgba(56, 161, 105, 0.14);
+            vertical-align: middle;
+            opacity: 0.8;
+        }
         .quote-pair-label:empty { display: none; }
         
         .trend-arrow {
@@ -1672,7 +1683,7 @@
                 <label for="kyber-only-direct-pools">Kyber 仅直连池</label>
             </div>
             <div id="kyber-direct-pools-note" class="quote-settings-note" style="display:none; margin-top:-8px; margin-bottom:12px;">
-                仅在使用 Kyber 时生效，默认关闭。开启后会给 Kyber 增加 `onlyDirectPools=true`。
+                仅对 Kyber 生效。开启后会加上 `onlyDirectPools=true`，重启后端后生效。
             </div>
 
             <div class="checkbox-group" id="inverse-toggle-group">

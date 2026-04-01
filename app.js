@@ -1361,6 +1361,16 @@
                     roundToOneDecimal(safeAmount * 2)
                 ];
             },
+            buildArbDetailRateText(rawPrice, fromSymbol, toSymbol, precision = 6) {
+                if (rawPrice === null || rawPrice === undefined || rawPrice === '') return '--';
+                const numericRate = Number(rawPrice);
+                if (!Number.isFinite(numericRate)) return '--';
+                const formattedRate = Number(numericRate.toFixed(precision));
+                if (!fromSymbol || !toSymbol) {
+                    return String(formattedRate);
+                }
+                return `1 ${fromSymbol} ≈ ${formattedRate} ${toSymbol}`;
+            },
             summarizeDetailResult(startAmount, finalAmount) {
                 const safeStart = Number(startAmount) > 0 ? Number(startAmount) : 1;
                 if (typeof finalAmount !== 'number' || Number.isNaN(finalAmount)) {
@@ -1643,6 +1653,21 @@
         return getCexPairLabel(quote, state);
     }
 
+    function shouldShowKyberDirectPoolsBadge(quote) {
+        if (!quote || quote.kyberOnlyDirectPools !== true) return false;
+        const preferredSource = String(quote.preferredSource || 'Kyber').trim();
+        return preferredSource === 'Kyber' || preferredSource === 'Auto';
+    }
+
+    function buildQuotePairLabelHtml(quote, state) {
+        const label = getQuotePairLabel(quote, state);
+        if (!label) return '';
+        const badgeHtml = shouldShowKyberDirectPoolsBadge(quote)
+            ? '<span class="quote-direct-badge" title="Kyber 仅直连池"></span>'
+            : '';
+        return `${escapeHtml(label)}${badgeHtml}`;
+    }
+
     function getQuoteDisplayText(quote, state) {
         if (isQuotePaused(quote)) return '已暂停';
         if (isCexOrderbookChain(quote && quote.chain)) {
@@ -1682,8 +1707,7 @@
     function updateQuotePairLabel(quote, state) {
         const pairLabelEl = document.getElementById(`quote-pair-label-${quote.id}`);
         if (!pairLabelEl) return;
-        const nextLabel = getQuotePairLabel(quote, state);
-        pairLabelEl.textContent = nextLabel;
+        pairLabelEl.innerHTML = buildQuotePairLabelHtml(quote, state);
     }
 
     function renderQuoteDisplayToggle() {
@@ -2528,7 +2552,7 @@
                             <div class="arb-detail-leg-pair">${buildArbDetailPairHtml(row)}</div>
                             <div class="arb-detail-leg-source">${buildArbDetailSourceHtml(row)}</div>
                         </div>
-                        <span class="arb-detail-leg-amount">${escapeHtml(row.amountText)}</span>
+                        <span class="arb-detail-leg-amount">${escapeHtml(row.rateText || row.amountText || '--')}</span>
                     </div>
                 </div>
             `).join('');
@@ -3174,6 +3198,11 @@
                         fromTokenAddress: isInverseLeg ? match.quote.toToken : match.quote.fromToken,
                         toTokenAddress: isInverseLeg ? match.quote.fromToken : match.quote.toToken,
                         inputAmount: legInputAmount,
+                        rateText: getArbDetailUtils().buildArbDetailRateText(
+                            data.rawPrice,
+                            data.symbols.from,
+                            data.symbols.to
+                        ),
                         amountText: `${formatDetailNumber(data.finalAmountOut)}`,
                         sourceText: data.usedSource || match.quote.preferredSource || 'Unknown'
                     });
@@ -5736,7 +5765,7 @@
         const initialAmount = quote.amount || 1;
         const amountInputHTML = !isCexOrderbookChain(quote.chain) ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
         const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
-        const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${escapeHtml(getQuotePairLabel(quote, monitorState))}</span>`;
+        const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${buildQuotePairLabelHtml(quote, monitorState)}</span>`;
         const requestChannelTagHtml = buildRequestChannelTagHtml(quote);
         const pauseButtonTitle = isQuotePaused(quote) ? '恢复' : '暂停';
         const pauseButtonIcon = isQuotePaused(quote) ? '▶️' : '⏸️';

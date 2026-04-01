@@ -94,6 +94,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('请求通道'));
     assert.ok(response.body.includes('id="kyber-only-direct-pools"'));
     assert.ok(response.body.includes('Kyber 仅直连池'));
+    assert.ok(response.body.includes('.quote-direct-badge'));
     assert.ok(response.body.includes('quote-channel-tag'));
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
     assert.ok(response.body.includes('id="path-alert-window"'));
@@ -140,6 +141,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
+    assert.ok(appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
+    assert.ok(appJsResponse.body.includes('quote-direct-badge'));
     assert.ok(appJsResponse.body.includes('quote.kyberOnlyDirectPools = true;'));
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
