@@ -118,7 +118,6 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('#top-bar-right > a {'));
     assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
     assert.ok(response.body.includes('.quote-item-paused'));
-    assert.ok(response.body.includes('.quote-label-stack.quote-dex-link-target {'));
     assert.ok(response.body.includes('border: 2px solid #f59e0b;'));
     assert.ok(response.body.includes('z-index: 7000;'));
     assert.ok(response.body.includes('.auto-refresh-toggle span {'));
@@ -140,8 +139,6 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-dex-link-chain'));
     assert.ok(appJsResponse.body.includes('copyDexLinkFromElement'));
     assert.ok(appJsResponse.body.includes('data-terminal-pair-link'));
-    assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
-    assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
     assert.ok(appJsResponse.body.includes('class="icon-btn add-quote-btn"'));
     assert.ok(!appJsResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));

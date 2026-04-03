@@ -2656,17 +2656,12 @@
 
     function buildArbDetailSourceHtml(row) {
         const sourceText = escapeHtml(row && row.sourceText ? row.sourceText : 'Unknown');
-        const dexLinkConfig = {
+        const dexButtonHtml = buildDexLinkCopyButtonHtml({
             chain: row && row.chain,
             fromTokenAddress: row && row.fromTokenAddress,
             toTokenAddress: row && row.toTokenAddress,
             inputAmount: row && row.inputAmount
-        };
-        const dexButtonHtml = buildDexLinkCopyButtonHtml(
-            dexLinkConfig,
-            'arb-detail-dex-link',
-            getDexLinkLabel(dexLinkConfig) || 'DEX'
-        );
+        }, 'arb-detail-dex-link', getDexLinkLabel(row) || 'DEX');
         if (!dexButtonHtml) {
             return sourceText;
         }
@@ -5911,35 +5906,7 @@
             </div>`;
         
         addDnDHandlers(itemEl, categoryId);
-
-        const labelStackEl = itemEl.querySelector('.quote-label-stack');
-        const dexLinkConfig = {
-            chain: quote.chain,
-            fromTokenAddress: quote.fromToken,
-            toTokenAddress: quote.toToken,
-            inputAmount: quote.amount
-        };
-        const dexLinkLabel = getDexLinkLabel(dexLinkConfig);
-        if (labelStackEl && dexLinkLabel) {
-            labelStackEl.classList.add('quote-dex-link-target');
-            labelStackEl.dataset.dexLinkCopy = '1';
-            labelStackEl.dataset.dexLinkLabel = dexLinkLabel;
-            labelStackEl.dataset.dexLinkChain = quote.chain || '';
-            labelStackEl.dataset.dexLinkFromTokenAddress = quote.fromToken || '';
-            labelStackEl.dataset.dexLinkToTokenAddress = quote.toToken || '';
-            const inputAmount = Number(quote.amount);
-            if (Number.isFinite(inputAmount) && inputAmount > 0) {
-                labelStackEl.dataset.dexLinkInputAmount = String(inputAmount);
-            }
-            labelStackEl.title = `点击复制 ${dexLinkLabel} 链接`;
-            labelStackEl.addEventListener('mousedown', (event) => event.stopPropagation());
-            labelStackEl.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                void copyDexLinkFromElement(labelStackEl);
-            });
-        }
-
+        
         const textWrapper = itemEl.querySelector('.quote-text-wrapper');
         if (textWrapper) {
             textWrapper.addEventListener('mouseenter', (e) => handleQuoteHover(e, quote.id));
