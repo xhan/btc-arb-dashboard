@@ -771,14 +771,27 @@
             gap: 8px;
         }
         #data-terminal-search-input {
-            flex: 1;
+            flex: 0 1 220px;
             min-width: 0;
+            max-width: 220px;
             padding: 4px 8px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             background: transparent;
             color: inherit;
             height: 30px;
+        }
+        .data-terminal-profit-bp {
+            margin-left: auto;
+            min-width: 72px;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--trend-up-bg);
+        }
+        .data-terminal-profit-bp-empty {
+            color: var(--text-color-light);
         }
         .data-terminal-toggle {
             display: inline-flex;
@@ -858,9 +871,15 @@
             padding: 6px 0;
             font-size: 12px;
             line-height: 1.35;
+            cursor: pointer;
+            border-radius: 6px;
         }
         .data-terminal-row + .data-terminal-row {
             border-top: 1px dashed var(--border-color);
+        }
+        .data-terminal-row-selected {
+            background: rgba(37, 99, 235, 0.10);
+            box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.35);
         }
         .data-terminal-chain,
         .data-terminal-rate,
@@ -872,6 +891,19 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .data-terminal-pair-link {
+            border: none;
+            padding: 0;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            color: inherit;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .data-terminal-pair-link:hover {
+            color: var(--text-color);
         }
         .data-terminal-rate,
         .data-terminal-amount {
@@ -1888,6 +1920,7 @@
     <script src="chain-defaults.js"></script>
     <script src="arb-panel-renderer.js"></script>
     <script src="arb-fixed-utils.js"></script>
+    <script src="dex-link-utils.js"></script>
     <script src="arb-detail-utils.js"></script>
     <script src="charts-utils.js"></script>
     <script src="charts-renderer.js"></script>

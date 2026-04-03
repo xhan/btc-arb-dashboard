@@ -61,6 +61,8 @@
       chain: quote.chain,
       fromSymbol: overrides.fromSymbol,
       toSymbol: overrides.toSymbol,
+      fromTokenAddress: overrides.fromTokenAddress || '',
+      toTokenAddress: overrides.toTokenAddress || '',
       rate: overrides.rate,
       amount: Number.isFinite(amount) && amount > 0 ? amount : 1,
       pricingMode: overrides.pricingMode,
@@ -86,6 +88,8 @@
             key: `${quote.id}:cex-bid1`,
             fromSymbol,
             toSymbol,
+            fromTokenAddress: quote.fromToken,
+            toTokenAddress: quote.toToken,
             rate: Number(orderbook.bestBidPrice),
             pricingMode: 'cex-bid1',
             direction: 'forward'
@@ -96,6 +100,8 @@
             key: `${quote.id}:cex-ask1-inverse`,
             fromSymbol: toSymbol,
             toSymbol: fromSymbol,
+            fromTokenAddress: quote.toToken,
+            toTokenAddress: quote.fromToken,
             rate: Number(orderbook.bestAskPrice),
             pricingMode: 'cex-ask1-inverse',
             direction: 'inverse'
@@ -109,6 +115,8 @@
           key: `${quote.id}:forward`,
           fromSymbol,
           toSymbol,
+          fromTokenAddress: quote.fromToken,
+          toTokenAddress: quote.toToken,
           rate: Number(record.lastRawPrice),
           pricingMode: 'raw',
           direction: 'forward'
@@ -120,6 +128,8 @@
           key: `${quote.id}:inverse`,
           fromSymbol: toSymbol,
           toSymbol: fromSymbol,
+          fromTokenAddress: quote.toToken,
+          toTokenAddress: quote.fromToken,
           rate: Number(record.inverseRawPrice),
           pricingMode: 'raw',
           direction: 'inverse'
@@ -135,6 +145,12 @@
     if (!Number.isFinite(numericRate)) return '--';
     const displayValue = showDiff ? (numericRate - 1) : numericRate;
     return displayValue.toFixed(5);
+  }
+
+  function formatDataTerminalBp(value) {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return '--';
+    return `${numericValue >= 0 ? '+' : ''}${numericValue.toFixed(2)}bp`;
   }
 
   function sortCandidates(candidates) {
@@ -223,9 +239,40 @@
     };
   }
 
+  function buildDataTerminalSelectionSummary(selectionState = {}, rowGroups = {}) {
+    const leftRows = Array.isArray(rowGroups.leftRows) ? rowGroups.leftRows : [];
+    const rightRows = Array.isArray(rowGroups.rightRows) ? rowGroups.rightRows : [];
+    const leftMap = new Map(leftRows.map((row) => [row.key, row]));
+    const rightMap = new Map(rightRows.map((row) => [row.key, row]));
+    const leftKey = leftMap.has(selectionState.leftKey) ? selectionState.leftKey : '';
+    const rightKey = rightMap.has(selectionState.rightKey) ? selectionState.rightKey : '';
+
+    if (!leftKey || !rightKey) {
+      return {
+        leftKey,
+        rightKey,
+        profitBp: null,
+        text: '--'
+      };
+    }
+
+    const leftRate = Number(leftMap.get(leftKey).rate);
+    const rightRate = Number(rightMap.get(rightKey).rate);
+    const profitBp = ((leftRate * rightRate) - 1) * 10000;
+
+    return {
+      leftKey,
+      rightKey,
+      profitBp,
+      text: formatDataTerminalBp(profitBp)
+    };
+  }
+
   return {
     buildDataTerminalCandidates,
+    buildDataTerminalSelectionSummary,
     buildDataTerminalViewModel,
+    formatDataTerminalBp,
     formatDataTerminalValue,
     parseDataTerminalQuery
   };

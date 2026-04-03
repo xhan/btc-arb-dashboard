@@ -95,6 +95,8 @@
         query: '',
         allowAliases: true,
         showDiff: false,
+        selectedLeftKey: '',
+        selectedRightKey: '',
         timer: null,
         domRefs: null
     };
@@ -1474,36 +1476,9 @@
                 };
             },
             buildArbDetailDexLink(config = {}) {
-                const chain = String(config.chain || '').trim();
-                const normalizedChain = chain.toLowerCase();
-                const fromTokenAddress = String(config.fromTokenAddress || '').trim();
-                const toTokenAddress = String(config.toTokenAddress || '').trim();
-                if (!fromTokenAddress || !toTokenAddress) return null;
-                if (normalizedChain === 'bybit' || normalizedChain === 'binance') return null;
-                if (normalizedChain === 'sui') {
-                    return {
-                        label: 'cetus',
-                        url: `https://app.cetus.zone/swap/${encodeURIComponent(fromTokenAddress)}/${encodeURIComponent(toTokenAddress)}`
-                    };
-                }
-                if (normalizedChain === 'solana') {
-                    return {
-                        label: 'jup.ag',
-                        url: `https://jup.ag/?sell=${encodeURIComponent(fromTokenAddress)}&buy=${encodeURIComponent(toTokenAddress)}`
-                    };
-                }
-                if (normalizedChain === 'starknet') {
-                    const inputAmount = Number(config.inputAmount);
-                    if (!Number.isFinite(inputAmount) || inputAmount <= 0) return null;
-                    return {
-                        label: 'ekubo',
-                        url: `https://ekubo.org/starknet/swap?inputCurrency=${encodeURIComponent(fromTokenAddress)}&amount=${encodeURIComponent(String(inputAmount))}&outputCurrency=${encodeURIComponent(toTokenAddress)}`
-                    };
-                }
-                return {
-                    label: 'swap.defillama',
-                    url: `https://swap.defillama.com/?chain=${encodeURIComponent(normalizedChain)}&from=${encodeURIComponent(fromTokenAddress)}&tab=swap&to=${encodeURIComponent(toTokenAddress)}`
-                };
+                const utils = window.DexLinkUtils;
+                if (!utils || typeof utils.buildDexLink !== 'function') return null;
+                return utils.buildDexLink(config);
             },
             findBestSummaryIndices(cards) {
                 let bestProfit = null;
@@ -1561,6 +1536,36 @@
 
     function getQuoteDisplayUtils() {
         return window.QuoteDisplayUtils || null;
+    }
+
+    function getDexLinkUtils() {
+        return window.DexLinkUtils || null;
+    }
+
+    function getDexLinkLabel(config = {}) {
+        const utils = getDexLinkUtils();
+        if (!utils || typeof utils.getDexLinkLabel !== 'function') return null;
+        return utils.getDexLinkLabel(config);
+    }
+
+    function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制') {
+        const dexLabel = getDexLinkLabel(config);
+        if (!dexLabel) return '';
+        const inputAmount = Number(config.inputAmount);
+        const amountAttr = Number.isFinite(inputAmount) && inputAmount > 0
+            ? ` data-dex-link-input-amount="${escapeHtml(String(inputAmount))}"`
+            : '';
+        return `
+            <button
+                type="button"
+                class="${escapeHtml(className)}"
+                data-dex-link-copy="1"
+                data-dex-link-label="${escapeHtml(dexLabel)}"
+                data-dex-link-chain="${escapeHtml(config.chain || '')}"
+                data-dex-link-from-token-address="${escapeHtml(config.fromTokenAddress || '')}"
+                data-dex-link-to-token-address="${escapeHtml(config.toTokenAddress || '')}"${amountAttr}
+            >${escapeHtml(buttonText)}</button>
+        `;
     }
 
     function formatDetailNumber(value, precision = 6) {
@@ -2087,22 +2092,30 @@
         return records;
     }
 
-    function buildDataTerminalRowHtml(row) {
+    function buildDataTerminalRowHtml(row, side, selectedKey) {
         const chainLabel = formatChainLabel(row.chain);
         const amountText = formatDetailNumber(Number(row.amount), 6);
+        const selectedClass = row.key === selectedKey ? ' data-terminal-row-selected' : '';
+        const pairLinkHtml = buildDexLinkCopyButtonHtml({
+            chain: row.chain,
+            fromTokenAddress: row.fromTokenAddress,
+            toTokenAddress: row.toTokenAddress,
+            inputAmount: row.amount
+        }, 'data-terminal-pair data-terminal-pair-link', `${row.fromSymbol} -> ${row.toSymbol}`)
+            || `<span class="data-terminal-pair">${escapeHtml(`${row.fromSymbol} -> ${row.toSymbol}`)}</span>`;
         return `
-            <div class="data-terminal-row">
+            <div class="data-terminal-row${selectedClass}" data-data-terminal-side="${escapeHtml(side)}" data-data-terminal-row-key="${escapeHtml(row.key)}">
                 <span class="data-terminal-chain">${escapeHtml(chainLabel)}</span>
-                <span class="data-terminal-pair">${escapeHtml(`${row.fromSymbol} -> ${row.toSymbol}`)}</span>
+                ${pairLinkHtml}
                 <span class="data-terminal-rate">${escapeHtml(row.displayValue)}</span>
                 <span class="data-terminal-amount">${escapeHtml(String(amountText))}</span>
             </div>
         `;
     }
 
-    function buildDataTerminalColumnHtml(rows, emptyMessage) {
+    function buildDataTerminalColumnHtml(rows, emptyMessage, side, selectedKey) {
         const bodyHtml = rows.length
-            ? rows.map((row) => buildDataTerminalRowHtml(row)).join('')
+            ? rows.map((row) => buildDataTerminalRowHtml(row, side, selectedKey)).join('')
             : `<div class="data-terminal-column-empty">${escapeHtml(emptyMessage)}</div>`;
         return `
             <section class="data-terminal-column">
@@ -2117,15 +2130,15 @@
         `;
     }
 
-    function buildDataTerminalPanelHtml(viewModel) {
+    function buildDataTerminalPanelHtml(viewModel, selectionState) {
         if (!viewModel || viewModel.mode === 'empty') {
             return `<div class="data-terminal-empty">${escapeHtml(viewModel && viewModel.emptyMessage ? viewModel.emptyMessage : '输入 1 或 2 个代币开始搜索')}</div>`;
         }
 
         return `
             <div class="data-terminal-grid">
-                ${buildDataTerminalColumnHtml(viewModel.leftRows || [], viewModel.emptyMessage || '暂无匹配交易对')}
-                ${buildDataTerminalColumnHtml(viewModel.rightRows || [], viewModel.emptyMessage || '暂无匹配交易对')}
+                ${buildDataTerminalColumnHtml(viewModel.leftRows || [], viewModel.emptyMessage || '暂无匹配交易对', 'left', selectionState.selectedLeftKey)}
+                ${buildDataTerminalColumnHtml(viewModel.rightRows || [], viewModel.emptyMessage || '暂无匹配交易对', 'right', selectionState.selectedRightKey)}
             </div>
         `;
     }
@@ -2158,11 +2171,67 @@
             showDiff: dataTerminalState.showDiff
         });
 
-        refs.content.innerHTML = buildDataTerminalPanelHtml(viewModel);
+        const selectionSummary = typeof utils.buildDataTerminalSelectionSummary === 'function'
+            ? utils.buildDataTerminalSelectionSummary(
+                {
+                    leftKey: dataTerminalState.selectedLeftKey,
+                    rightKey: dataTerminalState.selectedRightKey
+                },
+                {
+                    leftRows: viewModel.leftRows || [],
+                    rightRows: viewModel.rightRows || []
+                }
+            )
+            : {
+                leftKey: '',
+                rightKey: '',
+                profitBp: null,
+                text: '--'
+            };
+
+        dataTerminalState.selectedLeftKey = selectionSummary.leftKey;
+        dataTerminalState.selectedRightKey = selectionSummary.rightKey;
+
+        if (refs.profitBp) {
+            refs.profitBp.textContent = selectionSummary.text;
+            refs.profitBp.classList.toggle('data-terminal-profit-bp-empty', selectionSummary.profitBp === null);
+        }
+
+        refs.content.innerHTML = buildDataTerminalPanelHtml(viewModel, {
+            selectedLeftKey: dataTerminalState.selectedLeftKey,
+            selectedRightKey: dataTerminalState.selectedRightKey
+        });
 
         if (!hasDataTerminalActiveQuery()) {
             clearDataTerminalTimer();
         }
+    }
+
+    function handleDataTerminalContentClick(event) {
+        const eventTarget = resolveEventTargetElement(event);
+        if (!eventTarget) return;
+        const copyBtn = eventTarget.closest('[data-dex-link-copy]');
+        if (copyBtn) {
+            event.preventDefault();
+            event.stopPropagation();
+            void copyDexLinkFromElement(copyBtn);
+            return;
+        }
+        const rowEl = eventTarget.closest('[data-data-terminal-row-key]');
+        if (!rowEl) return;
+        const side = rowEl.dataset.dataTerminalSide;
+        const rowKey = rowEl.dataset.dataTerminalRowKey || '';
+        if (!rowKey) return;
+
+        if (side === 'left') {
+            dataTerminalState.selectedLeftKey = dataTerminalState.selectedLeftKey === rowKey ? '' : rowKey;
+        } else if (side === 'right') {
+            dataTerminalState.selectedRightKey = dataTerminalState.selectedRightKey === rowKey ? '' : rowKey;
+        } else {
+            return;
+        }
+
+        renderDataTerminalPanel();
     }
 
     function scheduleDataTerminalUpdate() {
@@ -2243,6 +2312,7 @@
                         <input id="data-terminal-diff-toggle" type="checkbox">
                         <span>显示和 1 的差值</span>
                     </label>
+                    <span id="data-terminal-profit-bp" class="data-terminal-profit-bp data-terminal-profit-bp-empty">--</span>
                 </div>
             </div>
             <div id="data-terminal-content"></div>
@@ -2259,6 +2329,7 @@
             searchInput: panel.querySelector('#data-terminal-search-input'),
             aliasToggle: panel.querySelector('#data-terminal-alias-toggle'),
             diffToggle: panel.querySelector('#data-terminal-diff-toggle'),
+            profitBp: panel.querySelector('#data-terminal-profit-bp'),
             content: panel.querySelector('#data-terminal-content')
         };
 
@@ -2290,6 +2361,9 @@
                 dataTerminalState.showDiff = event.target.checked;
                 renderDataTerminalPanel();
             });
+        }
+        if (refs.content) {
+            refs.content.addEventListener('click', handleDataTerminalContentClick);
         }
         if (refs.minBtn) {
             refs.minBtn.addEventListener('click', (event) => {
@@ -2582,12 +2656,17 @@
 
     function buildArbDetailSourceHtml(row) {
         const sourceText = escapeHtml(row && row.sourceText ? row.sourceText : 'Unknown');
-        const dexLink = getArbDetailUtils().buildArbDetailDexLink(row);
-        if (!dexLink || !dexLink.url) {
+        const dexButtonHtml = buildDexLinkCopyButtonHtml({
+            chain: row && row.chain,
+            fromTokenAddress: row && row.fromTokenAddress,
+            toTokenAddress: row && row.toTokenAddress,
+            inputAmount: row && row.inputAmount
+        }, 'arb-detail-dex-link', getDexLinkLabel(row) || 'DEX');
+        if (!dexButtonHtml) {
             return sourceText;
         }
 
-        return `${sourceText} · <button type="button" class="arb-detail-dex-link" data-arb-detail-dex-url="${escapeHtml(dexLink.url)}" data-arb-detail-dex-label="${escapeHtml(dexLink.label)}">${escapeHtml(dexLink.label)}</button>`;
+        return `${sourceText} · ${dexButtonHtml}`;
     }
 
     function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
@@ -5176,6 +5255,35 @@
         throw new Error('Clipboard unavailable');
     }
 
+    async function copyDexLinkFromElement(targetEl) {
+        if (!targetEl) return false;
+        const utils = getDexLinkUtils();
+        if (!utils || typeof utils.buildDexLink !== 'function') {
+            showCopyToast('DEX 链接模块未加载');
+            return false;
+        }
+
+        const dexLink = utils.buildDexLink({
+            chain: targetEl.dataset.dexLinkChain || '',
+            fromTokenAddress: targetEl.dataset.dexLinkFromTokenAddress || '',
+            toTokenAddress: targetEl.dataset.dexLinkToTokenAddress || '',
+            inputAmount: targetEl.dataset.dexLinkInputAmount || ''
+        });
+        if (!dexLink || !dexLink.url) {
+            showCopyToast('该交易对不支持 DEX 链接');
+            return false;
+        }
+
+        try {
+            await copyTextToClipboard(dexLink.url);
+            showCopyToast(`已复制 ${(targetEl.dataset.dexLinkLabel || dexLink.label || 'DEX')} 链接`);
+            return true;
+        } catch (error) {
+            showCopyToast('复制失败');
+            return false;
+        }
+    }
+
     function resolveEventTargetElement(event) {
         const target = event && event.target;
         if (target instanceof Element) {
@@ -6703,14 +6811,9 @@
                         return;
                     }
 
-                    const dexLinkEl = eventTarget.closest('[data-arb-detail-dex-url]');
+                    const dexLinkEl = eventTarget.closest('[data-dex-link-copy]');
                     if (dexLinkEl) {
-                        const dexUrl = dexLinkEl.dataset.arbDetailDexUrl;
-                        const dexLabel = dexLinkEl.dataset.arbDetailDexLabel || 'DEX';
-                        if (!dexUrl) return;
-                        copyTextToClipboard(dexUrl)
-                            .then(() => showCopyToast(`已复制 ${dexLabel} 链接`))
-                            .catch(() => showCopyToast('复制失败'));
+                        void copyDexLinkFromElement(dexLinkEl);
                         return;
                     }
 

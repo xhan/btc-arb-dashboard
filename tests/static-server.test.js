@@ -55,6 +55,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
+    assert.ok(response.body.includes('src="dex-link-utils.js"'));
     assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="alert-debug-utils.js"'));
@@ -72,6 +73,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="request-channel-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="dex-link-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
@@ -131,7 +135,10 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(appJsResponse.statusCode, 200);
     assert.ok(appJsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
-    assert.ok(appJsResponse.body.includes('data-arb-detail-dex-url'));
+    assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
+    assert.ok(appJsResponse.body.includes('data-dex-link-chain'));
+    assert.ok(appJsResponse.body.includes('copyDexLinkFromElement'));
+    assert.ok(appJsResponse.body.includes('data-terminal-pair-link'));
     assert.ok(appJsResponse.body.includes('class="icon-btn add-quote-btn"'));
     assert.ok(!appJsResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
@@ -211,6 +218,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function unmountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
     assert.ok(appJsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
+    assert.ok(appJsResponse.body.includes('id="data-terminal-profit-bp"'));
+    assert.ok(appJsResponse.body.includes('selectedLeftKey'));
+    assert.ok(appJsResponse.body.includes('selectedRightKey'));
+    assert.ok(appJsResponse.body.includes('buildDataTerminalSelectionSummary'));
     assert.ok(appJsResponse.body.includes('clearTimeout(dataTerminalState.timer);'));
     assert.ok(appJsResponse.body.includes('dataTerminalState.domRefs = null;'));
     assert.ok(appJsResponse.body.includes('Token -&gt; Token'));

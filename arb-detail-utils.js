@@ -1,10 +1,14 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(require('./dex-link-utils'));
     return;
   }
-  root.ArbDetailUtils = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  root.ArbDetailUtils = factory(root.DexLinkUtils);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (dexLinkUtils) {
+  const buildDexLink = dexLinkUtils && typeof dexLinkUtils.buildDexLink === 'function'
+    ? dexLinkUtils.buildDexLink
+    : () => null;
+
   function normalizePositiveAmount(value, fallback = 1) {
     const amount = Number(value);
     if (!Number.isFinite(amount) || amount <= 0) return fallback;
@@ -220,43 +224,7 @@
   }
 
   function buildArbDetailDexLink(config = {}) {
-    const chain = String(config.chain || '').trim();
-    const normalizedChain = chain.toLowerCase();
-    const fromTokenAddress = String(config.fromTokenAddress || '').trim();
-    const toTokenAddress = String(config.toTokenAddress || '').trim();
-    if (!fromTokenAddress || !toTokenAddress) return null;
-
-    if (normalizedChain === 'bybit' || normalizedChain === 'binance') {
-      return null;
-    }
-
-    if (normalizedChain === 'sui') {
-      return {
-        label: 'cetus',
-        url: `https://app.cetus.zone/swap/${encodeURIComponent(fromTokenAddress)}/${encodeURIComponent(toTokenAddress)}`
-      };
-    }
-
-    if (normalizedChain === 'solana') {
-      return {
-        label: 'jup.ag',
-        url: `https://jup.ag/?sell=${encodeURIComponent(fromTokenAddress)}&buy=${encodeURIComponent(toTokenAddress)}`
-      };
-    }
-
-    if (normalizedChain === 'starknet') {
-      const inputAmount = Number(config.inputAmount);
-      if (!Number.isFinite(inputAmount) || inputAmount <= 0) return null;
-      return {
-        label: 'ekubo',
-        url: `https://ekubo.org/starknet/swap?inputCurrency=${encodeURIComponent(fromTokenAddress)}&amount=${encodeURIComponent(String(inputAmount))}&outputCurrency=${encodeURIComponent(toTokenAddress)}`
-      };
-    }
-
-    return {
-      label: 'swap.defillama',
-      url: `https://swap.defillama.com/?chain=${encodeURIComponent(normalizedChain)}&from=${encodeURIComponent(fromTokenAddress)}&tab=swap&to=${encodeURIComponent(toTokenAddress)}`
-    };
+    return buildDexLink(config);
   }
 
   function buildArbOpportunityStableId(section, label, cycle) {
