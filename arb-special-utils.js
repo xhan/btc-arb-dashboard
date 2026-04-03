@@ -8,7 +8,8 @@
   const DEFAULT_BYBIT_PAIR_RULE_CONFIG = Object.freeze({
     withdrawFee: 0.0001,
     maxBookLevels: 10,
-    displayTargets: []
+    displayTargets: [],
+    depthDisplayLevels: 3
   });
 
   function isCexChain(chain) {
@@ -63,6 +64,26 @@
     return targets
       .map((value) => Number(value))
       .filter((value) => Number.isFinite(value) && value > 0);
+  }
+
+  function normalizeDecimalConfig(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) return null;
+    return Math.floor(parsed);
+  }
+
+  function formatConfiguredNumber(value, configuredDecimals, fallbackDecimals) {
+    if (!Number.isFinite(value)) return '--';
+    if (Number.isInteger(configuredDecimals) && configuredDecimals >= 0) {
+      return Number(value).toFixed(configuredDecimals);
+    }
+    return formatNumber(value, fallbackDecimals);
+  }
+
+  function formatConfiguredSignedNumber(value, configuredDecimals, fallbackDecimals) {
+    if (!Number.isFinite(value)) return '--';
+    const absText = formatConfiguredNumber(Math.abs(value), configuredDecimals, fallbackDecimals);
+    return value < 0 ? `-${absText}` : absText;
   }
 
   function buildEdges(quotes, quoteStateById) {
@@ -193,6 +214,10 @@
       this.withdrawFee = toNonNegativeNumber(rule.withdrawFee, DEFAULT_BYBIT_PAIR_RULE_CONFIG.withdrawFee);
       this.maxBookLevels = toPositiveNumber(rule.maxBookLevels, DEFAULT_BYBIT_PAIR_RULE_CONFIG.maxBookLevels);
       this.displayTargets = normalizeDisplayTargets(rule.displayTargets);
+      this.depthDisplayLevels = Math.max(1, Math.floor(toPositiveNumber(rule.depthDisplayLevels, DEFAULT_BYBIT_PAIR_RULE_CONFIG.depthDisplayLevels)));
+      this.depthSizeDecimals = normalizeDecimalConfig(rule.depthSizeDecimals);
+      this.targetAmountDecimals = normalizeDecimalConfig(rule.targetAmountDecimals);
+      this.profitDecimals = normalizeDecimalConfig(rule.profitDecimals);
     }
 
     buildDirectionResult(options = {}) {
@@ -297,7 +322,7 @@
     }
 
     buildDepthSummary(primary) {
-      return primary.usedLevels.map((level, index) => ({
+      return primary.usedLevels.slice(0, this.depthDisplayLevels).map((level, index) => ({
         index: index + 1,
         price: level.price,
         size: level.size,
@@ -311,51 +336,52 @@
 
     buildDexLine(primary, rule) {
       if (primary.direction === 'eth-to-bybit-bid') {
-        return `（ETH）${rule.dexBase} -> ${rule.dexQuote} @${formatNumber(primary.dexLeg.rate, 6)}`;
+        return `（ETH）${rule.dexBase} -> ${rule.dexQuote} ${formatNumber(primary.dexLeg.rate, 6)}`;
       }
-      return `（ETH）${rule.dexQuote} -> ${rule.dexBase} @${formatNumber(primary.dexLeg.rate, 6)}`;
+      return `（ETH）${rule.dexQuote} -> ${rule.dexBase} ${formatNumber(primary.dexLeg.rate, 6)}`;
     }
 
     buildCexLine(primary, rule) {
       const topPrice = formatNumber(primary.usedLevels[0] && primary.usedLevels[0].price, 6);
       if (primary.direction === 'eth-to-bybit-bid') {
-        return `（Bybit）${rule.dexQuote} -> ${rule.cexQuote} @${topPrice} bid1`;
+        return `（Bybit）${rule.dexQuote} -> ${rule.cexQuote} ${topPrice} bid1`;
       }
-      return `（Bybit）${rule.cexQuote} -> ${rule.dexQuote} @${topPrice} ask1`;
+      return `（Bybit）${rule.cexQuote} -> ${rule.dexQuote} ${topPrice} ask1`;
     }
 
-    buildDisplayMessage(primary, secondary, rule) {
-      const lines = [];
-      lines.push(this.buildDexLine(primary, rule));
-      lines.push(this.buildCexLine(primary, rule));
-      lines.push(`深度: ${this.buildDepthSummary(primary).map((item) => `${item.index}) ${formatNumber(item.size, 6)} @${formatNumber(item.price, 6)} (${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp)`).join('  ')}`);
-      this.buildDisplayTargetResults(primary, rule).forEach((item) => {
-        const amountText = `${formatNumber(item.targetAmount, 6)} ${this.buildInputSymbol(primary, rule)}`;
-        lines.push(`${amountText}: ${formatSignedNumber(item.profit, 8)} ${rule.cexQuote} / ${formatSignedNumber(item.profitBp, 2)} bp`);
-      });
-      lines.push(`最大正收益量: ${formatNumber(primary.totalInput, 6)} ${this.buildInputSymbol(primary, rule)} -> ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
-      return lines.join('\n');
+    buildDepthLine(item) {
+      const sizeText = formatConfiguredNumber(item.size, this.depthSizeDecimals, 6);
+      const priceText = formatNumber(item.price, 6);
+      const bpText = `${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp`;
+      return `${item.index}) ${sizeText}     ${priceText}     ${bpText}`;
     }
 
-    buildAlertMessage(primary, secondary, rule) {
+    buildTargetLine(amount, profit, bp, isMax = false) {
+      const amountText = formatConfiguredNumber(amount, this.targetAmountDecimals, 6);
+      const profitText = formatConfiguredSignedNumber(profit, this.profitDecimals, 8);
+      const bpText = `${formatSignedNumber(bp, 2)} bp`;
+      return `${amountText}     ${profitText}     ${bpText}${isMax ? '   MAX' : ''}`;
+    }
+
+    buildMessage(primary, secondary, rule, options = {}) {
       const lines = [];
-      const targetResults = this.buildDisplayTargetResults(primary, rule);
+      const includeSecondary = options.includeSecondary === true;
+      const depthLines = this.buildDepthSummary(primary).map((item) => this.buildDepthLine(item));
+      const targetLines = this.buildDisplayTargetResults(primary, rule).map((item) => (
+        this.buildTargetLine(item.targetAmount, item.profit, item.profitBp)
+      ));
       lines.push(this.buildDexLine(primary, rule));
       lines.push(this.buildCexLine(primary, rule));
       lines.push('');
-      this.buildDepthSummary(primary).forEach((item) => {
-        lines.push(`${item.index}) ${formatNumber(item.size, 6)} @${formatNumber(item.price, 6)} (${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp)`);
-      });
-      if (targetResults.length) {
+      lines.push(...depthLines);
+      if (targetLines.length) {
         lines.push('');
-        targetResults.forEach((item) => {
-          lines.push(`${formatNumber(item.targetAmount, 6)} : ${formatSignedNumber(item.profit, 8)}    | ${formatSignedNumber(item.profitBp, 2)} bp`);
-        });
+        lines.push(...targetLines);
       }
       lines.push('');
-      lines.push(`最大正收益量: ${formatNumber(primary.totalInput, 6)} ${this.buildInputSymbol(primary, rule)} -> ${formatSignedNumber(primary.netProfit, 8)} ${rule.cexQuote} / ${formatSignedNumber(primary.netProfitBp, 2)} bp`);
+      lines.push(this.buildTargetLine(primary.totalInput, primary.netProfit, primary.netProfitBp, true));
 
-      if (secondary && Number.isFinite(secondary.netProfit)) {
+      if (includeSecondary && secondary && Number.isFinite(secondary.netProfit)) {
         lines.push('');
         lines.push(
           `另一方向: ${secondary.directionLabel} | ${formatSignedNumber(secondary.netProfit, 8)} ${rule.cexQuote} , ${formatSignedNumber(secondary.netProfitBp, 2)} bp`
@@ -363,6 +389,14 @@
       }
 
       return lines.join('\n');
+    }
+
+    buildDisplayMessage(primary, secondary, rule) {
+      return this.buildMessage(primary, secondary, rule, { includeSecondary: false });
+    }
+
+    buildAlertMessage(primary, secondary, rule) {
+      return this.buildMessage(primary, secondary, rule, { includeSecondary: true });
     }
 
     buildCycle(primary, rule) {

@@ -126,7 +126,10 @@
       cexQuote: 'USDT',
       cexChain: 'Bybit',
       displayTargets: [100000, 200000],
-      withdrawFee: 0
+      withdrawFee: 0,
+      depthSizeDecimals: 1,
+      targetAmountDecimals: 1,
+      profitDecimals: 1
     },
     {
       id: 'special:usdtb-bybit',
@@ -138,7 +141,10 @@
       cexQuote: 'USDT',
       cexChain: 'Bybit',
       displayTargets: [100000, 200000],
-      withdrawFee: 0
+      withdrawFee: 0,
+      depthSizeDecimals: 1,
+      targetAmountDecimals: 1,
+      profitDecimals: 1
     }
   ]);
 
