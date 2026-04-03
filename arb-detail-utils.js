@@ -26,6 +26,19 @@
     ];
   }
 
+  function buildArbDetailRateText(rawPrice, fromSymbol, toSymbol, precision = 6) {
+    if (rawPrice === null || rawPrice === undefined || rawPrice === '') return '--';
+    const numericRate = Number(rawPrice);
+    if (!Number.isFinite(numericRate)) return '--';
+    const safeFromSymbol = String(fromSymbol || '').trim();
+    const safeToSymbol = String(toSymbol || '').trim();
+    const formattedRate = Number(numericRate.toFixed(precision));
+    if (!safeFromSymbol || !safeToSymbol) {
+      return String(formattedRate);
+    }
+    return `1 ${safeFromSymbol} ≈ ${formattedRate} ${safeToSymbol}`;
+  }
+
   function summarizeDetailResult(startAmount, finalAmount) {
     const safeStart = normalizePositiveAmount(startAmount, 1);
     const safeFinal = Number(finalAmount);
@@ -289,6 +302,7 @@
 
   return {
     buildDetailInputAmounts,
+    buildArbDetailRateText,
     summarizeDetailResult,
     getQuoteRunState,
     buildArbDetailChartPairs,

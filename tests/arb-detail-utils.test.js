@@ -20,7 +20,8 @@ const {
   shouldApplyArbDetailRequestVersion,
   shouldSyncArbDetailSnapshotForCard,
   buildArbDetailSnapshotMonitorState,
-  buildArbDetailDexLink
+  buildArbDetailDexLink,
+  buildArbDetailRateText
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -36,6 +37,16 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   buildDetailInputAmounts(3),
   [3, 1.5, 4.5, 6]
+);
+
+assert.strictEqual(
+  buildArbDetailRateText(0.9981234, 'cbBTC', 'WBTC'),
+  '1 cbBTC ≈ 0.998123 WBTC'
+);
+
+assert.strictEqual(
+  buildArbDetailRateText(null, 'cbBTC', 'WBTC'),
+  '--'
 );
 
 assert.deepStrictEqual(
