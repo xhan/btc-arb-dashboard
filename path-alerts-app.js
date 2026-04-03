@@ -41,14 +41,14 @@
   };
 
   const statusEl = document.getElementById('path-alerts-status');
-  const listEl = document.getElementById('path-alerts-list');
+  const listEl = document.getElementById('path-alerts-sections');
   const dismissedListEl = document.getElementById('path-alerts-dismissed-list');
   const editorEl = document.getElementById('path-alerts-editor');
   const editorTitleEl = document.getElementById('path-alerts-editor-title');
+  const editorModalEl = document.getElementById('path-alerts-editor-modal');
   const createBtn = document.getElementById('path-alerts-create-btn');
   const closeEditorBtn = document.getElementById('path-alerts-close-editor-btn');
-  const alertSearchInput = document.getElementById('path-alerts-search-input');
-  const dismissedSearchInput = document.getElementById('path-alerts-dismissed-search-input');
+  const contextBarEl = document.getElementById('path-alerts-context');
   const dismissSelectedBtn = document.getElementById('path-alerts-dismiss-selected-btn');
   const deleteSelectedBtn = document.getElementById('path-alerts-delete-selected-btn');
   const deleteDismissedSelectedBtn = document.getElementById('path-alerts-dismissed-delete-selected-btn');
@@ -69,8 +69,6 @@
     filterQuoteId: '',
     filteredCandidates: [],
     activeCandidateIndex: -1,
-    alertFilterQuery: '',
-    dismissedFilterQuery: '',
     selectedAlertIds: new Set(),
     selectedDismissedKeys: new Set()
   };
@@ -460,7 +458,6 @@
 
   function getFilteredAlerts() {
     const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
-    const query = pageState.alertFilterQuery;
     return alerts.filter((alert) => {
       if (
         pageState.filterQuoteId
@@ -468,15 +465,12 @@
       ) {
         return false;
       }
-      const summary = buildAlertSummary(alert);
-      const name = getAlertDisplayTitle(alert);
-      return matchesSearch(`${name} ${summary}`, query);
+      return true;
     });
   }
 
   function getFilteredDismissedTargets() {
     const items = Array.isArray(alertConfig.dismissedTargets) ? alertConfig.dismissedTargets : [];
-    const query = pageState.dismissedFilterQuery;
     return items.filter((entry) => {
       if (
         pageState.filterQuoteId
@@ -484,7 +478,7 @@
       ) {
         return false;
       }
-      return matchesSearch(buildDismissedSummary(entry), query);
+      return true;
     });
   }
 
@@ -1013,54 +1007,142 @@
     );
   }
 
-  function buildAlertSearchText(alert) {
-    return [
-      getAlertDisplayTitle(alert),
-      buildAlertSummary(alert),
-      alert.target && alert.target.type === 'quote'
-        ? '交易对报警'
-        : alert.target && alert.target.type === 'rule'
-        ? (alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则')
-        : '路径'
-    ].join(' ');
+  function groupAlertsBySection(alerts) {
+    const grouped = {
+      quote: [],
+      rule: [],
+      path: [],
+      special: []
+    };
+    for (const alert of (alerts || [])) {
+      if (!alert || !alert.target) continue;
+      if (alert.target.type === 'quote') {
+        grouped.quote.push(alert);
+        continue;
+      }
+      if (alert.target.type === 'rule') {
+        if (alert.target.ruleKind === 'special') grouped.special.push(alert);
+        else grouped.rule.push(alert);
+        continue;
+      }
+      grouped.path.push(alert);
+    }
+    return grouped;
   }
 
-  function buildDismissedSearchText(entry) {
-    return buildDismissedSummary(entry);
+  function buildSectionConfigs(grouped) {
+    return [
+      { key: 'quote', id: 'quote-alert-section', title: '交易对报警', note: pageState.filterQuoteId ? '当前交易对上下文' : '按交易对汇率分组', items: grouped.quote, tagClass: 'quote' },
+      { key: 'rule', id: 'rule-alert-section', title: '固定规则', note: '直接展示实际路径腿', items: grouped.rule, tagClass: 'rule' },
+      { key: 'path', id: 'path-manual-section', title: '手工路径', note: '保留完整 legs', items: grouped.path, tagClass: 'path' },
+      { key: 'special', id: 'special-alert-section', title: '特殊规则', note: '特殊聚合逻辑', items: grouped.special, tagClass: 'special' }
+    ];
+  }
+
+  function buildCardRouteHtml(lines) {
+    const safeLines = Array.isArray(lines) ? lines.filter(Boolean) : [];
+    if (!safeLines.length) {
+      return '<div class="alert-card-route-line">--</div>';
+    }
+    return safeLines.map((line) => `<div class="alert-card-route-line">${escapeHtml(line)}</div>`).join('');
+  }
+
+  function renderSectionCards(sectionKey, alerts) {
+    return alerts.map((alert) => {
+      const title = getAlertPrimaryTitle(alert);
+      const summaryLines = buildAlertSummaryLines(alert);
+      const metaText = formatAlertMetaLine(alert);
+      const subtitle = alert && alert.target && alert.target.type === 'quote'
+        ? buildQuoteAlertRuleLine(alert.target)
+        : alert && alert.target && alert.target.type === 'rule'
+          ? (alert.target.ruleKind === 'fixed' ? '固定规则路径' : '特殊规则路径')
+          : `${Array.isArray(alert?.target?.legs) ? alert.target.legs.length : 0} 腿路径`;
+      const typeClass = sectionKey === 'quote' ? 'quote' : sectionKey === 'rule' ? 'rule' : sectionKey === 'special' ? 'special' : 'path';
+      return `
+        <article class="alert-card" data-alert-open="${escapeHtml(alert.id)}">
+          <div class="alert-card-shell">
+            <input class="alert-card-select" type="checkbox" data-alert-select="${escapeHtml(alert.id)}" ${pageState.selectedAlertIds.has(alert.id) ? 'checked' : ''}>
+            <div class="alert-card-main">
+              <div class="alert-card-head">
+                <div>
+                  <div class="alert-card-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+                  <div class="alert-card-subline">${escapeHtml(subtitle)}</div>
+                </div>
+                <div class="alert-card-meta-tags">
+                  <span class="tag ${typeClass}">${sectionKey === 'quote' ? '交易对' : sectionKey === 'rule' ? '固定' : sectionKey === 'special' ? '特殊' : '路径'}</span>
+                  <span class="tag live">${alert.enabled === false ? '停用' : '启用'}</span>
+                </div>
+              </div>
+              <div class="alert-card-route">${buildCardRouteHtml(summaryLines)}</div>
+              <div class="alert-card-foot">
+                <div class="alert-card-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
+                <div class="alert-card-actions">
+                  <button type="button" class="inline-action-btn" data-alert-edit="${escapeHtml(alert.id)}">编辑</button>
+                  <button type="button" class="inline-action-btn" data-alert-toggle="${escapeHtml(alert.id)}">${alert.enabled === false ? '启用' : '停用'}</button>
+                  <button type="button" class="inline-action-btn" data-alert-dismiss-delete="${escapeHtml(alert.id)}">忽略并删除</button>
+                  <button type="button" class="inline-action-btn danger" data-alert-delete="${escapeHtml(alert.id)}">删除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  function renderContextBar() {
+    if (!contextBarEl) return;
+    if (!pageState.filterQuoteId) {
+      contextBarEl.classList.remove('visible');
+      contextBarEl.innerHTML = '';
+      return;
+    }
+    const quote = quoteById.get(Number(pageState.filterQuoteId));
+    const quoteLabel = quote
+      ? (isCexOrderbookChain(quote.chain)
+        ? `${formatChainLabel(quote.chain)} ${quote.symbol || '--'}`
+        : buildQuoteLabel(quote.chain, shortToken(quote.fromToken), shortToken(quote.toToken)).replace(/[()]/g, ''))
+      : `交易对 #${pageState.filterQuoteId}`;
+    const filteredCount = getFilteredAlerts().length;
+    contextBarEl.classList.add('visible');
+    contextBarEl.innerHTML = `
+      <div class="context-left">
+        <span class="chip context">当前交易对 · ${escapeHtml(quoteLabel)}</span>
+        <span class="chip">仅展示这个交易对相关报警</span>
+      </div>
+      <div class="toolbar-right">
+        <button type="button" data-context-create="forward">新增正向报警</button>
+        <button type="button" data-context-create="inverse">新增反向报警</button>
+        <div class="inline-count">当前 ${filteredCount} 条</div>
+      </div>
+    `;
   }
 
   function renderList() {
     syncSelectionSets();
-    const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
-    const filteredAlerts = getFilteredAlerts();
-    listEl.innerHTML = filteredAlerts.length
-      ? filteredAlerts.map((alert) => {
-        const title = getAlertPrimaryTitle(alert);
-        const summaryLines = buildAlertSummaryLines(alert);
-        const metaText = formatAlertMetaLine(alert);
-        return `
-          <div class="alert-item">
-            <div class="alert-item-shell">
-              <input class="alert-item-select" type="checkbox" data-alert-select="${escapeHtml(alert.id)}" ${pageState.selectedAlertIds.has(alert.id) ? 'checked' : ''}>
-              <div class="alert-item-main">
-                <div class="alert-item-head">
-                  <div class="alert-item-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
-                  <div class="alert-item-actions">
-                    <button type="button" data-alert-toggle="${escapeHtml(alert.id)}">${alert.enabled === false ? '启用' : '停用'}</button>
-                    <button type="button" data-alert-edit="${escapeHtml(alert.id)}">编辑</button>
-                    <button type="button" data-alert-dismiss-delete="${escapeHtml(alert.id)}">标记并删除</button>
-                    <button type="button" class="danger" data-alert-delete="${escapeHtml(alert.id)}">删除</button>
-                  </div>
-                </div>
-                <div class="alert-item-route">${buildAlertRouteHtml(summaryLines)}</div>
-                <div class="alert-item-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
-              </div>
+    const alerts = getFilteredAlerts();
+    renderContextBar();
+    if (!alerts.length) {
+      listEl.innerHTML = `<div class="empty">${pageState.filterQuoteId ? '这个交易对还没有报警' : '暂无报警'}</div>`;
+      syncSelectionCounters();
+      return;
+    }
+    const grouped = groupAlertsBySection(alerts);
+    listEl.innerHTML = buildSectionConfigs(grouped)
+      .filter((section) => section.items.length)
+      .map((section) => `
+        <section id="${section.id}" class="panel section-block section-anchor">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="tag ${section.tagClass}">${escapeHtml(section.title)}</span>
+              <h2>${escapeHtml(section.title)}</h2>
+              <small>${escapeHtml(section.note)}</small>
             </div>
+            <div class="section-link">${section.items.length} 条</div>
           </div>
-        `;
-      }).join('')
-      : `<div class="empty">${alerts.length ? '没有匹配的报警' : (pageState.filterQuoteId ? '这个交易对还没有报警' : '暂无报警')}</div>`;
-
+          <div class="card-grid">${renderSectionCards(section.key, section.items)}</div>
+        </section>
+      `).join('');
     syncSelectionCounters();
   }
 
@@ -1076,22 +1158,30 @@
         const summaryLines = buildDismissedSummaryLines(entry);
         const metaText = formatDismissedMetaLine(entry);
         return `
-          <div class="alert-item">
-            <div class="alert-item-shell">
-              <input class="alert-item-select" type="checkbox" data-dismissed-select="${escapeHtml(targetKey)}" ${pageState.selectedDismissedKeys.has(targetKey) ? 'checked' : ''}>
-              <div class="alert-item-main">
-                <div class="alert-item-head">
-                  <div class="alert-item-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
-                  <div class="alert-item-actions">
-                    <button type="button" data-dismissed-restore="${escapeHtml(targetKey)}">取消标记</button>
-                    <button type="button" class="danger" data-dismissed-delete="${escapeHtml(targetKey)}">删除</button>
+          <article class="alert-card">
+            <div class="alert-card-shell">
+              <input class="alert-card-select" type="checkbox" data-dismissed-select="${escapeHtml(targetKey)}" ${pageState.selectedDismissedKeys.has(targetKey) ? 'checked' : ''}>
+              <div class="alert-card-main">
+                <div class="alert-card-head">
+                  <div>
+                    <div class="alert-card-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+                    <div class="alert-card-subline">已忽略规则</div>
+                  </div>
+                  <div class="alert-card-meta-tags">
+                    <span class="tag path">已忽略</span>
                   </div>
                 </div>
-                <div class="alert-item-route">${buildAlertRouteHtml(summaryLines)}</div>
-                <div class="alert-item-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
+                <div class="alert-card-route">${buildCardRouteHtml(summaryLines)}</div>
+                <div class="alert-card-foot">
+                  <div class="alert-card-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
+                  <div class="alert-card-actions">
+                    <button type="button" class="inline-action-btn" data-dismissed-restore="${escapeHtml(targetKey)}">取消标记</button>
+                    <button type="button" class="inline-action-btn danger" data-dismissed-delete="${escapeHtml(targetKey)}">删除</button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </article>
         `;
       }).join('')
       : `<div class="empty">${dismissedTargets.length ? '没有匹配的已忽略项' : '暂无已忽略项'}</div>`;
@@ -1201,9 +1291,11 @@
 
   function renderEditor() {
     if (!pageState.editorVisible || !pageState.draft) {
-      editorEl.innerHTML = '<div class="empty">选择一条已有规则进行编辑，或点击“新建报警”。</div>';
+      if (editorModalEl) editorModalEl.classList.remove('visible');
+      editorEl.innerHTML = '';
       return;
     }
+    if (editorModalEl) editorModalEl.classList.add('visible');
 
     const draft = pageState.draft;
     const duplicateAlert = findDuplicateAlertForDraft(draft);
@@ -1492,6 +1584,16 @@
   }
 
   async function handleListClick(event) {
+    const selectInput = event.target.closest('[data-alert-select]');
+    if (selectInput) {
+      const id = String(selectInput.dataset.alertSelect || '');
+      if (!id) return;
+      if (selectInput.checked) pageState.selectedAlertIds.add(id);
+      else pageState.selectedAlertIds.delete(id);
+      syncSelectionCounters();
+      return;
+    }
+
     const editBtn = event.target.closest('[data-alert-edit]');
     if (editBtn) {
       const alert = (alertConfig.alerts || []).find((item) => item.id === editBtn.dataset.alertEdit);
@@ -1529,13 +1631,11 @@
       return;
     }
 
-    const selectInput = event.target.closest('[data-alert-select]');
-    if (selectInput) {
-      const id = String(selectInput.dataset.alertSelect || '');
-      if (!id) return;
-      if (selectInput.checked) pageState.selectedAlertIds.add(id);
-      else pageState.selectedAlertIds.delete(id);
-      syncSelectionCounters();
+    const openCard = event.target.closest('[data-alert-open]');
+    if (openCard) {
+      const alert = (alertConfig.alerts || []).find((item) => item.id === openCard.dataset.alertOpen);
+      if (!alert) return;
+      openEditorWithDraft(buildDraftFromAlert(alert), 'edit');
     }
   }
 
@@ -1758,6 +1858,12 @@
     }
   }
 
+  function handleContextBarClick(event) {
+    const createBtn = event.target.closest('[data-context-create]');
+    if (!createBtn || !pageState.filterQuoteId) return;
+    openEditorWithDraft(createQuoteScopedDraft(createBtn.dataset.contextCreate), 'create');
+  }
+
   async function init() {
     try {
       await Promise.all([loadDashboardConfig(), loadAlertConfig()]);
@@ -1766,9 +1872,10 @@
       } catch (candidateError) {
         console.warn('加载路径报警候选失败，回退到本地配置展示:', candidateError);
       }
+      applyInitialRoute();
       renderList();
       renderDismissedList();
-      applyInitialRoute();
+      renderEditor();
       setStatus('');
     } catch (error) {
       setStatus(error.message || '初始化失败', 'error');
@@ -1787,18 +1894,6 @@
     if (dismissedListEl) {
       dismissedListEl.addEventListener('click', (event) => {
         handleDismissedListClick(event).catch((error) => setStatus(error.message || '操作失败', 'error'));
-      });
-    }
-    if (alertSearchInput) {
-      alertSearchInput.addEventListener('input', (event) => {
-        pageState.alertFilterQuery = event.target.value || '';
-        renderList();
-      });
-    }
-    if (dismissedSearchInput) {
-      dismissedSearchInput.addEventListener('input', (event) => {
-        pageState.dismissedFilterQuery = event.target.value || '';
-        renderDismissedList();
       });
     }
     if (dismissSelectedBtn) {
@@ -1820,6 +1915,16 @@
     editorEl.addEventListener('keydown', handleEditorKeydown);
     editorEl.addEventListener('input', updateDraftField);
     editorEl.addEventListener('change', updateDraftField);
+    if (editorModalEl) {
+      editorModalEl.addEventListener('click', (event) => {
+        if (event.target === editorModalEl) {
+          closeEditor();
+        }
+      });
+    }
+    if (contextBarEl) {
+      contextBarEl.addEventListener('click', handleContextBarClick);
+    }
     editorEl.addEventListener('focusin', (event) => {
       if (event.target && event.target.id === 'path-alert-search-input') {
         renderCandidateSuggestions();
@@ -1837,7 +1942,8 @@
     buildAlertSummaryLines,
     buildAlertRouteHtml,
     getAlertPrimaryTitle,
-    formatAlertMetaLine
+    formatAlertMetaLine,
+    groupAlertsBySection
   };
 
   if (!window.__PATH_ALERTS_APP_DISABLE_AUTO_INIT__) {

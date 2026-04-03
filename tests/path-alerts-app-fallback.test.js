@@ -168,3 +168,14 @@ const quoteAlertMeta = sandbox.window.PathAlertsAppTestHooks.formatAlertMetaLine
   enabled: true
 });
 assert.strictEqual(quoteAlertMeta, '🏷️交易对 · 🎯0.100113 · ⚡立即 · ❄️180s · ✅');
+
+const grouped = sandbox.window.PathAlertsAppTestHooks.groupAlertsBySection([
+  { id: 'q1', target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 1.01 } },
+  { id: 'r1', target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:x' } },
+  { id: 'p1', target: { type: 'path', legs: [{}, {}] } },
+  { id: 's1', target: { type: 'rule', ruleKind: 'special', ruleId: 'special:x' } }
+]);
+assert.strictEqual(grouped.quote.map((item) => item.id).join(','), 'q1');
+assert.strictEqual(grouped.rule.map((item) => item.id).join(','), 'r1');
+assert.strictEqual(grouped.path.map((item) => item.id).join(','), 'p1');
+assert.strictEqual(grouped.special.map((item) => item.id).join(','), 's1');
