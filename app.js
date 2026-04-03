@@ -1684,6 +1684,7 @@
             toSymbol: state && state.toSymbol,
             totalAmountOut: state && state.lastTotalAmountOut,
             rate: state && state.lastRawPrice,
+            hideAmountPrefix: !isCexOrderbookChain(quote && quote.chain),
             fallbackText: (state && state.lastResultText) || '...'
         });
     }

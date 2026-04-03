@@ -33,6 +33,9 @@
       const amountText = String(options.amount ?? '').trim();
       const totalAmountOutText = formatQuoteDisplayNumber(options.totalAmountOut);
       if (!amountText || !totalAmountOutText) return fallbackText;
+      if (options.hideAmountPrefix) {
+        return `${fromSymbol} ≈ ${totalAmountOutText} ${toSymbol}`;
+      }
       return `${amountText} ${fromSymbol} ≈ ${totalAmountOutText} ${toSymbol}`;
     }
 

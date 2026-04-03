@@ -29,9 +29,10 @@ assert.strictEqual(
     fromSymbol: 'WBTC',
     toSymbol: 'cbBTC',
     totalAmountOut: 0.49956,
+    hideAmountPrefix: true,
     fallbackText: '...'
   }),
-  '0.5 WBTC ≈ 0.499560 cbBTC'
+  'WBTC ≈ 0.499560 cbBTC'
 );
 
 assert.strictEqual(
