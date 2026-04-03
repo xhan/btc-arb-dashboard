@@ -7,5 +7,5 @@ const specialRuleIds = ['special:wbtc-bybit', 'special:usde-bybit', 'special:usd
 for (const ruleId of specialRuleIds) {
   const rule = SPECIAL_ARB_RULES.find((entry) => entry.id === ruleId);
   assert.ok(rule, `missing special rule: ${ruleId}`);
-  assert.strictEqual(rule.alertConfirmDelaySec, 10, `${ruleId} should default to 10s confirm delay`);
+  assert.strictEqual(typeof rule.displayTargets !== 'undefined', true, `${ruleId} should keep displayTargets`);
 }

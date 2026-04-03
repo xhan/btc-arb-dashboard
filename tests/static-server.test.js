@@ -168,7 +168,6 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })'));
     assert.ok(appJsResponse.body.includes('path-alert-config-sync'));
     assert.ok(appJsResponse.body.includes('new Audio(pathAlertSound.currentSrc || pathAlertSound.src)'));
-    assert.ok(appJsResponse.body.includes('mergeSpecialRuleAlerts(normalized, SPECIAL_ARB_RULES)'));
     assert.ok(appJsResponse.body.includes('customAlertMessage: String(evaluation && evaluation.alertMessage || \'\').trim()'));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));

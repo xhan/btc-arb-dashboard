@@ -52,7 +52,22 @@ fs.writeFileSync(
         pathAlertEvalIntervalMs: 1500,
         defaultCooldownSec: 180
       },
-      alerts: []
+      alerts: [
+        {
+          id: 'legacy-alert',
+          name: 'legacy',
+          enabled: true,
+          thresholdBp: 1,
+          triggerMode: 'immediate',
+          confirmDelaySec: 0,
+          cooldownSec: 180,
+          target: {
+            type: 'rule',
+            ruleKind: 'fixed',
+            ruleId: 'fixed:gho-usdc'
+          }
+        }
+      ]
     },
     null,
     2
@@ -131,7 +146,7 @@ async function waitForServer(attempts = 15) {
     assert.strictEqual(defaultResponse.statusCode, 200);
     const defaultConfig = JSON.parse(defaultResponse.body);
     assert.strictEqual(defaultConfig.version, 1);
-    assert.strictEqual(defaultConfig.settings.pathAlertEvalIntervalMs, 1500);
+    assert.strictEqual(defaultConfig.settings.pathAlertEvalIntervalMs, 1000);
     assert.strictEqual(defaultConfig.settings.localSoundEnabled, true);
     assert.strictEqual(defaultConfig.settings.webhookEnabled, false);
     assert.deepStrictEqual(defaultConfig.alerts, []);

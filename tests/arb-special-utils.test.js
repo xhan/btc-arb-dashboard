@@ -12,10 +12,7 @@ const rules = [
     cexQuote: 'BTC',
     cexChain: 'Bybit',
     withdrawFee: 0.0001,
-    minNetProfit: 0.0001,
-    minNetProfitBp: 1.5,
     displayTargets: [1, 2, 3],
-    alertConfirmDelaySec: 10,
     maxBookLevels: 10
   }
 ];
@@ -77,10 +74,6 @@ const opportunity = opportunities[0];
 assert.strictEqual(opportunity.ruleId, 'special:wbtc-bybit');
 assert.strictEqual(opportunity.label, 'WBTC <-> BYBIT');
 assert.strictEqual(opportunity.direction, 'bybit-ask-to-eth');
-assert.strictEqual(opportunity.alert, true);
-assert.strictEqual(opportunity.alert_confirm_delay_sec, 10);
-assert.strictEqual(opportunity.alert_cooldown_sec, 120);
-assert.strictEqual(opportunity.alert_key, 'special:wbtc-bybit');
 assert.ok(opportunity.display_message.includes('（ETH）WBTC -> cbBTC'));
 assert.ok(opportunity.display_message.includes('（Bybit）BTC -> WBTC @0.9998 ask1'));
 assert.ok(opportunity.display_message.includes('1 BTC: 0.00125019 BTC / 12.5 bp'));
@@ -126,7 +119,6 @@ const bidDominant = buildSpecialArbOpportunities({
 });
 assert.strictEqual(bidDominant.length, 1);
 assert.strictEqual(bidDominant[0].direction, 'eth-to-bybit-bid');
-assert.strictEqual(bidDominant[0].alert_key, 'special:wbtc-bybit');
 
 const lowBpRules = [
   {
@@ -162,9 +154,8 @@ const lowBpOpportunities = buildSpecialArbOpportunities({
   aliasRules: null
 });
 assert.strictEqual(lowBpOpportunities.length, 1);
-assert.ok(lowBpOpportunities[0].stats.primary.netProfit > 0.0001);
-assert.ok(lowBpOpportunities[0].stats.primary.netProfitBp < 1.5);
-assert.strictEqual(lowBpOpportunities[0].alert, false);
+assert.ok(lowBpOpportunities[0].stats.primary.netProfit > 0);
+assert.ok(lowBpOpportunities[0].stats.primary.netProfitBp > 0);
 
 const usdeRules = [
   {
@@ -176,10 +167,7 @@ const usdeRules = [
     cexQuote: 'USDT',
     cexChain: 'Bybit',
     withdrawFee: 0,
-    minNetProfit: 8,
-    minNetProfitBp: 0,
     displayTargets: [100000, 200000],
-    alertConfirmDelaySec: 10,
     maxBookLevels: 10
   }
 ];
@@ -227,8 +215,7 @@ assert.strictEqual(usdeOpportunities.length, 1);
 assert.strictEqual(usdeOpportunities[0].ruleId, 'special:usde-bybit');
 assert.strictEqual(usdeOpportunities[0].label, 'USDe <-> BYBIT');
 assert.strictEqual(usdeOpportunities[0].direction, 'eth-to-bybit-bid');
-assert.strictEqual(usdeOpportunities[0].alert, true);
-assert.ok(usdeOpportunities[0].stats.primary.netProfit > 8);
+assert.ok(usdeOpportunities[0].stats.primary.netProfit > 0);
 assert.ok(usdeOpportunities[0].display_message.includes('（ETH）USDT -> USDe'));
 assert.ok(usdeOpportunities[0].display_message.includes('（Bybit）USDe -> USDT @0.9998 bid1'));
 assert.ok(usdeOpportunities[0].display_message.includes('100000 USDe: 179.96 USDT / 18 bp'));
@@ -248,10 +235,7 @@ const usdtbRules = [
     cexQuote: 'USDT',
     cexChain: 'Bybit',
     withdrawFee: 0,
-    minNetProfit: 8,
-    minNetProfitBp: 0,
     displayTargets: [100000, 200000],
-    alertConfirmDelaySec: 10,
     maxBookLevels: 10
   }
 ];
@@ -299,8 +283,7 @@ assert.strictEqual(usdtbOpportunities.length, 1);
 assert.strictEqual(usdtbOpportunities[0].ruleId, 'special:usdtb-bybit');
 assert.strictEqual(usdtbOpportunities[0].label, 'USDtb <-> BYBIT');
 assert.strictEqual(usdtbOpportunities[0].direction, 'eth-to-bybit-bid');
-assert.strictEqual(usdtbOpportunities[0].alert, true);
-assert.ok(usdtbOpportunities[0].stats.primary.netProfit > 8);
+assert.ok(usdtbOpportunities[0].stats.primary.netProfit > 0);
 assert.ok(usdtbOpportunities[0].display_message.includes('（ETH）USDT -> USDtb'));
 assert.ok(usdtbOpportunities[0].display_message.includes('（Bybit）USDtb -> USDT @0.9997 bid1'));
 assert.ok(usdtbOpportunities[0].display_message.includes('100000 USDtb:'));

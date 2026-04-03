@@ -6,10 +6,6 @@
   root.ArbSpecialUtils = factory(root.ArbPaths);
 }(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi) {
   const DEFAULT_BYBIT_PAIR_RULE_CONFIG = Object.freeze({
-    minNetProfit: 0.0001,
-    minNetProfitBp: 1.5,
-    alertConfirmDelaySec: 10,
-    alertCooldownSec: 120,
     withdrawFee: 0.0001,
     maxBookLevels: 10,
     displayTargets: []
@@ -194,10 +190,6 @@
   class BybitPairSpecialRuleRunner extends BaseSpecialRuleRunner {
     constructor(rule) {
       super(rule);
-      this.minNetProfit = toNonNegativeNumber(rule.minNetProfit, DEFAULT_BYBIT_PAIR_RULE_CONFIG.minNetProfit);
-      this.minNetProfitBp = toNonNegativeNumber(rule.minNetProfitBp, DEFAULT_BYBIT_PAIR_RULE_CONFIG.minNetProfitBp);
-      this.alertConfirmDelaySec = toNonNegativeNumber(rule.alertConfirmDelaySec, DEFAULT_BYBIT_PAIR_RULE_CONFIG.alertConfirmDelaySec);
-      this.alertCooldownSec = toNonNegativeNumber(rule.alertCooldownSec, DEFAULT_BYBIT_PAIR_RULE_CONFIG.alertCooldownSec);
       this.withdrawFee = toNonNegativeNumber(rule.withdrawFee, DEFAULT_BYBIT_PAIR_RULE_CONFIG.withdrawFee);
       this.maxBookLevels = toPositiveNumber(rule.maxBookLevels, DEFAULT_BYBIT_PAIR_RULE_CONFIG.maxBookLevels);
       this.displayTargets = normalizeDisplayTargets(rule.displayTargets);
@@ -493,11 +485,6 @@
         cycle,
         display_message: displayMessage,
         alert_message: alertMessage,
-        alert: primary.netProfit > this.minNetProfit && primary.netProfitBp > this.minNetProfitBp,
-        alert_confirm_delay_sec: this.alertConfirmDelaySec,
-        alert_cooldown_sec: this.alertCooldownSec,
-        // Use a stable key so cooldown survives direction flips.
-        alert_key: rule.id,
         stats: {
           primary,
           secondary

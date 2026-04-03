@@ -113,11 +113,8 @@
       dexQuote: 'WBTC',
       cexQuote: 'BTC',
       cexChain: 'Bybit',
-      minNetProfit: 0.0001,
-      minNetProfitBp: 1.5,
       displayTargets: [1, 2, 3],
-      alertConfirmDelaySec: 10,
-      alertCooldownSec: 120
+      withdrawFee: 0.0001
     },
     {
       id: 'special:usde-bybit',
@@ -128,12 +125,8 @@
       dexQuote: 'USDe',
       cexQuote: 'USDT',
       cexChain: 'Bybit',
-      minNetProfit: 8,
-      minNetProfitBp: 0.5,
       displayTargets: [100000, 200000],
-      withdrawFee: 0,
-      alertConfirmDelaySec: 10,
-      alertCooldownSec: 120
+      withdrawFee: 0
     },
     {
       id: 'special:usdtb-bybit',
@@ -144,12 +137,8 @@
       dexQuote: 'USDtb',
       cexQuote: 'USDT',
       cexChain: 'Bybit',
-      minNetProfit: 8,
-      minNetProfitBp: 0.5,
       displayTargets: [100000, 200000],
-      withdrawFee: 0,
-      alertConfirmDelaySec: 10,
-      alertCooldownSec: 120
+      withdrawFee: 0
     }
   ]);
 

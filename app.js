@@ -1290,11 +1290,8 @@
             dexQuote: 'WBTC',
             cexQuote: 'BTC',
             cexChain: 'Bybit',
-            minNetProfit: 0.0001,
-            minNetProfitBp: 1.5,
             displayTargets: [1, 2, 3],
-            alertConfirmDelaySec: 10,
-            alertCooldownSec: 120
+            withdrawFee: 0.0001
         },
         {
             id: 'special:usde-bybit',
@@ -1305,12 +1302,8 @@
             dexQuote: 'USDe',
             cexQuote: 'USDT',
             cexChain: 'Bybit',
-            minNetProfit: 8,
-            minNetProfitBp: 0,
             displayTargets: [100000, 200000],
-            withdrawFee: 0,
-            alertConfirmDelaySec: 10,
-            alertCooldownSec: 120
+            withdrawFee: 0
         },
         {
             id: 'special:usdtb-bybit',
@@ -1321,12 +1314,8 @@
             dexQuote: 'USDtb',
             cexQuote: 'USDT',
             cexChain: 'Bybit',
-            minNetProfit: 8,
-            minNetProfitBp: 0.5,
             displayTargets: [100000, 200000],
-            withdrawFee: 0,
-            alertConfirmDelaySec: 10,
-            alertCooldownSec: 120
+            withdrawFee: 0
         }
     ];
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
@@ -3417,36 +3406,17 @@
         return [];
     }
 
-    function getSpecialRuleAlertDefaultConfig(rule) {
-        const fallback = rule && typeof rule === 'object' ? rule : {};
+    function resolveSpecialRuleAlertConfig(alert) {
         if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
-            return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(fallback);
+            return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(alert && alert.specialRuleConfig);
         }
+        const source = alert && alert.specialRuleConfig && typeof alert.specialRuleConfig === 'object'
+            ? alert.specialRuleConfig
+            : {};
         return {
-            minNetProfit: Number.isFinite(Number(fallback.minNetProfit)) ? Number(fallback.minNetProfit) : 0,
-            minNetProfitBp: Number.isFinite(Number(fallback.minNetProfitBp)) ? Number(fallback.minNetProfitBp) : 0
+            minNetProfit: Number.isFinite(Number(source.minNetProfit)) ? Number(source.minNetProfit) : null,
+            minNetProfitBp: Number.isFinite(Number(source.minNetProfitBp)) ? Number(source.minNetProfitBp) : null
         };
-    }
-
-    function resolveSpecialRuleAlertConfig(alert, rule) {
-        const fallback = getSpecialRuleAlertDefaultConfig(rule);
-        if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
-            return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(
-                alert && alert.specialRuleConfig,
-                fallback
-            );
-        }
-        return fallback;
-    }
-
-    function normalizePathAlertConfigWithSpecialRules(config) {
-        const normalized = window.PathAlertUtils
-            ? window.PathAlertUtils.normalizeAlertConfig(config)
-            : config;
-        if (!window.SpecialRuleAlertConfigUtils || typeof window.SpecialRuleAlertConfigUtils.mergeSpecialRuleAlerts !== 'function') {
-            return normalized;
-        }
-        return window.SpecialRuleAlertConfigUtils.mergeSpecialRuleAlerts(normalized, SPECIAL_ARB_RULES);
     }
 
     function splitAlertMessageLines(message) {
@@ -3481,15 +3451,17 @@
             return { available: false };
         }
         const primaryStats = best.stats && best.stats.primary ? best.stats.primary : null;
-        const specialRuleConfig = resolveSpecialRuleAlertConfig(alert, rule);
+        const specialRuleConfig = resolveSpecialRuleAlertConfig(alert);
         const minNetProfit = Number(specialRuleConfig.minNetProfit);
         const minNetProfitBp = Number(specialRuleConfig.minNetProfitBp);
         const meetsTriggerCondition = primaryStats
+            && Number.isFinite(minNetProfit)
+            && Number.isFinite(minNetProfitBp)
             ? (
-                Number(primaryStats.netProfit) > (Number.isFinite(minNetProfit) ? minNetProfit : 0)
-                && Number(primaryStats.netProfitBp) > (Number.isFinite(minNetProfitBp) ? minNetProfitBp : 0)
+                Number(primaryStats.netProfit) > minNetProfit
+                && Number(primaryStats.netProfitBp) > minNetProfitBp
             )
-            : best.alert === true;
+            : false;
         return {
             available: true,
             profitRate: best.cycle.profitRate,
@@ -4067,7 +4039,9 @@
     }
 
     async function persistPathAlertConfig() {
-        const normalized = normalizePathAlertConfigWithSpecialRules(pathAlertConfig);
+        const normalized = window.PathAlertUtils
+            ? window.PathAlertUtils.normalizeAlertConfig(pathAlertConfig)
+            : pathAlertConfig;
         pathAlertConfig = normalized;
         await fetch(`${BACKEND_URL}/api/save-alert-config`, {
             method: 'POST',
@@ -4106,13 +4080,13 @@
             const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
             if (!response.ok) throw new Error('获取路径报警配置失败');
             const data = await response.json();
-            pathAlertConfig = normalizePathAlertConfigWithSpecialRules(data);
+            pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig(data);
         } catch (error) {
             if (!fallbackToDefault) {
                 throw error;
             }
             console.warn('加载路径报警配置失败:', error);
-            pathAlertConfig = normalizePathAlertConfigWithSpecialRules();
+            pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig();
         }
     }
 
@@ -4137,7 +4111,7 @@
             ? nextDraft.target.legs.map((leg) => ({ ...leg }))
             : [];
         pathAlertEditorState.draftSpecialRuleConfig = nextDraft.target.type === 'rule' && nextDraft.target.ruleKind === 'special'
-            ? resolveSpecialRuleAlertConfig(nextDraft, getSpecialRuleById(nextDraft.target.ruleId))
+            ? { ...(nextDraft.specialRuleConfig || {}) }
             : null;
 
         pathAlertModalTitle.textContent = nextDraft.id ? '编辑路径报警' : '添加路径报警';
@@ -4275,8 +4249,7 @@
             };
             if (sourceType === 'special') {
                 baseAlert.specialRuleConfig = resolveSpecialRuleAlertConfig(
-                    { specialRuleConfig: pathAlertEditorState.draftSpecialRuleConfig },
-                    getSpecialRuleById(pathAlertEditorState.selectedRuleId)
+                    { specialRuleConfig: pathAlertEditorState.draftSpecialRuleConfig }
                 );
             }
         }
@@ -4295,7 +4268,7 @@
             return `报价 | ${escapeHtml(String(alert.target.value != null ? alert.target.value : '--'))} | ${triggerText} | ${cooldownText}`;
         }
         if (alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special') {
-            const specialRuleConfig = resolveSpecialRuleAlertConfig(alert, getSpecialRuleById(alert.target.ruleId));
+            const specialRuleConfig = resolveSpecialRuleAlertConfig(alert);
             return [
                 `净收益 > ${escapeHtml(String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--'))}`,
                 `净收益率 > ${escapeHtml(String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--'))}bp`,
@@ -4538,7 +4511,7 @@
         if (ruleBtn) {
             pathAlertEditorState.selectedRuleId = ruleBtn.dataset.pathAlertRuleId;
             pathAlertEditorState.draftSpecialRuleConfig = pathAlertEditorState.sourceType === 'special'
-                ? getSpecialRuleAlertDefaultConfig(getSpecialRuleById(pathAlertEditorState.selectedRuleId))
+                ? { minNetProfit: 0, minNetProfitBp: 0 }
                 : null;
             if (!pathAlertNameInput.value.trim()) {
                 const rule = getPathAlertRuleDefinitions(pathAlertEditorState.sourceType)

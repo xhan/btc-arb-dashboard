@@ -149,34 +149,15 @@
       : null;
   }
 
-  function getSpecialRuleAlertDefaultConfig(rule) {
-    const safeRule = rule && typeof rule === 'object' ? rule : {};
+  function resolveSpecialRuleAlertConfig(config) {
     if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
-      return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(safeRule);
+      return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(config);
     }
+    const source = config && typeof config === 'object' ? config : {};
     return {
-      minNetProfit: Number.isFinite(Number(safeRule.minNetProfit)) ? Number(safeRule.minNetProfit) : 0,
-      minNetProfitBp: Number.isFinite(Number(safeRule.minNetProfitBp)) ? Number(safeRule.minNetProfitBp) : 0
+      minNetProfit: Number.isFinite(Number(source.minNetProfit)) ? Number(source.minNetProfit) : null,
+      minNetProfitBp: Number.isFinite(Number(source.minNetProfitBp)) ? Number(source.minNetProfitBp) : null
     };
-  }
-
-  function resolveSpecialRuleAlertConfig(config, rule) {
-    const fallback = getSpecialRuleAlertDefaultConfig(rule);
-    if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
-      return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(config, fallback);
-    }
-    return fallback;
-  }
-
-  function normalizeAlertConfigWithSpecialRules(config) {
-    const normalized = window.PathAlertUtils
-      ? window.PathAlertUtils.normalizeAlertConfig(config)
-      : config;
-    if (!window.SpecialRuleAlertConfigUtils || typeof window.SpecialRuleAlertConfigUtils.mergeSpecialRuleAlerts !== 'function') {
-      return normalized;
-    }
-    const rules = getRuleDefinitions('special');
-    return window.SpecialRuleAlertConfigUtils.mergeSpecialRuleAlerts(normalized, rules);
   }
 
   function createEmptyDraft() {
@@ -270,7 +251,7 @@
         quoteValue: '',
         quoteBasePrice: '',
         specialRuleConfig: normalized.target.ruleKind === 'special'
-          ? resolveSpecialRuleAlertConfig(normalized.specialRuleConfig, rule)
+          ? resolveSpecialRuleAlertConfig(normalized.specialRuleConfig)
           : null,
         searchQuery: '',
         legs: []
@@ -637,8 +618,7 @@
       ? String(alert.target.value != null ? alert.target.value : '--')
       : `${String(alert && alert.thresholdBp != null ? alert.thresholdBp : '--')}bp`;
     if (alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special') {
-      const rule = findRule('special', alert.target.ruleId);
-      const specialRuleConfig = resolveSpecialRuleAlertConfig(alert.specialRuleConfig, rule);
+      const specialRuleConfig = resolveSpecialRuleAlertConfig(alert.specialRuleConfig);
       valueText = `>${String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--')} / >${String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--')}bp`;
     }
     return [
@@ -784,11 +764,15 @@
     const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
     if (!response.ok) throw new Error('获取报警配置失败');
     const raw = await response.json();
-    alertConfig = normalizeAlertConfigWithSpecialRules(raw);
+    alertConfig = window.PathAlertUtils
+      ? window.PathAlertUtils.normalizeAlertConfig(raw)
+      : raw;
   }
 
   async function persistAlertConfig() {
-    const payload = normalizeAlertConfigWithSpecialRules(alertConfig);
+    const payload = window.PathAlertUtils
+      ? window.PathAlertUtils.normalizeAlertConfig(alertConfig)
+      : alertConfig;
     const response = await fetch(`${BACKEND_URL}/api/save-alert-config`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -962,7 +946,7 @@
         return '请选择有效的规则';
       }
       if (draft.sourceType === 'special') {
-        const specialRuleConfig = resolveSpecialRuleAlertConfig(draft.specialRuleConfig, rule);
+        const specialRuleConfig = resolveSpecialRuleAlertConfig(draft.specialRuleConfig);
         if (!Number.isFinite(Number(specialRuleConfig.minNetProfit)) || Number(specialRuleConfig.minNetProfit) < 0) {
           return '净收益阈值必须是大于等于 0 的数字';
         }
@@ -1015,10 +999,7 @@
       target: collectEditorTarget(draft)
     };
     if (draft.sourceType === 'special') {
-      alert.specialRuleConfig = resolveSpecialRuleAlertConfig(
-        draft.specialRuleConfig,
-        findRule('special', draft.selectedRuleId)
-      );
+      alert.specialRuleConfig = resolveSpecialRuleAlertConfig(draft.specialRuleConfig);
     }
     return window.PathAlertUtils
       ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
@@ -1409,11 +1390,11 @@
           ${draft.sourceType !== 'special' ? '' : `
             <div class="form-group">
               <label for="editor-special-min-profit">净收益阈值</label>
-              <input id="editor-special-min-profit" type="number" min="0" step="0.0001" value="${escapeHtml(String(resolveSpecialRuleAlertConfig(draft.specialRuleConfig, findRule('special', draft.selectedRuleId)).minNetProfit ?? 0))}">
+              <input id="editor-special-min-profit" type="number" min="0" step="0.0001" value="${escapeHtml(String(resolveSpecialRuleAlertConfig(draft.specialRuleConfig).minNetProfit ?? 0))}">
             </div>
             <div class="form-group">
               <label for="editor-special-min-profit-bp">净收益率阈值 (bp)</label>
-              <input id="editor-special-min-profit-bp" type="number" min="0" step="0.1" value="${escapeHtml(String(resolveSpecialRuleAlertConfig(draft.specialRuleConfig, findRule('special', draft.selectedRuleId)).minNetProfitBp ?? 0))}">
+              <input id="editor-special-min-profit-bp" type="number" min="0" step="0.1" value="${escapeHtml(String(resolveSpecialRuleAlertConfig(draft.specialRuleConfig).minNetProfitBp ?? 0))}">
             </div>
           `}
           <div class="form-group">
@@ -1750,13 +1731,13 @@
     if (target.id === 'editor-enabled') pageState.draft.enabled = target.checked;
     if (target.id === 'editor-special-min-profit') {
       pageState.draft.specialRuleConfig = {
-        ...resolveSpecialRuleAlertConfig(pageState.draft.specialRuleConfig, findRule('special', pageState.draft.selectedRuleId)),
+        ...resolveSpecialRuleAlertConfig(pageState.draft.specialRuleConfig),
         minNetProfit: Number(target.value || 0)
       };
     }
     if (target.id === 'editor-special-min-profit-bp') {
       pageState.draft.specialRuleConfig = {
-        ...resolveSpecialRuleAlertConfig(pageState.draft.specialRuleConfig, findRule('special', pageState.draft.selectedRuleId)),
+        ...resolveSpecialRuleAlertConfig(pageState.draft.specialRuleConfig),
         minNetProfitBp: Number(target.value || 0)
       };
     }
@@ -1885,7 +1866,7 @@
     if (ruleBtn) {
       pageState.draft.selectedRuleId = ruleBtn.dataset.editorRuleId || '';
       pageState.draft.specialRuleConfig = pageState.draft.sourceType === 'special'
-        ? resolveSpecialRuleAlertConfig(null, findRule('special', pageState.draft.selectedRuleId))
+        ? { minNetProfit: 0, minNetProfitBp: 0 }
         : null;
       renderEditor();
       return;
