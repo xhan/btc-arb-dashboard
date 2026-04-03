@@ -4,7 +4,7 @@
     "pathAlertEvalIntervalMs": 1000,
     "defaultCooldownSec": 120,
     "changedLegMinBp": 0.1,
-    "localSoundEnabled": true,
+    "localSoundEnabled": false,
     "webhookEnabled": true,
     "dayAppEnabled": false,
     "telegramEnabled": true,
@@ -16,7 +16,7 @@
       "id": "path-alert-1773395309298-wsvgtj",
       "name": "",
       "enabled": true,
-      "thresholdBp": 1.2,
+      "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
       "cooldownSec": 120,
@@ -44,7 +44,7 @@
       "id": "path-alert-1773395462112-azn84r",
       "name": "",
       "enabled": true,
-      "thresholdBp": 1.1,
+      "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
       "cooldownSec": 120,
@@ -72,7 +72,7 @@
       "id": "path-alert-1773395486976-4kofo7",
       "name": "",
       "enabled": true,
-      "thresholdBp": 1.1,
+      "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
       "cooldownSec": 120,
@@ -86,7 +86,7 @@
       "id": "path-alert-1773395497305-sbvftd",
       "name": "",
       "enabled": true,
-      "thresholdBp": 1.1,
+      "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
       "cooldownSec": 120,
@@ -100,7 +100,7 @@
       "id": "path-alert-1773395519056-v4tize",
       "name": "",
       "enabled": true,
-      "thresholdBp": 1.1,
+      "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
       "cooldownSec": 120,
@@ -165,7 +165,7 @@
         "quoteId": 1774206818567,
         "direction": "forward",
         "ruleKind": "targetAbove",
-        "value": 1.00215
+        "value": 1.0015
       }
     },
     {
@@ -181,7 +181,7 @@
         "quoteId": 1774206874519,
         "direction": "forward",
         "ruleKind": "targetAbove",
-        "value": 1.00215
+        "value": 1.0015
       }
     },
     {
