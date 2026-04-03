@@ -21,6 +21,8 @@ const { createVeloraClient } = require('./providers/velora');
 const { createZeroXClient } = require('./providers/zerox');
 
 const ERC20_ABI = ['function decimals() view returns (uint8)', 'function symbol() view returns (string)'];
+const ERC20_DECIMALS_SELECTOR = '0x313ce567';
+const ERC20_SYMBOL_SELECTOR = '0x95d89b41';
 const LIFI_API_BASE_URL = 'https://li.quest/v1';
 const LIFI_DEFAULT_FROM_ADDRESS = '0x1111111111111111111111111111111111111111';
 const LIFI_DEFAULT_SLIPPAGE = '0.005';
@@ -30,6 +32,21 @@ const EVM_TOKEN_META_MAX_ATTEMPTS = 2;
 function isRetryableEvmTokenMetaError(error) {
   const code = String(error && error.code || '').toUpperCase();
   return code === 'CALL_EXCEPTION' || code === 'NETWORK_ERROR' || code === 'SERVER_ERROR' || code === 'TIMEOUT';
+}
+
+function decodeRawUint8Result(rawValue) {
+  const [decoded] = ethers.AbiCoder.defaultAbiCoder().decode(['uint8'], rawValue);
+  return Number(decoded);
+}
+
+function decodeRawStringResult(rawValue) {
+  try {
+    const [decoded] = ethers.AbiCoder.defaultAbiCoder().decode(['string'], rawValue);
+    return String(decoded || '').trim();
+  } catch (stringError) {
+    const [bytes32Value] = ethers.AbiCoder.defaultAbiCoder().decode(['bytes32'], rawValue);
+    return ethers.decodeBytes32String(bytes32Value).trim();
+  }
 }
 
 function createMarketClients(options) {
@@ -54,6 +71,46 @@ function createMarketClients(options) {
     return headers;
   }
 
+  async function callEvmTokenField(provider, tokenAddress, selector, decoder, label) {
+    const rawValue = await provider.call({
+      to: tokenAddress,
+      data: selector
+    });
+    const decodedValue = decoder(rawValue);
+
+    if (label === 'decimals') {
+      if (!Number.isFinite(decodedValue)) {
+        throw new Error(`无法解析代币 ${tokenAddress} 的 decimals`);
+      }
+      return decodedValue;
+    }
+
+    if (!decodedValue) {
+      throw new Error(`无法解析代币 ${tokenAddress} 的 ${label}`);
+    }
+    return decodedValue;
+  }
+
+  async function readEvmTokenMetaField({ readPrimary, readFallback }) {
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= EVM_TOKEN_META_MAX_ATTEMPTS; attempt += 1) {
+      try {
+        return await readPrimary();
+      } catch (error) {
+        lastError = error;
+        if (attempt >= EVM_TOKEN_META_MAX_ATTEMPTS || !isRetryableEvmTokenMetaError(error)) {
+          break;
+        }
+      }
+    }
+
+    if (lastError && isRetryableEvmTokenMetaError(lastError)) {
+      return readFallback();
+    }
+    throw lastError;
+  }
+
   async function getEvmTokenMeta(chain, tokenAddress, providerOverride) {
     const provider = providerOverride || getEvmProvider(chain);
     if (!provider) {
@@ -61,20 +118,28 @@ function createMarketClients(options) {
     }
 
     return tokenMetaStore.remember(chain, tokenAddress, async () => {
-      let lastError = null;
-      for (let attempt = 1; attempt <= EVM_TOKEN_META_MAX_ATTEMPTS; attempt += 1) {
-        try {
-          const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-          const [decimals, symbol] = await Promise.all([contract.decimals(), contract.symbol()]);
-          return { decimals: Number(decimals), symbol };
-        } catch (error) {
-          lastError = error;
-          if (attempt >= EVM_TOKEN_META_MAX_ATTEMPTS || !isRetryableEvmTokenMetaError(error)) {
-            throw error;
-          }
-        }
-      }
-      throw lastError;
+      const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+      const decimals = await readEvmTokenMetaField({
+        readPrimary: () => contract.decimals(),
+        readFallback: () => callEvmTokenField(
+          provider,
+          tokenAddress,
+          ERC20_DECIMALS_SELECTOR,
+          decodeRawUint8Result,
+          'decimals'
+        )
+      });
+      const symbol = await readEvmTokenMetaField({
+        readPrimary: () => contract.symbol(),
+        readFallback: () => callEvmTokenField(
+          provider,
+          tokenAddress,
+          ERC20_SYMBOL_SELECTOR,
+          decodeRawStringResult,
+          'symbol'
+        )
+      });
+      return { decimals: Number(decimals), symbol };
     });
   }
 
