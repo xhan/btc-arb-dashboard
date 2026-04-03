@@ -118,6 +118,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('#top-bar-right > a {'));
     assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
     assert.ok(response.body.includes('.quote-item-paused'));
+    assert.ok(response.body.includes('.quote-label-stack.quote-dex-link-target {'));
+    assert.ok(response.body.includes('.quote-left-container .quote-dex-link-target {'));
+    assert.ok(response.body.includes('pointer-events: auto;'));
     assert.ok(response.body.includes('border: 2px solid #f59e0b;'));
     assert.ok(response.body.includes('z-index: 7000;'));
     assert.ok(response.body.includes('.auto-refresh-toggle span {'));
@@ -139,6 +142,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-dex-link-chain'));
     assert.ok(appJsResponse.body.includes('copyDexLinkFromElement'));
     assert.ok(appJsResponse.body.includes('data-terminal-pair-link'));
+    assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
+    assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
     assert.ok(appJsResponse.body.includes('class="icon-btn add-quote-btn"'));
     assert.ok(!appJsResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
@@ -300,14 +305,20 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(pathAlertsResponse.statusCode, 200);
     assert.ok(pathAlertsResponse.body.includes('报警管理'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-page"'));
-    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-list"'));
+    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-sections"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-dismissed-list"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-editor"'));
-    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-search-input"'));
-    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-dismissed-search-input"'));
+    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-anchor-nav"'));
+    assert.ok(pathAlertsResponse.body.includes('href="#quote-alert-section"'));
+    assert.ok(pathAlertsResponse.body.includes('href="#rule-alert-section"'));
+    assert.ok(pathAlertsResponse.body.includes('href="#path-manual-section"'));
+    assert.ok(pathAlertsResponse.body.includes('href="#special-alert-section"'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-dismiss-selected-btn"'));
     assert.ok(pathAlertsResponse.body.includes('批量删除'));
     assert.ok(pathAlertsResponse.body.includes('已忽略规则'));
+    assert.ok(pathAlertsResponse.body.includes('id="path-alerts-editor-modal"'));
+    assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-search-input"'));
+    assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-dismissed-search-input"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-calculator.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
@@ -327,14 +338,17 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsAppResponse.body.includes('path-alert-suggestions'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertCandidateUtils'));
     assert.ok(pathAlertsAppResponse.body.includes('findDismissedTargetForDraft'));
-    assert.ok(pathAlertsAppResponse.body.includes('path-alerts-search-input'));
-    assert.ok(pathAlertsAppResponse.body.includes('path-alerts-dismissed-search-input'));
+    assert.ok(pathAlertsAppResponse.body.includes('renderSectionCards'));
+    assert.ok(pathAlertsAppResponse.body.includes('groupAlertsBySection'));
+    assert.ok(pathAlertsAppResponse.body.includes('path-alerts-editor-modal'));
     assert.ok(pathAlertsAppResponse.body.includes('path-alerts-dismiss-selected-btn'));
     assert.ok(pathAlertsAppResponse.body.includes('data-alert-dismiss-delete'));
     assert.ok(pathAlertsAppResponse.body.includes('data-dismissed-restore'));
     assert.ok(pathAlertsAppResponse.body.includes("event.key === 'ArrowDown'"));
     assert.ok(pathAlertsAppResponse.body.includes("event.key === 'ArrowUp'"));
     assert.ok(pathAlertsAppResponse.body.includes("event.key === 'Enter'"));
+    assert.ok(pathAlertsAppResponse.body.includes('pageState.filterQuoteId = String(parsed.filterQuoteId || \'\').trim();'));
+    assert.ok(pathAlertsAppResponse.body.includes('applyInitialRoute();'));
   } finally {
     serverProcess.kill();
   }
