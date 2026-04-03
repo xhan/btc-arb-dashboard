@@ -401,6 +401,49 @@
     return '--';
   }
 
+  function buildQuoteAlertPairText(target) {
+    const quote = quoteById.get(Number(target && target.quoteId));
+    if (!quote) {
+      return `报价 #${String(target && target.quoteId || '--')}`;
+    }
+    const direction = getQuoteDirection(target);
+    if (isCexOrderbookChain(quote.chain)) {
+      const parsed = parseCexTradingPairSymbol(quote.symbol);
+      if (parsed) {
+        const fromSymbol = direction === 'inverse' ? parsed.toSymbol : parsed.fromSymbol;
+        const toSymbol = direction === 'inverse' ? parsed.fromSymbol : parsed.toSymbol;
+        return `${formatChainLabel(quote.chain)} ${fromSymbol}/${toSymbol}`;
+      }
+      return `${formatChainLabel(quote.chain)} ${quote.symbol || '--'}`;
+    }
+    const fromToken = direction === 'inverse' ? quote.toToken : quote.fromToken;
+    const toToken = direction === 'inverse' ? quote.fromToken : quote.toToken;
+    return `${formatChainLabel(quote.chain)} ${shortToken(fromToken)}/${shortToken(toToken)}`;
+  }
+
+  function buildDefaultQuoteAlertName(target) {
+    if (!target || target.type !== 'quote') return '';
+    const pairText = buildQuoteAlertPairText(target);
+    const suffix = target.ruleKind === 'targetAbove'
+      ? '汇率高于'
+      : target.ruleKind === 'targetBelow'
+        ? '汇率低于'
+        : target.ruleKind === 'percentUp'
+          ? '上涨提醒'
+          : target.ruleKind === 'percentDown'
+            ? '下跌提醒'
+            : '报警';
+    return `${pairText} ${suffix}`.trim();
+  }
+
+  function buildDefaultAlertName(draft = pageState.draft) {
+    if (!draft) return '';
+    if (draft.sourceType === 'quote') {
+      return buildDefaultQuoteAlertName(collectEditorTarget(draft));
+    }
+    return '';
+  }
+
   function buildAlertSummaryLines(alert) {
     if (alert && alert.target && alert.target.type === 'quote') {
       const displayTitle = getAlertDisplayTitle(alert);
@@ -963,7 +1006,7 @@
       : draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
     const alert = {
       id: draft.id || buildAlertId(),
-      name: draft.name.trim(),
+      name: draft.name.trim() || buildDefaultAlertName(draft),
       enabled: draft.enabled !== false,
       thresholdBp,
       triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
@@ -1943,7 +1986,8 @@
     buildAlertRouteHtml,
     getAlertPrimaryTitle,
     formatAlertMetaLine,
-    groupAlertsBySection
+    groupAlertsBySection,
+    buildDefaultAlertName
   };
 
   if (!window.__PATH_ALERTS_APP_DISABLE_AUTO_INIT__) {

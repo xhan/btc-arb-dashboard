@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>报警管理 Preview</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --border: #d9e2ec;
+      --text: #102a43;
+      --muted: #627d98;
+      --brand: #0f766e;
+      --brand-soft: #d9f2ef;
+      --quote: #155eef;
+      --quote-soft: #e8f1ff;
+      --rule: #9a3412;
+      --rule-soft: #ffedd5;
+      --path: #7c2d12;
+      --path-soft: #fde8e8;
+      --special: #6d28d9;
+      --special-soft: #f3e8ff;
+      --danger: #b42318;
+      --shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.35 "SF Pro Display", "Segoe UI", "PingFang SC", sans-serif;
+    }
+
+    .page {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 {
+      margin: 0 0 4px;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-weight: 600;
+      box-shadow: none;
+    }
+
+    .btn.primary {
+      background: #0f766e;
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .anchor-bar,
+    .context-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .anchor-links {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .anchor-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-soft);
+    }
+
+    .context-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: var(--panel);
+    }
+
+    .chip.context {
+      background: #e0f2fe;
+      border-color: #bae6fd;
+      color: #075985;
+    }
+
+    .stats {
+      color: var(--muted);
+      font-weight: 700;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+    .section {
+      margin-bottom: 12px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .section-title small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .section-link {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 122px;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .card-head h3 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .meta-stack {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tag {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tag.quote { background: var(--quote-soft); color: var(--quote); }
+    .tag.rule { background: var(--rule-soft); color: var(--rule); }
+    .tag.path { background: #ffe4d6; color: var(--path); }
+    .tag.special { background: var(--special-soft); color: var(--special); }
+    .tag.live { background: var(--brand-soft); color: var(--brand); }
+    .tag.cooldown { background: #f1f5f9; color: #334155; }
+
+    .subline {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .legs {
+      display: grid;
+      gap: 4px;
+    }
+
+    .leg {
+      padding: 5px 6px;
+      border-radius: 8px;
+      background: var(--panel-soft);
+      border: 1px solid #e5edf5;
+      font-size: 10px;
+      line-height: 1.18;
+      min-height: 0;
+    }
+
+    .leg strong {
+      display: inline-block;
+      min-width: 24px;
+      margin-right: 4px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .rule-line {
+      padding: 5px 6px;
+      border-radius: 8px;
+      background: var(--panel-soft);
+      border: 1px solid #e5edf5;
+      font-weight: 700;
+      font-size: 10px;
+      line-height: 1.18;
+    }
+
+    .card-foot {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      padding-top: 3px;
+      border-top: 1px dashed #dbe5ee;
+    }
+
+    .foot-meta {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .card-actions span.danger {
+      color: var(--danger);
+    }
+
+    @media (max-width: 1280px) {
+      .card-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .anchor-bar,
+      .context-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div>
+        <h1>报警管理 · Preview</h1>
+        <p>按类型分组，每组内部用高密度卡片墙。路径 legs 默认直接展示，列表默认只负责浏览和筛选；点击卡片再弹出编辑 UI。</p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn">返回全部报警</button>
+        <button class="btn primary">新增正向报警</button>
+        <button class="btn primary">新增反向报警</button>
+      </div>
+    </div>
+
+    <div class="anchor-bar">
+      <div class="anchor-links">
+        <a href="#quote-section">交易对报警</a>
+        <a href="#rule-section">固定规则</a>
+        <a href="#path-section">手工路径</a>
+        <a href="#special-section">特殊规则</a>
+      </div>
+      <div class="stats">规则很多时可直接跳到对应分组</div>
+    </div>
+
+    <div class="context-bar">
+      <div class="context-left">
+        <span class="chip context">当前交易对 · BSC BTCB/syBTC</span>
+        <span class="chip">仅显示这一个交易对相关规则</span>
+      </div>
+      <div class="foot-meta">共 17 条规则 · 当前筛到 5 条</div>
+    </div>
+
+    <section class="section" id="quote-section">
+      <div class="section-head">
+        <div class="section-title">
+          <span class="tag quote">交易对报警</span>
+          <h2>当前交易对</h2>
+          <small>最常用，优先展示</small>
+        </div>
+        <div class="section-link">查看该交易对全部 5 条</div>
+      </div>
+      <div class="card-grid">
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>BSC BTCB/syBTC</h3>
+              <div class="subline">正向 · BTCB → syBTC</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag quote">汇率报警</span>
+              <span class="tag live">启用</span>
+              <span class="tag cooldown">立即 · 冷却 120s</span>
+            </div>
+          </div>
+          <div class="rule-line">汇率 ≥ 1.00215</div>
+          <div class="legs">
+            <div class="leg"><strong>BSC</strong>BTCB → syBTC</div>
+            <div class="leg"><strong>规则</strong>正向汇率高于目标</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">点击卡片进入编辑</div>
+            <div class="card-actions"><span>编辑</span><span>停用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>BSC BTCB/syBTC</h3>
+              <div class="subline">反向 · syBTC → BTCB</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag quote">汇率报警</span>
+              <span class="tag live">启用</span>
+              <span class="tag cooldown">延迟 10s · 冷却 120s</span>
+            </div>
+          </div>
+          <div class="rule-line">相对基准上涨 ≥ 0.2%（基准汇率 1.0018）</div>
+          <div class="legs">
+            <div class="leg"><strong>BSC</strong>syBTC → BTCB</div>
+            <div class="leg"><strong>规则</strong>反向汇率相对基准上涨</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">更容易扫视正反向差异</div>
+            <div class="card-actions"><span>编辑</span><span>停用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>BSC BTCB/syBTC</h3>
+              <div class="subline">正向 · BTCB → syBTC</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag quote">汇率报警</span>
+              <span class="tag live">停用</span>
+              <span class="tag cooldown">立即 · 冷却 120s</span>
+            </div>
+          </div>
+          <div class="rule-line">汇率 ≤ 0.99780</div>
+          <div class="legs">
+            <div class="leg"><strong>BSC</strong>BTCB → syBTC</div>
+            <div class="leg"><strong>规则</strong>正向汇率低于目标</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">默认 4 列等宽</div>
+            <div class="card-actions"><span>编辑</span><span>启用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>BSC BTCB/syBTC</h3>
+              <div class="subline">反向 · syBTC → BTCB</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag quote">汇率报警</span>
+              <span class="tag live">启用</span>
+              <span class="tag cooldown">立即 · 冷却 120s</span>
+            </div>
+          </div>
+          <div class="rule-line">汇率 ≥ 1.00190</div>
+          <div class="legs">
+            <div class="leg"><strong>BSC</strong>syBTC → BTCB</div>
+            <div class="leg"><strong>规则</strong>反向汇率高于目标</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">14 寸目标稳定 4 列</div>
+            <div class="card-actions"><span>编辑</span><span>停用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="rule-section">
+      <div class="section-head">
+        <div class="section-title">
+          <span class="tag rule">固定规则</span>
+          <h2>固定规则</h2>
+          <small>路径 legs 默认完整显示</small>
+        </div>
+        <div class="section-link">收起 / 展开</div>
+      </div>
+      <div class="card-grid">
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>tBTC - BTC</h3>
+              <div class="subline">固定规则 · 当前收益 +1.16bp</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag rule">固定规则</span>
+              <span class="tag live">启用</span>
+              <span class="tag cooldown">延迟 13s · 冷却 180s</span>
+            </div>
+          </div>
+          <div class="legs">
+            <div class="leg"><strong>ETH</strong>tBTC → BTC.b @1.000055</div>
+            <div class="leg"><strong>Base</strong>cbBTC → tBTC @1.000060</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">阈值 &gt; 1.1bp</div>
+            <div class="card-actions"><span>编辑</span><span>停用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>LBTC - BTC</h3>
+              <div class="subline">固定规则 · 当前收益 +0.84bp</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag rule">固定规则</span>
+              <span class="tag live">启用</span>
+              <span class="tag cooldown">立即 · 冷却 180s</span>
+            </div>
+          </div>
+          <div class="legs">
+            <div class="leg"><strong>ETH</strong>LBTC → WBTC @0.999981</div>
+            <div class="leg"><strong>Bybit</strong>WBTC → BTC @0.999730 [bid1]</div>
+            <div class="leg"><strong>Base</strong>cbBTC → LBTC @1.000294</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">阈值 &gt; 1.0bp</div>
+            <div class="card-actions"><span>编辑</span><span>停用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>wBTC - ETH Arb</h3>
+              <div class="subline">固定规则 · 当前收益 +3.42bp</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag rule">固定规则</span>
+              <span class="tag live">启用</span>
+              <span class="tag cooldown">立即 · 冷却 180s</span>
+            </div>
+          </div>
+          <div class="legs">
+            <div class="leg"><strong>ETH</strong>WBTC → cbBTC @1.000451</div>
+            <div class="leg"><strong>Arb</strong>cbBTC → WBTC @1.000291</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">阈值 &gt; 3bp</div>
+            <div class="card-actions"><span>编辑</span><span>停用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="path-section">
+      <div class="section-head">
+        <div class="section-title">
+          <span class="tag path">手工路径</span>
+          <h2>手工路径</h2>
+          <small>卡片更适合 2-4 腿的完整展示</small>
+        </div>
+        <div class="section-link">收起 / 展开</div>
+      </div>
+      <div class="card-grid">
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>手工路径 · WBTC 回环</h3>
+              <div class="subline">3 腿 · 只关注 ETH / Base</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag path">手工路径</span>
+              <span class="tag live">启用</span>
+              <span class="tag cooldown">延迟 13s · 冷却 180s</span>
+            </div>
+          </div>
+          <div class="legs">
+            <div class="leg"><strong>ETH</strong>cbBTC → WBTC</div>
+            <div class="leg"><strong>Bybit</strong>WBTC → BTC [bid1]</div>
+            <div class="leg"><strong>Base</strong>BTC → cbBTC</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">阈值 &gt; 1.2bp</div>
+            <div class="card-actions"><span>编辑</span><span>停用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div>
+              <h3>手工路径 · syBTC 回环</h3>
+              <div class="subline">2 腿 · BSC / ETH</div>
+            </div>
+            <div class="meta-stack">
+              <span class="tag path">手工路径</span>
+              <span class="tag live">启用</span>
+              <span class="tag cooldown">立即 · 冷却 120s</span>
+            </div>
+          </div>
+          <div class="legs">
+            <div class="leg"><strong>BSC</strong>BTCB → syBTC</div>
+            <div class="leg"><strong>ETH</strong>syBTC → cbBTC</div>
+          </div>
+          <div class="card-foot">
+            <div class="foot-meta">阈值 &gt; 1.1bp</div>
+            <div class="card-actions"><span>编辑</span><span>停用</span><span class="danger">删除</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="special-section">
+      <div class="section-head">
+        <div class="section-title">
+          <span class="tag special">特殊规则</span>
+          <h2>特殊规则</h2>
+          <small>仍然保留在同一页，直接可见</small>
+        </div>
+        <div class="section-link">和其他分组一样直接浏览</div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

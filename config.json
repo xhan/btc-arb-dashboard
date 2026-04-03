@@ -22,7 +22,8 @@
           "toToken": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
           "preferredSource": "Kyber",
           "showInverse": true,
-          "kyberOnlyDirectPools": true
+          "kyberOnlyDirectPools": true,
+          "requestChannelId": "ch1"
         },
         {
           "id": 1760021219294,
@@ -568,6 +569,22 @@
           "showInverse": true,
           "requestChannelId": "ch1",
           "paused": true
+        },
+        {
+          "id": 1775203737574,
+          "chain": "ethereum",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          "toToken": "0xC139190F447e929f090Edeb554D95AbB8b18aC1C",
+          "showInverse": true
+        },
+        {
+          "id": 1775204058672,
+          "chain": "Bybit",
+          "amount": 1,
+          "preferredSource": "Bybit",
+          "symbol": "USDTBUSDT"
         }
       ]
     },
@@ -760,6 +777,14 @@
           "toToken": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
           "showInverse": false,
           "requestChannelId": "ch1"
+        },
+        {
+          "id": 1775200669932,
+          "chain": "solana",
+          "amount": 0.1,
+          "preferredSource": "Kyber",
+          "fromToken": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
+          "toToken": "zBTCug3er3tLyffELcvDNrKkCymbPWysGcWihESYfLg"
         }
       ]
     }
@@ -767,7 +792,7 @@
   "settings": {
     "kyber": 210,
     "zerox": 500,
-    "velora": 1100,
+    "velora": 1200,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,

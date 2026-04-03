@@ -4,7 +4,7 @@
     "pathAlertEvalIntervalMs": 1000,
     "defaultCooldownSec": 120,
     "changedLegMinBp": 0.1,
-    "localSoundEnabled": false,
+    "localSoundEnabled": true,
     "webhookEnabled": true,
     "dayAppEnabled": false,
     "telegramEnabled": true,
@@ -266,6 +266,40 @@
       "specialRuleConfig": {
         "minNetProfit": 8,
         "minNetProfitBp": 0.6
+      }
+    },
+    {
+      "id": "path-alert-1775208935817-lhbyjt",
+      "name": "",
+      "enabled": true,
+      "thresholdBp": 0,
+      "triggerMode": "immediate",
+      "confirmDelaySec": 13,
+      "cooldownSec": 120,
+      "target": {
+        "type": "quote",
+        "quoteId": 1775200669932,
+        "direction": "forward",
+        "ruleKind": "targetAbove",
+        "value": 1.003
+      }
+    },
+    {
+      "id": "rule-alert-special-usdtb-bybit",
+      "name": "USDtb <-> BYBIT",
+      "enabled": true,
+      "thresholdBp": 0,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 10,
+      "cooldownSec": 120,
+      "target": {
+        "type": "rule",
+        "ruleKind": "special",
+        "ruleId": "special:usdtb-bybit"
+      },
+      "specialRuleConfig": {
+        "minNetProfit": 8,
+        "minNetProfitBp": 0.5
       }
     }
   ],

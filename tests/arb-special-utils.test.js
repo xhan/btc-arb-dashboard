@@ -237,3 +237,71 @@ assert.ok(usdeOpportunities[0].display_message.includes('深度: 1) 120000 @0.99
 assert.ok(usdeOpportunities[0].alert_message.includes('（Bybit）USDe -> USDT @0.9998 bid1'));
 assert.ok(usdeOpportunities[0].alert_message.includes('\n\n100000 : 179.96'));
 assert.ok(usdeOpportunities[0].alert_message.includes('最大正收益量:'));
+
+const usdtbRules = [
+  {
+    id: 'special:usdtb-bybit',
+    title: 'USDtb <-> BYBIT',
+    type: 'pair-bybit',
+    dexBase: 'USDT',
+    dexQuote: 'USDtb',
+    cexQuote: 'USDT',
+    cexChain: 'Bybit',
+    withdrawFee: 0,
+    minNetProfit: 8,
+    minNetProfitBp: 0,
+    displayTargets: [100000, 200000],
+    alertConfirmDelaySec: 10,
+    maxBookLevels: 10
+  }
+];
+
+const usdtbQuotes = [
+  { id: 301, chain: 'ethereum', showInverse: true },
+  { id: 302, chain: 'Bybit', showInverse: true }
+];
+
+const usdtbQuoteStateById = new Map([
+  [301, {
+    fromSymbol: 'USDT',
+    toSymbol: 'USDtb',
+    lastRawPrice: 1.0015,
+    inverseRawPrice: 0.9985022466
+  }],
+  [302, {
+    fromSymbol: 'USDTB',
+    toSymbol: 'USDT',
+    cexOrderbook: {
+      bestBidPrice: 0.9997,
+      bestBidSize: 130000,
+      bestAskPrice: 1.0001,
+      bestAskSize: 130000,
+      bidsTopDepth: [
+        { price: 0.9997, size: 130000 },
+        { price: 0.9995, size: 30000 }
+      ],
+      asksTopDepth: [
+        { price: 1.0001, size: 130000 },
+        { price: 1.0003, size: 30000 }
+      ]
+    }
+  }]
+]);
+
+const usdtbOpportunities = buildSpecialArbOpportunities({
+  rules: usdtbRules,
+  quotes: usdtbQuotes,
+  quoteStateById: usdtbQuoteStateById,
+  aliasRules: { USDTB: 'USDtb' }
+});
+
+assert.strictEqual(usdtbOpportunities.length, 1);
+assert.strictEqual(usdtbOpportunities[0].ruleId, 'special:usdtb-bybit');
+assert.strictEqual(usdtbOpportunities[0].label, 'USDtb <-> BYBIT');
+assert.strictEqual(usdtbOpportunities[0].direction, 'eth-to-bybit-bid');
+assert.strictEqual(usdtbOpportunities[0].alert, true);
+assert.ok(usdtbOpportunities[0].stats.primary.netProfit > 8);
+assert.ok(usdtbOpportunities[0].display_message.includes('（ETH）USDT -> USDtb'));
+assert.ok(usdtbOpportunities[0].display_message.includes('（Bybit）USDtb -> USDT @0.9997 bid1'));
+assert.ok(usdtbOpportunities[0].display_message.includes('100000 USDtb:'));
+assert.ok(usdtbOpportunities[0].alert_message.includes('（Bybit）USDtb -> USDT @0.9997 bid1'));

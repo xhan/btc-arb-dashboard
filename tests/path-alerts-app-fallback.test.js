@@ -179,3 +179,12 @@ assert.strictEqual(grouped.quote.map((item) => item.id).join(','), 'q1');
 assert.strictEqual(grouped.rule.map((item) => item.id).join(','), 'r1');
 assert.strictEqual(grouped.path.map((item) => item.id).join(','), 'p1');
 assert.strictEqual(grouped.special.map((item) => item.id).join(','), 's1');
+
+const defaultQuoteAlertName = sandbox.window.PathAlertsAppTestHooks.buildDefaultAlertName({
+  sourceType: 'quote',
+  selectedQuoteId: '101',
+  quoteDirection: 'forward',
+  quoteRuleKind: 'targetAbove'
+});
+assert.ok(defaultQuoteAlertName);
+assert.ok(defaultQuoteAlertName.includes('汇率高于'));

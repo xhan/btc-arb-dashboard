@@ -1311,6 +1311,22 @@
             withdrawFee: 0,
             alertConfirmDelaySec: 10,
             alertCooldownSec: 120
+        },
+        {
+            id: 'special:usdtb-bybit',
+            title: 'USDtb <-> BYBIT',
+            type: 'pair-bybit',
+            categoryName: 'USD监控',
+            dexBase: 'USDT',
+            dexQuote: 'USDtb',
+            cexQuote: 'USDT',
+            cexChain: 'Bybit',
+            minNetProfit: 8,
+            minNetProfitBp: 0.5,
+            displayTargets: [100000, 200000],
+            withdrawFee: 0,
+            alertConfirmDelaySec: 10,
+            alertCooldownSec: 120
         }
     ];
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
@@ -1922,6 +1938,7 @@
             WBTC: ['WBTC', 'wBTC'],
             tBTC: ['tBTC', 'TBTC'],
             USDe: ['USDe', 'USDE'],
+            USDtb: ['USDtb', 'USDTB'],
             USDT: ['USDT', 'USD₮0']
         };
     }
@@ -1938,6 +1955,7 @@
             wBTC: 'WBTC',
             TBTC: 'tBTC',
             USDE: 'USDe',
+            USDTB: 'USDtb',
             'USD₮0': 'USDT'
         };
     }

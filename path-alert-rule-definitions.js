@@ -134,6 +134,22 @@
       withdrawFee: 0,
       alertConfirmDelaySec: 10,
       alertCooldownSec: 120
+    },
+    {
+      id: 'special:usdtb-bybit',
+      title: 'USDtb <-> BYBIT',
+      type: 'pair-bybit',
+      categoryName: 'USD监控',
+      dexBase: 'USDT',
+      dexQuote: 'USDtb',
+      cexQuote: 'USDT',
+      cexChain: 'Bybit',
+      minNetProfit: 8,
+      minNetProfitBp: 0.5,
+      displayTargets: [100000, 200000],
+      withdrawFee: 0,
+      alertConfirmDelaySec: 10,
+      alertCooldownSec: 120
     }
   ]);
 

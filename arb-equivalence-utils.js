@@ -4,6 +4,7 @@ function buildApi() {
     WBTC: ['WBTC', 'wBTC'],
     tBTC: ['tBTC', 'TBTC'],
     USDe: ['USDe', 'USDE'],
+    USDtb: ['USDtb', 'USDTB'],
     USDT: ['USDT', 'USD₮0']
   };
 
