@@ -28,7 +28,7 @@
         {
           "id": 1760021219294,
           "chain": "solana",
-          "amount": 1,
+          "amount": 0.5,
           "fromToken": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
           "toToken": "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
           "showInverse": true
@@ -670,7 +670,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0x35751007a407ca6FEFfE80b3cB397736D2cf4dbe",
           "toToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-          "showInverse": false,
+          "showInverse": true,
           "requestChannelId": "ch2"
         },
         {
