@@ -3,7 +3,7 @@
     {
       "id": "ch1",
       "name": "JP1",
-      "httpProxy": "http://127.0.0.1:18012",
+      "httpProxy": "http://127.0.0.1:18001",
       "intervals": {
         "kyber": 400,        
         "velora": 1350

@@ -197,6 +197,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
     assert.ok(!appJsResponse.body.includes('导入当前全部机会'));
     assert.ok(appJsResponse.body.includes('/path-alerts'));
+    assert.ok(appJsResponse.body.includes('if (pathAlertPanelHidden) return;'));
+    assert.ok(appJsResponse.body.includes('if (isVisible) {'));
+    assert.ok(appJsResponse.body.includes('renderPathAlertPanel();'));
     assert.ok(appJsResponse.body.includes('openPathAlertsManagementPage({'));
     assert.ok(appJsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(appJsResponse.body.includes('data-path-alert-delete'));

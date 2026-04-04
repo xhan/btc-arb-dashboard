@@ -4287,6 +4287,7 @@
 
     function renderPathAlertPanel() {
         if (!pathAlertContent) return;
+        if (pathAlertPanelHidden) return;
         const alerts = Array.isArray(pathAlertConfig.alerts) ? pathAlertConfig.alerts : [];
         const settings = pathAlertConfig.settings || {};
         const dismissedCount = Array.isArray(pathAlertConfig.dismissedTargets) ? pathAlertConfig.dismissedTargets.length : 0;
@@ -4361,6 +4362,9 @@
         if (!pathAlertWindow) return;
         pathAlertPanelHidden = !pathAlertPanelHidden;
         const isVisible = !pathAlertPanelHidden;
+        if (isVisible) {
+            renderPathAlertPanel();
+        }
         pathAlertWindow.style.display = isVisible ? 'flex' : 'none';
         if (isVisible) bringFloatingPanelToFront(pathAlertWindow);
     }
