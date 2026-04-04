@@ -26,7 +26,8 @@ const {
   extendMutedPathTargetEntry,
   findMutedPathAlert,
   pruneExpiredMutedPathTargets,
-  formatMutedCountdown
+  formatMutedCountdown,
+  buildEffectiveRuntimeAlert
 } = require('../path-alert-utils');
 
 const emptyConfig = normalizeAlertConfig();
@@ -1030,6 +1031,13 @@ const delayedAlert = {
   cooldownSec: 300,
   target: { type: 'path', legs: [] }
 };
+
+const forcedImmediateAlert = buildEffectiveRuntimeAlert(delayedAlert, { forceImmediate: true });
+assert.notStrictEqual(forcedImmediateAlert, delayedAlert);
+assert.strictEqual(forcedImmediateAlert.triggerMode, 'immediate');
+assert.strictEqual(forcedImmediateAlert.confirmDelaySec, 0);
+assert.strictEqual(forcedImmediateAlert.cooldownSec, delayedAlert.cooldownSec);
+assert.strictEqual(buildEffectiveRuntimeAlert(delayedAlert, { forceImmediate: false }), delayedAlert);
 
 let delayedRuntime = advancePathAlertRuntime(delayedAlert, null, {
   available: true,

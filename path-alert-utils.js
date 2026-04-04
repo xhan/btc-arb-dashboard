@@ -764,6 +764,19 @@
     return next;
   }
 
+  function buildEffectiveRuntimeAlert(alert, options = {}) {
+    if (!alert || typeof alert !== 'object') return alert;
+    if (!options || options.forceImmediate !== true) return alert;
+    if (alert.triggerMode === 'immediate' && toNonNegativeInteger(alert.confirmDelaySec, 0) === 0) {
+      return alert;
+    }
+    return {
+      ...alert,
+      triggerMode: 'immediate',
+      confirmDelaySec: 0
+    };
+  }
+
   function resolvePathAlertSnapshotState(alert, previousRuntime, nextRuntime, evaluation, allLegSnapshots) {
     const currentSnapshots = Array.isArray(evaluation && evaluation.legSnapshots)
       ? evaluation.legSnapshots.map((leg) => ({ ...leg }))
@@ -834,6 +847,7 @@
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
     DEFAULT_PATH_ALERT_SETTINGS,
     advancePathAlertRuntime,
+    buildEffectiveRuntimeAlert,
     buildAllLegSnapshots,
     buildChangedLegs,
     buildPathAlertTargetDuplicateKey,

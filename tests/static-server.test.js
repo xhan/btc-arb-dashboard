@@ -194,6 +194,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('音效'));
     assert.ok(appJsResponse.body.includes('远程'));
     assert.ok(appJsResponse.body.includes('path-alert-reload-btn'));
+    assert.ok(appJsResponse.body.includes('data-path-alert-force-immediate'));
+    assert.ok(appJsResponse.body.includes('全部立即'));
+    assert.ok(appJsResponse.body.includes('let forceImmediateAlerts = false;'));
+    assert.ok(appJsResponse.body.includes('buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts })'));
+    assert.ok(appJsResponse.body.includes("closest('[data-path-alert-force-immediate]')"));
     assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
     assert.ok(!appJsResponse.body.includes('导入当前全部机会'));
     assert.ok(appJsResponse.body.includes('/path-alerts'));

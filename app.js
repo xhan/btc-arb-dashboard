@@ -69,6 +69,7 @@
     let mutedPathLogTimer = null;
     let pathAlertReloading = false;
     let pathAlertExternalReloadTimer = null;
+    let forceImmediateAlerts = false;
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
@@ -3943,11 +3944,12 @@
             if (alert && alert.target && alert.target.type === 'quote') {
                 continue;
             }
+            const runtimeAlert = window.PathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
             const evaluation = window.PathAlertUtils.evaluatePathAlert(alert, context);
             const previous = pathAlertRuntimeState.get(alert.id) || null;
-            const next = window.PathAlertUtils.advancePathAlertRuntime(alert, previous, evaluation, nowMs);
+            const next = window.PathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, nowMs);
             const snapshotState = typeof window.PathAlertUtils.resolvePathAlertSnapshotState === 'function'
-                ? window.PathAlertUtils.resolvePathAlertSnapshotState(alert, previous, next, evaluation, allLegSnapshots)
+                ? window.PathAlertUtils.resolvePathAlertSnapshotState(runtimeAlert, previous, next, evaluation, allLegSnapshots)
                 : { currentSnapshots: [], baselineSnapshots: [] };
             next.evaluation = evaluation;
             const debugKind = alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special'
@@ -4305,6 +4307,10 @@
                         <input type="checkbox" data-path-alert-global-toggle="webhookEnabled" ${settings.webhookEnabled === true ? 'checked' : ''}>
                         <span>远程</span>
                     </label>
+                    <label class="path-alert-toolbar-toggle">
+                        <input type="checkbox" data-path-alert-force-immediate ${forceImmediateAlerts ? 'checked' : ''}>
+                        <span>全部立即</span>
+                    </label>
                     <div class="path-alert-toolbar-cycle">周期 ${settings.pathAlertEvalIntervalMs}ms</div>
                     <div class="path-alert-toolbar-cycle">已忽略 ${dismissedCount} 条</div>
                 </div>
@@ -4421,6 +4427,20 @@
     }
 
     function handlePathAlertPanelChange(event) {
+        const forceImmediateToggle = event.target.closest('[data-path-alert-force-immediate]');
+        if (forceImmediateToggle) {
+            forceImmediateAlerts = forceImmediateToggle.checked;
+            if (forceImmediateAlerts) {
+                evaluatePathAlertsOnce();
+                evaluateQuoteAlertsOnce();
+                renderPathAlertPanel();
+                return;
+            }
+            reloadPathAlertConfigFromServer().catch((error) => {
+                console.error('关闭全部立即后重新加载路径报警配置失败:', error);
+            });
+            return;
+        }
         const toggle = event.target.closest('[data-path-alert-global-toggle]');
         if (!toggle || !pathAlertConfig.settings) return;
         const key = toggle.dataset.pathAlertGlobalToggle;
@@ -4458,6 +4478,7 @@
         pathAlertReloading = true;
         renderPathAlertPanel();
         try {
+            forceImmediateAlerts = false;
             await loadPathAlertConfig({ fallbackToDefault: false });
             pathAlertRuntimeState = new Map();
             restartPathAlertScheduler();
@@ -5613,6 +5634,12 @@
         ));
     }
 
+    function evaluateQuoteAlertsOnce() {
+        for (const quote of dashboardState.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : [])) {
+            checkPriceForAlerts(quote);
+        }
+    }
+
     function syncLegacyQuoteAlertDismissButton(resultDiv, state, quoteId) {
         if (resultDiv && !resultDiv.querySelector('.dismiss-highlight-btn')) {
             if (state.hasUnreadAlert) {
@@ -5717,12 +5744,13 @@
         let hasTriggeredThisTick = false;
 
         for (const alert of quoteAlerts) {
+            const runtimeAlert = window.PathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
             const previous = pathAlertRuntimeState.get(alert.id) || null;
             const evaluation = window.PathAlertUtils
                 ? window.PathAlertUtils.evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })
                 : null;
             const next = window.PathAlertUtils
-                ? window.PathAlertUtils.advancePathAlertRuntime(alert, previous, evaluation, Date.now())
+                ? window.PathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, Date.now())
                 : null;
             if (!next) continue;
             next.evaluation = evaluation;
