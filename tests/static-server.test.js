@@ -103,11 +103,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
     assert.ok(response.body.includes('id="path-alert-window"'));
     assert.ok(response.body.includes('#path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none;'));
-    assert.ok(response.body.includes('id="path-alert-modal"'));
     assert.ok(response.body.includes('id="open-quote-alerts-manage"'));
     assert.ok(!response.body.includes('class="quote-alert-inline-grid"'));
     assert.ok(response.body.includes('id="modal-subtitle"'));
     assert.ok(response.body.includes('交易对报警已统一迁到「报警管理」页'));
+    assert.ok(!response.body.includes('id="path-alert-modal"'));
+    assert.ok(!response.body.includes('id="path-alert-name"'));
+    assert.ok(!response.body.includes('id="path-alert-search-input"'));
     assert.ok(response.body.includes('id="toggle-quote-display-btn"'));
     assert.ok(response.body.includes('价格: 汇率'));
     assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
@@ -193,7 +195,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("USDE: 'USDe'"));
     assert.ok(appJsResponse.body.includes('音效'));
     assert.ok(appJsResponse.body.includes('远程'));
-    assert.ok(appJsResponse.body.includes('path-alert-reload-btn'));
+    assert.ok(!appJsResponse.body.includes('path-alert-reload-btn'));
     assert.ok(appJsResponse.body.includes('data-path-alert-force-immediate'));
     assert.ok(appJsResponse.body.includes('全部立即'));
     assert.ok(appJsResponse.body.includes('let forceImmediateAlerts = false;'));
@@ -209,6 +211,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(appJsResponse.body.includes('data-path-alert-delete'));
     assert.ok(appJsResponse.body.includes('data-path-alert-dismiss-delete'));
+    assert.ok(!appJsResponse.body.includes('function openPathAlertModal('));
+    assert.ok(!appJsResponse.body.includes('function renderPathAlertModal('));
+    assert.ok(!appJsResponse.body.includes('function handlePathAlertModalClick('));
+    assert.ok(!appJsResponse.body.includes("pathAlertModal.addEventListener('click', handlePathAlertModalClick)"));
     assert.ok(appJsResponse.body.includes('PriceSnapshotPayloadUtils'));
     assert.ok(appJsResponse.body.includes('data-toggle-pause-id'));
     assert.ok(appJsResponse.body.includes('data-toggle-category-pause-id'));

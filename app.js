@@ -75,15 +75,6 @@
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
     const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;
     const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
-    let pathAlertEditorState = {
-        visible: false,
-        editingId: '',
-        sourceType: 'path',
-        selectedRuleId: '',
-        searchQuery: '',
-        draftLegs: [],
-        draftSpecialRuleConfig: null
-    };
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
@@ -163,23 +154,6 @@
     const pathAlertHeader = document.getElementById('path-alert-header');
     const pathAlertMinBtn = document.getElementById('path-alert-min-btn');
     const togglePathAlertBtn = document.getElementById('toggle-path-alert-btn');
-    const pathAlertModal = document.getElementById('path-alert-modal');
-    const pathAlertModalTitle = document.getElementById('path-alert-modal-title');
-    const pathAlertNameInput = document.getElementById('path-alert-name');
-    const pathAlertSearchInput = document.getElementById('path-alert-search-input');
-    const pathAlertCandidateList = document.getElementById('path-alert-candidate-list');
-    const pathAlertRuleList = document.getElementById('path-alert-rule-list');
-    const pathAlertSelectedLegs = document.getElementById('path-alert-selected-legs');
-    const pathAlertPreview = document.getElementById('path-alert-preview');
-    const pathAlertThresholdBpInput = document.getElementById('path-alert-threshold-bp');
-    const pathAlertTriggerModeSelect = document.getElementById('path-alert-trigger-mode');
-    const pathAlertConfirmDelayInput = document.getElementById('path-alert-confirm-delay');
-    const pathAlertCooldownInput = document.getElementById('path-alert-cooldown');
-    const pathAlertEnabledInput = document.getElementById('path-alert-enabled');
-    const pathAlertPathEditor = document.getElementById('path-alert-path-editor');
-    const pathAlertRuleEditor = document.getElementById('path-alert-rule-editor');
-    const pathAlertCancelBtn = document.getElementById('path-alert-cancel');
-    const pathAlertSaveBtn = document.getElementById('path-alert-save');
     const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
     const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
     const quoteTokenAddressesEl = document.getElementById('quote-token-addresses');
@@ -1979,89 +1953,6 @@
         return `(${chainText}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
     }
 
-    function buildPathAlertQuoteCandidates() {
-        const candidates = [];
-        for (const category of dashboardState) {
-            for (const quote of getActiveQuotes(category.quotes || [])) {
-                const state = quoteMonitorState.get(quote.id);
-                if (!state) continue;
-
-                if (isCexOrderbookChain(quote.chain) && state.fromSymbol && state.toSymbol) {
-                    if (state.cexOrderbook && Number.isFinite(state.cexOrderbook.bestBidPrice)) {
-                        candidates.push({
-                            key: `${quote.id}:cex-bid1`,
-                            quoteId: quote.id,
-                            direction: 'forward',
-                            pricingMode: 'cex-bid1',
-                            chain: quote.chain,
-                            fromSymbol: state.fromSymbol,
-                            toSymbol: state.toSymbol,
-                            categoryName: category.name,
-                            label: buildLiveQuoteLabel(quote.chain, state.fromSymbol, state.toSymbol, ' [bid1]')
-                        });
-                    }
-                    if (state.cexOrderbook && Number.isFinite(state.cexOrderbook.bestAskPrice)) {
-                        candidates.push({
-                            key: `${quote.id}:cex-ask1-inverse`,
-                            quoteId: quote.id,
-                            direction: 'forward',
-                            pricingMode: 'cex-ask1-inverse',
-                            chain: quote.chain,
-                            fromSymbol: state.toSymbol,
-                            toSymbol: state.fromSymbol,
-                            categoryName: category.name,
-                            label: buildLiveQuoteLabel(quote.chain, state.toSymbol, state.fromSymbol, ' [ask1]')
-                        });
-                    }
-                    continue;
-                }
-
-                if (state.fromSymbol && state.toSymbol && Number.isFinite(state.lastRawPrice)) {
-                    candidates.push({
-                        key: `${quote.id}:forward`,
-                        quoteId: quote.id,
-                        direction: 'forward',
-                        pricingMode: 'raw',
-                        chain: quote.chain,
-                        fromSymbol: state.fromSymbol,
-                        toSymbol: state.toSymbol,
-                        categoryName: category.name,
-                        label: buildLiveQuoteLabel(quote.chain, state.fromSymbol, state.toSymbol)
-                    });
-                }
-
-                if (quote.showInverse && state.toSymbol && state.fromSymbol && Number.isFinite(state.inverseRawPrice)) {
-                    candidates.push({
-                        key: `${quote.id}:inverse`,
-                        quoteId: quote.id,
-                        direction: 'inverse',
-                        pricingMode: 'raw',
-                        chain: quote.chain,
-                        fromSymbol: state.toSymbol,
-                        toSymbol: state.fromSymbol,
-                        categoryName: category.name,
-                        label: buildLiveQuoteLabel(quote.chain, state.toSymbol, state.fromSymbol)
-                    });
-                }
-            }
-        }
-
-        return candidates;
-    }
-
-    function matchesPathAlertCandidate(candidate, query) {
-        const utils = getChartsUtils();
-        const queryTokens = typeof utils.tokenizeChartSearch === 'function'
-            ? utils.tokenizeChartSearch(query)
-            : String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
-        if (!queryTokens.length) return true;
-        const terms = String(`${candidate.label} ${candidate.categoryName || ''} ${candidate.chain || ''}`)
-            .toLowerCase()
-            .split(/[^a-z0-9.+-]+/i)
-            .filter(Boolean);
-        return queryTokens.every((token) => terms.some((term) => term.startsWith(token)));
-    }
-
     function parseArbFilterInput(inputText) {
         const tokens = String(inputText || '')
             .split(/\s+/)
@@ -3400,10 +3291,6 @@
         blurArbGlobalFilterInputs();
     }
 
-    function createPathAlertId() {
-        return `path-alert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    }
-
     function getPathAlertRuleDefinitions(sourceType) {
         if (window.PathAlertRuleDefinitions && typeof window.PathAlertRuleDefinitions.getRuleDefinitions === 'function') {
             return window.PathAlertRuleDefinitions.getRuleDefinitions(sourceType);
@@ -3477,22 +3364,6 @@
             meetsTriggerCondition,
             displayMessage: String(best.display_message || ''),
             alertMessage: String(best.alert_message || '')
-        };
-    }
-
-    function buildPathAlertDraftFromAlert(alert) {
-        const normalized = window.PathAlertUtils
-            ? window.PathAlertUtils.normalizePathAlert(alert, pathAlertConfig.settings || { defaultCooldownSec: 300 })
-            : null;
-        if (!normalized) return null;
-        return {
-            ...normalized,
-            target: normalized.target.type === 'path'
-                ? { type: 'path', legs: normalized.target.legs.map((leg) => ({ ...leg })) }
-                : { ...normalized.target },
-            specialRuleConfig: normalized.target.type === 'rule' && normalized.target.ruleKind === 'special'
-                ? { ...(normalized.specialRuleConfig || {}) }
-                : null
         };
     }
 
@@ -4098,175 +3969,6 @@
         }
     }
 
-    function openPathAlertModal(prefill = null) {
-        pathAlertEditorState.visible = true;
-        const draft = prefill ? buildPathAlertDraftFromAlert(prefill) : null;
-        const nextDraft = draft || {
-            id: '',
-            name: '',
-            enabled: true,
-            thresholdBp: '',
-            triggerMode: 'delayed',
-            confirmDelaySec: 13,
-            cooldownSec: pathAlertConfig.settings.defaultCooldownSec,
-            target: { type: 'path', legs: [] }
-        };
-        pathAlertEditorState.editingId = nextDraft.id || '';
-        pathAlertEditorState.sourceType = nextDraft.target.type === 'rule' ? nextDraft.target.ruleKind : 'path';
-        pathAlertEditorState.selectedRuleId = nextDraft.target.type === 'rule' ? nextDraft.target.ruleId : '';
-        pathAlertEditorState.searchQuery = '';
-        pathAlertEditorState.draftLegs = nextDraft.target.type === 'path'
-            ? nextDraft.target.legs.map((leg) => ({ ...leg }))
-            : [];
-        pathAlertEditorState.draftSpecialRuleConfig = nextDraft.target.type === 'rule' && nextDraft.target.ruleKind === 'special'
-            ? { ...(nextDraft.specialRuleConfig || {}) }
-            : null;
-
-        pathAlertModalTitle.textContent = nextDraft.id ? '编辑路径报警' : '添加路径报警';
-        pathAlertNameInput.value = nextDraft.name || '';
-        pathAlertThresholdBpInput.value = nextDraft.thresholdBp === '' ? '' : nextDraft.thresholdBp;
-        pathAlertTriggerModeSelect.value = nextDraft.triggerMode || 'immediate';
-        pathAlertConfirmDelayInput.value = nextDraft.confirmDelaySec || 0;
-        pathAlertCooldownInput.value = nextDraft.cooldownSec || pathAlertConfig.settings.defaultCooldownSec;
-        pathAlertEnabledInput.checked = nextDraft.enabled !== false;
-        renderPathAlertModal();
-        pathAlertModal.classList.add('visible');
-    }
-
-    function closePathAlertModal() {
-        pathAlertEditorState.visible = false;
-        pathAlertModal.classList.remove('visible');
-    }
-
-    function renderPathAlertRuleChoices() {
-        if (!pathAlertRuleList) return;
-        const rules = getPathAlertRuleDefinitions(pathAlertEditorState.sourceType);
-        pathAlertRuleList.innerHTML = rules.length
-            ? rules.map((rule) => `
-                <button
-                    type="button"
-                    class="path-alert-rule-chip${pathAlertEditorState.selectedRuleId === rule.id ? ' active' : ''}"
-                    data-path-alert-rule-id="${escapeHtml(rule.id)}"
-                >${escapeHtml(rule.title)}</button>
-            `).join('')
-            : '<div class="path-alert-empty">暂无可选规则</div>';
-    }
-
-    function renderPathAlertCandidateList() {
-        if (!pathAlertCandidateList) return;
-        const selectedKeys = new Set(pathAlertEditorState.draftLegs.map((leg) => `${leg.quoteId}:${leg.direction}:${leg.pricingMode}`));
-        const candidates = buildPathAlertQuoteCandidates()
-            .filter((candidate) => matchesPathAlertCandidate(candidate, pathAlertEditorState.searchQuery))
-            .slice(0, 80);
-        pathAlertCandidateList.innerHTML = candidates.length
-            ? candidates.map((candidate) => {
-                const key = `${candidate.quoteId}:${candidate.direction}:${candidate.pricingMode}`;
-                return `
-                    <div class="path-alert-candidate-item">
-                        <div class="path-alert-candidate-text">${escapeHtml(candidate.label)}</div>
-                        <button
-                            type="button"
-                            class="path-alert-candidate-add"
-                            data-path-alert-candidate-key="${escapeHtml(candidate.key)}"
-                            ${selectedKeys.has(key) ? 'disabled' : ''}
-                        >添加</button>
-                    </div>
-                `;
-            }).join('')
-            : '<div class="path-alert-empty">没有匹配的报价腿</div>';
-    }
-
-    function renderPathAlertSelectedLegs() {
-        if (!pathAlertSelectedLegs) return;
-        if (pathAlertEditorState.sourceType === 'path') {
-            pathAlertSelectedLegs.innerHTML = pathAlertEditorState.draftLegs.length
-                ? pathAlertEditorState.draftLegs.map((leg, index) => `
-                    <div class="path-alert-leg-item">
-                        <div class="path-alert-leg-text">${escapeHtml(buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol))}</div>
-                        <div class="path-alert-leg-actions">
-                            <button type="button" class="path-alert-leg-action" data-path-alert-leg-move="up" data-path-alert-leg-index="${index}">↑</button>
-                            <button type="button" class="path-alert-leg-action" data-path-alert-leg-move="down" data-path-alert-leg-index="${index}">↓</button>
-                            <button type="button" class="path-alert-leg-action" data-path-alert-leg-remove="${index}">删</button>
-                        </div>
-                    </div>
-                `).join('')
-                : '<div class="path-alert-empty">还没有添加路径腿</div>';
-        } else {
-            const rule = getPathAlertRuleDefinitions(pathAlertEditorState.sourceType)
-                .find((item) => item.id === pathAlertEditorState.selectedRuleId);
-            pathAlertSelectedLegs.innerHTML = rule
-                ? `<div class="path-alert-rule-item"><div class="path-alert-rule-text">${escapeHtml(rule.title)}</div></div>`
-                : '<div class="path-alert-empty">请选择一条规则</div>';
-        }
-
-        const previewAlert = collectPathAlertFromEditor(false);
-        if (!previewAlert || !window.PathAlertUtils) {
-            pathAlertPreview.textContent = '当前收益: --';
-            return;
-        }
-        const evaluation = window.PathAlertUtils.evaluatePathAlert(previewAlert, buildPathAlertEvaluationContext());
-        pathAlertPreview.textContent = `当前收益: ${formatPathAlertEvaluationText(evaluation)} | ${buildPathAlertSummary(previewAlert) || '--'}`;
-    }
-
-    function renderPathAlertModal() {
-        if (!pathAlertModal) return;
-        const isPath = pathAlertEditorState.sourceType === 'path';
-        if (pathAlertPathEditor) pathAlertPathEditor.style.display = isPath ? '' : 'none';
-        if (pathAlertRuleEditor) pathAlertRuleEditor.style.display = isPath ? 'none' : '';
-        if (pathAlertSearchInput && pathAlertSearchInput.value !== pathAlertEditorState.searchQuery) {
-            pathAlertSearchInput.value = pathAlertEditorState.searchQuery;
-        }
-        if (pathAlertConfirmDelayInput) {
-            pathAlertConfirmDelayInput.disabled = window.PathAlertUtils
-                ? window.PathAlertUtils.isPathAlertConfirmDelayDisabled(pathAlertTriggerModeSelect && pathAlertTriggerModeSelect.value)
-                : !(pathAlertTriggerModeSelect && pathAlertTriggerModeSelect.value === 'delayed');
-        }
-        document.querySelectorAll('.path-alert-type-tab').forEach((button) => {
-            button.classList.toggle('active', button.dataset.pathAlertType === pathAlertEditorState.sourceType);
-        });
-        renderPathAlertCandidateList();
-        renderPathAlertRuleChoices();
-        renderPathAlertSelectedLegs();
-    }
-
-    function collectPathAlertFromEditor(strict = true) {
-        const sourceType = pathAlertEditorState.sourceType;
-        const baseAlert = {
-            id: pathAlertEditorState.editingId || createPathAlertId(),
-            name: pathAlertNameInput.value.trim(),
-            enabled: pathAlertEnabledInput.checked,
-            thresholdBp: pathAlertThresholdBpInput.value === '' ? '' : Number(pathAlertThresholdBpInput.value),
-            triggerMode: pathAlertTriggerModeSelect.value === 'delayed' ? 'delayed' : 'immediate',
-            confirmDelaySec: Number(pathAlertConfirmDelayInput.value || 0),
-            cooldownSec: Number(pathAlertCooldownInput.value || pathAlertConfig.settings.defaultCooldownSec),
-            target: null
-        };
-
-        if (sourceType === 'path') {
-            if (!pathAlertEditorState.draftLegs.length) return null;
-            baseAlert.target = {
-                type: 'path',
-                legs: pathAlertEditorState.draftLegs.map((leg) => ({ ...leg }))
-            };
-        } else {
-            if (!pathAlertEditorState.selectedRuleId) return null;
-            baseAlert.target = {
-                type: 'rule',
-                ruleKind: sourceType,
-                ruleId: pathAlertEditorState.selectedRuleId
-            };
-            if (sourceType === 'special') {
-                baseAlert.specialRuleConfig = resolveSpecialRuleAlertConfig(
-                    { specialRuleConfig: pathAlertEditorState.draftSpecialRuleConfig }
-                );
-            }
-        }
-
-        return window.PathAlertUtils
-            ? window.PathAlertUtils.normalizePathAlert(baseAlert, pathAlertConfig.settings)
-            : baseAlert;
-    }
-
     function buildPathAlertMetaText(alert) {
         const triggerText = alert.triggerMode === 'delayed'
             ? `延迟 ${String(alert.confirmDelaySec)}s`
@@ -4295,9 +3997,6 @@
         const dismissedCount = Array.isArray(pathAlertConfig.dismissedTargets) ? pathAlertConfig.dismissedTargets.length : 0;
         const toolbar = `
             <div class="path-alert-toolbar">
-                <div class="path-alert-toolbar-actions">
-                    <button type="button" id="path-alert-reload-btn" ${pathAlertReloading ? 'disabled' : ''}>${pathAlertReloading ? '重新加载中...' : '重新加载'}</button>
-                </div>
                 <div class="path-alert-toolbar-meta">
                     <label class="path-alert-toolbar-toggle">
                         <input type="checkbox" data-path-alert-global-toggle="localSoundEnabled" ${settings.localSoundEnabled !== false ? 'checked' : ''}>
@@ -4451,14 +4150,6 @@
     }
 
     function handlePathAlertPanelClick(event) {
-        const reloadBtn = event.target.closest('#path-alert-reload-btn');
-        if (reloadBtn) {
-            reloadPathAlertConfigFromServer().catch((error) => {
-                console.error('重新加载路径报警配置失败:', error);
-            });
-            return;
-        }
-
         const deleteBtn = event.target.closest('[data-path-alert-delete]');
         if (deleteBtn) {
             removePathAlertById(deleteBtn.dataset.pathAlertDelete);
@@ -4485,97 +4176,6 @@
         } finally {
             pathAlertReloading = false;
             renderPathAlertPanel();
-        }
-    }
-
-    function handlePathAlertTypeTabClick(event) {
-        const tabBtn = event.target.closest('[data-path-alert-type]');
-        if (!tabBtn) return;
-        pathAlertEditorState.sourceType = tabBtn.dataset.pathAlertType;
-        pathAlertEditorState.selectedRuleId = '';
-        pathAlertEditorState.draftSpecialRuleConfig = null;
-        renderPathAlertModal();
-    }
-
-    function handlePathAlertModalClick(event) {
-        const candidateBtn = event.target.closest('[data-path-alert-candidate-key]');
-        if (candidateBtn) {
-            const candidate = buildPathAlertQuoteCandidates()
-                .find((item) => item.key === candidateBtn.dataset.pathAlertCandidateKey);
-            if (!candidate) return;
-            pathAlertEditorState.draftLegs.push({
-                quoteId: candidate.quoteId,
-                direction: candidate.direction,
-                pricingMode: candidate.pricingMode,
-                chain: candidate.chain,
-                fromSymbol: candidate.fromSymbol,
-                toSymbol: candidate.toSymbol
-            });
-            renderPathAlertModal();
-            return;
-        }
-
-        const removeBtn = event.target.closest('[data-path-alert-leg-remove]');
-        if (removeBtn) {
-            const index = Number(removeBtn.dataset.pathAlertLegRemove);
-            if (Number.isFinite(index)) {
-                pathAlertEditorState.draftLegs.splice(index, 1);
-                renderPathAlertModal();
-            }
-            return;
-        }
-
-        const moveBtn = event.target.closest('[data-path-alert-leg-move]');
-        if (moveBtn) {
-            const index = Number(moveBtn.dataset.pathAlertLegIndex);
-            const direction = moveBtn.dataset.pathAlertLegMove;
-            if (!Number.isFinite(index)) return;
-            const nextIndex = direction === 'up' ? index - 1 : index + 1;
-            if (nextIndex < 0 || nextIndex >= pathAlertEditorState.draftLegs.length) return;
-            const legs = pathAlertEditorState.draftLegs;
-            [legs[index], legs[nextIndex]] = [legs[nextIndex], legs[index]];
-            renderPathAlertModal();
-            return;
-        }
-
-        const ruleBtn = event.target.closest('[data-path-alert-rule-id]');
-        if (ruleBtn) {
-            pathAlertEditorState.selectedRuleId = ruleBtn.dataset.pathAlertRuleId;
-            pathAlertEditorState.draftSpecialRuleConfig = pathAlertEditorState.sourceType === 'special'
-                ? { minNetProfit: 0, minNetProfitBp: 0 }
-                : null;
-            if (!pathAlertNameInput.value.trim()) {
-                const rule = getPathAlertRuleDefinitions(pathAlertEditorState.sourceType)
-                    .find((item) => item.id === pathAlertEditorState.selectedRuleId);
-                if (rule) {
-                    pathAlertNameInput.value = rule.title;
-                }
-            }
-            renderPathAlertModal();
-            return;
-        }
-
-        if (event.target === pathAlertModal || event.target === pathAlertCancelBtn) {
-            closePathAlertModal();
-            return;
-        }
-
-        if (event.target === pathAlertSaveBtn) {
-            const nextAlert = collectPathAlertFromEditor(true);
-            if (!nextAlert) {
-                window.alert(pathAlertEditorState.sourceType === 'path' ? '请至少添加一条路径腿' : '请选择一条规则');
-                return;
-            }
-            if (!nextAlert.name) {
-                window.alert('请填写路径报警名称');
-                return;
-            }
-            const existingIndex = pathAlertConfig.alerts.findIndex((item) => item.id === nextAlert.id);
-            if (existingIndex >= 0) pathAlertConfig.alerts.splice(existingIndex, 1, nextAlert);
-            else pathAlertConfig.alerts.push(nextAlert);
-            closePathAlertModal();
-            queuePathAlertConfigSave();
-            evaluatePathAlertsOnce();
         }
     }
 
@@ -6296,9 +5896,6 @@
         updateArbPanel();
         renderDataTerminalPanel();
         evaluatePathAlertsOnce();
-        if (pathAlertEditorState.visible) {
-            renderPathAlertModal();
-        }
     }
 
     function setQuotePausedState(categoryId, quote, nextPaused, options = {}) {
@@ -6956,27 +6553,6 @@
             }
             if (arbPathHeader) {
                 arbPathHeader.addEventListener('click', handleArbPathHeaderClick);
-            }
-            if (pathAlertModal) {
-                pathAlertModal.addEventListener('click', handlePathAlertModalClick);
-            }
-            if (pathAlertSearchInput) {
-                pathAlertSearchInput.addEventListener('input', (event) => {
-                    pathAlertEditorState.searchQuery = event.target.value || '';
-                    renderPathAlertModal();
-                });
-            }
-            document.querySelectorAll('.path-alert-type-tab').forEach((button) => {
-                button.addEventListener('click', handlePathAlertTypeTabClick);
-            });
-            [pathAlertNameInput, pathAlertThresholdBpInput, pathAlertConfirmDelayInput, pathAlertCooldownInput, pathAlertEnabledInput].forEach((input) => {
-                if (!input) return;
-                input.addEventListener('input', () => renderPathAlertSelectedLegs());
-                input.addEventListener('change', () => renderPathAlertSelectedLegs());
-            });
-            if (pathAlertTriggerModeSelect) {
-                pathAlertTriggerModeSelect.addEventListener('input', () => renderPathAlertModal());
-                pathAlertTriggerModeSelect.addEventListener('change', () => renderPathAlertModal());
             }
             document.addEventListener('keydown', handleGlobalShortcuts);
             if (arbPathMinBtn) {

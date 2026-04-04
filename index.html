@@ -1355,49 +1355,6 @@
         .path-alert-status-disabled { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
         .path-alert-profit { font-weight: 700; }
         .path-alert-empty { color: var(--text-color-light); }
-        #path-alert-modal .modal-box {
-            width: min(860px, 94vw);
-            max-width: none;
-            border: 1px solid var(--border-color);
-        }
-        .path-alert-type-tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-        .path-alert-type-tab {
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: inherit;
-            border-radius: 999px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .path-alert-type-tab.active {
-            background-color: #2d3748;
-            border-color: #2d3748;
-            color: #fff;
-        }
-        .dark-mode .path-alert-type-tab.active { background-color: #1a202c; border-color: #1a202c; }
-        .path-alert-editor-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 14px; }
-        .path-alert-editor-pane { border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; min-height: 240px; }
-        .path-alert-candidate-list,
-        .path-alert-selected-legs,
-        .path-alert-rule-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
-        .path-alert-candidate-item,
-        .path-alert-leg-item,
-        .path-alert-rule-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; }
-        .path-alert-candidate-text,
-        .path-alert-leg-text,
-        .path-alert-rule-text { min-width: 0; line-height: 1.4; }
-        .path-alert-candidate-add,
-        .path-alert-leg-action { padding: 4px 8px; }
-        .path-alert-leg-actions { display: flex; gap: 6px; }
-        .path-alert-rule-chip { padding: 6px 10px; font-weight: 600; }
-        .path-alert-rule-chip.active { background: #2d3748; border-color: #2d3748; color: #fff; }
-        .dark-mode .path-alert-rule-chip.active { background: #1a202c; border-color: #1a202c; }
-        .path-alert-preview { margin-top: 10px; font-size: 12px; color: var(--text-color-light); line-height: 1.45; }
-        @media (max-width: 980px) {
-            .path-alert-editor-grid { grid-template-columns: 1fr; }
-        }
-
         #calc-window { position: fixed; bottom: 20px; right: 390px; width: 430px; height: 280px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #calc-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #calc-header { background-color: #1a202c; }
@@ -1753,67 +1710,6 @@
                 <div class="modal-buttons">
                     <button id="modal-cancel">取消</button><button id="modal-save">保存</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="path-alert-modal">
-        <div class="modal-box">
-            <h3 id="path-alert-modal-title">添加路径报警</h3>
-            <div class="form-group">
-                <label for="path-alert-name">名称</label>
-                <input type="text" id="path-alert-name" placeholder="例如: GHO 固定路径">
-            </div>
-            <div class="path-alert-type-tabs">
-                <button type="button" class="path-alert-type-tab active" data-path-alert-type="path">手工路径</button>
-                <button type="button" class="path-alert-type-tab" data-path-alert-type="fixed">固定规则</button>
-                <button type="button" class="path-alert-type-tab" data-path-alert-type="special">特殊规则</button>
-            </div>
-            <div class="path-alert-editor-grid">
-                <div class="path-alert-editor-pane">
-                    <div id="path-alert-path-editor">
-                        <div class="form-group">
-                            <label for="path-alert-search-input">搜索报价腿</label>
-                            <input type="text" id="path-alert-search-input" placeholder="输入链名、代币、方向">
-                        </div>
-                        <div class="path-alert-candidate-list" id="path-alert-candidate-list"></div>
-                    </div>
-                    <div id="path-alert-rule-editor" style="display:none;">
-                        <div class="path-alert-rule-list" id="path-alert-rule-list"></div>
-                    </div>
-                </div>
-                <div class="path-alert-editor-pane">
-                    <div style="font-weight:700; margin-bottom:8px;">已选路径</div>
-                    <div class="path-alert-selected-legs" id="path-alert-selected-legs"></div>
-                    <div class="path-alert-preview" id="path-alert-preview">当前收益: --</div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="path-alert-threshold-bp">收益阈值 (bp)</label>
-                <input type="number" id="path-alert-threshold-bp" placeholder="例如: 3" step="0.1">
-            </div>
-            <div class="form-group">
-                <label for="path-alert-trigger-mode">触发方式</label>
-                <select id="path-alert-trigger-mode">
-                    <option value="immediate">立即提醒</option>
-                    <option value="delayed">延迟确认</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="path-alert-confirm-delay">延迟确认 (秒)</label>
-                <input type="number" id="path-alert-confirm-delay" placeholder="例如: 5" min="0">
-            </div>
-            <div class="form-group">
-                <label for="path-alert-cooldown">冷却时间 (秒)</label>
-                <input type="number" id="path-alert-cooldown" placeholder="例如: 300" min="1">
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="path-alert-enabled" checked>
-                <label for="path-alert-enabled">启用这条路径报警</label>
-            </div>
-            <div class="modal-buttons">
-                <button id="path-alert-cancel">取消</button>
-                <button id="path-alert-save">保存</button>
             </div>
         </div>
     </div>
