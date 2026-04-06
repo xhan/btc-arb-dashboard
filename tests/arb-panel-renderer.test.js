@@ -12,6 +12,7 @@ const html = renderArbGrid({
             label: '机会 1',
             opportunityId: 'fixed-1',
             chartHref: '/charts?pairs=%5B%7B%22quoteId%22%3A1%2C%22direction%22%3A%22forward%22%7D%5D',
+            displayMessage: '1) 0.50000     0.9998     💹 13.0‱\n\n2.30000     💰 0.00247     💹 10.7‱(MAX)',
             profitRate: 0.0012,
             legs: [
               { from: 'WBTC', to: 'WETH', rate: 16, chain: 'ethereum' },
@@ -37,6 +38,8 @@ assert.ok(html.includes('href="/charts?pairs=%5B%7B%22quoteId%22%3A1%2C%22direct
 assert.ok(html.includes('↗'));
 assert.ok(html.includes('WBTC->WETH 16 @ethereum'));
 assert.ok(html.includes('WETH->WBTC 0.064 @arbitrum bid1×1.25'));
+assert.ok(html.includes('class="arb-path-line arb-path-display-line">1) 0.50000     0.9998     💹 13.0‱</div>'));
+assert.ok(html.includes('class="arb-path-line arb-path-display-line arb-path-display-line-empty">&nbsp;</div>'));
 assert.ok(html.includes('class="arb-opportunity-head-profit arb-profit">12.00</div>'));
 assert.ok(!html.includes('<div class="arb-profit">收益: 12.00</div>'));
 

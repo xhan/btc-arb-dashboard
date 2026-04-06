@@ -78,8 +78,11 @@
       ? displayMessage
         .split('\n')
         .map((line) => String(line || '').trim())
-        .filter(Boolean)
-        .map((line) => `<div class="arb-path-line">${escapeHtml(line)}</div>`)
+        .map((line) => (
+          line
+            ? `<div class="arb-path-line arb-path-display-line">${escapeHtml(line)}</div>`
+            : '<div class="arb-path-line arb-path-display-line arb-path-display-line-empty">&nbsp;</div>'
+        ))
         .join('')
       : '';
     const labelHtml = `

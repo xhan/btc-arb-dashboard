@@ -13,6 +13,9 @@ const rules = [
     cexChain: 'Bybit',
     withdrawFee: 0.0001,
     displayTargets: [1, 2, 3],
+    depthSizeDecimals: 5,
+    targetAmountDecimals: 5,
+    profitDecimals: 5,
     maxBookLevels: 10
   }
 ];
@@ -76,22 +79,22 @@ assert.strictEqual(opportunity.label, 'WBTC <-> BYBIT');
 assert.strictEqual(opportunity.direction, 'bybit-ask-to-eth');
 assert.ok(opportunity.display_message.includes('（ETH）WBTC -> cbBTC 1.0011'));
 assert.ok(opportunity.display_message.includes('（Bybit）BTC -> WBTC 0.9998 ask1'));
-assert.ok(opportunity.display_message.includes('\n\n1) 0.5     0.9998     +13 bp'));
-assert.ok(opportunity.display_message.includes('\n2) 1     0.9999     +12 bp'));
-assert.ok(opportunity.display_message.includes('\n3) 0.8     1.0002     +9 bp'));
+assert.ok(opportunity.display_message.includes('\n\n1) 0.50000     0.9998     💹 13.0‱'));
+assert.ok(opportunity.display_message.includes('\n2) 1.00000     0.9999     💹 12.0‱'));
+assert.ok(opportunity.display_message.includes('\n3) 0.80000     1.0002     💹 9.0‱'));
 assert.ok(!opportunity.display_message.includes('\n4) '));
-assert.ok(opportunity.display_message.includes('\n\n1     0.00125019     12.5 bp'));
-assert.ok(opportunity.display_message.includes('\n2     0.00230016     11.5 bp'));
+assert.ok(opportunity.display_message.includes('\n\n1.00000     💰 0.00125     💹 12.5‱'));
+assert.ok(opportunity.display_message.includes('\n2.00000     💰 0.00230     💹 11.5‱'));
 assert.ok(!opportunity.display_message.includes('\n3     '));
-assert.ok(opportunity.display_message.includes('\n2.3     0.00247011     10.74 bp   MAX'));
+assert.ok(opportunity.display_message.includes('\n2.30000     💰 0.00247     💹 10.7‱(MAX)'));
 assert.ok(!opportunity.display_message.includes('@'));
 assert.ok(opportunity.alert_message.includes('（ETH）WBTC -> cbBTC'));
 assert.ok(opportunity.alert_message.includes('（Bybit）BTC -> WBTC 0.9998 ask1'));
-assert.ok(opportunity.alert_message.includes('\n\n1) 0.5     0.9998     +13 bp'));
-assert.ok(opportunity.alert_message.includes('\n\n1     0.00125019     12.5 bp'));
-assert.ok(opportunity.alert_message.includes('\n2     0.00230016     11.5 bp'));
+assert.ok(opportunity.alert_message.includes('\n\n1) 0.50000     0.9998     💹 13.0‱'));
+assert.ok(opportunity.alert_message.includes('\n\n1.00000     💰 0.00125     💹 12.5‱'));
+assert.ok(opportunity.alert_message.includes('\n2.00000     💰 0.00230     💹 11.5‱'));
 assert.ok(!opportunity.alert_message.includes('\n3     '));
-assert.ok(opportunity.alert_message.includes('\n2.3     0.00247011     10.74 bp   MAX'));
+assert.ok(opportunity.alert_message.includes('\n2.30000     💰 0.00247     💹 10.7‱(MAX)'));
 assert.ok(!opportunity.alert_message.includes('@'));
 assert.ok(opportunity.alert_message.includes('另一方向:'));
 
@@ -225,14 +228,14 @@ assert.strictEqual(usdeOpportunities[0].direction, 'eth-to-bybit-bid');
 assert.ok(usdeOpportunities[0].stats.primary.netProfit > 0);
 assert.ok(usdeOpportunities[0].display_message.includes('（ETH）USDT -> USDe 1.002'));
 assert.ok(usdeOpportunities[0].display_message.includes('（Bybit）USDe -> USDT 0.9998 bid1'));
-assert.ok(usdeOpportunities[0].display_message.includes('\n\n1) 120000.0     0.9998     +18 bp'));
-assert.ok(usdeOpportunities[0].display_message.includes('\n2) 30000.0     0.9996     +15.99 bp'));
-assert.ok(usdeOpportunities[0].display_message.includes('\n\n100000.0     180.0     18 bp'));
+assert.ok(usdeOpportunities[0].display_message.includes('\n\n1) 120000.0     0.9998     💹 18.0‱'));
+assert.ok(usdeOpportunities[0].display_message.includes('\n2) 30000.0      0.9996     💹 16.0‱'));
+assert.ok(usdeOpportunities[0].display_message.includes('\n\n100000.0     💰 180.0     💹 18.0‱'));
 assert.ok(!usdeOpportunities[0].display_message.includes('200000.0'));
-assert.ok(usdeOpportunities[0].display_message.includes('\n150000.0     263.9     17.6 bp   MAX'));
+assert.ok(usdeOpportunities[0].display_message.includes('\n150000.0     💰 263.9     💹 17.6‱(MAX)'));
 assert.ok(usdeOpportunities[0].alert_message.includes('（Bybit）USDe -> USDT 0.9998 bid1'));
-assert.ok(usdeOpportunities[0].alert_message.includes('\n\n100000.0     180.0     18 bp'));
-assert.ok(usdeOpportunities[0].alert_message.includes('\n150000.0     263.9     17.6 bp   MAX'));
+assert.ok(usdeOpportunities[0].alert_message.includes('\n\n100000.0     💰 180.0     💹 18.0‱'));
+assert.ok(usdeOpportunities[0].alert_message.includes('\n150000.0     💰 263.9     💹 17.6‱(MAX)'));
 assert.ok(!usdeOpportunities[0].display_message.includes('@'));
 
 const usdtbRules = [
@@ -299,8 +302,8 @@ assert.strictEqual(usdtbOpportunities[0].direction, 'eth-to-bybit-bid');
 assert.ok(usdtbOpportunities[0].stats.primary.netProfit > 0);
 assert.ok(usdtbOpportunities[0].display_message.includes('（ETH）USDT -> USDtb 1.0015'));
 assert.ok(usdtbOpportunities[0].display_message.includes('（Bybit）USDtb -> USDT 0.9997 bid1'));
-assert.ok(usdtbOpportunities[0].display_message.includes('\n\n1) 130000.0     0.9997     +12 bp'));
-assert.ok(usdtbOpportunities[0].display_message.includes('\n2) 30000.0     0.9995     +9.99 bp'));
-assert.ok(usdtbOpportunities[0].display_message.includes('\n\n100000.0     120.0     12 bp'));
-assert.ok(usdtbOpportunities[0].display_message.includes('160000.0     185.9     11.62 bp   MAX'));
+assert.ok(usdtbOpportunities[0].display_message.includes('\n\n1) 130000.0     0.9997     💹 12.0‱'));
+assert.ok(usdtbOpportunities[0].display_message.includes('\n2) 30000.0      0.9995     💹 10.0‱'));
+assert.ok(usdtbOpportunities[0].display_message.includes('\n\n100000.0     💰 120.0     💹 12.0‱'));
+assert.ok(usdtbOpportunities[0].display_message.includes('160000.0     💰 185.9     💹 11.6‱(MAX)'));
 assert.ok(usdtbOpportunities[0].alert_message.includes('（Bybit）USDtb -> USDT 0.9997 bid1'));

@@ -1266,7 +1266,11 @@
             cexQuote: 'BTC',
             cexChain: 'Bybit',
             displayTargets: [1, 2, 3],
-            withdrawFee: 0.0001
+            withdrawFee: 0.0001,
+            depthSizeDecimals: 5,
+            targetAmountDecimals: 5,
+            profitDecimals: 5,
+            bpDecimals: 1
         },
         {
             id: 'special:usde-bybit',
@@ -1281,7 +1285,8 @@
             withdrawFee: 0,
             depthSizeDecimals: 1,
             targetAmountDecimals: 1,
-            profitDecimals: 1
+            profitDecimals: 1,
+            bpDecimals: 1
         },
         {
             id: 'special:usdtb-bybit',
@@ -1296,7 +1301,8 @@
             withdrawFee: 0,
             depthSizeDecimals: 1,
             targetAmountDecimals: 1,
-            profitDecimals: 1
+            profitDecimals: 1,
+            bpDecimals: 1
         }
     ];
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];

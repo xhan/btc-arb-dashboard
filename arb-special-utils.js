@@ -86,6 +86,17 @@
     return value < 0 ? `-${absText}` : absText;
   }
 
+  function formatSignedFixedNumber(value, decimals) {
+    if (!Number.isFinite(value)) return '--';
+    const absText = formatFixedNumber(Math.abs(value), decimals);
+    return value < 0 ? `-${absText}` : absText;
+  }
+
+  function padRight(value, width) {
+    const text = String(value);
+    return text.padEnd(width, ' ');
+  }
+
   function buildEdges(quotes, quoteStateById) {
     const edges = [];
     for (const quote of quotes || []) {
@@ -218,6 +229,7 @@
       this.depthSizeDecimals = normalizeDecimalConfig(rule.depthSizeDecimals);
       this.targetAmountDecimals = normalizeDecimalConfig(rule.targetAmountDecimals);
       this.profitDecimals = normalizeDecimalConfig(rule.profitDecimals);
+      this.bpDecimals = normalizeDecimalConfig(rule.bpDecimals);
     }
 
     buildDirectionResult(options = {}) {
@@ -350,36 +362,57 @@
     }
 
     buildDepthLine(item) {
-      const sizeText = formatConfiguredNumber(item.size, this.depthSizeDecimals, 6);
-      const priceText = formatNumber(item.price, 6);
-      const bpText = `${item.unitProfitBp >= 0 ? '+' : ''}${formatNumber(item.unitProfitBp, 2)} bp`;
-      return `${item.index}) ${sizeText}     ${priceText}     ${bpText}`;
+      return {
+        indexText: `${item.index})`,
+        sizeText: formatConfiguredNumber(item.size, this.depthSizeDecimals, 6),
+        priceText: formatNumber(item.price, 6),
+        bpText: `💹 ${formatSignedFixedNumber(item.unitProfitBp, this.bpDecimals ?? 1)}‱`
+      };
     }
 
     buildTargetLine(amount, profit, bp, isMax = false) {
-      const amountText = formatConfiguredNumber(amount, this.targetAmountDecimals, 6);
-      const profitText = formatConfiguredSignedNumber(profit, this.profitDecimals, 8);
-      const bpText = `${formatSignedNumber(bp, 2)} bp`;
-      return `${amountText}     ${profitText}     ${bpText}${isMax ? '   MAX' : ''}`;
+      return {
+        amountText: formatConfiguredNumber(amount, this.targetAmountDecimals, 6),
+        profitText: `💰 ${formatConfiguredSignedNumber(profit, this.profitDecimals, 8)}`,
+        bpText: `💹 ${formatSignedFixedNumber(bp, this.bpDecimals ?? 1)}‱`,
+        isMax
+      };
+    }
+
+    buildDepthLines(primary) {
+      const rows = this.buildDepthSummary(primary).map((item) => this.buildDepthLine(item));
+      const sizeWidth = rows.reduce((max, row) => Math.max(max, row.sizeText.length), 0);
+      const priceWidth = rows.reduce((max, row) => Math.max(max, row.priceText.length), 0);
+      return rows.map((row) => (
+        `${row.indexText} ${padRight(row.sizeText, sizeWidth)}     ${padRight(row.priceText, priceWidth)}     ${row.bpText}`
+      ));
+    }
+
+    buildTargetLines(primary, rule) {
+      const rows = this.buildDisplayTargetResults(primary, rule).map((item) => (
+        this.buildTargetLine(item.targetAmount, item.profit, item.profitBp)
+      ));
+      rows.push(this.buildTargetLine(primary.totalInput, primary.netProfit, primary.netProfitBp, true));
+
+      const amountWidth = rows.reduce((max, row) => Math.max(max, row.amountText.length), 0);
+      const profitWidth = rows.reduce((max, row) => Math.max(max, row.profitText.length), 0);
+
+      return rows.map((row) => (
+        `${padRight(row.amountText, amountWidth)}     ${padRight(row.profitText, profitWidth)}     ${row.bpText}${row.isMax ? '(MAX)' : ''}`
+      ));
     }
 
     buildMessage(primary, secondary, rule, options = {}) {
       const lines = [];
       const includeSecondary = options.includeSecondary === true;
-      const depthLines = this.buildDepthSummary(primary).map((item) => this.buildDepthLine(item));
-      const targetLines = this.buildDisplayTargetResults(primary, rule).map((item) => (
-        this.buildTargetLine(item.targetAmount, item.profit, item.profitBp)
-      ));
+      const depthLines = this.buildDepthLines(primary);
+      const targetLines = this.buildTargetLines(primary, rule);
       lines.push(this.buildDexLine(primary, rule));
       lines.push(this.buildCexLine(primary, rule));
       lines.push('');
       lines.push(...depthLines);
-      if (targetLines.length) {
-        lines.push('');
-        lines.push(...targetLines);
-      }
       lines.push('');
-      lines.push(this.buildTargetLine(primary.totalInput, primary.netProfit, primary.netProfitBp, true));
+      lines.push(...targetLines);
 
       if (includeSecondary && secondary && Number.isFinite(secondary.netProfit)) {
         lines.push('');
