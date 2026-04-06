@@ -2418,20 +2418,6 @@
             return;
         }
 
-        const addAlertBtn = event.target.closest('[data-arb-opportunity-alert-id]');
-        if (addAlertBtn && arbPathContent.contains(addAlertBtn)) {
-            const draft = buildPathAlertDraftFromOpportunity(addAlertBtn.dataset.arbOpportunityAlertId);
-            if (draft) {
-                openPathAlertsManagementPage({
-                    mode: 'create',
-                    draft
-                });
-            }
-            return;
-        }
-
-        if (event.target.closest('.arb-opportunity-chart-link')) return;
-
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
         if (!opportunityEl) return;
         const opportunityId = opportunityEl.dataset.arbOpportunityId;
@@ -2445,7 +2431,6 @@
 
     function handleArbPathContentKeydown(event) {
         if (!arbPathContent) return;
-        if (event.target.closest('.arb-opportunity-chart-link')) return;
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
         if (!opportunityEl) return;
         if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -2457,8 +2442,6 @@
         if (!arbPathContent) return;
         if (typeof event.button === 'number' && event.button !== 0) return;
         if (event.target.closest('.arb-path-expand-toggle')) return;
-        if (event.target.closest('[data-arb-opportunity-alert-id]')) return;
-        if (event.target.closest('.arb-opportunity-chart-link')) return;
 
         const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
         if (!opportunityEl) return;
@@ -2477,13 +2460,10 @@
             label || '',
             cycle
         );
-        const chartPairs = getArbDetailUtils().buildArbDetailChartPairs(cycle);
-        const chartHref = getChartsUtils().buildChartsPageHref(chartPairs);
         const entry = {
             id: opportunityId,
             cycle,
             label,
-            chartHref,
             ...meta
         };
         targetMap.set(opportunityId, entry);
@@ -2492,11 +2472,21 @@
             label,
             cycle,
             opportunityId,
-            chartHref,
             clickable: meta.clickable !== false,
             displayMessage: typeof meta.displayMessage === 'string' ? meta.displayMessage : '',
             hideLegs: meta.hideLegs === true
         };
+    }
+
+    function buildArbOpportunityChartHref(entry) {
+        const cycle = entry && entry.cycle ? entry.cycle : entry;
+        if (!cycle) return '';
+        const chartsUtils = getChartsUtils();
+        if (!chartsUtils || typeof chartsUtils.buildChartsPageHref !== 'function') {
+            return '';
+        }
+        const chartPairs = getArbDetailUtils().buildArbDetailChartPairs(cycle);
+        return chartPairs.length ? chartsUtils.buildChartsPageHref(chartPairs) : '';
     }
 
     function refreshArbOpportunityStore(nextOpportunityMap) {
@@ -2885,9 +2875,7 @@
             ? getArbDetailUtils().buildArbDetailChartPairs(current.cycle)
             : [];
         const signature = buildArbDetailChartPreviewSignature(pairs);
-        const chartHref = current && current.chartHref
-            ? current.chartHref
-            : (pairs.length ? getChartsUtils().buildChartsPageHref(pairs) : '');
+        const chartHref = buildArbOpportunityChartHref(current);
 
         setArbDetailChartLinkState(chartHref);
 

@@ -33,9 +33,8 @@ const html = renderArbGrid({
 assert.ok(html.includes('固定路径'));
 assert.ok(html.includes('机会 1'));
 assert.ok(html.includes('data-arb-opportunity-id="fixed-1"'));
-assert.ok(html.includes('class="arb-opportunity-chart-link"'));
-assert.ok(html.includes('href="/charts?pairs=%5B%7B%22quoteId%22%3A1%2C%22direction%22%3A%22forward%22%7D%5D"'));
-assert.ok(html.includes('↗'));
+assert.ok(!html.includes('class="arb-opportunity-chart-link"'));
+assert.ok(!html.includes('data-arb-opportunity-alert-id="fixed-1"'));
 assert.ok(html.includes('WBTC->WETH 16 @ethereum'));
 assert.ok(html.includes('WETH->WBTC 0.064 @arbitrum bid1×1.25'));
 assert.ok(html.includes('class="arb-path-line arb-path-display-line">1) 0.50000     0.9998     💹 13.0‱</div>'));

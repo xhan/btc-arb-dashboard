@@ -151,7 +151,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
     assert.ok(appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
-    assert.ok(appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
+    assert.ok(!appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
+    assert.ok(!appJsResponse.body.includes("closest('[data-arb-opportunity-alert-id]')"));
+    assert.ok(appJsResponse.body.includes('function buildArbOpportunityChartHref(entry)'));
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
@@ -261,8 +263,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('src="arb-equivalence-utils.js"'));
     assert.ok(snapshotResponse.body.includes('src="charts-utils.js"'));
     assert.ok(snapshotResponse.body.includes('.arb-opportunity-head {'));
-    assert.ok(snapshotResponse.body.includes('.arb-opportunity-chart-link {'));
-    assert.ok(snapshotResponse.body.includes('.arb-opportunity-add-alert-btn {'));
+    assert.ok(!snapshotResponse.body.includes('.arb-opportunity-chart-link {'));
+    assert.ok(!snapshotResponse.body.includes('.arb-opportunity-add-alert-btn {'));
 
     const snapshotAppResponse = await request('/snapshot-app.js');
     assert.strictEqual(snapshotAppResponse.statusCode, 200);
