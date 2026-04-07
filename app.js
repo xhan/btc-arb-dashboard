@@ -3321,7 +3321,15 @@
             const cycles = sharedRuleSnapshot && sharedRuleSnapshot.fixedByRuleId
                 ? sharedRuleSnapshot.fixedByRuleId[target.ruleId]
                 : null;
-            const cycle = Array.isArray(cycles) && cycles.length ? cycles[0] : null;
+            const nowMs = Date.now();
+            const cycle = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.selectFirstUnmutedDisplayedCycle === 'function'
+                ? window.ArbPanelLayoutUtils.selectFirstUnmutedDisplayedCycle(cycles, (candidate) => {
+                    const muteTarget = candidate && Array.isArray(candidate.legs)
+                        ? buildMutedPathTargetFromCycleLegs(candidate.legs)
+                        : null;
+                    return Boolean(muteTarget && getMutedPathTargetEntry(muteTarget, nowMs));
+                })
+                : (Array.isArray(cycles) && cycles.length ? cycles[0] : null);
             return cycle
                 ? { available: true, profitRate: cycle.profitRate, label: rule.title, cycle }
                 : { available: false };

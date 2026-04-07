@@ -4,7 +4,8 @@ const {
   resolveItemsBySelectors,
   selectPositiveCyclesOrBest,
   getCycleDisplayState,
-  mapEntriesForDisplayCycles
+  mapEntriesForDisplayCycles,
+  selectFirstUnmutedDisplayedCycle
 } = require('../arb-panel-layout-utils');
 
 const sections = [
@@ -88,3 +89,24 @@ const mappedEntries = mapEntriesForDisplayCycles(
 
 assert.strictEqual(callbackCount, 2);
 assert.deepStrictEqual(mappedEntries, ['机会 2:pos-1', '机会 3:pos-2']);
+
+const fixedDisplayCycles = [
+  { id: 'pos-1', profitRate: 0.002 },
+  { id: 'pos-2', profitRate: 0.003 },
+  { id: 'neg-1', profitRate: -0.001 }
+];
+
+assert.strictEqual(
+  selectFirstUnmutedDisplayedCycle(fixedDisplayCycles, () => false).id,
+  'pos-1'
+);
+
+assert.strictEqual(
+  selectFirstUnmutedDisplayedCycle(fixedDisplayCycles, (cycle) => cycle.id === 'pos-1').id,
+  'pos-2'
+);
+
+assert.strictEqual(
+  selectFirstUnmutedDisplayedCycle(fixedDisplayCycles, (cycle) => cycle.id === 'pos-1' || cycle.id === 'pos-2').id,
+  'pos-1'
+);

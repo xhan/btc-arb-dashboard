@@ -139,6 +139,21 @@
     };
   }
 
+  function selectFirstUnmutedDisplayedCycle(cycles, isMuted) {
+    const displayCycles = selectPositiveCyclesOrBest(cycles);
+    if (!displayCycles.length) return null;
+    if (typeof isMuted !== 'function' || displayCycles.length <= 1) {
+      return displayCycles[0];
+    }
+
+    for (const cycle of displayCycles) {
+      if (!isMuted(cycle)) {
+        return cycle;
+      }
+    }
+    return displayCycles[0];
+  }
+
   function mapEntriesForDisplayCycles(allCycles, displayCycles, mapEntry) {
     const sourceCycles = Array.isArray(allCycles) ? allCycles : [];
     const visibleCycles = Array.isArray(displayCycles) ? displayCycles : [];
@@ -164,6 +179,7 @@
     resolveItemsBySelectors,
     selectPositiveCyclesOrBest,
     getCycleDisplayState,
-    mapEntriesForDisplayCycles
+    mapEntriesForDisplayCycles,
+    selectFirstUnmutedDisplayedCycle
   };
 }));

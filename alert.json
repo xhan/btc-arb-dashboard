@@ -301,6 +301,22 @@
         "minNetProfit": 8,
         "minNetProfitBp": 0.5
       }
+    },
+    {
+      "id": "path-alert-1775529888943-73fp8x",
+      "name": "Avalanche 0x50b754...87B218/0x0555E3...0d2B9c 汇率高于",
+      "enabled": true,
+      "thresholdBp": 0,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 13,
+      "cooldownSec": 120,
+      "target": {
+        "type": "quote",
+        "quoteId": 1764504889432,
+        "direction": "forward",
+        "ruleKind": "targetAbove",
+        "value": 1.0002
+      }
     }
   ],
   "dismissedTargets": []

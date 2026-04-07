@@ -188,6 +188,15 @@
           "showInverse": true
         },
         {
+          "id": 1775320046501,
+          "chain": "solana",
+          "amount": 1,
+          "preferredSource": "Kyber",
+          "fromToken": "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
+          "toToken": "LBTCgU4b3wsFKsPwBn1rRZDx5DoFutM6RPiEt1TPDsY",
+          "showInverse": true
+        },
+        {
           "id": 1767678293304,
           "chain": "sui",
           "amount": 0.5,
@@ -258,7 +267,7 @@
         {
           "id": 1760021761184,
           "chain": "base",
-          "amount": 0.5,
+          "amount": 0.3,
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x236aa50979D5f3De3Bd1Eeb40E81137F22ab794b",
           "preferredSource": "Kyber",
@@ -720,7 +729,7 @@
           "fromToken": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
           "toToken": "0x5979D7b546E38E414F7E9822514be443A4800529",
           "showInverse": true,
-          "paused": true
+          "paused": false
         },
         {
           "id": 1774205631551,
@@ -796,7 +805,7 @@
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
-    "solana": 1000,
+    "solana": 1100,
     "sui": 500,
     "starknet": 1000
   }
