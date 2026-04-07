@@ -84,12 +84,22 @@
       TBTC: 'tBTC',
       'USD₮0': 'USDT'
     };
+  const DEFAULT_ARB_CYCLE_START_PRIORITY = window.ArbCyclePriorityUtils
+    ? window.ArbCyclePriorityUtils.DEFAULT_ARB_CYCLE_START_PRIORITY
+    : ['cbBTC', 'WBTC', 'ETH'];
+  let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
 
   function formatChainLabel(chain) {
     return CHAIN_DISPLAY_NAMES[chain] || chain || '';
   }
 
   function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol) {
+    const configuredPriority = Array.isArray(arbCycleStartPriority) && arbCycleStartPriority.length
+      ? arbCycleStartPriority
+      : [canonicalSymbol];
+    if (window.ArbCyclePriorityUtils && typeof window.ArbCyclePriorityUtils.buildPreferredCycleStartSymbols === 'function') {
+      return window.ArbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
+    }
     const symbols = new Set([canonicalSymbol]);
     for (const [alias, mapped] of Object.entries(aliasRules || {})) {
       if (mapped === canonicalSymbol) {
@@ -98,6 +108,20 @@
       }
     }
     return Array.from(symbols);
+  }
+
+  async function loadArbSettings() {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/get-arb-settings`);
+      if (!response.ok) throw new Error('获取套利路径配置失败');
+      const data = await response.json();
+      arbCycleStartPriority = window.ArbCyclePriorityUtils && typeof window.ArbCyclePriorityUtils.normalizeArbCycleStartPriority === 'function'
+        ? window.ArbCyclePriorityUtils.normalizeArbCycleStartPriority(data && data.cycleStartPriority)
+        : Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
+    } catch (error) {
+      console.warn('加载套利路径配置失败:', error);
+      arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
+    }
   }
 
   function buildEdgesFromQuotes(quotes) {
@@ -471,11 +495,12 @@
     return local;
   }
 
-  function init() {
+  async function init() {
     const params = new URLSearchParams(location.search);
     timeInput.value = params.get('time') || getDefaultTime();
     modeSelect.value = params.get('mode') || 'floor';
     maxGapInput.value = params.get('maxGapSec') || '';
+    await loadArbSettings();
 
     loadBtn.addEventListener('click', () => loadSnapshot(true));
     arbContentEl.addEventListener('click', (event) => {

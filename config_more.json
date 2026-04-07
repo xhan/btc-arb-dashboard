@@ -6,5 +6,10 @@
   "telegramBotToken": "7481990287:AAF66-WsCuSTP8kZfnpJ1Zr-VfHCJFjbxtI",
   "telegramChatId": "1124758403",
   "enablePriceSnapshot": true,
-  "priceSnapshotIntervalSec": 10
+  "priceSnapshotIntervalSec": 10,
+  "arbCycleStartPriority": [
+    "cbBTC",
+    "WBTC",
+    "ETH"
+  ]
 }

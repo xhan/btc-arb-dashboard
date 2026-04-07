@@ -36,6 +36,10 @@ const {
     createCetusAggregatorClient,
     normalizeCetusAggregatorConfig
 } = require('./cetus-aggregator-config');
+const {
+    DEFAULT_ARB_CYCLE_START_PRIORITY,
+    normalizeArbCycleStartPriority
+} = require('./arb-cycle-priority-utils');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
@@ -355,6 +359,7 @@ async function getConfigMore() {
             ? configMore.telegramBotApiBaseUrl.trim()
             : '';
         const cetusAggregatorConfig = normalizeCetusAggregatorConfig(configMore);
+        const arbCycleStartPriority = normalizeArbCycleStartPriority(configMore.arbCycleStartPriority);
 
         return {
             kyberClientId: rawClientId || 'xh-quote-dashboard',
@@ -368,6 +373,7 @@ async function getConfigMore() {
             veloraOtherExchangePrices: configMore.veloraOtherExchangePrices === true,
             enablePriceSnapshot: configMore.enablePriceSnapshot === true,
             priceSnapshotIntervalSec: Number.parseInt(configMore.priceSnapshotIntervalSec, 10) || 10,
+            arbCycleStartPriority,
             telegramBotToken: rawTelegramBotToken,
             telegramChatId: rawTelegramChatId,
             telegramBotApiBaseUrl: rawTelegramBotApiBaseUrl || DEFAULT_TELEGRAM_BOT_API_BASE_URL
@@ -388,6 +394,7 @@ async function getConfigMore() {
             veloraOtherExchangePrices: false,
             enablePriceSnapshot: false,
             priceSnapshotIntervalSec: 10,
+            arbCycleStartPriority: Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY),
             telegramBotToken: '',
             telegramChatId: '',
             telegramBotApiBaseUrl: DEFAULT_TELEGRAM_BOT_API_BASE_URL
@@ -682,6 +689,17 @@ app.get('/api/get-price-snapshot-config', async (req, res) => {
     }
 });
 
+app.get('/api/get-arb-settings', async (req, res) => {
+    try {
+        const configMore = await getConfigMore();
+        res.json({
+            cycleStartPriority: normalizeArbCycleStartPriority(configMore.arbCycleStartPriority)
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/save-price-snapshot', async (req, res) => {
     try {
         const configMore = await getConfigMore();
@@ -777,7 +795,10 @@ app.get('/api/replay-arb-snapshot', async (req, res) => {
             return res.status(404).json({ error: '未找到满足条件的快照' });
         }
 
-        const replay = buildReplayFromSnapshot(selection);
+        const configMore = await getConfigMore();
+        const replay = buildReplayFromSnapshot(selection, {
+            cycleStartPriority: configMore.arbCycleStartPriority
+        });
         if (format === 'text') {
             return res.type('text/plain; charset=utf-8').send(renderReplayText(replay));
         }

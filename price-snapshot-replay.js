@@ -1,6 +1,11 @@
 const ArbPaths = require('./arb-paths');
 const { filterEdgesForFixedRule } = require('./arb-fixed-utils');
 const { formatUtc8 } = require('./time-utils');
+const {
+  DEFAULT_ARB_CYCLE_START_PRIORITY,
+  normalizeArbCycleStartPriority,
+  buildPreferredCycleStartSymbols
+} = require('./arb-cycle-priority-utils');
 
 const ALIAS_RULES = {
   xBTC: 'cbBTC',
@@ -26,18 +31,6 @@ const FIXED_PATH_RULES = [
     crossChain: true
   }
 ];
-
-function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
-  const target = String(canonicalSymbol || '').toUpperCase();
-  const symbols = new Set([canonicalSymbol]);
-  for (const [alias, mapped] of Object.entries(aliasRules || {})) {
-    if (String(mapped || '').toUpperCase() === target) {
-      symbols.add(alias);
-      symbols.add(mapped);
-    }
-  }
-  return Array.from(symbols);
-}
 
 function formatChainLabel(chain) {
   const labels = {
@@ -120,7 +113,7 @@ function decorateSnapshotSelection(selection) {
   };
 }
 
-function buildReplayFromSnapshot(selection) {
+function buildReplayFromSnapshot(selection, options = {}) {
   const displaySelection = decorateSnapshotSelection(selection);
   const snapshot = displaySelection?.snapshot;
   if (!snapshot) {
@@ -143,7 +136,10 @@ function buildReplayFromSnapshot(selection) {
   const ruleEdges = ArbPaths.buildRuleEdges(ALIAS_RULES);
   const allEdgesWithRules = edges.concat(ruleEdges);
   const quoteMetaById = new Map((snapshot?.quotes || []).map((quote) => [quote.quoteId, { categoryName: quote.categoryName }]));
-  const preferredStartSymbols = buildPreferredCycleStartSymbols(ALIAS_RULES, 'cbBTC');
+  const preferredStartSymbols = buildPreferredCycleStartSymbols(
+    ALIAS_RULES,
+    normalizeArbCycleStartPriority(options.cycleStartPriority, DEFAULT_ARB_CYCLE_START_PRIORITY)
+  );
 
   const fixedPaths = FIXED_PATH_RULES
     .map((rule) => cycleToPlain(

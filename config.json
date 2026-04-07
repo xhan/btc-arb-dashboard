@@ -718,7 +718,7 @@
           "preferredSource": "Kyber",
           "fromToken": "0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452",
           "toToken": "0x4200000000000000000000000000000000000006",
-          "showInverse": false,
+          "showInverse": true,
           "requestChannelId": "ch2"
         },
         {

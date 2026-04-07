@@ -183,8 +183,13 @@ function canonicalizeCycleRotation(legs, preferredStartSymbols) {
     return { legs: [], key: '' };
   }
 
-  const preferredSet = Array.isArray(preferredStartSymbols) && preferredStartSymbols.length
-    ? new Set(preferredStartSymbols.filter(Boolean))
+  const preferredRanks = Array.isArray(preferredStartSymbols) && preferredStartSymbols.length
+    ? preferredStartSymbols.reduce((map, symbol, index) => {
+      const normalized = String(symbol || '').trim();
+      if (!normalized || map.has(normalized)) return map;
+      map.set(normalized, index);
+      return map;
+    }, new Map())
     : null;
 
   let bestLegs = legs;
@@ -194,7 +199,9 @@ function canonicalizeCycleRotation(legs, preferredStartSymbols) {
   for (let i = 0; i < legs.length; i += 1) {
     const rotated = rotateCycleLegs(legs, i);
     const startSymbol = rotated[0] && rotated[0].from;
-    const rank = preferredSet ? (preferredSet.has(startSymbol) ? 0 : 1) : 0;
+    const rank = preferredRanks
+      ? (preferredRanks.has(startSymbol) ? preferredRanks.get(startSymbol) : preferredRanks.size + 1)
+      : 0;
     const key = rotated.map(buildCycleLegKey).join('>');
     if (rank < bestRank || (rank === bestRank && (bestKey === '' || key < bestKey))) {
       bestLegs = rotated;

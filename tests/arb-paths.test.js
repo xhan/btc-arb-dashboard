@@ -147,6 +147,17 @@ const preferredStartCycles = findTopCycles(symmetricLoopEdges, {
 });
 assert.strictEqual(preferredStartCycles[0].legs[0].from, 'cbBTC');
 
+const orderedPriorityCycles = findTopCycles([
+  { from: 'ETH', to: 'USDC', rate: 1.002, chain: 'ethereum' },
+  { from: 'USDC', to: 'WBTC', rate: 1.001, chain: 'base' },
+  { from: 'WBTC', to: 'ETH', rate: 0.9985, chain: 'arbitrum' }
+], {
+  maxDepth: 3,
+  limit: 5,
+  preferredStartSymbols: ['cbBTC', 'WBTC', 'ETH']
+});
+assert.strictEqual(orderedPriorityCycles[0].legs[0].from, 'WBTC');
+
 const noConsecutiveRuleCycles = findTopCycles([
   { from: 'xBTC', to: 'WBTC', rate: 1.002912, chain: 'SUI' },
   { from: 'WBTC', to: 'BTC.b', rate: 0.99743, chain: 'Monad' },

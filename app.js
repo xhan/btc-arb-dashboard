@@ -25,8 +25,12 @@
             sui: 500,
             starknet: 1000
         };
+    const DEFAULT_ARB_CYCLE_START_PRIORITY = window.ArbCyclePriorityUtils
+        ? window.ArbCyclePriorityUtils.DEFAULT_ARB_CYCLE_START_PRIORITY
+        : ['cbBTC', 'WBTC', 'ETH'];
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
+    let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
     let requestChannelPayload = { channels: [] };
     let showRequestChannelTags = true;
     let requestChannelOptions = window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelOptions === 'function'
@@ -1061,6 +1065,16 @@
         arbRuleSnapshotCacheKey = '';
     }
 
+    function invalidateArbPathTopologyCache() {
+        arbPathTopologyCache = null;
+        arbPathTopologyCacheKey = '';
+    }
+
+    function invalidateArbCaches() {
+        invalidateArbRuleSnapshotCache();
+        invalidateArbPathTopologyCache();
+    }
+
     function setQuoteMonitorState(quoteId, nextState) {
         quoteMonitorState.set(quoteId, nextState);
         invalidateArbRuleSnapshotCache();
@@ -1149,7 +1163,7 @@
         const utils = getArbPathTemplateCacheUtils();
         if (!utils || !window.ArbPaths) return null;
 
-        const cacheKey = utils.buildArbPathTopologyCacheKey(dashboardState, quoteMonitorState);
+        const cacheKey = `${utils.buildArbPathTopologyCacheKey(dashboardState, quoteMonitorState)}|${arbCycleStartPriority.join(',')}`;
         if (arbPathTopologyCache && arbPathTopologyCacheKey === cacheKey) {
             return arbPathTopologyCache;
         }
@@ -1895,6 +1909,12 @@
     }
 
     function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
+        const configuredPriority = Array.isArray(arbCycleStartPriority) && arbCycleStartPriority.length
+            ? arbCycleStartPriority
+            : [canonicalSymbol];
+        if (window.ArbCyclePriorityUtils && typeof window.ArbCyclePriorityUtils.buildPreferredCycleStartSymbols === 'function') {
+            return window.ArbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
+        }
         const symbols = new Set([canonicalSymbol]);
         for (const [alias, mapped] of Object.entries(aliasRules || {})) {
             if (mapped === canonicalSymbol) {
@@ -5700,6 +5720,22 @@
         }
     }
 
+    async function loadArbSettings() {
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/get-arb-settings`);
+            if (!response.ok) throw new Error('获取套利路径配置失败');
+            const data = await response.json();
+            const nextPriority = window.ArbCyclePriorityUtils && typeof window.ArbCyclePriorityUtils.normalizeArbCycleStartPriority === 'function'
+                ? window.ArbCyclePriorityUtils.normalizeArbCycleStartPriority(data && data.cycleStartPriority)
+                : Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
+            arbCycleStartPriority = nextPriority;
+        } catch (error) {
+            console.warn('加载套利路径配置失败:', error);
+            arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
+        }
+        invalidateArbCaches();
+    }
+
     async function loadRequestChannels() {
         try {
             const response = await fetch(`${BACKEND_URL}/api/get-request-channels`);
@@ -6341,6 +6377,7 @@
         audioNoticeEl.style.display = 'block';
         syncRequestChannelTagVisibility();
         await loadPriceSnapshotConfig();
+        await loadArbSettings();
         applyTheme(localStorage.getItem('theme'));
         
         try {
