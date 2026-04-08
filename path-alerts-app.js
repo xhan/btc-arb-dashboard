@@ -387,6 +387,25 @@
     if (!quote) {
       return `报价 #${String(target && target.quoteId || '--')}`;
     }
+    return buildQuoteAlertPairTextWithResolvedSymbols(target, quote, quoteCandidates);
+  }
+
+  function findQuoteCandidateForTarget(target, candidates = quoteCandidates) {
+    const quoteId = Number(target && target.quoteId);
+    if (!Number.isFinite(quoteId)) return null;
+    const direction = getQuoteDirection(target);
+    const items = Array.isArray(candidates) ? candidates : [];
+    return items.find((candidate) => (
+      Number(candidate && candidate.quoteId) === quoteId
+      && String(candidate && candidate.direction || 'forward') === direction
+      && String(candidate && candidate.pricingMode || 'raw') === 'raw'
+    )) || null;
+  }
+
+  function buildQuoteAlertPairTextWithResolvedSymbols(target, quote, candidates = quoteCandidates) {
+    if (!quote) {
+      return `报价 #${String(target && target.quoteId || '--')}`;
+    }
     const direction = getQuoteDirection(target);
     if (isCexOrderbookChain(quote.chain)) {
       const parsed = parseCexTradingPairSymbol(quote.symbol);
@@ -396,6 +415,10 @@
         return `${formatChainLabel(quote.chain)} ${fromSymbol}/${toSymbol}`;
       }
       return `${formatChainLabel(quote.chain)} ${quote.symbol || '--'}`;
+    }
+    const candidate = findQuoteCandidateForTarget(target, candidates);
+    if (candidate && candidate.fromSymbol && candidate.toSymbol) {
+      return `${formatChainLabel(quote.chain)} ${candidate.fromSymbol}/${candidate.toSymbol}`;
     }
     const fromToken = direction === 'inverse' ? quote.toToken : quote.fromToken;
     const toToken = direction === 'inverse' ? quote.fromToken : quote.toToken;
@@ -1968,7 +1991,20 @@
     getAlertPrimaryTitle,
     formatAlertMetaLine,
     groupAlertsBySection,
-    buildDefaultAlertName
+    buildDefaultAlertName,
+    buildDefaultQuoteAlertNameForTarget(target, quote, candidates) {
+      const pairText = buildQuoteAlertPairTextWithResolvedSymbols(target, quote, candidates);
+      const suffix = target && target.ruleKind === 'targetAbove'
+        ? '汇率高于'
+        : target && target.ruleKind === 'targetBelow'
+          ? '汇率低于'
+          : target && target.ruleKind === 'percentUp'
+            ? '上涨提醒'
+            : target && target.ruleKind === 'percentDown'
+              ? '下跌提醒'
+              : '报警';
+      return `${pairText} ${suffix}`.trim();
+    }
   };
 
   if (!window.__PATH_ALERTS_APP_DISABLE_AUTO_INIT__) {

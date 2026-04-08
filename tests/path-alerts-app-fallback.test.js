@@ -188,3 +188,35 @@ const defaultQuoteAlertName = sandbox.window.PathAlertsAppTestHooks.buildDefault
 });
 assert.ok(defaultQuoteAlertName);
 assert.ok(defaultQuoteAlertName.includes('汇率高于'));
+
+const resolvedQuoteAlertName = sandbox.window.PathAlertsAppTestHooks.buildDefaultQuoteAlertNameForTarget(
+  {
+    type: 'quote',
+    quoteId: 301,
+    direction: 'forward',
+    ruleKind: 'targetAbove',
+    value: 1.0001
+  },
+  {
+    id: 301,
+    chain: 'avalanche',
+    fromToken: '0x50b7545627a5162f82a992c33b87adc75187b218',
+    toToken: '0x0555e30da8f98308edb960aa94c0db47230d2b9c',
+    showInverse: true
+  },
+  [
+    {
+      quoteId: 301,
+      direction: 'forward',
+      fromSymbol: 'WBTC',
+      toSymbol: 'cbBTC'
+    },
+    {
+      quoteId: 301,
+      direction: 'inverse',
+      fromSymbol: 'cbBTC',
+      toSymbol: 'WBTC'
+    }
+  ]
+);
+assert.strictEqual(resolvedQuoteAlertName, 'Avalanche WBTC/cbBTC 汇率高于');
