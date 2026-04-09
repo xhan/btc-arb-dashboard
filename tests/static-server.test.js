@@ -55,6 +55,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
+    assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="dex-link-utils.js"'));
     assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
@@ -180,6 +181,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-quote-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('buildLegacyQuoteAlertLogHtml'));
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
+    assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));
+    assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));
     assert.ok(appJsResponse.body.includes('忽略 1 小时'));
     assert.ok(appJsResponse.body.includes('延长 2 小时'));
     assert.ok(appJsResponse.body.includes('沉默中'));
@@ -203,6 +206,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('let forceImmediateAlerts = false;'));
     assert.ok(appJsResponse.body.includes('buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts })'));
     assert.ok(appJsResponse.body.includes("closest('[data-path-alert-force-immediate]')"));
+    assert.ok(response.body.includes('.alert-log-entry-collapsed'));
     assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
     assert.ok(!appJsResponse.body.includes('导入当前全部机会'));
     assert.ok(appJsResponse.body.includes('/path-alerts'));

@@ -641,6 +641,11 @@
         #alert-log-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
+        .alert-log-entry-muted { opacity: 0.78; }
+        .alert-log-entry-collapsed { cursor: pointer; }
+        .alert-log-entry-collapsed .path-alert-log-actions,
+        .alert-log-entry-collapsed .alert-log-collapsible { display: none; }
+        .alert-log-title-muted { color: var(--text-color-light); }
         .quote-alert-log-link-row { margin-top: 4px; }
         .quote-alert-log-link {
             color: var(--text-color-light);
@@ -1796,6 +1801,7 @@
     <script src="arb-runtime-memory-utils.js"></script>
     <script src="arb-path-template-cache-utils.js"></script>
     <script src="arb-rule-snapshot-utils.js"></script>
+    <script src="alert-log-ui-utils.js"></script>
     <script src="alert-debug-utils.js"></script>
     <script src="special-rule-alert-config-utils.js"></script>
     <script src="path-alert-utils.js"></script>

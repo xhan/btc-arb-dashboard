@@ -742,6 +742,43 @@
         }
     }
 
+    function shouldAutoOpenAlertLogEntries(entries) {
+        if (window.AlertLogUiUtils && typeof window.AlertLogUiUtils.shouldAutoOpenAlertLogEntries === 'function') {
+            return window.AlertLogUiUtils.shouldAutoOpenAlertLogEntries(entries);
+        }
+        const list = Array.isArray(entries) ? entries : [];
+        return list.some((entry) => !(entry && entry.mutedEntry));
+    }
+
+    function buildAlertLogEntryDisplayState(entry, options = {}) {
+        if (window.AlertLogUiUtils && typeof window.AlertLogUiUtils.buildAlertLogEntryDisplayState === 'function') {
+            return window.AlertLogUiUtils.buildAlertLogEntryDisplayState(entry, options);
+        }
+        const muted = Boolean(entry && entry.mutedEntry);
+        const expanded = Boolean(options && options.expanded);
+        return {
+            muted,
+            collapsed: muted && !expanded
+        };
+    }
+
+    function expandCollapsedAlertLogCard(card) {
+        if (!card || card.dataset.alertLogCollapsed !== '1') return;
+        card.dataset.alertLogCollapsed = '0';
+        card.classList.remove('alert-log-entry-collapsed');
+        const titleEl = card.querySelector('[data-alert-log-title]');
+        if (titleEl) {
+            titleEl.classList.remove('alert-log-title-muted');
+            const expandedTitle = titleEl.dataset.alertLogExpandedTitle;
+            if (expandedTitle) {
+                titleEl.textContent = expandedTitle;
+            }
+        }
+        card.querySelectorAll('.alert-log-collapsible[hidden]').forEach((element) => {
+            element.hidden = false;
+        });
+    }
+
     function buildLegacyQuoteAlertDexLink(quote) {
         if (!quote) return null;
         return getArbDetailUtils().buildArbDetailDexLink({
@@ -790,10 +827,13 @@
     function buildLegacyQuoteAlertLogHtml(entry, nowMs = Date.now()) {
         const quote = entry && entry.quote ? entry.quote : null;
         const heading = [entry && entry.label, entry && entry.currentValueText].filter(Boolean).join('  ');
+        const expandedTitle = entry && entry.displayName ? entry.displayName : '';
         const actionLink = entry && entry.actionLink ? entry.actionLink : buildLegacyQuoteAlertActionLink(quote);
         const mutedEntry = entry && entry.mutedTargetCandidate
             ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
             : null;
+        const displayState = buildAlertLogEntryDisplayState({ ...entry, mutedEntry });
+        const collapsedTitle = [expandedTitle, heading].filter(Boolean).join('  ') || expandedTitle || '报价提醒';
         const targetKey = entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '';
         const statusText = mutedEntry ? buildMutedPathStatusText(mutedEntry, nowMs) : '已触发';
         const statusClass = mutedEntry ? 'path-alert-log-tag path-alert-log-tag-muted' : 'path-alert-log-tag';
@@ -813,22 +853,30 @@
                     data-quote-alert-log-mute="${escapeHtml(entry.alert && entry.alert.id || '')}"
                 >${mutedEntry ? '延长 2 小时' : '忽略 1 小时'}</button>`
             : '';
+        const cardClassName = [
+            'log-entry',
+            'quote-alert-log-entry',
+            displayState.muted ? 'alert-log-entry-muted' : '',
+            displayState.collapsed ? 'alert-log-entry-collapsed' : ''
+        ].filter(Boolean).join(' ');
+        const titleClassName = displayState.collapsed ? 'alert-log-title-muted' : '';
         return `
             <div
-                class="log-entry quote-alert-log-entry"
+                class="${cardClassName}"
                 data-quote-alert-log-entry="${escapeHtml(entry && entry.alert && entry.alert.id || '')}"
                 data-muted-target-key="${escapeHtml(targetKey)}"
+                data-alert-log-collapsed="${displayState.collapsed ? '1' : '0'}"
             >
                 <div class="path-alert-log-head">
                     <div>
-                        <div><strong>${escapeHtml(entry && entry.displayName || '')}</strong></div>
-                        ${heading ? `<div>${escapeHtml(heading)}</div>` : ''}
-                        <div>${escapeHtml(entry && entry.message || '')}</div>
-                        ${dexLinkHtml ? `<div class="quote-alert-log-link-row">${dexLinkHtml}</div>` : ''}
+                        <div><strong class="${titleClassName}" data-alert-log-title data-alert-log-expanded-title="${escapeHtml(expandedTitle)}">${escapeHtml(displayState.collapsed ? collapsedTitle : expandedTitle)}</strong></div>
+                        ${heading ? `<div class="alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${escapeHtml(heading)}</div>` : ''}
+                        <div class="alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${escapeHtml(entry && entry.message || '')}</div>
+                        ${dexLinkHtml ? `<div class="quote-alert-log-link-row alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${dexLinkHtml}</div>` : ''}
                     </div>
-                    <div class="path-alert-log-actions">${muteButtonHtml}</div>
+                    <div class="path-alert-log-actions alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${muteButtonHtml}</div>
                 </div>
-                <div class="path-alert-log-foot">
+                <div class="path-alert-log-foot alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>
                     <span class="${statusClass}" data-path-alert-muted-status>${escapeHtml(statusText)}</span>
                     <span class="log-time">${new Date(nowMs).toLocaleTimeString()}</span>
                 </div>
@@ -838,8 +886,10 @@
 
     function appendLegacyQuoteAlertLogEntry(entry, nowMs = Date.now()) {
         if (!alertLogWindow || !alertLogContent) return;
-        alertLogWindow.style.display = 'flex';
-        bringFloatingPanelToFront(alertLogWindow);
+        if (shouldAutoOpenAlertLogEntries([entry])) {
+            alertLogWindow.style.display = 'flex';
+            bringFloatingPanelToFront(alertLogWindow);
+        }
         const wrapper = document.createElement('div');
         wrapper.innerHTML = buildLegacyQuoteAlertLogHtml(entry, nowMs);
         const card = wrapper.firstElementChild;
@@ -965,8 +1015,10 @@
         const mutedEntry = entry && entry.mutedTargetCandidate
             ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
             : null;
+        const displayState = buildAlertLogEntryDisplayState({ ...entry, mutedEntry });
         const targetKey = entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '';
-        const title = `🚨 [路径报警] ${escapeHtml(entry.alert && entry.alert.name || '路径报警')}`;
+        const expandedTitle = `🚨 [路径报警] ${String(entry.alert && entry.alert.name || '路径报警')}`;
+        const title = escapeHtml(expandedTitle);
         const profitText = escapeHtml(formatPathAlertEvaluationText(entry.evaluation));
         const routeLinesHtml = (Array.isArray(entry.summaryLines) ? entry.summaryLines : [])
             .map((line) => `<div class="path-alert-log-line">${escapeHtml(line)}</div>`)
@@ -980,21 +1032,29 @@
                     data-path-alert-log-mute="${escapeHtml(entry.alert.id || '')}"
                 >${mutedEntry ? '延长 2 小时' : '忽略 1 小时'}</button>`
             : '';
+        const cardClassName = [
+            'log-entry',
+            'path-alert-log-entry',
+            displayState.muted ? 'alert-log-entry-muted' : '',
+            displayState.collapsed ? 'alert-log-entry-collapsed' : ''
+        ].filter(Boolean).join(' ');
+        const titleClassName = displayState.collapsed ? 'alert-log-title-muted' : '';
         return `
             <div
-                class="log-entry path-alert-log-entry"
+                class="${cardClassName}"
                 data-path-alert-log-entry="${escapeHtml(entry.alert && entry.alert.id || '')}"
                 data-muted-target-key="${escapeHtml(targetKey)}"
+                data-alert-log-collapsed="${displayState.collapsed ? '1' : '0'}"
             >
                 <div class="path-alert-log-head">
                     <div>
-                        <div><strong>${title}</strong></div>
-                        <div class="path-alert-log-profit">📈 ${profitText}</div>
+                        <div><strong class="${titleClassName}" data-alert-log-title data-alert-log-expanded-title="${escapeHtml(expandedTitle)}">${title}</strong></div>
+                        <div class="path-alert-log-profit alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>📈 ${profitText}</div>
                     </div>
-                    <div class="path-alert-log-actions">${muteButtonHtml}</div>
+                    <div class="path-alert-log-actions alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${muteButtonHtml}</div>
                 </div>
-                <div class="path-alert-log-route">${routeLinesHtml || '<div class="path-alert-log-line">--</div>'}</div>
-                <div class="path-alert-log-foot">
+                <div class="path-alert-log-route alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${routeLinesHtml || '<div class="path-alert-log-line">--</div>'}</div>
+                <div class="path-alert-log-foot alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>
                     <span class="${statusClass}" data-path-alert-muted-status>${escapeHtml(statusText)}</span>
                     <span class="log-time">${new Date(nowMs).toLocaleTimeString()}</span>
                 </div>
@@ -1006,8 +1066,10 @@
         if (!alertLogWindow || !alertLogContent) return;
         const list = Array.isArray(entries) ? entries : [];
         if (!list.length) return;
-        alertLogWindow.style.display = 'flex';
-        bringFloatingPanelToFront(alertLogWindow);
+        if (shouldAutoOpenAlertLogEntries(list)) {
+            alertLogWindow.style.display = 'flex';
+            bringFloatingPanelToFront(alertLogWindow);
+        }
         for (let index = list.length - 1; index >= 0; index -= 1) {
             const wrapper = document.createElement('div');
             wrapper.innerHTML = buildPathAlertLogCardHtml(list[index], nowMs);
@@ -4107,44 +4169,52 @@
         const muteBtn = event.target.closest('[data-path-alert-log-mute]');
         const quoteMuteBtn = event.target.closest('[data-quote-alert-log-mute]');
         const buttonEl = muteBtn || quoteMuteBtn;
-        if (!buttonEl || buttonEl.disabled) return;
-        const alertId = String(
-            (muteBtn && muteBtn.dataset.pathAlertLogMute)
-            || (quoteMuteBtn && quoteMuteBtn.dataset.quoteAlertLogMute)
-            || ''
-        ).trim();
-        if (!alertId) return;
-        const runtime = pathAlertRuntimeState.get(alertId);
-        if (!runtime || !runtime.evaluation) return;
-        const alert = (pathAlertConfig.alerts || []).find((item) => item && item.id === alertId);
-        if (!alert || !alert.target) return;
-        if (alert.target.type === 'quote') {
-            const quote = findDashboardQuoteById(alert.target.quoteId);
-            if (!quote) return;
-            const triggeredEntry = buildLegacyQuoteAlertTriggeredEntry(
+        if (buttonEl && !buttonEl.disabled) {
+            const alertId = String(
+                (muteBtn && muteBtn.dataset.pathAlertLogMute)
+                || (quoteMuteBtn && quoteMuteBtn.dataset.quoteAlertLogMute)
+                || ''
+            ).trim();
+            if (!alertId) return;
+            const runtime = pathAlertRuntimeState.get(alertId);
+            if (!runtime || !runtime.evaluation) return;
+            const alert = (pathAlertConfig.alerts || []).find((item) => item && item.id === alertId);
+            if (!alert || !alert.target) return;
+            if (alert.target.type === 'quote') {
+                const quote = findDashboardQuoteById(alert.target.quoteId);
+                if (!quote) return;
+                const triggeredEntry = buildLegacyQuoteAlertTriggeredEntry(
+                    alert,
+                    quote,
+                    buildQuoteAlertMessage(alert, runtime.evaluation),
+                    {
+                        currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, alert, runtime.evaluation)
+                    }
+                );
+                mutePathAlertTarget(triggeredEntry, Date.now());
+                return;
+            }
+            const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
+            const triggeredEntry = buildTriggeredPathAlertEntry(
                 alert,
-                quote,
-                buildQuoteAlertMessage(alert, runtime.evaluation),
-                {
-                    currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, alert, runtime.evaluation)
-                }
+                runtime.evaluation,
+                window.PathAlertUtils && typeof window.PathAlertUtils.buildChangedLegs === 'function'
+                    ? window.PathAlertUtils.buildChangedLegs(
+                        Array.isArray(runtime.currentLegSnapshots) ? runtime.currentLegSnapshots : [],
+                        Array.isArray(runtime.baselineLegSnapshots) ? runtime.baselineLegSnapshots : [],
+                        Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
+                    )
+                    : []
             );
             mutePathAlertTarget(triggeredEntry, Date.now());
             return;
         }
-        const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
-        const triggeredEntry = buildTriggeredPathAlertEntry(
-            alert,
-            runtime.evaluation,
-            window.PathAlertUtils && typeof window.PathAlertUtils.buildChangedLegs === 'function'
-                ? window.PathAlertUtils.buildChangedLegs(
-                    Array.isArray(runtime.currentLegSnapshots) ? runtime.currentLegSnapshots : [],
-                    Array.isArray(runtime.baselineLegSnapshots) ? runtime.baselineLegSnapshots : [],
-                    Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
-                )
-                : []
-        );
-        mutePathAlertTarget(triggeredEntry, Date.now());
+        if (event.target.closest('a, button')) return;
+        const collapsedCard = event.target.closest('[data-alert-log-collapsed="1"]');
+        if (collapsedCard) {
+            expandCollapsedAlertLogCard(collapsedCard);
+            return;
+        }
     }
 
     function handlePathAlertPanelChange(event) {
