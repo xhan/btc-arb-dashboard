@@ -5,7 +5,7 @@ function buildApi() {
     tBTC: ['tBTC', 'TBTC'],
     USDe: ['USDe', 'USDE'],
     USDtb: ['USDtb', 'USDTB'],
-    USDT: ['USDT', 'USD₮0']
+    USDT: ['USDT', 'USD₮0', 'USDT0']
   };
 
   function buildAliasRulesFromGroups(groups) {
