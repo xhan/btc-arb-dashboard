@@ -218,6 +218,22 @@ assert.strictEqual(fixedBest.legs[0].chain, 'arbitrum');
 assert.strictEqual(fixedBest.legs[1].chain, 'ethereum');
 assert.strictEqual(fixedAll.length, 2);
 assert.strictEqual(fixedAll[0].legs[0].chain, 'arbitrum');
+
+const usdeUsdFixedPaths = findFixedPaths([
+  { from: 'USDe', to: 'USD₮0', rate: 1.0003, chain: 'avalanche', quoteId: 901 },
+  { from: 'USD₮0', to: 'USDE', rate: 0.9999, chain: 'base', quoteId: 902 }
+], {
+  base: 'USDe',
+  quote: 'USDT',
+  steps: 2,
+  crossChain: true,
+  resultLimit: 2
+}, {
+  USDE: 'USDe',
+  'USD₮0': 'USDT'
+});
+assert.strictEqual(usdeUsdFixedPaths.length, 1);
+assert.deepStrictEqual(usdeUsdFixedPaths[0].legs.map((leg) => leg.quoteId), [901, 902]);
 assert.strictEqual(fixedAll[1].legs[0].chain, 'ethereum');
 
 const fixedAnyChainEdges = [

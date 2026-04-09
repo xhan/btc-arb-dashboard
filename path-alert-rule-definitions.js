@@ -73,6 +73,17 @@
       resultLimit: 2
     },
     {
+      id: 'fixed:usde-usdt',
+      title: 'USDE - USDT',
+      base: 'USDe',
+      quote: 'USDT',
+      categoryNames: ['USD监控'],
+      steps: 2,
+      crossChain: true,
+      excludeChains: ['Bybit', 'Binance'],
+      resultLimit: 1
+    },
+    {
       id: 'fixed:mseth',
       title: 'msETH',
       base: 'msETH',

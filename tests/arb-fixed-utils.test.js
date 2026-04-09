@@ -58,3 +58,27 @@ assert.strictEqual(
   resolveEdgesForFixedRule({ title: 'All edges', categoryNames: [] }, edgeIndex),
   edgeIndex.allEdges
 );
+
+const usdRule = {
+  title: 'USDE - USDT',
+  categoryNames: ['USD监控']
+};
+
+const usdEdges = [
+  { from: 'USDe', to: 'USDT', rate: 1.0002, quoteId: 11, chain: 'ethereum' },
+  { from: 'USDT', to: 'USDe', rate: 0.9999, quoteId: 12, chain: 'base' },
+  { from: 'USDe', to: 'USDT', rate: 1.0004, quoteId: 13, chain: 'Bybit' }
+];
+
+const usdQuoteMetaById = new Map([
+  [11, { categoryName: 'USD监控' }],
+  [12, { categoryName: 'USD监控' }],
+  [13, { categoryName: 'USD监控' }]
+]);
+
+const usdFiltered = filterEdgesForFixedRule(usdRule, usdEdges, usdQuoteMetaById);
+
+assert.deepStrictEqual(
+  usdFiltered.map((edge) => edge.quoteId),
+  [11, 12, 13]
+);

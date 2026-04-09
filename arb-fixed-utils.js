@@ -19,7 +19,6 @@
         ruleEdges.push(edge);
         continue;
       }
-
       const meta = metaMap.get(edge.quoteId);
       const categoryName = meta && meta.categoryName ? String(meta.categoryName) : '';
       if (!categoryName) continue;

@@ -111,6 +111,20 @@
       }
     },
     {
+      "id": "path-alert-1773395527000-usdeusdt",
+      "name": "",
+      "enabled": true,
+      "thresholdBp": 1,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 13,
+      "cooldownSec": 120,
+      "target": {
+        "type": "rule",
+        "ruleKind": "fixed",
+        "ruleId": "fixed:usde-usdt"
+      }
+    },
+    {
       "id": "path-alert-1773395534395-7dqza3",
       "name": "",
       "enabled": true,
