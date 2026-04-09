@@ -512,11 +512,10 @@
           "id": 1766416823874,
           "chain": "ethereum",
           "amount": 130000,
-          "preferredSource": "Kyber",
+          "preferredSource": "Velora",
           "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "toToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
-          "showInverse": true,
-          "kyberOnlyDirectPools": true
+          "showInverse": true
         },
         {
           "id": 1766416837020,
@@ -524,6 +523,15 @@
           "amount": 1,
           "preferredSource": "Kyber",
           "symbol": "USDEUSDT"
+        },
+        {
+          "id": 1775701767335,
+          "chain": "plasma",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+          "toToken": "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+          "showInverse": true
         },
         {
           "id": 1771776667295,
@@ -801,11 +809,11 @@
   "settings": {
     "kyber": 210,
     "zerox": 500,
-    "velora": 1200,
+    "velora": 1300,
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
-    "solana": 1100,
+    "solana": 3500,
     "sui": 500,
     "starknet": 1000
   }
