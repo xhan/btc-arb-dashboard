@@ -1430,7 +1430,7 @@
                     safeAmount,
                     roundToOneDecimal(safeAmount * 0.5),
                     roundToOneDecimal(safeAmount * 1.5),
-                    roundToOneDecimal(safeAmount * 2)
+                    roundToOneDecimal(safeAmount * 3)
                 ];
             },
             buildArbDetailRateText(rawPrice, fromSymbol, toSymbol, precision = 6) {
@@ -1442,6 +1442,17 @@
                     return String(formattedRate);
                 }
                 return `1 ${fromSymbol} ≈ ${formattedRate} ${toSymbol}`;
+            },
+            buildArbDetailRateDeltaText(baseRate, nextRate, decimals = 1) {
+                const safeBaseRate = Number(baseRate);
+                const safeNextRate = Number(nextRate);
+                if (!Number.isFinite(safeBaseRate) || safeBaseRate <= 0) return '--';
+                if (!Number.isFinite(safeNextRate) || safeNextRate <= 0) return '--';
+                const safeDecimals = Number.isInteger(decimals) && decimals >= 0 ? decimals : 1;
+                const bpDelta = ((safeNextRate / safeBaseRate) - 1) * 10000;
+                const roundedDelta = Number(bpDelta.toFixed(safeDecimals));
+                const sign = roundedDelta >= 0 ? '+' : '';
+                return `${sign}${roundedDelta.toFixed(safeDecimals)}bp`;
             },
             summarizeDetailResult(startAmount, finalAmount) {
                 const safeStart = Number(startAmount) > 0 ? Number(startAmount) : 1;
@@ -2612,7 +2623,10 @@
                             <div class="arb-detail-leg-pair">${buildArbDetailPairHtml(row)}</div>
                             <div class="arb-detail-leg-source">${buildArbDetailSourceHtml(row)}</div>
                         </div>
-                        <span class="arb-detail-leg-amount">${escapeHtml(row.rateText || row.amountText || '--')}</span>
+                        <div class="arb-detail-leg-amount-wrap">
+                            <span class="arb-detail-leg-amount">${escapeHtml(row.rateText || row.amountText || '--')}</span>
+                            ${row.rateDeltaText ? `<span class="arb-detail-leg-rate-delta ${escapeHtml(row.rateDeltaTone || 'neutral')}">${escapeHtml(row.rateDeltaText)}</span>` : ''}
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -2657,6 +2671,14 @@
         }
 
         return `${sourceText} · ${dexButtonHtml}`;
+    }
+
+    function getArbDetailRateDeltaTone(rateDeltaText) {
+        const value = Number.parseFloat(String(rateDeltaText || ''));
+        if (!Number.isFinite(value)) return 'neutral';
+        if (value > 0) return 'positive';
+        if (value < 0) return 'negative';
+        return 'neutral';
     }
 
     function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
@@ -3266,6 +3288,7 @@
                         fromTokenAddress: isInverseLeg ? match.quote.toToken : match.quote.fromToken,
                         toTokenAddress: isInverseLeg ? match.quote.fromToken : match.quote.toToken,
                         inputAmount: legInputAmount,
+                        rawPrice: data.rawPrice,
                         rateText: getArbDetailUtils().buildArbDetailRateText(
                             data.rawPrice,
                             data.symbols.from,
@@ -3281,6 +3304,18 @@
                 }
 
                 const summary = getArbDetailUtils().summarizeDetailResult(startAmount, rollingAmount);
+                if (cardIndex === 3) {
+                    const baseRows = Array.isArray(arbDetailState.cards[0]?.rows) ? arbDetailState.cards[0].rows : [];
+                    rows.forEach((row, rowIndex) => {
+                        const baseRow = baseRows[rowIndex];
+                        const rateDeltaText = getArbDetailUtils().buildArbDetailRateDeltaText(
+                            baseRow && baseRow.rawPrice,
+                            row && row.rawPrice
+                        );
+                        row.rateDeltaText = rateDeltaText;
+                        row.rateDeltaTone = getArbDetailRateDeltaTone(rateDeltaText);
+                    });
+                }
                 card.rows = rows;
                 card.summary = {
                     ...summary,

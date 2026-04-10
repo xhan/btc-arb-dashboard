@@ -26,7 +26,7 @@
       safeBaseAmount,
       normalizeRoundedDetailAmount(safeBaseAmount * 0.5, 1),
       normalizeRoundedDetailAmount(safeBaseAmount * 1.5, 1),
-      normalizeRoundedDetailAmount(safeBaseAmount * 2, 1)
+      normalizeRoundedDetailAmount(safeBaseAmount * 3, 1)
     ];
   }
 
@@ -41,6 +41,18 @@
       return String(formattedRate);
     }
     return `1 ${safeFromSymbol} ≈ ${formattedRate} ${safeToSymbol}`;
+  }
+
+  function buildArbDetailRateDeltaText(baseRate, nextRate, decimals = 1) {
+    const safeBaseRate = Number(baseRate);
+    const safeNextRate = Number(nextRate);
+    if (!Number.isFinite(safeBaseRate) || safeBaseRate <= 0) return '--';
+    if (!Number.isFinite(safeNextRate) || safeNextRate <= 0) return '--';
+    const bpDelta = ((safeNextRate / safeBaseRate) - 1) * 10000;
+    const safeDecimals = Number.isInteger(decimals) && decimals >= 0 ? decimals : 1;
+    const roundedDelta = Number(bpDelta.toFixed(safeDecimals));
+    const sign = roundedDelta >= 0 ? '+' : '';
+    return `${sign}${roundedDelta.toFixed(safeDecimals)}bp`;
   }
 
   function summarizeDetailResult(startAmount, finalAmount) {
@@ -271,6 +283,7 @@
   return {
     buildDetailInputAmounts,
     buildArbDetailRateText,
+    buildArbDetailRateDeltaText,
     summarizeDetailResult,
     getQuoteRunState,
     buildArbDetailChartPairs,

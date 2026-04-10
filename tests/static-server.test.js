@@ -136,6 +136,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('flex: 0 0 236px;'));
     assert.ok(response.body.includes('.arb-detail-profit-canvas {'));
     assert.ok(response.body.includes('height: 104px;'));
+    assert.ok(response.body.includes('.arb-detail-leg-rate-delta {'));
+    assert.ok(response.body.includes('.arb-detail-leg-rate-delta.positive {'));
 
     const appJsResponse = await request('/app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
@@ -230,6 +232,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
     assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
+    assert.ok(appJsResponse.body.includes('buildArbDetailRateDeltaText'));
+    assert.ok(appJsResponse.body.includes('rateDeltaText'));
     assert.ok(appJsResponse.body.includes('setArbPanelMaxHeight();'));
     assert.ok(appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));

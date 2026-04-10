@@ -21,22 +21,23 @@ const {
   shouldSyncArbDetailSnapshotForCard,
   buildArbDetailSnapshotMonitorState,
   buildArbDetailDexLink,
-  buildArbDetailRateText
+  buildArbDetailRateText,
+  buildArbDetailRateDeltaText
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
   buildDetailInputAmounts(10),
-  [10, 5, 15, 20]
+  [10, 5, 15, 30]
 );
 
 assert.deepStrictEqual(
   buildDetailInputAmounts(undefined),
-  [1, 0.5, 1.5, 2]
+  [1, 0.5, 1.5, 3]
 );
 
 assert.deepStrictEqual(
   buildDetailInputAmounts(3),
-  [3, 1.5, 4.5, 6]
+  [3, 1.5, 4.5, 9]
 );
 
 assert.strictEqual(
@@ -46,6 +47,21 @@ assert.strictEqual(
 
 assert.strictEqual(
   buildArbDetailRateText(null, 'cbBTC', 'WBTC'),
+  '--'
+);
+
+assert.strictEqual(
+  buildArbDetailRateDeltaText(1.0, 1.0001),
+  '+1.0bp'
+);
+
+assert.strictEqual(
+  buildArbDetailRateDeltaText(1.0, 0.9998),
+  '-2.0bp'
+);
+
+assert.strictEqual(
+  buildArbDetailRateDeltaText(null, 1.0001),
   '--'
 );
 
