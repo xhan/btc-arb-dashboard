@@ -1192,6 +1192,7 @@
                 quotesByCategoryName,
                 quoteStateById: quoteMonitorState,
                 aliasRules,
+                preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
                 arbPathsApi: window.ArbPaths,
                 arbFixedUtils: window.ArbFixedUtils,
                 arbSpecialUtils: window.ArbSpecialUtils
@@ -1273,7 +1274,8 @@
                 ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allTopologyEdgesWithRules, quoteMetaById)
                 : allTopologyEdgesWithRules;
             fixedTemplatesByRuleId[rule.id] = utils.buildFixedPathTemplates(filteredEdges, rule, aliasRules, {
-                limit: Number(rule.resultLimit) || 1
+                limit: Number(rule.resultLimit) || 1,
+                preferredStartSymbols: preferredCycleStartSymbols
             });
         }
 

@@ -333,7 +333,7 @@ function collectQuoteChains(edges) {
   return chains;
 }
 
-function buildFixedCycleCandidate(cycle, rule, aliases) {
+function buildFixedCycleCandidate(cycle, rule, aliases, options = {}) {
   if (!cycle || !Array.isArray(cycle.legs) || !cycle.legs.length) return null;
   const excludeChains = new Set(
     Array.isArray(rule && rule.excludeChains)
@@ -367,10 +367,13 @@ function buildFixedCycleCandidate(cycle, rule, aliases) {
       return null;
     }
   }
-  const canonical = canonicalizeCycleRotation(cycle.legs, null);
+  const preferredStartSymbols = Array.isArray(options.preferredStartSymbols) && options.preferredStartSymbols.length
+    ? options.preferredStartSymbols
+    : null;
+  const canonical = canonicalizeCycleRotation(cycle.legs, preferredStartSymbols);
   if (!canonical.key) return null;
   return {
-    legs: cycle.legs.map((leg) => ({ ...leg })),
+    legs: (preferredStartSymbols ? canonical.legs : cycle.legs).map((leg) => ({ ...leg })),
     profitRate: cycle.profitRate,
     key: canonical.key
   };
@@ -391,7 +394,7 @@ function findFixedPaths(edges, rule, aliases, options = {}) {
   const seen = new Set();
 
   function pushCycle(cycle) {
-    const candidate = buildFixedCycleCandidate(cycle, rule, aliases);
+    const candidate = buildFixedCycleCandidate(cycle, rule, aliases, options);
     if (!candidate || seen.has(candidate.key)) return;
     seen.add(candidate.key);
     candidates.push(candidate);
@@ -471,6 +474,7 @@ function buildApi() {
     findTopCycles,
     findFixedPaths,
     findBestFixedPath,
+    canonicalizeCycleRotation,
     selectBestDirectEdge,
     isMeaningfulPath
   };

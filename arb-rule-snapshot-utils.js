@@ -16,6 +16,7 @@
     const quotesByCategoryName = options.quotesByCategoryName instanceof Map ? options.quotesByCategoryName : new Map();
     const quoteStateById = options.quoteStateById instanceof Map ? options.quoteStateById : new Map();
     const aliasRules = options.aliasRules || null;
+    const preferredStartSymbols = Array.isArray(options.preferredStartSymbols) ? options.preferredStartSymbols : null;
     const fixedTemplatesByRuleId = options.fixedTemplatesByRuleId && typeof options.fixedTemplatesByRuleId === 'object'
       ? options.fixedTemplatesByRuleId
       : null;
@@ -46,7 +47,8 @@
       } else {
         if (!arbPathsApi || typeof arbPathsApi.findFixedPaths !== 'function') continue;
         cycles = arbPathsApi.findFixedPaths(filteredEdges, rule, aliasRules, {
-          limit: Number(rule.resultLimit) || 1
+          limit: Number(rule.resultLimit) || 1,
+          preferredStartSymbols
         });
       }
       const normalizedCycles = Array.isArray(cycles) ? cycles : [];

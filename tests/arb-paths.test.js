@@ -271,6 +271,16 @@ assert.strictEqual(suiLegForAliasDisplay.rawTo, 'tBTC');
 assert.strictEqual(suiLegForAliasDisplay.from, 'cbBTC');
 assert.strictEqual(suiLegForAliasDisplay.to, 'tBTC');
 
+const fixedAliasDisplayPreferred = findBestFixedPath(
+  fixedAliasDisplayEdges,
+  fixedAliasDisplayRule,
+  { xBTC: 'cbBTC' },
+  { preferredStartSymbols: ['cbBTC', 'WBTC', 'ETH'] }
+);
+assert.ok(fixedAliasDisplayPreferred);
+assert.strictEqual(fixedAliasDisplayPreferred.legs[0].from, 'cbBTC');
+assert.strictEqual(fixedAliasDisplayPreferred.legs[0].chain, 'sui');
+
 const fixedExcludeSymbolEdges = [
   { from: 'GHO', to: 'USDC.e', rate: 1.005, chain: 'base' },
   { from: 'USDC.e', to: 'GHO', rate: 1.002, chain: 'ethereum' },

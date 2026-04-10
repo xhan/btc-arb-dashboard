@@ -95,6 +95,24 @@ const fixedTemplates = buildFixedPathTemplates(fixedTopologyEdges, fixedRule, nu
 assert.ok(Array.isArray(fixedTemplates) && fixedTemplates.length > 0, 'should build fixed templates');
 assert.strictEqual(fixedTemplates[0].legs[0].quoteId, undefined, 'fixed templates should only keep route shape');
 
+const fixedAliasTemplates = buildFixedPathTemplates([
+  { quoteId: 301, chain: 'ethereum', from: 'tBTC', to: 'cbBTC', rate: 1 },
+  { quoteId: 302, chain: 'sui', from: 'xBTC', to: 'tBTC', rate: 1 }
+], {
+  id: 'fixed:tbtc-btc',
+  title: 'tBTC - BTC',
+  base: 'tBTC',
+  quote: 'cbBTC',
+  steps: 2,
+  crossChain: true
+}, { xBTC: 'cbBTC' }, {
+  limit: 5,
+  preferredStartSymbols: ['cbBTC', 'WBTC', 'ETH']
+});
+assert.ok(Array.isArray(fixedAliasTemplates) && fixedAliasTemplates.length > 0);
+assert.strictEqual(fixedAliasTemplates[0].legs[0].from, 'cbBTC');
+assert.strictEqual(fixedAliasTemplates[0].legs[0].chain, 'sui');
+
 const evaluatedFixed = evaluateFixedPathTemplate(fixedTemplates[0], [
   { quoteId: 101, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.001 },
   { quoteId: 102, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.003 },

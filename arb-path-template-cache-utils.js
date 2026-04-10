@@ -123,14 +123,24 @@
         return resolveAlias(edge.from, aliases) === normalizedQuote && resolveAlias(edge.to, aliases) === normalizedBase;
       });
       if (!hasLegA || !hasLegB) return;
-      const key = `${chainA}:${normalizedBase}->${normalizedQuote}|${chainB}:${normalizedQuote}->${normalizedBase}`;
+      const legs = [
+        { chain: chainA, from: normalizedBase, to: normalizedQuote },
+        { chain: chainB, from: normalizedQuote, to: normalizedBase }
+      ];
+      const preferredStartSymbols = Array.isArray(options.preferredStartSymbols) && options.preferredStartSymbols.length
+        ? options.preferredStartSymbols
+        : null;
+      const canonical = arbPathsApi && typeof arbPathsApi.canonicalizeCycleRotation === 'function'
+        ? arbPathsApi.canonicalizeCycleRotation(legs, preferredStartSymbols)
+        : {
+            legs,
+            key: `${chainA}:${normalizedBase}->${normalizedQuote}|${chainB}:${normalizedQuote}->${normalizedBase}`
+          };
+      const key = canonical.key;
       if (seen.has(key)) return;
       seen.add(key);
       templates.push({
-        legs: [
-          { chain: chainA, from: normalizedBase, to: normalizedQuote },
-          { chain: chainB, from: normalizedQuote, to: normalizedBase }
-        ],
+        legs: (preferredStartSymbols ? canonical.legs : legs).map((leg) => ({ ...leg })),
         profitRate: 0,
         key
       });
