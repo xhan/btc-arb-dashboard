@@ -157,11 +157,13 @@
     const mutedAt = toPositiveInteger(entry.mutedAt, 0);
     const expiresAt = toPositiveInteger(entry.expiresAt, 0);
     if (!mutedAt || !expiresAt || expiresAt <= mutedAt) return null;
+    const logTitleSnapshot = String(entry.logTitleSnapshot || '').trim();
     return {
       target,
       summaryLinesSnapshot: Array.isArray(entry.summaryLinesSnapshot)
         ? entry.summaryLinesSnapshot.map((line) => String(line || '')).filter(Boolean)
         : [],
+      logTitleSnapshot,
       mutedAt,
       expiresAt
     };
@@ -346,16 +348,19 @@
     alertOrTarget,
     summaryLinesSnapshot = [],
     mutedAt = Date.now(),
-    durationMs = PATH_ALERT_MUTE_DURATION_MS
+    durationMs = PATH_ALERT_MUTE_DURATION_MS,
+    options = {}
   ) {
     const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
     const normalizedTarget = normalizePathAlertTarget(target);
     const safeMutedAt = toPositiveInteger(mutedAt, Date.now());
     const safeDurationMs = toPositiveInteger(durationMs, PATH_ALERT_MUTE_DURATION_MS);
+    const logTitleSnapshot = String(options && options.logTitleSnapshot || '').trim();
     if (!normalizedTarget || (normalizedTarget.type !== 'path' && normalizedTarget.type !== 'quote')) return null;
     return normalizeMutedPathTarget({
       target: normalizedTarget,
       summaryLinesSnapshot,
+      logTitleSnapshot,
       mutedAt: safeMutedAt,
       expiresAt: safeMutedAt + safeDurationMs
     });

@@ -56,6 +56,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
+    assert.ok(response.body.includes('src="muted-path-storage-utils.js"'));
     assert.ok(response.body.includes('src="dex-link-utils.js"'));
     assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));

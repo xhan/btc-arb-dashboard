@@ -189,10 +189,13 @@ const mutedPathEntry = createMutedPathTargetEntry(
     }
   },
   ['(ETH) tBTC -> BTC.b', '(Base) cbBTC -> tBTC'],
-  1000
+  1000,
+  PATH_ALERT_MUTE_DURATION_MS,
+  { logTitleSnapshot: '🚨 [路径报警] tBTC - BTC' }
 );
 assert.strictEqual(mutedPathEntry.mutedAt, 1000);
 assert.strictEqual(mutedPathEntry.expiresAt, 1000 + PATH_ALERT_MUTE_DURATION_MS);
+assert.strictEqual(mutedPathEntry.logTitleSnapshot, '🚨 [路径报警] tBTC - BTC');
 assert.deepStrictEqual(
   mutedPathEntry.summaryLinesSnapshot,
   ['(ETH) tBTC -> BTC.b', '(Base) cbBTC -> tBTC']
@@ -214,6 +217,7 @@ const extendedMutedPathEntry = extendMutedPathTargetEntry(mutedPathEntry, 2000, 
 assert.ok(extendedMutedPathEntry);
 assert.strictEqual(extendedMutedPathEntry.mutedAt, 1000);
 assert.strictEqual(extendedMutedPathEntry.expiresAt, 1000 + PATH_ALERT_MUTE_DURATION_MS + PATH_ALERT_MUTE_EXTEND_DURATION_MS);
+assert.strictEqual(extendedMutedPathEntry.logTitleSnapshot, '🚨 [路径报警] tBTC - BTC');
 assert.deepStrictEqual(
   extendedMutedPathEntry.summaryLinesSnapshot,
   ['(ETH) tBTC -> BTC.b', '(Base) cbBTC -> tBTC']

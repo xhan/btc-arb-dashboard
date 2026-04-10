@@ -80,6 +80,7 @@
     const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;
     const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
+    const MUTED_PATH_TARGETS_STORAGE_KEY = 'mutedPathTargets';
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
     let arbGlobalExcludedChainsInput = '';
@@ -894,6 +895,7 @@
         wrapper.innerHTML = buildLegacyQuoteAlertLogHtml(entry, nowMs);
         const card = wrapper.firstElementChild;
         if (card) {
+            removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
             alertLogContent.prepend(card);
         }
         updateMutedPathAlertLogCards('', nowMs);
@@ -927,25 +929,73 @@
         return window.PathAlertUtils.buildPathAlertTargetDuplicateKey(target);
     }
 
+    function loadMutedPathTargetsFromStorage() {
+        if (!window.localStorage) return [];
+        try {
+            const raw = window.localStorage.getItem(MUTED_PATH_TARGETS_STORAGE_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (window.MutedPathStorageUtils && typeof window.MutedPathStorageUtils.normalizeStoredMutedPathTargets === 'function') {
+                return window.MutedPathStorageUtils.normalizeStoredMutedPathTargets(parsed);
+            }
+        } catch (error) {
+            console.warn('读取沉默报警本地缓存失败:', error);
+        }
+        return [];
+    }
+
+    function buildMutedPathLogTitleSnapshot(entry) {
+        if (!entry || typeof entry !== 'object') return '';
+        const explicitTitle = String(entry.logTitleSnapshot || '').trim();
+        if (explicitTitle) return explicitTitle;
+        if (entry.quote) {
+            return String(entry.displayName || (entry.alert && entry.alert.name) || '报价提醒').trim();
+        }
+        const alertName = String(entry.alert && entry.alert.name || '').trim();
+        return alertName ? `🚨 [路径报警] ${alertName}` : '🚨 [路径报警]';
+    }
+
+    function persistMutedPathTargets() {
+        if (!window.localStorage) return;
+        try {
+            const list = window.MutedPathStorageUtils && typeof window.MutedPathStorageUtils.trimMutedPathTargetsForStorage === 'function'
+                ? window.MutedPathStorageUtils.trimMutedPathTargetsForStorage(mutedPathTargets)
+                : mutedPathTargets;
+            mutedPathTargets = Array.isArray(list) ? list : [];
+            window.localStorage.setItem(MUTED_PATH_TARGETS_STORAGE_KEY, JSON.stringify(mutedPathTargets));
+        } catch (error) {
+            console.warn('保存沉默报警本地缓存失败:', error);
+        }
+    }
+
     function mutePathAlertTarget(entry, nowMs = Date.now()) {
         const muteTarget = entry && entry.mutedTargetCandidate ? entry.mutedTargetCandidate : null;
         if (!muteTarget) return null;
         if (!window.PathAlertUtils || typeof window.PathAlertUtils.createMutedPathTargetEntry !== 'function') return null;
         const targetKey = buildMutedPathTargetKey(muteTarget);
         if (!targetKey) return null;
+        const logTitleSnapshot = buildMutedPathLogTitleSnapshot(entry);
         pruneMutedPathTargetsInPlace(nowMs);
         const existingEntry = mutedPathTargets.find((item) => buildMutedPathTargetKey(item) === targetKey) || null;
-        const mutedEntry = existingEntry && typeof window.PathAlertUtils.extendMutedPathTargetEntry === 'function'
+        const nextMutedEntry = existingEntry && typeof window.PathAlertUtils.extendMutedPathTargetEntry === 'function'
             ? window.PathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS)
             : window.PathAlertUtils.createMutedPathTargetEntry(
                 muteTarget,
                 entry.summaryLines,
                 nowMs,
-                PATH_ALERT_MUTE_DURATION_MS
+                PATH_ALERT_MUTE_DURATION_MS,
+                { logTitleSnapshot }
             );
+        const mutedEntry = nextMutedEntry && !String(nextMutedEntry.logTitleSnapshot || '').trim()
+            ? window.PathAlertUtils.normalizeMutedPathTarget({
+                ...nextMutedEntry,
+                logTitleSnapshot
+            })
+            : nextMutedEntry;
         if (!mutedEntry) return null;
         mutedPathTargets = mutedPathTargets.filter((item) => buildMutedPathTargetKey(item) !== targetKey);
         mutedPathTargets.push(mutedEntry);
+        persistMutedPathTargets();
         updateMutedPathAlertLogCards(targetKey, nowMs);
         syncMutedPathLogTimer();
         return mutedEntry;
@@ -958,6 +1008,16 @@
             ? window.PathAlertUtils.formatMutedCountdown(remainingMs)
             : '--:--';
         return `沉默中 · ${countdown}`;
+    }
+
+    function removeRestoredMutedAlertLogCards(targetKey = '') {
+        if (!alertLogContent || !targetKey) return;
+        const escapedTargetKey = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+            ? CSS.escape(targetKey)
+            : targetKey.replace(/["\\]/g, '\\$&');
+        alertLogContent
+            .querySelectorAll(`.log-entry[data-muted-restored="1"][data-muted-target-key="${escapedTargetKey}"]`)
+            .forEach((card) => card.remove());
     }
 
     function updateMutedPathAlertLogCards(targetKey = '', nowMs = Date.now()) {
@@ -1003,12 +1063,81 @@
         if (mutedPathLogTimer) return;
         mutedPathLogTimer = setInterval(() => {
             pruneMutedPathTargetsInPlace(Date.now());
+            persistMutedPathTargets();
             updateMutedPathAlertLogCards('', Date.now());
             if (!mutedPathTargets.length && mutedPathLogTimer) {
                 clearInterval(mutedPathLogTimer);
                 mutedPathLogTimer = null;
             }
         }, 1000);
+    }
+
+    function buildRestoredMutedAlertLogHtml(mutedEntry, nowMs = Date.now()) {
+        const displayState = buildAlertLogEntryDisplayState({ mutedEntry });
+        const title = String(
+            mutedEntry && mutedEntry.logTitleSnapshot
+            || Array.isArray(mutedEntry && mutedEntry.summaryLinesSnapshot) && mutedEntry.summaryLinesSnapshot[0]
+            || '沉默中的提醒'
+        ).trim();
+        const targetKey = buildMutedPathTargetKey(mutedEntry);
+        const statusText = buildMutedPathStatusText(mutedEntry, nowMs);
+        const summaryLinesHtml = (Array.isArray(mutedEntry && mutedEntry.summaryLinesSnapshot) ? mutedEntry.summaryLinesSnapshot : [])
+            .map((line) => `<div class="path-alert-log-line">${escapeHtml(line)}</div>`)
+            .join('');
+        const cardClassName = [
+            'log-entry',
+            'path-alert-log-entry',
+            'alert-log-entry-muted',
+            displayState.collapsed ? 'alert-log-entry-collapsed' : ''
+        ].filter(Boolean).join(' ');
+        const titleClassName = displayState.collapsed ? 'alert-log-title-muted' : '';
+        return `
+            <div
+                class="${cardClassName}"
+                data-muted-target-key="${escapeHtml(targetKey)}"
+                data-muted-restored="1"
+                data-alert-log-collapsed="${displayState.collapsed ? '1' : '0'}"
+            >
+                <div class="path-alert-log-head">
+                    <div>
+                        <div><strong class="${titleClassName}" data-alert-log-title data-alert-log-expanded-title="${escapeHtml(title)}">${escapeHtml(title)}</strong></div>
+                    </div>
+                </div>
+                <div class="path-alert-log-route alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${summaryLinesHtml || '<div class="path-alert-log-line">--</div>'}</div>
+                <div class="path-alert-log-foot alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>
+                    <span class="path-alert-log-tag path-alert-log-tag-muted" data-path-alert-muted-status>${escapeHtml(statusText)}</span>
+                    <span class="log-time">${new Date(Number(mutedEntry && mutedEntry.mutedAt) || nowMs).toLocaleTimeString()}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function restoreMutedAlertLogEntries(nowMs = Date.now()) {
+        if (!alertLogContent || !mutedPathTargets.length) return;
+        const sortedEntries = mutedPathTargets
+            .slice()
+            .sort((left, right) => Number(left && left.mutedAt) - Number(right && right.mutedAt));
+        sortedEntries.forEach((entry) => {
+            const targetKey = buildMutedPathTargetKey(entry);
+            if (!targetKey) return;
+            const escapedTargetKey = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+                ? CSS.escape(targetKey)
+                : targetKey.replace(/["\\]/g, '\\$&');
+            if (alertLogContent.querySelector(`.log-entry[data-muted-target-key="${escapedTargetKey}"]`)) {
+                return;
+            }
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = buildRestoredMutedAlertLogHtml(entry, nowMs);
+            const card = wrapper.firstElementChild;
+            if (card) {
+                alertLogContent.prepend(card);
+            }
+        });
+        updateMutedPathAlertLogCards('', nowMs);
+        syncMutedPathLogTimer();
+        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
+            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
+        }
     }
 
     function buildPathAlertLogCardHtml(entry, nowMs = Date.now()) {
@@ -1075,6 +1204,7 @@
             wrapper.innerHTML = buildPathAlertLogCardHtml(list[index], nowMs);
             const card = wrapper.firstElementChild;
             if (card) {
+                removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
                 alertLogContent.prepend(card);
             }
         }
@@ -6486,6 +6616,7 @@
         await loadPriceSnapshotConfig();
         await loadArbSettings();
         applyTheme(localStorage.getItem('theme'));
+        mutedPathTargets = loadMutedPathTargetsFromStorage();
         
         try {
             const response = await fetch(`${BACKEND_URL}/api/get-config`);
@@ -6584,6 +6715,7 @@
             }
             if (alertLogContent) {
                 alertLogContent.addEventListener('click', handleAlertLogClick);
+                restoreMutedAlertLogEntries(Date.now());
             }
             if (pathAlertContent) {
                 pathAlertContent.addEventListener('click', handlePathAlertPanelClick);
