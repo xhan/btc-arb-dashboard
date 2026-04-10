@@ -106,6 +106,76 @@ const ethersModule = require('ethers');
     assert.deepStrictEqual(fallbackMeta, { decimals: 6, symbol: 'USDtb' });
     assert.strictEqual(symbolCallRequests.length, 1, 'symbol 读取失败后应回退到原始 eth_call');
     assert.strictEqual(symbolCallRequests[0].data, '0x95d89b41');
+
+    class MonadFallbackContract {
+      constructor() {}
+
+      async decimals() {
+        const error = new Error('missing revert data');
+        error.code = 'CALL_EXCEPTION';
+        throw error;
+      }
+
+      async symbol() {
+        const error = new Error('missing revert data');
+        error.code = 'CALL_EXCEPTION';
+        throw error;
+      }
+    }
+
+    Object.defineProperty(ethersModule.ethers, 'Contract', {
+      value: MonadFallbackContract,
+      configurable: true,
+      enumerable: true,
+      writable: true
+    });
+    delete require.cache[require.resolve('../market-clients')];
+    delete require.cache[require.resolve('../market-clients/index.js')];
+    ({ createMarketClients } = require('../market-clients'));
+
+    const monadTokenListRequests = [];
+    const monadFallbackClients = createMarketClients({
+      cachePath: '/tmp/market-diff-test-metadata-cache.json',
+      readJsonFile: async () => ({}),
+      writeFile: fs.writeFile,
+      fetchOnce: async (url) => {
+        monadTokenListRequests.push(url);
+        return {
+          async json() {
+            return {
+              tokens: [
+                {
+                  chainId: 143,
+                  address: '0x10Aeaf63194db8d453d4D85a06E5eFE1dd0b5417',
+                  symbol: 'wstETH',
+                  decimals: 18
+                }
+              ]
+            };
+          }
+        };
+      },
+      evmProviders: {
+        monad: {
+          async call() {
+            const error = new Error('missing revert data');
+            error.code = 'CALL_EXCEPTION';
+            throw error;
+          }
+        }
+      },
+      getConfigMore: async () => ({}),
+      solanaRpc: '',
+      suiClient: { getCoinMetadata: async () => null }
+    });
+
+    const monadFallbackMeta = await monadFallbackClients.getEvmTokenMeta('monad', '0x10Aeaf63194db8d453d4D85a06E5eFE1dd0b5417');
+    assert.deepStrictEqual(monadFallbackMeta, { decimals: 18, symbol: 'wstETH' });
+    assert.strictEqual(monadTokenListRequests.length, 1, 'Monad 元数据失败后应回退到官方 token list');
+    assert.strictEqual(
+      monadTokenListRequests[0],
+      'https://raw.githubusercontent.com/monad-crypto/token-list/main/tokenlist-mainnet.json'
+    );
   } finally {
     Object.defineProperty(ethersModule.ethers, 'Contract', originalDescriptor);
     await fs.rm('/tmp/market-diff-test-metadata-cache.json', { force: true }).catch(() => {});

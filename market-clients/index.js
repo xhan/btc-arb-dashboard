@@ -28,6 +28,12 @@ const LIFI_DEFAULT_FROM_ADDRESS = '0x1111111111111111111111111111111111111111';
 const LIFI_DEFAULT_SLIPPAGE = '0.005';
 const LIFI_CHAIN_MAP_TTL_MS = 10 * 60 * 1000;
 const EVM_TOKEN_META_MAX_ATTEMPTS = 2;
+const OFFICIAL_EVM_TOKEN_LIST_FALLBACKS = {
+  monad: {
+    chainId: 143,
+    url: 'https://raw.githubusercontent.com/monad-crypto/token-list/main/tokenlist-mainnet.json'
+  }
+};
 
 function isRetryableEvmTokenMetaError(error) {
   const code = String(error && error.code || '').toUpperCase();
@@ -49,12 +55,18 @@ function decodeRawStringResult(rawValue) {
   }
 }
 
+function normalizeAddress(value) {
+  const raw = String(value || '').trim();
+  return /^0x[0-9a-fA-F]+$/.test(raw) ? raw.toLowerCase() : raw;
+}
+
 function createMarketClients(options) {
   const tokenMetaStore = createTokenMetaStore({
     cachePath: options.cachePath,
     readJsonFile: options.readJsonFile,
     writeFile: options.writeFile
   });
+  const officialTokenListCache = new Map();
 
   let lifiChainIdMapCache = null;
   let lifiChainIdMapFetchedAt = 0;
@@ -111,35 +123,91 @@ function createMarketClients(options) {
     throw lastError;
   }
 
-  async function getEvmTokenMeta(chain, tokenAddress, providerOverride) {
+  async function getOfficialTokenListFallback(chain, requestContext) {
+    const fallback = OFFICIAL_EVM_TOKEN_LIST_FALLBACKS[String(chain || '').toLowerCase()];
+    if (!fallback) {
+      return null;
+    }
+
+    if (officialTokenListCache.has(fallback.url)) {
+      return officialTokenListCache.get(fallback.url);
+    }
+
+    const response = await options.fetchOnce(fallback.url, undefined, requestContext);
+    const tokenList = await response.json();
+    officialTokenListCache.set(fallback.url, tokenList);
+    return tokenList;
+  }
+
+  async function getOfficialEvmTokenMetaFallback(chain, tokenAddress, requestContext) {
+    const fallback = OFFICIAL_EVM_TOKEN_LIST_FALLBACKS[String(chain || '').toLowerCase()];
+    if (!fallback) {
+      return null;
+    }
+
+    const tokenList = await getOfficialTokenListFallback(chain, requestContext);
+    const normalizedToken = normalizeAddress(tokenAddress);
+    const match = Array.isArray(tokenList?.tokens)
+      ? tokenList.tokens.find((token) => {
+        if (!token || !Number.isFinite(Number(token.decimals))) {
+          return false;
+        }
+        if (Number(token.chainId) !== fallback.chainId) {
+          return false;
+        }
+        return normalizeAddress(token.address) === normalizedToken;
+      })
+      : null;
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      decimals: Number(match.decimals),
+      symbol: String(match.symbol || '').trim() || '???'
+    };
+  }
+
+  async function getEvmTokenMeta(chain, tokenAddress, providerOverride, requestContext) {
     const provider = providerOverride || getEvmProvider(chain);
     if (!provider) {
       throw new Error(`不支持的EVM链: ${chain}`);
     }
 
     return tokenMetaStore.remember(chain, tokenAddress, async () => {
-      const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-      const decimals = await readEvmTokenMetaField({
-        readPrimary: () => contract.decimals(),
-        readFallback: () => callEvmTokenField(
-          provider,
-          tokenAddress,
-          ERC20_DECIMALS_SELECTOR,
-          decodeRawUint8Result,
-          'decimals'
-        )
-      });
-      const symbol = await readEvmTokenMetaField({
-        readPrimary: () => contract.symbol(),
-        readFallback: () => callEvmTokenField(
-          provider,
-          tokenAddress,
-          ERC20_SYMBOL_SELECTOR,
-          decodeRawStringResult,
-          'symbol'
-        )
-      });
-      return { decimals: Number(decimals), symbol };
+      try {
+        const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+        const decimals = await readEvmTokenMetaField({
+          readPrimary: () => contract.decimals(),
+          readFallback: () => callEvmTokenField(
+            provider,
+            tokenAddress,
+            ERC20_DECIMALS_SELECTOR,
+            decodeRawUint8Result,
+            'decimals'
+          )
+        });
+        const symbol = await readEvmTokenMetaField({
+          readPrimary: () => contract.symbol(),
+          readFallback: () => callEvmTokenField(
+            provider,
+            tokenAddress,
+            ERC20_SYMBOL_SELECTOR,
+            decodeRawStringResult,
+            'symbol'
+          )
+        });
+        return { decimals: Number(decimals), symbol };
+      } catch (error) {
+        try {
+          const fallbackMeta = await getOfficialEvmTokenMetaFallback(chain, tokenAddress, requestContext);
+          if (fallbackMeta) {
+            return fallbackMeta;
+          }
+        } catch {}
+        throw error;
+      }
     });
   }
 
