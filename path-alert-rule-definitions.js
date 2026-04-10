@@ -84,6 +84,16 @@
       resultLimit: 1
     },
     {
+      id: 'fixed:susde-usdt',
+      title: 'sUSDE - USDT',
+      base: 'sUSDe',
+      quote: 'USDT',
+      categoryNames: ['USD监控'],
+      steps: 2,
+      chains: ['ethereum', 'plasma'],
+      resultLimit: 1
+    },
+    {
       id: 'fixed:mseth',
       title: 'msETH',
       base: 'msETH',
@@ -100,7 +110,8 @@
       quote: 'WETH',
       categoryNames: ['ETH监控'],
       steps: 2,
-      crossChain: true
+      crossChain: true,
+      resultLimit: 2
     },
     {
       id: 'fixed:wsteth',
