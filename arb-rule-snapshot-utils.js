@@ -17,11 +17,17 @@
     const quoteStateById = options.quoteStateById instanceof Map ? options.quoteStateById : new Map();
     const aliasRules = options.aliasRules || null;
     const preferredStartSymbols = Array.isArray(options.preferredStartSymbols) ? options.preferredStartSymbols : null;
+    const mutedPathLegs = Array.isArray(options.mutedPathLegs) ? options.mutedPathLegs : [];
+    const mutedPathLegUtils = options.mutedPathLegUtils || null;
+    const nowMs = Number.isFinite(Number(options.nowMs)) ? Number(options.nowMs) : Date.now();
     const fixedTemplatesByRuleId = options.fixedTemplatesByRuleId && typeof options.fixedTemplatesByRuleId === 'object'
       ? options.fixedTemplatesByRuleId
       : null;
+    const visibleEdges = mutedPathLegUtils && typeof mutedPathLegUtils.filterMutedPathLegs === 'function'
+      ? mutedPathLegUtils.filterMutedPathLegs(allEdgesWithRules, mutedPathLegs, nowMs)
+      : allEdgesWithRules;
     const fixedRuleEdgeIndex = arbFixedUtils && typeof arbFixedUtils.buildFixedRuleEdgeIndex === 'function'
-      ? arbFixedUtils.buildFixedRuleEdgeIndex(allEdgesWithRules, quoteMetaById)
+      ? arbFixedUtils.buildFixedRuleEdgeIndex(visibleEdges, quoteMetaById)
       : null;
 
     const fixedResults = [];
@@ -32,8 +38,8 @@
       const filteredEdges = fixedRuleEdgeIndex && arbFixedUtils && typeof arbFixedUtils.resolveEdgesForFixedRule === 'function'
         ? arbFixedUtils.resolveEdgesForFixedRule(rule, fixedRuleEdgeIndex)
         : arbFixedUtils && typeof arbFixedUtils.filterEdgesForFixedRule === 'function'
-        ? arbFixedUtils.filterEdgesForFixedRule(rule, allEdgesWithRules, quoteMetaById)
-        : allEdgesWithRules;
+        ? arbFixedUtils.filterEdgesForFixedRule(rule, visibleEdges, quoteMetaById)
+        : visibleEdges;
       const fixedTemplates = fixedTemplatesByRuleId && Array.isArray(fixedTemplatesByRuleId[rule.id])
         ? fixedTemplatesByRuleId[rule.id]
         : null;

@@ -638,7 +638,25 @@
         #alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 400px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #alert-log-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #alert-log-header { background-color: #1a202c; }
-        #alert-log-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
+        #alert-log-tabs { display: flex; gap: 8px; padding: 10px 15px 0; }
+        .alert-log-tab {
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-color-light);
+            border-radius: 999px;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .alert-log-tab.active {
+            color: var(--text-color);
+            background: rgba(15, 118, 110, 0.1);
+            border-color: rgba(15, 118, 110, 0.18);
+        }
+        #alert-log-content,
+        #alert-log-muted-content { flex-grow: 1; overflow-y: auto; padding: 15px; font-size: 14px; }
+        #alert-log-muted-content[hidden] { display: none; }
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
         .alert-log-entry-muted { opacity: 0.78; }
@@ -697,6 +715,58 @@
             background: rgba(245, 101, 101, 0.18);
             color: #feb2b2;
         }
+        .muted-state-section + .muted-state-section { margin-top: 16px; }
+        .muted-state-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        .muted-state-empty {
+            color: var(--text-color-light);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .muted-state-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 0;
+        }
+        .muted-state-item:last-child { border-bottom: none; }
+        .muted-state-item-title {
+            font-weight: 600;
+            color: var(--text-color);
+            line-height: 1.4;
+        }
+        .muted-state-item-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 4px;
+            color: var(--text-color-light);
+            font-size: 12px;
+        }
+        .muted-state-item-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .muted-state-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .muted-state-action-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-color-light);
+            padding: 0;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .muted-state-action-btn:hover { color: var(--text-color); }
 
         #arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 807px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
@@ -1236,6 +1306,22 @@
             opacity: 0.72;
             letter-spacing: 0.01em;
         }
+        .arb-detail-leg-action-row {
+            margin-top: 4px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .arb-detail-leg-mute-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-color-light);
+            padding: 0;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .arb-detail-leg-mute-btn:hover { color: var(--text-color); }
         .arb-detail-dex-link {
             border: none;
             background: transparent;
@@ -1538,7 +1624,12 @@
                 <button id="alert-log-min-btn" title="最小化">－</button>
             </div>
         </div>
+        <div id="alert-log-tabs">
+            <button id="alert-log-log-tab" class="alert-log-tab active" type="button">日志</button>
+            <button id="alert-log-muted-tab" class="alert-log-tab" type="button">临时屏蔽</button>
+        </div>
         <div id="alert-log-content"></div>
+        <div id="alert-log-muted-content" hidden></div>
     </div>
     <div id="path-alert-window">
         <div id="path-alert-header">
@@ -1826,6 +1917,7 @@
     <script src="arb-rule-snapshot-utils.js"></script>
     <script src="alert-log-ui-utils.js"></script>
     <script src="muted-path-storage-utils.js"></script>
+    <script src="muted-path-leg-utils.js"></script>
     <script src="alert-debug-utils.js"></script>
     <script src="special-rule-alert-config-utils.js"></script>
     <script src="path-alert-utils.js"></script>

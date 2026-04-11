@@ -240,3 +240,50 @@ assert.deepStrictEqual(
   snapshotKeepsCategoryScopedEdges.fixedByRuleId['fixed:wbtc-eth-arb'][0].legs.map((leg) => leg.quoteId),
   [201, 202]
 );
+
+const snapshotSkipsMutedLegs = buildArbRuleSnapshot({
+  fixedRules: [
+    {
+      id: 'fixed:wbtc-eth-arb',
+      title: 'WBTC ETH <-> ARB',
+      base: 'cbBTC',
+      quote: 'WBTC',
+      chains: ['ethereum', 'arbitrum'],
+      steps: 2,
+      resultLimit: 2,
+      categoryNames: ['WBTC监控']
+    }
+  ],
+  specialRules: [],
+  allEdgesWithRules: [
+    { quoteId: 201, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.001, direction: 'forward', pricingMode: 'raw' },
+    { quoteId: 202, chain: 'arbitrum', from: 'WBTC', to: 'cbBTC', rate: 0.9995, direction: 'forward', pricingMode: 'raw' }
+  ],
+  quoteMetaById: new Map([
+    [201, { categoryName: 'WBTC监控' }],
+    [202, { categoryName: 'WBTC监控' }]
+  ]),
+  mutedPathLegs: [
+    {
+      quoteId: 201,
+      direction: 'forward',
+      pricingMode: 'raw',
+      mutedAt: 1000,
+      expiresAt: 2000
+    }
+  ],
+  mutedPathLegUtils: {
+    filterMutedPathLegs(edges, mutedLegs, nowMs) {
+      assert.strictEqual(nowMs, 1500);
+      return edges.filter((edge) => !mutedLegs.some((item) => item.quoteId === edge.quoteId));
+    }
+  },
+  nowMs: 1500,
+  quoteStateById: new Map(),
+  aliasRules: null,
+  arbPathsApi: ArbPaths,
+  arbFixedUtils: require('../arb-fixed-utils')
+});
+
+assert.strictEqual(snapshotSkipsMutedLegs.fixedResults.length, 1);
+assert.deepStrictEqual(snapshotSkipsMutedLegs.fixedResults[0].cycles, []);

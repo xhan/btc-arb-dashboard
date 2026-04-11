@@ -188,6 +188,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));
     assert.ok(appJsResponse.body.includes('忽略 1 小时'));
     assert.ok(appJsResponse.body.includes('延长 2 小时'));
+    assert.ok(appJsResponse.body.includes('data-arb-detail-leg-mute'));
+    assert.ok(appJsResponse.body.includes('renderMutedAlertStatePanel'));
+    assert.ok(appJsResponse.body.includes('屏蔽 2 小时'));
+    assert.ok(appJsResponse.body.includes('屏蔽 8 小时'));
+    assert.ok(appJsResponse.body.includes('屏蔽 12 小时'));
     assert.ok(appJsResponse.body.includes('沉默中'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes("if (key === 'c')"));
@@ -258,6 +263,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('window.enableAlertDebug ='));
     assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
     assert.ok(appJsResponse.body.includes('最近 1 小时'));
+    assert.ok(response.body.includes('id="alert-log-log-tab"'));
+    assert.ok(response.body.includes('id="alert-log-muted-tab"'));
+    assert.ok(response.body.includes('id="alert-log-muted-content"'));
+    assert.ok(response.body.includes('src="muted-path-leg-utils.js"'));
     assert.ok(appJsResponse.body.includes('arb-detail-chart-card arb-detail-profit-card'));
     assert.ok(appJsResponse.body.includes('height: 104'));
     assert.ok(appJsResponse.body.includes('showRightPriceScale: true'));

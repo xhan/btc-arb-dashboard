@@ -70,10 +70,12 @@
     let pathAlertPanelHidden = true;
     let pathAlertRuntimeState = new Map();
     let mutedPathTargets = [];
+    let mutedPathLegs = [];
     let mutedPathLogTimer = null;
     let pathAlertReloading = false;
     let pathAlertExternalReloadTimer = null;
     let forceImmediateAlerts = false;
+    let alertLogActiveTab = 'log';
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
@@ -81,6 +83,7 @@
     const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
     const MUTED_PATH_TARGETS_STORAGE_KEY = 'mutedPathTargets';
+    const MUTED_PATH_LEGS_STORAGE_KEY = 'mutedPathLegs';
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
     let arbGlobalExcludedChainsInput = '';
@@ -128,6 +131,11 @@
         ? window.PathAlertUtils.PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000)
         : (2 * 60 * 60 * 1000);
     const PATH_ALERT_MUTE_DURATION_MS = Number(window.PathAlertUtils && window.PathAlertUtils.PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
+    const MUTED_PATH_LEG_DURATION_OPTIONS = window.MutedPathLegUtils
+        && Array.isArray(window.MutedPathLegUtils.MUTED_PATH_LEG_DURATION_OPTIONS)
+        ? window.MutedPathLegUtils.MUTED_PATH_LEG_DURATION_OPTIONS
+        : [2, 8, 12];
+    const MUTED_PATH_LEG_EXTEND_DURATION_MS = 2 * 60 * 60 * 1000;
     const alertDebugController = window.AlertDebugUtils
         && typeof window.AlertDebugUtils.createAlertDebugController === 'function'
         ? window.AlertDebugUtils.createAlertDebugController({
@@ -148,7 +156,10 @@
     const alertLogWindow = document.getElementById('alert-log-window');
     const alertLogHeader = document.getElementById('alert-log-header');
     const alertLogMinBtn = document.getElementById('alert-log-min-btn');
+    const alertLogLogTab = document.getElementById('alert-log-log-tab');
+    const alertLogMutedTab = document.getElementById('alert-log-muted-tab');
     const alertLogContent = document.getElementById('alert-log-content');
+    const alertLogMutedContent = document.getElementById('alert-log-muted-content');
     const alertSound = document.getElementById('alert-sound');
     const pathAlertSound = document.getElementById('path-alert-sound');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -944,6 +955,21 @@
         return [];
     }
 
+    function loadMutedPathLegsFromStorage() {
+        if (!window.localStorage) return [];
+        try {
+            const raw = window.localStorage.getItem(MUTED_PATH_LEGS_STORAGE_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (window.MutedPathLegUtils && typeof window.MutedPathLegUtils.pruneExpiredMutedPathLegs === 'function') {
+                return window.MutedPathLegUtils.pruneExpiredMutedPathLegs(parsed, Date.now());
+            }
+        } catch (error) {
+            console.warn('读取屏蔽腿本地缓存失败:', error);
+        }
+        return [];
+    }
+
     function buildMutedPathLogTitleSnapshot(entry) {
         if (!entry || typeof entry !== 'object') return '';
         const explicitTitle = String(entry.logTitleSnapshot || '').trim();
@@ -953,6 +979,14 @@
         }
         const alertName = String(entry.alert && entry.alert.name || '').trim();
         return alertName ? `🚨 [路径报警] ${alertName}` : '🚨 [路径报警]';
+    }
+
+    function buildMutedPathLegTitleSnapshot(leg) {
+        return buildLiveQuoteLabel(
+            leg && leg.chain,
+            leg && (leg.fromSymbol || leg.from),
+            leg && (leg.toSymbol || leg.to)
+        );
     }
 
     function persistMutedPathTargets() {
@@ -965,6 +999,19 @@
             window.localStorage.setItem(MUTED_PATH_TARGETS_STORAGE_KEY, JSON.stringify(mutedPathTargets));
         } catch (error) {
             console.warn('保存沉默报警本地缓存失败:', error);
+        }
+    }
+
+    function persistMutedPathLegs() {
+        if (!window.localStorage) return;
+        try {
+            const list = window.MutedPathLegUtils && typeof window.MutedPathLegUtils.trimMutedPathLegsForStorage === 'function'
+                ? window.MutedPathLegUtils.trimMutedPathLegsForStorage(mutedPathLegs)
+                : mutedPathLegs;
+            mutedPathLegs = Array.isArray(list) ? list : [];
+            window.localStorage.setItem(MUTED_PATH_LEGS_STORAGE_KEY, JSON.stringify(mutedPathLegs));
+        } catch (error) {
+            console.warn('保存屏蔽腿本地缓存失败:', error);
         }
     }
 
@@ -996,6 +1043,7 @@
         mutedPathTargets = mutedPathTargets.filter((item) => buildMutedPathTargetKey(item) !== targetKey);
         mutedPathTargets.push(mutedEntry);
         persistMutedPathTargets();
+        renderMutedAlertStatePanel(nowMs);
         updateMutedPathAlertLogCards(targetKey, nowMs);
         syncMutedPathLogTimer();
         return mutedEntry;
@@ -1008,6 +1056,140 @@
             ? window.PathAlertUtils.formatMutedCountdown(remainingMs)
             : '--:--';
         return `沉默中 · ${countdown}`;
+    }
+
+    function buildMutedPathLegStatusText(mutedEntry, nowMs = Date.now()) {
+        if (!mutedEntry) return '';
+        const remainingMs = Math.max(0, Number(mutedEntry.expiresAt) - nowMs);
+        const countdown = window.PathAlertUtils && typeof window.PathAlertUtils.formatMutedCountdown === 'function'
+            ? window.PathAlertUtils.formatMutedCountdown(remainingMs)
+            : '--:--';
+        return `屏蔽中 · ${countdown}`;
+    }
+
+    function buildMutedPathLegKey(legOrEntry) {
+        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.buildMutedPathLegKey !== 'function') {
+            return '';
+        }
+        return window.MutedPathLegUtils.buildMutedPathLegKey(legOrEntry);
+    }
+
+    function pruneMutedPathLegsInPlace(nowMs = Date.now()) {
+        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.pruneExpiredMutedPathLegs !== 'function') {
+            return mutedPathLegs;
+        }
+        mutedPathLegs = window.MutedPathLegUtils.pruneExpiredMutedPathLegs(mutedPathLegs, nowMs);
+        return mutedPathLegs;
+    }
+
+    function getMutedPathLegEntry(leg, nowMs = Date.now()) {
+        pruneMutedPathLegsInPlace(nowMs);
+        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.findMutedPathLeg !== 'function') {
+            return null;
+        }
+        return window.MutedPathLegUtils.findMutedPathLeg(mutedPathLegs, leg, nowMs);
+    }
+
+    function triggerMutedPathLegRefresh(options = {}) {
+        invalidateArbRuleSnapshotCache();
+        evaluatePathAlertsOnce();
+        renderMutedAlertStatePanel(Date.now());
+        renderPathAlertPanel();
+        updateAlertSoundState();
+        updateArbPanel();
+        if (options.closeDetail !== false) {
+            closeArbDetailModal();
+            return;
+        }
+        if (arbDetailState.visible) {
+            renderArbDetailModal();
+        }
+    }
+
+    function muteArbDetailLeg(leg, durationHours, nowMs = Date.now()) {
+        if (!leg || !window.MutedPathLegUtils || typeof window.MutedPathLegUtils.createMutedPathLegEntry !== 'function') {
+            return null;
+        }
+        const durationMs = Number(durationHours) * 60 * 60 * 1000;
+        if (!Number.isFinite(durationMs) || durationMs <= 0) return null;
+        const legKey = buildMutedPathLegKey(leg);
+        if (!legKey) return null;
+        pruneMutedPathLegsInPlace(nowMs);
+        const existingEntry = mutedPathLegs.find((entry) => buildMutedPathLegKey(entry) === legKey) || null;
+        const nextEntry = existingEntry && typeof window.MutedPathLegUtils.extendMutedPathLegEntry === 'function'
+            ? window.MutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, durationMs)
+            : window.MutedPathLegUtils.createMutedPathLegEntry(
+                leg,
+                nowMs,
+                durationMs,
+                { titleSnapshot: buildMutedPathLegTitleSnapshot(leg) }
+            );
+        if (!nextEntry) return null;
+        const mutedEntry = !String(nextEntry.titleSnapshot || '').trim() && typeof window.MutedPathLegUtils.normalizeMutedPathLeg === 'function'
+            ? window.MutedPathLegUtils.normalizeMutedPathLeg({
+                ...nextEntry,
+                titleSnapshot: buildMutedPathLegTitleSnapshot(leg)
+            })
+            : nextEntry;
+        if (!mutedEntry) return null;
+        mutedPathLegs = mutedPathLegs.filter((entry) => buildMutedPathLegKey(entry) !== legKey);
+        mutedPathLegs.push(mutedEntry);
+        persistMutedPathLegs();
+        syncMutedPathLogTimer();
+        triggerMutedPathLegRefresh({ closeDetail: true });
+        return mutedEntry;
+    }
+
+    function extendMutedPathTargetByKey(targetKey, nowMs = Date.now()) {
+        if (!targetKey || !window.PathAlertUtils || typeof window.PathAlertUtils.extendMutedPathTargetEntry !== 'function') {
+            return null;
+        }
+        pruneMutedPathTargetsInPlace(nowMs);
+        const existingEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === targetKey) || null;
+        if (!existingEntry) return null;
+        const nextEntry = window.PathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
+        if (!nextEntry) return null;
+        mutedPathTargets = mutedPathTargets.filter((entry) => buildMutedPathTargetKey(entry) !== targetKey);
+        mutedPathTargets.push(nextEntry);
+        persistMutedPathTargets();
+        renderMutedAlertStatePanel(nowMs);
+        updateMutedPathAlertLogCards(targetKey, nowMs);
+        syncMutedPathLogTimer();
+        return nextEntry;
+    }
+
+    function removeMutedPathTargetByKey(targetKey, nowMs = Date.now()) {
+        if (!targetKey) return;
+        mutedPathTargets = mutedPathTargets.filter((entry) => buildMutedPathTargetKey(entry) !== targetKey);
+        persistMutedPathTargets();
+        renderMutedAlertStatePanel(nowMs);
+        updateMutedPathAlertLogCards(targetKey, nowMs);
+        syncMutedPathLogTimer();
+    }
+
+    function extendMutedPathLegByKey(targetKey, nowMs = Date.now()) {
+        if (!targetKey || !window.MutedPathLegUtils || typeof window.MutedPathLegUtils.extendMutedPathLegEntry !== 'function') {
+            return null;
+        }
+        pruneMutedPathLegsInPlace(nowMs);
+        const existingEntry = mutedPathLegs.find((entry) => buildMutedPathLegKey(entry) === targetKey) || null;
+        if (!existingEntry) return null;
+        const nextEntry = window.MutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, MUTED_PATH_LEG_EXTEND_DURATION_MS);
+        if (!nextEntry) return null;
+        mutedPathLegs = mutedPathLegs.filter((entry) => buildMutedPathLegKey(entry) !== targetKey);
+        mutedPathLegs.push(nextEntry);
+        persistMutedPathLegs();
+        syncMutedPathLogTimer();
+        triggerMutedPathLegRefresh({ closeDetail: false });
+        return nextEntry;
+    }
+
+    function removeMutedPathLegByKey(targetKey, nowMs = Date.now()) {
+        if (!targetKey) return;
+        mutedPathLegs = mutedPathLegs.filter((entry) => buildMutedPathLegKey(entry) !== targetKey);
+        persistMutedPathLegs();
+        syncMutedPathLogTimer();
+        triggerMutedPathLegRefresh({ closeDetail: false });
     }
 
     function removeRestoredMutedAlertLogCards(targetKey = '') {
@@ -1051,9 +1233,93 @@
         });
     }
 
+    function buildMutedStateItemHtml(config) {
+        const linesHtml = (Array.isArray(config.lines) ? config.lines : [])
+            .filter(Boolean)
+            .map((line) => `<div>${escapeHtml(line)}</div>`)
+            .join('');
+        const actionsHtml = (Array.isArray(config.actions) ? config.actions : [])
+            .map((action) => `<button type="button" class="muted-state-action-btn" ${action.dataAttr}="${escapeHtml(action.value)}">${escapeHtml(action.label)}</button>`)
+            .join('');
+        return `
+            <div class="muted-state-item">
+                <div class="muted-state-item-title">${escapeHtml(config.title || '--')}</div>
+                ${linesHtml ? `<div class="muted-state-item-lines">${linesHtml}</div>` : ''}
+                <div class="muted-state-item-foot">
+                    <span class="path-alert-log-tag path-alert-log-tag-muted">${escapeHtml(config.status || '')}</span>
+                    <div class="muted-state-item-actions">${actionsHtml}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function buildMutedStateSectionHtml(title, items, emptyText) {
+        const list = Array.isArray(items) ? items : [];
+        return `
+            <section class="muted-state-section">
+                <div class="muted-state-title">${escapeHtml(title)}</div>
+                ${list.length ? list.join('') : `<div class="muted-state-empty">${escapeHtml(emptyText)}</div>`}
+            </section>
+        `;
+    }
+
+    function renderMutedAlertStatePanel(nowMs = Date.now()) {
+        if (!alertLogMutedContent) return;
+        pruneMutedPathTargetsInPlace(nowMs);
+        pruneMutedPathLegsInPlace(nowMs);
+        const mutedPathItems = mutedPathTargets
+            .slice()
+            .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt))
+            .map((entry) => buildMutedStateItemHtml({
+                title: entry.logTitleSnapshot || entry.summaryLinesSnapshot[0] || '路径沉默',
+                lines: entry.summaryLinesSnapshot,
+                status: buildMutedPathStatusText(entry, nowMs),
+                actions: [
+                    { label: '延长 2 小时', dataAttr: 'data-muted-path-target-extend', value: buildMutedPathTargetKey(entry) },
+                    { label: '恢复', dataAttr: 'data-muted-path-target-restore', value: buildMutedPathTargetKey(entry) }
+                ]
+            }));
+        const mutedLegItems = mutedPathLegs
+            .slice()
+            .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt))
+            .map((entry) => buildMutedStateItemHtml({
+                title: entry.titleSnapshot || buildLiveQuoteLabel(entry.chain, entry.fromSymbol, entry.toSymbol),
+                lines: [],
+                status: buildMutedPathLegStatusText(entry, nowMs),
+                actions: [
+                    { label: '延长 2 小时', dataAttr: 'data-muted-path-leg-extend', value: buildMutedPathLegKey(entry) },
+                    { label: '恢复', dataAttr: 'data-muted-path-leg-restore', value: buildMutedPathLegKey(entry) }
+                ]
+            }));
+        alertLogMutedContent.innerHTML = [
+            buildMutedStateSectionHtml('沉默的路径', mutedPathItems, '当前没有沉默中的路径'),
+            buildMutedStateSectionHtml('屏蔽的腿', mutedLegItems, '当前没有屏蔽中的腿')
+        ].join('');
+    }
+
+    function renderAlertLogTabState() {
+        const showLogTab = alertLogActiveTab !== 'muted';
+        if (alertLogLogTab) {
+            alertLogLogTab.classList.toggle('active', showLogTab);
+        }
+        if (alertLogMutedTab) {
+            alertLogMutedTab.classList.toggle('active', !showLogTab);
+        }
+        if (alertLogContent) {
+            alertLogContent.hidden = !showLogTab;
+        }
+        if (alertLogMutedContent) {
+            alertLogMutedContent.hidden = showLogTab;
+            if (!showLogTab) {
+                renderMutedAlertStatePanel(Date.now());
+            }
+        }
+    }
+
     function syncMutedPathLogTimer() {
         pruneMutedPathTargetsInPlace(Date.now());
-        if (!mutedPathTargets.length) {
+        pruneMutedPathLegsInPlace(Date.now());
+        if (!mutedPathTargets.length && !mutedPathLegs.length) {
             if (mutedPathLogTimer) {
                 clearInterval(mutedPathLogTimer);
                 mutedPathLogTimer = null;
@@ -1062,10 +1328,18 @@
         }
         if (mutedPathLogTimer) return;
         mutedPathLogTimer = setInterval(() => {
+            const previousLegKeys = mutedPathLegs.map((entry) => buildMutedPathLegKey(entry)).join('|');
             pruneMutedPathTargetsInPlace(Date.now());
+            pruneMutedPathLegsInPlace(Date.now());
             persistMutedPathTargets();
+            persistMutedPathLegs();
             updateMutedPathAlertLogCards('', Date.now());
-            if (!mutedPathTargets.length && mutedPathLogTimer) {
+            renderMutedAlertStatePanel(Date.now());
+            const nextLegKeys = mutedPathLegs.map((entry) => buildMutedPathLegKey(entry)).join('|');
+            if (previousLegKeys !== nextLegKeys) {
+                triggerMutedPathLegRefresh({ closeDetail: false });
+            }
+            if (!mutedPathTargets.length && !mutedPathLegs.length && mutedPathLogTimer) {
                 clearInterval(mutedPathLogTimer);
                 mutedPathLogTimer = null;
             }
@@ -1296,6 +1570,29 @@
         return result;
     }
 
+    function filterMutedArbEdges(edges, nowMs = Date.now()) {
+        pruneMutedPathLegsInPlace(nowMs);
+        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.filterMutedPathLegs !== 'function') {
+            return Array.isArray(edges) ? edges : [];
+        }
+        return window.MutedPathLegUtils.filterMutedPathLegs(edges, mutedPathLegs, nowMs);
+    }
+
+    function filterMutedArbCycles(cycles, nowMs = Date.now()) {
+        pruneMutedPathLegsInPlace(nowMs);
+        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.filterMutedCycles !== 'function') {
+            return Array.isArray(cycles) ? cycles : [];
+        }
+        return window.MutedPathLegUtils.filterMutedCycles(cycles, mutedPathLegs, nowMs);
+    }
+
+    function buildVisibleArbEdges(quotes, nowMs = Date.now()) {
+        return filterMutedArbEdges(
+            window.ArbPaths.buildEdges(quotes, quoteMonitorState, null),
+            nowMs
+        );
+    }
+
     function getSharedArbRuleSnapshot() {
         const topologyCacheForFixed = getArbPathTopologyCache();
         const cacheKey = buildArbRuleSnapshotCacheKey();
@@ -1305,7 +1602,7 @@
 
         const aliasRules = getAliasRules();
         const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
-        const allEdges = window.ArbPaths.buildEdges(allQuotes, quoteMonitorState, null);
+        const allEdges = buildVisibleArbEdges(allQuotes);
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
         const quoteMetaById = buildQuoteMetaById();
@@ -1322,6 +1619,8 @@
                 quotesByCategoryName,
                 quoteStateById: quoteMonitorState,
                 aliasRules,
+                mutedPathLegs,
+                mutedPathLegUtils: window.MutedPathLegUtils,
                 preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
                 arbPathsApi: window.ArbPaths,
                 arbFixedUtils: window.ArbFixedUtils,
@@ -2744,9 +3043,9 @@
         return window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP;
     }
 
-    function buildArbDetailRowsHtml(card) {
+    function buildArbDetailRowsHtml(card, cardIndex) {
         if (card.rows && card.rows.length) {
-            return card.rows.map((row) => `
+            return card.rows.map((row, rowIndex) => `
                 <div class="arb-detail-leg">
                     <div class="arb-detail-leg-line">
                         <div class="arb-detail-leg-main">
@@ -2758,6 +3057,17 @@
                             ${row.rateDeltaText ? `<span class="arb-detail-leg-rate-delta ${escapeHtml(row.rateDeltaTone || 'neutral')}">${escapeHtml(row.rateDeltaText)}</span>` : ''}
                         </div>
                     </div>
+                    ${cardIndex === 0 ? `
+                        <div class="arb-detail-leg-action-row">
+                            <button
+                                type="button"
+                                class="arb-detail-leg-mute-btn"
+                                data-arb-detail-leg-mute="${escapeHtml(String(row.quoteId || ''))}"
+                                data-arb-detail-card-index="${escapeHtml(String(cardIndex))}"
+                                data-arb-detail-row-index="${escapeHtml(String(rowIndex))}"
+                            >屏蔽</button>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('');
         }
@@ -2801,6 +3111,18 @@
         }
 
         return `${sourceText} · ${dexButtonHtml}`;
+    }
+
+    function promptMutedPathLegDurationHours() {
+        const input = window.prompt([
+            '选择屏蔽时长：',
+            '2 = 屏蔽 2 小时',
+            '8 = 屏蔽 8 小时',
+            '12 = 屏蔽 12 小时'
+        ].join('\n'), '2');
+        if (input === null) return null;
+        const value = Number.parseInt(String(input).trim(), 10);
+        return MUTED_PATH_LEG_DURATION_OPTIONS.includes(value) ? value : null;
     }
 
     function getArbDetailRateDeltaTone(rateDeltaText) {
@@ -2893,7 +3215,7 @@
             const summaryEl = document.getElementById(ids.summaryId);
             if (!rowsEl || !summaryEl) return;
 
-            rowsEl.innerHTML = buildArbDetailRowsHtml(card);
+            rowsEl.innerHTML = buildArbDetailRowsHtml(card, index);
             summaryEl.innerHTML = buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices);
         });
     }
@@ -3411,6 +3733,9 @@
                     finalSymbol = data.symbols.to || finalSymbol;
                     const isInverseLeg = Boolean(leg.inverse);
                     rows.push({
+                        quoteId: Number(match.quote.id),
+                        direction: isInverseLeg ? 'inverse' : 'forward',
+                        pricingMode: 'raw',
                         chain: match.quote.chain,
                         chainLabel: formatChainLabel(match.quote.chain),
                         fromSymbol: data.symbols.from,
@@ -4333,6 +4658,38 @@
     }
 
     function handleAlertLogClick(event) {
+        const logTabBtn = event.target.closest('#alert-log-log-tab');
+        if (logTabBtn) {
+            alertLogActiveTab = 'log';
+            renderAlertLogTabState();
+            return;
+        }
+        const mutedTabBtn = event.target.closest('#alert-log-muted-tab');
+        if (mutedTabBtn) {
+            alertLogActiveTab = 'muted';
+            renderAlertLogTabState();
+            return;
+        }
+        const extendMutedPathTargetBtn = event.target.closest('[data-muted-path-target-extend]');
+        if (extendMutedPathTargetBtn) {
+            extendMutedPathTargetByKey(String(extendMutedPathTargetBtn.dataset.mutedPathTargetExtend || ''), Date.now());
+            return;
+        }
+        const restoreMutedPathTargetBtn = event.target.closest('[data-muted-path-target-restore]');
+        if (restoreMutedPathTargetBtn) {
+            removeMutedPathTargetByKey(String(restoreMutedPathTargetBtn.dataset.mutedPathTargetRestore || ''), Date.now());
+            return;
+        }
+        const extendMutedPathLegBtn = event.target.closest('[data-muted-path-leg-extend]');
+        if (extendMutedPathLegBtn) {
+            extendMutedPathLegByKey(String(extendMutedPathLegBtn.dataset.mutedPathLegExtend || ''), Date.now());
+            return;
+        }
+        const restoreMutedPathLegBtn = event.target.closest('[data-muted-path-leg-restore]');
+        if (restoreMutedPathLegBtn) {
+            removeMutedPathLegByKey(String(restoreMutedPathLegBtn.dataset.mutedPathLegRestore || ''), Date.now());
+            return;
+        }
         const muteBtn = event.target.closest('[data-path-alert-log-mute]');
         const quoteMuteBtn = event.target.closest('[data-quote-alert-log-mute]');
         const buttonEl = muteBtn || quoteMuteBtn;
@@ -4525,15 +4882,13 @@
                 ? topologyCache.categoryTemplatesBySectionKey.get(sectionKey) || []
                 : [];
             const cycles = cachedTemplates.length && templateUtils
-                ? cachedTemplates
+                ? filterMutedArbCycles(cachedTemplates
                     .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMonitorState))
                     .filter(Boolean)
-                    .sort((left, right) => Number(right.profitRate) - Number(left.profitRate))
+                    .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)))
                 : window.ArbPaths.findTopCycles(
-                    window.ArbPaths.buildEdges(
+                    buildVisibleArbEdges(
                         getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []),
-                        quoteMonitorState,
-                        null
                     ).concat(ruleEdges),
                     {
                         maxDepth: 3,
@@ -4573,16 +4928,16 @@
 
         const globalSectionKey = buildArbSectionKey('global', 'all');
         const globalCycles = topologyCache && templateUtils
-            ? topologyCache.globalTemplates
+            ? filterMutedArbCycles(topologyCache.globalTemplates
                 .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMonitorState))
                 .filter(Boolean)
-                .sort((left, right) => Number(right.profitRate) - Number(left.profitRate))
+                .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)))
             : (() => {
                 const globalSourceCategories = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.resolveItemsBySelectors === 'function'
                     ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
                     : dashboardState.slice(0, 4);
                 const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
-                const globalEdges = window.ArbPaths.buildEdges(globalSourceQuotes, quoteMonitorState, null);
+                const globalEdges = buildVisibleArbEdges(globalSourceQuotes);
                 return window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges), {
                     maxDepth: 3,
                     limit: Number.MAX_SAFE_INTEGER,
@@ -6617,6 +6972,7 @@
         await loadArbSettings();
         applyTheme(localStorage.getItem('theme'));
         mutedPathTargets = loadMutedPathTargetsFromStorage();
+        mutedPathLegs = loadMutedPathLegsFromStorage();
         
         try {
             const response = await fetch(`${BACKEND_URL}/api/get-config`);
@@ -6713,10 +7069,15 @@
             if (toggleAlertLogBtn) {
                 toggleAlertLogBtn.addEventListener('click', toggleAlertLogPanel);
             }
+            if (alertLogWindow) {
+                alertLogWindow.addEventListener('click', handleAlertLogClick);
+            }
             if (alertLogContent) {
-                alertLogContent.addEventListener('click', handleAlertLogClick);
                 restoreMutedAlertLogEntries(Date.now());
             }
+            renderMutedAlertStatePanel(Date.now());
+            renderAlertLogTabState();
+            syncMutedPathLogTimer();
             if (pathAlertContent) {
                 pathAlertContent.addEventListener('click', handlePathAlertPanelClick);
                 pathAlertContent.addEventListener('change', handlePathAlertPanelChange);
@@ -6752,6 +7113,21 @@
                     const dexLinkEl = eventTarget.closest('[data-dex-link-copy]');
                     if (dexLinkEl) {
                         void copyDexLinkFromElement(dexLinkEl);
+                        return;
+                    }
+
+                    const muteLegBtn = eventTarget.closest('[data-arb-detail-leg-mute]');
+                    if (muteLegBtn) {
+                        const cardIndex = Number(muteLegBtn.dataset.arbDetailCardIndex);
+                        const rowIndex = Number(muteLegBtn.dataset.arbDetailRowIndex);
+                        if (!Number.isFinite(cardIndex) || !Number.isFinite(rowIndex)) return;
+                        const row = arbDetailState.cards[cardIndex] && Array.isArray(arbDetailState.cards[cardIndex].rows)
+                            ? arbDetailState.cards[cardIndex].rows[rowIndex]
+                            : null;
+                        if (!row) return;
+                        const durationHours = promptMutedPathLegDurationHours();
+                        if (!durationHours) return;
+                        muteArbDetailLeg(row, durationHours, Date.now());
                         return;
                     }
 
