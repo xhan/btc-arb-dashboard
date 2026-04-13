@@ -2,7 +2,7 @@
   "version": 1,
   "settings": {
     "pathAlertEvalIntervalMs": 1000,
-    "defaultCooldownSec": 120,
+    "defaultCooldownSec": 180,
     "changedLegMinBp": 0.1,
     "localSoundEnabled": true,
     "webhookEnabled": true,
@@ -19,7 +19,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -33,7 +33,7 @@
       "thresholdBp": 3,
       "triggerMode": "immediate",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -47,7 +47,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -61,7 +61,7 @@
       "thresholdBp": 1,
       "triggerMode": "immediate",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -75,7 +75,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -89,7 +89,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -103,7 +103,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -117,7 +117,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -131,7 +131,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -145,7 +145,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -159,7 +159,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -173,7 +173,7 @@
       "thresholdBp": 1,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "fixed",
@@ -187,7 +187,7 @@
       "thresholdBp": 0,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "quote",
         "quoteId": 1774206818567,
@@ -203,7 +203,7 @@
       "thresholdBp": 0,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "quote",
         "quoteId": 1774206874519,
@@ -219,7 +219,7 @@
       "thresholdBp": 0,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "quote",
         "quoteId": 1774600991130,
@@ -235,7 +235,7 @@
       "thresholdBp": 0,
       "triggerMode": "delayed",
       "confirmDelaySec": 10,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "quote",
         "quoteId": 1760021727906,
@@ -251,7 +251,7 @@
       "thresholdBp": 0,
       "triggerMode": "immediate",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "quote",
         "quoteId": 1766413776518,
@@ -267,7 +267,7 @@
       "thresholdBp": 0,
       "triggerMode": "delayed",
       "confirmDelaySec": 10,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "special",
@@ -285,7 +285,7 @@
       "thresholdBp": 0,
       "triggerMode": "delayed",
       "confirmDelaySec": 10,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "special",
@@ -303,7 +303,7 @@
       "thresholdBp": 0,
       "triggerMode": "immediate",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "quote",
         "quoteId": 1775200669932,
@@ -319,7 +319,7 @@
       "thresholdBp": 0,
       "triggerMode": "delayed",
       "confirmDelaySec": 10,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "rule",
         "ruleKind": "special",
@@ -337,7 +337,7 @@
       "thresholdBp": 0,
       "triggerMode": "delayed",
       "confirmDelaySec": 13,
-      "cooldownSec": 120,
+      "cooldownSec": 180,
       "target": {
         "type": "quote",
         "quoteId": 1766416823874,
