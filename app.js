@@ -2020,6 +2020,9 @@
                 });
 
                 return { bestProfitIndices, bestProfitRateIndices };
+            },
+            shouldSyncArbDetailInput(index, editingInputIndex) {
+                return index !== editingInputIndex;
             }
         };
     }
@@ -3190,15 +3193,14 @@
 
         arbDetailGrid.innerHTML = cardsHtml;
     }
-
     function syncArbDetailInputValues() {
         arbDetailState.cards.forEach((card, index) => {
-            if (!getArbDetailUtils().shouldSyncArbDetailInput(index, arbDetailState.editingInputIndex)) {
-                return;
-            }
             const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
             const inputEl = document.getElementById(ids.inputId);
             if (!inputEl) return;
+            if (!getArbDetailUtils().shouldSyncArbDetailInput(index, arbDetailState.editingInputIndex)) {
+                return;
+            }
             const nextValue = String(card.inputAmount);
             if (inputEl.value !== nextValue) {
                 inputEl.value = nextValue;
@@ -3777,7 +3779,7 @@
                     symbol: finalSymbol
                 };
                 card.error = '';
-                renderArbDetailModal();
+                renderArbDetailCardContents();
             }
         } catch (error) {
             if (error.name !== 'AbortError') {
@@ -3791,7 +3793,7 @@
             if (arbDetailFetchController === controller) {
                 arbDetailFetchController = null;
             }
-            renderArbDetailModal();
+            renderArbDetailCardContents();
         }
 
         return true;
@@ -7144,28 +7146,12 @@
                     const input = eventTarget.closest('[data-arb-detail-input-index]');
                     if (!input) return;
                     arbDetailState.editingInputIndex = Number(input.dataset.arbDetailInputIndex);
-                    input.dataset.arbDetailJustFocused = '1';
-                    setTimeout(() => {
-                        if (document.activeElement === input) {
-                            input.select();
-                        }
-                    }, 0);
-                });
-                arbDetailGrid.addEventListener('mouseup', (event) => {
-                    const eventTarget = resolveEventTargetElement(event);
-                    if (!eventTarget) return;
-                    const input = eventTarget.closest('[data-arb-detail-input-index]');
-                    if (!input) return;
-                    if (input.dataset.arbDetailJustFocused !== '1') return;
-                    delete input.dataset.arbDetailJustFocused;
-                    event.preventDefault();
                 });
                 arbDetailGrid.addEventListener('focusout', (event) => {
                     const eventTarget = resolveEventTargetElement(event);
                     if (!eventTarget) return;
                     const input = eventTarget.closest('[data-arb-detail-input-index]');
                     if (!input) return;
-                    delete input.dataset.arbDetailJustFocused;
                     arbDetailState.editingInputIndex = null;
                     commitArbDetailInput(Number(input.dataset.arbDetailInputIndex), input.value);
                 });

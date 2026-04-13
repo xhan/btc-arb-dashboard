@@ -240,6 +240,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
     assert.ok(appJsResponse.body.includes('buildArbDetailRateDeltaText'));
     assert.ok(appJsResponse.body.includes('rateDeltaText'));
+    assert.ok(appJsResponse.body.includes('renderArbDetailCardContents();'));
+    assert.ok(!appJsResponse.body.includes('function getActiveArbDetailInputIndex()'));
+    assert.ok(!appJsResponse.body.includes('draftInputValue'));
+    assert.ok(!appJsResponse.body.includes("arbDetailGrid.addEventListener('input'"));
+    assert.ok(!appJsResponse.body.includes('function captureArbDetailInputSelection()'));
+    assert.ok(!appJsResponse.body.includes('function restoreArbDetailInputSelection(selectionState)'));
+    assert.ok(!appJsResponse.body.includes('input.select()'));
+    assert.ok(!appJsResponse.body.includes("arbDetailGrid.addEventListener('mouseup'"));
     assert.ok(appJsResponse.body.includes('setArbPanelMaxHeight();'));
     assert.ok(appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));

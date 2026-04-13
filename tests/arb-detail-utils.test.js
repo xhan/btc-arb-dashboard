@@ -142,6 +142,11 @@ assert.strictEqual(
 );
 
 assert.strictEqual(
+  shouldSyncArbDetailInput(1, null),
+  true
+);
+
+assert.strictEqual(
   parseCommittedArbDetailInput('1.5'),
   1.5
 );
