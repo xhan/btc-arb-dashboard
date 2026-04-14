@@ -10,6 +10,21 @@ assert.ok(
 );
 
 assert.ok(
+  appJs.includes('function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled)'),
+  '多渠道开关应通过统一的批量重排队列逻辑切换'
+);
+
+assert.ok(
+  appJs.includes('queueQuoteRefresh(quote, { updateSchedulers: false });'),
+  '多渠道开关切换后应批量回收到队列，并只在最后统一刷新 scheduler'
+);
+
+assert.ok(
+  appJs.includes('getEffectiveRequestChannelIdForQuote(quote)'),
+  '主看板请求与队列归类都应走生效渠道，而不是直接读原始 requestChannelId'
+);
+
+assert.ok(
   !appJs.includes('fetchSingleQuote(newQuote);'),
   '新增报价后不应直接请求，应只进入队列'
 );

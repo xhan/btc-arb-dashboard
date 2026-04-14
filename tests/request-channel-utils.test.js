@@ -4,7 +4,9 @@ const {
   DEFAULT_REQUEST_CHANNEL_ID,
   DEFAULT_INTERVALS,
   buildQueueKey,
+  getEffectiveRequestChannelIdForQuote,
   getEffectiveIntervalForQueue,
+  getQueueKeyForQuote,
   getRequestChannelDisplayForQuote,
   getQueueSourceKeyForQuote,
   getRequestChannelOptions,
@@ -82,6 +84,29 @@ assert.strictEqual(
     channels
   ),
   DEFAULT_REQUEST_CHANNEL_ID
+);
+assert.strictEqual(
+  getEffectiveRequestChannelIdForQuote(
+    { chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' },
+    channels
+  ),
+  'HK-1'
+);
+assert.strictEqual(
+  getEffectiveRequestChannelIdForQuote(
+    { chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' },
+    channels,
+    { multiChannelEnabled: false }
+  ),
+  DEFAULT_REQUEST_CHANNEL_ID
+);
+assert.strictEqual(
+  getQueueKeyForQuote(
+    { chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' },
+    channels,
+    { multiChannelEnabled: false }
+  ),
+  'kyber:default'
 );
 
 assert.strictEqual(

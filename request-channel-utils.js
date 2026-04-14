@@ -142,6 +142,17 @@
     return requestChannels.byId.has(channelId) ? channelId : DEFAULT_REQUEST_CHANNEL_ID;
   }
 
+  function getEffectiveRequestChannelIdForQuote(quote, requestChannels, options) {
+    const resolvedChannelId = resolveRequestChannelIdForQuote(quote, requestChannels);
+    if (!quote || !supportsRequestChannelForQuote(quote)) {
+      return DEFAULT_REQUEST_CHANNEL_ID;
+    }
+    if (options && options.multiChannelEnabled === false) {
+      return DEFAULT_REQUEST_CHANNEL_ID;
+    }
+    return resolvedChannelId;
+  }
+
   function getRequestChannelDisplayForQuote(quote, requestChannels) {
     const channelId = resolveRequestChannelIdForQuote(quote, requestChannels);
     if (channelId === DEFAULT_REQUEST_CHANNEL_ID) {
@@ -195,9 +206,9 @@
     };
   }
 
-  function getQueueKeyForQuote(quote, requestChannels) {
+  function getQueueKeyForQuote(quote, requestChannels, options) {
     const sourceKey = getQueueSourceKeyForQuote(quote);
-    const channelId = resolveRequestChannelIdForQuote(quote, requestChannels);
+    const channelId = getEffectiveRequestChannelIdForQuote(quote, requestChannels, options);
     return buildQueueKey(sourceKey, channelId);
   }
 
@@ -223,6 +234,7 @@
     DEFAULT_REQUEST_CHANNEL_ID,
     DEFAULT_REQUEST_CHANNEL_NAME,
     buildQueueKey,
+    getEffectiveRequestChannelIdForQuote,
     getEffectiveIntervalForQueue,
     getRequestChannelDisplayForQuote,
     getQueueKeyForQuote,

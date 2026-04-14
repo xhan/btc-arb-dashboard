@@ -116,6 +116,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('价格: 汇率'));
     assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
     assert.ok(response.body.includes('id="toggle-data-terminal-btn"'));
+    assert.ok(response.body.includes('id="toggle-multi-channel-btn"'));
+    assert.ok(response.body.includes('多渠道'));
     assert.ok(response.body.includes('数据终端'));
     assert.ok(response.body.includes('报警管理'));
     assert.ok(response.body.includes('#top-bar-right > button,'));

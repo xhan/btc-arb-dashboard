@@ -47,9 +47,9 @@
     return !!quote && quote.paused === true;
   }
 
-  function getQueueTypeForQuote(quote, requestChannels) {
+  function getQueueTypeForQuote(quote, requestChannels, options) {
     if (requestChannels && requestChannelUtils && typeof requestChannelUtils.getQueueKeyForQuote === 'function') {
-      return requestChannelUtils.getQueueKeyForQuote(quote, requestChannels);
+      return requestChannelUtils.getQueueKeyForQuote(quote, requestChannels, options);
     }
     const chain = String(quote && quote.chain ? quote.chain : '');
     const normalized = normalizeChain(chain);

@@ -7,6 +7,7 @@
     let onConfirmAction = null;
     const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
     const PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN = 'main-dashboard';
+    const MULTI_CHANNEL_ENABLED_STORAGE_KEY = 'dashboard-multi-channel-enabled';
 
     let queues = {};
     let indices = {};
@@ -32,6 +33,7 @@
     let apiIntervals = { ...DEFAULT_INTERVALS };
     let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
     let requestChannelPayload = { channels: [] };
+    let multiChannelEnabled = true;
     let showRequestChannelTags = true;
     let requestChannelOptions = window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelOptions === 'function'
         ? window.RequestChannelUtils.getRequestChannelOptions(requestChannelPayload, apiIntervals)
@@ -214,6 +216,7 @@
     const toggleDataTerminalBtn = document.getElementById('toggle-data-terminal-btn');
     const toggleArbBtn = document.getElementById('toggle-arb-btn');
     const toggleAlertLogBtn = document.getElementById('toggle-alert-log-btn');
+    const toggleMultiChannelBtn = document.getElementById('toggle-multi-channel-btn');
     const arbDetailModal = document.getElementById('arb-detail-modal');
     const arbDetailCloseBtn = document.getElementById('arb-detail-close-btn');
     const arbDetailChartLink = document.getElementById('arb-detail-chart-link');
@@ -404,6 +407,56 @@
         };
     }
 
+    function loadMultiChannelEnabledFromStorage() {
+        if (!window.localStorage) return true;
+        try {
+            const raw = window.localStorage.getItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY);
+            if (raw === null) return true;
+            return raw !== 'false';
+        } catch (error) {
+            console.warn('读取多渠道开关本地缓存失败:', error);
+        }
+        return true;
+    }
+
+    function persistMultiChannelEnabled() {
+        if (!window.localStorage) return;
+        try {
+            window.localStorage.setItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY, multiChannelEnabled ? 'true' : 'false');
+        } catch (error) {
+            console.warn('保存多渠道开关本地缓存失败:', error);
+        }
+    }
+
+    function renderMultiChannelToggle() {
+        if (!toggleMultiChannelBtn) return;
+        toggleMultiChannelBtn.textContent = `多渠道: ${multiChannelEnabled ? '开' : '关'}`;
+        toggleMultiChannelBtn.title = multiChannelEnabled ? '已开启多渠道，点击后临时并入默认渠道' : '已关闭多渠道，点击后恢复按交易对渠道请求';
+        toggleMultiChannelBtn.setAttribute('aria-pressed', multiChannelEnabled ? 'true' : 'false');
+        toggleMultiChannelBtn.classList.toggle('active', multiChannelEnabled);
+    }
+
+    function getEffectiveRequestChannelIdForQuote(quote, options = {}) {
+        const nextMultiChannelEnabled = typeof options.multiChannelEnabled === 'boolean'
+            ? options.multiChannelEnabled
+            : multiChannelEnabled;
+
+        if (window.RequestChannelUtils && typeof window.RequestChannelUtils.getEffectiveRequestChannelIdForQuote === 'function') {
+            return window.RequestChannelUtils.getEffectiveRequestChannelIdForQuote(quote, requestChannelOptions, {
+                multiChannelEnabled: nextMultiChannelEnabled
+            });
+        }
+
+        const channelId = window.RequestChannelUtils && typeof window.RequestChannelUtils.resolveRequestChannelIdForQuote === 'function'
+            ? window.RequestChannelUtils.resolveRequestChannelIdForQuote(quote, requestChannelOptions)
+            : (quote && quote.requestChannelId) || 'default';
+
+        if (nextMultiChannelEnabled === false && shouldShowRequestChannelForQuote(quote)) {
+            return 'default';
+        }
+        return channelId || 'default';
+    }
+
     function getRequestChannelDisplayForQuote(quote) {
         return window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelDisplayForQuote === 'function'
             ? window.RequestChannelUtils.getRequestChannelDisplayForQuote(quote, requestChannelOptions)
@@ -454,7 +507,7 @@
 
     function getQueueTypeForQuote(quote) {
         if (window.QueueStatsUtils && typeof window.QueueStatsUtils.getQueueTypeForQuote === 'function') {
-            return window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions);
+            return window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled });
         }
         let type = 'kyber';
         if (isCexOrderbookChain(quote.chain)) {
@@ -471,6 +524,9 @@
             } else if (quote.preferredSource === 'LI.FI') {
                 type = 'lifi';
             }
+        }
+        if (window.RequestChannelUtils && typeof window.RequestChannelUtils.buildQueueKey === 'function') {
+            return window.RequestChannelUtils.buildQueueKey(type, getEffectiveRequestChannelIdForQuote(quote));
         }
         return type;
     }
@@ -563,6 +619,45 @@
             updateSchedulers();
         }
         return true;
+    }
+
+    function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled) {
+        let touched = false;
+        dashboardState.forEach((category) => {
+            (category.quotes || []).forEach((quote) => {
+                if (!shouldShowRequestChannelForQuote(quote)) {
+                    return;
+                }
+                const previousChannelId = getEffectiveRequestChannelIdForQuote(quote, { multiChannelEnabled: previousEnabled });
+                const nextChannelId = getEffectiveRequestChannelIdForQuote(quote, { multiChannelEnabled: nextEnabled });
+                if (previousChannelId === nextChannelId) {
+                    return;
+                }
+                removeFromQueue(quote.id);
+                queueQuoteRefresh(quote, { updateSchedulers: false });
+                touched = true;
+            });
+        });
+
+        if (!touched) {
+            updateSchedulers();
+            return;
+        }
+        updateSchedulers();
+    }
+
+    function setMultiChannelEnabled(nextValue) {
+        const normalized = nextValue !== false;
+        const previousEnabled = multiChannelEnabled;
+        if (previousEnabled === normalized) {
+            renderMultiChannelToggle();
+            persistMultiChannelEnabled();
+            return;
+        }
+        multiChannelEnabled = normalized;
+        renderMultiChannelToggle();
+        persistMultiChannelEnabled();
+        rebuildQueuesForMultiChannelToggle(previousEnabled, normalized);
     }
 
     function removeFromQueue(quoteId) {
@@ -5276,7 +5371,7 @@
             : (quote.amount || 1);
         const requestChannelId = typeof options.requestChannelId === 'string' && options.requestChannelId.trim()
             ? options.requestChannelId.trim()
-            : quote.requestChannelId;
+            : getEffectiveRequestChannelIdForQuote(quote);
         const requestQuote = isInverseFetch
             ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: requestedAmount, requestChannelId }
             : { ...quote, amount: requestedAmount, requestChannelId };
@@ -6969,6 +7064,8 @@
     
     async function init() {
         audioNoticeEl.style.display = 'block';
+        multiChannelEnabled = loadMultiChannelEnabledFromStorage();
+        renderMultiChannelToggle();
         syncRequestChannelTagVisibility();
         await loadPriceSnapshotConfig();
         await loadArbSettings();
@@ -7070,6 +7167,11 @@
             }
             if (toggleAlertLogBtn) {
                 toggleAlertLogBtn.addEventListener('click', toggleAlertLogPanel);
+            }
+            if (toggleMultiChannelBtn) {
+                toggleMultiChannelBtn.addEventListener('click', () => {
+                    setMultiChannelEnabled(!multiChannelEnabled);
+                });
             }
             if (alertLogWindow) {
                 alertLogWindow.addEventListener('click', handleAlertLogClick);
