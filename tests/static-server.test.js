@@ -92,6 +92,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(
       response.body.indexOf('src="special-rule-alert-utils.js"') < response.body.indexOf('src="app.js"')
     );
+    assert.ok(
+      response.body.indexOf('src="path-alert-utils.js"') < response.body.indexOf('src="muted-path-storage-utils.js"')
+    );
     assert.ok(response.body.includes('id="path-alert-sound"'));
     assert.ok(response.body.includes('src="alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
