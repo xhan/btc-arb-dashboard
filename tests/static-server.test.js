@@ -139,7 +139,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('id="arb-global-filter-bar"'));
     assert.ok(response.body.includes('多渠道'));
     assert.ok(response.body.includes('数据终端'));
-    assert.ok(response.body.includes('报警管理'));
+    assert.ok(response.body.includes('<button id="toggle-path-alert-btn" title="打开报警管理页">🚨</button>'));
+    assert.ok(response.body.includes('<button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">📝</button>'));
+    assert.ok(response.body.includes('<a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">📸</a>'));
+    assert.ok(response.body.includes('<a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">📊</a>'));
     assert.ok(!response.body.includes('id="toggle-calc-btn"'));
     assert.ok(!response.body.includes('id="calc-window"'));
     assert.ok(!response.body.includes('id="calc-content"'));
