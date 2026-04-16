@@ -160,8 +160,10 @@
     const alertLogHeader = document.getElementById('alert-log-header');
     const alertLogMinBtn = document.getElementById('alert-log-min-btn');
     const alertLogLogTab = document.getElementById('alert-log-log-tab');
+    const alertLogMutedLogTab = document.getElementById('alert-log-muted-log-tab');
     const alertLogMutedTab = document.getElementById('alert-log-muted-tab');
     const alertLogContent = document.getElementById('alert-log-content');
+    const alertLogMutedLogContent = document.getElementById('alert-log-muted-log-content');
     const alertLogMutedContent = document.getElementById('alert-log-muted-content');
     const alertSound = document.getElementById('alert-sound');
     const pathAlertSound = document.getElementById('path-alert-sound');
@@ -842,6 +844,21 @@
         }
     }
 
+    function getAlertLogEntryContainers() {
+        return [alertLogContent, alertLogMutedLogContent].filter(Boolean);
+    }
+
+    function appendMutedAlertLogCard(card, nowMs = Date.now()) {
+        if (!card || !alertLogMutedLogContent) return;
+        removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
+        alertLogMutedLogContent.prepend(card);
+        updateMutedPathAlertLogCards('', nowMs);
+        syncMutedPathLogTimer();
+        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
+            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
+        }
+    }
+
     function shouldAutoOpenAlertLogEntries(entries) {
         if (window.AlertLogUiUtils && typeof window.AlertLogUiUtils.shouldAutoOpenAlertLogEntries === 'function') {
             return window.AlertLogUiUtils.shouldAutoOpenAlertLogEntries(entries);
@@ -940,10 +957,14 @@
         const dexLinkHtml = actionLink && actionLink.url
             ? `<a
                     href="${escapeHtml(actionLink.url)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
                     class="quote-alert-log-link"
                     data-quote-alert-dex-link="${escapeHtml(actionLink.url)}"
+                    data-quote-alert-dex-link-copy="1"
+                    data-dex-link-label="${escapeHtml(actionLink.label || '交易链接')}"
+                    data-dex-link-chain="${escapeHtml(quote && quote.chain || '')}"
+                    data-dex-link-from-token-address="${escapeHtml(quote && quote.fromToken || '')}"
+                    data-dex-link-to-token-address="${escapeHtml(quote && quote.toToken || '')}"
+                    data-dex-link-input-amount="${escapeHtml(quote && quote.amount || '')}"
                 >${escapeHtml(actionLink.label || '交易链接')}</a>`
             : '';
         const muteButtonHtml = entry && entry.mutedTargetCandidate
@@ -993,10 +1014,13 @@
         const wrapper = document.createElement('div');
         wrapper.innerHTML = buildLegacyQuoteAlertLogHtml(entry, nowMs);
         const card = wrapper.firstElementChild;
-        if (card) {
-            removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
-            alertLogContent.prepend(card);
+        if (!card) return;
+        if (entry && entry.mutedEntry) {
+            appendMutedAlertLogCard(card, nowMs);
+            return;
         }
+        removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
+        alertLogContent.prepend(card);
         updateMutedPathAlertLogCards('', nowMs);
         syncMutedPathLogTimer();
         if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
@@ -1281,43 +1305,48 @@
     }
 
     function removeRestoredMutedAlertLogCards(targetKey = '') {
-        if (!alertLogContent || !targetKey) return;
+        if (!targetKey) return;
         const escapedTargetKey = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
             ? CSS.escape(targetKey)
             : targetKey.replace(/["\\]/g, '\\$&');
-        alertLogContent
-            .querySelectorAll(`.log-entry[data-muted-restored="1"][data-muted-target-key="${escapedTargetKey}"]`)
-            .forEach((card) => card.remove());
+        getAlertLogEntryContainers().forEach((container) => {
+            container
+                .querySelectorAll(`.log-entry[data-muted-restored="1"][data-muted-target-key="${escapedTargetKey}"]`)
+                .forEach((card) => card.remove());
+        });
     }
 
     function updateMutedPathAlertLogCards(targetKey = '', nowMs = Date.now()) {
-        if (!alertLogContent) return;
+        const containers = getAlertLogEntryContainers();
+        if (!containers.length) return;
         pruneMutedPathTargetsInPlace(nowMs);
-        const cards = alertLogContent.querySelectorAll('.log-entry[data-muted-target-key]');
-        cards.forEach((card) => {
-            if (targetKey && card.dataset.mutedTargetKey !== targetKey) return;
-            const resolvedEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === card.dataset.mutedTargetKey) || null;
-            const statusEl = card.querySelector('[data-path-alert-muted-status]');
-            const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]');
-            if (resolvedEntry) {
-                if (statusEl) {
-                    statusEl.textContent = buildMutedPathStatusText(resolvedEntry, nowMs);
-                    statusEl.className = 'path-alert-log-tag path-alert-log-tag-muted';
+        containers.forEach((container) => {
+            const cards = container.querySelectorAll('.log-entry[data-muted-target-key]');
+            cards.forEach((card) => {
+                if (targetKey && card.dataset.mutedTargetKey !== targetKey) return;
+                const resolvedEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === card.dataset.mutedTargetKey) || null;
+                const statusEl = card.querySelector('[data-path-alert-muted-status]');
+                const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]');
+                if (resolvedEntry) {
+                    if (statusEl) {
+                        statusEl.textContent = buildMutedPathStatusText(resolvedEntry, nowMs);
+                        statusEl.className = 'path-alert-log-tag path-alert-log-tag-muted';
+                    }
+                    if (buttonEl) {
+                        buttonEl.textContent = '延长 2 小时';
+                        buttonEl.disabled = false;
+                    }
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = '已触发';
+                        statusEl.className = 'path-alert-log-tag';
+                    }
+                    if (buttonEl) {
+                        buttonEl.textContent = '忽略 1 小时';
+                        buttonEl.disabled = false;
+                    }
                 }
-                if (buttonEl) {
-                    buttonEl.textContent = '延长 2 小时';
-                    buttonEl.disabled = false;
-                }
-            } else {
-                if (statusEl) {
-                    statusEl.textContent = '已触发';
-                    statusEl.className = 'path-alert-log-tag';
-                }
-                if (buttonEl) {
-                    buttonEl.textContent = '忽略 1 小时';
-                    buttonEl.disabled = false;
-                }
-            }
+            });
         });
     }
 
@@ -1386,19 +1415,27 @@
     }
 
     function renderAlertLogTabState() {
-        const showLogTab = alertLogActiveTab !== 'muted';
+        const showLogTab = alertLogActiveTab === 'log';
+        const showMutedLogTab = alertLogActiveTab === 'muted-log';
+        const showMutedStateTab = alertLogActiveTab === 'muted';
         if (alertLogLogTab) {
             alertLogLogTab.classList.toggle('active', showLogTab);
         }
+        if (alertLogMutedLogTab) {
+            alertLogMutedLogTab.classList.toggle('active', showMutedLogTab);
+        }
         if (alertLogMutedTab) {
-            alertLogMutedTab.classList.toggle('active', !showLogTab);
+            alertLogMutedTab.classList.toggle('active', showMutedStateTab);
         }
         if (alertLogContent) {
             alertLogContent.hidden = !showLogTab;
         }
+        if (alertLogMutedLogContent) {
+            alertLogMutedLogContent.hidden = !showMutedLogTab;
+        }
         if (alertLogMutedContent) {
-            alertLogMutedContent.hidden = showLogTab;
-            if (!showLogTab) {
+            alertLogMutedContent.hidden = !showMutedStateTab;
+            if (showMutedStateTab) {
                 renderMutedAlertStatePanel(Date.now());
             }
         }
@@ -1475,7 +1512,7 @@
     }
 
     function restoreMutedAlertLogEntries(nowMs = Date.now()) {
-        if (!alertLogContent || !mutedPathTargets.length) return;
+        if (!alertLogMutedLogContent || !mutedPathTargets.length) return;
         const sortedEntries = mutedPathTargets
             .slice()
             .sort((left, right) => Number(left && left.mutedAt) - Number(right && right.mutedAt));
@@ -1485,20 +1522,20 @@
             const escapedTargetKey = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
                 ? CSS.escape(targetKey)
                 : targetKey.replace(/["\\]/g, '\\$&');
-            if (alertLogContent.querySelector(`.log-entry[data-muted-target-key="${escapedTargetKey}"]`)) {
+            if (alertLogMutedLogContent.querySelector(`.log-entry[data-muted-target-key="${escapedTargetKey}"]`)) {
                 return;
             }
             const wrapper = document.createElement('div');
             wrapper.innerHTML = buildRestoredMutedAlertLogHtml(entry, nowMs);
             const card = wrapper.firstElementChild;
             if (card) {
-                alertLogContent.prepend(card);
+                alertLogMutedLogContent.prepend(card);
             }
         });
         updateMutedPathAlertLogCards('', nowMs);
         syncMutedPathLogTimer();
         if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
-            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
+            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
         }
     }
 
@@ -1566,8 +1603,12 @@
             wrapper.innerHTML = buildPathAlertLogCardHtml(list[index], nowMs);
             const card = wrapper.firstElementChild;
             if (card) {
-                removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
-                alertLogContent.prepend(card);
+                if (list[index] && list[index].mutedEntry) {
+                    appendMutedAlertLogCard(card, nowMs);
+                } else {
+                    removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
+                    alertLogContent.prepend(card);
+                }
             }
         }
         updateMutedPathAlertLogCards('', nowMs);
@@ -4767,10 +4808,22 @@
             renderAlertLogTabState();
             return;
         }
+        const mutedLogTabBtn = event.target.closest('#alert-log-muted-log-tab');
+        if (mutedLogTabBtn) {
+            alertLogActiveTab = 'muted-log';
+            renderAlertLogTabState();
+            return;
+        }
         const mutedTabBtn = event.target.closest('#alert-log-muted-tab');
         if (mutedTabBtn) {
             alertLogActiveTab = 'muted';
             renderAlertLogTabState();
+            return;
+        }
+        const quoteDexLinkEl = event.target.closest('[data-quote-alert-dex-link-copy]');
+        if (quoteDexLinkEl) {
+            event.preventDefault();
+            void copyDexLinkFromElement(quoteDexLinkEl);
             return;
         }
         const extendMutedPathTargetBtn = event.target.closest('[data-muted-path-target-extend]');
@@ -7082,7 +7135,7 @@
             if (alertLogWindow) {
                 alertLogWindow.addEventListener('click', handleAlertLogClick);
             }
-            if (alertLogContent) {
+            if (alertLogMutedLogContent) {
                 restoreMutedAlertLogEntries(Date.now());
             }
             renderMutedAlertStatePanel(Date.now());

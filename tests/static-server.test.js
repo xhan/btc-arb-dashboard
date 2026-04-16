@@ -55,7 +55,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('width: 160px;'));
     assert.ok(response.body.includes('font-size: 13px;'));
     assert.ok(response.body.includes('#arb-path-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
-    assert.ok(/#alert-log-content,\s*#alert-log-muted-content\s*\{\s*flex-grow:\s*1;\s*overflow-y:\s*auto;\s*overscroll-behavior:\s*contain;/.test(response.body));
+    assert.ok(/#alert-log-content,\s*#alert-log-muted-log-content,\s*#alert-log-muted-content\s*\{\s*flex-grow:\s*1;\s*overflow-y:\s*auto;\s*overscroll-behavior:\s*contain;/.test(response.body));
     assert.ok(response.body.includes('#path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none;'));
     assert.ok(response.body.includes('#path-alert-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
     assert.ok(/#data-terminal-content\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?overscroll-behavior:\s*contain;/.test(response.body));
@@ -213,11 +213,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] muted trigger skipped'"));
     assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link'));
+    assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link-copy="1"'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('buildLegacyQuoteAlertLogHtml'));
+    assert.ok(appJsResponse.body.includes('appendMutedAlertLogCard'));
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));
     assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));
+    assert.ok(appJsResponse.body.includes("const mutedLogTabBtn = event.target.closest('#alert-log-muted-log-tab');"));
+    assert.ok(appJsResponse.body.includes("alertLogActiveTab = 'muted-log';"));
+    assert.ok(appJsResponse.body.includes("const quoteDexLinkEl = event.target.closest('[data-quote-alert-dex-link-copy]');"));
+    assert.ok(appJsResponse.body.includes('event.preventDefault();'));
+    assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(quoteDexLinkEl);'));
     assert.ok(appJsResponse.body.includes('忽略 1 小时'));
     assert.ok(appJsResponse.body.includes('延长 2 小时'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-leg-mute'));
@@ -314,7 +321,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
     assert.ok(appJsResponse.body.includes('最近 1 小时'));
     assert.ok(response.body.includes('id="alert-log-log-tab"'));
+    assert.ok(response.body.includes('id="alert-log-muted-log-tab"'));
     assert.ok(response.body.includes('id="alert-log-muted-tab"'));
+    assert.ok(response.body.includes('id="alert-log-muted-log-content"'));
     assert.ok(response.body.includes('id="alert-log-muted-content"'));
     assert.ok(response.body.includes('src="muted-path-leg-utils.js"'));
     assert.ok(appJsResponse.body.includes('arb-detail-chart-card arb-detail-profit-card'));

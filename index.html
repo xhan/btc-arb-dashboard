@@ -655,7 +655,9 @@
             border-color: rgba(15, 118, 110, 0.18);
         }
         #alert-log-content,
+        #alert-log-muted-log-content,
         #alert-log-muted-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain; padding: 15px; font-size: 14px; }
+        #alert-log-muted-log-content[hidden],
         #alert-log-muted-content[hidden] { display: none; }
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
@@ -1614,9 +1616,11 @@
         </div>
         <div id="alert-log-tabs">
             <button id="alert-log-log-tab" class="alert-log-tab active" type="button">日志</button>
+            <button id="alert-log-muted-log-tab" class="alert-log-tab" type="button">屏蔽日志</button>
             <button id="alert-log-muted-tab" class="alert-log-tab" type="button">临时屏蔽</button>
         </div>
         <div id="alert-log-content"></div>
+        <div id="alert-log-muted-log-content" hidden></div>
         <div id="alert-log-muted-content" hidden></div>
     </div>
     <div id="path-alert-window">
