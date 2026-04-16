@@ -165,7 +165,6 @@
     const alertLogContent = document.getElementById('alert-log-content');
     const alertLogMutedLogContent = document.getElementById('alert-log-muted-log-content');
     const alertLogMutedContent = document.getElementById('alert-log-muted-content');
-    const alertSound = document.getElementById('alert-sound');
     const pathAlertSound = document.getElementById('path-alert-sound');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const audioNoticeEl = document.getElementById('audio-notice');
@@ -796,14 +795,7 @@
 
     function updateAlertSoundState() {
         if (!isAudioUnlocked) return;
-        
-        let shouldPlayQuoteAlert = false;
-        for (const state of quoteMonitorState.values()) {
-            if (state.isSoundActive) {
-                shouldPlayQuoteAlert = true;
-                break;
-            }
-        }
+
         let shouldPlayPathAlert = false;
         for (const runtime of pathAlertRuntimeState.values()) {
             if (runtime && runtime.isSoundActive) {
@@ -811,7 +803,6 @@
                 break;
             }
         }
-        syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);
         syncLoopingAlertSound(pathAlertSound, shouldPlayPathAlert);
     }
 
@@ -1631,7 +1622,7 @@
     function unlockAudio() {
         if (isAudioUnlocked) return;
         audioNoticeEl.style.display = 'none';
-        Promise.allSettled([primeAlertAudio(alertSound), primeAlertAudio(pathAlertSound)]).then((results) => {
+        Promise.allSettled([primeAlertAudio(pathAlertSound)]).then((results) => {
             if (!results.some((result) => result.status === 'fulfilled' && result.value === true)) {
                 throw new Error('no audio unlocked');
             }
@@ -7027,11 +7018,27 @@
         function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
     }
     
+    async function requestBackendConfigRefresh() {
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/request-update-config`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: '{}'
+            });
+            if (!response.ok) {
+                throw new Error('刷新后端配置失败');
+            }
+        } catch (error) {
+            console.warn('刷新后端配置失败:', error);
+        }
+    }
+
     async function init() {
         audioNoticeEl.style.display = 'block';
         multiChannelEnabled = loadMultiChannelEnabledFromStorage();
         renderMultiChannelToggle();
         syncRequestChannelTagVisibility();
+        await requestBackendConfigRefresh();
         await loadPriceSnapshotConfig();
         await loadArbSettings();
         applyTheme(localStorage.getItem('theme'));

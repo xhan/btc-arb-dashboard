@@ -107,6 +107,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(
       response.body.indexOf('src="path-alert-utils.js"') < response.body.indexOf('src="muted-path-storage-utils.js"')
     );
+    assert.ok(!response.body.includes('id="alert-sound"'));
+    assert.ok(!response.body.includes('src="alert.mp3"'));
     assert.ok(response.body.includes('id="path-alert-sound"'));
     assert.ok(response.body.includes('src="alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
@@ -191,7 +193,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("closest('[data-arb-opportunity-alert-id]')"));
     assert.ok(appJsResponse.body.includes('function buildArbOpportunityChartHref(entry)'));
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
+    assert.ok(appJsResponse.body.includes('/api/request-update-config'));
     assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
+    assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
     assert.ok(appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(appJsResponse.body.includes('quote-direct-badge'));
@@ -206,6 +210,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("function getQuoteAlertDirection(target)"));
     assert.ok(appJsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })'));
+    assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
+    assert.ok(!appJsResponse.body.includes('syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);'));
     assert.ok(appJsResponse.body.includes('path-alert-config-sync'));
     assert.ok(appJsResponse.body.includes('new Audio(pathAlertSound.currentSrc || pathAlertSound.src)'));
     assert.ok(appJsResponse.body.includes('customAlertMessage: String(evaluation && evaluation.alertMessage || \'\').trim()'));

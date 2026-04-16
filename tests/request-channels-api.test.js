@@ -55,6 +55,31 @@ function request(pathname) {
   });
 }
 
+function post(pathname, body = '') {
+  return new Promise((resolve, reject) => {
+    const req = http.request(
+      {
+        hostname: '127.0.0.1',
+        port,
+        path: pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body)
+        }
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => resolve({ statusCode: res.statusCode, body: data }));
+      }
+    );
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 async function waitForServer(attempts = 15) {
   for (let i = 0; i < attempts; i += 1) {
     try {
@@ -100,6 +125,71 @@ async function waitForServer(attempts = 15) {
         httpProxy: 'http://127.0.0.1:18001',
         intervals: {
           kyber: 90,
+          zerox: 110,
+          velora: 700,
+          lifi: 170,
+          bybit: 1000,
+          binance: 1000,
+          solana: 3500,
+          sui: 500,
+          starknet: 1000
+        }
+      }
+    ]);
+
+    fs.writeFileSync(configPath, JSON.stringify({ dashboard: [], settings: { kyber: 230, zerox: 110, solana: 3500, sui: 500, starknet: 1000, bybit: 1000, binance: 1000, velora: 700, lifi: 170 } }, null, 2));
+    fs.writeFileSync(configMorePath, JSON.stringify({ kyberClientId: 'updated-default-client', jupiterApiKey: 'default-jupiter' }, null, 2));
+    fs.writeFileSync(
+      requestChannelsPath,
+      JSON.stringify({
+        channels: [
+          {
+            id: 'hk-1',
+            name: 'HK-Reloaded',
+            httpProxy: 'http://127.0.0.1:28001',
+            intervals: {
+              kyber: 130
+            },
+            configMore: {
+              kyberClientId: 'hk-reloaded-client'
+            }
+          }
+        ]
+      }, null, 2)
+    );
+
+    const reloadResponse = await post('/api/request-update-config', '{}');
+    assert.strictEqual(reloadResponse.statusCode, 200);
+
+    const reloadedChannelsResponse = await request('/api/get-request-channels');
+    assert.strictEqual(reloadedChannelsResponse.statusCode, 200);
+    const reloadedPayload = JSON.parse(reloadedChannelsResponse.body);
+
+    assert.deepStrictEqual(reloadedPayload.channels, [
+      {
+        id: 'default',
+        name: '默认通道',
+        isDefault: true,
+        httpProxy: '',
+        intervals: {
+          kyber: 230,
+          zerox: 110,
+          velora: 700,
+          lifi: 170,
+          bybit: 1000,
+          binance: 1000,
+          solana: 3500,
+          sui: 500,
+          starknet: 1000
+        }
+      },
+      {
+        id: 'hk-1',
+        name: 'HK-Reloaded',
+        isDefault: false,
+        httpProxy: 'http://127.0.0.1:28001',
+        intervals: {
+          kyber: 130,
           zerox: 110,
           velora: 700,
           lifi: 170,
