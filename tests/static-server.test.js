@@ -48,6 +48,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
     assert.ok(response.body.includes('#arb-path-window { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;'));
+    assert.ok(response.body.includes('#arb-path-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
+    assert.ok(/#alert-log-content,\s*#alert-log-muted-content\s*\{\s*flex-grow:\s*1;\s*overflow-y:\s*auto;\s*overscroll-behavior:\s*contain;/.test(response.body));
+    assert.ok(response.body.includes('#path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none;'));
+    assert.ok(response.body.includes('#path-alert-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
+    assert.ok(response.body.includes('#calc-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
+    assert.ok(/#data-terminal-content\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?overscroll-behavior:\s*contain;/.test(response.body));
     assert.ok(response.body.includes('#alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 315px; max-height: 400px;'));
     assert.ok(response.body.includes('#data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 807px;'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
