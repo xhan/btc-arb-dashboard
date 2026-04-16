@@ -5074,14 +5074,15 @@
                 .filter(Boolean);
         const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
         const globalEmptyText = hasGlobalFilter ? '过滤后暂无路径' : '等待数据...';
-        const fixedAndSpecialColumns = window.ArbPanelLayoutUtils
-            ? window.ArbPanelLayoutUtils.splitSectionsIntoColumns(fixedSections.concat(specialSections), 6, 2)
-            : [fixedSections.concat(specialSections), []];
+        const fixedColumns = window.ArbPanelLayoutUtils
+            ? window.ArbPanelLayoutUtils.splitSectionsIntoColumns(fixedSections, 6, 2)
+            : [fixedSections, []];
         const wbtcSection = categorySections.find((section) => section && section.title === 'WBTC监控') || { title: 'WBTC监控', opportunities: [], emptyText: '等待数据...' };
         const tbtcSection = categorySections.find((section) => section && section.title === 'TBTC监控') || { title: 'TBTC监控', opportunities: [], emptyText: '等待数据...' };
         const columns = [
-            fixedAndSpecialColumns[0] || [],
-            fixedAndSpecialColumns[1] || [],
+            fixedColumns[0] || [],
+            fixedColumns[1] || [],
+            specialSections,
             [wbtcSection, lbtcSection || { title: 'LBTC监控', opportunities: [], emptyText: '等待数据...' }, tbtcSection],
             [{
                 title: '全局路径',
@@ -5902,10 +5903,7 @@
 
     function setArbPanelMaxHeight() {
         if (!arbPathWindow) return;
-        const topBar = document.getElementById('top-bar');
-        const bannerHeight = topBar ? topBar.getBoundingClientRect().height : 0;
-        const padding = 20 * 2;
-        const maxHeight = Math.max(200, window.innerHeight - bannerHeight - padding);
+        const maxHeight = Math.max(200, window.innerHeight);
         arbPathWindow.style.height = `${maxHeight}px`;
     }
 

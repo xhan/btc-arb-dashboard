@@ -47,7 +47,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="arb-detail-chart-preview"'));
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
-    assert.ok(response.body.includes('#arb-path-window { position: fixed; bottom: 20px; left: 20px; width: 1242px;'));
+    assert.ok(response.body.includes('#arb-path-window { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;'));
+    assert.ok(response.body.includes('#alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 315px; max-height: 400px;'));
     assert.ok(response.body.includes('#data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 807px;'));
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="charts-renderer.js"'));
@@ -252,6 +253,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("arbDetailGrid.addEventListener('mouseup'"));
     assert.ok(appJsResponse.body.includes('setArbPanelMaxHeight();'));
     assert.ok(appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
+    assert.ok(appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
+    assert.ok(appJsResponse.body.includes("title: '特殊规则'"));
+    assert.ok(appJsResponse.body.includes('const columns = ['));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
     assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));
