@@ -48,6 +48,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
     assert.ok(response.body.includes('#arb-path-window { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;'));
+    assert.ok(response.body.includes('#arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }'));
+    assert.ok(response.body.includes('#arb-global-filter-input,'));
+    assert.ok(response.body.includes('#arb-global-chain-filter-input,'));
+    assert.ok(response.body.includes('#arb-global-include-filter-input {'));
+    assert.ok(response.body.includes('width: 160px;'));
+    assert.ok(response.body.includes('font-size: 13px;'));
     assert.ok(response.body.includes('#arb-path-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
     assert.ok(/#alert-log-content,\s*#alert-log-muted-content\s*\{\s*flex-grow:\s*1;\s*overflow-y:\s*auto;\s*overscroll-behavior:\s*contain;/.test(response.body));
     assert.ok(response.body.includes('#path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none;'));
@@ -127,6 +133,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="toggle-path-alert-btn"'));
     assert.ok(response.body.includes('id="toggle-data-terminal-btn"'));
     assert.ok(response.body.includes('id="toggle-multi-channel-btn"'));
+    assert.ok(response.body.includes('id="arb-global-include-filter-input"'));
+    assert.ok(response.body.includes('placeholder="仅显示代币"'));
+    assert.ok(!response.body.includes('id="arb-path-max-btn"'));
+    assert.ok(!response.body.includes('id="arb-global-filter-bar"'));
     assert.ok(response.body.includes('多渠道'));
     assert.ok(response.body.includes('数据终端'));
     assert.ok(response.body.includes('报警管理'));
@@ -165,7 +175,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('class="icon-btn add-quote-btn"'));
     assert.ok(!appJsResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
+    assert.ok(appJsResponse.body.includes("arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput)"));
     assert.ok(appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
+    assert.ok(appJsResponse.body.includes("closest('button, input, textarea, select, [contenteditable=\"true\"]')"));
+    assert.ok(!appJsResponse.body.includes('makeDraggable(arbPathWindow, arbPathHeader)'));
+    assert.ok(!appJsResponse.body.includes('if (!arbGlobalFilterBar) return;'));
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
     assert.ok(!appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
     assert.ok(!appJsResponse.body.includes("closest('[data-arb-opportunity-alert-id]')"));
@@ -265,6 +279,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
     assert.ok(appJsResponse.body.includes("title: '特殊规则'"));
     assert.ok(appJsResponse.body.includes('const columns = ['));
+    assert.ok(appJsResponse.body.includes('const includedSymbols = parseArbFilterInput(arbGlobalIncludedSymbolsInput);'));
+    assert.ok(appJsResponse.body.includes('cycleContainsAnySymbols(cycle, includedSymbols)'));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
     assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));

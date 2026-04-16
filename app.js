@@ -89,6 +89,7 @@
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
     let arbGlobalExcludedChainsInput = '';
+    let arbGlobalIncludedSymbolsInput = '';
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
@@ -205,12 +206,11 @@
     const copyToast = document.getElementById('copy-toast');
     const arbPathWindow = document.getElementById('arb-path-window');
     const arbPathContent = document.getElementById('arb-path-content');
-    const arbGlobalFilterBar = document.getElementById('arb-global-filter-bar');
     const arbGlobalFilterInput = document.getElementById('arb-global-filter-input');
     const arbGlobalChainFilterInput = document.getElementById('arb-global-chain-filter-input');
+    const arbGlobalIncludeFilterInput = document.getElementById('arb-global-include-filter-input');
     const arbGlobalFilterClearBtn = document.getElementById('arb-global-filter-clear-btn');
     const arbPathHeader = document.getElementById('arb-path-header');
-    const arbPathMaxBtn = document.getElementById('arb-path-max-btn');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
     const toggleQuoteDisplayBtn = document.getElementById('toggle-quote-display-btn');
     const toggleDataTerminalBtn = document.getElementById('toggle-data-terminal-btn');
@@ -2948,16 +2948,17 @@
     }
 
     function updateGlobalArbFilterBar() {
-        if (!arbGlobalFilterBar) return;
-
         if (arbGlobalFilterInput && arbGlobalFilterInput.value !== arbGlobalExcludedSymbolsInput) {
             arbGlobalFilterInput.value = arbGlobalExcludedSymbolsInput;
         }
         if (arbGlobalChainFilterInput && arbGlobalChainFilterInput.value !== arbGlobalExcludedChainsInput) {
             arbGlobalChainFilterInput.value = arbGlobalExcludedChainsInput;
         }
+        if (arbGlobalIncludeFilterInput && arbGlobalIncludeFilterInput.value !== arbGlobalIncludedSymbolsInput) {
+            arbGlobalIncludeFilterInput.value = arbGlobalIncludedSymbolsInput;
+        }
         if (arbGlobalFilterClearBtn) {
-            arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim() && !arbGlobalExcludedChainsInput.trim();
+            arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim() && !arbGlobalExcludedChainsInput.trim() && !arbGlobalIncludedSymbolsInput.trim();
         }
     }
 
@@ -3925,10 +3926,18 @@
         updateArbPanel();
     }
 
+    function handleArbGlobalIncludeFilterInput(event) {
+        const nextValue = (event && event.target && typeof event.target.value === 'string') ? event.target.value : '';
+        if (nextValue === arbGlobalIncludedSymbolsInput) return;
+        arbGlobalIncludedSymbolsInput = nextValue;
+        updateArbPanel();
+    }
+
     function handleArbGlobalFilterClear() {
-        if (!arbGlobalExcludedSymbolsInput && !arbGlobalExcludedChainsInput) return;
+        if (!arbGlobalExcludedSymbolsInput && !arbGlobalExcludedChainsInput && !arbGlobalIncludedSymbolsInput) return;
         arbGlobalExcludedSymbolsInput = '';
         arbGlobalExcludedChainsInput = '';
+        arbGlobalIncludedSymbolsInput = '';
         updateArbPanel();
         if (arbGlobalFilterInput) {
             arbGlobalFilterInput.focus();
@@ -3937,7 +3946,7 @@
 
     function blurArbGlobalFilterInputs() {
         const activeElement = document.activeElement;
-        if (activeElement === arbGlobalFilterInput || activeElement === arbGlobalChainFilterInput) {
+        if (activeElement === arbGlobalFilterInput || activeElement === arbGlobalChainFilterInput || activeElement === arbGlobalIncludeFilterInput) {
             activeElement.blur();
         }
     }
@@ -3950,7 +3959,11 @@
 
     function handleArbPathHeaderClick(event) {
         if (!event) return;
-        if (event.target && typeof event.target.closest === 'function' && event.target.closest('button')) {
+        if (
+            event.target &&
+            typeof event.target.closest === 'function' &&
+            event.target.closest('button, input, textarea, select, [contenteditable="true"]')
+        ) {
             return;
         }
         blurArbGlobalFilterInputs();
@@ -5048,9 +5061,11 @@
                 .map(normalizeArbChainFilterToken)
                 .filter(Boolean)
         ));
-        const hasGlobalFilter = excludedSymbols.length || excludedChains.length;
+        const includedSymbols = parseArbFilterInput(arbGlobalIncludedSymbolsInput);
+        const hasGlobalFilter = excludedSymbols.length || excludedChains.length || includedSymbols.length;
         const filteredGlobalCycles = hasGlobalFilter
             ? globalCycles.filter(cycle =>
+                (!includedSymbols.length || cycleContainsAnySymbols(cycle, includedSymbols)) &&
                 !cycleContainsAnySymbols(cycle, excludedSymbols) &&
                 !cycleContainsAnyChains(cycle, excludedChains)
             )
@@ -7131,7 +7146,6 @@
                 bindFloatingPanelFocus(pathAlertWindow, pathAlertHeader);
             }
             if (arbPathWindow && arbPathHeader) {
-                makeDraggable(arbPathWindow, arbPathHeader);
                 bindFloatingPanelFocus(arbPathWindow, arbPathHeader);
             }
             if (calcWindow && calcHeader) {
@@ -7288,6 +7302,10 @@
                 arbGlobalChainFilterInput.addEventListener('input', handleArbGlobalChainFilterInput);
                 arbGlobalChainFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown);
             }
+            if (arbGlobalIncludeFilterInput) {
+                arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput);
+                arbGlobalIncludeFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown);
+            }
             if (arbGlobalFilterClearBtn) {
                 arbGlobalFilterClearBtn.addEventListener('click', handleArbGlobalFilterClear);
             }
@@ -7311,12 +7329,6 @@
                 alertLogMinBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     toggleAlertLogPanel();
-                });
-            }
-            if (arbPathMaxBtn) {
-                arbPathMaxBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    setArbPanelMaxHeight();
                 });
             }
             window.addEventListener('resize', setArbPanelMaxHeight);

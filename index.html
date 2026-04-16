@@ -770,12 +770,12 @@
 
         #arb-path-window { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
         #data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 807px; height: 330px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: flex; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
-        #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        #arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         #data-terminal-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .dark-mode #arb-path-header { background-color: #1a202c; }
         .dark-mode #data-terminal-header { background-color: #1a202c; }
         .panel-header-actions { display: flex; align-items: center; gap: 8px; }
-        #arb-path-max-btn, #arb-path-min-btn, #path-alert-min-btn, #calc-min-btn, #alert-log-min-btn, #data-terminal-min-btn {
+        #arb-path-min-btn, #path-alert-min-btn, #calc-min-btn, #alert-log-min-btn, #data-terminal-min-btn {
             border: 1px solid rgba(255,255,255,0.3);
             background: transparent;
             color: #fff;
@@ -784,19 +784,24 @@
             cursor: pointer;
             font-weight: 700;
         }
-        #arb-path-max-btn:hover, #arb-path-min-btn:hover, #path-alert-min-btn:hover, #calc-min-btn:hover, #alert-log-min-btn:hover, #data-terminal-min-btn:hover { background-color: rgba(255,255,255,0.12); }
-        #arb-global-filter-bar { padding: 8px 12px; border-bottom: 1px solid var(--border-color); background-color: rgba(0,0,0,0.015); }
-        .dark-mode #arb-global-filter-bar { background-color: rgba(255,255,255,0.02); }
+        #arb-path-min-btn:hover, #path-alert-min-btn:hover, #calc-min-btn:hover, #alert-log-min-btn:hover, #data-terminal-min-btn:hover { background-color: rgba(255,255,255,0.12); }
+        .arb-path-header-main { flex: 0 0 auto; min-width: 0; }
+        .arb-path-header-controls { display: flex; align-items: center; gap: 8px; min-width: 0; margin-left: auto; }
         .arb-global-filter-row { display: flex; gap: 6px; align-items: center; }
         #arb-global-filter-input,
-        #arb-global-chain-filter-input {
-            flex: 1;
+        #arb-global-chain-filter-input,
+        #arb-global-include-filter-input {
+            width: 160px;
             min-width: 0;
-            padding: 4px 6px;
+            height: 28px;
+            padding: 3px 8px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             background: transparent;
             color: inherit;
+            font-size: 13px;
+            line-height: 20px;
+            box-sizing: border-box;
         }
         #arb-global-filter-clear-btn { padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
         #arb-global-filter-clear-btn:disabled { opacity: 0.5; cursor: default; }
@@ -1644,17 +1649,17 @@
     </div>
     <div id="arb-path-window">
         <div id="arb-path-header">
-            <span>套利路径</span>
-            <div class="panel-header-actions">
-                <button id="arb-path-min-btn" title="最小化">－</button>
-                <button id="arb-path-max-btn" title="最大化高度">⇵</button>
-            </div>
-        </div>
-        <div id="arb-global-filter-bar">
-            <div class="arb-global-filter-row">
-                <input id="arb-global-filter-input" type="text" placeholder="代币过滤（空格分隔）">
-                <input id="arb-global-chain-filter-input" type="text" placeholder="链过滤（空格分隔，如 Arbitrum）">
-                <button id="arb-global-filter-clear-btn" type="button" disabled>清空</button>
+            <div class="arb-path-header-main">套利路径</div>
+            <div class="arb-path-header-controls">
+                <div class="arb-global-filter-row">
+                    <input id="arb-global-filter-input" type="text" placeholder="排除代币">
+                    <input id="arb-global-chain-filter-input" type="text" placeholder="排除链">
+                    <input id="arb-global-include-filter-input" type="text" placeholder="仅显示代币">
+                    <button id="arb-global-filter-clear-btn" type="button" disabled>清空</button>
+                </div>
+                <div class="panel-header-actions">
+                    <button id="arb-path-min-btn" title="最小化">－</button>
+                </div>
             </div>
         </div>
         <div id="arb-path-content">等待数据...</div>
