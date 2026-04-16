@@ -775,7 +775,7 @@
         .dark-mode #arb-path-header { background-color: #1a202c; }
         .dark-mode #data-terminal-header { background-color: #1a202c; }
         .panel-header-actions { display: flex; align-items: center; gap: 8px; }
-        #arb-path-min-btn, #path-alert-min-btn, #calc-min-btn, #alert-log-min-btn, #data-terminal-min-btn {
+        #arb-path-min-btn, #path-alert-min-btn, #alert-log-min-btn, #data-terminal-min-btn {
             border: 1px solid rgba(255,255,255,0.3);
             background: transparent;
             color: #fff;
@@ -784,7 +784,7 @@
             cursor: pointer;
             font-weight: 700;
         }
-        #arb-path-min-btn:hover, #path-alert-min-btn:hover, #calc-min-btn:hover, #alert-log-min-btn:hover, #data-terminal-min-btn:hover { background-color: rgba(255,255,255,0.12); }
+        #arb-path-min-btn:hover, #path-alert-min-btn:hover, #alert-log-min-btn:hover, #data-terminal-min-btn:hover { background-color: rgba(255,255,255,0.12); }
         .arb-path-header-main { flex: 0 0 auto; min-width: 0; }
         .arb-path-header-controls { display: flex; align-items: center; gap: 8px; min-width: 0; margin-left: auto; }
         .arb-global-filter-row { display: flex; gap: 6px; align-items: center; }
@@ -1453,24 +1453,6 @@
         .path-alert-status-disabled { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
         .path-alert-profit { font-weight: 700; }
         .path-alert-empty { color: var(--text-color-light); }
-        #calc-window { position: fixed; bottom: 20px; right: 390px; width: 430px; height: 280px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
-        #calc-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .dark-mode #calc-header { background-color: #1a202c; }
-        #calc-reset-btn, #calc-min-btn {
-            border: 1px solid rgba(255,255,255,0.3);
-            background: transparent;
-            color: #fff;
-            border-radius: 6px;
-            padding: 2px 8px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-        #calc-reset-btn:hover, #calc-min-btn:hover { background-color: rgba(255,255,255,0.12); }
-        #calc-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain; padding: 12px; font-size: 13px; }
-        .calc-line { margin-bottom: 6px; line-height: 1.35; }
-        .calc-footer { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-color); font-weight: 700; }
-        .calc-empty { color: var(--text-color-light); }
-        
         #audio-notice {
             display: none;
             position: fixed;
@@ -1611,7 +1593,6 @@
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
              <button id="toggle-path-alert-btn" title="打开报警管理页">报警管理</button>
              <button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">提醒日志</button>
-             <button id="toggle-calc-btn" title="显示/隐藏计算器">计算器</button>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">快照</a>
              <a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">图表</a>
              <button id="global-settings-btn" class="icon-btn" title="API 设置">⚙️</button>
@@ -1685,17 +1666,6 @@
             <div id="arb-detail-grid"></div>
         </div>
     </div>
-    <div id="calc-window">
-        <div id="calc-header">
-            <span>计算器</span>
-            <div class="panel-header-actions">
-                <button id="calc-reset-btn" title="清空结果">Reset</button>
-                <button id="calc-min-btn" title="最小化">－</button>
-            </div>
-        </div>
-        <div id="calc-content"><div class="calc-empty">点击报价价格后会显示在这里</div></div>
-    </div>
-    
     <audio id="alert-sound" src="alert.mp3" preload="auto"></audio>
     <audio id="path-alert-sound" src="alert_path.mp3" preload="auto"></audio>
     
@@ -1933,7 +1903,6 @@
     <script src="quote-alert-config-utils.js"></script>
     <script src="path-alert-page-utils.js"></script>
     <script src="path-alert-rule-definitions.js"></script>
-    <script src="quote-calculator.js"></script>
     <script src="chain-defaults.js"></script>
     <script src="arb-panel-renderer.js"></script>
     <script src="arb-fixed-utils.js"></script>

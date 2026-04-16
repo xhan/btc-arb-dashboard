@@ -58,7 +58,6 @@ async function waitForServer(attempts = 12) {
     assert.ok(/#alert-log-content,\s*#alert-log-muted-content\s*\{\s*flex-grow:\s*1;\s*overflow-y:\s*auto;\s*overscroll-behavior:\s*contain;/.test(response.body));
     assert.ok(response.body.includes('#path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none;'));
     assert.ok(response.body.includes('#path-alert-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
-    assert.ok(response.body.includes('#calc-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
     assert.ok(/#data-terminal-content\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?overscroll-behavior:\s*contain;/.test(response.body));
     assert.ok(response.body.includes('#alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 315px; max-height: 400px;'));
     assert.ok(response.body.includes('#data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 807px;'));
@@ -83,6 +82,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
+    assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
       response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
     );
@@ -140,6 +140,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('多渠道'));
     assert.ok(response.body.includes('数据终端'));
     assert.ok(response.body.includes('报警管理'));
+    assert.ok(!response.body.includes('id="toggle-calc-btn"'));
+    assert.ok(!response.body.includes('id="calc-window"'));
+    assert.ok(!response.body.includes('id="calc-content"'));
     assert.ok(response.body.includes('#top-bar-right > button,'));
     assert.ok(response.body.includes('#top-bar-right > a {'));
     assert.ok(response.body.includes('#top-bar-right > button.icon-btn'));
@@ -222,9 +225,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('沉默中'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes("if (key === 'c')"));
-    assert.ok(appJsResponse.body.includes("if (key === 'd')"));
     assert.ok(appJsResponse.body.includes("if (key === 'p')"));
     assert.ok(appJsResponse.body.includes("if (key === 's')"));
+    assert.ok(!appJsResponse.body.includes("if (key === 'd')"));
+    assert.ok(!appJsResponse.body.includes("if (key === 'r')"));
+    assert.ok(!appJsResponse.body.includes('toggleCalcPanel()'));
+    assert.ok(!appJsResponse.body.includes('resetCalculator()'));
+    assert.ok(!appJsResponse.body.includes('calculatorEntries'));
+    assert.ok(!appJsResponse.body.includes('addToCalculator('));
     assert.ok(appJsResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
     assert.ok(appJsResponse.body.includes('toggleQuoteDisplayMode()'));
     assert.ok(appJsResponse.body.includes('toggleDataTerminalPanel()'));

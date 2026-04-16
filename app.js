@@ -225,16 +225,9 @@
     const arbDetailChartPreview = document.getElementById('arb-detail-chart-preview');
     const arbDetailProfitPreview = document.getElementById('arb-detail-profit-preview');
     const arbDetailGrid = document.getElementById('arb-detail-grid');
-    const calcWindow = document.getElementById('calc-window');
-    const calcContent = document.getElementById('calc-content');
-    const calcHeader = document.getElementById('calc-header');
-    const calcResetBtn = document.getElementById('calc-reset-btn');
-    const calcMinBtn = document.getElementById('calc-min-btn');
-    const toggleCalcBtn = document.getElementById('toggle-calc-btn');
     const requestChannelSelectGroup = document.getElementById('request-channel-select-group');
     const quoteRequestChannelSelect = document.getElementById('quote-request-channel');
     let copyToastTimer = null;
-    let calculatorEntries = [];
     const THEME_ORDER = ['light', 'warm', 'dark'];
     const THEME_META = {
         light: { icon: '☀️', title: '切换主题（当前：浅色）' },
@@ -5488,13 +5481,7 @@
                     inverseEl.textContent = getInverseQuoteDisplayText(quote, inverseState, inverseEl.textContent);
                     bindCopyHandler(
                         inverseEl,
-                        () => inverseEl.textContent,
-                        () => ({
-                            chain: quote.chain,
-                            fromSymbol: (quoteMonitorState.get(quote.id) || {}).inverseFromSymbol || '',
-                            toSymbol: (quoteMonitorState.get(quote.id) || {}).inverseToSymbol || '',
-                            normalizedPrice: (quoteMonitorState.get(quote.id) || {}).inverseRawPrice
-                        })
+                        () => inverseEl.textContent
                     );
                 }
             } else {
@@ -5586,9 +5573,6 @@
     }
 
     function extractPriceFromText(text) {
-        if (window.QuoteCalculator && typeof window.QuoteCalculator.extractPriceFromText === 'function') {
-            return window.QuoteCalculator.extractPriceFromText(text);
-        }
         if (!text) return null;
         const delimiterMatch = text.match(/(?:≈|=|:)\s*([-+]?\d*\.?\d+(?:e[+-]?\d+)?)/i);
         if (delimiterMatch) return Number(delimiterMatch[1]);
@@ -5649,72 +5633,20 @@
         return null;
     }
 
-    function formatCalculatorProduct(product, count) {
-        if (typeof product !== 'number' || Number.isNaN(product)) return '--';
-        if (count <= 1) return product.toFixed(6);
-        return product.toFixed(10).replace(/\.?0+$/, '');
-    }
-
-    function renderCalculatorPanel() {
-        if (!calcContent) return;
-        if (!calculatorEntries.length) {
-            calcContent.innerHTML = '<div class="calc-empty">点击报价价格后会显示在这里</div>';
-            return;
-        }
-
-        const entryLines = calculatorEntries.map((entry) => {
-            const lineText = window.QuoteCalculator
-                ? window.QuoteCalculator.formatCalculatorEntry(entry)
-                : `${entry.chainLabel} ${entry.fromSymbol} -> ${entry.toSymbol} ${entry.price.toFixed(6)}`;
-            return `<div class="calc-line">${lineText}</div>`;
-        }).join('');
-
-        const product = window.QuoteCalculator
-            ? window.QuoteCalculator.calculateProduct(calculatorEntries)
-            : calculatorEntries.reduce((acc, item) => acc * item.price, 1);
-
-        calcContent.innerHTML = `${entryLines}<div class="calc-footer">乘积: ${formatCalculatorProduct(product, calculatorEntries.length)}</div>`;
-    }
-
-    function addToCalculator(details, clickedPrice) {
-        if (!details) return;
-        const normalizedPrice = Number(details.normalizedPrice);
-        const calculatorPrice = Number.isFinite(normalizedPrice) ? normalizedPrice : clickedPrice;
-        if (typeof calculatorPrice !== 'number' || Number.isNaN(calculatorPrice)) return;
-        const entryInput = {
-            chainLabel: formatChainLabel(details.chain),
-            fromSymbol: details.fromSymbol || '',
-            toSymbol: details.toSymbol || '',
-            price: calculatorPrice
-        };
-        const entry = (window.QuoteCalculator && window.QuoteCalculator.buildCalculatorEntry)
-            ? window.QuoteCalculator.buildCalculatorEntry(entryInput)
-            : entryInput;
-        if (!entry || !entry.fromSymbol || !entry.toSymbol) return;
-
-        calculatorEntries.push(entry);
-        if (calcWindow && calcWindow.style.display === 'none') {
-            calcWindow.style.display = 'flex';
-        }
-        renderCalculatorPanel();
-    }
-
-    function copyPriceFromText(text, details) {
+    function copyPriceFromText(text) {
         const price = extractPriceFromText(text);
         if (typeof price !== 'number' || Number.isNaN(price)) return;
         copyTextToClipboard(String(price));
         showCopyToast(`已复制: ${price}`);
-        addToCalculator(details, price);
     }
 
-    function bindCopyHandler(targetEl, getText, getDetails) {
+    function bindCopyHandler(targetEl, getText) {
         if (!targetEl || targetEl.dataset.copyBound) return;
         targetEl.dataset.copyBound = '1';
         targetEl.addEventListener('click', (event) => {
             event.stopPropagation();
             const text = typeof getText === 'function' ? getText() : targetEl.textContent;
-            const details = typeof getDetails === 'function' ? getDetails() : null;
-            copyPriceFromText(text, details);
+            copyPriceFromText(text);
         });
     }
 
@@ -5890,30 +5822,6 @@
             toggleRequestChannelTags();
             return;
         }
-        if (key === 'd') {
-            event.preventDefault();
-            toggleCalcPanel();
-            return;
-        }
-        if (key === 'r') {
-            event.preventDefault();
-            resetCalculator();
-        }
-    }
-
-    function toggleCalcPanel() {
-        if (!calcWindow) return;
-        const isHidden = window.getComputedStyle(calcWindow).display === 'none';
-        calcWindow.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden) {
-            bringFloatingPanelToFront(calcWindow);
-            renderCalculatorPanel();
-        }
-    }
-
-    function resetCalculator() {
-        calculatorEntries = [];
-        renderCalculatorPanel();
     }
 
     function setArbPanelMaxHeight() {
@@ -6302,16 +6210,7 @@
             const quoteTextEl = itemEl.querySelector(`#quote-text-${quote.id}`);
             bindCopyHandler(
                 textWrapper,
-                () => (quoteTextEl ? quoteTextEl.textContent : textWrapper.textContent),
-                () => {
-                    const state = quoteMonitorState.get(quote.id) || {};
-                    return {
-                        chain: quote.chain,
-                        fromSymbol: state.fromSymbol || '',
-                        toSymbol: state.toSymbol || '',
-                        normalizedPrice: state.lastRawPrice
-                    };
-                }
+                () => (quoteTextEl ? quoteTextEl.textContent : textWrapper.textContent)
             );
         }
         
@@ -7148,12 +7047,7 @@
             if (arbPathWindow && arbPathHeader) {
                 bindFloatingPanelFocus(arbPathWindow, arbPathHeader);
             }
-            if (calcWindow && calcHeader) {
-                makeDraggable(calcWindow, calcHeader);
-                bindFloatingPanelFocus(calcWindow, calcHeader);
-                renderCalculatorPanel();
-            }
-            [alertLogWindow, pathAlertWindow, arbPathWindow, calcWindow].forEach((panel) => {
+            [alertLogWindow, pathAlertWindow, arbPathWindow].forEach((panel) => {
                 if (panel) {
                     panel.style.zIndex = String(FLOATING_PANEL_BASE_Z_INDEX);
                 }
@@ -7332,21 +7226,6 @@
                 });
             }
             window.addEventListener('resize', setArbPanelMaxHeight);
-            if (toggleCalcBtn) {
-                toggleCalcBtn.addEventListener('click', toggleCalcPanel);
-            }
-            if (calcMinBtn) {
-                calcMinBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    toggleCalcPanel();
-                });
-            }
-            if (calcResetBtn) {
-                calcResetBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    resetCalculator();
-                });
-            }
         } catch (error) {
             dashboardEl.innerHTML = `<div class="module"><h2 style="color: var(--error-color);">加载配置失败</h2><p>${error.message}。请确保后端服务已启动并刷新页面。</p></div>`;
         }
