@@ -65,3 +65,27 @@ const htmlWithoutLabel = renderArbGrid({
 
 assert.ok(!htmlWithoutLabel.includes('<div class="arb-path-line"><strong>历史图表</strong></div>'));
 assert.ok(htmlWithoutLabel.includes('class="arb-path-line arb-opportunity-head-label"'));
+
+const highlightedHtml = renderArbGrid({
+  columns: [
+    [
+      {
+        title: '高亮测试',
+        opportunities: [
+          {
+            label: '机会 2',
+            opportunityId: 'highlight-1',
+            isAlertHighlighted: true,
+            profitRate: 0.0004,
+            legs: [
+              { from: 'cbBTC', to: 'BTC.b', rate: 1.0002, chain: 'base' },
+              { from: 'BTC.b', to: 'cbBTC', rate: 0.9999, chain: 'ethereum' }
+            ]
+          }
+        ]
+      }
+    ]
+  ]
+});
+
+assert.ok(highlightedHtml.includes('class="arb-opportunity is-alert-highlight"'));

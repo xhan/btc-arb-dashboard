@@ -52,6 +52,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('#arb-global-filter-input,'));
     assert.ok(response.body.includes('#arb-global-chain-filter-input,'));
     assert.ok(response.body.includes('#arb-global-include-filter-input {'));
+    assert.ok(response.body.includes('.arb-global-filter-checkbox {'));
     assert.ok(response.body.includes('width: 160px;'));
     assert.ok(response.body.includes('font-size: 13px;'));
     assert.ok(response.body.includes('#arb-path-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain;'));
@@ -113,6 +114,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
     assert.ok(response.body.includes('Velora (默认 700ms)'));
+    assert.ok(response.body.includes('.arb-opportunity.is-alert-highlight {'));
     assert.ok(response.body.includes('class="settings-grid"'));
     assert.ok(response.body.includes('id="quote-request-channel"'));
     assert.ok(response.body.includes('请求通道'));
@@ -137,6 +139,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="toggle-multi-channel-btn"'));
     assert.ok(response.body.includes('id="arb-global-include-filter-input"'));
     assert.ok(response.body.includes('placeholder="仅显示代币"'));
+    assert.ok(response.body.includes('id="arb-global-two-leg-only"'));
+    assert.ok(response.body.includes('只看 2 腿'));
     assert.ok(!response.body.includes('id="arb-path-max-btn"'));
     assert.ok(!response.body.includes('id="arb-global-filter-bar"'));
     assert.ok(response.body.includes('多渠道'));
@@ -209,6 +213,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('quote.alerts'));
     assert.ok(appJsResponse.body.includes("function getQuoteAlertDirection(target)"));
     assert.ok(appJsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
+    assert.ok(appJsResponse.body.includes("return { text: '', className: '' };"));
+    assert.ok(appJsResponse.body.includes('const statusTagHtml = statusInfo.text'));
+    assert.ok(/\.filter\(\(\{ statusInfo \}\) => Boolean\(\s*statusInfo\s*&& statusInfo\.text\s*&& statusInfo\.className !== 'path-alert-status-unavailable'\s*\)\s*\)\s*/.test(appJsResponse.body));
+    assert.ok(!appJsResponse.body.includes("return { text: '监控中', className: 'path-alert-status-monitoring' };"));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })'));
     assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
     assert.ok(!appJsResponse.body.includes('syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);'));
@@ -218,6 +226,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] muted trigger skipped'"));
+    assert.ok(appJsResponse.body.includes('const ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS = 8000;'));
+    assert.ok(appJsResponse.body.includes('let arbHighlightedOpportunityUntilById = new Map();'));
+    assert.ok(appJsResponse.body.includes('markTriggeredArbOpportunities'));
+    assert.ok(appJsResponse.body.includes('let arbGlobalTwoLegOnly = false;'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link-copy="1"'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-log-mute'));
@@ -304,6 +316,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("title: '特殊规则'"));
     assert.ok(appJsResponse.body.includes('const columns = ['));
     assert.ok(appJsResponse.body.includes('const includedSymbols = parseArbFilterInput(arbGlobalIncludedSymbolsInput);'));
+    assert.ok(appJsResponse.body.includes('const twoLegOnlyCycles = arbGlobalTwoLegOnly'));
+    assert.ok(appJsResponse.body.includes('cycleLegs.length === 2'));
     assert.ok(appJsResponse.body.includes('cycleContainsAnySymbols(cycle, includedSymbols)'));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
@@ -417,7 +431,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-editor-modal"'));
     assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-search-input"'));
     assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-dismissed-search-input"'));
-    assert.ok(pathAlertsResponse.body.includes('src="quote-calculator.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="shared/trading-pair-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));

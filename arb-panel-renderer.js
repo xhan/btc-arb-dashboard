@@ -87,11 +87,14 @@
       </div>
     `;
     const opportunityId = entry && entry.opportunityId ? String(entry.opportunityId) : '';
+    const className = entry && entry.isAlertHighlighted === true
+      ? 'arb-opportunity is-alert-highlight'
+      : 'arb-opportunity';
     const clickableAttrs = opportunityId && entry && entry.clickable !== false
       ? ` data-arb-opportunity-id="${escapeAttr(opportunityId)}" role="button" tabindex="0"`
       : '';
 
-    return `<div class="arb-opportunity"${clickableAttrs}>${labelHtml}${displayMessageHtml}${legHtml}</div>`;
+    return `<div class="${className}"${clickableAttrs}>${labelHtml}${displayMessageHtml}${legHtml}</div>`;
   }
 
   function renderSection(section, options) {

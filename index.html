@@ -790,6 +790,13 @@
         .arb-path-header-main { flex: 0 0 auto; min-width: 0; }
         .arb-path-header-controls { display: flex; align-items: center; gap: 8px; min-width: 0; margin-left: auto; }
         .arb-global-filter-row { display: flex; gap: 6px; align-items: center; }
+        .arb-global-filter-checkbox {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
         #arb-global-filter-input,
         #arb-global-chain-filter-input,
         #arb-global-include-filter-input {
@@ -824,6 +831,20 @@
         .arb-opportunity:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
         .arb-opportunity[data-arb-opportunity-id] { cursor: pointer; }
         .arb-opportunity[data-arb-opportunity-id]:hover { background-color: rgba(37, 99, 235, 0.04); }
+        .arb-opportunity.is-alert-highlight {
+            background: rgba(245, 158, 11, 0.14);
+            box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.55);
+            border-radius: 8px;
+            padding: 6px 8px;
+            margin: 6px -8px 0;
+        }
+        .arb-opportunity.is-alert-highlight:first-of-type {
+            margin-top: 0;
+        }
+        .dark-mode .arb-opportunity.is-alert-highlight {
+            background: rgba(245, 158, 11, 0.16);
+            box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.7);
+        }
         .arb-opportunity-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .arb-opportunity-head-label { flex: 1 1 auto; min-width: 0; }
         .arb-opportunity-head-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
@@ -1640,6 +1661,10 @@
                     <input id="arb-global-filter-input" type="text" placeholder="排除代币">
                     <input id="arb-global-chain-filter-input" type="text" placeholder="排除链">
                     <input id="arb-global-include-filter-input" type="text" placeholder="仅显示代币">
+                    <label class="arb-global-filter-checkbox" for="arb-global-two-leg-only">
+                        <input id="arb-global-two-leg-only" type="checkbox">
+                        <span>只看 2 腿</span>
+                    </label>
                     <button id="arb-global-filter-clear-btn" type="button" disabled>清空</button>
                 </div>
                 <div class="panel-header-actions">

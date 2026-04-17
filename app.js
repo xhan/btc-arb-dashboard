@@ -78,6 +78,10 @@
     let pathAlertExternalReloadTimer = null;
     let forceImmediateAlerts = false;
     let alertLogActiveTab = 'log';
+    const ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS = 8000;
+    let arbHighlightedOpportunityUntilById = new Map();
+    let arbOpportunityIdsByTargetKey = new Map();
+    let arbOpportunityHighlightCleanupTimer = null;
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
@@ -90,6 +94,7 @@
     let arbGlobalExcludedSymbolsInput = '';
     let arbGlobalExcludedChainsInput = '';
     let arbGlobalIncludedSymbolsInput = '';
+    let arbGlobalTwoLegOnly = false;
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
@@ -210,6 +215,7 @@
     const arbGlobalFilterInput = document.getElementById('arb-global-filter-input');
     const arbGlobalChainFilterInput = document.getElementById('arb-global-chain-filter-input');
     const arbGlobalIncludeFilterInput = document.getElementById('arb-global-include-filter-input');
+    const arbGlobalTwoLegOnlyInput = document.getElementById('arb-global-two-leg-only');
     const arbGlobalFilterClearBtn = document.getElementById('arb-global-filter-clear-btn');
     const arbPathHeader = document.getElementById('arb-path-header');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
@@ -930,6 +936,99 @@
         if (!Number.isFinite(numericQuoteId)) return null;
         const category = dashboardState.find((item) => Array.isArray(item && item.quotes) && item.quotes.some((quote) => Number(quote && quote.id) === numericQuoteId));
         return category ? category.quotes.find((quote) => Number(quote && quote.id) === numericQuoteId) || null : null;
+    }
+
+    function pruneArbOpportunityHighlightsInPlace(nowMs = Date.now()) {
+        if (!(arbHighlightedOpportunityUntilById instanceof Map) || !arbHighlightedOpportunityUntilById.size) {
+            return arbHighlightedOpportunityUntilById;
+        }
+        for (const [opportunityId, expiresAt] of arbHighlightedOpportunityUntilById.entries()) {
+            if (!Number.isFinite(expiresAt) || expiresAt <= nowMs) {
+                arbHighlightedOpportunityUntilById.delete(opportunityId);
+            }
+        }
+        return arbHighlightedOpportunityUntilById;
+    }
+
+    function scheduleArbOpportunityHighlightCleanup(nowMs = Date.now()) {
+        if (arbOpportunityHighlightCleanupTimer) {
+            clearTimeout(arbOpportunityHighlightCleanupTimer);
+            arbOpportunityHighlightCleanupTimer = null;
+        }
+        pruneArbOpportunityHighlightsInPlace(nowMs);
+        if (!arbHighlightedOpportunityUntilById.size) return;
+
+        let nextExpiresAt = Number.POSITIVE_INFINITY;
+        for (const expiresAt of arbHighlightedOpportunityUntilById.values()) {
+            if (Number.isFinite(expiresAt) && expiresAt < nextExpiresAt) {
+                nextExpiresAt = expiresAt;
+            }
+        }
+        if (!Number.isFinite(nextExpiresAt)) return;
+
+        const delayMs = Math.max(0, nextExpiresAt - nowMs);
+        arbOpportunityHighlightCleanupTimer = setTimeout(() => {
+            arbOpportunityHighlightCleanupTimer = null;
+            const previousSize = arbHighlightedOpportunityUntilById.size;
+            pruneArbOpportunityHighlightsInPlace(Date.now());
+            if (arbHighlightedOpportunityUntilById.size !== previousSize) {
+                updateArbPanel();
+            }
+            scheduleArbOpportunityHighlightCleanup(Date.now());
+        }, delayMs + 10);
+    }
+
+    function isArbOpportunityHighlighted(opportunityId, nowMs = Date.now()) {
+        if (!opportunityId) return false;
+        pruneArbOpportunityHighlightsInPlace(nowMs);
+        const expiresAt = arbHighlightedOpportunityUntilById.get(String(opportunityId));
+        return Number.isFinite(expiresAt) && expiresAt > nowMs;
+    }
+
+    function buildArbOpportunityHighlightTargetKeyFromCycle(cycle) {
+        if (!cycle || !Array.isArray(cycle.legs)) return '';
+        const candidate = buildMutedPathTargetFromCycleLegs(cycle.legs);
+        return candidate ? buildMutedPathTargetKey(candidate) : '';
+    }
+
+    function buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation) {
+        if (!alert || !alert.target || alert.target.type === 'quote') return '';
+        if (alert.target.type === 'path') {
+            return buildMutedPathTargetKey(alert);
+        }
+        return buildArbOpportunityHighlightTargetKeyFromCycle(evaluation && evaluation.cycle);
+    }
+
+    function registerArbOpportunityHighlightTarget(nextTargetMap, targetKey, opportunityId) {
+        if (!targetKey || !opportunityId) return;
+        const currentIds = nextTargetMap.get(targetKey);
+        if (currentIds) {
+            currentIds.push(opportunityId);
+            return;
+        }
+        nextTargetMap.set(targetKey, [opportunityId]);
+    }
+
+    function markTriggeredArbOpportunities(alert, evaluation, nowMs = Date.now()) {
+        const targetKey = buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation);
+        if (!targetKey) return false;
+        const opportunityIds = arbOpportunityIdsByTargetKey.get(targetKey);
+        if (!Array.isArray(opportunityIds) || !opportunityIds.length) return false;
+
+        let changed = false;
+        const nextExpiresAt = nowMs + ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS;
+        for (const opportunityId of opportunityIds) {
+            const normalizedId = String(opportunityId || '').trim();
+            if (!normalizedId) continue;
+            const previousExpiresAt = arbHighlightedOpportunityUntilById.get(normalizedId) || 0;
+            if (previousExpiresAt >= nextExpiresAt) continue;
+            arbHighlightedOpportunityUntilById.set(normalizedId, nextExpiresAt);
+            changed = true;
+        }
+        if (changed) {
+            scheduleArbOpportunityHighlightCleanup(nowMs);
+        }
+        return changed;
     }
 
     function buildLegacyQuoteAlertLogHtml(entry, nowMs = Date.now()) {
@@ -2982,8 +3081,11 @@
         if (arbGlobalIncludeFilterInput && arbGlobalIncludeFilterInput.value !== arbGlobalIncludedSymbolsInput) {
             arbGlobalIncludeFilterInput.value = arbGlobalIncludedSymbolsInput;
         }
+        if (arbGlobalTwoLegOnlyInput && arbGlobalTwoLegOnlyInput.checked !== arbGlobalTwoLegOnly) {
+            arbGlobalTwoLegOnlyInput.checked = arbGlobalTwoLegOnly;
+        }
         if (arbGlobalFilterClearBtn) {
-            arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim() && !arbGlobalExcludedChainsInput.trim() && !arbGlobalIncludedSymbolsInput.trim();
+            arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim() && !arbGlobalExcludedChainsInput.trim() && !arbGlobalIncludedSymbolsInput.trim() && arbGlobalTwoLegOnly !== true;
         }
     }
 
@@ -3100,7 +3202,7 @@
         openArbDetailModal(opportunityId);
     }
 
-    function createArbOpportunityEntry(targetMap, cycle, label, meta = {}) {
+    function createArbOpportunityEntry(targetMap, highlightTargetMap, cycle, label, meta = {}) {
         if (!cycle) return null;
         const opportunityId = getArbDetailUtils().buildUniqueArbOpportunityId(
             new Set(targetMap.keys()),
@@ -3115,11 +3217,17 @@
             ...meta
         };
         targetMap.set(opportunityId, entry);
+        registerArbOpportunityHighlightTarget(
+            highlightTargetMap,
+            buildArbOpportunityHighlightTargetKeyFromCycle(cycle),
+            opportunityId
+        );
 
         return {
             label,
             cycle,
             opportunityId,
+            isAlertHighlighted: isArbOpportunityHighlighted(opportunityId),
             clickable: meta.clickable !== false,
             displayMessage: typeof meta.displayMessage === 'string' ? meta.displayMessage : '',
             hideLegs: meta.hideLegs === true
@@ -3958,11 +4066,19 @@
         updateArbPanel();
     }
 
+    function handleArbGlobalTwoLegOnlyChange(event) {
+        const nextChecked = Boolean(event && event.target && event.target.checked);
+        if (nextChecked === arbGlobalTwoLegOnly) return;
+        arbGlobalTwoLegOnly = nextChecked;
+        updateArbPanel();
+    }
+
     function handleArbGlobalFilterClear() {
-        if (!arbGlobalExcludedSymbolsInput && !arbGlobalExcludedChainsInput && !arbGlobalIncludedSymbolsInput) return;
+        if (!arbGlobalExcludedSymbolsInput && !arbGlobalExcludedChainsInput && !arbGlobalIncludedSymbolsInput && !arbGlobalTwoLegOnly) return;
         arbGlobalExcludedSymbolsInput = '';
         arbGlobalExcludedChainsInput = '';
         arbGlobalIncludedSymbolsInput = '';
+        arbGlobalTwoLegOnly = false;
         updateArbPanel();
         if (arbGlobalFilterInput) {
             arbGlobalFilterInput.focus();
@@ -4073,6 +4189,15 @@
             label: rule.title,
             cycle: best.cycle,
             meetsTriggerCondition,
+            debugComparison: primaryStats
+                ? {
+                    netProfit: Number(primaryStats.netProfit),
+                    minNetProfit,
+                    netProfitBp: Number(primaryStats.netProfitBp),
+                    minNetProfitBp,
+                    meetsTriggerCondition
+                }
+                : null,
             displayMessage: String(best.display_message || ''),
             alertMessage: String(best.alert_message || '')
         };
@@ -4179,7 +4304,7 @@
         if (runtime.status === 'cooldown') {
             return { text: '冷却中', className: 'path-alert-status-cooldown' };
         }
-        return { text: '监控中', className: 'path-alert-status-monitoring' };
+        return { text: '', className: '' };
     }
 
     function buildPathAlertSummaryLines(alert) {
@@ -4453,7 +4578,7 @@
         return next.status || 'idle';
     }
 
-    function buildRuntimeDebugSnapshot(previous, next) {
+    function buildRuntimeDebugSnapshot(previous, next, evaluation) {
         if (!next || typeof next !== 'object') return null;
         return {
             now: Date.now(),
@@ -4461,7 +4586,10 @@
             reason: inferRuntimeDebugReason(previous, next),
             eligibleSince: next.eligibleSince,
             lastTriggeredAt: next.lastTriggeredAt,
-            cooldownUntil: next.cooldownUntil
+            cooldownUntil: next.cooldownUntil,
+            comparison: evaluation && evaluation.debugComparison && typeof evaluation.debugComparison === 'object'
+                ? { ...evaluation.debugComparison }
+                : null
         };
     }
 
@@ -4520,6 +4648,7 @@
         const nowMs = Date.now();
         const logTriggeredEntries = [];
         const remoteTriggeredEntries = [];
+        let shouldRefreshArbPanelHighlights = false;
 
         for (const alert of (pathAlertConfig.alerts || [])) {
             activeIds.add(alert.id);
@@ -4540,7 +4669,7 @@
             recordAlertDebug(
                 debugKind,
                 alert.id,
-                buildRuntimeDebugSnapshot(previous, next)
+                buildRuntimeDebugSnapshot(previous, next, evaluation)
             );
             let isMuted = false;
             if (next.shouldTrigger) {
@@ -4557,6 +4686,9 @@
                 if (mutedEntry) {
                     triggeredEntry.mutedEntry = mutedEntry;
                     isMuted = true;
+                }
+                if (markTriggeredArbOpportunities(alert, evaluation, nowMs)) {
+                    shouldRefreshArbPanelHighlights = true;
                 }
                 logTriggeredEntries.push(triggeredEntry);
                 if (!isMuted) {
@@ -4583,6 +4715,9 @@
         }
 
         updateAlertSoundState();
+        if (shouldRefreshArbPanelHighlights) {
+            updateArbPanel();
+        }
         renderPathAlertPanel();
     }
 
@@ -4731,10 +4866,33 @@
             return;
         }
 
-        const items = alerts.map((alert) => {
-            const runtime = pathAlertRuntimeState.get(alert.id) || null;
-            const evaluation = runtime && runtime.evaluation ? runtime.evaluation : null;
-            const statusInfo = getPathAlertStatusInfo(alert, runtime);
+        const alertItems = alerts
+            .map((alert) => {
+                const runtime = pathAlertRuntimeState.get(alert.id) || null;
+                const evaluation = runtime && runtime.evaluation ? runtime.evaluation : null;
+                const statusInfo = getPathAlertStatusInfo(alert, runtime);
+                return {
+                    alert,
+                    runtime,
+                    evaluation,
+                    statusInfo
+                };
+            })
+            .filter(({ statusInfo }) => Boolean(
+                statusInfo
+                && statusInfo.text
+                && statusInfo.className !== 'path-alert-status-unavailable'
+            ));
+
+        if (!alertItems.length) {
+            pathAlertContent.innerHTML = `${toolbar}<div class="path-alert-empty">暂无需要关注的路径报警</div>`;
+            return;
+        }
+
+        const items = alertItems.map(({ alert, runtime, evaluation, statusInfo }) => {
+            const statusTagHtml = statusInfo.text
+                ? `<span class="path-alert-status-tag ${statusInfo.className}">${statusInfo.text}</span>`
+                : '';
             const lastTriggeredText = runtime && runtime.lastTriggeredAt
                 ? new Date(runtime.lastTriggeredAt).toLocaleTimeString()
                 : '--';
@@ -4763,7 +4921,7 @@
                         </div>
                     </div>
                     <div class="path-alert-status-row">
-                        <span class="path-alert-status-tag ${statusInfo.className}">${statusInfo.text}</span>
+                        ${statusTagHtml}
                         <span class="path-alert-profit">${formatPathAlertEvaluationText(evaluation)}</span>
                     </div>
                     <div class="path-alert-item-meta">上次报警: ${escapeHtml(lastTriggeredText)}</div>
@@ -4969,6 +5127,7 @@
             ? topologyCache.ruleEdges
             : sharedRuleSnapshot.ruleEdges;
         const nextOpportunityMap = new Map();
+        const nextOpportunityIdsByTargetKey = new Map();
 
         const fixedSections = sharedRuleSnapshot.fixedResults
                 .map(({ rule, cycles }) => {
@@ -4978,6 +5137,7 @@
                     const opportunities = displayCycles
                         .map((cycle, index, items) => createArbOpportunityEntry(
                             nextOpportunityMap,
+                            nextOpportunityIdsByTargetKey,
                             cycle,
                             items.length > 1 ? `机会 ${index + 1}` : '',
                             { section: `fixed:${rule?.id || ''}`, alertPreset: { type: 'path' } }
@@ -4997,6 +5157,7 @@
         const specialEntries = specialOpportunities
             .map((opportunity) => createArbOpportunityEntry(
                 nextOpportunityMap,
+                nextOpportunityIdsByTargetKey,
                 opportunity.cycle,
                 opportunity.label,
                 {
@@ -5048,6 +5209,7 @@
             const displayEntries = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'
                 ? window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles(cycles, cycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
                     nextOpportunityMap,
+                    nextOpportunityIdsByTargetKey,
                     cycle,
                     `机会 ${index + 1}`,
                     { section: category.name, alertPreset: { type: 'path' } }
@@ -5055,6 +5217,7 @@
                 : cycleDisplayState.displayCycles
                     .map((cycle, index) => createArbOpportunityEntry(
                         nextOpportunityMap,
+                        nextOpportunityIdsByTargetKey,
                         cycle,
                         `机会 ${index + 1}`,
                         { section: category.name, alertPreset: { type: 'path' } }
@@ -5099,19 +5262,26 @@
                 .filter(Boolean)
         ));
         const includedSymbols = parseArbFilterInput(arbGlobalIncludedSymbolsInput);
+        const twoLegOnlyCycles = arbGlobalTwoLegOnly
+            ? globalCycles.filter((cycle) => {
+                const cycleLegs = Array.isArray(cycle && cycle.legs) ? cycle.legs.filter((leg) => !isRuleLeg(leg)) : [];
+                return cycleLegs.length === 2;
+            })
+            : globalCycles;
         const hasGlobalFilter = excludedSymbols.length || excludedChains.length || includedSymbols.length;
         const filteredGlobalCycles = hasGlobalFilter
-            ? globalCycles.filter(cycle =>
+            ? twoLegOnlyCycles.filter(cycle =>
                 (!includedSymbols.length || cycleContainsAnySymbols(cycle, includedSymbols)) &&
                 !cycleContainsAnySymbols(cycle, excludedSymbols) &&
                 !cycleContainsAnyChains(cycle, excludedChains)
             )
-            : globalCycles;
+            : twoLegOnlyCycles;
         updateGlobalArbFilterBar();
         const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
         const globalEntries = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'
             ? window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles(globalCycles, globalCycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
                 nextOpportunityMap,
+                nextOpportunityIdsByTargetKey,
                 cycle,
                 `机会 ${index + 1}`,
                 { section: '全局路径', alertPreset: { type: 'path' } }
@@ -5119,6 +5289,7 @@
             : globalCycleDisplayState.displayCycles
                 .map((cycle, index) => createArbOpportunityEntry(
                     nextOpportunityMap,
+                    nextOpportunityIdsByTargetKey,
                     cycle,
                     `机会 ${index + 1}`,
                     { section: '全局路径', alertPreset: { type: 'path' } }
@@ -5146,7 +5317,8 @@
 
         return {
             columns,
-            nextOpportunityMap
+            nextOpportunityMap,
+            nextOpportunityIdsByTargetKey
         };
     }
 
@@ -5158,9 +5330,10 @@
             return;
         }
 
-        const { columns, nextOpportunityMap } = panelData;
+        const { columns, nextOpportunityMap, nextOpportunityIdsByTargetKey } = panelData;
 
         arbOpportunityMap = nextOpportunityMap;
+        arbOpportunityIdsByTargetKey = nextOpportunityIdsByTargetKey instanceof Map ? nextOpportunityIdsByTargetKey : new Map();
         refreshArbOpportunityStore(nextOpportunityMap);
 
         arbPathContent.innerHTML = window.ArbPanelRenderer.renderArbGrid({
@@ -7259,6 +7432,9 @@
             if (arbGlobalIncludeFilterInput) {
                 arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput);
                 arbGlobalIncludeFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown);
+            }
+            if (arbGlobalTwoLegOnlyInput) {
+                arbGlobalTwoLegOnlyInput.addEventListener('change', handleArbGlobalTwoLegOnlyChange);
             }
             if (arbGlobalFilterClearBtn) {
                 arbGlobalFilterClearBtn.addEventListener('click', handleArbGlobalFilterClear);
