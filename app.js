@@ -3921,103 +3921,116 @@
                 if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) return;
 
                 const requestVersion = Number(card.requestVersion) || 0;
-                const startAmount = Number(card.inputAmount);
-                let rollingAmount = startAmount;
-                const rows = [];
-                let finalSymbol = '';
-                let shouldSkipApply = false;
 
-                for (const leg of executableLegs) {
-                    const match = findQuoteById(leg.quoteId);
-                    if (!match || !match.quote) {
-                        throw new Error('报价配置不存在');
+                try {
+                    const startAmount = Number(card.inputAmount);
+                    let rollingAmount = startAmount;
+                    const rows = [];
+                    let finalSymbol = '';
+                    let shouldSkipApply = false;
+
+                    for (const leg of executableLegs) {
+                        const match = findQuoteById(leg.quoteId);
+                        if (!match || !match.quote) {
+                            throw new Error('报价配置不存在');
+                        }
+                        const legInputAmount = rollingAmount;
+
+                        const { data, successSource } = await fetchQuoteByStrategy(match.quote, {
+                            signal: controller.signal,
+                            isInverseFetch: Boolean(leg.inverse),
+                            amount: legInputAmount,
+                            requestChannelId: 'default',
+                            skipDelay: true,
+                            beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)
+                        });
+
+                        if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) {
+                            return;
+                        }
+                        if (!getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
+                            shouldSkipApply = true;
+                            break;
+                        }
+
+                        if (getArbDetailUtils().shouldSyncArbDetailSnapshotForCard(cardIndex)) {
+                            syncArbDetailPrimaryCardQuoteState(
+                                match.quote,
+                                data,
+                                successSource,
+                                Boolean(leg.inverse)
+                            );
+                        }
+
+                        rollingAmount = data.finalAmountOut;
+                        finalSymbol = data.symbols.to || finalSymbol;
+                        const isInverseLeg = Boolean(leg.inverse);
+                        rows.push({
+                            quoteId: Number(match.quote.id),
+                            direction: isInverseLeg ? 'inverse' : 'forward',
+                            pricingMode: 'raw',
+                            chain: match.quote.chain,
+                            chainLabel: formatChainLabel(match.quote.chain),
+                            fromSymbol: data.symbols.from,
+                            toSymbol: data.symbols.to,
+                            fromTokenAddress: isInverseLeg ? match.quote.toToken : match.quote.fromToken,
+                            toTokenAddress: isInverseLeg ? match.quote.fromToken : match.quote.toToken,
+                            inputAmount: legInputAmount,
+                            rawPrice: data.rawPrice,
+                            rateText: getArbDetailUtils().buildArbDetailRateText(
+                                data.rawPrice,
+                                data.symbols.from,
+                                data.symbols.to
+                            ),
+                            amountText: `${formatDetailNumber(data.finalAmountOut)}`,
+                            sourceText: data.usedSource || match.quote.preferredSource || 'Unknown'
+                        });
                     }
-                    const legInputAmount = rollingAmount;
 
-                    const { data, successSource } = await fetchQuoteByStrategy(match.quote, {
-                        signal: controller.signal,
-                        isInverseFetch: Boolean(leg.inverse),
-                        amount: legInputAmount,
-                        requestChannelId: 'default',
-                        skipDelay: true,
-                        beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)
-                    });
+                    if (shouldSkipApply || !getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
+                        continue;
+                    }
 
-                    if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) {
-                        return;
+                    const summary = getArbDetailUtils().summarizeDetailResult(startAmount, rollingAmount);
+                    if (cardIndex === 3) {
+                        const baseRows = Array.isArray(arbDetailState.cards[0]?.rows) ? arbDetailState.cards[0].rows : [];
+                        rows.forEach((row, rowIndex) => {
+                            const baseRow = baseRows[rowIndex];
+                            const rateDeltaText = getArbDetailUtils().buildArbDetailRateDeltaText(
+                                baseRow && baseRow.rawPrice,
+                                row && row.rawPrice
+                            );
+                            row.rateDeltaText = rateDeltaText;
+                            row.rateDeltaTone = getArbDetailRateDeltaTone(rateDeltaText);
+                        });
+                    }
+                    card.rows = rows;
+                    card.summary = {
+                        ...summary,
+                        symbol: finalSymbol
+                    };
+                    card.error = '';
+                    renderArbDetailCardContents();
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        throw error;
                     }
                     if (!getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
-                        shouldSkipApply = true;
-                        break;
+                        continue;
                     }
-
-                    if (getArbDetailUtils().shouldSyncArbDetailSnapshotForCard(cardIndex)) {
-                        syncArbDetailPrimaryCardQuoteState(
-                            match.quote,
-                            data,
-                            successSource,
-                            Boolean(leg.inverse)
-                        );
-                    }
-
-                    rollingAmount = data.finalAmountOut;
-                    finalSymbol = data.symbols.to || finalSymbol;
-                    const isInverseLeg = Boolean(leg.inverse);
-                    rows.push({
-                        quoteId: Number(match.quote.id),
-                        direction: isInverseLeg ? 'inverse' : 'forward',
-                        pricingMode: 'raw',
-                        chain: match.quote.chain,
-                        chainLabel: formatChainLabel(match.quote.chain),
-                        fromSymbol: data.symbols.from,
-                        toSymbol: data.symbols.to,
-                        fromTokenAddress: isInverseLeg ? match.quote.toToken : match.quote.fromToken,
-                        toTokenAddress: isInverseLeg ? match.quote.fromToken : match.quote.toToken,
-                        inputAmount: legInputAmount,
-                        rawPrice: data.rawPrice,
-                        rateText: getArbDetailUtils().buildArbDetailRateText(
-                            data.rawPrice,
-                            data.symbols.from,
-                            data.symbols.to
-                        ),
-                        amountText: `${formatDetailNumber(data.finalAmountOut)}`,
-                        sourceText: data.usedSource || match.quote.preferredSource || 'Unknown'
-                    });
+                    getArbDetailUtils().applyArbDetailCardError(
+                        arbDetailState.cards,
+                        cardIndex,
+                        error.message || '详情报价失败'
+                    );
+                    renderArbDetailCardContents();
                 }
-
-                if (shouldSkipApply || !getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
-                    continue;
-                }
-
-                const summary = getArbDetailUtils().summarizeDetailResult(startAmount, rollingAmount);
-                if (cardIndex === 3) {
-                    const baseRows = Array.isArray(arbDetailState.cards[0]?.rows) ? arbDetailState.cards[0].rows : [];
-                    rows.forEach((row, rowIndex) => {
-                        const baseRow = baseRows[rowIndex];
-                        const rateDeltaText = getArbDetailUtils().buildArbDetailRateDeltaText(
-                            baseRow && baseRow.rawPrice,
-                            row && row.rawPrice
-                        );
-                        row.rateDeltaText = rateDeltaText;
-                        row.rateDeltaTone = getArbDetailRateDeltaTone(rateDeltaText);
-                    });
-                }
-                card.rows = rows;
-                card.summary = {
-                    ...summary,
-                    symbol: finalSymbol
-                };
-                card.error = '';
-                renderArbDetailCardContents();
             }
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                for (const card of arbDetailState.cards) {
-                    card.rows = [];
-                    card.summary = null;
-                    card.error = error.message || '详情报价失败';
-                }
+            if (error.name === 'AbortError') {
+                return false;
             }
+            throw error;
         } finally {
             if (arbDetailFetchController === controller) {
                 arbDetailFetchController = null;

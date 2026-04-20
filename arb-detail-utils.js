@@ -280,6 +280,15 @@
     return Number(expectedVersion) === Number(currentVersion);
   }
 
+  function applyArbDetailCardError(cards, cardIndex, errorMessage) {
+    if (!Array.isArray(cards)) return;
+    const card = cards[cardIndex];
+    if (!card || typeof card !== 'object') return;
+    card.rows = [];
+    card.summary = null;
+    card.error = errorMessage || '详情报价失败';
+  }
+
   return {
     buildDetailInputAmounts,
     buildArbDetailRateText,
@@ -302,6 +311,7 @@
     buildArbOpportunityStableId,
     buildUniqueArbOpportunityId,
     getNextArbDetailRequestVersion,
-    shouldApplyArbDetailRequestVersion
+    shouldApplyArbDetailRequestVersion,
+    applyArbDetailCardError
   };
 }));

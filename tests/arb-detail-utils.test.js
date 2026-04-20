@@ -18,6 +18,7 @@ const {
   buildUniqueArbOpportunityId,
   getNextArbDetailRequestVersion,
   shouldApplyArbDetailRequestVersion,
+  applyArbDetailCardError,
   shouldSyncArbDetailSnapshotForCard,
   buildArbDetailSnapshotMonitorState,
   buildArbDetailDexLink,
@@ -288,6 +289,25 @@ assert.strictEqual(
 assert.strictEqual(
   shouldApplyArbDetailRequestVersion(2, 3),
   false
+);
+
+const detailCards = [
+  { rows: [{ quoteId: 1 }], summary: { profit: 1 }, error: '' },
+  { rows: [{ quoteId: 2 }], summary: { profit: 2 }, error: '' },
+  { rows: [{ quoteId: 3 }], summary: { profit: 3 }, error: '' },
+  { rows: [{ quoteId: 4 }], summary: { profit: 4 }, error: '' }
+];
+
+applyArbDetailCardError(detailCards, 1, '流动性不足');
+
+assert.deepStrictEqual(
+  detailCards,
+  [
+    { rows: [{ quoteId: 1 }], summary: { profit: 1 }, error: '' },
+    { rows: [], summary: null, error: '流动性不足' },
+    { rows: [{ quoteId: 3 }], summary: { profit: 3 }, error: '' },
+    { rows: [{ quoteId: 4 }], summary: { profit: 4 }, error: '' }
+  ]
 );
 
 assert.strictEqual(
