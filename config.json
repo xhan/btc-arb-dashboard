@@ -787,6 +787,15 @@
           "toToken": "0x4200000000000000000000000000000000000006",
           "showInverse": false,
           "requestChannelId": "ch2"
+        },
+        {
+          "id": 1776594764789,
+          "chain": "katana",
+          "amount": 10,
+          "preferredSource": "LI.FI",
+          "fromToken": "0xEE7D8BCFb72bC1880D0Cf19822eB0A2e6577aB62",
+          "toToken": "0x9893989433e7a383Cb313953e4c2365107dc19a7",
+          "showInverse": true
         }
       ]
     },
