@@ -820,6 +820,10 @@
         .arb-section { border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; margin-bottom: 8px; background-color: rgba(0,0,0,0.01); }
         .dark-mode .arb-section { background-color: rgba(255,255,255,0.02); }
         .arb-section-title { font-weight: 700; margin-bottom: 6px; font-size: 13px; }
+        .arb-section-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+        .arb-section-title-row .arb-section-title { margin-bottom: 0; }
+        .arb-section-title-profit { flex-shrink: 0; font-size: 12px; font-weight: 700; }
+        .arb-section-special { padding: 8px; }
         .arb-path-line { margin-bottom: 4px; line-height: 1.35; }
         .arb-path-display-line {
             white-space: pre-wrap;
@@ -829,6 +833,11 @@
         .arb-path-display-line-empty { min-height: 0.8em; }
         .arb-opportunity { padding-top: 6px; margin-top: 6px; border-top: 1px dashed var(--border-color); }
         .arb-opportunity:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+        .arb-opportunity-special-body {
+            padding: 0;
+            margin-top: 0;
+            border-top: none;
+        }
         .arb-opportunity[data-arb-opportunity-id] { cursor: pointer; }
         .arb-opportunity[data-arb-opportunity-id]:hover { background-color: rgba(37, 99, 235, 0.04); }
         .arb-opportunity.is-alert-highlight {
@@ -1921,11 +1930,11 @@
     <script src="arb-path-template-cache-utils.js"></script>
     <script src="arb-rule-snapshot-utils.js"></script>
     <script src="alert-log-ui-utils.js"></script>
-    <script src="path-alert-utils.js"></script>
     <script src="muted-path-storage-utils.js"></script>
     <script src="muted-path-leg-utils.js"></script>
     <script src="alert-debug-utils.js"></script>
     <script src="special-rule-alert-config-utils.js"></script>
+    <script src="path-alert-utils.js"></script>
     <script src="special-rule-alert-utils.js"></script>
     <script src="path-alert-notification-utils.js"></script>
     <script src="quote-alert-config-utils.js"></script>

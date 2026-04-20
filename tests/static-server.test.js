@@ -106,7 +106,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="special-rule-alert-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="path-alert-utils.js"') < response.body.indexOf('src="muted-path-storage-utils.js"')
+      response.body.indexOf('src="muted-path-storage-utils.js"') < response.body.indexOf('src="path-alert-utils.js"')
     );
     assert.ok(!response.body.includes('id="alert-sound"'));
     assert.ok(!response.body.includes('src="alert.mp3"'));
@@ -173,6 +173,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('height: 104px;'));
     assert.ok(response.body.includes('.arb-detail-leg-rate-delta {'));
     assert.ok(response.body.includes('.arb-detail-leg-rate-delta.positive {'));
+    const specialRuleConfigScriptIndex = response.body.indexOf('special-rule-alert-config-utils.js');
+    const pathAlertUtilsScriptIndex = response.body.indexOf('path-alert-utils.js');
+    assert.ok(specialRuleConfigScriptIndex >= 0);
+    assert.ok(pathAlertUtilsScriptIndex >= 0);
+    assert.ok(specialRuleConfigScriptIndex < pathAlertUtilsScriptIndex);
 
     const appJsResponse = await request('/app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
@@ -313,7 +318,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('setArbPanelMaxHeight();'));
     assert.ok(appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
     assert.ok(appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
-    assert.ok(appJsResponse.body.includes("title: '特殊规则'"));
+    assert.ok(appJsResponse.body.includes("const specialSections = SPECIAL_ARB_RULES"));
+    assert.ok(appJsResponse.body.includes("emptyText: '无收益率'"));
     assert.ok(appJsResponse.body.includes('const columns = ['));
     assert.ok(appJsResponse.body.includes('const includedSymbols = parseArbFilterInput(arbGlobalIncludedSymbolsInput);'));
     assert.ok(appJsResponse.body.includes('const twoLegOnlyCycles = arbGlobalTwoLegOnly'));

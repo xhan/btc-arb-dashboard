@@ -62,6 +62,7 @@
 
     const profitClass = cycle.profitRate >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
     const profitText = (options.formatProfit || defaultFormatProfit)(cycle.profitRate);
+    const isSpecialRuleEntry = entry && entry.entryType === 'special-rule';
     const labelTextHtml = entry && entry.label
       ? `<div class="arb-path-line arb-opportunity-head-label"><strong>${entry.label}</strong></div>`
       : '<div class="arb-path-line arb-opportunity-head-label" aria-hidden="true"></div>';
@@ -80,16 +81,23 @@
         ))
         .join('')
       : '';
-    const labelHtml = `
+    const labelHtml = isSpecialRuleEntry
+      ? ''
+      : `
       <div class="arb-opportunity-head">
         ${labelTextHtml}
         <div class="arb-opportunity-head-actions">${profitHtml}</div>
       </div>
     `;
     const opportunityId = entry && entry.opportunityId ? String(entry.opportunityId) : '';
-    const className = entry && entry.isAlertHighlighted === true
-      ? 'arb-opportunity is-alert-highlight'
-      : 'arb-opportunity';
+    const classNames = ['arb-opportunity'];
+    if (isSpecialRuleEntry) {
+      classNames.push('arb-opportunity-special-body');
+    }
+    if (entry && entry.isAlertHighlighted === true) {
+      classNames.push('is-alert-highlight');
+    }
+    const className = classNames.join(' ');
     const clickableAttrs = opportunityId && entry && entry.clickable !== false
       ? ` data-arb-opportunity-id="${escapeAttr(opportunityId)}" role="button" tabindex="0"`
       : '';
@@ -111,10 +119,22 @@
       : `<div class="arb-path-line">${emptyText}</div>`;
 
     const title = section && section.title ? section.title : '';
+    const titleProfitRate = section && Number.isFinite(section.titleProfitRate)
+      ? section.titleProfitRate
+      : null;
+    const titleProfitClass = titleProfitRate != null && titleProfitRate >= 0
+      ? 'arb-profit'
+      : 'arb-profit arb-profit-neg';
+    const titleRowHtml = section && section.sectionType === 'special-rule'
+      ? `<div class="arb-section-title-row"><div class="arb-section-title">${escapeHtml(title)}</div>${titleProfitRate != null ? `<div class="arb-section-title-profit ${titleProfitClass}">${escapeHtml((options.formatProfit || defaultFormatProfit)(titleProfitRate))}</div>` : ''}</div>`
+      : `<div class="arb-section-title">${escapeHtml(title)}</div>`;
     const headerExtraHtml = section && section.headerExtraHtml ? section.headerExtraHtml : '';
     const footerHtml = section && section.footerHtml ? section.footerHtml : '';
+    const sectionClassName = section && section.sectionType === 'special-rule'
+      ? 'arb-section arb-section-special'
+      : 'arb-section';
 
-    return `<div class="arb-section"><div class="arb-section-title">${title}</div>${headerExtraHtml}${body}${footerHtml}</div>`;
+    return `<div class="${sectionClassName}">${titleRowHtml}${headerExtraHtml}${body}${footerHtml}</div>`;
   }
 
   function renderArbGrid(config = {}) {

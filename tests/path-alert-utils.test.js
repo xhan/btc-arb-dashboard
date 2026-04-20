@@ -1,4 +1,7 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
 
 const {
   DEFAULT_PATH_ALERT_SETTINGS,
@@ -171,6 +174,48 @@ const normalizedSpecialRuleConfig = normalizeAlertConfig({
   ]
 });
 assert.deepStrictEqual(normalizedSpecialRuleConfig.alerts[0].specialRuleConfig, {
+  minNetProfit: 8,
+  minNetProfitBp: 0.5
+});
+
+const browserLikeContext = {
+  console,
+  globalThis: {},
+  setTimeout,
+  clearTimeout
+};
+browserLikeContext.globalThis = browserLikeContext;
+vm.createContext(browserLikeContext);
+const browserLikePathAlertUtilsSource = fs.readFileSync(path.join(__dirname, '..', 'path-alert-utils.js'), 'utf8');
+vm.runInContext(browserLikePathAlertUtilsSource, browserLikeContext);
+browserLikeContext.SpecialRuleAlertConfigUtils = {
+  normalizeSpecialRuleAlertConfig(input) {
+    return {
+      minNetProfit: Number(input && input.minNetProfit),
+      minNetProfitBp: Number(input && input.minNetProfitBp)
+    };
+  }
+};
+const browserNormalizedSpecialRuleConfig = browserLikeContext.PathAlertUtils.normalizeAlertConfig({
+  settings: { defaultCooldownSec: 180 },
+  alerts: [
+    {
+      id: 'rule-alert-special-usdtb-bybit',
+      name: 'USDtb <-> BYBIT',
+      enabled: true,
+      target: {
+        type: 'rule',
+        ruleKind: 'special',
+        ruleId: 'special:usdtb-bybit'
+      },
+      specialRuleConfig: {
+        minNetProfit: 8,
+        minNetProfitBp: 0.5
+      }
+    }
+  ]
+});
+assert.deepStrictEqual(browserNormalizedSpecialRuleConfig.alerts[0].specialRuleConfig, {
   minNetProfit: 8,
   minNetProfitBp: 0.5
 });

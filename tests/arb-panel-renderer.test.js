@@ -89,3 +89,35 @@ const highlightedHtml = renderArbGrid({
 });
 
 assert.ok(highlightedHtml.includes('class="arb-opportunity is-alert-highlight"'));
+
+const specialHtml = renderArbGrid({
+  columns: [
+    [
+      {
+        title: 'WBTC <-> BYBIT',
+        sectionType: 'special-rule',
+        titleProfitRate: 0.00013,
+        opportunities: [
+          {
+            label: '',
+            opportunityId: 'special-1',
+            profitRate: 0.00013,
+            entryType: 'special-rule',
+            displayMessage: '（ETH）cbBTC -> WBTC 1.001562\n（Bybit）WBTC -> BTC 0.9992 bid1\n\n1) 0.02001   0.9992   💹7.6‱\n\n1.00000   💰0.00059   💹5.9‱\n2.30000   💰0.00247   💹10.7‱(MAX)',
+            hideLegs: true,
+            clickable: false
+          }
+        ]
+      }
+    ]
+  ],
+  formatProfit: (profitRate) => `${(profitRate * 10000).toFixed(2)}`
+});
+
+assert.ok(specialHtml.includes('class="arb-section arb-section-special"'));
+assert.ok(specialHtml.includes('class="arb-section-title-row"'));
+assert.ok(specialHtml.includes('WBTC &lt;-&gt; BYBIT'));
+assert.ok(specialHtml.includes('class="arb-section-title-profit arb-profit">1.30</div>'));
+assert.ok(specialHtml.includes('class="arb-opportunity arb-opportunity-special-body"'));
+assert.ok(!specialHtml.includes('arb-opportunity-head'));
+assert.ok(specialHtml.includes('class="arb-path-line arb-path-display-line">1.00000   💰0.00059   💹5.9‱</div>'));

@@ -1,10 +1,13 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./special-rule-alert-config-utils'));
+    module.exports = factory(
+      typeof globalThis !== 'undefined' ? globalThis : root,
+      require('./special-rule-alert-config-utils')
+    );
     return;
   }
-  root.PathAlertUtils = factory(root.SpecialRuleAlertConfigUtils || null);
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (specialRuleAlertConfigUtils) {
+  root.PathAlertUtils = factory(root, root.SpecialRuleAlertConfigUtils || null);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (root, specialRuleAlertConfigUtils) {
   const DEFAULT_PATH_ALERT_WEBHOOK_URL = 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder';
   const DEFAULT_TELEGRAM_BOT_API_BASE_URL = 'https://api.telegram.org';
   const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
@@ -45,6 +48,23 @@
 
   function cloneDefaultSettings() {
     return { ...DEFAULT_PATH_ALERT_SETTINGS };
+  }
+
+  function getSpecialRuleAlertConfigUtils() {
+    if (
+      specialRuleAlertConfigUtils
+      && typeof specialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function'
+    ) {
+      return specialRuleAlertConfigUtils;
+    }
+    if (
+      root
+      && root.SpecialRuleAlertConfigUtils
+      && typeof root.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function'
+    ) {
+      return root.SpecialRuleAlertConfigUtils;
+    }
+    return null;
   }
 
   function normalizePathAlertLeg(leg) {
@@ -126,13 +146,11 @@
     };
 
     normalized.target = target;
-    if (
-      target.type === 'rule'
-      && target.ruleKind === 'special'
-      && specialRuleAlertConfigUtils
-      && typeof specialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function'
-    ) {
-      normalized.specialRuleConfig = specialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(alert.specialRuleConfig);
+    if (target.type === 'rule' && target.ruleKind === 'special') {
+      const utils = getSpecialRuleAlertConfigUtils();
+      if (utils) {
+        normalized.specialRuleConfig = utils.normalizeSpecialRuleAlertConfig(alert.specialRuleConfig);
+      }
     }
     return normalized;
   }

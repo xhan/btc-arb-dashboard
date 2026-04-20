@@ -366,15 +366,15 @@
         indexText: `${item.index})`,
         sizeText: formatConfiguredNumber(item.size, this.depthSizeDecimals, 6),
         priceText: formatNumber(item.price, 6),
-        bpText: `💹 ${formatSignedFixedNumber(item.unitProfitBp, this.bpDecimals ?? 1)}‱`
+        bpText: `💹${formatSignedFixedNumber(item.unitProfitBp, this.bpDecimals ?? 1)}‱`
       };
     }
 
     buildTargetLine(amount, profit, bp, isMax = false) {
       return {
         amountText: formatConfiguredNumber(amount, this.targetAmountDecimals, 6),
-        profitText: `💰 ${formatConfiguredSignedNumber(profit, this.profitDecimals, 8)}`,
-        bpText: `💹 ${formatSignedFixedNumber(bp, this.bpDecimals ?? 1)}‱`,
+        profitText: `💰${formatConfiguredSignedNumber(profit, this.profitDecimals, 8)}`,
+        bpText: `💹${formatSignedFixedNumber(bp, this.bpDecimals ?? 1)}‱`,
         isMax
       };
     }
@@ -384,7 +384,7 @@
       const sizeWidth = rows.reduce((max, row) => Math.max(max, row.sizeText.length), 0);
       const priceWidth = rows.reduce((max, row) => Math.max(max, row.priceText.length), 0);
       return rows.map((row) => (
-        `${row.indexText} ${padRight(row.sizeText, sizeWidth)}     ${padRight(row.priceText, priceWidth)}     ${row.bpText}`
+        `${row.indexText} ${padRight(row.sizeText, sizeWidth)}   ${padRight(row.priceText, priceWidth)}   ${row.bpText}`
       ));
     }
 
@@ -398,7 +398,7 @@
       const profitWidth = rows.reduce((max, row) => Math.max(max, row.profitText.length), 0);
 
       return rows.map((row) => (
-        `${padRight(row.amountText, amountWidth)}     ${padRight(row.profitText, profitWidth)}     ${row.bpText}${row.isMax ? '(MAX)' : ''}`
+        `${padRight(row.amountText, amountWidth)}   ${padRight(row.profitText, profitWidth)}   ${row.bpText}${row.isMax ? '(MAX)' : ''}`
       ));
     }
 
@@ -541,6 +541,7 @@
       });
       const primary = sorted[0];
       const secondary = sorted[1] || null;
+      const targetResults = this.buildDisplayTargetResults(primary, rule);
       const cycle = this.buildCycle(primary, rule);
       const displayMessage = this.buildDisplayMessage(primary, secondary, rule);
       const alertMessage = this.buildAlertMessage(primary, secondary, rule);
@@ -554,7 +555,8 @@
         alert_message: alertMessage,
         stats: {
           primary,
-          secondary
+          secondary,
+          targetResults
         }
       };
     }

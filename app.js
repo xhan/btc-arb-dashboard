@@ -3230,7 +3230,8 @@
             isAlertHighlighted: isArbOpportunityHighlighted(opportunityId),
             clickable: meta.clickable !== false,
             displayMessage: typeof meta.displayMessage === 'string' ? meta.displayMessage : '',
-            hideLegs: meta.hideLegs === true
+            hideLegs: meta.hideLegs === true,
+            entryType: typeof meta.entryType === 'string' ? meta.entryType : ''
         };
     }
 
@@ -4186,31 +4187,24 @@
         }
         const primaryStats = best.stats && best.stats.primary ? best.stats.primary : null;
         const specialRuleConfig = resolveSpecialRuleAlertConfig(alert);
-        const minNetProfit = Number(specialRuleConfig.minNetProfit);
-        const minNetProfitBp = Number(specialRuleConfig.minNetProfitBp);
-        const meetsTriggerCondition = primaryStats
-            && Number.isFinite(minNetProfit)
-            && Number.isFinite(minNetProfitBp)
-            ? (
-                Number(primaryStats.netProfit) > minNetProfit
-                && Number(primaryStats.netProfitBp) > minNetProfitBp
-            )
-            : false;
+        const triggerEvaluation = window.SpecialRuleAlertConfigUtils
+            && typeof window.SpecialRuleAlertConfigUtils.evaluateSpecialRuleTrigger === 'function'
+            ? window.SpecialRuleAlertConfigUtils.evaluateSpecialRuleTrigger(best.stats, specialRuleConfig)
+            : {
+                meetsTriggerCondition: false,
+                netProfit: Number(primaryStats && primaryStats.netProfit),
+                minNetProfit: Number(specialRuleConfig.minNetProfit),
+                netProfitBp: Number(primaryStats && primaryStats.netProfitBp),
+                minNetProfitBp: Number(specialRuleConfig.minNetProfitBp)
+            };
+        const meetsTriggerCondition = triggerEvaluation.meetsTriggerCondition === true;
         return {
             available: true,
             profitRate: best.cycle.profitRate,
             label: rule.title,
             cycle: best.cycle,
             meetsTriggerCondition,
-            debugComparison: primaryStats
-                ? {
-                    netProfit: Number(primaryStats.netProfit),
-                    minNetProfit,
-                    netProfitBp: Number(primaryStats.netProfitBp),
-                    minNetProfitBp,
-                    meetsTriggerCondition
-                }
-                : null,
+            debugComparison: triggerEvaluation,
             displayMessage: String(best.display_message || ''),
             alertMessage: String(best.alert_message || '')
         };
@@ -5162,9 +5156,6 @@
                         emptyText: '等待数据...'
                     };
                 });
-        const specialRuleTitles = SPECIAL_ARB_RULES
-            .filter((rule) => rule && typeof rule.title === 'string' && rule.title.trim())
-            .map((rule) => rule.title.trim());
         const specialOpportunities = sharedRuleSnapshot.specialResults
             .flatMap(({ opportunities }) => Array.isArray(opportunities) ? opportunities : []);
         const specialEntries = specialOpportunities
@@ -5175,6 +5166,7 @@
                 opportunity.label,
                 {
                     section: 'special',
+                    entryType: 'special-rule',
                     clickable: false,
                     displayMessage: String(opportunity.display_message || ''),
                     hideLegs: true,
@@ -5186,14 +5178,27 @@
                 }
             ))
             .filter(Boolean);
-        const specialEmptyText = specialRuleTitles.length
-            ? `${specialRuleTitles.join(' / ')} | 无收益率`
-            : '暂无可用规则';
-        const specialSections = [{
-            title: '特殊规则',
-            opportunities: specialEntries.filter((entry) => entry && entry.cycle && entry.cycle.profitRate > 0),
-            emptyText: specialEmptyText
-        }];
+        const specialEntriesByLabel = new Map(
+            specialEntries
+                .filter((entry) => entry && typeof entry.label === 'string' && entry.label.trim())
+                .map((entry) => [entry.label.trim(), entry])
+        );
+        const specialSections = SPECIAL_ARB_RULES
+            .filter((rule) => rule && typeof rule.title === 'string' && rule.title.trim())
+            .map((rule) => {
+                const title = rule.title.trim();
+                const entry = specialEntriesByLabel.get(title);
+                const opportunity = entry && entry.cycle && entry.cycle.profitRate > 0
+                    ? { ...entry, label: '' }
+                    : null;
+                return {
+                    title,
+                    sectionType: 'special-rule',
+                    titleProfitRate: opportunity && opportunity.cycle ? opportunity.cycle.profitRate : null,
+                    opportunities: opportunity ? [opportunity] : [],
+                    emptyText: '无收益率'
+                };
+            });
 
         const categorySections = [];
         let lbtcSection = null;
