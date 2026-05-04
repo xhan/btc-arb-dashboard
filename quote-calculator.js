@@ -1,3 +1,7 @@
+const TradingPairUtils = typeof module === 'object' && module.exports
+  ? require('./shared/trading-pair-utils')
+  : null;
+
 function extractPriceFromText(text) {
   if (!text) return null;
   const delimiterMatch = text.match(/(?:≈|=|:)\s*([-+]?\d*\.?\d+(?:e[+-]?\d+)?)/i);
@@ -8,6 +12,10 @@ function extractPriceFromText(text) {
 }
 
 function splitCompactTradingPairSymbol(symbol) {
+  if (TradingPairUtils && typeof TradingPairUtils.splitCompactTradingPairSymbol === 'function') {
+    return TradingPairUtils.splitCompactTradingPairSymbol(symbol);
+  }
+
   if (typeof symbol !== 'string') return null;
   const raw = symbol.trim().toUpperCase();
   if (!raw) return null;

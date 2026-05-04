@@ -18,6 +18,7 @@ assert.ok(!Object.prototype.hasOwnProperty.call(aliasRules, 'cbBTC'));
 assert.ok(!Object.prototype.hasOwnProperty.call(aliasRules, 'tBTC'));
 
 const defaultAliasRules = buildAliasRulesFromGroups(DEFAULT_ASSET_EQUIVALENCE_GROUPS);
+assert.strictEqual(defaultAliasRules.WETH, 'ETH');
 assert.strictEqual(defaultAliasRules.TBTC, 'tBTC');
 assert.strictEqual(defaultAliasRules['USD₮0'], 'USDT');
 assert.strictEqual(defaultAliasRules.USDT0, 'USDT');

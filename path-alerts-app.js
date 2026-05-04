@@ -104,8 +104,8 @@
   }
 
   function parseCexTradingPairSymbol(symbol) {
-    if (window.QuoteCalculator && typeof window.QuoteCalculator.splitCompactTradingPairSymbol === 'function') {
-      const parsed = window.QuoteCalculator.splitCompactTradingPairSymbol(symbol);
+    if (window.TradingPairUtils && typeof window.TradingPairUtils.splitCompactTradingPairSymbol === 'function') {
+      const parsed = window.TradingPairUtils.splitCompactTradingPairSymbol(symbol);
       if (parsed && parsed.fromSymbol && parsed.toSymbol) {
         return parsed;
       }

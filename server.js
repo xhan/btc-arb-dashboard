@@ -31,7 +31,7 @@ const {
     normalizeAlertConfig
 } = require('./path-alert-utils');
 const { buildPathAlertCandidates } = require('./path-alert-candidate-utils');
-const { splitCompactTradingPairSymbol } = require('./quote-calculator');
+const { splitCompactTradingPairSymbol } = require('./shared/trading-pair-utils');
 const {
     createCetusAggregatorClient,
     normalizeCetusAggregatorConfig

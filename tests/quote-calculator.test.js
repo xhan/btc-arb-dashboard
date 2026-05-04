@@ -10,6 +10,9 @@ const {
   formatCalculatorEntry,
   splitCompactTradingPairSymbol
 } = require('../quote-calculator');
+const {
+  splitCompactTradingPairSymbol: splitCompactTradingPairSymbolFromShared
+} = require('../shared/trading-pair-utils');
 
 assert.strictEqual(extractPriceFromText('cbBTC ≈ 1.003060 WBTC'), 1.00306);
 assert.strictEqual(extractPriceFromText('WBTC = 0.998812 cbBTC'), 0.998812);
@@ -41,6 +44,10 @@ assert.deepStrictEqual(
   { fromSymbol: 'WBTC', toSymbol: 'BTC' }
 );
 assert.deepStrictEqual(
+  splitCompactTradingPairSymbolFromShared('WBTCBTC'),
+  { fromSymbol: 'WBTC', toSymbol: 'BTC' }
+);
+assert.deepStrictEqual(
   splitCompactTradingPairSymbol('BTCUSDT'),
   { fromSymbol: 'BTC', toSymbol: 'USDT' }
 );
@@ -49,9 +56,16 @@ assert.deepStrictEqual(
   { fromSymbol: 'ETH', toSymbol: 'BTC' }
 );
 assert.strictEqual(splitCompactTradingPairSymbol('BTC'), null);
+assert.strictEqual(splitCompactTradingPairSymbolFromShared('BTC'), null);
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'quote-calculator.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
 assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));
 assert.ok(browserSandbox.window.QuoteCalculator, 'expected QuoteCalculator to attach to window');
+
+const tradingPairBrowserCode = fs.readFileSync(path.join(__dirname, '..', 'shared', 'trading-pair-utils.js'), 'utf8');
+const tradingPairBrowserSandbox = { window: {} };
+vm.createContext(tradingPairBrowserSandbox);
+assert.doesNotThrow(() => vm.runInContext(tradingPairBrowserCode, tradingPairBrowserSandbox));
+assert.ok(tradingPairBrowserSandbox.window.TradingPairUtils, 'expected TradingPairUtils to attach to window');

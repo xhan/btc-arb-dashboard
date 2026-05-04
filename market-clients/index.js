@@ -1,7 +1,7 @@
 const { ethers } = require('ethers');
 const BN = require('bn.js');
 const { createBinanceClient } = require('./providers/binance');
-const { splitCompactTradingPairSymbol } = require('../quote-calculator');
+const { splitCompactTradingPairSymbol } = require('../shared/trading-pair-utils');
 const { createBybitClient } = require('./providers/bybit');
 const { buildLifiChainIdMap, resolveLifiChainId } = require('./providers/lifi-utils');
 const { getDisplayedToAmountRaw } = require('./providers/lifi-quote-utils');
