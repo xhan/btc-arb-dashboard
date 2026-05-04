@@ -3085,9 +3085,27 @@
         }
     }
 
-    function getCycleDisplayState(cycles, maxPositiveCount, expanded = false) {
+    function getDefaultArbDisplayMinProfitBp() {
+        const ruleDefault = Number(window.PathAlertRuleDefinitions && window.PathAlertRuleDefinitions.DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP);
+        if (Number.isFinite(ruleDefault)) return Math.max(0, ruleDefault);
+        const layoutDefault = Number(window.ArbPanelLayoutUtils && window.ArbPanelLayoutUtils.DEFAULT_DISPLAY_MIN_PROFIT_BP);
+        return Number.isFinite(layoutDefault) ? Math.max(0, layoutDefault) : 0.5;
+    }
+
+    function normalizeArbDisplayMinProfitBp(value, fallback = getDefaultArbDisplayMinProfitBp()) {
+        const numericValue = Number(value);
+        if (Number.isFinite(numericValue)) return Math.max(0, numericValue);
+        const fallbackValue = Number(fallback);
+        return Number.isFinite(fallbackValue) ? Math.max(0, fallbackValue) : getDefaultArbDisplayMinProfitBp();
+    }
+
+    function getFixedRuleDisplayMinProfitBp(rule) {
+        return normalizeArbDisplayMinProfitBp(rule && rule.displayMinProfitBp, getDefaultArbDisplayMinProfitBp());
+    }
+
+    function getCycleDisplayState(cycles, maxPositiveCount, expanded = false, options = null) {
         if (window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.getCycleDisplayState === 'function') {
-            return window.ArbPanelLayoutUtils.getCycleDisplayState(cycles, maxPositiveCount, expanded);
+            return window.ArbPanelLayoutUtils.getCycleDisplayState(cycles, maxPositiveCount, expanded, options);
         }
         const list = Array.isArray(cycles) ? cycles : [];
         const maxCount = Math.max(1, Number(maxPositiveCount) || 1);
@@ -3097,13 +3115,19 @@
                 positiveCount: 0,
                 hiddenPositiveCount: 0,
                 canToggleExpand: false,
-                expanded: false
+                expanded: false,
+                displayMinProfitBp: normalizeArbDisplayMinProfitBp(
+                    (typeof options === 'number' || typeof options === 'string') ? options : options && options.minProfitBp
+                )
             };
         }
+        const displayMinProfitBp = normalizeArbDisplayMinProfitBp(
+            (typeof options === 'number' || typeof options === 'string') ? options : options && options.minProfitBp
+        );
         const positiveCycles = list.filter(cycle =>
             cycle &&
-            typeof cycle.profitRate === 'number' &&
-            cycle.profitRate > 0
+            Number.isFinite(Number(cycle.profitRate)) &&
+            Number(cycle.profitRate) * 10000 > displayMinProfitBp
         );
         if (positiveCycles.length) {
             const canToggleExpand = positiveCycles.length > maxCount;
@@ -3114,24 +3138,27 @@
                 positiveCount: positiveCycles.length,
                 hiddenPositiveCount: Math.max(0, positiveCycles.length - displayCycles.length),
                 canToggleExpand,
-                expanded: shouldExpand
+                expanded: shouldExpand,
+                displayMinProfitBp
             };
         }
         return {
-            displayCycles: list.slice(0, 1),
+            displayCycles: [],
             positiveCount: 0,
             hiddenPositiveCount: 0,
             canToggleExpand: false,
-            expanded: false
+            expanded: false,
+            displayMinProfitBp
         };
     }
 
     function buildArbSectionToggleHtml(sectionKey, cycleDisplayState) {
         if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
 
+        const minProfitBp = normalizeArbDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp);
         const buttonText = cycleDisplayState.expanded
-            ? `已展开 ${cycleDisplayState.positiveCount} 条正收益，点击收起`
-            : `还有 ${cycleDisplayState.hiddenPositiveCount} 条正收益未显示，点击展开全部`;
+            ? `已展开 ${cycleDisplayState.positiveCount} 条 > ${minProfitBp}bp，点击收起`
+            : `还有 ${cycleDisplayState.hiddenPositiveCount} 条 > ${minProfitBp}bp 未显示，点击展开全部`;
 
         return `
             <button
@@ -5142,9 +5169,10 @@
 
         const fixedSections = sharedRuleSnapshot.fixedResults
                 .map(({ rule, cycles }) => {
-                    const displayCycles = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.selectPositiveCyclesOrBest === 'function'
-                        ? window.ArbPanelLayoutUtils.selectPositiveCyclesOrBest(cycles)
-                        : (Array.isArray(cycles) ? cycles.filter((cycle) => cycle && Number(cycle.profitRate) > 0) : []);
+                    const displayMinProfitBp = getFixedRuleDisplayMinProfitBp(rule);
+                    const displayCycles = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.selectCyclesAboveDisplayThreshold === 'function'
+                        ? window.ArbPanelLayoutUtils.selectCyclesAboveDisplayThreshold(cycles, displayMinProfitBp)
+                        : (Array.isArray(cycles) ? cycles.filter((cycle) => cycle && Number(cycle.profitRate) * 10000 > displayMinProfitBp) : []);
                     const opportunities = displayCycles
                         .map((cycle, index, items) => createArbOpportunityEntry(
                             nextOpportunityMap,
@@ -5157,7 +5185,7 @@
                     return {
                         title: String(rule?.title || '固定路径'),
                         opportunities,
-                        emptyText: '等待数据...'
+                        emptyText: `无收益率 > ${displayMinProfitBp}bp`
                     };
                 });
         const specialOpportunities = sharedRuleSnapshot.specialResults

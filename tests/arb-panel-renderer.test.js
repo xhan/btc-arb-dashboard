@@ -42,6 +42,20 @@ assert.ok(html.includes('class="arb-path-line arb-path-display-line arb-path-dis
 assert.ok(html.includes('class="arb-opportunity-head-profit arb-profit">12.00</div>'));
 assert.ok(!html.includes('<div class="arb-profit">收益: 12.00</div>'));
 
+const emptyHtml = renderArbGrid({
+  columns: [
+    [
+      {
+        title: '空状态',
+        opportunities: [],
+        emptyText: '无收益率 > 0.5bp'
+      }
+    ]
+  ]
+});
+
+assert.ok(emptyHtml.includes('<div class="arb-path-line arb-path-empty">无收益率 &gt; 0.5bp</div>'));
+
 const htmlWithoutLabel = renderArbGrid({
   columns: [
     [

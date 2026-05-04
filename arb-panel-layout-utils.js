@@ -5,6 +5,8 @@
   }
   root.ArbPanelLayoutUtils = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const DEFAULT_DISPLAY_MIN_PROFIT_BP = 0.5;
+
   function cloneSection(section, opportunities) {
     return {
       ...section,
@@ -24,7 +26,12 @@
     for (const section of safeSections) {
       const opportunities = Array.isArray(section && section.opportunities) ? section.opportunities : [];
       if (!opportunities.length) {
+        if (usedInColumn >= normalizedLimit && columnIndex < columns.length - 1) {
+          columnIndex += 1;
+          usedInColumn = 0;
+        }
         columns[columnIndex].push(cloneSection(section, []));
+        usedInColumn += 1;
         continue;
       }
 
@@ -81,6 +88,32 @@
     return matches;
   }
 
+  function normalizeDisplayMinProfitBp(value, fallback = DEFAULT_DISPLAY_MIN_PROFIT_BP) {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue)) return Math.max(0, numericValue);
+    const fallbackValue = Number(fallback);
+    return Number.isFinite(fallbackValue) ? Math.max(0, fallbackValue) : DEFAULT_DISPLAY_MIN_PROFIT_BP;
+  }
+
+  function resolveDisplayMinProfitBp(options) {
+    if (typeof options === 'number' || typeof options === 'string') {
+      return normalizeDisplayMinProfitBp(options);
+    }
+    if (options && typeof options === 'object') {
+      return normalizeDisplayMinProfitBp(options.minProfitBp);
+    }
+    return DEFAULT_DISPLAY_MIN_PROFIT_BP;
+  }
+
+  function selectCyclesAboveDisplayThreshold(cycles, minProfitBp = DEFAULT_DISPLAY_MIN_PROFIT_BP) {
+    const list = Array.isArray(cycles) ? cycles.filter(Boolean) : [];
+    const thresholdBp = normalizeDisplayMinProfitBp(minProfitBp);
+    return list.filter((cycle) => {
+      const profitRate = Number(cycle && cycle.profitRate);
+      return Number.isFinite(profitRate) && profitRate * 10000 > thresholdBp;
+    });
+  }
+
   function selectPositiveCyclesOrBest(cycles) {
     const list = Array.isArray(cycles) ? cycles.filter(Boolean) : [];
     if (!list.length) return [];
@@ -98,44 +131,44 @@
     return best ? [best] : [];
   }
 
-  function getCycleDisplayState(cycles, maxPositiveCount, expanded = false) {
+  function getCycleDisplayState(cycles, maxPositiveCount, expanded = false, options = null) {
     const list = Array.isArray(cycles) ? cycles : [];
     const maxCount = Math.max(1, Number(maxPositiveCount) || 1);
+    const displayMinProfitBp = resolveDisplayMinProfitBp(options);
     if (!list.length) {
       return {
         displayCycles: [],
         positiveCount: 0,
         hiddenPositiveCount: 0,
         canToggleExpand: false,
-        expanded: false
+        expanded: false,
+        displayMinProfitBp
       };
     }
 
-    const positiveCycles = list.filter((cycle) => (
-      cycle &&
-      typeof cycle.profitRate === 'number' &&
-      cycle.profitRate > 0
-    ));
+    const displayableCycles = selectCyclesAboveDisplayThreshold(list, displayMinProfitBp);
 
-    if (positiveCycles.length) {
-      const canToggleExpand = positiveCycles.length > maxCount;
+    if (displayableCycles.length) {
+      const canToggleExpand = displayableCycles.length > maxCount;
       const shouldExpand = canToggleExpand && expanded;
-      const displayCycles = shouldExpand ? positiveCycles : positiveCycles.slice(0, maxCount);
+      const displayCycles = shouldExpand ? displayableCycles : displayableCycles.slice(0, maxCount);
       return {
         displayCycles,
-        positiveCount: positiveCycles.length,
-        hiddenPositiveCount: Math.max(0, positiveCycles.length - displayCycles.length),
+        positiveCount: displayableCycles.length,
+        hiddenPositiveCount: Math.max(0, displayableCycles.length - displayCycles.length),
         canToggleExpand,
-        expanded: shouldExpand
+        expanded: shouldExpand,
+        displayMinProfitBp
       };
     }
 
     return {
-      displayCycles: list.slice(0, 1),
+      displayCycles: [],
       positiveCount: 0,
       hiddenPositiveCount: 0,
       canToggleExpand: false,
-      expanded: false
+      expanded: false,
+      displayMinProfitBp
     };
   }
 
@@ -177,6 +210,9 @@
   return {
     splitSectionsIntoColumns,
     resolveItemsBySelectors,
+    DEFAULT_DISPLAY_MIN_PROFIT_BP,
+    normalizeDisplayMinProfitBp,
+    selectCyclesAboveDisplayThreshold,
     selectPositiveCyclesOrBest,
     getCycleDisplayState,
     mapEntriesForDisplayCycles,

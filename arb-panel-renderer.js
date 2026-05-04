@@ -116,7 +116,7 @@
     const emptyText = section && section.emptyText ? section.emptyText : '等待数据...';
     const body = rendered.length
       ? rendered.join('')
-      : `<div class="arb-path-line">${emptyText}</div>`;
+      : `<div class="arb-path-line arb-path-empty">${escapeHtml(emptyText)}</div>`;
 
     const title = section && section.title ? section.title : '';
     const titleProfitRate = section && Number.isFinite(section.titleProfitRate)

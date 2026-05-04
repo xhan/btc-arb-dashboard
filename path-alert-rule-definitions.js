@@ -5,6 +5,8 @@
   }
   root.PathAlertRuleDefinitions = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP = 0.5;
+
   const FIXED_PATH_RULES = Object.freeze([
     {
       id: 'fixed:wbtc-eth-arb',
@@ -13,7 +15,8 @@
       quote: 'WBTC',
       categoryNames: ['WBTC监控'],
       chains: ['ethereum', 'arbitrum'],
-      steps: 2
+      steps: 2,
+      displayMinProfitBp: 1,
     },
 
     {
@@ -187,6 +190,7 @@
   }
 
   return {
+    DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP,
     FIXED_PATH_RULES,
     SPECIAL_ARB_RULES,
     getRuleDefinitions,

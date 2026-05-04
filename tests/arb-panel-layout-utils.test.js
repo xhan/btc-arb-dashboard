@@ -2,6 +2,8 @@ const assert = require('assert');
 const {
   splitSectionsIntoColumns,
   resolveItemsBySelectors,
+  DEFAULT_DISPLAY_MIN_PROFIT_BP,
+  selectCyclesAboveDisplayThreshold,
   selectPositiveCyclesOrBest,
   getCycleDisplayState,
   mapEntriesForDisplayCycles,
@@ -17,6 +19,18 @@ const columns = splitSectionsIntoColumns(sections, 6, 2);
 assert.strictEqual(columns.length, 2);
 assert.deepStrictEqual(columns[0].map((item) => [item.title, item.opportunities.length]), [['固定路径', 6]]);
 assert.deepStrictEqual(columns[1].map((item) => [item.title, item.opportunities.length]), [['固定路径', 2], ['特殊规则', 3]]);
+
+const emptySections = Array.from({ length: 8 }, (_, index) => ({ title: `固定路径 ${index + 1}`, opportunities: [] }));
+const emptyColumns = splitSectionsIntoColumns(emptySections, 6, 2);
+assert.deepStrictEqual(emptyColumns[0].map((item) => item.title), [
+  '固定路径 1',
+  '固定路径 2',
+  '固定路径 3',
+  '固定路径 4',
+  '固定路径 5',
+  '固定路径 6'
+]);
+assert.deepStrictEqual(emptyColumns[1].map((item) => item.title), ['固定路径 7', '固定路径 8']);
 
 const items = [
   { id: 11, name: 'WBTC监控' },
@@ -57,8 +71,28 @@ assert.deepStrictEqual(
 
 assert.deepStrictEqual(selectPositiveCyclesOrBest([]), []);
 
+assert.strictEqual(DEFAULT_DISPLAY_MIN_PROFIT_BP, 0.5);
+
+assert.deepStrictEqual(
+  selectCyclesAboveDisplayThreshold([
+    { id: 'low-positive', profitRate: 0.00004 },
+    { id: 'at-threshold', profitRate: 0.00005 },
+    { id: 'above-threshold', profitRate: 0.000051 }
+  ]).map((item) => item.id),
+  ['above-threshold']
+);
+
+assert.deepStrictEqual(
+  selectCyclesAboveDisplayThreshold([
+    { id: 'low-positive', profitRate: 0.00004 },
+    { id: 'above-zero', profitRate: 0.000001 }
+  ], 0).map((item) => item.id),
+  ['low-positive', 'above-zero']
+);
+
 const cycleDisplayState = getCycleDisplayState([
   { id: 'neg-1', profitRate: -0.001 },
+  { id: 'low-positive', profitRate: 0.00004 },
   { id: 'pos-1', profitRate: 0.002 },
   { id: 'pos-2', profitRate: 0.003 },
   { id: 'pos-3', profitRate: 0.004 }
@@ -69,6 +103,14 @@ assert.strictEqual(cycleDisplayState.positiveCount, 3);
 assert.strictEqual(cycleDisplayState.hiddenPositiveCount, 1);
 assert.strictEqual(cycleDisplayState.canToggleExpand, true);
 assert.strictEqual(cycleDisplayState.expanded, false);
+
+const lowProfitCycleDisplayState = getCycleDisplayState([
+  { id: 'neg-1', profitRate: -0.001 },
+  { id: 'low-positive', profitRate: 0.00004 }
+], 2, false);
+
+assert.deepStrictEqual(lowProfitCycleDisplayState.displayCycles, []);
+assert.strictEqual(lowProfitCycleDisplayState.positiveCount, 0);
 
 const displaySourceCycles = [
   { id: 'neg-1', profitRate: -0.001 },
