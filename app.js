@@ -139,10 +139,6 @@
         ? window.PathAlertUtils.PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000)
         : (2 * 60 * 60 * 1000);
     const PATH_ALERT_MUTE_DURATION_MS = Number(window.PathAlertUtils && window.PathAlertUtils.PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
-    const MUTED_PATH_LEG_DURATION_OPTIONS = window.MutedPathLegUtils
-        && Array.isArray(window.MutedPathLegUtils.MUTED_PATH_LEG_DURATION_OPTIONS)
-        ? window.MutedPathLegUtils.MUTED_PATH_LEG_DURATION_OPTIONS
-        : [2, 8, 12];
     const MUTED_PATH_LEG_EXTEND_DURATION_MS = 2 * 60 * 60 * 1000;
     const alertDebugController = window.AlertDebugUtils
         && typeof window.AlertDebugUtils.createAlertDebugController === 'function'
@@ -3283,24 +3279,13 @@
                     <div class="arb-detail-leg-line">
                         <div class="arb-detail-leg-main">
                             <div class="arb-detail-leg-pair">${buildArbDetailPairHtml(row)}</div>
-                            <div class="arb-detail-leg-source">${buildArbDetailSourceHtml(row)}</div>
+                            <div class="arb-detail-leg-source">${buildArbDetailSourceHtml(row, { cardIndex, rowIndex })}</div>
                         </div>
                         <div class="arb-detail-leg-amount-wrap">
                             <span class="arb-detail-leg-amount">${escapeHtml(row.rateText || row.amountText || '--')}</span>
                             ${row.rateDeltaText ? `<span class="arb-detail-leg-rate-delta ${escapeHtml(row.rateDeltaTone || 'neutral')}">${escapeHtml(row.rateDeltaText)}</span>` : ''}
                         </div>
                     </div>
-                    ${cardIndex === 0 ? `
-                        <div class="arb-detail-leg-action-row">
-                            <button
-                                type="button"
-                                class="arb-detail-leg-mute-btn"
-                                data-arb-detail-leg-mute="${escapeHtml(String(row.quoteId || ''))}"
-                                data-arb-detail-card-index="${escapeHtml(String(cardIndex))}"
-                                data-arb-detail-row-index="${escapeHtml(String(rowIndex))}"
-                            >屏蔽</button>
-                        </div>
-                    ` : ''}
                 </div>
             `).join('');
         }
@@ -3326,36 +3311,55 @@
         return `${chainText}${fromHtml} -> ${toHtml}`;
     }
 
-    function buildArbDetailSourceHtml(row) {
-        const sourceText = escapeHtml(row && row.sourceText ? row.sourceText : 'Unknown');
+    function buildArbDetailMuteButtonHtml(cardIndex, rowIndex, quoteId) {
+        if (Number(cardIndex) !== 0) return '';
+        return `<button
+            type="button"
+            class="arb-detail-leg-mute-btn"
+            data-arb-detail-leg-mute="${escapeHtml(String(quoteId || ''))}"
+            data-arb-detail-card-index="${escapeHtml(String(cardIndex))}"
+            data-arb-detail-row-index="${escapeHtml(String(rowIndex))}"
+        >屏蔽</button>`;
+    }
+
+    function buildArbDetailSourceMetaHtml(row) {
         const dexLinkConfig = {
             chain: row && row.chain,
             fromTokenAddress: row && row.fromTokenAddress,
             toTokenAddress: row && row.toTokenAddress,
             inputAmount: row && row.inputAmount
         };
+        const sourceText = escapeHtml(row && row.sourceText ? row.sourceText : 'Unknown');
         const dexButtonHtml = buildDexLinkCopyButtonHtml(
             dexLinkConfig,
             'arb-detail-dex-link',
             getDexLinkLabel(dexLinkConfig) || 'DEX'
         );
-        if (!dexButtonHtml) {
-            return sourceText;
-        }
+        return dexButtonHtml ? `${sourceText} · ${dexButtonHtml}` : sourceText;
+    }
 
-        return `${sourceText} · ${dexButtonHtml}`;
+    function buildArbDetailSourceActionsHtml(row, options = {}) {
+        const muteButtonHtml = buildArbDetailMuteButtonHtml(options.cardIndex, options.rowIndex, row && row.quoteId);
+        return muteButtonHtml || '';
+    }
+
+    function buildArbDetailSourceHtml(row, options = {}) {
+        const sourceMetaHtml = buildArbDetailSourceMetaHtml(row);
+        const actionsHtml = buildArbDetailSourceActionsHtml(row, options);
+        if (!actionsHtml) {
+            return `<span class="arb-detail-leg-source-main">${sourceMetaHtml}</span>`;
+        }
+        return `
+            <span class="arb-detail-leg-source-main">${sourceMetaHtml}</span>
+            <span class="arb-detail-leg-source-actions">${actionsHtml}</span>
+        `;
     }
 
     function promptMutedPathLegDurationHours() {
-        const input = window.prompt([
-            '选择屏蔽时长：',
-            '2 = 屏蔽 2 小时',
-            '8 = 屏蔽 8 小时',
-            '12 = 屏蔽 12 小时'
-        ].join('\n'), '2');
+        const input = window.prompt('输入屏蔽时长（小时，正整数）', '2');
         if (input === null) return null;
         const value = Number.parseInt(String(input).trim(), 10);
-        return MUTED_PATH_LEG_DURATION_OPTIONS.includes(value) ? value : null;
+        return Number.isFinite(value) && value > 0 ? value : null;
     }
 
     function getArbDetailRateDeltaTone(rateDeltaText) {
