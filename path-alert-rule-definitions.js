@@ -111,7 +111,7 @@
       categoryNames: ['ETH监控'],
       steps: 2,
       crossChain: true,
-      resultLimit: 2
+      resultLimit: 8
     },
     {
       id: 'fixed:wsteth',
@@ -121,7 +121,7 @@
       categoryNames: ['ETH监控'],
       steps: 2,
       crossChain: true,
-      resultLimit: 2
+      resultLimit: 8
     }
   ]);
 
