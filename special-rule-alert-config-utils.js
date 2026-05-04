@@ -28,7 +28,38 @@
     return normalized;
   }
 
+  function evaluateSpecialRuleTrigger(stats, config) {
+    const sourceStats = stats && typeof stats === 'object' ? stats : {};
+    const primary = sourceStats.primary && typeof sourceStats.primary === 'object'
+      ? sourceStats.primary
+      : {};
+    const targetResults = Array.isArray(sourceStats.targetResults) ? sourceStats.targetResults : [];
+    const sourceConfig = config && typeof config === 'object' ? config : {};
+
+    const minNetProfit = toNonNegativeNumber(sourceConfig.minNetProfit, null);
+    const minNetProfitBp = toNonNegativeNumber(sourceConfig.minNetProfitBp, null);
+    const triggerReference = targetResults.length ? targetResults[0] : primary;
+    const netProfit = Number(triggerReference && (triggerReference.profit != null ? triggerReference.profit : triggerReference.netProfit));
+    const netProfitBp = Number(triggerReference && (triggerReference.profitBp != null ? triggerReference.profitBp : triggerReference.netProfitBp));
+
+    const meetsTriggerCondition = Number.isFinite(netProfit)
+      && Number.isFinite(minNetProfit)
+      && Number.isFinite(netProfitBp)
+      && Number.isFinite(minNetProfitBp)
+      && netProfit > minNetProfit
+      && netProfitBp > minNetProfitBp;
+
+    return {
+      meetsTriggerCondition,
+      netProfit,
+      minNetProfit,
+      netProfitBp,
+      minNetProfitBp
+    };
+  }
+
   return {
-    normalizeSpecialRuleAlertConfig
+    normalizeSpecialRuleAlertConfig,
+    evaluateSpecialRuleTrigger
   };
 }));

@@ -16,7 +16,14 @@ assert.strictEqual(controller.isEnabled(), false);
 controller.record('special', 'special:wbtc-bybit', {
   status: 'pending_confirm',
   reason: 'condition_on',
-  eligibleSince: 1000
+  eligibleSince: 1000,
+  comparison: {
+    netProfit: 7.95,
+    minNetProfit: 8,
+    netProfitBp: 0.57,
+    minNetProfitBp: 0.6,
+    meetsTriggerCondition: false
+  }
 });
 assert.strictEqual(logs.length, 0);
 
@@ -29,7 +36,14 @@ controller.record('special', 'special:wbtc-bybit', {
   now: 1500,
   status: 'pending_confirm',
   reason: 'condition_on',
-  eligibleSince: 1000
+  eligibleSince: 1000,
+  comparison: {
+    netProfit: 7.95,
+    minNetProfit: 8,
+    netProfitBp: 0.57,
+    minNetProfitBp: 0.6,
+    meetsTriggerCondition: false
+  }
 });
 assert.strictEqual(logs.length, 2);
 assert.ok(logs[1].includes('[alert-debug][special] special:wbtc-bybit'));
@@ -39,11 +53,21 @@ assert.ok(logs[1].includes('now=T1500 (1500)'));
 assert.ok(logs[1].includes('eligible_since=T1000 (1000)'));
 assert.ok(logs[1].includes('last_triggered_at=null'));
 assert.ok(logs[1].includes('cooldown_until=null'));
+assert.ok(logs[1].includes('net=7.95/8'));
+assert.ok(logs[1].includes('bp=0.57/0.6'));
+assert.ok(logs[1].includes('meets=false'));
 
 controller.record('special', 'special:wbtc-bybit', {
   status: 'pending_confirm',
   reason: 'condition_on',
-  eligibleSince: 1000
+  eligibleSince: 1000,
+  comparison: {
+    netProfit: 7.95,
+    minNetProfit: 8,
+    netProfitBp: 0.57,
+    minNetProfitBp: 0.6,
+    meetsTriggerCondition: false
+  }
 });
 assert.strictEqual(logs.length, 2);
 

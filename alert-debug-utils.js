@@ -45,9 +45,39 @@
       reason: snapshot.reason || '',
       eligibleSince: normalizeOptionalTimestamp(snapshot.eligibleSince),
       lastTriggeredAt: normalizeOptionalTimestamp(snapshot.lastTriggeredAt),
-      cooldownUntil: normalizeOptionalTimestamp(snapshot.cooldownUntil)
+      cooldownUntil: normalizeOptionalTimestamp(snapshot.cooldownUntil),
+      comparison: snapshot.comparison && typeof snapshot.comparison === 'object'
+        ? {
+          netProfit: Number.isFinite(Number(snapshot.comparison.netProfit)) ? Number(snapshot.comparison.netProfit) : null,
+          minNetProfit: Number.isFinite(Number(snapshot.comparison.minNetProfit)) ? Number(snapshot.comparison.minNetProfit) : null,
+          netProfitBp: Number.isFinite(Number(snapshot.comparison.netProfitBp)) ? Number(snapshot.comparison.netProfitBp) : null,
+          minNetProfitBp: Number.isFinite(Number(snapshot.comparison.minNetProfitBp)) ? Number(snapshot.comparison.minNetProfitBp) : null,
+          meetsTriggerCondition: snapshot.comparison.meetsTriggerCondition === true
+        }
+        : null
     };
     return JSON.stringify(data);
+  }
+
+  function buildComparisonText(comparison) {
+    if (!comparison || typeof comparison !== 'object') return '';
+    const netProfit = Number(comparison.netProfit);
+    const minNetProfit = Number(comparison.minNetProfit);
+    const netProfitBp = Number(comparison.netProfitBp);
+    const minNetProfitBp = Number(comparison.minNetProfitBp);
+    if (
+      !Number.isFinite(netProfit)
+      || !Number.isFinite(minNetProfit)
+      || !Number.isFinite(netProfitBp)
+      || !Number.isFinite(minNetProfitBp)
+    ) {
+      return '';
+    }
+    return [
+      `net=${netProfit}/${minNetProfit}`,
+      `bp=${netProfitBp}/${minNetProfitBp}`,
+      `meets=${comparison.meetsTriggerCondition === true ? 'true' : 'false'}`
+    ].join(' | ');
   }
 
   function createAlertDebugController(options = {}) {
@@ -91,7 +121,7 @@
     }
 
     function buildLogLine(kind, id, snapshot) {
-      return [
+      const parts = [
         `[alert-debug][${kind}] ${id}`,
         formatStatus(snapshot.status),
         `reason=${formatReason(snapshot.reason)}`,
@@ -99,7 +129,10 @@
         `eligible_since=${formatTimestamp(snapshot.eligibleSince)}`,
         `last_triggered_at=${formatTimestamp(snapshot.lastTriggeredAt)}`,
         `cooldown_until=${formatTimestamp(snapshot.cooldownUntil)}`
-      ].join(' | ');
+      ];
+      const comparisonText = buildComparisonText(snapshot.comparison);
+      if (comparisonText) parts.push(comparisonText);
+      return parts.join(' | ');
     }
 
     function isEnabled() {
