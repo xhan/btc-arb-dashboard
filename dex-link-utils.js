@@ -48,7 +48,7 @@
       if (!Number.isFinite(inputAmount) || inputAmount <= 0) return null;
       return {
         label,
-        url: `https://ekubo.org/starknet/swap?inputCurrency=${encodeURIComponent(fromTokenAddress)}&amount=${encodeURIComponent(String(inputAmount))}&outputCurrency=${encodeURIComponent(toTokenAddress)}`
+        url: `https://ekubo.org/swap?inputCurrency=${encodeURIComponent(fromTokenAddress)}&amount=${encodeURIComponent(String(inputAmount))}&outputCurrency=${encodeURIComponent(toTokenAddress)}&chainId=0x534e5f4d41494e`
       };
     }
 

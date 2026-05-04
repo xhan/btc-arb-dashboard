@@ -417,7 +417,7 @@ assert.deepStrictEqual(
   }),
   {
     label: 'ekubo',
-    url: 'https://ekubo.org/starknet/swap?inputCurrency=0x111&amount=1.25&outputCurrency=0x222'
+    url: 'https://ekubo.org/swap?inputCurrency=0x111&amount=1.25&outputCurrency=0x222&chainId=0x534e5f4d41494e'
   }
 );
 
