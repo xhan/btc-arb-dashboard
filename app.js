@@ -246,6 +246,7 @@
         ronin: 'Ronin', unichain: 'Unichain', hyperevm: 'HyperEVM', plasma: 'Plasma',
         scroll: 'Scroll', blast: 'Blast', mode: 'Mode', monad: 'Monad', etherlink: 'Etherlink',
         fantom: 'Fantom', cronos: 'Cronos', moonbeam: 'Moonbeam', boba: 'Boba', gnosis: 'Gnosis', celo: 'Celo',
+        megaeth: 'MegaETH',
         hemi: 'Hemi',
         katana: 'Katana',
         starknet: 'Starknet'
@@ -280,13 +281,15 @@
         GLMR: 'moonbeam',
         BOBA: 'boba',
         GNO: 'gnosis',
-        CELO: 'celo'
+        CELO: 'celo',
+        MEGA: 'megaeth',
+        MEGAETH: 'megaeth'
     };
 
     const CHAIN_ADDRESS_PLACEHOLDERS = {
         ethereum: '0x...', solana: 'Enter mint address...', sui: '0x...::module::TYPE',
         polygon: '0x...', arbitrum: '0x...', optimism: '0x...',
-        bsc: '0x...', avalanche: '0x...', base: '0x...', hemi: '0x...', katana: '0x...', starknet: '0x...', Bybit: 'N/A', bybit: 'N/A', Binance: 'N/A', binance: 'N/A'
+        bsc: '0x...', avalanche: '0x...', base: '0x...', megaeth: '0x...', hemi: '0x...', katana: '0x...', starknet: '0x...', Bybit: 'N/A', bybit: 'N/A', Binance: 'N/A', binance: 'N/A'
     };
 
     function isCexOrderbookChain(chain) {
@@ -297,7 +300,7 @@
     const KYBER_SUPPORTED_CHAINS = [
         'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche', 
         'base', 'linea', 'mantle', 'sonic', 'berachain', 'ronin', 
-        'unichain', 'hyperevm', 'plasma', 'etherlink', 'monad',
+        'unichain', 'hyperevm', 'plasma', 'etherlink', 'monad', 'megaeth',
         'cronos', 'zksync', 'fantom', 'polygon-zkevm', 
         'scroll', 'aurora', 'bittorrent', 'velas', 'oasis', 'blast',
         'moonbeam', 'boba', 'gnosis', 'celo', 'mode'

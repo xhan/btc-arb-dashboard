@@ -8,5 +8,6 @@ assert.strictEqual(getDefaultSourceForChain(' HEMI '), 'LI.FI');
 assert.strictEqual(getDefaultSourceForChain('starknet'), 'Ekubo');
 assert.strictEqual(getDefaultSourceForChain(' StarkNet '), 'Ekubo');
 assert.strictEqual(getDefaultSourceForChain('ethereum'), 'Kyber');
+assert.strictEqual(getDefaultSourceForChain('megaeth'), 'Kyber');
 assert.strictEqual(getDefaultSourceForChain('Bybit'), 'Bybit');
 assert.strictEqual(getDefaultSourceForChain(' Binance '), 'Binance');

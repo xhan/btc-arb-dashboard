@@ -110,6 +110,7 @@ const PATH_ALERT_CHAIN_LABELS = {
     mode: 'Mode',
     monad: 'Monad',
     etherlink: 'Etherlink',
+    megaeth: 'MegaETH',
     fantom: 'Fantom',
     cronos: 'Cronos',
     moonbeam: 'Moonbeam',
@@ -608,6 +609,7 @@ const RPC_URLS = {
     plasma: 'https://rpc.plasma.to',
     etherlink: 'https://node.mainnet.etherlink.com',
     monad: 'https://monad-mainnet.drpc.org',
+    megaeth: 'https://mainnet.megaeth.com/rpc',
 
     zksync: 'https://mainnet.era.zksync.io',
     moonbeam: 'https://rpc.api.moonbeam.network',
