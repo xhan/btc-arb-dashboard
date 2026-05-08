@@ -65,10 +65,11 @@
   function createMutedPathLegEntry(leg, mutedAt = Date.now(), durationMs = DEFAULT_MUTED_PATH_LEG_DURATION_MS, options = {}) {
     const safeMutedAt = toPositiveInteger(mutedAt, Date.now());
     const safeDurationMs = toPositiveInteger(durationMs, DEFAULT_MUTED_PATH_LEG_DURATION_MS);
+    const signature = normalizeLegSignature(leg);
     return normalizeMutedPathLeg({
       quoteId: leg && leg.quoteId,
-      direction: leg && leg.direction,
-      pricingMode: leg && leg.pricingMode,
+      direction: signature && signature.direction,
+      pricingMode: signature && signature.pricingMode,
       chain: leg && leg.chain,
       fromSymbol: leg && (leg.fromSymbol || leg.from),
       toSymbol: leg && (leg.toSymbol || leg.to),

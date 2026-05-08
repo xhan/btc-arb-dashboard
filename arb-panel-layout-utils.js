@@ -65,6 +65,23 @@
     return columns;
   }
 
+  function splitSectionsBySectionCount(sections, sectionLimit = 6, maxColumns = 2) {
+    const safeSections = Array.isArray(sections) ? sections : [];
+    const columns = Array.from({ length: Math.max(1, maxColumns) }, () => []);
+    const normalizedLimit = Number.isFinite(Number(sectionLimit)) && Number(sectionLimit) > 0
+      ? Math.floor(Number(sectionLimit))
+      : Number.MAX_SAFE_INTEGER;
+
+    for (let index = 0; index < safeSections.length; index += 1) {
+      const columnIndex = Math.min(Math.floor(index / normalizedLimit), columns.length - 1);
+      const section = safeSections[index];
+      const opportunities = Array.isArray(section && section.opportunities) ? section.opportunities : [];
+      columns[columnIndex].push(cloneSection(section, opportunities));
+    }
+
+    return columns;
+  }
+
   function resolveItemsBySelectors(items, selectors) {
     const safeItems = Array.isArray(items) ? items : [];
     const safeSelectors = Array.isArray(selectors) ? selectors : [];
@@ -209,6 +226,7 @@
 
   return {
     splitSectionsIntoColumns,
+    splitSectionsBySectionCount,
     resolveItemsBySelectors,
     DEFAULT_DISPLAY_MIN_PROFIT_BP,
     normalizeDisplayMinProfitBp,

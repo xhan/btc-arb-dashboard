@@ -34,6 +34,38 @@ assert.strictEqual(mutedLeg.pricingMode, 'raw');
 assert.strictEqual(mutedLeg.titleSnapshot, '（ETH）tBTC -> BTC.b');
 assert.strictEqual(mutedLeg.expiresAt, 1000 + (2 * 60 * 60 * 1000));
 
+const inverseMutedLeg = createMutedPathLegEntry(
+  {
+    quoteId: 23,
+    inverse: true,
+    chain: 'ethereum',
+    from: 'BTC.b',
+    to: 'tBTC'
+  },
+  1000,
+  2 * 60 * 60 * 1000
+);
+
+assert.ok(inverseMutedLeg);
+assert.strictEqual(inverseMutedLeg.direction, 'inverse');
+assert.strictEqual(inverseMutedLeg.pricingMode, 'raw');
+
+const cexAskMutedLeg = createMutedPathLegEntry(
+  {
+    quoteId: 24,
+    cexLevelLabel: 'ask1',
+    chain: 'Bybit',
+    from: 'USDT',
+    to: 'USDe'
+  },
+  1000,
+  2 * 60 * 60 * 1000
+);
+
+assert.ok(cexAskMutedLeg);
+assert.strictEqual(cexAskMutedLeg.direction, 'forward');
+assert.strictEqual(cexAskMutedLeg.pricingMode, 'cex-ask1-inverse');
+
 const normalized = normalizeMutedPathLeg({
   quoteId: 22,
   direction: 'inverse',

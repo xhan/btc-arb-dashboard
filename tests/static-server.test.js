@@ -194,7 +194,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
     assert.ok(appJsResponse.body.includes("arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput)"));
     assert.ok(appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
-    assert.ok(appJsResponse.body.includes("closest('button, input, textarea, select, [contenteditable=\"true\"]')"));
+    assert.ok(appJsResponse.body.includes("closestEventTarget(event, 'button, input, textarea, select, [contenteditable=\"true\"]')"));
     assert.ok(!appJsResponse.body.includes('makeDraggable(arbPathWindow, arbPathHeader)'));
     assert.ok(!appJsResponse.body.includes('if (!arbGlobalFilterBar) return;'));
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
@@ -243,9 +243,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));
     assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));
-    assert.ok(appJsResponse.body.includes("const mutedLogTabBtn = event.target.closest('#alert-log-muted-log-tab');"));
+    assert.ok(appJsResponse.body.includes('extendMutedPathTargetFromLogButton'));
+    assert.ok(appJsResponse.body.includes('if (extendMutedPathTargetFromLogButton(buttonEl, Date.now()))'));
+    assert.ok(appJsResponse.body.includes("const mutedLogTabBtn = closestEventTarget(event, '#alert-log-muted-log-tab');"));
     assert.ok(appJsResponse.body.includes("alertLogActiveTab = 'muted-log';"));
-    assert.ok(appJsResponse.body.includes("const quoteDexLinkEl = event.target.closest('[data-quote-alert-dex-link-copy]');"));
+    assert.ok(appJsResponse.body.includes("const quoteDexLinkEl = closestEventTarget(event, '[data-quote-alert-dex-link-copy]');"));
     assert.ok(appJsResponse.body.includes('event.preventDefault();'));
     assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(quoteDexLinkEl);'));
     assert.ok(appJsResponse.body.includes('忽略 1 小时'));
@@ -279,7 +281,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('全部立即'));
     assert.ok(appJsResponse.body.includes('let forceImmediateAlerts = false;'));
     assert.ok(appJsResponse.body.includes('buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts })'));
-    assert.ok(appJsResponse.body.includes("closest('[data-path-alert-force-immediate]')"));
+    assert.ok(appJsResponse.body.includes("closestEventTarget(event, '[data-path-alert-force-immediate]')"));
     assert.ok(response.body.includes('.alert-log-entry-collapsed'));
     assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
     assert.ok(!appJsResponse.body.includes('导入当前全部机会'));

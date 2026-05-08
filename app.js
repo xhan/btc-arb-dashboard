@@ -406,10 +406,20 @@
         };
     }
 
-    function loadMultiChannelEnabledFromStorage() {
-        if (!window.localStorage) return true;
+    function getLocalStorageSafe() {
         try {
-            const raw = window.localStorage.getItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY);
+            return window.localStorage || null;
+        } catch (error) {
+            console.warn('访问浏览器本地缓存失败:', error);
+            return null;
+        }
+    }
+
+    function loadMultiChannelEnabledFromStorage() {
+        const storage = getLocalStorageSafe();
+        if (!storage) return true;
+        try {
+            const raw = storage.getItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY);
             if (raw === null) return true;
             return raw !== 'false';
         } catch (error) {
@@ -419,9 +429,10 @@
     }
 
     function persistMultiChannelEnabled() {
-        if (!window.localStorage) return;
+        const storage = getLocalStorageSafe();
+        if (!storage) return;
         try {
-            window.localStorage.setItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY, multiChannelEnabled ? 'true' : 'false');
+            storage.setItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY, multiChannelEnabled ? 'true' : 'false');
         } catch (error) {
             console.warn('保存多渠道开关本地缓存失败:', error);
         }
@@ -1142,9 +1153,10 @@
     }
 
     function loadMutedPathTargetsFromStorage() {
-        if (!window.localStorage) return [];
+        const storage = getLocalStorageSafe();
+        if (!storage) return [];
         try {
-            const raw = window.localStorage.getItem(MUTED_PATH_TARGETS_STORAGE_KEY);
+            const raw = storage.getItem(MUTED_PATH_TARGETS_STORAGE_KEY);
             if (!raw) return [];
             const parsed = JSON.parse(raw);
             if (window.MutedPathStorageUtils && typeof window.MutedPathStorageUtils.normalizeStoredMutedPathTargets === 'function') {
@@ -1157,9 +1169,10 @@
     }
 
     function loadMutedPathLegsFromStorage() {
-        if (!window.localStorage) return [];
+        const storage = getLocalStorageSafe();
+        if (!storage) return [];
         try {
-            const raw = window.localStorage.getItem(MUTED_PATH_LEGS_STORAGE_KEY);
+            const raw = storage.getItem(MUTED_PATH_LEGS_STORAGE_KEY);
             if (!raw) return [];
             const parsed = JSON.parse(raw);
             if (window.MutedPathLegUtils && typeof window.MutedPathLegUtils.pruneExpiredMutedPathLegs === 'function') {
@@ -1191,26 +1204,28 @@
     }
 
     function persistMutedPathTargets() {
-        if (!window.localStorage) return;
+        const storage = getLocalStorageSafe();
+        if (!storage) return;
         try {
             const list = window.MutedPathStorageUtils && typeof window.MutedPathStorageUtils.trimMutedPathTargetsForStorage === 'function'
                 ? window.MutedPathStorageUtils.trimMutedPathTargetsForStorage(mutedPathTargets)
                 : mutedPathTargets;
             mutedPathTargets = Array.isArray(list) ? list : [];
-            window.localStorage.setItem(MUTED_PATH_TARGETS_STORAGE_KEY, JSON.stringify(mutedPathTargets));
+            storage.setItem(MUTED_PATH_TARGETS_STORAGE_KEY, JSON.stringify(mutedPathTargets));
         } catch (error) {
             console.warn('保存沉默报警本地缓存失败:', error);
         }
     }
 
     function persistMutedPathLegs() {
-        if (!window.localStorage) return;
+        const storage = getLocalStorageSafe();
+        if (!storage) return;
         try {
             const list = window.MutedPathLegUtils && typeof window.MutedPathLegUtils.trimMutedPathLegsForStorage === 'function'
                 ? window.MutedPathLegUtils.trimMutedPathLegsForStorage(mutedPathLegs)
                 : mutedPathLegs;
             mutedPathLegs = Array.isArray(list) ? list : [];
-            window.localStorage.setItem(MUTED_PATH_LEGS_STORAGE_KEY, JSON.stringify(mutedPathLegs));
+            storage.setItem(MUTED_PATH_LEGS_STORAGE_KEY, JSON.stringify(mutedPathLegs));
         } catch (error) {
             console.warn('保存屏蔽腿本地缓存失败:', error);
         }
@@ -1391,6 +1406,17 @@
         persistMutedPathLegs();
         syncMutedPathLogTimer();
         triggerMutedPathLegRefresh({ closeDetail: false });
+    }
+
+    function extendMutedPathTargetFromLogButton(buttonEl, nowMs = Date.now()) {
+        if (!buttonEl || typeof buttonEl.closest !== 'function') return false;
+        const card = buttonEl.closest('.log-entry[data-muted-target-key]');
+        const targetKey = String(card && card.dataset && card.dataset.mutedTargetKey || '').trim();
+        if (!targetKey) return false;
+        pruneMutedPathTargetsInPlace(nowMs);
+        const existingEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === targetKey) || null;
+        if (!existingEntry) return false;
+        return Boolean(extendMutedPathTargetByKey(targetKey, nowMs));
     }
 
     function removeRestoredMutedAlertLogCards(targetKey = '') {
@@ -2903,7 +2929,7 @@
 
     function handleDataTerminalHeaderClick(event) {
         if (!event) return;
-        if (event.target && typeof event.target.closest === 'function' && event.target.closest('button')) {
+        if (closestEventTarget(event, 'button')) {
             return;
         }
         const refs = dataTerminalState.domRefs;
@@ -3180,7 +3206,7 @@
 
     function handleArbPathContentClick(event) {
         if (!arbPathContent) return;
-        const toggleBtn = event.target.closest('.arb-path-expand-toggle');
+        const toggleBtn = closestEventTarget(event, '.arb-path-expand-toggle');
         if (toggleBtn && arbPathContent.contains(toggleBtn)) {
             const sectionKey = toggleBtn.dataset.arbSectionKey;
             if (!sectionKey) return;
@@ -3194,7 +3220,7 @@
             return;
         }
 
-        const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
+        const opportunityEl = closestEventTarget(event, '[data-arb-opportunity-id]');
         if (!opportunityEl) return;
         const opportunityId = opportunityEl.dataset.arbOpportunityId;
         if (!opportunityId) return;
@@ -3207,7 +3233,7 @@
 
     function handleArbPathContentKeydown(event) {
         if (!arbPathContent) return;
-        const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
+        const opportunityEl = closestEventTarget(event, '[data-arb-opportunity-id]');
         if (!opportunityEl) return;
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
@@ -3217,9 +3243,9 @@
     function handleArbPathContentPointerDown(event) {
         if (!arbPathContent) return;
         if (typeof event.button === 'number' && event.button !== 0) return;
-        if (event.target.closest('.arb-path-expand-toggle')) return;
+        if (closestEventTarget(event, '.arb-path-expand-toggle')) return;
 
-        const opportunityEl = event.target.closest('[data-arb-opportunity-id]');
+        const opportunityEl = closestEventTarget(event, '[data-arb-opportunity-id]');
         if (!opportunityEl) return;
         const opportunityId = opportunityEl.dataset.arbOpportunityId;
         if (!opportunityId) return;
@@ -4148,11 +4174,7 @@
 
     function handleArbPathHeaderClick(event) {
         if (!event) return;
-        if (
-            event.target &&
-            typeof event.target.closest === 'function' &&
-            event.target.closest('button, input, textarea, select, [contenteditable="true"]')
-        ) {
+        if (closestEventTarget(event, 'button, input, textarea, select, [contenteditable="true"]')) {
             return;
         }
         blurArbGlobalFilterInputs();
@@ -4777,7 +4799,10 @@
             ts: Date.now()
         });
         try {
-            localStorage.setItem(PATH_ALERT_CONFIG_SYNC_KEY, payload);
+            const storage = getLocalStorageSafe();
+            if (storage) {
+                storage.setItem(PATH_ALERT_CONFIG_SYNC_KEY, payload);
+            }
         } catch (error) {
             console.warn('[path-alert-config] sync emit failed', error);
         }
@@ -4992,54 +5017,57 @@
     }
 
     function handleAlertLogClick(event) {
-        const logTabBtn = event.target.closest('#alert-log-log-tab');
+        const logTabBtn = closestEventTarget(event, '#alert-log-log-tab');
         if (logTabBtn) {
             alertLogActiveTab = 'log';
             renderAlertLogTabState();
             return;
         }
-        const mutedLogTabBtn = event.target.closest('#alert-log-muted-log-tab');
+        const mutedLogTabBtn = closestEventTarget(event, '#alert-log-muted-log-tab');
         if (mutedLogTabBtn) {
             alertLogActiveTab = 'muted-log';
             renderAlertLogTabState();
             return;
         }
-        const mutedTabBtn = event.target.closest('#alert-log-muted-tab');
+        const mutedTabBtn = closestEventTarget(event, '#alert-log-muted-tab');
         if (mutedTabBtn) {
             alertLogActiveTab = 'muted';
             renderAlertLogTabState();
             return;
         }
-        const quoteDexLinkEl = event.target.closest('[data-quote-alert-dex-link-copy]');
+        const quoteDexLinkEl = closestEventTarget(event, '[data-quote-alert-dex-link-copy]');
         if (quoteDexLinkEl) {
             event.preventDefault();
             void copyDexLinkFromElement(quoteDexLinkEl);
             return;
         }
-        const extendMutedPathTargetBtn = event.target.closest('[data-muted-path-target-extend]');
+        const extendMutedPathTargetBtn = closestEventTarget(event, '[data-muted-path-target-extend]');
         if (extendMutedPathTargetBtn) {
             extendMutedPathTargetByKey(String(extendMutedPathTargetBtn.dataset.mutedPathTargetExtend || ''), Date.now());
             return;
         }
-        const restoreMutedPathTargetBtn = event.target.closest('[data-muted-path-target-restore]');
+        const restoreMutedPathTargetBtn = closestEventTarget(event, '[data-muted-path-target-restore]');
         if (restoreMutedPathTargetBtn) {
             removeMutedPathTargetByKey(String(restoreMutedPathTargetBtn.dataset.mutedPathTargetRestore || ''), Date.now());
             return;
         }
-        const extendMutedPathLegBtn = event.target.closest('[data-muted-path-leg-extend]');
+        const extendMutedPathLegBtn = closestEventTarget(event, '[data-muted-path-leg-extend]');
         if (extendMutedPathLegBtn) {
             extendMutedPathLegByKey(String(extendMutedPathLegBtn.dataset.mutedPathLegExtend || ''), Date.now());
             return;
         }
-        const restoreMutedPathLegBtn = event.target.closest('[data-muted-path-leg-restore]');
+        const restoreMutedPathLegBtn = closestEventTarget(event, '[data-muted-path-leg-restore]');
         if (restoreMutedPathLegBtn) {
             removeMutedPathLegByKey(String(restoreMutedPathLegBtn.dataset.mutedPathLegRestore || ''), Date.now());
             return;
         }
-        const muteBtn = event.target.closest('[data-path-alert-log-mute]');
-        const quoteMuteBtn = event.target.closest('[data-quote-alert-log-mute]');
+        const muteBtn = closestEventTarget(event, '[data-path-alert-log-mute]');
+        const quoteMuteBtn = closestEventTarget(event, '[data-quote-alert-log-mute]');
         const buttonEl = muteBtn || quoteMuteBtn;
         if (buttonEl && !buttonEl.disabled) {
+            if (extendMutedPathTargetFromLogButton(buttonEl, Date.now())) {
+                return;
+            }
             const alertId = String(
                 (muteBtn && muteBtn.dataset.pathAlertLogMute)
                 || (quoteMuteBtn && quoteMuteBtn.dataset.quoteAlertLogMute)
@@ -5079,8 +5107,8 @@
             mutePathAlertTarget(triggeredEntry, Date.now());
             return;
         }
-        if (event.target.closest('a, button')) return;
-        const collapsedCard = event.target.closest('[data-alert-log-collapsed="1"]');
+        if (closestEventTarget(event, 'a, button')) return;
+        const collapsedCard = closestEventTarget(event, '[data-alert-log-collapsed="1"]');
         if (collapsedCard) {
             expandCollapsedAlertLogCard(collapsedCard);
             return;
@@ -5088,7 +5116,7 @@
     }
 
     function handlePathAlertPanelChange(event) {
-        const forceImmediateToggle = event.target.closest('[data-path-alert-force-immediate]');
+        const forceImmediateToggle = closestEventTarget(event, '[data-path-alert-force-immediate]');
         if (forceImmediateToggle) {
             forceImmediateAlerts = forceImmediateToggle.checked;
             if (forceImmediateAlerts) {
@@ -5102,7 +5130,7 @@
             });
             return;
         }
-        const toggle = event.target.closest('[data-path-alert-global-toggle]');
+        const toggle = closestEventTarget(event, '[data-path-alert-global-toggle]');
         if (!toggle || !pathAlertConfig.settings) return;
         const key = toggle.dataset.pathAlertGlobalToggle;
         if (!key) return;
@@ -5112,14 +5140,14 @@
     }
 
     function handlePathAlertPanelClick(event) {
-        const deleteBtn = event.target.closest('[data-path-alert-delete]');
+        const deleteBtn = closestEventTarget(event, '[data-path-alert-delete]');
         if (deleteBtn) {
             removePathAlertById(deleteBtn.dataset.pathAlertDelete);
             queuePathAlertConfigSave();
             return;
         }
 
-        const dismissDeleteBtn = event.target.closest('[data-path-alert-dismiss-delete]');
+        const dismissDeleteBtn = closestEventTarget(event, '[data-path-alert-dismiss-delete]');
         if (dismissDeleteBtn) {
             dismissPathAlertById(dismissDeleteBtn.dataset.pathAlertDismissDelete);
             queuePathAlertConfigSave();
@@ -5350,8 +5378,8 @@
                 .filter(Boolean);
         const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
         const globalEmptyText = hasGlobalFilter ? '过滤后暂无路径' : '等待数据...';
-        const fixedColumns = window.ArbPanelLayoutUtils
-            ? window.ArbPanelLayoutUtils.splitSectionsIntoColumns(fixedSections, 6, 2)
+        const fixedColumns = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.splitSectionsBySectionCount === 'function'
+            ? window.ArbPanelLayoutUtils.splitSectionsBySectionCount(fixedSections, 6, 2)
             : [fixedSections, []];
         const wbtcSection = categorySections.find((section) => section && section.title === 'WBTC监控') || { title: 'WBTC监控', opportunities: [], emptyText: '等待数据...' };
         const tbtcSection = categorySections.find((section) => section && section.title === 'TBTC监控') || { title: 'TBTC监控', opportunities: [], emptyText: '等待数据...' };
@@ -5901,6 +5929,13 @@
             return target.parentElement;
         }
         return null;
+    }
+
+    function closestEventTarget(event, selector) {
+        const target = resolveEventTargetElement(event);
+        return target && typeof target.closest === 'function'
+            ? target.closest(selector)
+            : null;
     }
 
     function copyPriceFromText(text) {
@@ -6720,7 +6755,10 @@
             themeToggleBtn.title = THEME_META[nextTheme].title;
             themeToggleBtn.setAttribute('aria-label', THEME_META[nextTheme].title);
         }
-        localStorage.setItem('theme', nextTheme);
+        const storage = getLocalStorageSafe();
+        if (storage) {
+            storage.setItem('theme', nextTheme);
+        }
     }
 
     function getNextTheme(currentTheme) {
@@ -7267,7 +7305,8 @@
         await requestBackendConfigRefresh();
         await loadPriceSnapshotConfig();
         await loadArbSettings();
-        applyTheme(localStorage.getItem('theme'));
+        const storage = getLocalStorageSafe();
+        applyTheme(storage ? storage.getItem('theme') : null);
         mutedPathTargets = loadMutedPathTargetsFromStorage();
         mutedPathLegs = loadMutedPathLegsFromStorage();
         

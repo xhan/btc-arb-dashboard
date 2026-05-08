@@ -1,6 +1,7 @@
 const assert = require('assert');
 const {
   splitSectionsIntoColumns,
+  splitSectionsBySectionCount,
   resolveItemsBySelectors,
   DEFAULT_DISPLAY_MIN_PROFIT_BP,
   selectCyclesAboveDisplayThreshold,
@@ -31,6 +32,22 @@ assert.deepStrictEqual(emptyColumns[0].map((item) => item.title), [
   '固定路径 6'
 ]);
 assert.deepStrictEqual(emptyColumns[1].map((item) => item.title), ['固定路径 7', '固定路径 8']);
+
+const fixedRuleSections = Array.from({ length: 8 }, (_, index) => ({
+  title: `固定规则 ${index + 1}`,
+  opportunities: Array.from({ length: index % 2 ? 2 : 1 }, (_, opportunityIndex) => ({ label: `机会 ${opportunityIndex + 1}` }))
+}));
+const fixedRuleColumns = splitSectionsBySectionCount(fixedRuleSections, 6, 2);
+assert.deepStrictEqual(fixedRuleColumns[0].map((item) => item.title), [
+  '固定规则 1',
+  '固定规则 2',
+  '固定规则 3',
+  '固定规则 4',
+  '固定规则 5',
+  '固定规则 6'
+]);
+assert.deepStrictEqual(fixedRuleColumns[1].map((item) => item.title), ['固定规则 7', '固定规则 8']);
+assert.deepStrictEqual(fixedRuleColumns[1][1].opportunities.map((item) => item.label), ['机会 1', '机会 2']);
 
 const items = [
   { id: 11, name: 'WBTC监控' },
