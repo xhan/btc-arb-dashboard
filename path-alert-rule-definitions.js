@@ -27,7 +27,8 @@
       categoryNames: ['WBTC监控'],
       excludeChains: ['arbitrum'],
       steps: 2,
-      crossChain: true
+      crossChain: true,
+      resultLimit: 2
     },
     {
       id: 'fixed:lbtc-btc',
@@ -36,7 +37,8 @@
       quote: 'LBTC',
       categoryNames: ['LBTC监控'],
       steps: 2,
-      crossChain: true
+      crossChain: true,
+      resultLimit: 2
     },
     {
       id: 'fixed:wbtc-lbtc',
@@ -45,7 +47,8 @@
       quote: 'LBTC',
       categoryNames: ['LBTC监控'],
       steps: 2,
-      crossChain: true
+      crossChain: true,
+      resultLimit: 2
     },
     {
       id: 'fixed:tbtc-wbtc',
@@ -54,7 +57,8 @@
       quote: 'WBTC',
       categoryNames: ['TBTC监控'],
       steps: 2,
-      crossChain: true
+      crossChain: true,
+      resultLimit: 2
     },
     {
       id: 'fixed:tbtc-btc',
@@ -63,7 +67,8 @@
       quote: 'cbBTC',
       categoryNames: ['TBTC监控'],
       steps: 2,
-      crossChain: true
+      crossChain: true,
+      resultLimit: 2
     },
     {
       id: 'fixed:gho-usd',
@@ -84,7 +89,7 @@
       steps: 2,
       crossChain: true,
       excludeChains: ['Bybit', 'Binance'],
-      resultLimit: 1
+      resultLimit: 2
     },
     {
       id: 'fixed:susde-usdt',
@@ -94,7 +99,7 @@
       categoryNames: ['USD监控'],
       steps: 2,
       chains: ['ethereum', 'plasma'],
-      resultLimit: 1
+      resultLimit: 2
     },
     {
       id: 'fixed:mseth',
