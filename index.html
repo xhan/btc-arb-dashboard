@@ -859,6 +859,50 @@
         .arb-opportunity-head-label { flex: 1 1 auto; min-width: 0; }
         .arb-opportunity-head-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
         .arb-opportunity-head-profit { min-width: 72px; text-align: right; font-size: 12px; }
+        .arb-opportunity-quote-price {
+            display: grid;
+            gap: 5px;
+            padding: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.045);
+        }
+        .dark-mode .arb-opportunity-quote-price {
+            border-color: rgba(96, 165, 250, 0.22);
+            background: rgba(96, 165, 250, 0.08);
+        }
+        .arb-quote-price-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .arb-quote-price-title {
+            min-width: 0;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .arb-quote-price-status {
+            flex-shrink: 0;
+            color: var(--text-color-light);
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        .arb-quote-price-value {
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1.15;
+            font-variant-numeric: tabular-nums;
+            color: var(--trend-up-bg);
+        }
+        .arb-quote-price-meta {
+            color: var(--text-color-light);
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        .arb-opportunity-quote-price.is-muted .arb-quote-price-value {
+            color: var(--text-color-light);
+        }
         .arb-profit { font-weight: 700; color: var(--trend-up-bg); }
         .arb-profit-neg { color: var(--trend-down-bg); }
         #data-terminal-controls {
@@ -1956,6 +2000,8 @@
     <script src="quote-alert-config-utils.js"></script>
     <script src="path-alert-page-utils.js"></script>
     <script src="path-alert-rule-definitions.js"></script>
+    <script src="arb-path-config.js"></script>
+    <script src="arb-path-config-utils.js"></script>
     <script src="chain-defaults.js"></script>
     <script src="arb-panel-renderer.js"></script>
     <script src="arb-fixed-utils.js"></script>

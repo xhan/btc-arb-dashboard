@@ -135,3 +135,40 @@ assert.ok(specialHtml.includes('class="arb-section-title-profit arb-profit">1.30
 assert.ok(specialHtml.includes('class="arb-opportunity arb-opportunity-special-body"'));
 assert.ok(!specialHtml.includes('arb-opportunity-head'));
 assert.ok(specialHtml.includes('class="arb-path-line arb-path-display-line">1.00000   💰0.00059   💹5.9‱</div>'));
+
+const quotePriceHtml = renderArbGrid({
+  columns: [
+    [
+      {
+        title: '关注列表',
+        opportunities: [
+          {
+            entryType: 'quote-price',
+            title: 'ETH USDT/USDe 汇率高于',
+            priceText: '1.00042',
+            metaText: 'Ethereum · USDT/USDe',
+            statusText: ''
+          },
+          {
+            entryType: 'quote-price',
+            title: '等待报价测试',
+            priceText: '--',
+            metaText: 'Ethereum · cbBTC/syBTC',
+            statusText: '等待报价',
+            muted: true
+          }
+        ]
+      }
+    ]
+  ],
+  isMeaningfulPath: () => false
+});
+
+assert.ok(quotePriceHtml.includes('class="arb-opportunity arb-opportunity-quote-price"'));
+assert.ok(quotePriceHtml.includes('ETH USDT/USDe 汇率高于'));
+assert.ok(quotePriceHtml.includes('class="arb-quote-price-value">1.00042</div>'));
+assert.ok(quotePriceHtml.includes('Ethereum · USDT/USDe'));
+assert.ok(quotePriceHtml.includes('等待报价'));
+assert.ok(!quotePriceHtml.includes('正向'));
+assert.ok(!quotePriceHtml.includes('阈值'));
+assert.ok(!quotePriceHtml.includes('状态 未触发'));

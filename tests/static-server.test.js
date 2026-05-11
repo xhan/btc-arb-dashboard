@@ -67,6 +67,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="copy-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
+    assert.ok(response.body.includes('src="arb-path-config.js"'));
+    assert.ok(response.body.includes('src="arb-path-config-utils.js"'));
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="muted-path-storage-utils.js"'));
@@ -101,6 +103,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="special-rule-alert-config-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="arb-path-config.js"') < response.body.indexOf('src="arb-path-config-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="arb-path-config-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="special-rule-alert-utils.js"') < response.body.indexOf('src="app.js"')
@@ -321,6 +329,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
     assert.ok(appJsResponse.body.includes("const specialSections = SPECIAL_ARB_RULES"));
     assert.ok(appJsResponse.body.includes("emptyText: '无收益率'"));
+    assert.ok(appJsResponse.body.includes("title: '关注列表'"));
+    assert.ok(appJsResponse.body.includes('buildQuotePriceWatchEntries()'));
+    assert.ok(!appJsResponse.body.includes('buildQuoteAlertWatchEntries'));
     assert.ok(appJsResponse.body.includes('const columns = ['));
     assert.ok(appJsResponse.body.includes('const includedSymbols = parseArbFilterInput(arbGlobalIncludedSymbolsInput);'));
     assert.ok(appJsResponse.body.includes('const twoLegOnlyCycles = arbGlobalTwoLegOnly'));

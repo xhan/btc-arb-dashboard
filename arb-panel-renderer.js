@@ -30,7 +30,33 @@
     return String(profitRate);
   }
 
+  function renderQuotePriceOpportunity(entry) {
+    const classNames = ['arb-opportunity', 'arb-opportunity-quote-price'];
+    if (entry && entry.muted === true) classNames.push('is-muted');
+    const title = entry && entry.title ? String(entry.title) : '交易对价格';
+    const priceText = entry && entry.priceText ? String(entry.priceText) : '--';
+    const metaText = entry && entry.metaText ? String(entry.metaText) : '';
+    const statusText = entry && entry.statusText ? String(entry.statusText) : '';
+    const statusHtml = statusText
+      ? `<div class="arb-quote-price-status">${escapeHtml(statusText)}</div>`
+      : '';
+    return `
+      <div class="${classNames.join(' ')}">
+        <div class="arb-quote-price-header">
+          <div class="arb-quote-price-title">${escapeHtml(title)}</div>
+          ${statusHtml}
+        </div>
+        <div class="arb-quote-price-value">${escapeHtml(priceText)}</div>
+        ${metaText ? `<div class="arb-quote-price-meta">${escapeHtml(metaText)}</div>` : ''}
+      </div>
+    `;
+  }
+
   function renderOpportunity(entry, options) {
+    if (entry && entry.entryType === 'quote-price') {
+      return renderQuotePriceOpportunity(entry);
+    }
+
     const cycle = entry && entry.cycle ? entry.cycle : entry;
     const isMeaningful = typeof options.isMeaningfulPath === 'function'
       ? options.isMeaningfulPath(cycle)

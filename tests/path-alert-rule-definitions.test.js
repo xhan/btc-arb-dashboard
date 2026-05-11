@@ -15,7 +15,7 @@ assert.strictEqual(fixedRule.title, 'USDE - USDT');
 assert.deepStrictEqual(fixedRule.categoryNames, ['USD监控']);
 assert.strictEqual(fixedRule.base, 'USDe');
 assert.strictEqual(fixedRule.quote, 'USDT');
-assert.strictEqual(fixedRule.resultLimit, 1);
+assert.strictEqual(fixedRule.resultLimit, 2);
 assert.deepStrictEqual(fixedRule.excludeChains, ['Bybit', 'Binance']);
 
 assert.ok(fixedSusdeRule, 'missing fixed rule: fixed:susde-usdt');
@@ -24,7 +24,7 @@ assert.deepStrictEqual(fixedSusdeRule.categoryNames, ['USD监控']);
 assert.strictEqual(fixedSusdeRule.base, 'sUSDe');
 assert.strictEqual(fixedSusdeRule.quote, 'USDT');
 assert.deepStrictEqual(fixedSusdeRule.chains, ['ethereum', 'plasma']);
-assert.strictEqual(fixedSusdeRule.resultLimit, 1);
+assert.strictEqual(fixedSusdeRule.resultLimit, 2);
 
 for (const ruleId of specialRuleIds) {
   const rule = SPECIAL_ARB_RULES.find((entry) => entry.id === ruleId);

@@ -2057,6 +2057,7 @@
         }
     ];
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
+    const ARB_PATH_CONFIG = window.ArbPathConfig || { watchItems: [] };
 
     function formatArbPathLegLine(leg) {
         const displayFrom = leg && leg.rawFrom ? leg.rawFrom : leg.from;
@@ -5176,6 +5177,73 @@
             : [];
     }
 
+    function getQuotePriceWatchItems() {
+        if (window.ArbPathConfigUtils && typeof window.ArbPathConfigUtils.getQuotePriceWatchItems === 'function') {
+            return window.ArbPathConfigUtils.getQuotePriceWatchItems(ARB_PATH_CONFIG);
+        }
+        const items = Array.isArray(ARB_PATH_CONFIG && ARB_PATH_CONFIG.watchItems)
+            ? ARB_PATH_CONFIG.watchItems
+            : [];
+        return items
+            .filter((item) => item && item.type === 'quote-price')
+            .map((item) => ({
+                title: String(item.title || '').trim(),
+                type: 'quote-price',
+                quoteId: Number(item.quoteId),
+                direction: item.direction === 'inverse' ? 'inverse' : 'forward'
+            }))
+            .filter((item) => item.title && Number.isFinite(item.quoteId) && item.quoteId > 0);
+    }
+
+    function resolveQuotePriceWatchValue(item, state) {
+        if (window.ArbPathConfigUtils && typeof window.ArbPathConfigUtils.resolveQuotePriceValue === 'function') {
+            return window.ArbPathConfigUtils.resolveQuotePriceValue(item, state);
+        }
+        if (!state || typeof state !== 'object') return null;
+        const value = item && item.direction === 'inverse'
+            ? Number(state.inverseRawPrice)
+            : Number(state.lastRawPrice);
+        return Number.isFinite(value) ? value : null;
+    }
+
+    function buildQuotePriceWatchEntry(item) {
+        const quote = findDashboardQuoteById(item.quoteId);
+        const state = quote ? quoteMonitorState.get(Number(quote.id)) || {} : {};
+        const value = resolveQuotePriceWatchValue(item, state);
+        const isPaused = quote ? isQuotePaused(quote) : false;
+        const statusText = !quote || value == null
+            ? '等待报价'
+            : isPaused
+                ? '报价暂停'
+                : '';
+        const pairLabel = quote
+            ? buildQuoteAlertDisplayLabel(quote, state, item.direction)
+            : `报价 #${String(item.quoteId)}`;
+        const chainLabel = quote ? formatChainLabel(quote.chain) : '未知链';
+        return {
+            entryType: 'quote-price',
+            title: item.title,
+            priceText: value == null ? '--' : String(formatDetailNumber(value, 8)),
+            metaText: [chainLabel, pairLabel].filter(Boolean).join(' · '),
+            statusText,
+            muted: Boolean(statusText)
+        };
+    }
+
+    function buildQuotePriceWatchEntries() {
+        return getQuotePriceWatchItems()
+            .map(buildQuotePriceWatchEntry)
+            .filter(Boolean);
+    }
+
+    function buildQuotePriceWatchSection() {
+        return {
+            title: '关注列表',
+            opportunities: buildQuotePriceWatchEntries(),
+            emptyText: '暂无关注价格'
+        };
+    }
+
     function buildArbPanelData() {
         if (!window.ArbPaths) {
             return { error: '路径模块未加载' };
@@ -5387,7 +5455,7 @@
             fixedColumns[0] || [],
             fixedColumns[1] || [],
             specialSections,
-            [wbtcSection, lbtcSection || { title: 'LBTC监控', opportunities: [], emptyText: '等待数据...' }, tbtcSection],
+            [buildQuotePriceWatchSection()],
             [{
                 title: '全局路径',
                 opportunities: globalEntries,
