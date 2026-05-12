@@ -6190,6 +6190,11 @@
             togglePathAlertPanel();
             return;
         }
+        if (key === 'l') {
+            event.preventDefault();
+            toggleAlertLogPanel();
+            return;
+        }
         if (key === 'c') {
             event.preventDefault();
             toggleRequestChannelTags();

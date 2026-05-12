@@ -267,6 +267,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('沉默中'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes("if (key === 'c')"));
+    assert.ok(appJsResponse.body.includes("if (key === 'l')"));
     assert.ok(appJsResponse.body.includes("if (key === 'p')"));
     assert.ok(appJsResponse.body.includes("if (key === 's')"));
     assert.ok(!appJsResponse.body.includes("if (key === 'd')"));
