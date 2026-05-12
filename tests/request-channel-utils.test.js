@@ -36,6 +36,10 @@ assert.strictEqual(
   'kyber'
 );
 assert.strictEqual(
+  getQueueSourceKeyForQuote({ chain: 'arbitrum', toChain: 'ethereum', preferredSource: 'Kyber' }),
+  'lifi'
+);
+assert.strictEqual(
   getQueueSourceKeyForQuote({ chain: 'ethereum', preferredSource: '0x' }),
   'zerox'
 );

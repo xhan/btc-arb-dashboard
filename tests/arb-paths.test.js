@@ -37,6 +37,13 @@ assert.ok(bestTwo.profitRate > 0);
 const exactFilteredEdges = buildEdges(quotes, state, ['CBBTC', 'WBTC']);
 assert.strictEqual(exactFilteredEdges.length, 0);
 
+const crossChainEdges = buildEdges([
+  { id: 21, chain: 'arbitrum', toChain: 'ethereum', showInverse: true }
+], new Map([
+  [21, { fromSymbol: 'USDC', toSymbol: 'USDC', lastRawPrice: 0.999, inverseRawPrice: 0.998 }]
+]));
+assert.deepStrictEqual(crossChainEdges, [], 'cross-chain quotes should not enter same-chain arb paths');
+
 const formatted = formatLegLine({
   from: 'cbBTC',
   to: 'WBTC',

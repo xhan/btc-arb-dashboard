@@ -350,6 +350,7 @@ function buildDefaultConfigMore() {
         kyberClientId: 'xh-quote-dashboard',
         lifiApiKey: '',
         lifiIntegrator: '',
+        lifiSlippage: '0.0001',
         jupiterApiKey: '',
         cetusAggregatorEndpoint: normalizeCetusAggregatorConfig().endpoint,
         cetusAggregatorApiKey: '',
@@ -369,6 +370,7 @@ function normalizeConfigMoreData(configMore = {}) {
     const rawClientId = typeof configMore.kyberClientId === 'string' ? configMore.kyberClientId.trim() : '';
     const rawLifiApiKey = typeof configMore.LIFIApiKey === 'string' ? configMore.LIFIApiKey.trim() : '';
     const rawLifiIntegrator = typeof configMore.LIFIIntegrator === 'string' ? configMore.LIFIIntegrator.trim() : '';
+    const rawLifiSlippage = typeof configMore.LIFISlippage === 'string' ? configMore.LIFISlippage.trim() : '';
     const rawJupiterApiKey = typeof configMore.jupiterApiKey === 'string' ? configMore.jupiterApiKey.trim() : '';
     const rawVeloraPartner = typeof configMore.veloraPartner === 'string' ? configMore.veloraPartner.trim() : '';
     const rawVeloraIncludeDEXS = normalizeStringArray(configMore.veloraIncludeDEXS);
@@ -384,6 +386,7 @@ function normalizeConfigMoreData(configMore = {}) {
         kyberClientId: rawClientId || 'xh-quote-dashboard',
         lifiApiKey: rawLifiApiKey,
         lifiIntegrator: rawLifiIntegrator,
+        lifiSlippage: rawLifiSlippage || '0.0001',
         jupiterApiKey: rawJupiterApiKey,
         cetusAggregatorEndpoint: cetusAggregatorConfig.endpoint,
         cetusAggregatorApiKey: cetusAggregatorConfig.apiKey,
@@ -914,8 +917,9 @@ app.post('/api/get-lifi-quote', async (req, res) => {
         const result = await marketClients.providers.lifi.getQuote(input);
         res.json(result);
     } catch (error) {
-        const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('LIFI', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
+        const { chain, toChain, fromToken, toToken, amount } = req.body;
+        const logChain = toChain && toChain !== chain ? `${chain}->${toChain}` : chain;
+        logQuoteError('LIFI', withQuoteLogRequestChannel({ chain: logChain, fromToken, toToken, amount: amount || 1 }, input), error);
         res.status(500).json({ error: error.message });
     }
 });

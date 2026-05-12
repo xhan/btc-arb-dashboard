@@ -55,6 +55,7 @@
   - `preferredSource = 'Velora'` 走 `velora`
   - `preferredSource = 'LI.FI'` 走 `lifi`
   - 其他默认走 `kyber`
+- `toChain` 存在且不同于 `chain` 的跨链报价强制走 `LI.FI`
 
 ## 队列与执行逻辑
 
@@ -115,6 +116,7 @@
 - 报价队列负责拉 quote
 - 套利路径面板负责读取当前最新 quote 状态后做路径计算和渲染
 - 当前路径面板走一个单独节流器：`ARB_PANEL_UPDATE_DELAY_MS = 1000`
+- LI.FI 跨链报价不进入当前套利路径拓扑，避免把桥接路线当成同链可闭环交易腿
 
 触发顺序是：
 

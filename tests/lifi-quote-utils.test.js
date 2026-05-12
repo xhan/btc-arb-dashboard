@@ -42,6 +42,35 @@ const quoteWithoutProtocolFee = {
   ]
 };
 
+const crossChainQuoteWithIntermediateSwap = {
+  action: {
+    fromAmount: '100000000',
+    fromChainId: 42161,
+    toChainId: 1
+  },
+  estimate: {
+    toAmount: '99372650'
+  },
+  includedSteps: [
+    {
+      type: 'protocol',
+      tool: 'feeCollection',
+      estimate: { fromAmount: '100000000', toAmount: '99750000' }
+    },
+    {
+      type: 'swap',
+      tool: 'bitget',
+      action: { fromAmount: '99750000' },
+      estimate: { toAmount: '79978088512' }
+    },
+    {
+      type: 'cross',
+      tool: 'mayan',
+      estimate: { fromAmount: '79578198069', toAmount: '99372650' }
+    }
+  ]
+};
+
 assert.strictEqual(
   getDisplayedToAmountRaw(quoteWithProtocolFee),
   '99466613'
@@ -50,6 +79,11 @@ assert.strictEqual(
 assert.strictEqual(
   getDisplayedToAmountRaw(quoteWithoutProtocolFee),
   '99466538'
+);
+
+assert.strictEqual(
+  getDisplayedToAmountRaw(crossChainQuoteWithIntermediateSwap),
+  '99621704'
 );
 
 assert.strictEqual(

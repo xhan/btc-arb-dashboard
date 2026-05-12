@@ -34,6 +34,12 @@
     return !!normalized && !nonEvm.has(normalized);
   }
 
+  function isCrossChainQuote(quote) {
+    const fromChain = normalizeChain(quote && quote.chain);
+    const toChain = normalizeChain(quote && quote.toChain);
+    return Boolean(fromChain && toChain && fromChain !== toChain);
+  }
+
   function isChannelAwareSourceKey(sourceKey) {
     return CHANNEL_AWARE_SOURCE_KEYS.includes(normalizeString(sourceKey).toLowerCase());
   }
@@ -48,6 +54,7 @@
     const normalized = normalizeChain(chain);
     let sourceKey = 'kyber';
 
+    if (isCrossChainQuote(quote)) return 'lifi';
     if (normalized === 'bybit') return 'bybit';
     if (normalized === 'binance') return 'binance';
     if (normalized === 'solana') return 'solana';

@@ -58,6 +58,13 @@ assert.deepStrictEqual(
   ]
 );
 
+const crossChainTopologyEdges = buildTopologyEdges([
+  { id: 9, chain: 'arbitrum', toChain: 'ethereum', showInverse: true, paused: false }
+], new Map([
+  [9, { fromSymbol: 'USDC', toSymbol: 'USDC', lastRawPrice: 0.999, inverseRawPrice: 0.998 }]
+]));
+assert.deepStrictEqual(crossChainTopologyEdges, [], 'cross-chain quotes should not enter cached arb topology');
+
 const templates = buildCycleTemplates(topologyEdges, {
   maxDepth: 3,
   limit: 10,

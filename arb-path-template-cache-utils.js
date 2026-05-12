@@ -17,6 +17,12 @@
     return Boolean(quote && quote.paused === true);
   }
 
+  function isCrossChainQuote(quote) {
+    const fromChain = String(quote && quote.chain || '').trim().toLowerCase();
+    const toChain = String(quote && quote.toChain || '').trim().toLowerCase();
+    return Boolean(fromChain && toChain && fromChain !== toChain);
+  }
+
   function getActiveQuotes(quotes) {
     return Array.isArray(quotes) ? quotes.filter((quote) => !isQuotePaused(quote)) : [];
   }
@@ -53,6 +59,7 @@
 
     for (const quote of quotes || []) {
       if (!quote || !Number.isFinite(Number(quote.id))) continue;
+      if (isCrossChainQuote(quote)) continue;
       const state = stateMap.get(Number(quote.id));
       if (!state || !state.fromSymbol || !state.toSymbol) continue;
 

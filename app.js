@@ -194,6 +194,8 @@
     
     const addQuoteModal = document.getElementById('add-quote-modal');
     const addQuoteChainSelect = document.getElementById('add-quote-chain');
+    const addQuoteToChainSelect = document.getElementById('add-quote-to-chain');
+    const addQuoteToChainGroup = document.getElementById('add-quote-to-chain-group');
     const addQuotePairFields = document.getElementById('add-quote-pair-fields');
     const addQuoteSymbolField = document.getElementById('add-quote-symbol-field');
     const addQuoteFromInput = document.getElementById('add-quote-from');
@@ -292,8 +294,32 @@
         bsc: '0x...', avalanche: '0x...', base: '0x...', megaeth: '0x...', hemi: '0x...', katana: '0x...', starknet: '0x...', Bybit: 'N/A', bybit: 'N/A', Binance: 'N/A', binance: 'N/A'
     };
 
+    function normalizeChainKey(chain) {
+        return String(chain || '').trim().toLowerCase();
+    }
+
+    function isCrossChainQuote(quote) {
+        const fromChain = normalizeChainKey(quote && quote.chain);
+        const toChain = normalizeChainKey(quote && quote.toChain);
+        return Boolean(fromChain && toChain && fromChain !== toChain);
+    }
+
+    function getSingleChainDisplayName(chain) {
+        const normalized = normalizeChainKey(chain);
+        return CHAIN_DISPLAY_NAMES[normalized] || chain || '';
+    }
+
+    function getQuoteChainDisplayName(quote) {
+        if (!quote) return '';
+        const fromChain = normalizeChainKey(quote.chain);
+        const toChain = normalizeChainKey(quote.toChain);
+        const fromLabel = getSingleChainDisplayName(quote.chain);
+        if (!fromChain || !toChain || fromChain === toChain) return fromLabel;
+        return `${fromLabel} -> ${getSingleChainDisplayName(quote.toChain)}`;
+    }
+
     function isCexOrderbookChain(chain) {
-        const normalized = String(chain || '').trim().toLowerCase();
+        const normalized = normalizeChainKey(chain);
         return normalized === 'bybit' || normalized === 'binance';
     }
     
@@ -327,18 +353,19 @@
 
     function isEvmChain(chain) {
         const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];
-        return !nonEvm.includes(chain.toLowerCase());
+        return !!chain && !nonEvm.includes(normalizeChainKey(chain));
     }
 
     function is0xSupported(chain) {
-        return ZEROX_SUPPORTED_CHAINS.includes(chain.toLowerCase());
+        return ZEROX_SUPPORTED_CHAINS.includes(normalizeChainKey(chain));
     }
 
     function isKyberSupported(chain) {
-        return KYBER_SUPPORTED_CHAINS.includes(chain.toLowerCase());
+        return KYBER_SUPPORTED_CHAINS.includes(normalizeChainKey(chain));
     }
 
     function shouldQueueInverseFetch(quote) {
+        if (isCrossChainQuote(quote)) return false;
         if (window.QueueStatsUtils && typeof window.QueueStatsUtils.shouldQueueInverseFetch === 'function') {
             return window.QueueStatsUtils.shouldQueueInverseFetch(quote);
         }
@@ -517,9 +544,14 @@
 
     function getQueueTypeForQuote(quote) {
         if (window.QueueStatsUtils && typeof window.QueueStatsUtils.getQueueTypeForQuote === 'function') {
-            return window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled });
+            const queueType = window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions);
+            if (multiChannelEnabled === false) {
+                return window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled });
+            }
+            return queueType;
         }
         let type = 'kyber';
+        if (isCrossChainQuote(quote)) return 'lifi';
         if (isCexOrderbookChain(quote.chain)) {
             type = String(quote.chain).trim().toLowerCase() === 'binance' ? 'binance' : 'bybit';
         }
@@ -904,7 +936,7 @@
     }
 
     function buildLegacyQuoteAlertDexLink(quote) {
-        if (!quote) return null;
+        if (!quote || isCrossChainQuote(quote)) return null;
         return getArbDetailUtils().buildArbDetailDexLink({
             chain: quote.chain,
             fromTokenAddress: quote.fromToken,
@@ -923,7 +955,7 @@
     }
 
     function buildLegacyQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
-        const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
+        const displayName = getQuoteChainDisplayName(quote);
         const direction = getQuoteAlertDirection(alert && alert.target);
         const label = buildQuoteAlertDisplayLabel(quote, quoteMonitorState.get(quote.id) || {}, direction);
         const currentValueText = options.currentValueText || '';
@@ -1796,7 +1828,7 @@
                 const quoteIds = Array.isArray(category && category.quotes)
                     ? category.quotes
                         .filter((quote) => quote && quote.paused !== true)
-                        .map((quote) => `${quote.id}:${quote.chain}:${quote.showInverse ? 1 : 0}`)
+                        .map((quote) => `${quote.id}:${quote.chain}:${quote.toChain || ''}:${quote.showInverse ? 1 : 0}`)
                         .join(',')
                     : '';
                 return `${category && category.name || ''}:${quoteIds}`;
@@ -5549,6 +5581,9 @@
             finalAmountOut: data.amountOut,
             rawPrice: data.raw_price,
             usedSource: 'LI.FI',
+            fromChain: data.fromChain,
+            toChain: data.toChain,
+            isCrossChain: data.isCrossChain === true,
             resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
         };
     }
@@ -5708,6 +5743,7 @@
     }
 
     function buildQuoteStrategy(quote) {
+        if (isCrossChainQuote(quote)) return ['LI.FI'];
         if (isEvmChain(quote.chain)) {
             const pref = quote.preferredSource || 'Kyber';
             if (pref === 'Auto') {
@@ -6509,7 +6545,7 @@
     }
 
     function createQuoteItem(quote, categoryId) {
-        const displayName = CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain;
+        const displayName = getQuoteChainDisplayName(quote);
         const monitorState = quoteMonitorState.get(quote.id) || {};
         const lastResultText = getQuoteDisplayText(quote, monitorState);
         const itemEl = document.createElement('li');
@@ -6558,7 +6594,7 @@
             toTokenAddress: quote.toToken,
             inputAmount: quote.amount
         };
-        const dexLinkLabel = getDexLinkLabel(dexLinkConfig);
+        const dexLinkLabel = isCrossChainQuote(quote) ? null : getDexLinkLabel(dexLinkConfig);
         if (labelStackEl && dexLinkLabel) {
             labelStackEl.classList.add('quote-dex-link-target');
             labelStackEl.dataset.dexLinkCopy = '1';
@@ -6995,7 +7031,7 @@
         const category = dashboardState.find(c => c.id == categoryId);
         if (!category) return false;
         const quote = category.quotes.find(q => q.id == quoteId);
-        if (!quote || isCexOrderbookChain(quote.chain)) return false;
+        if (!quote || isCexOrderbookChain(quote.chain) || isCrossChainQuote(quote)) return false;
 
         [quote.fromToken, quote.toToken] = [quote.toToken, quote.fromToken];
 
@@ -7086,7 +7122,7 @@
             if(!pairLabel && monitorState.fromSymbol && monitorState.toSymbol){
                 pairLabel = `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
             }
-            document.getElementById('modal-title').textContent = `设置 · ${CHAIN_DISPLAY_NAMES[quote.chain] || quote.chain}`;
+            document.getElementById('modal-title').textContent = `设置 · ${getQuoteChainDisplayName(quote)}`;
             const modalSubtitleEl = document.getElementById('modal-subtitle');
             if (modalSubtitleEl) {
                 modalSubtitleEl.textContent = pairLabel || '...';
@@ -7098,25 +7134,35 @@
                 if (isCexOrderbookChain(quote.chain) || !quote.fromToken || !quote.toToken) {
                     quoteTokenAddressesEl.style.display = 'none';
                 } else {
-                    quoteFromTokenLineEl.textContent = `${fromSymbolLabel} ${quote.fromToken}`;
-                    quoteToTokenLineEl.textContent = `${toSymbolLabel} ${quote.toToken}`;
+                    const fromChainLabel = getSingleChainDisplayName(quote.chain);
+                    const toChainLabel = getSingleChainDisplayName(quote.toChain || quote.chain);
+                    quoteFromTokenLineEl.textContent = `${fromSymbolLabel} (${fromChainLabel}) ${quote.fromToken}`;
+                    quoteToTokenLineEl.textContent = `${toSymbolLabel} (${toChainLabel}) ${quote.toToken}`;
                     quoteTokenAddressesEl.style.display = 'block';
                 }
             }
             
             const sourceGroup = document.getElementById('source-select-group');
-            if (isEvmChain(quote.chain)) {
+            if (quoteSourceSelect) quoteSourceSelect.disabled = false;
+            if (isCrossChainQuote(quote)) {
+                if (sourceGroup) sourceGroup.style.display = 'block';
+                if (quoteSourceSelect) {
+                    quoteSourceSelect.value = 'LI.FI';
+                    quoteSourceSelect.disabled = true;
+                }
+                syncKyberOnlyDirectPoolsControl(quote, '');
+            } else if (isEvmChain(quote.chain)) {
                 if (quote.chain.toLowerCase() === 'plasma') {
-                    sourceGroup.style.display = 'none';
+                    if (sourceGroup) sourceGroup.style.display = 'none';
                     syncKyberOnlyDirectPoolsControl(quote, '');
                 } else {
-                    sourceGroup.style.display = 'block';
+                    if (sourceGroup) sourceGroup.style.display = 'block';
                     const pref = quote.preferredSource || 'Kyber';
-                    quoteSourceSelect.value = pref;
+                    if (quoteSourceSelect) quoteSourceSelect.value = pref;
                     syncKyberOnlyDirectPoolsControl(quote, pref);
                 }
             } else {
-                sourceGroup.style.display = 'none';
+                if (sourceGroup) sourceGroup.style.display = 'none';
                 syncKyberOnlyDirectPoolsControl(quote, '');
             }
 
@@ -7127,7 +7173,7 @@
             renderQuoteRequestChannelOptions(quote);
 
             const inverseCheckbox = document.getElementById('show-inverse-quote');
-            if (isCexOrderbookChain(quote.chain)) {
+            if (isCexOrderbookChain(quote.chain) || isCrossChainQuote(quote)) {
                  document.getElementById('inverse-toggle-group').style.display = 'none';
             } else {
                  document.getElementById('inverse-toggle-group').style.display = 'flex';
@@ -7135,7 +7181,7 @@
             }
 
             if (modalSwapQuoteBtn) {
-                modalSwapQuoteBtn.style.display = isCexOrderbookChain(quote.chain) ? 'none' : 'block';
+                modalSwapQuoteBtn.style.display = (isCexOrderbookChain(quote.chain) || isCrossChainQuote(quote)) ? 'none' : 'block';
             }
             if (modalDeleteQuoteBtn) {
                 modalDeleteQuoteBtn.style.display = 'block';
@@ -7200,7 +7246,12 @@
                 const { quote } = currentlyEditingQuote;
                 let shouldQueueRefreshQuote = false;
                 
-                if (isEvmChain(quote.chain)) {
+                if (isCrossChainQuote(quote)) {
+                    if (quote.preferredSource !== 'LI.FI') {
+                        quote.preferredSource = 'LI.FI';
+                        shouldQueueRefreshQuote = true;
+                    }
+                } else if (isEvmChain(quote.chain)) {
                     if (quote.chain.toLowerCase() !== 'plasma') {
                         const newSource = quoteSourceSelect.value;
                         if (quote.preferredSource !== newSource) {
@@ -7210,7 +7261,7 @@
                     }
                 }
 
-                const kyberOnlyDirectPools = kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;
+                const kyberOnlyDirectPools = !isCrossChainQuote(quote) && kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;
                 if (quote.kyberOnlyDirectPools !== kyberOnlyDirectPools) {
                     if (kyberOnlyDirectPools) {
                         quote.kyberOnlyDirectPools = true;
@@ -7220,7 +7271,7 @@
                     shouldQueueRefreshQuote = true;
                 }
 
-                const showInverse = document.getElementById('show-inverse-quote').checked;
+                const showInverse = isCrossChainQuote(quote) ? false : document.getElementById('show-inverse-quote').checked;
                 if (quote.showInverse !== showInverse) {
                     quote.showInverse = showInverse;
                     shouldQueueRefreshQuote = true;
@@ -7284,14 +7335,31 @@
 
     function resetAndCloseAddQuoteModal() {
         addQuoteChainSelect.value = '';
+        if (addQuoteToChainSelect) addQuoteToChainSelect.value = '';
         addQuoteFromInput.value = '';
         addQuoteToInput.value = '';
         addQuoteSymbolInput.value = '';
+        if (addQuoteToChainGroup) addQuoteToChainGroup.style.display = 'none';
         addQuotePairFields.style.display = 'none';
         addQuoteSymbolField.style.display = 'none';
         addQuoteSaveBtn.disabled = true;
         addQuoteModal.classList.remove('visible');
         currentCategoryIdToAdd = null;
+    }
+
+    function updateAddQuoteTokenPlaceholders() {
+        const chain = normalizeChainKey(addQuoteChainSelect.value);
+        const toChain = normalizeChainKey(addQuoteToChainSelect && addQuoteToChainSelect.value);
+        addQuoteFromInput.placeholder = CHAIN_ADDRESS_PLACEHOLDERS[chain] || 'Enter token address';
+        addQuoteToInput.placeholder = CHAIN_ADDRESS_PLACEHOLDERS[toChain || chain] || 'Enter token address';
+    }
+
+    function syncAddQuoteCrossChainControls() {
+        const chain = addQuoteChainSelect.value;
+        const showTarget = chain && !isCexOrderbookChain(chain) && isEvmChain(chain);
+        if (addQuoteToChainGroup) addQuoteToChainGroup.style.display = showTarget ? 'block' : 'none';
+        if (!showTarget && addQuoteToChainSelect) addQuoteToChainSelect.value = '';
+        updateAddQuoteTokenPlaceholders();
     }
 
     function validateAddQuoteForm() {
@@ -7305,13 +7373,15 @@
         const chain = addQuoteChainSelect.value;
         addQuotePairFields.style.display = (chain && !isCexOrderbookChain(chain)) ? 'block' : 'none';
         addQuoteSymbolField.style.display = isCexOrderbookChain(chain) ? 'block' : 'none';
-        if (chain && !isCexOrderbookChain(chain)) {
-            const placeholder = CHAIN_ADDRESS_PLACEHOLDERS[chain.toLowerCase()] || 'Enter token address';
-            addQuoteFromInput.placeholder = placeholder;
-            addQuoteToInput.placeholder = placeholder;
-        }
+        syncAddQuoteCrossChainControls();
         validateAddQuoteForm();
     });
+    if (addQuoteToChainSelect) {
+        addQuoteToChainSelect.addEventListener('change', () => {
+            updateAddQuoteTokenPlaceholders();
+            validateAddQuoteForm();
+        });
+    }
     [addQuoteFromInput, addQuoteToInput, addQuoteSymbolInput].forEach(input => {
         input.addEventListener('input', validateAddQuoteForm);
     });
@@ -7322,14 +7392,23 @@
         } else if (e.target.id === 'add-quote-save') {
             if (currentCategoryIdToAdd === null) return;
             const chain = addQuoteChainSelect.value;
+            const normalizedChain = normalizeChainKey(chain);
+            const normalizedToChain = addQuoteToChainSelect && addQuoteToChainSelect.value
+                ? normalizeChainKey(addQuoteToChainSelect.value)
+                : '';
             const defaultSource = defaultSourceResolver(chain);
-            const newQuote = { id: Date.now(), chain: chain.toLowerCase(), amount: 1, preferredSource: defaultSource }; 
+            const newQuote = { id: Date.now(), chain: normalizedChain, amount: 1, preferredSource: defaultSource };
             if (isCexOrderbookChain(chain)) {
                 newQuote.chain = chain;
                 newQuote.symbol = addQuoteSymbolInput.value.trim().toUpperCase();
             } else {
                 newQuote.fromToken = addQuoteFromInput.value.trim();
                 newQuote.toToken = addQuoteToInput.value.trim();
+                if (normalizedToChain && normalizedToChain !== normalizedChain) {
+                    newQuote.toChain = normalizedToChain;
+                    newQuote.preferredSource = 'LI.FI';
+                    newQuote.showInverse = false;
+                }
             }
             const category = dashboardState.find(c => c.id == currentCategoryIdToAdd);
             if (!category) return;

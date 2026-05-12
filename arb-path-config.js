@@ -20,7 +20,9 @@
       // solana cbBTC/zBTC
       { title: 'SOL cbBTC/zBTC 汇率高于', type: 'quote-price', quoteId: 1775200669932, direction: 'forward' },
       // ethereum USDT/USDe
-      { title: 'ETH USDT/USDe 汇率高于', type: 'quote-price', quoteId: 1766416823874, direction: 'forward' }
+      { title: 'ETH USDT/USDe 汇率高于', type: 'quote-price', quoteId: 1766416823874, direction: 'forward' },
+      // arbitrum WBTC -> ethereum WBTC
+      { title: 'ARB WBTC -> ETH WBTC 汇率高于', type: 'quote-price', quoteId: 1778597385755, direction: 'forward' }
     ]
   };
 }));

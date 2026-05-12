@@ -3,38 +3,45 @@ function createLifiClient(deps) {
     async getQuote(input) {
       const requestContext = input && input.requestContext ? input.requestContext : undefined;
       const chain = String(input.chain || '').trim();
+      const toChain = String(input.toChain || input.chain || '').trim();
       const fromToken = input.fromToken;
       const toToken = input.toToken;
       const finalAmount = Number(input.amount) || 1;
 
-      if (!chain || !fromToken || !toToken) {
-        throw new Error('缺少 chain/fromToken/toToken 参数');
+      if (!chain || !toChain || !fromToken || !toToken) {
+        throw new Error('缺少 chain/toChain/fromToken/toToken 参数');
       }
 
       const configMore = requestContext && requestContext.configMore
         ? requestContext.configMore
         : await deps.getConfigMore();
       const chainIdMap = await deps.getLifiChainIdMap(configMore, requestContext);
-      const chainId = deps.resolveLifiChainId(chain, chainIdMap);
-      if (!chainId) {
+      const fromChainId = deps.resolveLifiChainId(chain, chainIdMap);
+      const toChainId = deps.resolveLifiChainId(toChain, chainIdMap);
+      if (!fromChainId) {
         throw new Error(`LI.FI 不支持此链: ${chain}`);
       }
+      if (!toChainId) {
+        throw new Error(`LI.FI 不支持此链: ${toChain}`);
+      }
+      const isCrossChain = chain.toLowerCase() !== toChain.toLowerCase();
 
       const [fromMeta, toMeta] = await Promise.all([
-        deps.getLifiTokenMeta(chain, chainId, fromToken, configMore, requestContext),
-        deps.getLifiTokenMeta(chain, chainId, toToken, configMore, requestContext)
+        deps.getLifiTokenMeta(chain, fromChainId, fromToken, configMore, requestContext),
+        deps.getLifiTokenMeta(toChain, toChainId, toToken, configMore, requestContext)
       ]);
 
       const fromAmount = deps.toRawAmount(finalAmount, fromMeta.decimals);
+      const slippage = String(configMore.lifiSlippage || deps.defaultSlippage || '').trim();
       const quoteParams = new URLSearchParams({
-        fromChain: String(chainId),
-        toChain: String(chainId),
+        fromChain: String(fromChainId),
+        toChain: String(toChainId),
         fromToken,
         toToken,
         fromAmount,
         fromAddress: deps.defaultFromAddress,
         toAddress: deps.defaultFromAddress,
-        slippage: deps.defaultSlippage
+        slippage
       });
 
       if (configMore.lifiIntegrator) {
@@ -44,6 +51,7 @@ function createLifiClient(deps) {
       const quoteUrl = `${deps.apiBaseUrl}/quote?${quoteParams.toString()}`;
       deps.logQuoteRequest('LIFI', {
         chain,
+        toChain,
         fromToken,
         toToken,
         amount: finalAmount,
@@ -65,6 +73,9 @@ function createLifiClient(deps) {
       const result = {
         fromSymbol: fromMeta.symbol,
         toSymbol: toMeta.symbol,
+        fromChain: chain,
+        toChain,
+        isCrossChain,
         amountOut,
         raw_price: amountOut / finalAmount,
         source: 'LI.FI'
@@ -72,6 +83,7 @@ function createLifiClient(deps) {
 
       deps.logQuoteResult('LIFI', {
         chain,
+        toChain,
         fromToken,
         toToken,
         amount: finalAmount,

@@ -5,6 +5,7 @@ function buildEdges(quotes, quoteStateById, allowedSymbols) {
 
   const edges = [];
   for (const quote of quotes || []) {
+    if (isCrossChainQuote(quote)) continue;
     const state = quoteStateById.get(quote.id);
     if (!state) continue;
 
@@ -26,6 +27,12 @@ function buildEdges(quotes, quoteStateById, allowedSymbols) {
   }
 
   return edges;
+}
+
+function isCrossChainQuote(quote) {
+  const fromChain = String(quote && quote.chain || '').trim().toLowerCase();
+  const toChain = String(quote && quote.toChain || '').trim().toLowerCase();
+  return Boolean(fromChain && toChain && fromChain !== toChain);
 }
 
 function formatLegLine({ from, to, rate, chainLabel, precision = 6 }) {
@@ -466,6 +473,7 @@ function isMeaningfulPath(legs) {
 function buildApi() {
   return {
     buildEdges,
+    isCrossChainQuote,
     findBestTwoStepCycle,
     formatLegLine,
     formatProfitWanfen,

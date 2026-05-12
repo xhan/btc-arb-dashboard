@@ -2,6 +2,7 @@
   "kyberClientId": "xh-chain-baby",
   "veloraPartner": "xh-chain-baby",
   "LIFIApiKey": "f9509549-3598-47b6-a1f3-bae66a4d8119.43696834-00aa-4bbd-88dc-881fe98c29a2",
+  "LIFISlippage": "0.0001",
   "jupiterApiKey": "49a281ef-1c9f-45a5-8ec5-1bd71fcb3c9a",
   "telegramBotToken": "7481990287:AAF66-WsCuSTP8kZfnpJ1Zr-VfHCJFjbxtI",
   "telegramChatId": "1124758403",

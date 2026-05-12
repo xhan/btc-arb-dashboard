@@ -35,7 +35,14 @@
     return !!normalized && !nonEvm.has(normalized);
   }
 
+  function isCrossChainQuote(quote) {
+    const fromChain = normalizeChain(quote && quote.chain);
+    const toChain = normalizeChain(quote && quote.toChain);
+    return Boolean(fromChain && toChain && fromChain !== toChain);
+  }
+
   function shouldQueueInverseFetch(quote) {
+    if (isCrossChainQuote(quote)) return false;
     const normalized = normalizeChain(quote && quote.chain ? quote.chain : '');
     return !!quote && !!quote.showInverse && normalized !== 'bybit' && normalized !== 'binance';
   }
@@ -55,6 +62,7 @@
     const normalized = normalizeChain(chain);
     let type = 'kyber';
 
+    if (isCrossChainQuote(quote)) return 'lifi';
     if (normalized === 'bybit') return 'bybit';
     if (normalized === 'binance') return 'binance';
     if (normalized === 'solana') return 'solana';

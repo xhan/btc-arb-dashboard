@@ -127,6 +127,16 @@
           "fromToken": "0xd18b7ec58cdf4876f6afebd3ed1730e4ce10414b",
           "toToken": "0x0555e30da8f98308edb960aa94c0db47230d2b9c",
           "showInverse": true
+        },
+        {
+          "id": 1778597385755,
+          "chain": "arbitrum",
+          "amount": 1,
+          "preferredSource": "LI.FI",
+          "fromToken": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+          "toToken": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+          "toChain": "ethereum",
+          "showInverse": false
         }
       ]
     },

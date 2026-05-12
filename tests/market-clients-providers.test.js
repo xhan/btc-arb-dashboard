@@ -706,13 +706,78 @@ const { createCetusClient } = require('../market-clients/providers/cetus');
       httpProxy: 'http://127.0.0.1:18003',
       configMore: {
         lifiApiKey: 'us-lifi-key',
-        lifiIntegrator: 'us-integrator'
+        lifiIntegrator: 'us-integrator',
+        lifiSlippage: '0.0001'
       }
     }
   });
   assert.strictEqual(lifiResult.source, 'LI.FI');
+  const lifiUrl = new URL(lifiRequests[0].url);
+  assert.strictEqual(lifiUrl.searchParams.get('slippage'), '0.0001');
   assert.strictEqual(lifiRequests[0].options.headers['x-lifi-api-key'], 'us-lifi-key');
   assert.strictEqual(lifiRequests[0].requestContext.channelId, 'us-1');
+
+  const lifiCrossChainRequests = [];
+  const lifiCrossChainMetaCalls = [];
+  const lifiCrossChain = createLifiClient({
+    apiBaseUrl: 'https://li.quest/v1',
+    defaultFromAddress: '0x1111111111111111111111111111111111111111',
+    defaultSlippage: '0.005',
+    fetchOnce: async (url) => {
+      lifiCrossChainRequests.push(url);
+      return {
+        json: async () => ({
+          estimate: {
+            toAmount: '99000000'
+          }
+        })
+      };
+    },
+    fromRawAmount: (raw, decimals) => {
+      if (raw === '99000000' && decimals === 6) return 99;
+      throw new Error('unexpected cross-chain lifi fromRawAmount input');
+    },
+    getConfigMore: async () => ({ lifiApiKey: 'lifi-key' }),
+    getDisplayedToAmountRaw: (quoteData) => quoteData.estimate.toAmount,
+    getLifiChainIdMap: async () => ({ arbitrum: 42161, ethereum: 1 }),
+    getLifiHeaders: () => ({}),
+    getLifiTokenMeta: async (chain, chainId, tokenAddress) => {
+      lifiCrossChainMetaCalls.push({ chain, chainId, tokenAddress });
+      return { symbol: tokenAddress === '0xarb-usdc' ? 'USDC.e' : 'USDC', decimals: 6 };
+    },
+    logQuoteRequest: () => {},
+    logQuoteResult: () => {},
+    resolveLifiChainId: (chain, map) => map[chain],
+    toRawAmount: (amount, decimals) => {
+      if (amount === 100 && decimals === 6) return '100000000';
+      throw new Error('unexpected cross-chain lifi toRawAmount input');
+    }
+  });
+
+  const lifiCrossChainResult = await lifiCrossChain.getQuote({
+    chain: 'arbitrum',
+    toChain: 'ethereum',
+    fromToken: '0xarb-usdc',
+    toToken: '0xeth-usdc',
+    amount: 100
+  });
+  const lifiCrossChainUrl = new URL(lifiCrossChainRequests[0]);
+  assert.strictEqual(lifiCrossChainUrl.searchParams.get('fromChain'), '42161');
+  assert.strictEqual(lifiCrossChainUrl.searchParams.get('toChain'), '1');
+  assert.deepStrictEqual(lifiCrossChainMetaCalls, [
+    { chain: 'arbitrum', chainId: 42161, tokenAddress: '0xarb-usdc' },
+    { chain: 'ethereum', chainId: 1, tokenAddress: '0xeth-usdc' }
+  ]);
+  assert.deepStrictEqual(lifiCrossChainResult, {
+    fromSymbol: 'USDC.e',
+    toSymbol: 'USDC',
+    fromChain: 'arbitrum',
+    toChain: 'ethereum',
+    isCrossChain: true,
+    amountOut: 99,
+    raw_price: 0.99,
+    source: 'LI.FI'
+  });
 
   const ekuboRequests = [];
   const ekubo = createEkuboClient({
