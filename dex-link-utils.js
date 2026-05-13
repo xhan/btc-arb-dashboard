@@ -14,8 +14,13 @@
     if (chain === 'sui') return 'cetus';
     if (chain === 'solana') return 'jup.ag';
     if (chain === 'starknet') return 'ekubo';
+    if (chain === 'mantle') return 'jumper';
     return 'swap.defillama';
   }
+
+  const JUMPER_CHAIN_IDS = {
+    mantle: 5000
+  };
 
   function buildDexLink(config = {}) {
     const chain = String(config.chain || '').trim();
@@ -49,6 +54,14 @@
       return {
         label,
         url: `https://ekubo.org/swap?inputCurrency=${encodeURIComponent(fromTokenAddress)}&amount=${encodeURIComponent(String(inputAmount))}&outputCurrency=${encodeURIComponent(toTokenAddress)}&chainId=0x534e5f4d41494e`
+      };
+    }
+
+    if (JUMPER_CHAIN_IDS[normalizedChain]) {
+      const chainId = JUMPER_CHAIN_IDS[normalizedChain];
+      return {
+        label,
+        url: `https://jumper.xyz/zh?fromChain=${chainId}&fromToken=${encodeURIComponent(fromTokenAddress)}&toChain=${chainId}&toToken=${encodeURIComponent(toTokenAddress)}`
       };
     }
 

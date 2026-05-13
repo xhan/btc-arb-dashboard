@@ -9,6 +9,7 @@ assert.strictEqual(getDexLinkLabel({ chain: 'sui' }), 'cetus');
 assert.strictEqual(getDexLinkLabel({ chain: 'solana' }), 'jup.ag');
 assert.strictEqual(getDexLinkLabel({ chain: 'starknet' }), 'ekubo');
 assert.strictEqual(getDexLinkLabel({ chain: 'arbitrum' }), 'swap.defillama');
+assert.strictEqual(getDexLinkLabel({ chain: 'mantle' }), 'jumper');
 assert.strictEqual(getDexLinkLabel({ chain: 'binance' }), null);
 
 assert.deepStrictEqual(
@@ -57,6 +58,18 @@ assert.deepStrictEqual(
   {
     label: 'swap.defillama',
     url: 'https://swap.defillama.com/?chain=arbitrum&from=0xaaa&tab=swap&to=0xbbb'
+  }
+);
+
+assert.deepStrictEqual(
+  buildDexLink({
+    chain: 'mantle',
+    fromTokenAddress: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736',
+    toTokenAddress: '0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34'
+  }),
+  {
+    label: 'jumper',
+    url: 'https://jumper.xyz/zh?fromChain=5000&fromToken=0x779Ded0c9e1022225f8E0630b35a9b54bE713736&toChain=5000&toToken=0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34'
   }
 );
 
