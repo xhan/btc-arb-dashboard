@@ -216,6 +216,22 @@
         `;
   }
 
+  function formatLogText(value) {
+    return escapeHtml(value).replace(/\n/g, '<br>');
+  }
+
+  function buildGenericAlertLogEntryHtml(entry = {}) {
+    const subtitleHtml = entry.subtitle ? `<div>${formatLogText(entry.subtitle)}</div>` : '';
+    return `
+            <div class="log-entry">
+                <div><strong>${formatLogText(entry.title)}</strong></div>
+                ${subtitleHtml}
+                <div>${formatLogText(entry.message)}</div>
+                <span class="log-time">${escapeHtml(entry.timeText || '')}</span>
+            </div>
+        `;
+  }
+
   return {
     isMutedAlertLogEntry,
     shouldAutoOpenAlertLogEntries,
@@ -224,6 +240,7 @@
     buildMutedStateSectionHtml,
     buildRestoredMutedAlertLogHtml,
     buildPathAlertLogCardHtml,
-    buildQuoteAlertLogHtml
+    buildQuoteAlertLogHtml,
+    buildGenericAlertLogEntryHtml
   };
 }));

@@ -890,11 +890,15 @@
         alertLogWindow.style.display = 'flex';
         bringFloatingPanelToFront(alertLogWindow);
         const now = new Date();
-        const logEntry = document.createElement('div');
-        logEntry.className = 'log-entry';
-        const formatLogText = (value) => escapeHtml(value).replace(/\n/g, '<br>');
-        const subtitleHtml = subtitle ? `<div>${formatLogText(subtitle)}</div>` : '';
-        logEntry.innerHTML = `<div><strong>${formatLogText(title)}</strong></div>${subtitleHtml}<div>${formatLogText(message)}</div><span class="log-time">${now.toLocaleTimeString()}</span>`;
+        const logEntry = window.DomRenderUtils.createElementFromHtml(
+            window.AlertLogUiUtils.buildGenericAlertLogEntryHtml({
+                title,
+                subtitle,
+                message,
+                timeText: now.toLocaleTimeString()
+            })
+        );
+        if (!logEntry) return;
         alertLogContent.prepend(logEntry);
         if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
             window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);

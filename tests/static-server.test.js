@@ -244,6 +244,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildQuoteAlertLogHtml(entry, {'));
     assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildRestoredMutedAlertLogHtml(entry, {'));
     assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildPathAlertLogCardHtml(entry, {'));
+    assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildGenericAlertLogEntryHtml({'));
     assert.ok(appJsResponse.body.includes('pathAlertPanelHtmlRenderer.render(pathAlertContent'));
     assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));
     assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildMutedStateItemHtml({'));
@@ -254,6 +255,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function buildPathAlertLogCardHtml'));
     assert.ok(!appJsResponse.body.includes('function buildQuoteAlertLogHtml'));
     assert.ok(!appJsResponse.body.includes('function buildAlertLogEntryDisplayState'));
+    assert.ok(!appJsResponse.body.includes('logEntry.innerHTML ='));
     assert.ok(!appJsResponse.body.includes('pathAlertContent.innerHTML = `${toolbar}'));
     assert.ok(!appJsResponse.body.includes('alertLogMutedContent.innerHTML = ['));
     assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
