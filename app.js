@@ -1513,36 +1513,6 @@
         });
     }
 
-    function buildMutedStateItemHtml(config) {
-        const linesHtml = (Array.isArray(config.lines) ? config.lines : [])
-            .filter(Boolean)
-            .map((line) => `<div>${escapeHtml(line)}</div>`)
-            .join('');
-        const actionsHtml = (Array.isArray(config.actions) ? config.actions : [])
-            .map((action) => `<button type="button" class="muted-state-action-btn" ${action.dataAttr}="${escapeHtml(action.value)}">${escapeHtml(action.label)}</button>`)
-            .join('');
-        return `
-            <div class="muted-state-item">
-                <div class="muted-state-item-title">${escapeHtml(config.title || '--')}</div>
-                ${linesHtml ? `<div class="muted-state-item-lines">${linesHtml}</div>` : ''}
-                <div class="muted-state-item-foot">
-                    <span class="path-alert-log-tag path-alert-log-tag-muted">${escapeHtml(config.status || '')}</span>
-                    <div class="muted-state-item-actions">${actionsHtml}</div>
-                </div>
-            </div>
-        `;
-    }
-
-    function buildMutedStateSectionHtml(title, items, emptyText) {
-        const list = Array.isArray(items) ? items : [];
-        return `
-            <section class="muted-state-section">
-                <div class="muted-state-title">${escapeHtml(title)}</div>
-                ${list.length ? list.join('') : `<div class="muted-state-empty">${escapeHtml(emptyText)}</div>`}
-            </section>
-        `;
-    }
-
     function renderMutedAlertStatePanel(nowMs = Date.now()) {
         if (!alertLogMutedContent) return;
         pruneMutedPathTargetsInPlace(nowMs);
@@ -1550,7 +1520,7 @@
         const mutedPathItems = mutedPathTargets
             .slice()
             .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt))
-            .map((entry) => buildMutedStateItemHtml({
+            .map((entry) => window.AlertLogUiUtils.buildMutedStateItemHtml({
                 title: entry.logTitleSnapshot || entry.summaryLinesSnapshot[0] || '路径沉默',
                 lines: entry.summaryLinesSnapshot,
                 status: buildMutedPathStatusText(entry, nowMs),
@@ -1562,7 +1532,7 @@
         const mutedLegItems = mutedPathLegs
             .slice()
             .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt))
-            .map((entry) => buildMutedStateItemHtml({
+            .map((entry) => window.AlertLogUiUtils.buildMutedStateItemHtml({
                 title: entry.titleSnapshot || buildLiveQuoteLabel(entry.chain, entry.fromSymbol, entry.toSymbol),
                 lines: [],
                 status: buildMutedPathLegStatusText(entry, nowMs),
@@ -1572,8 +1542,8 @@
                 ]
             }));
         mutedAlertStateHtmlRenderer.render(alertLogMutedContent, [
-            buildMutedStateSectionHtml('沉默的路径', mutedPathItems, '当前没有沉默中的路径'),
-            buildMutedStateSectionHtml('屏蔽的腿', mutedLegItems, '当前没有屏蔽中的腿')
+            window.AlertLogUiUtils.buildMutedStateSectionHtml('沉默的路径', mutedPathItems, '当前没有沉默中的路径'),
+            window.AlertLogUiUtils.buildMutedStateSectionHtml('屏蔽的腿', mutedLegItems, '当前没有屏蔽中的腿')
         ].join(''));
     }
 

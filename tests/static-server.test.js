@@ -244,6 +244,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('window.DomRenderUtils.createElementFromHtml(buildPathAlertLogCardHtml(list[index], nowMs))'));
     assert.ok(appJsResponse.body.includes('pathAlertPanelHtmlRenderer.render(pathAlertContent'));
     assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));
+    assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildMutedStateItemHtml({'));
+    assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildMutedStateSectionHtml(\'沉默的路径\''));
+    assert.ok(!appJsResponse.body.includes('function buildMutedStateItemHtml'));
+    assert.ok(!appJsResponse.body.includes('function buildMutedStateSectionHtml'));
     assert.ok(!appJsResponse.body.includes('pathAlertContent.innerHTML = `${toolbar}'));
     assert.ok(!appJsResponse.body.includes('alertLogMutedContent.innerHTML = ['));
     assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
