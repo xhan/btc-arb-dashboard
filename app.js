@@ -676,32 +676,11 @@
         return keys;
     }
 
-    function buildQueueTasksForQuote(quote) {
-        const tasks = [{ quoteId: quote.id, mode: 'main' }];
-        if (shouldQueueInverseFetch(quote)) {
-            tasks.push({ quoteId: quote.id, mode: 'inverse' });
-        }
-        return tasks;
-    }
-
-    function getQueueTaskKey(task) {
-        return `${task.quoteId}:${task.mode}`;
-    }
-
     function addToQueue(quote) {
         if (!quote || isQuotePaused(quote)) return;
         const type = getQueueTypeForQuote(quote);
         const queue = ensureQueueState(type);
-        const taskKeys = new Set(queue.map(getQueueTaskKey));
-        const tasks = buildQueueTasksForQuote(quote);
-
-        for (const task of tasks) {
-            const key = getQueueTaskKey(task);
-            if (!taskKeys.has(key)) {
-                queue.push(task);
-                taskKeys.add(key);
-            }
-        }
+        getQueueStatsUtils().appendQuoteQueueTasks(queue, quote);
     }
 
     function queueQuoteRefresh(quote, options = {}) {
@@ -761,23 +740,12 @@
     }
 
     function removeFromQueue(quoteId) {
-        Object.keys(queues).forEach(type => {
-            queues[type] = queues[type].filter(task => task.quoteId !== quoteId);
-        });
+        getQueueStatsUtils().removeQuoteTasksFromQueues(queues, quoteId);
     }
 
     function deferCurrentQueueTask(type) {
         const queue = ensureQueueState(type);
-        if (!queue || queue.length <= 1) return;
-
-        const currentIndex = indices[type];
-        if (currentIndex < 0 || currentIndex >= queue.length) return;
-
-        const [task] = queue.splice(currentIndex, 1);
-        queue.push(task);
-
-        // 回退一格，确保下一个 tick 轮到“当前任务后面的任务”，而不是刚被挪到队尾的同一任务。
-        indices[type] = (currentIndex - 1 + queue.length) % queue.length;
+        indices[type] = getQueueStatsUtils().deferQueueTask(queue, indices[type]);
     }
 
     function processQueue(type) {

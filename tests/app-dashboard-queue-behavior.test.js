@@ -20,6 +20,26 @@ assert.ok(
 );
 
 assert.ok(
+  appJs.includes('getQueueStatsUtils().appendQuoteQueueTasks(queue, quote);'),
+  '队列 task 构造和去重应下沉到 QueueStatsUtils'
+);
+
+assert.ok(
+  appJs.includes('getQueueStatsUtils().removeQuoteTasksFromQueues(queues, quoteId);'),
+  '删除 quote 任务应复用 QueueStatsUtils，避免多处维护队列结构'
+);
+
+assert.ok(
+  appJs.includes('getQueueStatsUtils().deferQueueTask(queue, indices[type]);'),
+  '当前任务 defer 的索引规则应由 QueueStatsUtils 统一维护'
+);
+
+assert.ok(
+  !appJs.includes('function buildQueueTasksForQuote(quote)'),
+  '主看板不应保留本地 task 生成规则'
+);
+
+assert.ok(
   appJs.includes('getEffectiveRequestChannelIdForQuote(quote)'),
   '主看板请求与队列归类都应走生效渠道，而不是直接读原始 requestChannelId'
 );

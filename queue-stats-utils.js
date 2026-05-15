@@ -59,6 +59,59 @@
     return !!quote && !!quote.showInverse && normalized !== 'bybit' && normalized !== 'binance';
   }
 
+  function buildQueueTasksForQuote(quote) {
+    if (!quote || quote.id == null) return [];
+    const tasks = [{ quoteId: quote.id, mode: 'main' }];
+    if (shouldQueueInverseFetch(quote)) {
+      tasks.push({ quoteId: quote.id, mode: 'inverse' });
+    }
+    return tasks;
+  }
+
+  function getQueueTaskKey(task) {
+    return `${task && task.quoteId}:${task && task.mode}`;
+  }
+
+  function appendQuoteQueueTasks(queue, quote) {
+    if (!Array.isArray(queue)) return 0;
+    const taskKeys = new Set(queue.map(getQueueTaskKey));
+    let addedCount = 0;
+
+    for (const task of buildQueueTasksForQuote(quote)) {
+      const key = getQueueTaskKey(task);
+      if (taskKeys.has(key)) continue;
+      queue.push(task);
+      taskKeys.add(key);
+      addedCount += 1;
+    }
+
+    return addedCount;
+  }
+
+  function removeQuoteTasksFromQueues(queues, quoteId) {
+    if (!queues || typeof queues !== 'object') return 0;
+    let removedCount = 0;
+    Object.keys(queues).forEach((type) => {
+      const queue = Array.isArray(queues[type]) ? queues[type] : [];
+      const nextQueue = queue.filter((task) => task && task.quoteId !== quoteId);
+      removedCount += queue.length - nextQueue.length;
+      queues[type] = nextQueue;
+    });
+    return removedCount;
+  }
+
+  function deferQueueTask(queue, currentIndex) {
+    if (!Array.isArray(queue) || queue.length <= 1) return currentIndex;
+    const normalizedIndex = Number(currentIndex);
+    if (!Number.isInteger(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= queue.length) {
+      return currentIndex;
+    }
+
+    const [task] = queue.splice(normalizedIndex, 1);
+    queue.push(task);
+    return (normalizedIndex - 1 + queue.length) % queue.length;
+  }
+
   function isQuotePaused(quote) {
     if (quotePauseUtils && typeof quotePauseUtils.isQuotePaused === 'function') {
       return quotePauseUtils.isQuotePaused(quote);
@@ -236,9 +289,14 @@
 
   return {
     DEFAULT_INTERVALS,
+    appendQuoteQueueTasks,
+    buildQueueTasksForQuote,
     buildQueueSummary,
+    deferQueueTask,
     formatDurationMs,
+    getQueueTaskKey,
     getQueueTypeForQuote,
+    removeQuoteTasksFromQueues,
     shouldQueueInverseFetch
   };
 });

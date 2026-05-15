@@ -2,8 +2,13 @@ const assert = require('assert');
 
 const {
   DEFAULT_INTERVALS,
+  appendQuoteQueueTasks,
+  buildQueueTasksForQuote,
   buildQueueSummary,
-  formatDurationMs
+  deferQueueTask,
+  formatDurationMs,
+  getQueueTaskKey,
+  removeQuoteTasksFromQueues
 } = require('../queue-stats-utils');
 
 const summary = buildQueueSummary({
@@ -67,6 +72,49 @@ assert.strictEqual(binance.inverseTasks, 0);
 assert.strictEqual(solana.taskCount, 2);
 assert.strictEqual(formatDurationMs(650), '650ms');
 assert.strictEqual(formatDurationMs(24000), '24.00s');
+
+assert.deepStrictEqual(buildQueueTasksForQuote({ id: 301, chain: 'ethereum', showInverse: true }), [
+  { quoteId: 301, mode: 'main' },
+  { quoteId: 301, mode: 'inverse' }
+]);
+assert.deepStrictEqual(buildQueueTasksForQuote({ id: 302, chain: 'bybit', showInverse: true }), [
+  { quoteId: 302, mode: 'main' }
+]);
+assert.deepStrictEqual(buildQueueTasksForQuote(null), []);
+assert.strictEqual(getQueueTaskKey({ quoteId: 301, mode: 'inverse' }), '301:inverse');
+
+const queue = [{ quoteId: 301, mode: 'main' }];
+assert.strictEqual(appendQuoteQueueTasks(queue, { id: 301, chain: 'ethereum', showInverse: true }), 1);
+assert.deepStrictEqual(queue, [
+  { quoteId: 301, mode: 'main' },
+  { quoteId: 301, mode: 'inverse' }
+]);
+assert.strictEqual(appendQuoteQueueTasks(queue, { id: 301, chain: 'ethereum', showInverse: true }), 0);
+
+const queues = {
+  kyber: [
+    { quoteId: 301, mode: 'main' },
+    { quoteId: 302, mode: 'main' }
+  ],
+  solana: [{ quoteId: 301, mode: 'inverse' }]
+};
+assert.strictEqual(removeQuoteTasksFromQueues(queues, 301), 2);
+assert.deepStrictEqual(queues, {
+  kyber: [{ quoteId: 302, mode: 'main' }],
+  solana: []
+});
+
+const deferQueue = [
+  { quoteId: 1, mode: 'main' },
+  { quoteId: 2, mode: 'main' },
+  { quoteId: 3, mode: 'main' }
+];
+assert.strictEqual(deferQueueTask(deferQueue, 1), 0);
+assert.deepStrictEqual(deferQueue, [
+  { quoteId: 1, mode: 'main' },
+  { quoteId: 3, mode: 'main' },
+  { quoteId: 2, mode: 'main' }
+]);
 
 const channelSummary = buildQueueSummary(
   {
