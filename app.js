@@ -2,7 +2,6 @@
     let dashboardState = [];
     let quoteMarketState = new Map();
     let quoteUiState = new Map();
-    let globalSymbolCache = new Map(); 
     
     let isAudioUnlocked = false; 
     let onConfirmAction = null;
@@ -5098,24 +5097,6 @@
             formatProfit: profitRate => window.ArbPaths.formatProfitWanfen(profitRate)
         });
         arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);
-    }
-
-    async function getEvmMetadata(chain, tokenAddress, signal) {
-        const cacheKey = `${chain}-${tokenAddress}`;
-        if (globalSymbolCache.has(cacheKey) && globalSymbolCache.get(cacheKey).decimals !== undefined) {
-            return globalSymbolCache.get(cacheKey);
-        }
-        const response = await fetch(`${BACKEND_URL}/api/get-evm-meta`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chain, tokenAddress }),
-            signal
-        });
-        if (!response.ok) throw new Error('Metadata fetch failed');
-        const meta = await response.json();
-        
-        globalSymbolCache.set(cacheKey, meta);
-        return meta;
     }
 
     async function get0xQuote(quote, signal) {

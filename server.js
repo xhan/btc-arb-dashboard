@@ -887,16 +887,6 @@ app.get('/api/replay-arb-snapshot', async (req, res) => {
     }
 });
 
-app.post('/api/get-evm-meta', async (req, res) => {
-    const { chain, tokenAddress } = req.body;
-    try {
-        const meta = await marketClients.getEvmTokenMeta(chain, tokenAddress);
-        res.json(meta);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 function buildDefaultQuoteErrorContext(body) {
     const { chain, fromToken, toToken, amount } = body;
     return { chain, fromToken, toToken, amount: amount || 1 };
