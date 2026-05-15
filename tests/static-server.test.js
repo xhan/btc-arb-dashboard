@@ -450,6 +450,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('MutedPathLegUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getMutedPathStorageUtils()'));
     assert.ok(appJsResponse.body.includes('MutedPathStorageUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getArbRuntimeMemoryUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbRuntimeMemoryUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES)'));
+    assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().buildRetainedArbOpportunityStore(nextOpportunityMap, retainedEntries)'));
+    assert.ok(!appJsResponse.body.includes('window.ArbRuntimeMemoryUtils &&'));
     assert.ok(appJsResponse.body.includes('let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();'));
     assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathLegs, nowMs)'));
     const pruneMutedPathTargetsMatch = appJsResponse.body.match(/function pruneMutedPathTargetsInPlace\([\s\S]*?\n    \}/);

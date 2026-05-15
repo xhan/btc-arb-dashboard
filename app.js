@@ -309,6 +309,13 @@
         return window.MutedPathStorageUtils;
     }
 
+    function getArbRuntimeMemoryUtils() {
+        if (!window.ArbRuntimeMemoryUtils) {
+            throw new Error('ArbRuntimeMemoryUtils is not loaded');
+        }
+        return window.ArbRuntimeMemoryUtils;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -818,9 +825,7 @@
         );
         if (!logEntry) return;
         alertLogContent.prepend(logEntry);
-        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
-            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
-        }
+        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
     }
 
     function getAlertLogEntryContainers() {
@@ -833,9 +838,7 @@
         alertLogMutedLogContent.prepend(card);
         updateMutedPathAlertLogCards('', nowMs);
         syncMutedPathLogTimer();
-        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
-            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
-        }
+        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
     }
 
     function shouldAutoOpenAlertLogEntries(entries) {
@@ -1034,9 +1037,7 @@
         alertLogContent.prepend(card);
         updateMutedPathAlertLogCards('', nowMs);
         syncMutedPathLogTimer();
-        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
-            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
-        }
+        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
     }
 
     function pruneMutedPathTargetsInPlace(nowMs = Date.now()) {
@@ -1478,9 +1479,7 @@
         });
         updateMutedPathAlertLogCards('', nowMs);
         syncMutedPathLogTimer();
-        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
-            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
-        }
+        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
     }
 
     function appendPathAlertLogEntries(entries, nowMs = Date.now()) {
@@ -1516,9 +1515,7 @@
         }
         updateMutedPathAlertLogCards('', nowMs);
         syncMutedPathLogTimer();
-        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.trimContainerChildren === 'function') {
-            window.ArbRuntimeMemoryUtils.trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
-        }
+        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
     }
 
     async function primeAlertAudio(audioEl) {
@@ -2822,17 +2819,7 @@
             retainedEntries.push(arbOpportunityStore.get(arbDetailState.opportunityId));
         }
 
-        if (window.ArbRuntimeMemoryUtils && typeof window.ArbRuntimeMemoryUtils.buildRetainedArbOpportunityStore === 'function') {
-            arbOpportunityStore = window.ArbRuntimeMemoryUtils.buildRetainedArbOpportunityStore(nextOpportunityMap, retainedEntries);
-            return;
-        }
-
-        const nextStore = nextOpportunityMap instanceof Map ? new Map(nextOpportunityMap) : new Map();
-        for (const entry of retainedEntries) {
-            if (!entry || !entry.id || nextStore.has(entry.id)) continue;
-            nextStore.set(entry.id, entry);
-        }
-        arbOpportunityStore = nextStore;
+        arbOpportunityStore = getArbRuntimeMemoryUtils().buildRetainedArbOpportunityStore(nextOpportunityMap, retainedEntries);
     }
 
     function buildArbDetailRowsHtml(card, cardIndex) {
