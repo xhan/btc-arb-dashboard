@@ -3561,40 +3561,11 @@
 
     function renderArbDetailChartPreviewMessage(message) {
         if (!arbDetailChartPreview) return;
-        arbDetailChartPreview.innerHTML = `<div class="arb-detail-chart-message">${escapeHtml(message)}</div>`;
+        arbDetailChartPreview.innerHTML = getArbDetailUtils().buildArbDetailChartMessageHtml(message);
     }
 
     function buildArbDetailChartPreviewSignature(pairs) {
         return JSON.stringify((pairs || []).map((pair) => `${pair.quoteId}:${pair.direction}`));
-    }
-
-    function buildArbDetailChartPreviewCardHtml(pair, index) {
-        const label = getChartsUtils().buildChartPairLabel(pair);
-        return `
-            <article class="arb-detail-chart-card" data-arb-detail-chart-index="${index}">
-                <div class="arb-detail-chart-card-head">
-                    <div>
-                        <div class="arb-detail-chart-card-title">${escapeHtml(label)}</div>
-                        <div class="arb-detail-chart-card-meta">等待历史图表...</div>
-                    </div>
-                </div>
-                <div class="arb-detail-chart-canvas"></div>
-            </article>
-        `;
-    }
-
-    function buildArbDetailProfitPreviewCardHtml() {
-        return `
-            <article class="arb-detail-chart-card arb-detail-profit-card" data-arb-detail-profit-card="true">
-                <div class="arb-detail-chart-card-head arb-detail-profit-head">
-                    <div>
-                        <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
-                        <div class="arb-detail-chart-card-meta arb-detail-profit-meta">等待价格图表加载完成...</div>
-                    </div>
-                </div>
-                <div class="arb-detail-chart-canvas arb-detail-profit-canvas"></div>
-            </article>
-        `;
     }
 
     function getArbDetailProfitCardEl() {
@@ -3606,15 +3577,7 @@
     function renderArbDetailProfitPreviewMessage(message) {
         const cardEl = getArbDetailProfitCardEl();
         if (!cardEl) return;
-        cardEl.innerHTML = `
-            <div class="arb-detail-chart-card-head arb-detail-profit-head">
-                <div>
-                    <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
-                    <div class="arb-detail-chart-card-meta arb-detail-profit-meta">${escapeHtml(message)}</div>
-                </div>
-            </div>
-            <div class="arb-detail-chart-message">${escapeHtml(message)}</div>
-        `;
+        cardEl.innerHTML = getArbDetailUtils().buildArbDetailProfitPreviewMessageHtml(message);
     }
 
     function syncArbDetailProfitPreview(seriesList, renderer) {
@@ -3644,15 +3607,7 @@
             return;
         }
 
-        cardEl.innerHTML = `
-            <div class="arb-detail-chart-card-head arb-detail-profit-head">
-                <div>
-                    <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
-                    <div class="arb-detail-chart-card-meta arb-detail-profit-meta">按当前 ${validSeries.length} 张价格图逐时点乘积计算，> 1.0 为正收益。</div>
-                </div>
-            </div>
-            <div class="arb-detail-chart-canvas arb-detail-profit-canvas"></div>
-        `;
+        cardEl.innerHTML = getArbDetailUtils().buildArbDetailProfitPreviewReadyHtml(validSeries.length);
         const canvasEl = cardEl.querySelector('.arb-detail-profit-canvas');
         const metaEl = cardEl ? cardEl.querySelector('.arb-detail-profit-meta') : null;
         if (!canvasEl) return;
@@ -3698,7 +3653,9 @@
         const runId = arbDetailChartPreviewRunId;
         arbDetailState.chartPreviewSignature = signature;
         destroyArbDetailChartPreview();
-        arbDetailChartPreview.innerHTML = `<div class="arb-detail-chart-strip">${pairs.map(buildArbDetailChartPreviewCardHtml).join('')}${buildArbDetailProfitPreviewCardHtml()}</div>`;
+        arbDetailChartPreview.innerHTML = getArbDetailUtils().buildArbDetailChartPreviewStripHtml(pairs, {
+            buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)
+        });
 
         const renderer = getChartsRenderer();
         if (!renderer || typeof renderer.mountPriceHistoryChart !== 'function') {
@@ -3748,7 +3705,7 @@
             } catch (error) {
                 if (arbDetailChartPreviewRunId !== runId) return;
                 if (canvasEl) {
-                    canvasEl.outerHTML = `<div class="arb-detail-chart-message">${escapeHtml(error.message || '图表加载失败')}</div>`;
+                    canvasEl.outerHTML = getArbDetailUtils().buildArbDetailChartMessageHtml(error.message || '图表加载失败');
                 }
                 if (metaEl) {
                     metaEl.textContent = '加载失败';

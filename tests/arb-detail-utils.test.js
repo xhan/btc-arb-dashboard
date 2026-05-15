@@ -28,7 +28,13 @@ const {
   buildArbDetailPairHtml,
   buildArbDetailRowsHtml,
   buildArbDetailSummaryHtml,
-  buildArbDetailShellHtml
+  buildArbDetailShellHtml,
+  buildArbDetailChartMessageHtml,
+  buildArbDetailChartPreviewCardHtml,
+  buildArbDetailProfitPreviewCardHtml,
+  buildArbDetailProfitPreviewMessageHtml,
+  buildArbDetailProfitPreviewReadyHtml,
+  buildArbDetailChartPreviewStripHtml
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -159,6 +165,41 @@ assert.ok(detailShellHtml.includes('value="1.25 &lt;bad&gt;"'));
 assert.ok(detailShellHtml.includes('data-arb-detail-step-index="1"'));
 assert.ok(detailShellHtml.includes('id="arb-detail-rows-1"'));
 assert.ok(detailShellHtml.includes('id="arb-detail-summary-1"'));
+
+assert.strictEqual(
+  buildArbDetailChartMessageHtml('加载 <失败>'),
+  '<div class="arb-detail-chart-message">加载 &lt;失败&gt;</div>'
+);
+
+const chartCardHtml = buildArbDetailChartPreviewCardHtml(
+  { quoteId: 1, direction: 'forward', fromSymbol: 'cbBTC', toSymbol: 'WBTC' },
+  2,
+  { buildChartPairLabel: () => 'cb<BTC> -> W&BTC' }
+);
+assert.ok(chartCardHtml.includes('data-arb-detail-chart-index="2"'));
+assert.ok(chartCardHtml.includes('cb&lt;BTC&gt; -&gt; W&amp;BTC'));
+assert.ok(chartCardHtml.includes('等待历史图表...'));
+assert.ok(chartCardHtml.includes('arb-detail-chart-canvas'));
+
+const profitCardHtml = buildArbDetailProfitPreviewCardHtml();
+assert.ok(profitCardHtml.includes('data-arb-detail-profit-card="true"'));
+assert.ok(profitCardHtml.includes('等待价格图表加载完成...'));
+
+const profitMessageHtml = buildArbDetailProfitPreviewMessageHtml('至少 <2> 张');
+assert.ok(profitMessageHtml.includes('arb-detail-profit-meta">至少 &lt;2&gt; 张'));
+assert.ok(profitMessageHtml.includes('arb-detail-chart-message">至少 &lt;2&gt; 张'));
+
+const readyProfitHtml = buildArbDetailProfitPreviewReadyHtml(3);
+assert.ok(readyProfitHtml.includes('按当前 3 张价格图逐时点乘积计算'));
+assert.ok(readyProfitHtml.includes('arb-detail-profit-canvas'));
+
+const stripHtml = buildArbDetailChartPreviewStripHtml(
+  [{ quoteId: 1, direction: 'forward' }],
+  { buildChartPairLabel: () => 'Pair <1>' }
+);
+assert.ok(stripHtml.includes('arb-detail-chart-strip'));
+assert.ok(stripHtml.includes('Pair &lt;1&gt;'));
+assert.ok(stripHtml.includes('data-arb-detail-profit-card="true"'));
 
 assert.deepStrictEqual(
   summarizeDetailResult(0.2, 0.201),

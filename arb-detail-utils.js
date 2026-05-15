@@ -344,6 +344,75 @@
     }).join('');
   }
 
+  function buildArbDetailChartMessageHtml(message) {
+    return `<div class="arb-detail-chart-message">${escapeHtml(message)}</div>`;
+  }
+
+  function buildArbDetailChartPreviewCardHtml(pair, index, options = {}) {
+    const buildChartPairLabel = typeof options.buildChartPairLabel === 'function'
+      ? options.buildChartPairLabel
+      : () => '';
+    const label = buildChartPairLabel(pair);
+    return `
+            <article class="arb-detail-chart-card" data-arb-detail-chart-index="${index}">
+                <div class="arb-detail-chart-card-head">
+                    <div>
+                        <div class="arb-detail-chart-card-title">${escapeHtml(label)}</div>
+                        <div class="arb-detail-chart-card-meta">等待历史图表...</div>
+                    </div>
+                </div>
+                <div class="arb-detail-chart-canvas"></div>
+            </article>
+        `;
+  }
+
+  function buildArbDetailProfitPreviewCardHtml() {
+    return `
+            <article class="arb-detail-chart-card arb-detail-profit-card" data-arb-detail-profit-card="true">
+                <div class="arb-detail-chart-card-head arb-detail-profit-head">
+                    <div>
+                        <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
+                        <div class="arb-detail-chart-card-meta arb-detail-profit-meta">等待价格图表加载完成...</div>
+                    </div>
+                </div>
+                <div class="arb-detail-chart-canvas arb-detail-profit-canvas"></div>
+            </article>
+        `;
+  }
+
+  function buildArbDetailProfitPreviewMessageHtml(message) {
+    const safeMessage = escapeHtml(message);
+    return `
+            <div class="arb-detail-chart-card-head arb-detail-profit-head">
+                <div>
+                    <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
+                    <div class="arb-detail-chart-card-meta arb-detail-profit-meta">${safeMessage}</div>
+                </div>
+            </div>
+            <div class="arb-detail-chart-message">${safeMessage}</div>
+        `;
+  }
+
+  function buildArbDetailProfitPreviewReadyHtml(seriesCount) {
+    const safeCount = Number(seriesCount);
+    const countText = Number.isFinite(safeCount) ? String(safeCount) : '0';
+    return `
+            <div class="arb-detail-chart-card-head arb-detail-profit-head">
+                <div>
+                    <div class="arb-detail-chart-card-title arb-detail-profit-title">组合收益图</div>
+                    <div class="arb-detail-chart-card-meta arb-detail-profit-meta">按当前 ${countText} 张价格图逐时点乘积计算，> 1.0 为正收益。</div>
+                </div>
+            </div>
+            <div class="arb-detail-chart-canvas arb-detail-profit-canvas"></div>
+        `;
+  }
+
+  function buildArbDetailChartPreviewStripHtml(pairs = [], options = {}) {
+    const list = Array.isArray(pairs) ? pairs : [];
+    const cardsHtml = list.map((pair, index) => buildArbDetailChartPreviewCardHtml(pair, index, options)).join('');
+    return `<div class="arb-detail-chart-strip">${cardsHtml}${buildArbDetailProfitPreviewCardHtml()}</div>`;
+  }
+
   function buildArbOpportunityStableId(section, label, cycle) {
     const safeSection = String(section || '');
     const safeLabel = String(label || '');
@@ -418,6 +487,12 @@
     buildArbDetailRowsHtml,
     buildArbDetailSummaryHtml,
     buildArbDetailShellHtml,
+    buildArbDetailChartMessageHtml,
+    buildArbDetailChartPreviewCardHtml,
+    buildArbDetailProfitPreviewCardHtml,
+    buildArbDetailProfitPreviewMessageHtml,
+    buildArbDetailProfitPreviewReadyHtml,
+    buildArbDetailChartPreviewStripHtml,
     buildArbOpportunityStableId,
     buildUniqueArbOpportunityId,
     getNextArbDetailRequestVersion,

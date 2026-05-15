@@ -440,7 +440,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="alert-log-muted-log-content"'));
     assert.ok(response.body.includes('id="alert-log-muted-content"'));
     assert.ok(response.body.includes('src="muted-path-leg-utils.js"'));
-    assert.ok(appJsResponse.body.includes('arb-detail-chart-card arb-detail-profit-card'));
+    assert.ok(arbDetailUtilsResponse.body.includes('arb-detail-chart-card arb-detail-profit-card'));
     assert.ok(appJsResponse.body.includes('height: 104'));
     assert.ok(appJsResponse.body.includes('showRightPriceScale: true'));
     assert.ok(appJsResponse.body.includes('mini: true'));
@@ -448,6 +448,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRowsHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSummaryHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailShellHtml'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailChartPreviewStripHtml'));
+    assert.ok(appJsResponse.body.includes('buildArbDetailChartPreviewStripHtml(pairs, {'));
+    assert.ok(appJsResponse.body.includes('buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)'));
     assert.ok(appJsResponse.body.includes('utils.buildArbDetailShellHtml(arbDetailState.cards)'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailTokenHtml'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailPairHtml'));
@@ -457,6 +460,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('utils.buildArbDetailSummaryHtml(card, {'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailRowsHtml(card, cardIndex) {\n        if (card.rows && card.rows.length)'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSourceHtml(row, options)'));
+    assert.ok(!appJsResponse.body.includes('function buildArbDetailChartPreviewCardHtml'));
+    assert.ok(!appJsResponse.body.includes('function buildArbDetailProfitPreviewCardHtml'));
     assert.ok(!appJsResponse.body.includes('arb-detail-leg-action-row'));
     assert.ok(response.body.includes('.arb-detail-leg-source {'));
     assert.ok(response.body.includes('.arb-detail-leg-source-actions {'));
