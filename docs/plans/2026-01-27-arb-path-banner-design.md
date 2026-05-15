@@ -13,7 +13,7 @@
 
 ## 关键数据
 - `dashboardState`：配置与分区/报价列表。
-- `quoteMonitorState`：每条报价的最新价格与元数据（新增反向报价缓存）。
+- `quoteMarketState`：每条报价的最新价格与元数据（新增反向报价缓存）。
 
 ## 路径模型
 - 报价被视为有向边：`fromSymbol -> toSymbol`，附带 `chain` 与 `rate`。
@@ -23,7 +23,7 @@
 - 选择收益率最高的路径作为展示结果。
 
 ## 数据流
-1. `fetchSingleQuote` 成功后更新 `quoteMonitorState`。
+1. `fetchSingleQuote` 成功后更新 `quoteMarketState`。
 2. 同步保存反向报价（如有）。
 3. 触发 `updateArbPanel()`（轻量节流，约 300ms）。
 4. 计算最大收益路径并渲染到“套利路径”窗口。

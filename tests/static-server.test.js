@@ -237,7 +237,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const statusTagHtml = statusInfo.text'));
     assert.ok(/\.filter\(\(\{ statusInfo \}\) => Boolean\(\s*statusInfo\s*&& statusInfo\.text\s*&& statusInfo\.className !== 'path-alert-status-unavailable'\s*\)\s*\)\s*/.test(appJsResponse.body));
     assert.ok(!appJsResponse.body.includes("return { text: '监控中', className: 'path-alert-status-monitoring' };"));
-    assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })'));
+    assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMarketState })'));
     assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
     assert.ok(!appJsResponse.body.includes('syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);'));
     assert.ok(appJsResponse.body.includes('path-alert-config-sync'));

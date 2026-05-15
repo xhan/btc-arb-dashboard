@@ -1,6 +1,6 @@
     const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
     let dashboardState = [];
-    let quoteMonitorState = new Map();
+    let quoteMarketState = new Map();
     let quoteUiState = new Map();
     let globalSymbolCache = new Map(); 
     
@@ -961,7 +961,7 @@
     function buildQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
         const displayName = getQuoteChainDisplayName(quote);
         const direction = getQuoteAlertDirection(alert && alert.target);
-        const label = buildQuoteAlertDisplayLabel(quote, quoteMonitorState.get(quote.id) || {}, direction);
+        const label = buildQuoteAlertDisplayLabel(quote, quoteMarketState.get(quote.id) || {}, direction);
         const currentValueText = options.currentValueText || '';
         const actionLink = buildQuoteAlertActionLink(quote);
         return {
@@ -1882,11 +1882,11 @@
         return result;
     }
 
-    function setQuoteMonitorState(quoteId, nextState) {
-        const previousState = quoteMonitorState.get(quoteId) || null;
+    function setQuoteMarketState(quoteId, nextState) {
+        const previousState = quoteMarketState.get(quoteId) || null;
         const marketState = sanitizeQuoteMarketState(nextState);
         const marketStateChanged = hasQuoteMarketStateChanged(previousState, marketState);
-        quoteMonitorState.set(quoteId, marketState);
+        quoteMarketState.set(quoteId, marketState);
         if (marketStateChanged) {
             invalidateArbRuleSnapshotCache();
         }
@@ -1984,7 +1984,7 @@
 
     function buildVisibleArbEdges(quotes, nowMs = Date.now()) {
         return filterMutedArbEdges(
-            window.ArbPaths.buildEdges(quotes, quoteMonitorState, null),
+            window.ArbPaths.buildEdges(quotes, quoteMarketState, null),
             nowMs
         );
     }
@@ -2013,7 +2013,7 @@
                     : null,
                 quoteMetaById,
                 quotesByCategoryName,
-                quoteStateById: quoteMonitorState,
+                quoteStateById: quoteMarketState,
                 aliasRules,
                 mutedPathLegs,
                 mutedPathLegUtils: window.MutedPathLegUtils,
@@ -2051,7 +2051,7 @@
         const utils = getArbPathTemplateCacheUtils();
         if (!utils || !window.ArbPaths) return null;
 
-        const cacheKey = `${utils.buildArbPathTopologyCacheKey(dashboardState, quoteMonitorState)}|${arbCycleStartPriority.join(',')}`;
+        const cacheKey = `${utils.buildArbPathTopologyCacheKey(dashboardState, quoteMarketState)}|${arbCycleStartPriority.join(',')}`;
         if (arbPathTopologyCache && arbPathTopologyCacheKey === cacheKey) {
             return arbPathTopologyCache;
         }
@@ -2064,14 +2064,14 @@
         const targetCategories = dashboardState.filter((category) => targetNames.includes(category && category.name));
         const categoryTemplatesBySectionKey = new Map();
         const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
-        const allTopologyEdges = utils.buildTopologyEdges(allQuotes, quoteMonitorState, null);
+        const allTopologyEdges = utils.buildTopologyEdges(allQuotes, quoteMarketState, null);
         const allTopologyEdgesWithRules = allTopologyEdges.concat(ruleEdges);
         const fixedTemplatesByRuleId = {};
 
         for (const category of targetCategories) {
             const sectionKey = buildArbSectionKey('category', category && (category.id || category.name));
             const quotes = getActiveQuotes(Array.isArray(category && category.quotes) ? category.quotes : []);
-            const edges = utils.buildTopologyEdges(quotes, quoteMonitorState, null);
+            const edges = utils.buildTopologyEdges(quotes, quoteMarketState, null);
             const templates = utils.buildCycleTemplates(edges.concat(ruleEdges), {
                 maxDepth: 3,
                 limit: Number.MAX_SAFE_INTEGER,
@@ -2085,7 +2085,7 @@
             ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
             : dashboardState.slice(0, 4);
         const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
-        const globalEdges = utils.buildTopologyEdges(globalSourceQuotes, quoteMonitorState, null);
+        const globalEdges = utils.buildTopologyEdges(globalSourceQuotes, quoteMarketState, null);
         const globalTemplates = utils.buildCycleTemplates(globalEdges.concat(ruleEdges), {
             maxDepth: 3,
             limit: Number.MAX_SAFE_INTEGER,
@@ -2639,7 +2639,7 @@
         for (const category of dashboardState) {
             const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
             for (const quote of quotes) {
-                const state = quoteMonitorState.get(quote.id) || {};
+                const state = quoteMarketState.get(quote.id) || {};
                 const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
                 if (quoteTextEl) {
                     quoteTextEl.textContent = getQuoteDisplayText(quote, state);
@@ -2740,7 +2740,7 @@
         const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
         const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
         const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
-        const state = quoteMonitorState.get(quote.id) || {};
+        const state = quoteMarketState.get(quote.id) || {};
 
         if (itemEl) {
             itemEl.classList.remove('quote-item-paused', 'highlight', 'highlight-past');
@@ -2955,7 +2955,7 @@
 
         for (const category of dashboardState) {
             for (const quote of getActiveQuotes(Array.isArray(category && category.quotes) ? category.quotes : [])) {
-                const state = quoteMonitorState.get(quote.id) || {};
+                const state = quoteMarketState.get(quote.id) || {};
                 records.push({
                     categoryName: category && category.name,
                     quote,
@@ -3735,12 +3735,12 @@
 
     function syncArbDetailPrimaryCardQuoteState(quote, data, successSource, isInverseFetch) {
         if (!quote) return;
-        const previousState = quoteMonitorState.get(quote.id) || {};
+        const previousState = quoteMarketState.get(quote.id) || {};
         const nextState = getArbDetailUtils().buildArbDetailSnapshotMonitorState(previousState, data, {
             successSource,
             isInverseFetch
         });
-        setQuoteMonitorState(quote.id, nextState);
+        setQuoteMarketState(quote.id, nextState);
     }
 
     async function waitForArbDetailSourceBudget(source, signal) {
@@ -4581,7 +4581,7 @@
             }
             const match = findQuoteById(Number(alert.target.quoteId));
             const quote = match ? match.quote : null;
-            const monitorState = quote ? quoteMonitorState.get(Number(quote.id)) : null;
+            const monitorState = quote ? quoteMarketState.get(Number(quote.id)) : null;
             const label = quote
                 ? buildQuoteAlertDisplayLabel(quote, monitorState || {}, getQuoteAlertDirection(alert.target))
                 : `报价 #${String(alert.target.quoteId || '--')}`;
@@ -4598,7 +4598,7 @@
             return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
                 formatLeg(leg) {
                     const match = findQuoteById(Number(leg.quoteId));
-                    const state = match ? quoteMonitorState.get(Number(leg.quoteId)) : null;
+                    const state = match ? quoteMarketState.get(Number(leg.quoteId)) : null;
                     if (state && state.fromSymbol && state.toSymbol) {
                         if (leg.pricingMode === 'cex-ask1-inverse') {
                             return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol, ' [ask1]');
@@ -4773,7 +4773,7 @@
 
     function buildPathAlertEvaluationContext(sharedRuleSnapshot) {
         return {
-            quoteStateById: quoteMonitorState,
+            quoteStateById: quoteMarketState,
             resolveRuleEvaluation(target, alert) {
                 return buildRuleAlertEvaluation(target, alert, sharedRuleSnapshot);
             }
@@ -4905,7 +4905,7 @@
         const sharedRuleSnapshot = getSharedArbRuleSnapshot();
         const context = buildPathAlertEvaluationContext(sharedRuleSnapshot);
         const allLegSnapshots = typeof window.PathAlertUtils.buildAllLegSnapshots === 'function'
-            ? window.PathAlertUtils.buildAllLegSnapshots(sharedRuleSnapshot.allQuotes || [], quoteMonitorState)
+            ? window.PathAlertUtils.buildAllLegSnapshots(sharedRuleSnapshot.allQuotes || [], quoteMarketState)
             : [];
         const activeIds = new Set();
         const nowMs = Date.now();
@@ -5412,7 +5412,7 @@
 
     function buildQuotePriceWatchEntry(item) {
         const quote = findDashboardQuoteById(item.quoteId);
-        const state = quote ? quoteMonitorState.get(Number(quote.id)) || {} : {};
+        const state = quote ? quoteMarketState.get(Number(quote.id)) || {} : {};
         const value = resolveQuotePriceWatchValue(item, state);
         const isPaused = quote ? isQuotePaused(quote) : false;
         const statusText = !quote || value == null
@@ -5544,7 +5544,7 @@
                 : [];
             const cycles = cachedTemplates.length && templateUtils
                 ? filterMutedArbCycles(cachedTemplates
-                    .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMonitorState))
+                    .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMarketState))
                     .filter(Boolean)
                     .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)))
                 : window.ArbPaths.findTopCycles(
@@ -5592,7 +5592,7 @@
         const globalSectionKey = buildArbSectionKey('global', 'all');
         const globalCycles = topologyCache && templateUtils
             ? filterMutedArbCycles(topologyCache.globalTemplates
-                .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMonitorState))
+                .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMarketState))
                 .filter(Boolean)
                 .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)))
             : (() => {
@@ -6011,7 +6011,7 @@
         const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
         if (!quoteDataEl || !quoteTextEl) return;
         if (isQuotePaused(quote)) {
-            const previousState = quoteMonitorState.get(quote.id) || {};
+            const previousState = quoteMarketState.get(quote.id) || {};
             resetQuoteUiRuntimeState(quote.id);
             applyPausedQuoteUiState(quote, previousState);
             return;
@@ -6037,7 +6037,7 @@
                 isInverseFetch
             });
 
-            const previousState = quoteMonitorState.get(quote.id) || {};
+            const previousState = quoteMarketState.get(quote.id) || {};
             const inverseContainerId = `inverse-quote-${quote.id}`;
             let inverseEl = document.getElementById(inverseContainerId);
 
@@ -6058,7 +6058,7 @@
                         inverseFromSymbol: data.symbols.from,
                         inverseToSymbol: data.symbols.to
                     };
-                    setQuoteMonitorState(quote.id, inverseState);
+                    setQuoteMarketState(quote.id, inverseState);
                     inverseEl.textContent = getInverseQuoteDisplayText(quote, inverseState, inverseEl.textContent);
                     bindCopyHandler(
                         inverseEl,
@@ -6101,7 +6101,7 @@
                     newState.inverseToSymbol = null;
                 }
 
-                const marketStateChanged = setQuoteMonitorState(quote.id, newState);
+                const marketStateChanged = setQuoteMarketState(quote.id, newState);
                 if (marketStateChanged) {
                     scheduleArbUpdate();
                     scheduleDataTerminalUpdate();
@@ -6255,7 +6255,7 @@
 
     function handleQuoteHover(event, quoteId) {
         const textWrapper = event.currentTarget;
-        const state = quoteMonitorState.get(quoteId);
+        const state = quoteMarketState.get(quoteId);
         const category = dashboardState.find(c => c.quotes && c.quotes.some(q => q.id === quoteId));
         const quote = category ? category.quotes.find(q => q.id === quoteId) : null;
         
@@ -6434,7 +6434,7 @@
         return target && target.direction === 'inverse' ? 'inverse' : 'forward';
     }
 
-    function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMonitorState.get(quote.id) || {}, direction = 'forward') {
+    function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMarketState.get(quote.id) || {}, direction = 'forward') {
         if (!quote) return '--';
         const isInverse = direction === 'inverse';
         if (isCexOrderbookChain(quote.chain)) {
@@ -6579,7 +6579,7 @@
             const runtimeAlert = window.PathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
             const previous = pathAlertRuntimeState.get(alert.id) || null;
             const evaluation = window.PathAlertUtils
-                ? window.PathAlertUtils.evaluatePathAlert(alert, { quoteStateById: quoteMonitorState })
+                ? window.PathAlertUtils.evaluatePathAlert(alert, { quoteStateById: quoteMarketState })
                 : null;
             const next = window.PathAlertUtils
                 ? window.PathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, Date.now())
@@ -6735,7 +6735,7 @@
 
     function createQuoteItem(quote, categoryId) {
         const displayName = getQuoteChainDisplayName(quote);
-        const monitorState = quoteMonitorState.get(quote.id) || {};
+        const monitorState = quoteMarketState.get(quote.id) || {};
         const lastResultText = getQuoteDisplayText(quote, monitorState);
         const itemEl = document.createElement('li');
         itemEl.id = `quote-item-${quote.id}`;
@@ -7004,7 +7004,7 @@
         return window.PriceSnapshotPayloadUtils
             ? window.PriceSnapshotPayloadUtils.buildPriceSnapshotPayload({
                 dashboardState,
-                quoteStateById: quoteMonitorState,
+                quoteStateById: quoteMarketState,
                 clientCapturedAt: new Date().toISOString()
             })
             : {
@@ -7129,7 +7129,7 @@
         const quoteItem = document.getElementById(`quote-item-${quoteId}`);
         if (quoteItem) quoteItem.remove();
 
-        quoteMonitorState.delete(quoteId);
+        quoteMarketState.delete(quoteId);
         deleteQuoteUiRuntimeState(quoteId);
         updateCategoryPauseButtonState(categoryId);
         updateAlertSoundState();
@@ -7158,12 +7158,12 @@
         }
 
         if (nextPaused) {
-            const previousState = quoteMonitorState.get(quoteId) || {};
+            const previousState = quoteMarketState.get(quoteId) || {};
             removeFromQueue(quoteId);
             abortQuoteFetch(quoteId);
-            setQuoteMonitorState(quoteId, buildPausedMonitorState(previousState));
+            setQuoteMarketState(quoteId, buildPausedMonitorState(previousState));
             resetQuoteUiRuntimeState(quoteId);
-            applyPausedQuoteUiState(quote, quoteMonitorState.get(quoteId) || {});
+            applyPausedQuoteUiState(quote, quoteMarketState.get(quoteId) || {});
             updateSchedulers();
             if (doesArbDetailUseQuote(quoteId)) {
                 closeArbDetailModal();
@@ -7226,7 +7226,7 @@
 
         [quote.fromToken, quote.toToken] = [quote.toToken, quote.fromToken];
 
-        const state = quoteMonitorState.get(quoteId);
+        const state = quoteMarketState.get(quoteId);
         if (state) {
             const nextState = {
                 ...state,
@@ -7254,7 +7254,7 @@
                 const dismissBtn = quoteItemEl.querySelector('.dismiss-highlight-btn');
                 if (dismissBtn) dismissBtn.remove();
             }
-            setQuoteMonitorState(quoteId, nextState);
+            setQuoteMarketState(quoteId, nextState);
         }
         resetQuoteUiRuntimeState(quoteId);
         updateAlertSoundState();
@@ -7306,7 +7306,7 @@
             const quote = category.quotes.find(q => q.id == editQuoteId);
             if (!quote) return;
             currentlyEditingQuote = { quote: quote, categoryId: categoryId };
-            const monitorState = quoteMonitorState.get(quote.id) || {};
+            const monitorState = quoteMarketState.get(quote.id) || {};
             
             let pairLabel = quote.symbol;
             if(!pairLabel && monitorState.fromSymbol && monitorState.toSymbol){
@@ -7390,7 +7390,7 @@
                      showConfirmation(`确定删除分区 "${dashboardState[categoryIndex].name}" 吗？`, () => {
                         (dashboardState[categoryIndex].quotes || []).forEach(q => {
                            removeFromQueue(q.id);
-                           quoteMonitorState.delete(q.id);
+                           quoteMarketState.delete(q.id);
                            deleteQuoteUiRuntimeState(q.id);
                         });
                         updateAlertSoundState();

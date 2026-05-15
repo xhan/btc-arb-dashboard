@@ -64,15 +64,15 @@
 ### 5. 把行情状态和 UI 状态拆开
 - 目标：避免 UI 变化误伤套利缓存。
 - 现状：
-  - 已新增独立 `quoteUiState`，趋势箭头 timer、未读报警等 UI-only 字段不再写入 `quoteMonitorState`
-  - `setQuoteMonitorState()` 会净化行情状态，避免 UI 字段重新混入市场状态 Map
-  - 已新增 market-state signature，`setQuoteMonitorState()` 只在市场字段变化时推进套利/数据终端 revision
+  - 已新增独立 `quoteUiState`，趋势箭头 timer、未读报警等 UI-only 字段不再写入 `quoteMarketState`
+  - `setQuoteMarketState()` 会净化行情状态，避免 UI 字段重新混入市场状态 Map
+  - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效
   - 继续降低前端重复计算
-- 建议改法：
-  - 后续可把 `quoteMonitorState` 重命名为 `quoteMarketState`
+- 后续建议：
   - 保持只有行情字段变更时才失效套利缓存
+  - 后续拆 `app.js` 时把 `quoteMarketState` / `quoteUiState` 放入各自模块边界
 
 ### 6. 减少整块 `innerHTML` 重建
 - 目标：减少大面板反复全量重绘。
@@ -90,7 +90,7 @@
 ### 7. 数据终端缓存化
 - 目标：避免每次刷新都重建 records 和 candidates。
 - 现状：
-  - `renderDataTerminalPanel()` 每次都会从 `dashboardState + quoteMonitorState` 重建全量数据
+  - `renderDataTerminalPanel()` 每次都会从 `dashboardState + quoteMarketState` 重建全量数据
   - 然后再跑搜索、别名、diff 计算
 - 预期收益：
   - 降低数据终端打开后的持续 CPU

@@ -73,7 +73,7 @@
 `app.js` 在 `updateArbPanel()` 中读取：
 
 - `dashboardState`（分区与报价列表）
-- `quoteMonitorState`（报价状态，含 `fromSymbol/toSymbol/lastRawPrice` 等）
+- `quoteMarketState`（报价状态，含 `fromSymbol/toSymbol/lastRawPrice` 等）
 
 再通过 `window.ArbPaths.buildEdges(...)` 生成报价边。
 

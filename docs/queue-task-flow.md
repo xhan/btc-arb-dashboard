@@ -121,7 +121,7 @@
 触发顺序是：
 
 1. 某个 `main` 报价成功
-2. 更新 `quoteMonitorState`
+2. 更新 `quoteMarketState`
 3. 调用 `scheduleArbUpdate()`
 4. 如果当前没有等待中的路径刷新 timer，则创建一个 `1000ms` timer
 5. timer 到期后执行一次 `updateArbPanel()`
