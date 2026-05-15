@@ -4920,49 +4920,31 @@
         };
     }
 
-    function buildArbPanelData() {
-        if (!window.ArbPaths) {
-            return { error: '路径模块未加载' };
-        }
-        if (!window.ArbPanelRenderer || typeof window.ArbPanelRenderer.renderArbGrid !== 'function') {
-            return { error: '路径渲染模块未加载' };
-        }
-        const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
-        const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
-        if (!targetCategories.length) {
-            return { error: '暂无可用路径' };
-        }
+    function buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
+        return sharedRuleSnapshot.fixedResults
+            .map(({ rule, cycles }) => {
+                const displayMinProfitBp = getFixedRuleDisplayMinProfitBp(rule);
+                const displayCycles = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.selectCyclesAboveDisplayThreshold === 'function'
+                    ? window.ArbPanelLayoutUtils.selectCyclesAboveDisplayThreshold(cycles, displayMinProfitBp)
+                    : (Array.isArray(cycles) ? cycles.filter((cycle) => cycle && Number(cycle.profitRate) * 10000 > displayMinProfitBp) : []);
+                const opportunities = displayCycles
+                    .map((cycle, index, items) => createArbOpportunityEntry(
+                        nextOpportunityMap,
+                        nextOpportunityIdsByTargetKey,
+                        cycle,
+                        items.length > 1 ? `机会 ${index + 1}` : '',
+                        { section: `fixed:${rule?.id || ''}`, alertPreset: { type: 'path' } }
+                    ))
+                    .filter(Boolean);
+                return {
+                    title: String(rule?.title || '固定路径'),
+                    opportunities,
+                    emptyText: `无收益率 > ${displayMinProfitBp}bp`
+                };
+            });
+    }
 
-        const sharedRuleSnapshot = getSharedArbRuleSnapshot();
-        const topologyCache = getArbPathTopologyCache();
-        const templateUtils = getArbPathTemplateCacheUtils();
-        const ruleEdges = topologyCache && Array.isArray(topologyCache.ruleEdges)
-            ? topologyCache.ruleEdges
-            : sharedRuleSnapshot.ruleEdges;
-        const nextOpportunityMap = new Map();
-        const nextOpportunityIdsByTargetKey = new Map();
-
-        const fixedSections = sharedRuleSnapshot.fixedResults
-                .map(({ rule, cycles }) => {
-                    const displayMinProfitBp = getFixedRuleDisplayMinProfitBp(rule);
-                    const displayCycles = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.selectCyclesAboveDisplayThreshold === 'function'
-                        ? window.ArbPanelLayoutUtils.selectCyclesAboveDisplayThreshold(cycles, displayMinProfitBp)
-                        : (Array.isArray(cycles) ? cycles.filter((cycle) => cycle && Number(cycle.profitRate) * 10000 > displayMinProfitBp) : []);
-                    const opportunities = displayCycles
-                        .map((cycle, index, items) => createArbOpportunityEntry(
-                            nextOpportunityMap,
-                            nextOpportunityIdsByTargetKey,
-                            cycle,
-                            items.length > 1 ? `机会 ${index + 1}` : '',
-                            { section: `fixed:${rule?.id || ''}`, alertPreset: { type: 'path' } }
-                        ))
-                        .filter(Boolean);
-                    return {
-                        title: String(rule?.title || '固定路径'),
-                        opportunities,
-                        emptyText: `无收益率 > ${displayMinProfitBp}bp`
-                    };
-                });
+    function buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
         const specialOpportunities = sharedRuleSnapshot.specialResults
             .flatMap(({ opportunities }) => Array.isArray(opportunities) ? opportunities : []);
         const specialEntries = specialOpportunities
@@ -4990,7 +4972,7 @@
                 .filter((entry) => entry && typeof entry.label === 'string' && entry.label.trim())
                 .map((entry) => [entry.label.trim(), entry])
         );
-        const specialSections = SPECIAL_ARB_RULES
+        return SPECIAL_ARB_RULES
             .filter((rule) => rule && typeof rule.title === 'string' && rule.title.trim())
             .map((rule) => {
                 const title = rule.title.trim();
@@ -5006,6 +4988,32 @@
                     emptyText: '无收益率'
                 };
             });
+    }
+
+    function buildArbPanelData() {
+        if (!window.ArbPaths) {
+            return { error: '路径模块未加载' };
+        }
+        if (!window.ArbPanelRenderer || typeof window.ArbPanelRenderer.renderArbGrid !== 'function') {
+            return { error: '路径渲染模块未加载' };
+        }
+        const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
+        const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
+        if (!targetCategories.length) {
+            return { error: '暂无可用路径' };
+        }
+
+        const sharedRuleSnapshot = getSharedArbRuleSnapshot();
+        const topologyCache = getArbPathTopologyCache();
+        const templateUtils = getArbPathTemplateCacheUtils();
+        const ruleEdges = topologyCache && Array.isArray(topologyCache.ruleEdges)
+            ? topologyCache.ruleEdges
+            : sharedRuleSnapshot.ruleEdges;
+        const nextOpportunityMap = new Map();
+        const nextOpportunityIdsByTargetKey = new Map();
+
+        const fixedSections = buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
+        const specialSections = buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
 
         const categorySections = [];
         let lbtcSection = null;

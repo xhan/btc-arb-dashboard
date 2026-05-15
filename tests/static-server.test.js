@@ -435,7 +435,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('setArbPanelMaxHeight();'));
     assert.ok(appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
     assert.ok(appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
-    assert.ok(appJsResponse.body.includes("const specialSections = SPECIAL_ARB_RULES"));
+    assert.ok(appJsResponse.body.includes('function buildFixedArbSections('));
+    assert.ok(appJsResponse.body.includes('function buildSpecialArbSections('));
+    assert.ok(appJsResponse.body.includes('const fixedSections = buildFixedArbSections('));
+    assert.ok(appJsResponse.body.includes('const specialSections = buildSpecialArbSections('));
     assert.ok(appJsResponse.body.includes("emptyText: '无收益率'"));
     assert.ok(appJsResponse.body.includes("title: '关注列表'"));
     assert.ok(appJsResponse.body.includes('buildQuotePriceWatchEntries()'));
