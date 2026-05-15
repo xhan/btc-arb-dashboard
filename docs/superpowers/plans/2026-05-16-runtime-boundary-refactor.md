@@ -8,6 +8,8 @@
 
 **Tech Stack:** Node.js, Express, browser globals, CommonJS-compatible UMD utility files, existing `node` test runner style.
 
+**Status:** Completed. The runtime helper is now required before `app.js`, scheduler/cache boundaries are wired, and the full test suite has passed after implementation.
+
 ---
 
 ## File Structure
@@ -20,7 +22,7 @@
 - Modify `index.html`
   - Loads `dashboard-runtime-utils.js` before `app.js`.
 - Modify `app.js`
-  - Uses the helper when available, with local fallback behavior.
+  - Requires the helper through an explicit loader guard.
   - Adds dirty refresh gating for the arbitrage panel.
   - Adds path alert scheduler eligibility gating.
   - Adds an interval delay to arbitrage detail refresh.
@@ -37,7 +39,7 @@
 - Test: `tests/dashboard-runtime-utils.test.js`
 - Modify: `package.json`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create tests that assert:
 
@@ -48,13 +50,13 @@ Create tests that assert:
 - enabled path/rule alerts do need the path scheduler
 - data terminal cache keys change when quote revision or quote topology changes
 
-- [ ] **Step 2: Run the new test**
+- [x] **Step 2: Run the new test**
 
 Run: `node tests/dashboard-runtime-utils.test.js`
 
 Expected: fail because `dashboard-runtime-utils.js` does not exist.
 
-- [ ] **Step 3: Implement the helper**
+- [x] **Step 3: Implement the helper**
 
 Create the UMD-style helper with:
 
@@ -62,7 +64,7 @@ Create the UMD-style helper with:
 - `hasActivePathAlertEvaluationTarget(alertConfig)`
 - `buildDataTerminalRecordsCacheKey(dashboardState, quoteStateRevision)`
 
-- [ ] **Step 4: Run the new test**
+- [x] **Step 4: Run the new test**
 
 Run: `node tests/dashboard-runtime-utils.test.js`
 
@@ -75,23 +77,23 @@ Expected: pass.
 - Modify: `app.js`
 - Modify: `tests/static-server.test.js`
 
-- [ ] **Step 1: Load helper before app**
+- [x] **Step 1: Load helper before app**
 
 Add `<script src="dashboard-runtime-utils.js"></script>` before `app.js`.
 
-- [ ] **Step 2: Gate hidden arbitrage panel rebuilds**
+- [x] **Step 2: Gate hidden arbitrage panel rebuilds**
 
 Update `scheduleArbUpdate()` so hidden panels mark `arbPanelDirty = true` and skip the timer. When `toggleArbPanel()` opens a dirty panel, render once immediately.
 
-- [ ] **Step 3: Gate path alert scheduler**
+- [x] **Step 3: Gate path alert scheduler**
 
 Update `restartPathAlertScheduler()` to return without setting an interval when `hasActivePathAlertEvaluationTarget(pathAlertConfig)` is false.
 
-- [ ] **Step 4: Add controlled detail refresh delay**
+- [x] **Step 4: Add controlled detail refresh delay**
 
 Update `startArbDetailLoop()` to wait `ARB_DETAIL_REFRESH_INTERVAL_MS` between successful refresh rounds.
 
-- [ ] **Step 5: Cache data terminal records**
+- [x] **Step 5: Cache data terminal records**
 
 Use `buildDataTerminalRecordsCacheKey(dashboardState, quoteStateRevision)` in `buildDataTerminalRecords()` so records are rebuilt only when the dashboard topology or quote revision changes.
 
@@ -100,19 +102,19 @@ Use `buildDataTerminalRecordsCacheKey(dashboardState, quoteStateRevision)` in `b
 **Files:**
 - Modify: none unless tests reveal behavior gaps.
 
-- [ ] **Step 1: Syntax check touched browser files**
+- [x] **Step 1: Syntax check touched browser files**
 
 Run: `node -c app.js && node -c dashboard-runtime-utils.js`
 
 Expected: no output and exit code 0.
 
-- [ ] **Step 2: Run targeted tests**
+- [x] **Step 2: Run targeted tests**
 
 Run: `node tests/dashboard-runtime-utils.test.js && node tests/static-server.test.js && node tests/app-dashboard-queue-behavior.test.js && node tests/path-alert-utils.test.js && node tests/data-terminal-utils.test.js`
 
 Expected: all pass.
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `npm test`
 
