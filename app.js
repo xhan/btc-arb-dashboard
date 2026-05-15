@@ -88,6 +88,7 @@
     const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;
     const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
+    const ARB_DETAIL_REFRESH_INTERVAL_MS = 2500;
     const MUTED_PATH_TARGETS_STORAGE_KEY = 'mutedPathTargets';
     const MUTED_PATH_LEGS_STORAGE_KEY = 'mutedPathLegs';
     let arbExpandedSections = new Set();
@@ -97,6 +98,7 @@
     let arbGlobalTwoLegOnly = false;
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
+    let arbPanelDirty = false;
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
     let dataTerminalState = {
         visible: false,
@@ -108,6 +110,8 @@
         timer: null,
         domRefs: null
     };
+    let dataTerminalRecordsCacheKey = '';
+    let dataTerminalRecordsCache = null;
     let quoteStateRevision = 0;
     let arbRuleSnapshotCacheKey = '';
     let arbRuleSnapshotCache = null;
@@ -1794,10 +1798,14 @@
     document.body.addEventListener('keydown', unlockAudio, { once: true });
 
     function scheduleArbUpdate() {
+        if (!isArbPanelVisible()) {
+            arbPanelDirty = true;
+            return;
+        }
         if (arbUpdateTimer) return;
         arbUpdateTimer = setTimeout(() => {
             arbUpdateTimer = null;
-            updateArbPanel();
+            updateArbPanel({ force: true });
         }, ARB_PANEL_UPDATE_DELAY_MS);
     }
 
@@ -2771,6 +2779,40 @@
         return Array.from(new Set(tokens));
     }
 
+    function getDashboardRuntimeUtils() {
+        return window.DashboardRuntimeUtils || null;
+    }
+
+    function isArbPanelVisible() {
+        const utils = getDashboardRuntimeUtils();
+        if (utils && typeof utils.isPanelVisible === 'function') {
+            return utils.isPanelVisible(arbPathWindow);
+        }
+        if (!arbPathWindow) return false;
+        return window.getComputedStyle(arbPathWindow).display !== 'none';
+    }
+
+    function hasActivePathAlertEvaluationTarget() {
+        const utils = getDashboardRuntimeUtils();
+        if (utils && typeof utils.hasActivePathAlertEvaluationTarget === 'function') {
+            return utils.hasActivePathAlertEvaluationTarget(pathAlertConfig);
+        }
+        return (pathAlertConfig.alerts || []).some((alert) => (
+            alert
+                && alert.enabled !== false
+                && alert.target
+                && alert.target.type !== 'quote'
+        ));
+    }
+
+    function resolveDataTerminalRecordsCacheKey() {
+        const utils = getDashboardRuntimeUtils();
+        if (utils && typeof utils.buildDataTerminalRecordsCacheKey === 'function') {
+            return utils.buildDataTerminalRecordsCacheKey(dashboardState, quoteStateRevision);
+        }
+        return `${quoteStateRevision}|${dashboardState.length}`;
+    }
+
     function clearDataTerminalTimer() {
         if (dataTerminalState.timer) {
             clearTimeout(dataTerminalState.timer);
@@ -2787,6 +2829,11 @@
     }
 
     function buildDataTerminalRecords() {
+        const cacheKey = resolveDataTerminalRecordsCacheKey();
+        if (dataTerminalRecordsCache && dataTerminalRecordsCacheKey === cacheKey) {
+            return dataTerminalRecordsCache;
+        }
+
         const records = [];
 
         for (const category of dashboardState) {
@@ -2804,6 +2851,8 @@
             }
         }
 
+        dataTerminalRecordsCacheKey = cacheKey;
+        dataTerminalRecordsCache = records;
         return records;
     }
 
@@ -4144,6 +4193,7 @@
                 const didRefresh = await refreshArbDetailCards(runToken);
                 if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) break;
                 if (!didRefresh) break;
+                await sleep(ARB_DETAIL_REFRESH_INTERVAL_MS);
             }
         } finally {
             if (arbDetailState.loopToken === runToken) {
@@ -4820,6 +4870,7 @@
     function restartPathAlertScheduler() {
         if (pathAlertEvalTimer) clearInterval(pathAlertEvalTimer);
         pathAlertEvalTimer = null;
+        if (!hasActivePathAlertEvaluationTarget()) return;
         const intervalMs = Number(pathAlertConfig?.settings?.pathAlertEvalIntervalMs);
         if (!Number.isFinite(intervalMs) || intervalMs <= 0) return;
         pathAlertEvalTimer = setInterval(evaluatePathAlertsOnce, intervalMs);
@@ -5503,8 +5554,14 @@
         };
     }
 
-    function updateArbPanel() {
+    function updateArbPanel(options = {}) {
         if (!arbPathContent) return;
+        if (!options.force && !isArbPanelVisible()) {
+            arbPanelDirty = true;
+            return;
+        }
+        arbPanelDirty = false;
+
         const panelData = buildArbPanelData();
         if (panelData.error) {
             arbPathContent.textContent = panelData.error;
@@ -6184,7 +6241,12 @@
         if (!arbPathWindow) return;
         const isHidden = window.getComputedStyle(arbPathWindow).display === 'none';
         arbPathWindow.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden) bringFloatingPanelToFront(arbPathWindow);
+        if (isHidden) {
+            bringFloatingPanelToFront(arbPathWindow);
+            if (arbPanelDirty) {
+                updateArbPanel({ force: true });
+            }
+        }
     }
 
     function isTypingTarget(target) {

@@ -125,7 +125,7 @@
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
 - 现状：
-  - `quote-calculator.js` 里 `buildCalculatorEntry/formatCalculatorEntry` 更像旧功能残留
+  - `quote-calculator.js` 里的旧计算器残留已在运行时边界重构中移除
   - `legacy quote alert` 相关逻辑已经并入统一 runtime，但命名仍分裂
   - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
 - 建议改法：

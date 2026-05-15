@@ -85,12 +85,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
+    assert.ok(response.body.includes('src="dashboard-runtime-utils.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
       response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="request-channel-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="dex-link-utils.js"') < response.body.indexOf('src="app.js"')

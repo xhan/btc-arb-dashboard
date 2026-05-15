@@ -897,118 +897,100 @@ app.post('/api/get-evm-meta', async (req, res) => {
     }
 });
 
-app.post('/api/get-0x-quote', async (req, res) => {
-    let input = null;
-    try {
-        input = await buildQuoteRequestInput(req.body, 'zerox');
-        const result = await marketClients.providers.zerox.getQuote(input);
-        res.json(result);
-    } catch (error) {
-        const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('ZEROX', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
-        res.status(500).json({ error: error.message });
-    }
-});
+function buildDefaultQuoteErrorContext(body) {
+    const { chain, fromToken, toToken, amount } = body;
+    return { chain, fromToken, toToken, amount: amount || 1 };
+}
 
-app.post('/api/get-lifi-quote', async (req, res) => {
-    let input = null;
-    try {
-        input = await buildQuoteRequestInput(req.body, 'lifi');
-        const result = await marketClients.providers.lifi.getQuote(input);
-        res.json(result);
-    } catch (error) {
-        const { chain, toChain, fromToken, toToken, amount } = req.body;
+function registerMarketQuoteRoute({ routePath, providerKey, sourceKey, logSource, buildErrorContext = buildDefaultQuoteErrorContext }) {
+    app.post(routePath, async (req, res) => {
+        let input = null;
+        try {
+            input = await buildQuoteRequestInput(req.body, sourceKey);
+            const result = await marketClients.providers[providerKey].getQuote(input);
+            res.json(result);
+        } catch (error) {
+            logQuoteError(logSource, withQuoteLogRequestChannel(buildErrorContext(req.body), input), error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+}
+
+function registerCexQuoteRoute({ routePath, providerKey, logSource, chainLabel }) {
+    app.post(routePath, async (req, res) => {
+        try {
+            const result = await marketClients.providers[providerKey].getQuote(req.body);
+            res.json(result);
+        } catch (error) {
+            const { amount, symbol } = req.body;
+            logQuoteError(logSource, { chain: chainLabel, fromSymbol: symbol, amount: amount || 1 }, error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+}
+
+registerMarketQuoteRoute({
+    routePath: '/api/get-0x-quote',
+    providerKey: 'zerox',
+    sourceKey: 'zerox',
+    logSource: 'ZEROX'
+});
+registerMarketQuoteRoute({
+    routePath: '/api/get-lifi-quote',
+    providerKey: 'lifi',
+    sourceKey: 'lifi',
+    logSource: 'LIFI',
+    buildErrorContext: (body) => {
+        const { chain, toChain, fromToken, toToken, amount } = body;
         const logChain = toChain && toChain !== chain ? `${chain}->${toChain}` : chain;
-        logQuoteError('LIFI', withQuoteLogRequestChannel({ chain: logChain, fromToken, toToken, amount: amount || 1 }, input), error);
-        res.status(500).json({ error: error.message });
+        return { chain: logChain, fromToken, toToken, amount: amount || 1 };
     }
 });
-
-app.post('/api/get-ekubo-quote', async (req, res) => {
-    let input = null;
-    try {
-        input = await buildQuoteRequestInput(req.body, 'starknet');
-        const result = await marketClients.providers.ekubo.getQuote(input);
-        res.json(result);
-    } catch (error) {
-        const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('EKUBO', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
-        res.status(500).json({ error: error.message });
+registerMarketQuoteRoute({
+    routePath: '/api/get-ekubo-quote',
+    providerKey: 'ekubo',
+    sourceKey: 'starknet',
+    logSource: 'EKUBO'
+});
+registerMarketQuoteRoute({
+    routePath: '/api/get-jupiter-quote',
+    providerKey: 'jupiter',
+    sourceKey: 'solana',
+    logSource: 'JUPITER',
+    buildErrorContext: (body) => {
+        const { fromToken, toToken, amount } = body;
+        return { chain: 'solana', fromToken, toToken, amount: amount || 1 };
     }
 });
-
-app.post('/api/get-jupiter-quote', async (req, res) => {
-    let input = null;
-    try {
-        input = await buildQuoteRequestInput(req.body, 'solana');
-        const result = await marketClients.providers.jupiter.getQuote(input);
-        res.json(result);
-    } catch (error) {
-        const { fromToken, toToken, amount } = req.body;
-        logQuoteError('JUPITER', withQuoteLogRequestChannel({ chain: 'solana', fromToken, toToken, amount: amount || 1 }, input), error);
-        res.status(500).json({ error: error.message });
-    }
+registerMarketQuoteRoute({
+    routePath: '/api/get-kyber-quote',
+    providerKey: 'kyber',
+    sourceKey: 'kyber',
+    logSource: 'KYBER'
 });
-
-app.post('/api/get-kyber-quote', async (req, res) => {
-    let input = null;
-    try {
-        input = await buildQuoteRequestInput(req.body, 'kyber');
-        const result = await marketClients.providers.kyber.getQuote(input);
-        res.json(result);
-    } catch (error) { 
-        const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('KYBER', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
-        res.status(500).json({ error: error.message }); 
-    }
+registerMarketQuoteRoute({
+    routePath: '/api/get-velora-quote',
+    providerKey: 'velora',
+    sourceKey: 'velora',
+    logSource: 'VELORA'
 });
-
-app.post('/api/get-velora-quote', async (req, res) => {
-    let input = null;
-    try {
-        input = await buildQuoteRequestInput(req.body, 'velora');
-        const result = await marketClients.providers.velora.getQuote(input);
-        res.json(result);
-    } catch (error) {
-        const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('VELORA', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
-        res.status(500).json({ error: error.message });
-    }
+registerMarketQuoteRoute({
+    routePath: '/api/get-cetus-quote',
+    providerKey: 'cetus',
+    sourceKey: 'sui',
+    logSource: 'CETUS'
 });
-
-app.post('/api/get-cetus-quote', async (req, res) => {
-    let input = null;
-    try {
-        input = await buildQuoteRequestInput(req.body, 'sui');
-        const result = await marketClients.providers.cetus.getQuote(input);
-        res.json(result);
-    } catch (error) {
-        const { chain, fromToken, toToken, amount } = req.body;
-        logQuoteError('CETUS', withQuoteLogRequestChannel({ chain, fromToken, toToken, amount: amount || 1 }, input), error);
-        res.status(500).json({ error: error.message });
-    }
+registerCexQuoteRoute({
+    routePath: '/api/get-bybit-quote',
+    providerKey: 'bybit',
+    logSource: 'BYBIT',
+    chainLabel: 'Bybit'
 });
-
-app.post('/api/get-bybit-quote', async (req, res) => {
-    try {
-        const result = await marketClients.providers.bybit.getQuote(req.body);
-        res.json(result);
-    } catch (error) {
-        const { amount, symbol } = req.body;
-        logQuoteError('BYBIT', { chain: 'Bybit', fromSymbol: symbol, amount: amount || 1 }, error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/get-binance-quote', async (req, res) => {
-    try {
-        const result = await marketClients.providers.binance.getQuote(req.body);
-        res.json(result);
-    } catch (error) {
-        const { amount, symbol } = req.body;
-        logQuoteError('BINANCE', { chain: 'Binance', fromSymbol: symbol, amount: amount || 1 }, error);
-        res.status(500).json({ error: error.message });
-    }
+registerCexQuoteRoute({
+    routePath: '/api/get-binance-quote',
+    providerKey: 'binance',
+    logSource: 'BINANCE',
+    chainLabel: 'Binance'
 });
 
 app.get('/api/solana-metadata', async (req, res) => {
