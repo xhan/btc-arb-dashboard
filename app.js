@@ -319,6 +319,9 @@
     }
 
     function isCrossChainQuote(quote) {
+        if (window.ChainDefaults && typeof window.ChainDefaults.isCrossChainQuote === 'function') {
+            return window.ChainDefaults.isCrossChainQuote(quote);
+        }
         const fromChain = normalizeChainKey(quote && quote.chain);
         const toChain = normalizeChainKey(quote && quote.toChain);
         return Boolean(fromChain && toChain && fromChain !== toChain);
@@ -339,6 +342,9 @@
     }
 
     function isCexOrderbookChain(chain) {
+        if (window.ChainDefaults && typeof window.ChainDefaults.isCexOrderbookChain === 'function') {
+            return window.ChainDefaults.isCexOrderbookChain(chain);
+        }
         const normalized = normalizeChainKey(chain);
         return normalized === 'bybit' || normalized === 'binance';
     }
@@ -372,6 +378,9 @@
         : () => 'Kyber';
 
     function isEvmChain(chain) {
+        if (window.ChainDefaults && typeof window.ChainDefaults.isEvmChain === 'function') {
+            return window.ChainDefaults.isEvmChain(chain);
+        }
         const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];
         return !!chain && !nonEvm.includes(normalizeChainKey(chain));
     }
@@ -5234,34 +5243,6 @@
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    function buildQuoteStrategy(quote) {
-        if (isCrossChainQuote(quote)) return ['LI.FI'];
-        if (isEvmChain(quote.chain)) {
-            const pref = quote.preferredSource || 'Kyber';
-            if (pref === 'Auto') {
-                return ['Kyber', '0x', 'Kyber'];
-            }
-            if (pref === '0x') {
-                return ['0x', '0x'];
-            }
-            if (pref === 'Velora') {
-                return ['Velora', 'Velora'];
-            }
-            if (pref === 'LI.FI') {
-                return ['LI.FI', 'LI.FI'];
-            }
-            return ['Kyber', 'Kyber'];
-        }
-
-        if (quote.chain === 'sui') return ['Cetus'];
-        if (quote.chain === 'solana') return ['Jupiter'];
-        if (quote.chain === 'starknet') return ['Ekubo'];
-        if (isCexOrderbookChain(quote.chain)) {
-            return [String(quote.chain).trim().toLowerCase() === 'binance' ? 'Binance' : 'Bybit'];
-        }
-        return [];
-    }
-
     async function fetchQuoteByStrategy(quote, options = {}) {
         const signal = options.signal;
         const beforeSourceAttempt = typeof options.beforeSourceAttempt === 'function'
@@ -5278,7 +5259,9 @@
         const requestQuote = isInverseFetch
             ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: requestedAmount, requestChannelId }
             : { ...quote, amount: requestedAmount, requestChannelId };
-        const strategy = buildQuoteStrategy(quote);
+        const strategy = window.ChainDefaults && typeof window.ChainDefaults.buildQuoteStrategy === 'function'
+            ? window.ChainDefaults.buildQuoteStrategy(quote)
+            : [];
         let fetchError = null;
         let successSource = null;
         let data = null;

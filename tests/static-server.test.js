@@ -86,6 +86,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="quote-display-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
+    assert.ok(response.body.includes('src="chain-defaults.js"'));
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-runtime-utils.js"'));
@@ -95,6 +96,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="request-channel-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
@@ -250,6 +254,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getEvmMetadata'));
     assert.ok(appJsResponse.body.includes('const MARKET_QUOTE_REQUESTS = {'));
     assert.ok(appJsResponse.body.includes('function getMarketQuote(quote, signal, config)'));
+    assert.ok(appJsResponse.body.includes('window.ChainDefaults.buildQuoteStrategy(quote)'));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteStrategy(quote)'));
     assert.ok(!appJsResponse.body.includes('function get0xQuote'));
     assert.ok(!appJsResponse.body.includes('function getVeloraQuote'));
     assert.ok(!appJsResponse.body.includes('function getLifiQuote'));
