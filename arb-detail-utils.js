@@ -8,6 +8,12 @@
   const buildDexLink = dexLinkUtils && typeof dexLinkUtils.buildDexLink === 'function'
     ? dexLinkUtils.buildDexLink
     : () => null;
+  const buildDexLinkCopyButtonHtml = dexLinkUtils && typeof dexLinkUtils.buildDexLinkCopyButtonHtml === 'function'
+    ? dexLinkUtils.buildDexLinkCopyButtonHtml
+    : () => '';
+  const getDexLinkLabel = dexLinkUtils && typeof dexLinkUtils.getDexLinkLabel === 'function'
+    ? dexLinkUtils.getDexLinkLabel
+    : () => null;
 
   function normalizePositiveAmount(value, fallback = 1) {
     const amount = Number(value);
@@ -266,6 +272,49 @@
     return `${chainText}${fromHtml} -> ${toHtml}`;
   }
 
+  function buildArbDetailMuteButtonHtml(cardIndex, rowIndex, quoteId) {
+    if (Number(cardIndex) !== 0) return '';
+    return `<button
+            type="button"
+            class="arb-detail-leg-mute-btn"
+            data-arb-detail-leg-mute="${escapeHtml(String(quoteId || ''))}"
+            data-arb-detail-card-index="${escapeHtml(String(cardIndex))}"
+            data-arb-detail-row-index="${escapeHtml(String(rowIndex))}"
+        >屏蔽</button>`;
+  }
+
+  function buildArbDetailSourceMetaHtml(row) {
+    const dexLinkConfig = {
+      chain: row && row.chain,
+      fromTokenAddress: row && row.fromTokenAddress,
+      toTokenAddress: row && row.toTokenAddress,
+      inputAmount: row && row.inputAmount
+    };
+    const sourceText = escapeHtml(row && row.sourceText ? row.sourceText : 'Unknown');
+    const dexButtonHtml = buildDexLinkCopyButtonHtml(
+      dexLinkConfig,
+      'arb-detail-dex-link',
+      getDexLinkLabel(dexLinkConfig) || 'DEX'
+    );
+    return dexButtonHtml ? `${sourceText} · ${dexButtonHtml}` : sourceText;
+  }
+
+  function buildArbDetailSourceActionsHtml(row, options = {}) {
+    return buildArbDetailMuteButtonHtml(options.cardIndex, options.rowIndex, row && row.quoteId);
+  }
+
+  function buildArbDetailSourceHtml(row, options = {}) {
+    const sourceMetaHtml = buildArbDetailSourceMetaHtml(row);
+    const actionsHtml = buildArbDetailSourceActionsHtml(row, options);
+    if (!actionsHtml) {
+      return `<span class="arb-detail-leg-source-main">${sourceMetaHtml}</span>`;
+    }
+    return `
+            <span class="arb-detail-leg-source-main">${sourceMetaHtml}</span>
+            <span class="arb-detail-leg-source-actions">${actionsHtml}</span>
+        `;
+  }
+
   function buildArbDetailRowsHtml(card = {}, options = {}) {
     if (card.rows && card.rows.length) {
       const buildPairHtml = typeof options.buildPairHtml === 'function'
@@ -484,6 +533,10 @@
     buildArbDetailDexLink,
     buildArbDetailTokenHtml,
     buildArbDetailPairHtml,
+    buildArbDetailMuteButtonHtml,
+    buildArbDetailSourceActionsHtml,
+    buildArbDetailSourceHtml,
+    buildArbDetailSourceMetaHtml,
     buildArbDetailRowsHtml,
     buildArbDetailSummaryHtml,
     buildArbDetailShellHtml,

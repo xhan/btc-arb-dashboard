@@ -3241,48 +3241,10 @@
         return '<div class="arb-detail-error">详情渲染模块未加载</div>';
     }
 
-    function buildArbDetailMuteButtonHtml(cardIndex, rowIndex, quoteId) {
-        if (Number(cardIndex) !== 0) return '';
-        return `<button
-            type="button"
-            class="arb-detail-leg-mute-btn"
-            data-arb-detail-leg-mute="${escapeHtml(String(quoteId || ''))}"
-            data-arb-detail-card-index="${escapeHtml(String(cardIndex))}"
-            data-arb-detail-row-index="${escapeHtml(String(rowIndex))}"
-        >屏蔽</button>`;
-    }
-
-    function buildArbDetailSourceMetaHtml(row) {
-        const dexLinkConfig = {
-            chain: row && row.chain,
-            fromTokenAddress: row && row.fromTokenAddress,
-            toTokenAddress: row && row.toTokenAddress,
-            inputAmount: row && row.inputAmount
-        };
-        const sourceText = escapeHtml(row && row.sourceText ? row.sourceText : 'Unknown');
-        const dexButtonHtml = buildDexLinkCopyButtonHtml(
-            dexLinkConfig,
-            'arb-detail-dex-link',
-            getDexLinkLabel(dexLinkConfig) || 'DEX'
-        );
-        return dexButtonHtml ? `${sourceText} · ${dexButtonHtml}` : sourceText;
-    }
-
-    function buildArbDetailSourceActionsHtml(row, options = {}) {
-        const muteButtonHtml = buildArbDetailMuteButtonHtml(options.cardIndex, options.rowIndex, row && row.quoteId);
-        return muteButtonHtml || '';
-    }
-
     function buildArbDetailSourceHtml(row, options = {}) {
-        const sourceMetaHtml = buildArbDetailSourceMetaHtml(row);
-        const actionsHtml = buildArbDetailSourceActionsHtml(row, options);
-        if (!actionsHtml) {
-            return `<span class="arb-detail-leg-source-main">${sourceMetaHtml}</span>`;
-        }
-        return `
-            <span class="arb-detail-leg-source-main">${sourceMetaHtml}</span>
-            <span class="arb-detail-leg-source-actions">${actionsHtml}</span>
-        `;
+        const utils = getArbDetailUtils();
+        if (typeof utils.buildArbDetailSourceHtml !== 'function') return '';
+        return utils.buildArbDetailSourceHtml(row, options);
     }
 
     function promptMutedPathLegDurationHours() {

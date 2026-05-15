@@ -499,13 +499,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('utils.buildArbDetailSummaryHtml(card, {'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailRowsHtml(card, cardIndex) {\n        if (card.rows && card.rows.length)'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSourceHtml(row, options)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSourceHtml(row, options = {})'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSourceMetaHtml(row)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSourceActionsHtml(row, options = {})'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailChartPreviewCardHtml'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailProfitPreviewCardHtml'));
     assert.ok(!appJsResponse.body.includes('arb-detail-leg-action-row'));
     assert.ok(response.body.includes('.arb-detail-leg-source {'));
     assert.ok(response.body.includes('.arb-detail-leg-source-actions {'));
-    assert.ok(appJsResponse.body.includes('buildArbDetailSourceMetaHtml'));
-    assert.ok(appJsResponse.body.includes('buildArbDetailSourceActionsHtml'));
+    assert.ok(!appJsResponse.body.includes('function buildArbDetailSourceMetaHtml'));
+    assert.ok(!appJsResponse.body.includes('function buildArbDetailSourceActionsHtml'));
 
     const snapshotResponse = await request('/snapshot');
     assert.strictEqual(snapshotResponse.statusCode, 200);

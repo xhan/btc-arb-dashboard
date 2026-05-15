@@ -26,6 +26,10 @@ const {
   buildArbDetailRateDeltaText,
   buildArbDetailTokenHtml,
   buildArbDetailPairHtml,
+  buildArbDetailMuteButtonHtml,
+  buildArbDetailSourceActionsHtml,
+  buildArbDetailSourceHtml,
+  buildArbDetailSourceMetaHtml,
   buildArbDetailRowsHtml,
   buildArbDetailSummaryHtml,
   buildArbDetailShellHtml,
@@ -97,6 +101,45 @@ assert.strictEqual(
   }),
   '（Ethereum &lt;Main&gt;）<span class="arb-detail-token" data-arb-detail-token-address="0xfrom" data-arb-detail-token-symbol="cb&lt;BTC&gt;" title="0xfrom">cb&lt;BTC&gt;</span> -> <span class="arb-detail-token" data-arb-detail-token-address="0xto" data-arb-detail-token-symbol="WBTC &amp; ETH" title="0xto">WBTC &amp; ETH</span>'
 );
+
+assert.strictEqual(
+  buildArbDetailMuteButtonHtml(1, 0, 12),
+  ''
+);
+
+assert.ok(
+  buildArbDetailMuteButtonHtml(0, 2, 'quote<12>').includes('data-arb-detail-leg-mute="quote&lt;12&gt;"')
+);
+
+const sourceMetaHtml = buildArbDetailSourceMetaHtml({
+  chain: 'arbitrum',
+  fromTokenAddress: '0xaaa',
+  toTokenAddress: '0xbbb',
+  inputAmount: 1.25,
+  sourceText: 'Kyber <Main>'
+});
+assert.ok(sourceMetaHtml.includes('Kyber &lt;Main&gt;'));
+assert.ok(sourceMetaHtml.includes('data-dex-link-copy="1"'));
+assert.ok(sourceMetaHtml.includes('data-dex-link-label="swap.defillama"'));
+
+assert.ok(
+  buildArbDetailSourceActionsHtml({ quoteId: 12 }, { cardIndex: 0, rowIndex: 1 }).includes('data-arb-detail-row-index="1"')
+);
+
+const sourceHtml = buildArbDetailSourceHtml(
+  {
+    chain: 'arbitrum',
+    fromTokenAddress: '0xaaa',
+    toTokenAddress: '0xbbb',
+    inputAmount: 1.25,
+    sourceText: 'Kyber',
+    quoteId: 12
+  },
+  { cardIndex: 0, rowIndex: 1 }
+);
+assert.ok(sourceHtml.includes('arb-detail-leg-source-main'));
+assert.ok(sourceHtml.includes('arb-detail-leg-source-actions'));
+assert.ok(sourceHtml.includes('arb-detail-leg-mute-btn'));
 
 const detailRowsHtml = buildArbDetailRowsHtml(
   {
