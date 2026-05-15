@@ -102,7 +102,7 @@
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
     let arbPanelDirty = false;
-    let arbPanelRenderedHtml = '';
+    const arbPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
     let dataTerminalState = {
         visible: false,
@@ -112,7 +112,8 @@
         selectedLeftKey: '',
         selectedRightKey: '',
         timer: null,
-        domRefs: null
+        domRefs: null,
+        htmlRenderer: window.DomRenderUtils.createStableHtmlRenderer()
     };
     let dataTerminalRecordsCacheKey = '';
     let dataTerminalRecordsCache = null;
@@ -3050,7 +3051,7 @@
         const utils = getDataTerminalUtils();
         if (!refs.content) return;
         if (!utils || typeof utils.buildDataTerminalCandidates !== 'function' || typeof utils.buildDataTerminalViewModel !== 'function') {
-            refs.content.innerHTML = '<div class="data-terminal-empty">数据终端模块未加载</div>';
+            dataTerminalState.htmlRenderer.render(refs.content, '<div class="data-terminal-empty">数据终端模块未加载</div>');
             return;
         }
 
@@ -3098,10 +3099,10 @@
             refs.profitBp.classList.toggle('data-terminal-profit-bp-empty', selectionSummary.profitBp === null);
         }
 
-        refs.content.innerHTML = buildDataTerminalPanelHtml(viewModel, {
+        dataTerminalState.htmlRenderer.render(refs.content, buildDataTerminalPanelHtml(viewModel, {
             selectedLeftKey: dataTerminalState.selectedLeftKey,
             selectedRightKey: dataTerminalState.selectedRightKey
-        });
+        }));
 
         if (!hasDataTerminalActiveQuery()) {
             clearDataTerminalTimer();
@@ -3236,6 +3237,7 @@
 
         dataTerminalState.visible = true;
         dataTerminalState.domRefs = refs;
+        dataTerminalState.htmlRenderer.reset();
 
         if (refs.searchInput) {
             refs.searchInput.value = dataTerminalState.query;
@@ -3293,6 +3295,7 @@
         }
         dataTerminalState.visible = false;
         dataTerminalState.domRefs = null;
+        dataTerminalState.htmlRenderer.reset();
     }
 
     function toggleDataTerminalPanel() {
@@ -5712,7 +5715,7 @@
 
         const panelData = buildArbPanelData();
         if (panelData.error) {
-            arbPanelRenderedHtml = '';
+            arbPanelHtmlRenderer.reset();
             arbPathContent.textContent = panelData.error;
             return;
         }
@@ -5731,10 +5734,7 @@
             formatLegLine: formatArbPathLegLine,
             formatProfit: profitRate => window.ArbPaths.formatProfitWanfen(profitRate)
         });
-        if (nextArbPanelHtml !== arbPanelRenderedHtml) {
-            arbPathContent.innerHTML = nextArbPanelHtml;
-            arbPanelRenderedHtml = nextArbPanelHtml;
-        }
+        arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);
     }
 
     async function getEvmMetadata(chain, tokenAddress, signal) {

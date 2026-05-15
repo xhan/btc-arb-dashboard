@@ -67,6 +67,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="copy-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
+    assert.ok(response.body.includes('src="dom-render-utils.js"'));
     assert.ok(response.body.includes('src="arb-path-config.js"'));
     assert.ok(response.body.includes('src="arb-path-config-utils.js"'));
     assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
@@ -102,6 +103,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="arb-detail-refresh-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="dom-render-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
@@ -252,9 +256,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const statusTagHtml = statusInfo.text'));
     assert.ok(/\.filter\(\(\{ statusInfo \}\) => Boolean\(\s*statusInfo\s*&& statusInfo\.text\s*&& statusInfo\.className !== 'path-alert-status-unavailable'\s*\)\s*\)\s*/.test(appJsResponse.body));
     assert.ok(!appJsResponse.body.includes("return { text: '监控中', className: 'path-alert-status-monitoring' };"));
-    assert.ok(appJsResponse.body.includes("let arbPanelRenderedHtml = '';"));
+    assert.ok(appJsResponse.body.includes('const arbPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();'));
+    assert.ok(appJsResponse.body.includes('htmlRenderer: window.DomRenderUtils.createStableHtmlRenderer()'));
     assert.ok(appJsResponse.body.includes('const nextArbPanelHtml = window.ArbPanelRenderer.renderArbGrid({'));
-    assert.ok(appJsResponse.body.includes('if (nextArbPanelHtml !== arbPanelRenderedHtml)'));
+    assert.ok(appJsResponse.body.includes('arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);'));
+    assert.ok(appJsResponse.body.includes('dataTerminalState.htmlRenderer.render(refs.content'));
+    assert.ok(!appJsResponse.body.includes('refs.content.innerHTML = buildDataTerminalPanelHtml'));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMarketState })'));
     assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
     assert.ok(!appJsResponse.body.includes('syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);'));
