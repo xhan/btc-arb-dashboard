@@ -378,7 +378,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildQuoteAlertLogHtml(entry, {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(entry, {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildPathAlertLogCardHtml(entry, {'));
-    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildGenericAlertLogEntryHtml({'));
+    assert.ok(!appJsResponse.body.includes('appendAlertLogEntry'));
+    assert.ok(!alertLogUiResponse.body.includes('buildGenericAlertLogEntryHtml'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().escapeCssAttributeValue(targetKey)'));
     assert.ok(appJsResponse.body.includes('pathAlertPanelHtmlRenderer.render(pathAlertContent'));
     assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));

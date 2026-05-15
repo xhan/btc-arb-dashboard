@@ -7,8 +7,7 @@ const {
   buildMutedStateSectionHtml,
   buildRestoredMutedAlertLogHtml,
   buildPathAlertLogCardHtml,
-  buildQuoteAlertLogHtml,
-  buildGenericAlertLogEntryHtml
+  buildQuoteAlertLogHtml
 } = require('../alert-log-ui-utils');
 
 assert.strictEqual(shouldAutoOpenAlertLogEntries([]), false);
@@ -183,23 +182,3 @@ assert.ok(mutedQuoteLogHtml.includes('alert-log-entry-collapsed'));
 assert.ok(mutedQuoteLogHtml.includes('data-alert-log-collapsed="1"'));
 assert.ok(mutedQuoteLogHtml.includes('cbBTC/syBTC  cbBTC  +2bp'));
 assert.ok(mutedQuoteLogHtml.includes('延长 2 小时'));
-
-const genericLogHtml = buildGenericAlertLogEntryHtml({
-  title: 'Title <A>',
-  subtitle: 'Sub & line',
-  message: 'Line 1\nLine <2>',
-  timeText: '12:34:56'
-});
-
-assert.ok(genericLogHtml.includes('class="log-entry"'));
-assert.ok(genericLogHtml.includes('<strong>Title &lt;A&gt;</strong>'));
-assert.ok(genericLogHtml.includes('<div>Sub &amp; line</div>'));
-assert.ok(genericLogHtml.includes('<div>Line 1<br>Line &lt;2&gt;</div>'));
-assert.ok(genericLogHtml.includes('<span class="log-time">12:34:56</span>'));
-
-const genericLogWithoutSubtitleHtml = buildGenericAlertLogEntryHtml({
-  title: 'Only title',
-  message: 'Only message',
-  timeText: 'now'
-});
-assert.ok(!genericLogWithoutSubtitleHtml.includes('<div></div>'));

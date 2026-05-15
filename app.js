@@ -881,24 +881,6 @@
         panel.addEventListener('mousedown', () => bringFloatingPanelToFront(panel));
     }
 
-    function appendAlertLogEntry(title, message, subtitle = '') {
-        if (!alertLogWindow || !alertLogContent) return;
-        alertLogWindow.style.display = 'flex';
-        bringFloatingPanelToFront(alertLogWindow);
-        const now = new Date();
-        const logEntry = getDomRenderUtils().createElementFromHtml(
-            getAlertLogUiUtils().buildGenericAlertLogEntryHtml({
-                title,
-                subtitle,
-                message,
-                timeText: now.toLocaleTimeString()
-            })
-        );
-        if (!logEntry) return;
-        alertLogContent.prepend(logEntry);
-        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
-    }
-
     function getAlertLogEntryContainers() {
         return [alertLogContent, alertLogMutedLogContent].filter(Boolean);
     }
