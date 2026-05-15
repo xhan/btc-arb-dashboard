@@ -5,6 +5,7 @@ const vm = require('vm');
 
 const {
   buildDataTerminalCandidates,
+  buildDataTerminalPanelHtml,
   buildDataTerminalSelectionSummary,
   buildDataTerminalViewModel,
   formatDataTerminalBp,
@@ -197,6 +198,59 @@ assert.deepStrictEqual(
     text: '--'
   }
 );
+
+const panelHtml = buildDataTerminalPanelHtml(
+  {
+    mode: 'pair',
+    leftRows: [
+      {
+        key: 'left"1',
+        chain: 'ethereum',
+        fromSymbol: 'cb<BTC>',
+        toSymbol: 'W&BTC',
+        fromTokenAddress: '0xfrom',
+        toTokenAddress: '0xto',
+        displayValue: '1.00123',
+        amount: 0.25
+      }
+    ],
+    rightRows: [],
+    emptyMessage: 'No <rows>'
+  },
+  {
+    selectedLeftKey: 'left"1',
+    selectedRightKey: ''
+  },
+  {
+    formatChainLabel: (chain) => `Chain:${chain}`,
+    formatAmount: (amount) => `Amount:${amount}`,
+    buildPairLinkHtml: (row, className, label) => `<button class="${className}">${label}</button>`
+  }
+);
+
+assert.ok(panelHtml.includes('data-terminal-grid'));
+assert.ok(panelHtml.includes('data-terminal-row-selected'));
+assert.ok(panelHtml.includes('data-data-terminal-row-key="left&quot;1"'));
+assert.ok(panelHtml.includes('<span class="data-terminal-chain">Chain:ethereum</span>'));
+assert.ok(panelHtml.includes('<button class="data-terminal-pair data-terminal-pair-link">cb<BTC> -> W&BTC</button>'));
+assert.ok(panelHtml.includes('<span class="data-terminal-rate">1.00123</span>'));
+assert.ok(panelHtml.includes('<span class="data-terminal-amount">Amount:0.25</span>'));
+assert.ok(panelHtml.includes('No &lt;rows&gt;'));
+
+const fallbackPanelHtml = buildDataTerminalPanelHtml(
+  {
+    mode: 'single',
+    leftRows: [{ key: 'left-2', chain: 'base', fromSymbol: 'A<B', toSymbol: 'C&D', displayValue: '<rate>', amount: 1 }],
+    rightRows: [],
+    emptyMessage: 'empty'
+  },
+  {}
+);
+assert.ok(fallbackPanelHtml.includes('<span class="data-terminal-pair">A&lt;B -&gt; C&amp;D</span>'));
+assert.ok(fallbackPanelHtml.includes('&lt;rate&gt;'));
+
+const emptyPanelHtml = buildDataTerminalPanelHtml({ mode: 'empty', emptyMessage: 'Type <token>' }, {});
+assert.strictEqual(emptyPanelHtml, '<div class="data-terminal-empty">Type &lt;token&gt;</div>');
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'data-terminal-utils.js'), 'utf8');
 const browserSandbox = { window: {} };

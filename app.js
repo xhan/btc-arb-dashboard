@@ -2823,63 +2823,15 @@
         return candidates;
     }
 
-    function buildDataTerminalRowHtml(row, side, selectedKey) {
-        const chainLabel = formatChainLabel(row.chain);
-        const amountText = formatDetailNumber(Number(row.amount), 6);
-        const selectedClass = row.key === selectedKey ? ' data-terminal-row-selected' : '';
-        const pairLinkHtml = buildDexLinkCopyButtonHtml({
-            chain: row.chain,
-            fromTokenAddress: row.fromTokenAddress,
-            toTokenAddress: row.toTokenAddress,
-            inputAmount: row.amount
-        }, 'data-terminal-pair data-terminal-pair-link', `${row.fromSymbol} -> ${row.toSymbol}`)
-            || `<span class="data-terminal-pair">${escapeHtml(`${row.fromSymbol} -> ${row.toSymbol}`)}</span>`;
-        return `
-            <div class="data-terminal-row${selectedClass}" data-data-terminal-side="${escapeHtml(side)}" data-data-terminal-row-key="${escapeHtml(row.key)}">
-                <span class="data-terminal-chain">${escapeHtml(chainLabel)}</span>
-                ${pairLinkHtml}
-                <span class="data-terminal-rate">${escapeHtml(row.displayValue)}</span>
-                <span class="data-terminal-amount">${escapeHtml(String(amountText))}</span>
-            </div>
-        `;
-    }
-
-    function buildDataTerminalColumnHtml(rows, emptyMessage, side, selectedKey) {
-        const bodyHtml = rows.length
-            ? rows.map((row) => buildDataTerminalRowHtml(row, side, selectedKey)).join('')
-            : `<div class="data-terminal-column-empty">${escapeHtml(emptyMessage)}</div>`;
-        return `
-            <section class="data-terminal-column">
-                <div class="data-terminal-head">
-                    <span>链</span>
-                    <span>Token -&gt; Token</span>
-                    <span>汇率</span>
-                    <span>数量</span>
-                </div>
-                ${bodyHtml}
-            </section>
-        `;
-    }
-
-    function buildDataTerminalPanelHtml(viewModel, selectionState) {
-        if (!viewModel || viewModel.mode === 'empty') {
-            return `<div class="data-terminal-empty">${escapeHtml(viewModel && viewModel.emptyMessage ? viewModel.emptyMessage : '输入 1 或 2 个代币开始搜索')}</div>`;
-        }
-
-        return `
-            <div class="data-terminal-grid">
-                ${buildDataTerminalColumnHtml(viewModel.leftRows || [], viewModel.emptyMessage || '暂无匹配交易对', 'left', selectionState.selectedLeftKey)}
-                ${buildDataTerminalColumnHtml(viewModel.rightRows || [], viewModel.emptyMessage || '暂无匹配交易对', 'right', selectionState.selectedRightKey)}
-            </div>
-        `;
-    }
-
     function renderDataTerminalPanel() {
         if (!dataTerminalState.visible || !dataTerminalState.domRefs) return;
         const refs = dataTerminalState.domRefs;
         const utils = getDataTerminalUtils();
         if (!refs.content) return;
-        if (!utils || typeof utils.buildDataTerminalCandidates !== 'function' || typeof utils.buildDataTerminalViewModel !== 'function') {
+        if (!utils
+            || typeof utils.buildDataTerminalCandidates !== 'function'
+            || typeof utils.buildDataTerminalViewModel !== 'function'
+            || typeof utils.buildDataTerminalPanelHtml !== 'function') {
             dataTerminalState.htmlRenderer.render(refs.content, '<div class="data-terminal-empty">数据终端模块未加载</div>');
             return;
         }
@@ -2928,10 +2880,26 @@
             refs.profitBp.classList.toggle('data-terminal-profit-bp-empty', selectionSummary.profitBp === null);
         }
 
-        dataTerminalState.htmlRenderer.render(refs.content, buildDataTerminalPanelHtml(viewModel, {
-            selectedLeftKey: dataTerminalState.selectedLeftKey,
-            selectedRightKey: dataTerminalState.selectedRightKey
-        }));
+        dataTerminalState.htmlRenderer.render(
+            refs.content,
+            utils.buildDataTerminalPanelHtml(
+                viewModel,
+                {
+                    selectedLeftKey: dataTerminalState.selectedLeftKey,
+                    selectedRightKey: dataTerminalState.selectedRightKey
+                },
+                {
+                    formatChainLabel,
+                    formatAmount: (amount) => formatDetailNumber(Number(amount), 6),
+                    buildPairLinkHtml: (row, className, label) => buildDexLinkCopyButtonHtml({
+                        chain: row.chain,
+                        fromTokenAddress: row.fromTokenAddress,
+                        toTokenAddress: row.toTokenAddress,
+                        inputAmount: row.amount
+                    }, className, label)
+                }
+            )
+        );
 
         if (!hasDataTerminalActiveQuery()) {
             clearDataTerminalTimer();

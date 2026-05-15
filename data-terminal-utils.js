@@ -19,6 +19,15 @@
     return String(value || '').trim().toUpperCase();
   }
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function isCexOrderbookChain(chain) {
     const normalized = String(chain || '').trim().toLowerCase();
     return normalized === 'bybit' || normalized === 'binance';
@@ -268,8 +277,65 @@
     };
   }
 
+  function buildDataTerminalRowHtml(row, side, selectedKey, options = {}) {
+    const formatChainLabel = typeof options.formatChainLabel === 'function'
+      ? options.formatChainLabel
+      : (chain) => String(chain || '');
+    const formatAmount = typeof options.formatAmount === 'function'
+      ? options.formatAmount
+      : (amount) => String(amount || '');
+    const selectedClass = row.key === selectedKey ? ' data-terminal-row-selected' : '';
+    const pairLabel = `${row.fromSymbol} -> ${row.toSymbol}`;
+    const pairLinkHtml = typeof options.buildPairLinkHtml === 'function'
+      ? options.buildPairLinkHtml(row, 'data-terminal-pair data-terminal-pair-link', pairLabel)
+      : '';
+    const pairHtml = pairLinkHtml
+      || `<span class="data-terminal-pair">${escapeHtml(pairLabel)}</span>`;
+
+    return `
+            <div class="data-terminal-row${selectedClass}" data-data-terminal-side="${escapeHtml(side)}" data-data-terminal-row-key="${escapeHtml(row.key)}">
+                <span class="data-terminal-chain">${escapeHtml(formatChainLabel(row.chain))}</span>
+                ${pairHtml}
+                <span class="data-terminal-rate">${escapeHtml(row.displayValue)}</span>
+                <span class="data-terminal-amount">${escapeHtml(String(formatAmount(row.amount)))}</span>
+            </div>
+        `;
+  }
+
+  function buildDataTerminalColumnHtml(rows, emptyMessage, side, selectedKey, options = {}) {
+    const list = Array.isArray(rows) ? rows : [];
+    const bodyHtml = list.length
+      ? list.map((row) => buildDataTerminalRowHtml(row, side, selectedKey, options)).join('')
+      : `<div class="data-terminal-column-empty">${escapeHtml(emptyMessage)}</div>`;
+    return `
+            <section class="data-terminal-column">
+                <div class="data-terminal-head">
+                    <span>链</span>
+                    <span>Token -&gt; Token</span>
+                    <span>汇率</span>
+                    <span>数量</span>
+                </div>
+                ${bodyHtml}
+            </section>
+        `;
+  }
+
+  function buildDataTerminalPanelHtml(viewModel, selectionState = {}, options = {}) {
+    if (!viewModel || viewModel.mode === 'empty') {
+      return `<div class="data-terminal-empty">${escapeHtml(viewModel && viewModel.emptyMessage ? viewModel.emptyMessage : '输入 1 或 2 个代币开始搜索')}</div>`;
+    }
+
+    return `
+            <div class="data-terminal-grid">
+                ${buildDataTerminalColumnHtml(viewModel.leftRows || [], viewModel.emptyMessage || '暂无匹配交易对', 'left', selectionState.selectedLeftKey, options)}
+                ${buildDataTerminalColumnHtml(viewModel.rightRows || [], viewModel.emptyMessage || '暂无匹配交易对', 'right', selectionState.selectedRightKey, options)}
+            </div>
+        `;
+  }
+
   return {
     buildDataTerminalCandidates,
+    buildDataTerminalPanelHtml,
     buildDataTerminalSelectionSummary,
     buildDataTerminalViewModel,
     formatDataTerminalBp,
