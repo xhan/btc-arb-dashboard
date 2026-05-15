@@ -4,7 +4,8 @@ const {
   shouldAutoOpenAlertLogEntries,
   buildAlertLogEntryDisplayState,
   buildMutedStateItemHtml,
-  buildMutedStateSectionHtml
+  buildMutedStateSectionHtml,
+  buildRestoredMutedAlertLogHtml
 } = require('../alert-log-ui-utils');
 
 assert.strictEqual(shouldAutoOpenAlertLogEntries([]), false);
@@ -55,3 +56,29 @@ assert.ok(emptySectionHtml.includes('当前为空 &amp; 可恢复'));
 const listSectionHtml = buildMutedStateSectionHtml('屏蔽的腿', ['<div class="muted-state-item">A</div>'], '空');
 assert.ok(listSectionHtml.includes('<div class="muted-state-item">A</div>'));
 assert.ok(!listSectionHtml.includes('muted-state-empty'));
+
+const restoredLogHtml = buildRestoredMutedAlertLogHtml(
+  {
+    logTitleSnapshot: '路径 <A>',
+    summaryLinesSnapshot: ['USDC -> ETH & back'],
+    mutedAt: 1000
+  },
+  {
+    nowMs: 2000,
+    targetKey: 'target"1',
+    statusText: '还剩 <2 小时>'
+  }
+);
+
+assert.ok(restoredLogHtml.includes('data-muted-restored="1"'));
+assert.ok(restoredLogHtml.includes('data-muted-target-key="target&quot;1"'));
+assert.ok(restoredLogHtml.includes('data-alert-log-collapsed="1"'));
+assert.ok(restoredLogHtml.includes('路径 &lt;A&gt;'));
+assert.ok(restoredLogHtml.includes('USDC -&gt; ETH &amp; back'));
+assert.ok(restoredLogHtml.includes('还剩 &lt;2 小时&gt;'));
+
+const fallbackRestoredLogHtml = buildRestoredMutedAlertLogHtml(
+  { summaryLinesSnapshot: ['fallback title'] },
+  { statusText: 'still muted' }
+);
+assert.ok(fallbackRestoredLogHtml.includes('fallback title'));

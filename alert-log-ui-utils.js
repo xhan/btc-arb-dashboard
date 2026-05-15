@@ -62,11 +62,53 @@
         `;
   }
 
+  function buildRestoredMutedAlertLogHtml(mutedEntry, options = {}) {
+    const displayState = buildAlertLogEntryDisplayState({ mutedEntry });
+    const title = String(
+      mutedEntry && mutedEntry.logTitleSnapshot
+      || Array.isArray(mutedEntry && mutedEntry.summaryLinesSnapshot) && mutedEntry.summaryLinesSnapshot[0]
+      || '沉默中的提醒'
+    ).trim();
+    const nowMs = Number(options.nowMs) || Date.now();
+    const targetKey = options.targetKey || '';
+    const statusText = options.statusText || '';
+    const summaryLinesHtml = (Array.isArray(mutedEntry && mutedEntry.summaryLinesSnapshot) ? mutedEntry.summaryLinesSnapshot : [])
+      .map((line) => `<div class="path-alert-log-line">${escapeHtml(line)}</div>`)
+      .join('');
+    const cardClassName = [
+      'log-entry',
+      'path-alert-log-entry',
+      'alert-log-entry-muted',
+      displayState.collapsed ? 'alert-log-entry-collapsed' : ''
+    ].filter(Boolean).join(' ');
+    const titleClassName = displayState.collapsed ? 'alert-log-title-muted' : '';
+    return `
+            <div
+                class="${cardClassName}"
+                data-muted-target-key="${escapeHtml(targetKey)}"
+                data-muted-restored="1"
+                data-alert-log-collapsed="${displayState.collapsed ? '1' : '0'}"
+            >
+                <div class="path-alert-log-head">
+                    <div>
+                        <div><strong class="${titleClassName}" data-alert-log-title data-alert-log-expanded-title="${escapeHtml(title)}">${escapeHtml(title)}</strong></div>
+                    </div>
+                </div>
+                <div class="path-alert-log-route alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${summaryLinesHtml || '<div class="path-alert-log-line">--</div>'}</div>
+                <div class="path-alert-log-foot alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>
+                    <span class="path-alert-log-tag path-alert-log-tag-muted" data-path-alert-muted-status>${escapeHtml(statusText)}</span>
+                    <span class="log-time">${new Date(Number(mutedEntry && mutedEntry.mutedAt) || nowMs).toLocaleTimeString()}</span>
+                </div>
+            </div>
+        `;
+  }
+
   return {
     isMutedAlertLogEntry,
     shouldAutoOpenAlertLogEntries,
     buildAlertLogEntryDisplayState,
     buildMutedStateItemHtml,
-    buildMutedStateSectionHtml
+    buildMutedStateSectionHtml,
+    buildRestoredMutedAlertLogHtml
   };
 }));
