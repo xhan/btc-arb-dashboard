@@ -1753,12 +1753,14 @@
     }
 
     function getArbPathTemplateCacheUtils() {
-        return window.ArbPathTemplateCacheUtils || null;
+        if (!window.ArbPathTemplateCacheUtils) {
+            throw new Error('ArbPathTemplateCacheUtils is not loaded');
+        }
+        return window.ArbPathTemplateCacheUtils;
     }
 
     function getArbPathTopologyCache() {
         const utils = getArbPathTemplateCacheUtils();
-        if (!utils || !window.ArbPaths) return null;
 
         const cacheKey = `${utils.buildArbPathTopologyCacheKey(dashboardState, quoteMarketState)}|${arbCycleStartPriority.join(',')}`;
         if (arbPathTopologyCache && arbPathTopologyCacheKey === cacheKey) {
@@ -4387,24 +4389,12 @@
             });
     }
 
-    function buildGlobalArbSection(sharedRuleSnapshot, topologyCache, templateUtils, ruleEdges, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
+    function buildGlobalArbSection(topologyCache, templateUtils, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
         const globalSectionKey = buildArbSectionKey('global', 'all');
-        const globalCycles = topologyCache && templateUtils
-            ? filterMutedArbCycles(topologyCache.globalTemplates
-                .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMarketState))
-                .filter(Boolean)
-                .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)))
-            : (() => {
-                const globalSourceCategories = getArbPanelLayoutUtils().resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS);
-                const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
-                const globalEdges = buildVisibleArbEdges(globalSourceQuotes);
-                return window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges), {
-                    maxDepth: 3,
-                    limit: Number.MAX_SAFE_INTEGER,
-                    acceptCycle: window.ArbPaths.isMeaningfulPath,
-                    preferredStartSymbols: buildPreferredCycleStartSymbols(sharedRuleSnapshot.aliasRules, 'cbBTC')
-                });
-            })();
+        const globalCycles = filterMutedArbCycles(topologyCache.globalTemplates
+            .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMarketState))
+            .filter(Boolean)
+            .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)));
         const layoutUtils = getArbPanelLayoutUtils();
         const excludedSymbols = layoutUtils.parseFilterInput(arbGlobalExcludedSymbolsInput);
         const excludedChains = Array.from(new Set(
@@ -4456,19 +4446,14 @@
         const sharedRuleSnapshot = getSharedArbRuleSnapshot();
         const topologyCache = getArbPathTopologyCache();
         const templateUtils = getArbPathTemplateCacheUtils();
-        const ruleEdges = topologyCache && Array.isArray(topologyCache.ruleEdges)
-            ? topologyCache.ruleEdges
-            : sharedRuleSnapshot.ruleEdges;
         const nextOpportunityMap = new Map();
         const nextOpportunityIdsByTargetKey = new Map();
 
         const fixedSections = buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
         const specialSections = buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
         const globalSection = buildGlobalArbSection(
-            sharedRuleSnapshot,
             topologyCache,
             templateUtils,
-            ruleEdges,
             nextOpportunityMap,
             nextOpportunityIdsByTargetKey
         );

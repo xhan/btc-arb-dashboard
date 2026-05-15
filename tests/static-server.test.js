@@ -581,6 +581,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function buildFixedArbSections('));
     assert.ok(appJsResponse.body.includes('function buildSpecialArbSections('));
     assert.ok(appJsResponse.body.includes('function buildGlobalArbSection('));
+    assert.ok(appJsResponse.body.includes('function getArbPathTemplateCacheUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbPathTemplateCacheUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('templateUtils.evaluateCycleTemplate(template, quoteMarketState)'));
+    assert.ok(!appJsResponse.body.includes('topologyCache && templateUtils'));
+    assert.ok(!appJsResponse.body.includes('window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges)'));
     assert.ok(appJsResponse.body.includes('const fixedSections = buildFixedArbSections('));
     assert.ok(appJsResponse.body.includes('const specialSections = buildSpecialArbSections('));
     assert.ok(appJsResponse.body.includes('const globalSection = buildGlobalArbSection('));
