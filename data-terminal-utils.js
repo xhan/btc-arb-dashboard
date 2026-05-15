@@ -2,7 +2,10 @@
   const quotePauseUtils = typeof module !== 'undefined' && module.exports
     ? require('./quote-pause-utils')
     : root.QuotePauseUtils;
-  const api = factory(quotePauseUtils);
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('./chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(quotePauseUtils, chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
@@ -10,7 +13,7 @@
   if (root && root.window && root.window !== root) {
     root.window.DataTerminalUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils, chainDefaults) {
   const isQuotePaused = quotePauseUtils && typeof quotePauseUtils.isQuotePaused === 'function'
     ? quotePauseUtils.isQuotePaused
     : (quote) => !!quote && quote.paused === true;
@@ -29,6 +32,9 @@
   }
 
   function isCexOrderbookChain(chain) {
+    if (chainDefaults && typeof chainDefaults.isCexOrderbookChain === 'function') {
+      return chainDefaults.isCexOrderbookChain(chain);
+    }
     const normalized = String(chain || '').trim().toLowerCase();
     return normalized === 'bybit' || normalized === 'binance';
   }

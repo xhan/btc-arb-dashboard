@@ -1,5 +1,8 @@
 (function (root, factory) {
-  const api = factory();
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('./chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
@@ -7,7 +10,7 @@
   if (root && root.window && root.window !== root) {
     root.window.QuoteDisplayUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   const QUOTE_DISPLAY_MODE_RATE = 'rate';
   const QUOTE_DISPLAY_MODE_AMOUNT = 'amount';
 
@@ -27,6 +30,9 @@
   }
 
   function isCexOrderbookChain(chain) {
+    if (chainDefaults && typeof chainDefaults.isCexOrderbookChain === 'function') {
+      return chainDefaults.isCexOrderbookChain(chain);
+    }
     const normalized = String(chain || '').trim().toLowerCase();
     return normalized === 'bybit' || normalized === 'binance';
   }

@@ -101,6 +101,12 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
+      response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="quote-display-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="data-terminal-utils.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
@@ -633,8 +639,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('src="shared/trading-pair-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
     assert.ok(!pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="chain-defaults.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="special-rule-alert-config-utils.js"'));
+    assert.ok(
+      pathAlertsResponse.body.indexOf('src="chain-defaults.js"') < pathAlertsResponse.body.indexOf('src="path-alert-candidate-utils.js"')
+    );
     assert.ok(
       pathAlertsResponse.body.indexOf('src="path-alert-candidate-utils.js"') < pathAlertsResponse.body.indexOf('src="path-alerts-app.js"')
     );
