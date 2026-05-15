@@ -140,6 +140,25 @@
     return keys;
   }
 
+  function getQueueTaskStatus(task, queueKey, quote, requestChannels, options = {}) {
+    if (!task || !quote) {
+      return { action: 'remove', reason: 'missing_quote' };
+    }
+    if (isQuotePaused(quote)) {
+      return { action: 'remove', reason: 'paused_quote' };
+    }
+
+    const currentQueueKey = getQueueTypeForQuote(quote, requestChannels, options);
+    if (currentQueueKey !== queueKey) {
+      return { action: 'requeue', reason: 'queue_changed', queueKey: currentQueueKey };
+    }
+    if (task.mode === 'inverse' && !shouldQueueInverseFetch(quote)) {
+      return { action: 'requeue', reason: 'inverse_disabled', queueKey: currentQueueKey };
+    }
+
+    return { action: 'fetch', reason: 'ready', queueKey: currentQueueKey };
+  }
+
   function isQuotePaused(quote) {
     if (quotePauseUtils && typeof quotePauseUtils.isQuotePaused === 'function') {
       return quotePauseUtils.isQuotePaused(quote);
@@ -324,6 +343,7 @@
     deferQueueTask,
     formatDurationMs,
     getQueueTaskKey,
+    getQueueTaskStatus,
     getQueueTypeForQuote,
     removeQuoteTasksFromQueues,
     shouldQueueInverseFetch

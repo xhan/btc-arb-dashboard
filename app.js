@@ -746,28 +746,27 @@
         
         const category = dashboardState.find(c => c.quotes && c.quotes.some(q => q.id === taskFromQueue.quoteId));
         const quoteToFetch = category ? category.quotes.find(q => q.id === taskFromQueue.quoteId) : null;
+        const taskStatus = getQueueStatsUtils().getQueueTaskStatus(
+            taskFromQueue,
+            type,
+            quoteToFetch,
+            requestChannelOptions,
+            { multiChannelEnabled }
+        );
 
-        if (quoteToFetch) {
-            if (isQuotePaused(quoteToFetch)) {
-                removeFromQueue(quoteToFetch.id);
-                return;
-            }
-            const currentType = getQueueTypeForQuote(quoteToFetch);
-            const inverseTaskInvalid = taskFromQueue.mode === 'inverse' && !shouldQueueInverseFetch(quoteToFetch);
-
-            if (currentType !== type || inverseTaskInvalid) {
-                removeFromQueue(quoteToFetch.id);
-                addToQueue(quoteToFetch);
-                return;
-            }
-
-            if (!activeFetchControllers.has(quoteToFetch.id)) {
-                fetchSingleQuote(quoteToFetch, taskFromQueue.mode);
-            } else {
-                deferCurrentQueueTask(type);
-            }
-        } else {
+        if (taskStatus.action === 'remove') {
             removeFromQueue(taskFromQueue.quoteId);
+            return;
+        }
+        if (taskStatus.action === 'requeue') {
+            removeFromQueue(taskFromQueue.quoteId);
+            addToQueue(quoteToFetch);
+            return;
+        }
+        if (!activeFetchControllers.has(quoteToFetch.id)) {
+            fetchSingleQuote(quoteToFetch, taskFromQueue.mode);
+        } else {
+            deferCurrentQueueTask(type);
         }
     }
 

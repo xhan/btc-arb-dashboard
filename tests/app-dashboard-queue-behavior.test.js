@@ -50,6 +50,16 @@ assert.ok(
 );
 
 assert.ok(
+  appJs.includes('getQueueStatsUtils().getQueueTaskStatus('),
+  '队列任务状态判断应由 QueueStatsUtils 统一维护'
+);
+
+assert.ok(
+  !appJs.includes("const inverseTaskInvalid = taskFromQueue.mode === 'inverse'"),
+  '主看板不应保留本地 inverse task 有效性判断'
+);
+
+assert.ok(
   appJs.includes('getEffectiveRequestChannelIdForQuote(quote)'),
   '主看板请求与队列归类都应走生效渠道，而不是直接读原始 requestChannelId'
 );

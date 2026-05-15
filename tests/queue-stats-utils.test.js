@@ -9,6 +9,7 @@ const {
   deferQueueTask,
   formatDurationMs,
   getQueueTaskKey,
+  getQueueTaskStatus,
   removeQuoteTasksFromQueues
 } = require('../queue-stats-utils');
 
@@ -198,4 +199,52 @@ const managedChannelQueueKeys = buildManagedQueueKeys({
 assert.deepStrictEqual(
   Array.from(managedChannelQueueKeys).sort(),
   ['bybit', 'kyber:default', 'kyber:hk-1', 'solana:default', 'solana:sg-1']
+);
+
+assert.deepStrictEqual(
+  getQueueTaskStatus(
+    { quoteId: 501, mode: 'main' },
+    'kyber:hk-1',
+    { id: 501, chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'hk-1' },
+    channelSummary.requestChannels,
+    { multiChannelEnabled: true }
+  ),
+  { action: 'fetch', reason: 'ready', queueKey: 'kyber:hk-1' }
+);
+
+assert.deepStrictEqual(
+  getQueueTaskStatus(
+    { quoteId: 502, mode: 'inverse' },
+    'kyber:hk-1',
+    { id: 502, chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'hk-1', showInverse: false },
+    channelSummary.requestChannels,
+    { multiChannelEnabled: true }
+  ),
+  { action: 'requeue', reason: 'inverse_disabled', queueKey: 'kyber:hk-1' }
+);
+
+assert.deepStrictEqual(
+  getQueueTaskStatus(
+    { quoteId: 503, mode: 'main' },
+    'kyber:hk-1',
+    { id: 503, chain: 'ethereum', preferredSource: 'Velora', requestChannelId: 'hk-1' },
+    channelSummary.requestChannels,
+    { multiChannelEnabled: true }
+  ),
+  { action: 'requeue', reason: 'queue_changed', queueKey: 'velora:hk-1' }
+);
+
+assert.deepStrictEqual(
+  getQueueTaskStatus({ quoteId: 504, mode: 'main' }, 'kyber', null, null),
+  { action: 'remove', reason: 'missing_quote' }
+);
+
+assert.deepStrictEqual(
+  getQueueTaskStatus(
+    { quoteId: 505, mode: 'main' },
+    'kyber',
+    { id: 505, chain: 'ethereum', preferredSource: 'Kyber', paused: true },
+    null
+  ),
+  { action: 'remove', reason: 'paused_quote' }
 );
