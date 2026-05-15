@@ -1,7 +1,9 @@
 const assert = require('assert');
 
 const {
+  buildPathAlertCandidateRecordsFromDashboard,
   buildPathAlertCandidates,
+  buildPathAlertCandidatesFromDashboard,
   filterPathAlertCandidates,
   matchesPathAlertCandidate
 } = require('../path-alert-candidate-utils');
@@ -53,3 +55,51 @@ assert.deepStrictEqual(
   ['101:forward', '101:inverse']
 );
 assert.deepStrictEqual(filterPathAlertCandidates(candidates, 'missing'), []);
+
+const dashboard = [
+  {
+    name: 'Dashboard A',
+    quotes: [
+      {
+        id: 201,
+        chain: 'ethereum',
+        fromToken: '0x1234567890abcdef123456',
+        toToken: 'USDC',
+        showInverse: true
+      },
+      {
+        id: 202,
+        chain: 'Bybit',
+        symbol: 'WBTCBTC'
+      }
+    ]
+  }
+];
+const dashboardRecords = buildPathAlertCandidateRecordsFromDashboard(dashboard, {
+  parseCexTradingPairSymbol(symbol) {
+    return symbol === 'WBTCBTC' ? { fromSymbol: 'WBTC', toSymbol: 'BTC' } : null;
+  }
+});
+assert.deepStrictEqual(
+  dashboardRecords.map((item) => ({
+    quoteId: item.quote.id,
+    fromSymbol: item.fromSymbol,
+    toSymbol: item.toSymbol
+  })),
+  [
+    { quoteId: 201, fromSymbol: '0x123456...123456', toSymbol: 'USDC' },
+    { quoteId: 202, fromSymbol: 'WBTC', toSymbol: 'BTC' }
+  ]
+);
+
+assert.deepStrictEqual(
+  buildPathAlertCandidatesFromDashboard(dashboard, {
+    parseCexTradingPairSymbol(symbol) {
+      return symbol === 'WBTCBTC' ? { fromSymbol: 'WBTC', toSymbol: 'BTC' } : null;
+    },
+    buildLabel(chain, fromSymbol, toSymbol, suffix = '') {
+      return `${chain}:${fromSymbol}->${toSymbol}${suffix}`;
+    }
+  }).map((item) => item.key),
+  ['201:forward', '201:inverse', '202:cex-bid1', '202:cex-ask1-inverse']
+);

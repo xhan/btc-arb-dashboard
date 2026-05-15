@@ -30,6 +30,13 @@
     return `(${String(chain || '').trim()}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
   }
 
+  function shortenTokenText(value) {
+    const text = String(value || '').trim();
+    if (!text) return '--';
+    if (text.length <= 18) return text;
+    return `${text.slice(0, 8)}...${text.slice(-6)}`;
+  }
+
   function buildPathAlertCandidates(records, options = {}) {
     const buildLabel = typeof options.buildLabel === 'function'
       ? options.buildLabel
@@ -110,6 +117,53 @@
     return candidates;
   }
 
+  function buildPathAlertCandidateRecordsFromDashboard(dashboard, options = {}) {
+    const parseCexTradingPairSymbol = typeof options.parseCexTradingPairSymbol === 'function'
+      ? options.parseCexTradingPairSymbol
+      : () => null;
+    const shortenToken = typeof options.shortenToken === 'function'
+      ? options.shortenToken
+      : shortenTokenText;
+    const records = [];
+
+    for (const category of (Array.isArray(dashboard) ? dashboard : [])) {
+      for (const quote of (Array.isArray(category && category.quotes) ? category.quotes : [])) {
+        if (!quote) continue;
+        if (isCexOrderbookChain(quote.chain)) {
+          const parsed = parseCexTradingPairSymbol(quote.symbol);
+          if (!parsed) continue;
+          records.push({
+            categoryName: category.name,
+            quote,
+            fromSymbol: parsed.fromSymbol,
+            toSymbol: parsed.toSymbol,
+            searchText: `${category.name} ${quote.chain} ${quote.symbol} ${parsed.fromSymbol} ${parsed.toSymbol}`
+          });
+          continue;
+        }
+
+        const forwardFrom = shortenToken(quote.fromToken);
+        const forwardTo = shortenToken(quote.toToken);
+        records.push({
+          categoryName: category.name,
+          quote,
+          fromSymbol: forwardFrom,
+          toSymbol: forwardTo,
+          searchText: `${category.name} ${quote.chain} ${quote.fromToken || ''} ${quote.toToken || ''} ${forwardFrom} ${forwardTo}`
+        });
+      }
+    }
+
+    return records;
+  }
+
+  function buildPathAlertCandidatesFromDashboard(dashboard, options = {}) {
+    return buildPathAlertCandidates(
+      buildPathAlertCandidateRecordsFromDashboard(dashboard, options),
+      options
+    );
+  }
+
   function matchesPathAlertCandidate(candidate, query) {
     const tokens = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
     if (!tokens.length) return true;
@@ -127,7 +181,9 @@
   }
 
   return {
+    buildPathAlertCandidateRecordsFromDashboard,
     buildPathAlertCandidates,
+    buildPathAlertCandidatesFromDashboard,
     filterPathAlertCandidates,
     matchesPathAlertCandidate
   };

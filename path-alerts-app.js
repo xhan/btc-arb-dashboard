@@ -456,35 +456,10 @@
   }
 
   function buildFallbackQuoteCandidatesFromDashboard(dashboard) {
-    const records = [];
-    for (const category of (dashboard || [])) {
-      for (const quote of (category.quotes || [])) {
-        if (isCexOrderbookChain(quote.chain)) {
-          const parsed = parseCexTradingPairSymbol(quote.symbol);
-          if (!parsed) continue;
-          records.push({
-            categoryName: category.name,
-            quote,
-            fromSymbol: parsed.fromSymbol,
-            toSymbol: parsed.toSymbol,
-            searchText: `${category.name} ${quote.chain} ${quote.symbol} ${parsed.fromSymbol} ${parsed.toSymbol}`
-          });
-          continue;
-        }
-
-        const forwardFrom = shortToken(quote.fromToken);
-        const forwardTo = shortToken(quote.toToken);
-        records.push({
-          categoryName: category.name,
-          quote,
-          fromSymbol: forwardFrom,
-          toSymbol: forwardTo,
-          searchText: `${category.name} ${quote.chain} ${quote.fromToken || ''} ${quote.toToken || ''} ${forwardFrom} ${forwardTo}`
-        });
-      }
-    }
     return window.PathAlertCandidateUtils
-      ? window.PathAlertCandidateUtils.buildPathAlertCandidates(records, {
+      ? window.PathAlertCandidateUtils.buildPathAlertCandidatesFromDashboard(dashboard, {
+        parseCexTradingPairSymbol,
+        shortenToken: shortToken,
         buildLabel: (chain, fromSymbol, toSymbol, suffix = '') => buildQuoteLabel(chain, fromSymbol, toSymbol, suffix)
       })
       : [];
