@@ -10,7 +10,10 @@ const {
   buildPathAlertEditorDraftFromPrefill,
   buildPathAlertEditorTarget,
   buildPathAlertFromEditorDraft,
+  buildPathAlertDefaultQuoteAlertName,
+  buildPathAlertQuoteDisplayLabel,
   buildPathAlertQuoteLabel,
+  buildPathAlertQuotePairText,
   buildPathAlertSectionConfigs,
   buildPathAlertMetaText,
   buildPathAlertsPageHref,
@@ -43,6 +46,40 @@ assert.strictEqual(
     formatChainLabel: (chain) => chain.toUpperCase()
   }),
   '(ETHEREUM) cbBTC -> WBTC [bid1]'
+);
+assert.strictEqual(
+  buildPathAlertQuoteDisplayLabel(
+    { type: 'quote', quoteId: 1, direction: 'inverse' },
+    { id: 1, chain: 'Bybit', symbol: 'WBTCBTC' },
+    {
+      isCexOrderbookChain: (chain) => chain === 'Bybit',
+      parseCexTradingPairSymbol: () => ({ fromSymbol: 'WBTC', toSymbol: 'BTC' }),
+      buildQuoteLabel: (chain, fromSymbol, toSymbol, suffix = '') => `(${chain}) ${fromSymbol}->${toSymbol}${suffix}`
+    }
+  ),
+  '反向 (Bybit) BTC->WBTC'
+);
+const quotePairOptions = {
+  formatChainLabel: (chain) => chain === 'avalanche' ? 'Avalanche' : chain,
+  shortenToken: (value) => String(value || '').slice(0, 6)
+};
+assert.strictEqual(
+  buildPathAlertQuotePairText(
+    { type: 'quote', quoteId: 301, direction: 'forward' },
+    { id: 301, chain: 'avalanche', fromToken: '0x50b7545627a5162f82a992c33b87adc75187b218', toToken: '0x0555e30da8f98308edb960aa94c0db47230d2b9c' },
+    [{ quoteId: 301, direction: 'forward', fromSymbol: 'WBTC', toSymbol: 'cbBTC' }],
+    quotePairOptions
+  ),
+  'Avalanche WBTC/cbBTC'
+);
+assert.strictEqual(
+  buildPathAlertDefaultQuoteAlertName(
+    { type: 'quote', quoteId: 301, direction: 'forward', ruleKind: 'percentUp' },
+    { id: 301, chain: 'avalanche', fromToken: 'AAA', toToken: 'BBB' },
+    [],
+    quotePairOptions
+  ),
+  'Avalanche AAA/BBB 上涨提醒'
 );
 
 const scopedAlerts = [

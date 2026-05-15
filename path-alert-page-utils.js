@@ -36,6 +36,132 @@
     return `(${chainLabel}) ${fromSymbol} -> ${toSymbol}${suffix}`;
   }
 
+  function getPathAlertQuoteDirection(target, options = {}) {
+    if (typeof options.getQuoteDirection === 'function') {
+      return options.getQuoteDirection(target);
+    }
+    return target && target.direction === 'inverse' ? 'inverse' : 'forward';
+  }
+
+  function buildPathAlertQuoteDirectionLabel(target, options = {}) {
+    if (typeof options.buildQuoteDirectionLabel === 'function') {
+      return options.buildQuoteDirectionLabel(target);
+    }
+    return getPathAlertQuoteDirection(target, options) === 'inverse' ? '反向' : '正向';
+  }
+
+  function isPathAlertCexOrderbookChain(chain, options = {}) {
+    return typeof options.isCexOrderbookChain === 'function'
+      ? options.isCexOrderbookChain(chain)
+      : false;
+  }
+
+  function parsePathAlertCexPair(symbol, options = {}) {
+    return typeof options.parseCexTradingPairSymbol === 'function'
+      ? options.parseCexTradingPairSymbol(symbol)
+      : null;
+  }
+
+  function formatPathAlertChainLabel(chain, options = {}) {
+    return typeof options.formatChainLabel === 'function'
+      ? options.formatChainLabel(chain)
+      : String(chain || '');
+  }
+
+  function buildPathAlertQuotePairLabel(chain, fromSymbol, toSymbol, suffix, options = {}) {
+    if (typeof options.buildQuoteLabel === 'function') {
+      return options.buildQuoteLabel(chain, fromSymbol, toSymbol, suffix);
+    }
+    return buildPathAlertQuoteLabel({
+      chain,
+      fromSymbol,
+      toSymbol,
+      suffix,
+      formatChainLabel: (value) => formatPathAlertChainLabel(value, options)
+    });
+  }
+
+  function shortenPathAlertQuoteToken(value, options = {}) {
+    return typeof options.shortenToken === 'function'
+      ? options.shortenToken(value)
+      : shortenTokenText(value);
+  }
+
+  function buildPathAlertQuoteDisplayLabel(target, quote, options = {}) {
+    if (!quote) {
+      return `报价 #${String(target && target.quoteId || '--')}`;
+    }
+    const direction = getPathAlertQuoteDirection(target, options);
+    const directionLabel = buildPathAlertQuoteDirectionLabel(target, options);
+    if (isPathAlertCexOrderbookChain(quote.chain, options)) {
+      const parsed = parsePathAlertCexPair(quote.symbol, options);
+      if (parsed) {
+        const fromSymbol = direction === 'inverse' ? parsed.toSymbol : parsed.fromSymbol;
+        const toSymbol = direction === 'inverse' ? parsed.fromSymbol : parsed.toSymbol;
+        return `${directionLabel} ${buildPathAlertQuotePairLabel(quote.chain, fromSymbol, toSymbol, '', options)}`;
+      }
+      return `${directionLabel} (${formatPathAlertChainLabel(quote.chain, options)}) ${quote.symbol || '--'}`;
+    }
+    const fromToken = direction === 'inverse' ? quote.toToken : quote.fromToken;
+    const toToken = direction === 'inverse' ? quote.fromToken : quote.toToken;
+    return `${directionLabel} ${buildPathAlertQuotePairLabel(
+      quote.chain,
+      shortenPathAlertQuoteToken(fromToken, options),
+      shortenPathAlertQuoteToken(toToken, options),
+      '',
+      options
+    )}`;
+  }
+
+  function findPathAlertQuoteCandidateForTarget(target, candidates, options = {}) {
+    const quoteId = Number(target && target.quoteId);
+    if (!Number.isFinite(quoteId)) return null;
+    const direction = getPathAlertQuoteDirection(target, options);
+    const items = Array.isArray(candidates) ? candidates : [];
+    return items.find((candidate) => (
+      Number(candidate && candidate.quoteId) === quoteId
+      && String(candidate && candidate.direction || 'forward') === direction
+      && String(candidate && candidate.pricingMode || 'raw') === 'raw'
+    )) || null;
+  }
+
+  function buildPathAlertQuotePairText(target, quote, candidates, options = {}) {
+    if (!quote) {
+      return `报价 #${String(target && target.quoteId || '--')}`;
+    }
+    const direction = getPathAlertQuoteDirection(target, options);
+    if (isPathAlertCexOrderbookChain(quote.chain, options)) {
+      const parsed = parsePathAlertCexPair(quote.symbol, options);
+      if (parsed) {
+        const fromSymbol = direction === 'inverse' ? parsed.toSymbol : parsed.fromSymbol;
+        const toSymbol = direction === 'inverse' ? parsed.fromSymbol : parsed.toSymbol;
+        return `${formatPathAlertChainLabel(quote.chain, options)} ${fromSymbol}/${toSymbol}`;
+      }
+      return `${formatPathAlertChainLabel(quote.chain, options)} ${quote.symbol || '--'}`;
+    }
+    const candidate = findPathAlertQuoteCandidateForTarget(target, candidates, options);
+    if (candidate && candidate.fromSymbol && candidate.toSymbol) {
+      return `${formatPathAlertChainLabel(quote.chain, options)} ${candidate.fromSymbol}/${candidate.toSymbol}`;
+    }
+    const fromToken = direction === 'inverse' ? quote.toToken : quote.fromToken;
+    const toToken = direction === 'inverse' ? quote.fromToken : quote.toToken;
+    return `${formatPathAlertChainLabel(quote.chain, options)} ${shortenPathAlertQuoteToken(fromToken, options)}/${shortenPathAlertQuoteToken(toToken, options)}`;
+  }
+
+  function getPathAlertQuoteDefaultNameSuffix(target) {
+    if (target && target.ruleKind === 'targetAbove') return '汇率高于';
+    if (target && target.ruleKind === 'targetBelow') return '汇率低于';
+    if (target && target.ruleKind === 'percentUp') return '上涨提醒';
+    if (target && target.ruleKind === 'percentDown') return '下跌提醒';
+    return '报警';
+  }
+
+  function buildPathAlertDefaultQuoteAlertName(target, quote, candidates, options = {}) {
+    if (!target || target.type !== 'quote') return '';
+    const pairText = buildPathAlertQuotePairText(target, quote, candidates, options);
+    return `${pairText} ${getPathAlertQuoteDefaultNameSuffix(target)}`.trim();
+  }
+
   function getEditorDefaultCooldownSec(options = {}) {
     return options.defaultCooldownSec || 180;
   }
@@ -810,7 +936,10 @@
     buildPathAlertEditorTarget,
     buildPathAlertCardMetaText,
     buildPathAlertCardTitle,
+    buildPathAlertDefaultQuoteAlertName,
     buildPathAlertQuoteLabel,
+    buildPathAlertQuoteDisplayLabel,
+    buildPathAlertQuotePairText,
     buildPathAlertSectionConfigs,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
