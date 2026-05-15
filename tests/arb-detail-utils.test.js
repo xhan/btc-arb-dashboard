@@ -27,7 +27,8 @@ const {
   buildArbDetailTokenHtml,
   buildArbDetailPairHtml,
   buildArbDetailRowsHtml,
-  buildArbDetailSummaryHtml
+  buildArbDetailSummaryHtml,
+  buildArbDetailShellHtml
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -145,6 +146,19 @@ assert.ok(detailSummaryHtml.includes('arb-detail-metric arb-detail-metric-best')
 assert.ok(detailSummaryHtml.includes('收益 N:0.123456 cb&lt;BTC&gt;'));
 assert.ok(detailSummaryHtml.includes('R:0.0123'));
 assert.strictEqual(buildArbDetailSummaryHtml({ summary: null }, {}), '<span class="arb-detail-metric">收益 --</span>');
+
+const detailShellHtml = buildArbDetailShellHtml([
+  { inputAmount: '1.25 <bad>' },
+  { inputAmount: 2 }
+]);
+
+assert.ok(detailShellHtml.includes('data-arb-detail-card-index="0"'));
+assert.ok(detailShellHtml.includes('id="arb-detail-input-0"'));
+assert.ok(detailShellHtml.includes('data-arb-detail-input-index="0"'));
+assert.ok(detailShellHtml.includes('value="1.25 &lt;bad&gt;"'));
+assert.ok(detailShellHtml.includes('data-arb-detail-step-index="1"'));
+assert.ok(detailShellHtml.includes('id="arb-detail-rows-1"'));
+assert.ok(detailShellHtml.includes('id="arb-detail-summary-1"'));
 
 assert.deepStrictEqual(
   summarizeDetailResult(0.2, 0.201),

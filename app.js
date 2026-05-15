@@ -3431,34 +3431,10 @@
     }
 
     function renderArbDetailShell() {
-        const cardsHtml = arbDetailState.cards.map((card, index) => {
-            const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
-            return `
-                <div class="arb-detail-card" data-arb-detail-card-index="${index}">
-                    <div class="arb-detail-card-header">
-                        <span class="arb-detail-badge">${index + 1}</span>
-                        <div class="arb-detail-input-row">
-                            <input
-                                id="${ids.inputId}"
-                                class="arb-detail-input"
-                                type="text"
-                                inputmode="decimal"
-                                data-arb-detail-input-index="${index}"
-                                value="${escapeHtml(card.inputAmount)}"
-                            >
-                            <div class="arb-detail-stepper">
-                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="-0.1">－</button>
-                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="0.1">＋</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="${ids.rowsId}" class="arb-detail-path-list"></div>
-                    <div id="${ids.summaryId}" class="arb-detail-summary"></div>
-                </div>
-            `;
-        }).join('');
-
-        arbDetailGrid.innerHTML = cardsHtml;
+        const utils = getArbDetailUtils();
+        arbDetailGrid.innerHTML = typeof utils.buildArbDetailShellHtml === 'function'
+            ? utils.buildArbDetailShellHtml(arbDetailState.cards)
+            : '<div class="arb-detail-error">详情渲染模块未加载</div>';
     }
     function syncArbDetailInputValues() {
         arbDetailState.cards.forEach((card, index) => {

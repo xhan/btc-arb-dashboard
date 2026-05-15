@@ -207,7 +207,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/arb-detail-utils.js');
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
-    assert.ok(appJsResponse.body.includes('inputmode="decimal"'));
+    assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
     assert.ok(appJsResponse.body.includes('data-dex-link-chain'));
@@ -447,8 +447,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailPairHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRowsHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSummaryHtml'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailShellHtml'));
+    assert.ok(appJsResponse.body.includes('utils.buildArbDetailShellHtml(arbDetailState.cards)'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailTokenHtml'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailPairHtml'));
+    assert.ok(!appJsResponse.body.includes('const cardsHtml = arbDetailState.cards.map'));
     assert.ok(appJsResponse.body.includes('utils.buildArbDetailRowsHtml(card, {'));
     assert.ok(appJsResponse.body.includes('buildSourceHtml: (row, options) => buildArbDetailSourceHtml(row, options)'));
     assert.ok(appJsResponse.body.includes('utils.buildArbDetailSummaryHtml(card, {'));

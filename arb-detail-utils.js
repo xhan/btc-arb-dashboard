@@ -315,6 +315,35 @@
     return '<span class="arb-detail-metric">收益 --</span>';
   }
 
+  function buildArbDetailShellHtml(cards = []) {
+    return (Array.isArray(cards) ? cards : []).map((card, index) => {
+      const ids = getArbDetailCardDomIds(index);
+      return `
+                <div class="arb-detail-card" data-arb-detail-card-index="${index}">
+                    <div class="arb-detail-card-header">
+                        <span class="arb-detail-badge">${index + 1}</span>
+                        <div class="arb-detail-input-row">
+                            <input
+                                id="${ids.inputId}"
+                                class="arb-detail-input"
+                                type="text"
+                                inputmode="decimal"
+                                data-arb-detail-input-index="${index}"
+                                value="${escapeHtml(card && card.inputAmount)}"
+                            >
+                            <div class="arb-detail-stepper">
+                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="-0.1">－</button>
+                                <button type="button" class="arb-detail-step-btn" data-arb-detail-step-index="${index}" data-arb-detail-step="0.1">＋</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="${ids.rowsId}" class="arb-detail-path-list"></div>
+                    <div id="${ids.summaryId}" class="arb-detail-summary"></div>
+                </div>
+            `;
+    }).join('');
+  }
+
   function buildArbOpportunityStableId(section, label, cycle) {
     const safeSection = String(section || '');
     const safeLabel = String(label || '');
@@ -388,6 +417,7 @@
     buildArbDetailPairHtml,
     buildArbDetailRowsHtml,
     buildArbDetailSummaryHtml,
+    buildArbDetailShellHtml,
     buildArbOpportunityStableId,
     buildUniqueArbOpportunityId,
     getNextArbDetailRequestVersion,
