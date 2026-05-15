@@ -13,19 +13,7 @@
     let indices = {};
     let timers = {};
 
-    const DEFAULT_INTERVALS = window.QueueStatsUtils
-        ? { ...window.QueueStatsUtils.DEFAULT_INTERVALS }
-        : {
-            kyber: 170,
-            zerox: 110,
-            velora: 700,
-            lifi: 170,
-            bybit: 1000,
-            binance: 1000,
-            solana: 3500,
-            sui: 500,
-            starknet: 1000
-        };
+    const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
     const DEFAULT_ARB_CYCLE_START_PRIORITY = window.ArbCyclePriorityUtils
         ? window.ArbCyclePriorityUtils.DEFAULT_ARB_CYCLE_START_PRIORITY
         : ['cbBTC', 'WBTC', 'ETH'];
@@ -35,13 +23,7 @@
     let requestChannelPayload = { channels: [] };
     let multiChannelEnabled = true;
     let showRequestChannelTags = true;
-    let requestChannelOptions = window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelOptions === 'function'
-        ? window.RequestChannelUtils.getRequestChannelOptions(requestChannelPayload, apiIntervals)
-        : {
-            channels: [{ id: 'default', name: '默认通道', isDefault: true, httpProxy: '', intervals: { ...apiIntervals } }],
-            byId: new Map([['default', { id: 'default', name: '默认通道', isDefault: true, httpProxy: '', intervals: { ...apiIntervals } }]]),
-            defaultChannelId: 'default'
-        };
+    let requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
 
     let activeFetchControllers = new Map(); 
     let saveTimeout = null;
@@ -401,11 +383,7 @@
     }
 
     function shouldQueueInverseFetch(quote) {
-        if (isCrossChainQuote(quote)) return false;
-        if (window.QueueStatsUtils && typeof window.QueueStatsUtils.shouldQueueInverseFetch === 'function') {
-            return window.QueueStatsUtils.shouldQueueInverseFetch(quote);
-        }
-        return !!quote && !!quote.showInverse && !isCexOrderbookChain(quote.chain);
+        return getQueueStatsUtils().shouldQueueInverseFetch(quote);
     }
 
     function isQuotePaused(quote) {
@@ -454,16 +432,22 @@
         };
     }
 
-    function refreshRequestChannelOptions() {
-        if (window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelOptions === 'function') {
-            requestChannelOptions = window.RequestChannelUtils.getRequestChannelOptions(requestChannelPayload, apiIntervals);
-            return;
+    function getRequestChannelUtils() {
+        if (!window.RequestChannelUtils) {
+            throw new Error('RequestChannelUtils is not loaded');
         }
-        requestChannelOptions = {
-            channels: [{ id: 'default', name: '默认通道', isDefault: true, httpProxy: '', intervals: { ...apiIntervals } }],
-            byId: new Map([['default', { id: 'default', name: '默认通道', isDefault: true, httpProxy: '', intervals: { ...apiIntervals } }]]),
-            defaultChannelId: 'default'
-        };
+        return window.RequestChannelUtils;
+    }
+
+    function getQueueStatsUtils() {
+        if (!window.QueueStatsUtils) {
+            throw new Error('QueueStatsUtils is not loaded');
+        }
+        return window.QueueStatsUtils;
+    }
+
+    function refreshRequestChannelOptions() {
+        requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
     }
 
     function getLocalStorageSafe() {
@@ -510,27 +494,13 @@
         const nextMultiChannelEnabled = typeof options.multiChannelEnabled === 'boolean'
             ? options.multiChannelEnabled
             : multiChannelEnabled;
-
-        if (window.RequestChannelUtils && typeof window.RequestChannelUtils.getEffectiveRequestChannelIdForQuote === 'function') {
-            return window.RequestChannelUtils.getEffectiveRequestChannelIdForQuote(quote, requestChannelOptions, {
-                multiChannelEnabled: nextMultiChannelEnabled
-            });
-        }
-
-        const channelId = window.RequestChannelUtils && typeof window.RequestChannelUtils.resolveRequestChannelIdForQuote === 'function'
-            ? window.RequestChannelUtils.resolveRequestChannelIdForQuote(quote, requestChannelOptions)
-            : (quote && quote.requestChannelId) || 'default';
-
-        if (nextMultiChannelEnabled === false && shouldShowRequestChannelForQuote(quote)) {
-            return 'default';
-        }
-        return channelId || 'default';
+        return getRequestChannelUtils().getEffectiveRequestChannelIdForQuote(quote, requestChannelOptions, {
+            multiChannelEnabled: nextMultiChannelEnabled
+        });
     }
 
     function getRequestChannelDisplayForQuote(quote) {
-        return window.RequestChannelUtils && typeof window.RequestChannelUtils.getRequestChannelDisplayForQuote === 'function'
-            ? window.RequestChannelUtils.getRequestChannelDisplayForQuote(quote, requestChannelOptions)
-            : null;
+        return getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
     }
 
     function buildRequestChannelTagHtml(quote) {
@@ -573,42 +543,11 @@
     }
 
     function getQueueTypeForQuote(quote) {
-        if (window.QueueStatsUtils && typeof window.QueueStatsUtils.getQueueTypeForQuote === 'function') {
-            const queueType = window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions);
-            if (multiChannelEnabled === false) {
-                return window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled });
-            }
-            return queueType;
-        }
-        let type = 'kyber';
-        if (isCrossChainQuote(quote)) return 'lifi';
-        if (isCexOrderbookChain(quote.chain)) {
-            type = String(quote.chain).trim().toLowerCase() === 'binance' ? 'binance' : 'bybit';
-        }
-        else if (quote.chain === 'solana') type = 'solana';
-        else if (quote.chain === 'sui') type = 'sui';
-        else if (quote.chain === 'starknet') type = 'starknet';
-        else if (isEvmChain(quote.chain)) {
-            if (quote.preferredSource === 'Velora') {
-                type = 'velora';
-            } else if (quote.preferredSource === '0x') {
-                type = 'zerox';
-            } else if (quote.preferredSource === 'LI.FI') {
-                type = 'lifi';
-            }
-        }
-        if (window.RequestChannelUtils && typeof window.RequestChannelUtils.buildQueueKey === 'function') {
-            return window.RequestChannelUtils.buildQueueKey(type, getEffectiveRequestChannelIdForQuote(quote));
-        }
-        return type;
+        return getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled });
     }
 
     function getQueueIntervalMs(type) {
-        if (window.RequestChannelUtils && typeof window.RequestChannelUtils.getEffectiveIntervalForQueue === 'function') {
-            return window.RequestChannelUtils.getEffectiveIntervalForQueue(type, apiIntervals, requestChannelOptions);
-        }
-        const configured = Number(apiIntervals[type]);
-        return Number.isFinite(configured) && configured >= 0 ? configured : 0;
+        return getRequestChannelUtils().getEffectiveIntervalForQueue(type, apiIntervals, requestChannelOptions);
     }
 
     function ensureQueueState(type) {
@@ -631,11 +570,7 @@
             : 'default';
 
         Object.keys(DEFAULT_INTERVALS).forEach((sourceKey) => {
-            if (window.RequestChannelUtils && typeof window.RequestChannelUtils.buildQueueKey === 'function') {
-                keys.add(window.RequestChannelUtils.buildQueueKey(sourceKey, defaultChannelId));
-                return;
-            }
-            keys.add(sourceKey);
+            keys.add(getRequestChannelUtils().buildQueueKey(sourceKey, defaultChannelId));
         });
 
         dashboardState.forEach((category) => {
@@ -6087,9 +6022,7 @@
     }
 
     function shouldShowRequestChannelForQuote(quote) {
-        return !!(window.RequestChannelUtils
-            && typeof window.RequestChannelUtils.supportsRequestChannelForQuote === 'function'
-            && window.RequestChannelUtils.supportsRequestChannelForQuote(quote));
+        return getRequestChannelUtils().supportsRequestChannelForQuote(quote);
     }
 
     function shouldShowKyberOnlyDirectPoolsControl(quote, selectedSource) {
@@ -6119,14 +6052,9 @@
         }
 
         requestChannelSelectGroup.style.display = 'block';
-        const currentChannelId = window.RequestChannelUtils && typeof window.RequestChannelUtils.resolveRequestChannelIdForQuote === 'function'
-            ? window.RequestChannelUtils.resolveRequestChannelIdForQuote(quote, requestChannelOptions)
-            : (quote.requestChannelId || 'default');
+        const currentChannelId = getRequestChannelUtils().resolveRequestChannelIdForQuote(quote, requestChannelOptions);
 
-        quoteRequestChannelSelect.innerHTML = window.RequestChannelUtils
-            && typeof window.RequestChannelUtils.buildRequestChannelOptionsHtml === 'function'
-            ? window.RequestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])
-            : '';
+        quoteRequestChannelSelect.innerHTML = getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || []);
         quoteRequestChannelSelect.value = currentChannelId;
     }
 

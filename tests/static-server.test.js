@@ -288,7 +288,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function get0xQuote'));
     assert.ok(!appJsResponse.body.includes('function getVeloraQuote'));
     assert.ok(!appJsResponse.body.includes('function getLifiQuote'));
-    assert.ok(appJsResponse.body.includes('RequestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
+    assert.ok(appJsResponse.body.includes('function getRequestChannelUtils()'));
+    assert.ok(appJsResponse.body.includes('function getQueueStatsUtils()'));
+    assert.ok(appJsResponse.body.includes('RequestChannelUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('QueueStatsUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
+    assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'));
+    assert.ok(appJsResponse.body.includes('getQueueStatsUtils().shouldQueueInverseFetch(quote)'));
+    assert.ok(!appJsResponse.body.includes("channels: [{ id: 'default', name: '默认通道'"));
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));

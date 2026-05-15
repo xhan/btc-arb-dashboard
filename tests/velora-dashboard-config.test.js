@@ -4,11 +4,16 @@ const path = require('path');
 
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const { DEFAULT_INTERVALS } = require('../queue-stats-utils');
+const { getQueueSourceKeyForQuote } = require('../request-channel-utils');
 
-assert.ok(/velora:\s*700/.test(appJs), 'DEFAULT_INTERVALS 应包含 velora 默认 700ms');
-assert.ok(appJs.includes('window.QueueStatsUtils.getQueueTypeForQuote(quote, requestChannelOptions)'), '报价应通过共享请求通道工具决定队列');
-assert.ok(appJs.includes("quote.preferredSource === 'Velora'"), 'Velora source 映射逻辑应保留');
-assert.ok(appJs.includes("type = 'velora';"), 'Velora 仍应映射到独立 source 队列');
+assert.strictEqual(DEFAULT_INTERVALS.velora, 700, 'DEFAULT_INTERVALS 应包含 velora 默认 700ms');
+assert.ok(appJs.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'), '报价应通过共享请求通道工具决定队列');
+assert.strictEqual(
+  getQueueSourceKeyForQuote({ chain: 'ethereum', preferredSource: 'Velora' }),
+  'velora',
+  'Velora 仍应映射到独立 source 队列'
+);
 assert.ok(
   appJs.includes("document.getElementById('setting-velora-interval').value = apiIntervals.velora;"),
   '设置弹窗应回填 Velora 间隔'
