@@ -232,6 +232,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('let quoteUiState = new Map();'));
     assert.ok(appJsResponse.body.includes('function sanitizeQuoteMarketState(state)'));
     assert.ok(appJsResponse.body.includes('function setQuoteUiState(quoteId, nextState)'));
+    const defaultQuoteUiStateMatch = appJsResponse.body.match(/function buildDefaultQuoteUiState\(\) \{([\s\S]*?)function normalizeQuoteStateKey/);
+    assert.ok(defaultQuoteUiStateMatch);
+    assert.ok(defaultQuoteUiStateMatch[1].includes('hasUnreadAlert: false'));
+    assert.ok(defaultQuoteUiStateMatch[1].includes('trendTimer: null'));
+    assert.ok(!defaultQuoteUiStateMatch[1].includes('logShown:'));
+    assert.ok(!defaultQuoteUiStateMatch[1].includes('isSoundActive:'));
     assert.ok(appJsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
     assert.ok(appJsResponse.body.includes("return { text: '', className: '' };"));
     assert.ok(appJsResponse.body.includes('const statusTagHtml = statusInfo.text'));

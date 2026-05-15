@@ -21,11 +21,12 @@
     'usedSourceReal',
     'cexOrderbook'
   ];
-  const QUOTE_UI_STATE_FIELDS = new Set([
+  const NON_MARKET_QUOTE_STATE_FIELDS = new Set([
     'hasUnreadAlert',
+    'trendTimer',
+    // Legacy UI fields may still arrive from old runtime snapshots.
     'logShown',
-    'isSoundActive',
-    'trendTimer'
+    'isSoundActive'
   ]);
 
   function normalizeMarketStateValue(value) {
@@ -51,7 +52,7 @@
     const source = state && typeof state === 'object' ? state : {};
     const result = {};
     for (const [key, value] of Object.entries(source)) {
-      if (!QUOTE_UI_STATE_FIELDS.has(key)) {
+      if (!NON_MARKET_QUOTE_STATE_FIELDS.has(key)) {
         result[key] = value;
       }
     }

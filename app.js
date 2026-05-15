@@ -1898,8 +1898,6 @@
     function buildDefaultQuoteUiState() {
         return {
             hasUnreadAlert: false,
-            logShown: false,
-            isSoundActive: false,
             trendTimer: null
         };
     }
@@ -6614,10 +6612,7 @@
             });
         }
 
-        const nextUiState = {
-            ...uiState,
-            isSoundActive: false
-        };
+        const nextUiState = { ...uiState };
         if (hasTriggeredThisTick) {
             nextUiState.hasUnreadAlert = true;
             if (itemEl) {
@@ -7297,8 +7292,7 @@
         if (target.matches('.dismiss-highlight-btn')) {
             const quoteIdToDismiss = parseInt(target.dataset.dismissHighlightId);
             setQuoteUiState(quoteIdToDismiss, {
-                hasUnreadAlert: false,
-                isSoundActive: false
+                hasUnreadAlert: false
             });
             const quoteItemEl = document.getElementById(`quote-item-${quoteIdToDismiss}`);
             if(quoteItemEl) {
@@ -7306,7 +7300,6 @@
                 quoteItemEl.classList.remove('highlight-past');
             }
             target.remove();
-            updateAlertSoundState();
         } else if (target.dataset.toggleCategoryPauseId) {
             toggleCategoryPause(categoryId);
         } else if (target.dataset.togglePauseId) {
