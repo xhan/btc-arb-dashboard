@@ -21,6 +21,12 @@
     'usedSourceReal',
     'cexOrderbook'
   ];
+  const QUOTE_UI_STATE_FIELDS = new Set([
+    'hasUnreadAlert',
+    'logShown',
+    'isSoundActive',
+    'trendTimer'
+  ]);
 
   function normalizeMarketStateValue(value) {
     if (value === undefined) return null;
@@ -39,6 +45,17 @@
 
   function hasQuoteMarketStateChanged(previousState, nextState) {
     return buildQuoteMarketStateSignature(previousState) !== buildQuoteMarketStateSignature(nextState);
+  }
+
+  function sanitizeQuoteMarketState(state) {
+    const source = state && typeof state === 'object' ? state : {};
+    const result = {};
+    for (const [key, value] of Object.entries(source)) {
+      if (!QUOTE_UI_STATE_FIELDS.has(key)) {
+        result[key] = value;
+      }
+    }
+    return result;
   }
 
   function isPanelVisible(panel, getComputedStyleImpl) {
@@ -136,6 +153,7 @@
     buildDataTerminalRecordsCacheKey,
     buildQuoteMarketStateSignature,
     hasQuoteMarketStateChanged,
+    sanitizeQuoteMarketState,
     hasActivePathAlertEvaluationTarget,
     isPanelVisible,
     resolveMutedStateRefreshDelay

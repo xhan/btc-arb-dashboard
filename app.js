@@ -1,6 +1,7 @@
     const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
     let dashboardState = [];
     let quoteMonitorState = new Map();
+    let quoteUiState = new Map();
     let globalSymbolCache = new Map(); 
     
     let isAudioUnlocked = false; 
@@ -420,10 +421,7 @@
             inverseToSymbol: '',
             usedSource: '',
             usedSourceReal: '',
-            cexOrderbook: null,
-            hasUnreadAlert: false,
-            logShown: false,
-            isSoundActive: false
+            cexOrderbook: null
         };
     }
 
@@ -1870,14 +1868,78 @@
         return previousState !== nextState;
     }
 
+    function sanitizeQuoteMarketState(state) {
+        const utils = getDashboardRuntimeUtils();
+        if (utils && typeof utils.sanitizeQuoteMarketState === 'function') {
+            return utils.sanitizeQuoteMarketState(state);
+        }
+        const source = state && typeof state === 'object' ? state : {};
+        const result = { ...source };
+        delete result.hasUnreadAlert;
+        delete result.logShown;
+        delete result.isSoundActive;
+        delete result.trendTimer;
+        return result;
+    }
+
     function setQuoteMonitorState(quoteId, nextState) {
         const previousState = quoteMonitorState.get(quoteId) || null;
-        const marketStateChanged = hasQuoteMarketStateChanged(previousState, nextState);
-        quoteMonitorState.set(quoteId, nextState);
+        const marketState = sanitizeQuoteMarketState(nextState);
+        const marketStateChanged = hasQuoteMarketStateChanged(previousState, marketState);
+        quoteMonitorState.set(quoteId, marketState);
         if (marketStateChanged) {
             invalidateArbRuleSnapshotCache();
         }
         return marketStateChanged;
+    }
+
+    function buildDefaultQuoteUiState() {
+        return {
+            hasUnreadAlert: false,
+            logShown: false,
+            isSoundActive: false,
+            trendTimer: null
+        };
+    }
+
+    function normalizeQuoteStateKey(quoteId) {
+        const numericQuoteId = Number(quoteId);
+        return Number.isFinite(numericQuoteId) ? numericQuoteId : quoteId;
+    }
+
+    function getQuoteUiState(quoteId) {
+        return quoteUiState.get(normalizeQuoteStateKey(quoteId)) || buildDefaultQuoteUiState();
+    }
+
+    function setQuoteUiState(quoteId, nextState) {
+        const key = normalizeQuoteStateKey(quoteId);
+        const current = getQuoteUiState(key);
+        const merged = {
+            ...buildDefaultQuoteUiState(),
+            ...current,
+            ...(nextState && typeof nextState === 'object' ? nextState : {})
+        };
+        quoteUiState.set(key, merged);
+        return merged;
+    }
+
+    function clearQuoteTrendTimer(quoteId) {
+        const key = normalizeQuoteStateKey(quoteId);
+        const state = quoteUiState.get(key);
+        if (state && state.trendTimer) {
+            clearTimeout(state.trendTimer);
+            quoteUiState.set(key, { ...state, trendTimer: null });
+        }
+    }
+
+    function resetQuoteUiRuntimeState(quoteId) {
+        clearQuoteTrendTimer(quoteId);
+        quoteUiState.set(normalizeQuoteStateKey(quoteId), buildDefaultQuoteUiState());
+    }
+
+    function deleteQuoteUiRuntimeState(quoteId) {
+        clearQuoteTrendTimer(quoteId);
+        quoteUiState.delete(normalizeQuoteStateKey(quoteId));
     }
 
     function buildArbRuleSnapshotCacheKey() {
@@ -2618,16 +2680,13 @@
         pauseBtn.innerHTML = allPaused ? '▶️' : '⏸️';
     }
 
-    function clearQuoteTrendArrow(quoteId, previousState) {
+    function clearQuoteTrendArrow(quoteId) {
         const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
         if (arrowEl) {
             arrowEl.className = 'trend-arrow';
             arrowEl.innerHTML = '';
         }
-        const state = previousState && typeof previousState === 'object' ? previousState : {};
-        if (state.trendTimer) {
-            clearTimeout(state.trendTimer);
-        }
+        clearQuoteTrendTimer(quoteId);
     }
 
     function clearQuoteAlertUi(quoteId) {
@@ -2650,7 +2709,7 @@
         activeFetchControllers.delete(quoteId);
     }
 
-    function applyPausedQuoteUiState(quote, state, previousState) {
+    function applyPausedQuoteUiState(quote, state) {
         const itemEl = document.getElementById(`quote-item-${quote.id}`);
         const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
         const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
@@ -2673,8 +2732,7 @@
         updatePauseButtonState(quote);
         removeInverseQuoteElement(quote.id);
         clearQuoteAlertUi(quote.id);
-        clearQuoteTrendArrow(quote.id, previousState);
-
+        clearQuoteTrendArrow(quote.id);
     }
 
     function applyActiveQuoteUiState(quote, options = {}) {
@@ -2703,7 +2761,7 @@
         updateQuotePairLabel(quote, state);
         updatePauseButtonState(quote);
         clearQuoteAlertUi(quote.id);
-        clearQuoteTrendArrow(quote.id, state);
+        clearQuoteTrendArrow(quote.id);
         if (options.clearInverse) {
             removeInverseQuoteElement(quote.id);
         }
@@ -5954,7 +6012,8 @@
         if (!quoteDataEl || !quoteTextEl) return;
         if (isQuotePaused(quote)) {
             const previousState = quoteMonitorState.get(quote.id) || {};
-            applyPausedQuoteUiState(quote, previousState, previousState);
+            resetQuoteUiRuntimeState(quote.id);
+            applyPausedQuoteUiState(quote, previousState);
             return;
         }
         const isInverseFetch = fetchMode === 'inverse' && shouldQueueInverseFetch(quote);
@@ -6279,9 +6338,9 @@
         
         if (changeRatio < 0.0001) return; 
 
-        const state = quoteMonitorState.get(quoteId) || {};
+        const uiState = getQuoteUiState(quoteId);
         
-        if (state.trendTimer) clearTimeout(state.trendTimer);
+        if (uiState.trendTimer) clearTimeout(uiState.trendTimer);
 
         arrowEl.classList.remove('visible');
         
@@ -6295,11 +6354,11 @@
             arrowEl.className = 'trend-arrow trend-down visible';
         }
 
-        state.trendTimer = setTimeout(() => {
+        const trendTimer = setTimeout(() => {
             arrowEl.classList.remove('visible');
         }, 30000);
         
-        setQuoteMonitorState(quoteId, state);
+        setQuoteUiState(quoteId, { trendTimer });
     }
 
     function toggleArbPanel() {
@@ -6510,7 +6569,7 @@
     function checkPriceForAlerts(quote) {
         if (isQuotePaused(quote)) return;
 
-        const state = quoteMonitorState.get(quote.id) || {};
+        const uiState = getQuoteUiState(quote.id);
         const quoteAlerts = getQuoteAlertsForQuoteId(quote.id);
         const itemEl = document.getElementById(`quote-item-${quote.id}`);
         const resultDiv = itemEl ? itemEl.querySelector('.quote-result') : null;
@@ -6542,24 +6601,27 @@
             });
         }
 
-        state.isSoundActive = false;
+        const nextUiState = {
+            ...uiState,
+            isSoundActive: false
+        };
         if (hasTriggeredThisTick) {
-            state.hasUnreadAlert = true;
+            nextUiState.hasUnreadAlert = true;
             if (itemEl) {
                 itemEl.classList.add('highlight');
                 itemEl.classList.remove('highlight-past');
             }
         } else if (itemEl) {
             itemEl.classList.remove('highlight');
-            if (state.hasUnreadAlert) {
+            if (nextUiState.hasUnreadAlert) {
                 itemEl.classList.add('highlight-past');
             } else {
                 itemEl.classList.remove('highlight-past');
             }
         }
 
-        syncQuoteAlertDismissButton(resultDiv, state, quote.id);
-        setQuoteMonitorState(quote.id, state);
+        setQuoteUiState(quote.id, nextUiState);
+        syncQuoteAlertDismissButton(resultDiv, nextUiState, quote.id);
         updateAlertSoundState();
     }
 
@@ -7068,6 +7130,7 @@
         if (quoteItem) quoteItem.remove();
 
         quoteMonitorState.delete(quoteId);
+        deleteQuoteUiRuntimeState(quoteId);
         updateCategoryPauseButtonState(categoryId);
         updateAlertSoundState();
         renderDataTerminalPanel();
@@ -7099,7 +7162,8 @@
             removeFromQueue(quoteId);
             abortQuoteFetch(quoteId);
             setQuoteMonitorState(quoteId, buildPausedMonitorState(previousState));
-            applyPausedQuoteUiState(quote, quoteMonitorState.get(quoteId) || {}, previousState);
+            resetQuoteUiRuntimeState(quoteId);
+            applyPausedQuoteUiState(quote, quoteMonitorState.get(quoteId) || {});
             updateSchedulers();
             if (doesArbDetailUseQuote(quoteId)) {
                 closeArbDetailModal();
@@ -7164,24 +7228,23 @@
 
         const state = quoteMonitorState.get(quoteId);
         if (state) {
-            state.lastRawPrice = null;
-            state.lastTotalAmountOut = null;
-            state.inverseRawPrice = null;
-            state.inverseTotalAmountOut = null;
-            state.isSoundActive = false;
-            state.logShown = false;
-            state.hasUnreadAlert = false;
+            const nextState = {
+                ...state,
+                lastRawPrice: null,
+                lastTotalAmountOut: null,
+                inverseRawPrice: null,
+                inverseTotalAmountOut: null
+            };
 
             const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
             if (arrowEl) {
                 arrowEl.className = 'trend-arrow';
-                if (state.trendTimer) clearTimeout(state.trendTimer);
             }
 
-            if (state.fromSymbol && state.toSymbol) {
-                const temp = state.fromSymbol;
-                state.fromSymbol = state.toSymbol;
-                state.toSymbol = temp;
+            if (nextState.fromSymbol && nextState.toSymbol) {
+                const temp = nextState.fromSymbol;
+                nextState.fromSymbol = nextState.toSymbol;
+                nextState.toSymbol = temp;
             }
 
             const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
@@ -7191,7 +7254,9 @@
                 const dismissBtn = quoteItemEl.querySelector('.dismiss-highlight-btn');
                 if (dismissBtn) dismissBtn.remove();
             }
+            setQuoteMonitorState(quoteId, nextState);
         }
+        resetQuoteUiRuntimeState(quoteId);
         updateAlertSoundState();
 
         const quoteTextEl = document.getElementById(`quote-text-${quoteId}`);
@@ -7218,18 +7283,16 @@
         
         if (target.matches('.dismiss-highlight-btn')) {
             const quoteIdToDismiss = parseInt(target.dataset.dismissHighlightId);
-            const state = quoteMonitorState.get(quoteIdToDismiss);
-            if(state) {
-                state.hasUnreadAlert = false;
-                state.isSoundActive = false;
-                
-                const quoteItemEl = document.getElementById(`quote-item-${quoteIdToDismiss}`);
-                if(quoteItemEl) {
-                    quoteItemEl.classList.remove('highlight');
-                    quoteItemEl.classList.remove('highlight-past');
-                }
-                target.remove();
+            setQuoteUiState(quoteIdToDismiss, {
+                hasUnreadAlert: false,
+                isSoundActive: false
+            });
+            const quoteItemEl = document.getElementById(`quote-item-${quoteIdToDismiss}`);
+            if(quoteItemEl) {
+                quoteItemEl.classList.remove('highlight');
+                quoteItemEl.classList.remove('highlight-past');
             }
+            target.remove();
             updateAlertSoundState();
         } else if (target.dataset.toggleCategoryPauseId) {
             toggleCategoryPause(categoryId);
@@ -7328,6 +7391,7 @@
                         (dashboardState[categoryIndex].quotes || []).forEach(q => {
                            removeFromQueue(q.id);
                            quoteMonitorState.delete(q.id);
+                           deleteQuoteUiRuntimeState(q.id);
                         });
                         updateAlertSoundState();
                         dashboardState.splice(categoryIndex, 1);

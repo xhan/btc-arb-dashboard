@@ -4,6 +4,7 @@ const {
   buildDataTerminalRecordsCacheKey,
   buildQuoteMarketStateSignature,
   hasQuoteMarketStateChanged,
+  sanitizeQuoteMarketState,
   hasActivePathAlertEvaluationTarget,
   isPanelVisible,
   resolveMutedStateRefreshDelay
@@ -170,3 +171,13 @@ assert.strictEqual(
   }),
   true
 );
+
+const sanitizedMarketState = sanitizeQuoteMarketState({
+  ...marketState,
+  isSoundActive: true
+});
+assert.deepStrictEqual(
+  Object.keys(sanitizedMarketState).filter((field) => ['hasUnreadAlert', 'logShown', 'trendTimer', 'isSoundActive'].includes(field)),
+  []
+);
+assert.strictEqual(sanitizedMarketState.lastRawPrice, marketState.lastRawPrice);
