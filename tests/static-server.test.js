@@ -358,6 +358,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));
     assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));
+    assert.ok(appJsResponse.body.includes('function getActivePathAlertEvaluationAlerts()'));
+    assert.ok(appJsResponse.body.includes('function pruneInactiveAlertRuntimeState()'));
+    assert.ok(appJsResponse.body.includes('const evaluationAlerts = getActivePathAlertEvaluationAlerts();'));
+    assert.ok(appJsResponse.body.includes('if (!evaluationAlerts.length) {'));
     assert.ok(appJsResponse.body.includes('extendMutedPathTargetFromLogButton'));
     assert.ok(appJsResponse.body.includes('if (extendMutedPathTargetFromLogButton(buttonEl, Date.now()))'));
     assert.ok(appJsResponse.body.includes("const mutedLogTabBtn = closestEventTarget(event, '#alert-log-muted-log-tab');"));

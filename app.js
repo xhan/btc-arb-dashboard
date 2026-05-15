@@ -2631,6 +2631,30 @@
         ));
     }
 
+    function getActivePathAlertEvaluationAlerts() {
+        return (Array.isArray(pathAlertConfig && pathAlertConfig.alerts) ? pathAlertConfig.alerts : [])
+            .filter((alert) => (
+                alert
+                && alert.id
+                && alert.enabled !== false
+                && alert.target
+                && alert.target.type !== 'quote'
+            ));
+    }
+
+    function pruneInactiveAlertRuntimeState() {
+        const activeIds = new Set(
+            (Array.isArray(pathAlertConfig && pathAlertConfig.alerts) ? pathAlertConfig.alerts : [])
+                .filter((alert) => alert && alert.id && alert.enabled !== false)
+                .map((alert) => alert.id)
+        );
+        for (const alertId of Array.from(pathAlertRuntimeState.keys())) {
+            if (!activeIds.has(alertId)) {
+                pathAlertRuntimeState.delete(alertId);
+            }
+        }
+    }
+
     function resolveDataTerminalRecordsCacheKey() {
         const utils = getDashboardRuntimeUtils();
         if (utils && typeof utils.buildDataTerminalRecordsCacheKey === 'function') {
@@ -4347,23 +4371,24 @@
 
     function evaluatePathAlertsOnce() {
         if (!window.PathAlertUtils) return;
+        const evaluationAlerts = getActivePathAlertEvaluationAlerts();
+        if (!evaluationAlerts.length) {
+            pruneInactiveAlertRuntimeState();
+            updateAlertSoundState();
+            return;
+        }
         pruneMutedPathTargetsInPlace(Date.now());
         const sharedRuleSnapshot = getSharedArbRuleSnapshot();
         const context = buildPathAlertEvaluationContext(sharedRuleSnapshot);
         const allLegSnapshots = typeof window.PathAlertUtils.buildAllLegSnapshots === 'function'
             ? window.PathAlertUtils.buildAllLegSnapshots(sharedRuleSnapshot.allQuotes || [], quoteMarketState)
             : [];
-        const activeIds = new Set();
         const nowMs = Date.now();
         const logTriggeredEntries = [];
         const remoteTriggeredEntries = [];
         let shouldRefreshArbPanelHighlights = false;
 
-        for (const alert of (pathAlertConfig.alerts || [])) {
-            activeIds.add(alert.id);
-            if (alert && alert.target && alert.target.type === 'quote') {
-                continue;
-            }
+        for (const alert of evaluationAlerts) {
             const runtimeAlert = window.PathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
             const evaluation = window.PathAlertUtils.evaluatePathAlert(alert, context);
             const previous = pathAlertRuntimeState.get(alert.id) || null;
@@ -4408,11 +4433,7 @@
             pathAlertRuntimeState.set(alert.id, next);
         }
 
-        for (const alertId of Array.from(pathAlertRuntimeState.keys())) {
-            if (!activeIds.has(alertId)) {
-                pathAlertRuntimeState.delete(alertId);
-            }
-        }
+        pruneInactiveAlertRuntimeState();
 
         const sortedLogEntries = sortTriggeredPathAlertEntries(logTriggeredEntries).slice(0, 3);
         if (sortedLogEntries.length) {
