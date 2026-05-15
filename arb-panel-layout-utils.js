@@ -224,6 +224,53 @@
     return entries;
   }
 
+  function parseFilterInput(inputText) {
+    const tokens = String(inputText || '')
+      .split(/\s+/)
+      .map(token => token.trim())
+      .filter(Boolean);
+    return Array.from(new Set(tokens));
+  }
+
+  function cycleContainsAnySymbols(cycle, symbols) {
+    if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(symbols) || !symbols.length) return false;
+    const symbolSet = new Set(symbols);
+    return cycle.legs.some(leg => symbolSet.has(leg.from) || symbolSet.has(leg.to));
+  }
+
+  function cycleContainsAnyChains(cycle, chains) {
+    if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(chains) || !chains.length) return false;
+    const chainSet = new Set(chains);
+    return cycle.legs.some(leg => chainSet.has(String(leg.chain || '')));
+  }
+
+  function filterGlobalArbCycles(cycles, options = {}) {
+    const sourceCycles = Array.isArray(cycles) ? cycles : [];
+    const includedSymbols = Array.isArray(options.includedSymbols) ? options.includedSymbols : [];
+    const excludedSymbols = Array.isArray(options.excludedSymbols) ? options.excludedSymbols : [];
+    const excludedChains = Array.isArray(options.excludedChains) ? options.excludedChains : [];
+    const isRuleLeg = typeof options.isRuleLeg === 'function' ? options.isRuleLeg : () => false;
+    const twoLegOnlyCycles = options.twoLegOnly === true
+      ? sourceCycles.filter((cycle) => {
+        const cycleLegs = Array.isArray(cycle && cycle.legs) ? cycle.legs.filter((leg) => !isRuleLeg(leg)) : [];
+        return cycleLegs.length === 2;
+      })
+      : sourceCycles;
+    const hasFilter = Boolean(excludedSymbols.length || excludedChains.length || includedSymbols.length);
+    const filteredCycles = hasFilter
+      ? twoLegOnlyCycles.filter(cycle =>
+        (!includedSymbols.length || cycleContainsAnySymbols(cycle, includedSymbols)) &&
+        !cycleContainsAnySymbols(cycle, excludedSymbols) &&
+        !cycleContainsAnyChains(cycle, excludedChains)
+      )
+      : twoLegOnlyCycles;
+
+    return {
+      cycles: filteredCycles,
+      hasFilter
+    };
+  }
+
   function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {}) {
     return {
       id: opportunityId,
@@ -288,6 +335,10 @@
     buildQuotePriceWatchDisplayEntry,
     getCycleDisplayState,
     mapEntriesForDisplayCycles,
+    parseFilterInput,
+    cycleContainsAnySymbols,
+    cycleContainsAnyChains,
+    filterGlobalArbCycles,
     registerArbOpportunityHighlightTarget,
     selectFirstUnmutedDisplayedCycle
   };

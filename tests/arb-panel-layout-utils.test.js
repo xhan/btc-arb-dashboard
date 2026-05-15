@@ -9,8 +9,12 @@ const {
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
   buildQuotePriceWatchDisplayEntry,
+  cycleContainsAnyChains,
+  cycleContainsAnySymbols,
+  filterGlobalArbCycles,
   getCycleDisplayState,
   mapEntriesForDisplayCycles,
+  parseFilterInput,
   registerArbOpportunityHighlightTarget,
   selectFirstUnmutedDisplayedCycle
 } = require('../arb-panel-layout-utils');
@@ -152,6 +156,60 @@ const mappedEntries = mapEntriesForDisplayCycles(
 
 assert.strictEqual(callbackCount, 2);
 assert.deepStrictEqual(mappedEntries, ['机会 2:pos-1', '机会 3:pos-2']);
+
+assert.deepStrictEqual(parseFilterInput('  cbBTC  WBTC cbBTC  USDe '), ['cbBTC', 'WBTC', 'USDe']);
+
+const globalFilterCycles = [
+  {
+    id: 'keep',
+    legs: [
+      { from: 'A', to: 'B', chain: 'ethereum' },
+      { from: 'B', to: 'C', chain: 'arbitrum' }
+    ]
+  },
+  {
+    id: 'excluded-symbol',
+    legs: [
+      { from: 'A', to: 'D', chain: 'ethereum' },
+      { from: 'D', to: 'C', chain: 'arbitrum' }
+    ]
+  },
+  {
+    id: 'excluded-chain',
+    legs: [
+      { from: 'A', to: 'B', chain: 'optimism' },
+      { from: 'B', to: 'C', chain: 'arbitrum' }
+    ]
+  },
+  {
+    id: 'one-real-leg',
+    legs: [
+      { from: 'A', to: 'B', chain: 'ethereum' },
+      { from: 'B', to: 'C', chain: '规则', rule: true }
+    ]
+  }
+];
+
+assert.strictEqual(cycleContainsAnySymbols(globalFilterCycles[0], ['C']), true);
+assert.strictEqual(cycleContainsAnySymbols(globalFilterCycles[0], ['D']), false);
+assert.strictEqual(cycleContainsAnyChains(globalFilterCycles[2], ['optimism']), true);
+assert.deepStrictEqual(
+  filterGlobalArbCycles(globalFilterCycles, {
+    includedSymbols: ['A'],
+    excludedSymbols: ['D'],
+    excludedChains: ['optimism'],
+    twoLegOnly: true,
+    isRuleLeg: (leg) => leg && leg.rule === true
+  }).cycles.map((cycle) => cycle.id),
+  ['keep']
+);
+
+const twoLegOnlyFilterState = filterGlobalArbCycles(globalFilterCycles, {
+  twoLegOnly: true,
+  isRuleLeg: (leg) => leg && leg.rule === true
+});
+assert.deepStrictEqual(twoLegOnlyFilterState.cycles.map((cycle) => cycle.id), ['keep', 'excluded-symbol', 'excluded-chain']);
+assert.strictEqual(twoLegOnlyFilterState.hasFilter, false);
 
 const fixedDisplayCycles = [
   { id: 'pos-1', profitRate: 0.002 },

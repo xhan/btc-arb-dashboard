@@ -2597,14 +2597,6 @@
         return `(${chainText}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
     }
 
-    function parseArbFilterInput(inputText) {
-        const tokens = String(inputText || '')
-            .split(/\s+/)
-            .map(token => token.trim())
-            .filter(Boolean);
-        return Array.from(new Set(tokens));
-    }
-
     function getDashboardRuntimeUtils() {
         return window.DashboardRuntimeUtils || null;
     }
@@ -2963,18 +2955,6 @@
             return;
         }
         mountDataTerminalPanel();
-    }
-
-    function cycleContainsAnySymbols(cycle, symbols) {
-        if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(symbols) || !symbols.length) return false;
-        const symbolSet = new Set(symbols);
-        return cycle.legs.some(leg => symbolSet.has(leg.from) || symbolSet.has(leg.to));
-    }
-
-    function cycleContainsAnyChains(cycle, chains) {
-        if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(chains) || !chains.length) return false;
-        const chainSet = new Set(chains);
-        return cycle.legs.some(leg => chainSet.has(String(leg.chain || '')));
     }
 
     function updateGlobalArbFilterBar() {
@@ -4993,27 +4973,23 @@
                     preferredStartSymbols: buildPreferredCycleStartSymbols(sharedRuleSnapshot.aliasRules, 'cbBTC')
                 });
             })();
-        const excludedSymbols = parseArbFilterInput(arbGlobalExcludedSymbolsInput);
+        const layoutUtils = window.ArbPanelLayoutUtils;
+        const excludedSymbols = layoutUtils.parseFilterInput(arbGlobalExcludedSymbolsInput);
         const excludedChains = Array.from(new Set(
-            parseArbFilterInput(arbGlobalExcludedChainsInput)
+            layoutUtils.parseFilterInput(arbGlobalExcludedChainsInput)
                 .map(normalizeArbChainFilterToken)
                 .filter(Boolean)
         ));
-        const includedSymbols = parseArbFilterInput(arbGlobalIncludedSymbolsInput);
-        const twoLegOnlyCycles = arbGlobalTwoLegOnly
-            ? globalCycles.filter((cycle) => {
-                const cycleLegs = Array.isArray(cycle && cycle.legs) ? cycle.legs.filter((leg) => !isRuleLeg(leg)) : [];
-                return cycleLegs.length === 2;
-            })
-            : globalCycles;
-        const hasGlobalFilter = excludedSymbols.length || excludedChains.length || includedSymbols.length;
-        const filteredGlobalCycles = hasGlobalFilter
-            ? twoLegOnlyCycles.filter(cycle =>
-                (!includedSymbols.length || cycleContainsAnySymbols(cycle, includedSymbols)) &&
-                !cycleContainsAnySymbols(cycle, excludedSymbols) &&
-                !cycleContainsAnyChains(cycle, excludedChains)
-            )
-            : twoLegOnlyCycles;
+        const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);
+        const filterState = layoutUtils.filterGlobalArbCycles(globalCycles, {
+            includedSymbols,
+            excludedSymbols,
+            excludedChains,
+            twoLegOnly: arbGlobalTwoLegOnly,
+            isRuleLeg
+        });
+        const filteredGlobalCycles = filterState.cycles;
+        const hasGlobalFilter = filterState.hasFilter;
         updateGlobalArbFilterBar();
         const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
         const opportunities = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'

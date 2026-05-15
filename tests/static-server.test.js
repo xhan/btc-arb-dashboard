@@ -449,10 +449,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('buildQuotePriceWatchEntries()'));
     assert.ok(!appJsResponse.body.includes('buildQuoteAlertWatchEntries'));
     assert.ok(appJsResponse.body.includes('const columns = ['));
-    assert.ok(appJsResponse.body.includes('const includedSymbols = parseArbFilterInput(arbGlobalIncludedSymbolsInput);'));
-    assert.ok(appJsResponse.body.includes('const twoLegOnlyCycles = arbGlobalTwoLegOnly'));
-    assert.ok(appJsResponse.body.includes('cycleLegs.length === 2'));
-    assert.ok(appJsResponse.body.includes('cycleContainsAnySymbols(cycle, includedSymbols)'));
+    assert.ok(appJsResponse.body.includes('const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);'));
+    assert.ok(appJsResponse.body.includes('const filterState = layoutUtils.filterGlobalArbCycles(globalCycles, {'));
+    assert.ok(!appJsResponse.body.includes('function parseArbFilterInput'));
+    assert.ok(!appJsResponse.body.includes('function cycleContainsAnySymbols'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function filterGlobalArbCycles(cycles, options = {})'));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
     assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));
