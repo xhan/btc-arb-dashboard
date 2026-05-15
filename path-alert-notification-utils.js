@@ -110,6 +110,49 @@
     };
   }
 
+  function defaultQuoteAlertNumberFormatter(value, precision = 6) {
+    return (typeof value === 'number' && Number.isFinite(value))
+      ? Number(value.toFixed(precision))
+      : '--';
+  }
+
+  function formatQuoteAlertNumber(value, options = {}) {
+    if (typeof options.formatNumber === 'function') {
+      return options.formatNumber(value);
+    }
+    return defaultQuoteAlertNumberFormatter(value);
+  }
+
+  function buildQuoteAlertMessage(alert, evaluation, options = {}) {
+    if (!alert || !alert.target || !evaluation) return '';
+    const target = alert.target;
+    if (target.ruleKind === 'targetAbove') {
+      return `汇率已达到或超过目标 ${formatQuoteAlertNumber(target.value, options)}`;
+    }
+    if (target.ruleKind === 'targetBelow') {
+      return `汇率已达到或低于目标 ${formatQuoteAlertNumber(target.value, options)}`;
+    }
+    if (target.ruleKind === 'percentUp') {
+      return `汇率相比基准(${formatQuoteAlertNumber(evaluation.basePrice, options)}) 上涨 ${Number(evaluation.changePercent || 0).toFixed(3)}% (>${formatQuoteAlertNumber(target.value, options)}%)`;
+    }
+    if (target.ruleKind === 'percentDown') {
+      return `汇率相比基准(${formatQuoteAlertNumber(evaluation.basePrice, options)}) 下跌 ${Math.abs(Number(evaluation.changePercent || 0)).toFixed(3)}% (>${formatQuoteAlertNumber(target.value, options)}%)`;
+    }
+    return '';
+  }
+
+  function buildQuoteAlertCurrentValueText(alert, evaluation, options = {}) {
+    if (!alert || !alert.target || !evaluation) return '';
+    if (alert.target.ruleKind === 'targetAbove' || alert.target.ruleKind === 'targetBelow') {
+      return Number.isFinite(Number(evaluation.currentValue))
+        ? `当前汇率 ${formatQuoteAlertNumber(evaluation.currentValue, options)}`
+        : '';
+    }
+    return Number.isFinite(Number(evaluation.basePrice)) && Number.isFinite(Number(evaluation.currentValue))
+      ? `基准汇率 ${formatQuoteAlertNumber(evaluation.basePrice, options)} -> ${formatQuoteAlertNumber(evaluation.currentValue, options)}`
+      : '';
+  }
+
   function buildQuoteAlertRemotePayload(options = {}) {
     const chainName = String(options.chainName || '').trim() || '未知链';
     const label = String(options.label || '').trim();
@@ -152,6 +195,8 @@
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,
     buildPathAlertAggregatedLog,
+    buildQuoteAlertCurrentValueText,
+    buildQuoteAlertMessage,
     buildQuoteAlertRemotePayload,
     buildLegacyQuoteAlertRemotePayload: buildQuoteAlertRemotePayload
   };

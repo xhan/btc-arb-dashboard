@@ -5721,33 +5721,16 @@
     }
 
     function buildQuoteAlertMessage(alert, evaluation) {
-        if (!alert || !alert.target || !evaluation) return '';
-        const target = alert.target;
-        if (target.ruleKind === 'targetAbove') {
-            return `汇率已达到或超过目标 ${formatDetailNumber(target.value)}`;
-        }
-        if (target.ruleKind === 'targetBelow') {
-            return `汇率已达到或低于目标 ${formatDetailNumber(target.value)}`;
-        }
-        if (target.ruleKind === 'percentUp') {
-            return `汇率相比基准(${formatDetailNumber(evaluation.basePrice)}) 上涨 ${Number(evaluation.changePercent || 0).toFixed(3)}% (>${formatDetailNumber(target.value)}%)`;
-        }
-        if (target.ruleKind === 'percentDown') {
-            return `汇率相比基准(${formatDetailNumber(evaluation.basePrice)}) 下跌 ${Math.abs(Number(evaluation.changePercent || 0)).toFixed(3)}% (>${formatDetailNumber(target.value)}%)`;
-        }
-        return '';
+        return window.PathAlertNotificationUtils.buildQuoteAlertMessage(alert, evaluation, {
+            formatNumber: formatDetailNumber
+        });
     }
 
     function buildQuoteAlertCurrentValueText(quote, alert, evaluation) {
-        if (!quote || !alert || !alert.target || !evaluation) return '';
-        if (alert.target.ruleKind === 'targetAbove' || alert.target.ruleKind === 'targetBelow') {
-            return Number.isFinite(Number(evaluation.currentValue))
-                ? `当前汇率 ${formatDetailNumber(evaluation.currentValue)}`
-                : '';
-        }
-        return Number.isFinite(Number(evaluation.basePrice)) && Number.isFinite(Number(evaluation.currentValue))
-            ? `基准汇率 ${formatDetailNumber(evaluation.basePrice)} -> ${formatDetailNumber(evaluation.currentValue)}`
-            : '';
+        if (!quote) return '';
+        return window.PathAlertNotificationUtils.buildQuoteAlertCurrentValueText(alert, evaluation, {
+            formatNumber: formatDetailNumber
+        });
     }
 
     function playPathAlertSoundOnce() {

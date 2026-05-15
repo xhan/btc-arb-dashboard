@@ -5,6 +5,8 @@ const {
   buildPathAlertNotificationTitle,
   buildPathAlertNotificationBody,
   buildPathAlertAggregatedLog,
+  buildQuoteAlertCurrentValueText,
+  buildQuoteAlertMessage,
   buildQuoteAlertRemotePayload,
   buildLegacyQuoteAlertRemotePayload
 } = require('../path-alert-notification-utils');
@@ -112,6 +114,47 @@ assert.deepStrictEqual(
       '（ETH）WBTC -> cbBTC @0.997992'
     ].join('\n')
   }
+);
+
+assert.strictEqual(
+  buildQuoteAlertMessage(
+    { target: { ruleKind: 'targetAbove', value: 1.00017 } },
+    { currentValue: 1.0002 }
+  ),
+  '汇率已达到或超过目标 1.00017'
+);
+
+assert.strictEqual(
+  buildQuoteAlertMessage(
+    { target: { ruleKind: 'percentUp', value: 0.1 } },
+    { basePrice: 100, currentValue: 100.25, changePercent: 0.25 }
+  ),
+  '汇率相比基准(100) 上涨 0.250% (>0.1%)'
+);
+
+assert.strictEqual(
+  buildQuoteAlertMessage(
+    { target: { ruleKind: 'percentDown', value: 0.2 } },
+    { basePrice: 100, currentValue: 99.75, changePercent: -0.25 }
+  ),
+  '汇率相比基准(100) 下跌 0.250% (>0.2%)'
+);
+
+assert.strictEqual(
+  buildQuoteAlertCurrentValueText(
+    { target: { ruleKind: 'targetBelow' } },
+    { currentValue: 0.9987654321 },
+    { formatNumber: (value) => Number(value.toFixed(4)) }
+  ),
+  '当前汇率 0.9988'
+);
+
+assert.strictEqual(
+  buildQuoteAlertCurrentValueText(
+    { target: { ruleKind: 'percentDown' } },
+    { basePrice: 1.0001, currentValue: 0.9997 }
+  ),
+  '基准汇率 1.0001 -> 0.9997'
 );
 
 assert.deepStrictEqual(

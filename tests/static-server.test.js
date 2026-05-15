@@ -239,6 +239,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(pathAlertPageUtilsResponse.statusCode, 200);
     const dashboardRuntimeUtilsResponse = await request('/dashboard-runtime-utils.js');
     assert.strictEqual(dashboardRuntimeUtilsResponse.statusCode, 200);
+    const pathAlertNotificationUtilsResponse = await request('/path-alert-notification-utils.js');
+    assert.strictEqual(pathAlertNotificationUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
@@ -339,6 +341,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));
     assert.ok(!appJsResponse.body.includes('quote.alerts'));
     assert.ok(appJsResponse.body.includes("function getQuoteAlertDirection(target)"));
+    assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertMessage(alert, evaluation, {'));
+    assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertCurrentValueText(alert, evaluation, {'));
+    assert.ok(!appJsResponse.body.includes('汇率已达到或超过目标'));
+    assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertMessage(alert, evaluation, options = {})'));
+    assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertCurrentValueText(alert, evaluation, options = {})'));
     assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertRemotePayload({'));
     assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
     assert.ok(appJsResponse.body.includes('let quoteUiState = new Map();'));
