@@ -36,6 +36,169 @@
     return `(${chainLabel}) ${fromSymbol} -> ${toSymbol}${suffix}`;
   }
 
+  function getEditorDefaultCooldownSec(options = {}) {
+    return options.defaultCooldownSec || 180;
+  }
+
+  function getEditorDefaultThresholdBp(options = {}) {
+    return Number.isFinite(Number(options.defaultThresholdBp))
+      ? Number(options.defaultThresholdBp)
+      : 1.1;
+  }
+
+  function createPathAlertEditorDraft(options = {}) {
+    return {
+      id: '',
+      name: '',
+      enabled: true,
+      thresholdBp: getEditorDefaultThresholdBp(options),
+      triggerMode: 'delayed',
+      confirmDelaySec: 13,
+      cooldownSec: getEditorDefaultCooldownSec(options),
+      sourceType: 'path',
+      selectedRuleId: '',
+      selectedQuoteId: '',
+      quoteDirection: 'forward',
+      quoteRuleKind: 'targetAbove',
+      quoteValue: '',
+      quoteBasePrice: '',
+      specialRuleConfig: null,
+      searchQuery: '',
+      legs: []
+    };
+  }
+
+  function clonePathAlertEditorDraft(draft, options = {}) {
+    const source = draft && typeof draft === 'object' ? draft : {};
+    return {
+      id: String(source.id || ''),
+      name: String(source.name || ''),
+      enabled: source.enabled !== false,
+      thresholdBp: source.thresholdBp === '' ? '' : Number(source.thresholdBp),
+      triggerMode: source.triggerMode === 'delayed' ? 'delayed' : 'immediate',
+      confirmDelaySec: Number(source.confirmDelaySec || 0),
+      cooldownSec: Number(source.cooldownSec || getEditorDefaultCooldownSec(options)),
+      sourceType: ['path', 'fixed', 'special', 'quote'].includes(source.sourceType) ? source.sourceType : 'path',
+      selectedRuleId: String(source.selectedRuleId || ''),
+      selectedQuoteId: String(source.selectedQuoteId || ''),
+      quoteDirection: source.quoteDirection === 'inverse' ? 'inverse' : 'forward',
+      quoteRuleKind: ['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(source.quoteRuleKind)
+        ? source.quoteRuleKind
+        : 'targetAbove',
+      quoteValue: source.quoteValue === '' ? '' : Number(source.quoteValue),
+      quoteBasePrice: source.quoteBasePrice === '' ? '' : Number(source.quoteBasePrice),
+      specialRuleConfig: source.specialRuleConfig && typeof source.specialRuleConfig === 'object'
+        ? { ...source.specialRuleConfig }
+        : null,
+      searchQuery: String(source.searchQuery || ''),
+      legs: Array.isArray(source.legs) ? source.legs.map((leg) => ({ ...leg })) : []
+    };
+  }
+
+  function buildQuoteEditorDraft(normalized) {
+    return {
+      id: normalized.id,
+      name: normalized.name,
+      enabled: normalized.enabled !== false,
+      thresholdBp: '',
+      triggerMode: normalized.triggerMode,
+      confirmDelaySec: normalized.confirmDelaySec,
+      cooldownSec: normalized.cooldownSec,
+      sourceType: 'quote',
+      selectedRuleId: '',
+      selectedQuoteId: String(normalized.target.quoteId || ''),
+      quoteDirection: normalized.target.direction === 'inverse' ? 'inverse' : 'forward',
+      quoteRuleKind: normalized.target.ruleKind,
+      quoteValue: normalized.target.value,
+      quoteBasePrice: normalized.target.basePrice === undefined ? '' : normalized.target.basePrice,
+      searchQuery: '',
+      legs: []
+    };
+  }
+
+  function buildRuleEditorDraft(normalized, options = {}) {
+    const resolveSpecialRuleConfig = typeof options.resolveSpecialRuleConfig === 'function'
+      ? options.resolveSpecialRuleConfig
+      : (config) => (config && typeof config === 'object' ? config : null);
+    return {
+      id: normalized.id,
+      name: normalized.name,
+      enabled: normalized.enabled !== false,
+      thresholdBp: normalized.thresholdBp,
+      triggerMode: normalized.triggerMode,
+      confirmDelaySec: normalized.confirmDelaySec,
+      cooldownSec: normalized.cooldownSec,
+      sourceType: normalized.target.ruleKind,
+      selectedRuleId: normalized.target.ruleId,
+      selectedQuoteId: '',
+      quoteDirection: 'forward',
+      quoteRuleKind: 'targetAbove',
+      quoteValue: '',
+      quoteBasePrice: '',
+      specialRuleConfig: normalized.target.ruleKind === 'special'
+        ? resolveSpecialRuleConfig(normalized.specialRuleConfig)
+        : null,
+      searchQuery: '',
+      legs: []
+    };
+  }
+
+  function buildPathEditorDraft(normalized) {
+    return {
+      id: normalized.id,
+      name: normalized.name,
+      enabled: normalized.enabled !== false,
+      thresholdBp: normalized.thresholdBp,
+      triggerMode: normalized.triggerMode,
+      confirmDelaySec: normalized.confirmDelaySec,
+      cooldownSec: normalized.cooldownSec,
+      sourceType: 'path',
+      selectedRuleId: '',
+      selectedQuoteId: '',
+      quoteDirection: 'forward',
+      quoteRuleKind: 'targetAbove',
+      quoteValue: '',
+      quoteBasePrice: '',
+      searchQuery: '',
+      legs: normalized.target.legs.map((leg) => ({ ...leg }))
+    };
+  }
+
+  function buildPathAlertEditorDraftFromAlert(alert, options = {}) {
+    const normalizePathAlert = typeof options.normalizePathAlert === 'function'
+      ? options.normalizePathAlert
+      : () => null;
+    const normalized = normalizePathAlert(alert);
+    if (!normalized || !normalized.target) return createPathAlertEditorDraft(options);
+    if (normalized.target.type === 'quote') return buildQuoteEditorDraft(normalized);
+    if (normalized.target.type === 'rule') return buildRuleEditorDraft(normalized, options);
+    return buildPathEditorDraft(normalized);
+  }
+
+  function buildPathAlertEditorDraftFromPrefill(prefill, options = {}) {
+    const draft = createPathAlertEditorDraft(options);
+    if (!prefill) return draft;
+    draft.name = String(prefill.name || '');
+    if (prefill.target && prefill.target.type === 'rule') {
+      draft.sourceType = prefill.target.ruleKind;
+      draft.selectedRuleId = prefill.target.ruleId;
+      return draft;
+    }
+    if (prefill.target && prefill.target.type === 'quote') {
+      draft.sourceType = 'quote';
+      draft.selectedQuoteId = String(prefill.target.quoteId || '');
+      draft.quoteDirection = prefill.target.direction === 'inverse' ? 'inverse' : 'forward';
+      draft.quoteRuleKind = prefill.target.ruleKind || 'targetAbove';
+      draft.quoteValue = Number.isFinite(Number(prefill.target.value)) ? Number(prefill.target.value) : '';
+      draft.quoteBasePrice = Number.isFinite(Number(prefill.target.basePrice)) ? Number(prefill.target.basePrice) : '';
+      return draft;
+    }
+    if (prefill.target && prefill.target.type === 'path') {
+      draft.legs = (prefill.target.legs || []).map((leg) => ({ ...leg }));
+    }
+    return draft;
+  }
+
   function sanitizeLeg(leg) {
     if (!leg || typeof leg !== 'object') return null;
     const quoteId = Number(leg.quoteId);
@@ -468,12 +631,16 @@
     sanitizePathAlertDraft,
     buildDismissedTargetCardTitle,
     buildDismissedTargetMetaText,
+    buildPathAlertEditorDraftFromAlert,
+    buildPathAlertEditorDraftFromPrefill,
     buildPathAlertCardMetaText,
     buildPathAlertCardTitle,
     buildPathAlertQuoteLabel,
     buildPathAlertSectionConfigs,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
+    clonePathAlertEditorDraft,
+    createPathAlertEditorDraft,
     escapeHtml,
     filterAlertsByQuoteId,
     filterDismissedTargetsByQuoteId,

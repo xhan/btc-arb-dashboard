@@ -6,10 +6,14 @@ const {
   buildDismissedTargetMetaText,
   buildPathAlertCardMetaText,
   buildPathAlertCardTitle,
+  buildPathAlertEditorDraftFromAlert,
+  buildPathAlertEditorDraftFromPrefill,
   buildPathAlertQuoteLabel,
   buildPathAlertSectionConfigs,
   buildPathAlertMetaText,
   buildPathAlertsPageHref,
+  clonePathAlertEditorDraft,
+  createPathAlertEditorDraft,
   escapeHtml,
   filterAlertsByQuoteId,
   filterDismissedTargetsByQuoteId,
@@ -117,6 +121,152 @@ assert.strictEqual(
 assert.strictEqual(
   buildDismissedTargetMetaText({ dismissedAt: 1710000000000 }, { formatDate: () => '2024/3/9 12:00:00' }),
   '🗃️已忽略 · 🕒2024/3/9 12:00:00'
+);
+
+const emptyEditorDraft = createPathAlertEditorDraft({
+  defaultThresholdBp: 2.5,
+  defaultCooldownSec: 240
+});
+assert.deepStrictEqual(emptyEditorDraft, {
+  id: '',
+  name: '',
+  enabled: true,
+  thresholdBp: 2.5,
+  triggerMode: 'delayed',
+  confirmDelaySec: 13,
+  cooldownSec: 240,
+  sourceType: 'path',
+  selectedRuleId: '',
+  selectedQuoteId: '',
+  quoteDirection: 'forward',
+  quoteRuleKind: 'targetAbove',
+  quoteValue: '',
+  quoteBasePrice: '',
+  specialRuleConfig: null,
+  searchQuery: '',
+  legs: []
+});
+assert.deepStrictEqual(
+  clonePathAlertEditorDraft({
+    id: 123,
+    name: 'Draft',
+    enabled: false,
+    thresholdBp: '1.5',
+    triggerMode: 'delayed',
+    confirmDelaySec: '8',
+    sourceType: 'bad',
+    quoteDirection: 'inverse',
+    quoteRuleKind: 'bad',
+    quoteValue: '1.001',
+    quoteBasePrice: '',
+    specialRuleConfig: { minNetProfit: 1 },
+    searchQuery: 99,
+    legs: [{ quoteId: 1 }]
+  }, { defaultCooldownSec: 360 }),
+  {
+    id: '123',
+    name: 'Draft',
+    enabled: false,
+    thresholdBp: 1.5,
+    triggerMode: 'delayed',
+    confirmDelaySec: 8,
+    cooldownSec: 360,
+    sourceType: 'path',
+    selectedRuleId: '',
+    selectedQuoteId: '',
+    quoteDirection: 'inverse',
+    quoteRuleKind: 'targetAbove',
+    quoteValue: 1.001,
+    quoteBasePrice: '',
+    specialRuleConfig: { minNetProfit: 1 },
+    searchQuery: '99',
+    legs: [{ quoteId: 1 }]
+  }
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorDraftFromAlert({
+    id: 'quote-alert',
+    name: 'Quote alert',
+    enabled: true,
+    triggerMode: 'immediate',
+    confirmDelaySec: 0,
+    cooldownSec: 90,
+    target: {
+      type: 'quote',
+      quoteId: 101,
+      direction: 'inverse',
+      ruleKind: 'targetAbove',
+      value: 1.002,
+      basePrice: 1
+    }
+  }, {
+    normalizePathAlert: (alert) => alert
+  }),
+  {
+    id: 'quote-alert',
+    name: 'Quote alert',
+    enabled: true,
+    thresholdBp: '',
+    triggerMode: 'immediate',
+    confirmDelaySec: 0,
+    cooldownSec: 90,
+    sourceType: 'quote',
+    selectedRuleId: '',
+    selectedQuoteId: '101',
+    quoteDirection: 'inverse',
+    quoteRuleKind: 'targetAbove',
+    quoteValue: 1.002,
+    quoteBasePrice: 1,
+    searchQuery: '',
+    legs: []
+  }
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorDraftFromAlert({
+    id: 'special-alert',
+    name: 'Special alert',
+    enabled: true,
+    thresholdBp: 0,
+    triggerMode: 'delayed',
+    confirmDelaySec: 13,
+    cooldownSec: 180,
+    specialRuleConfig: { minNetProfit: '2', minNetProfitBp: '5' },
+    target: {
+      type: 'rule',
+      ruleKind: 'special',
+      ruleId: 'special:btc'
+    }
+  }, {
+    normalizePathAlert: (alert) => alert,
+    resolveSpecialRuleConfig: (config) => ({
+      minNetProfit: Number(config.minNetProfit),
+      minNetProfitBp: Number(config.minNetProfitBp)
+    })
+  }).specialRuleConfig,
+  { minNetProfit: 2, minNetProfitBp: 5 }
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorDraftFromPrefill({
+    name: 'Prefill quote',
+    target: {
+      type: 'quote',
+      quoteId: 202,
+      direction: 'inverse',
+      ruleKind: 'percentDown',
+      value: '0.3',
+      basePrice: '1.001'
+    }
+  }, { defaultThresholdBp: 2.5, defaultCooldownSec: 240 }),
+  {
+    ...emptyEditorDraft,
+    name: 'Prefill quote',
+    sourceType: 'quote',
+    selectedQuoteId: '202',
+    quoteDirection: 'inverse',
+    quoteRuleKind: 'percentDown',
+    quoteValue: 0.3,
+    quoteBasePrice: 1.001
+  }
 );
 
 const pathDraft = sanitizePathAlertDraft({

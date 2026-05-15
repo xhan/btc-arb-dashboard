@@ -119,145 +119,33 @@
     };
   }
 
-  function createEmptyDraft() {
+  function getEditorDraftOptions() {
     return {
-      id: '',
-      name: '',
-      enabled: true,
-      thresholdBp: getDefaultThresholdBp(),
-      triggerMode: 'delayed',
-      confirmDelaySec: 13,
-      cooldownSec: alertConfig.settings?.defaultCooldownSec || 180,
-      sourceType: 'path',
-      selectedRuleId: '',
-      selectedQuoteId: '',
-      quoteDirection: 'forward',
-      quoteRuleKind: 'targetAbove',
-      quoteValue: '',
-      quoteBasePrice: '',
-      specialRuleConfig: null,
-      searchQuery: '',
-      legs: []
+      defaultThresholdBp: getDefaultThresholdBp(),
+      defaultCooldownSec: alertConfig.settings?.defaultCooldownSec || 180,
+      normalizePathAlert(alert) {
+        return window.PathAlertUtils
+          ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
+          : null;
+      },
+      resolveSpecialRuleConfig: resolveSpecialRuleAlertConfig
     };
+  }
+
+  function createEmptyDraft() {
+    return window.PathAlertPageUtils.createPathAlertEditorDraft(getEditorDraftOptions());
   }
 
   function cloneDraft(draft) {
-    return {
-      id: String(draft.id || ''),
-      name: String(draft.name || ''),
-      enabled: draft.enabled !== false,
-      thresholdBp: draft.thresholdBp === '' ? '' : Number(draft.thresholdBp),
-      triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
-      confirmDelaySec: Number(draft.confirmDelaySec || 0),
-      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
-      sourceType: ['path', 'fixed', 'special', 'quote'].includes(draft.sourceType) ? draft.sourceType : 'path',
-      selectedRuleId: String(draft.selectedRuleId || ''),
-      selectedQuoteId: String(draft.selectedQuoteId || ''),
-      quoteDirection: draft.quoteDirection === 'inverse' ? 'inverse' : 'forward',
-      quoteRuleKind: ['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(draft.quoteRuleKind)
-        ? draft.quoteRuleKind
-        : 'targetAbove',
-      quoteValue: draft.quoteValue === '' ? '' : Number(draft.quoteValue),
-      quoteBasePrice: draft.quoteBasePrice === '' ? '' : Number(draft.quoteBasePrice),
-      specialRuleConfig: draft.specialRuleConfig && typeof draft.specialRuleConfig === 'object'
-        ? { ...draft.specialRuleConfig }
-        : null,
-      searchQuery: String(draft.searchQuery || ''),
-      legs: Array.isArray(draft.legs) ? draft.legs.map((leg) => ({ ...leg })) : []
-    };
+    return window.PathAlertPageUtils.clonePathAlertEditorDraft(draft, getEditorDraftOptions());
   }
 
   function buildDraftFromAlert(alert) {
-    const normalized = window.PathAlertUtils
-      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
-      : null;
-    if (!normalized) return createEmptyDraft();
-    if (normalized.target.type === 'quote') {
-      return {
-        id: normalized.id,
-        name: normalized.name,
-        enabled: normalized.enabled !== false,
-        thresholdBp: '',
-        triggerMode: normalized.triggerMode,
-        confirmDelaySec: normalized.confirmDelaySec,
-        cooldownSec: normalized.cooldownSec,
-        sourceType: 'quote',
-        selectedRuleId: '',
-        selectedQuoteId: String(normalized.target.quoteId || ''),
-        quoteDirection: normalized.target.direction === 'inverse' ? 'inverse' : 'forward',
-        quoteRuleKind: normalized.target.ruleKind,
-        quoteValue: normalized.target.value,
-        quoteBasePrice: normalized.target.basePrice === undefined ? '' : normalized.target.basePrice,
-        searchQuery: '',
-        legs: []
-      };
-    }
-    if (normalized.target.type === 'rule') {
-      const rule = findRule(normalized.target.ruleKind, normalized.target.ruleId);
-      return {
-        id: normalized.id,
-        name: normalized.name,
-        enabled: normalized.enabled !== false,
-        thresholdBp: normalized.thresholdBp,
-        triggerMode: normalized.triggerMode,
-        confirmDelaySec: normalized.confirmDelaySec,
-        cooldownSec: normalized.cooldownSec,
-        sourceType: normalized.target.ruleKind,
-        selectedRuleId: normalized.target.ruleId,
-        selectedQuoteId: '',
-        quoteDirection: 'forward',
-        quoteRuleKind: 'targetAbove',
-        quoteValue: '',
-        quoteBasePrice: '',
-        specialRuleConfig: normalized.target.ruleKind === 'special'
-          ? resolveSpecialRuleAlertConfig(normalized.specialRuleConfig)
-          : null,
-        searchQuery: '',
-        legs: []
-      };
-    }
-    return {
-      id: normalized.id,
-      name: normalized.name,
-      enabled: normalized.enabled !== false,
-      thresholdBp: normalized.thresholdBp,
-      triggerMode: normalized.triggerMode,
-      confirmDelaySec: normalized.confirmDelaySec,
-      cooldownSec: normalized.cooldownSec,
-      sourceType: 'path',
-      selectedRuleId: '',
-      selectedQuoteId: '',
-      quoteDirection: 'forward',
-      quoteRuleKind: 'targetAbove',
-      quoteValue: '',
-      quoteBasePrice: '',
-      searchQuery: '',
-      legs: normalized.target.legs.map((leg) => ({ ...leg }))
-    };
+    return window.PathAlertPageUtils.buildPathAlertEditorDraftFromAlert(alert, getEditorDraftOptions());
   }
 
   function buildDraftFromPrefill(prefill) {
-    const draft = createEmptyDraft();
-    if (!prefill) return draft;
-    draft.name = String(prefill.name || '');
-    if (prefill.target && prefill.target.type === 'rule') {
-      draft.sourceType = prefill.target.ruleKind;
-      draft.selectedRuleId = prefill.target.ruleId;
-      return draft;
-    }
-    if (prefill.target && prefill.target.type === 'quote') {
-      draft.sourceType = 'quote';
-      draft.selectedQuoteId = String(prefill.target.quoteId || '');
-      draft.quoteDirection = prefill.target.direction === 'inverse' ? 'inverse' : 'forward';
-      draft.quoteRuleKind = prefill.target.ruleKind || 'targetAbove';
-      draft.quoteValue = Number.isFinite(Number(prefill.target.value)) ? Number(prefill.target.value) : '';
-      draft.quoteBasePrice = Number.isFinite(Number(prefill.target.basePrice)) ? Number(prefill.target.basePrice) : '';
-      return draft;
-    }
-    if (prefill.target && prefill.target.type === 'path') {
-      draft.legs = (prefill.target.legs || []).map((leg) => ({ ...leg }));
-    }
-    return draft;
+    return window.PathAlertPageUtils.buildPathAlertEditorDraftFromPrefill(prefill, getEditorDraftOptions());
   }
 
   function buildDismissedIdentityKey(entry) {

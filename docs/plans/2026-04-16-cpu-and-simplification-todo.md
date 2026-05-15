@@ -136,6 +136,7 @@
   - `path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
   - `path-alerts-app.js` 的卡片标题、meta、section 配置和路线行渲染已下沉到 `path-alert-page-utils.js`
   - `path-alerts-app.js` 的 dashboard quote 到候选报价转换已下沉到 `path-alert-candidate-utils.js`
+  - `path-alerts-app.js` 的编辑器草稿创建、克隆和 prefill/alert 还原已下沉到 `path-alert-page-utils.js`
   - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
