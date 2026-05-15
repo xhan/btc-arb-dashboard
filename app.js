@@ -391,6 +391,13 @@
         return window.TradingPairUtils;
     }
 
+    function getArbPathConfigUtils() {
+        if (!window.ArbPathConfigUtils) {
+            throw new Error('ArbPathConfigUtils is not loaded');
+        }
+        return window.ArbPathConfigUtils;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -4241,32 +4248,11 @@
     }
 
     function getQuotePriceWatchItems() {
-        if (window.ArbPathConfigUtils && typeof window.ArbPathConfigUtils.getQuotePriceWatchItems === 'function') {
-            return window.ArbPathConfigUtils.getQuotePriceWatchItems(ARB_PATH_CONFIG);
-        }
-        const items = Array.isArray(ARB_PATH_CONFIG && ARB_PATH_CONFIG.watchItems)
-            ? ARB_PATH_CONFIG.watchItems
-            : [];
-        return items
-            .filter((item) => item && item.type === 'quote-price')
-            .map((item) => ({
-                title: String(item.title || '').trim(),
-                type: 'quote-price',
-                quoteId: Number(item.quoteId),
-                direction: item.direction === 'inverse' ? 'inverse' : 'forward'
-            }))
-            .filter((item) => item.title && Number.isFinite(item.quoteId) && item.quoteId > 0);
+        return getArbPathConfigUtils().getQuotePriceWatchItems(ARB_PATH_CONFIG);
     }
 
     function resolveQuotePriceWatchValue(item, state) {
-        if (window.ArbPathConfigUtils && typeof window.ArbPathConfigUtils.resolveQuotePriceValue === 'function') {
-            return window.ArbPathConfigUtils.resolveQuotePriceValue(item, state);
-        }
-        if (!state || typeof state !== 'object') return null;
-        const value = item && item.direction === 'inverse'
-            ? Number(state.inverseRawPrice)
-            : Number(state.lastRawPrice);
-        return Number.isFinite(value) ? value : null;
+        return getArbPathConfigUtils().resolveQuotePriceValue(item, state);
     }
 
     function buildQuotePriceWatchEntry(item) {

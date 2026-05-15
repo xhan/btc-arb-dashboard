@@ -642,6 +642,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const wbtcSection = categorySections.find'));
     assert.ok(appJsResponse.body.includes("emptyText: '无收益率'"));
     assert.ok(appJsResponse.body.includes("title: '关注列表'"));
+    assert.ok(appJsResponse.body.includes('function getArbPathConfigUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbPathConfigUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getArbPathConfigUtils().getQuotePriceWatchItems(ARB_PATH_CONFIG)'));
+    assert.ok(appJsResponse.body.includes('getArbPathConfigUtils().resolveQuotePriceValue(item, state)'));
+    assert.ok(!appJsResponse.body.includes('window.ArbPathConfigUtils &&'));
+    assert.ok(!appJsResponse.body.includes('typeof window.ArbPathConfigUtils'));
+    assert.ok(!appJsResponse.body.includes(".filter((item) => item && item.type === 'quote-price')"));
     assert.ok(appJsResponse.body.includes('buildQuotePriceWatchEntries()'));
     assert.ok(!appJsResponse.body.includes('buildQuoteAlertWatchEntries'));
     assert.ok(appJsResponse.body.includes('const columns = ['));
