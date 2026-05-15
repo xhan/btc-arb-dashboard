@@ -134,6 +134,7 @@
   - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 未使用的 generic alert log 渲染路径已移除
   - `path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
+  - `path-alerts-app.js` 的卡片标题、meta、section 配置和路线行渲染已下沉到 `path-alert-page-utils.js`
   - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
 - 建议改法：
   - 先删死代码和无生产调用 API

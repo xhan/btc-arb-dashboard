@@ -48,12 +48,7 @@
   }
 
   function escapeHtml(value) {
-    return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return window.PathAlertPageUtils.escapeHtml(value);
   }
 
   function formatChainLabel(chain) {
@@ -452,75 +447,8 @@
     }
   }
 
-  function renderSummaryLinesHtml(lines, className) {
-    const safeLines = Array.isArray(lines) ? lines.filter(Boolean) : [];
-    if (!safeLines.length) {
-      return `<div class="${className}">--</div>`;
-    }
-    return safeLines.map((line) => `<div class="${className}">${escapeHtml(line)}</div>`).join('');
-  }
-
   function buildAlertRouteHtml(lines) {
-    return `<div class="alert-item-route-lines">${renderSummaryLinesHtml(lines, 'alert-item-route-line')}</div>`;
-  }
-
-  function getAlertPrimaryTitle(alert) {
-    const note = getAlertDisplayTitle(alert);
-    if (note) return note;
-    if (alert && alert.target && alert.target.type === 'quote') {
-      return buildQuoteAlertQuoteLabel(alert.target);
-    }
-    if (alert && alert.target && alert.target.type === 'rule') {
-      return alert.target.ruleKind === 'fixed' ? '固定规则' : '特殊规则';
-    }
-    const legCount = Array.isArray(alert && alert.target && alert.target.legs) ? alert.target.legs.length : 0;
-    return legCount > 0 ? `路径规则 (${legCount}腿)` : '路径规则';
-  }
-
-  function getDismissedPrimaryTitle(entry) {
-    const target = entry && entry.target ? entry.target : null;
-    if (!target) return '已忽略规则';
-    if (target.type === 'quote') {
-      return '已忽略交易对报警';
-    }
-    if (target.type === 'rule') {
-      return target.ruleKind === 'fixed' ? '已忽略固定规则' : '已忽略特殊规则';
-    }
-    const legCount = Array.isArray(target.legs) ? target.legs.length : 0;
-    return legCount > 0 ? `已忽略手工路径 (${legCount}腿)` : '已忽略手工路径';
-  }
-
-  function formatAlertMetaLine(alert) {
-    const typeLabel = alert && alert.target && alert.target.type === 'quote'
-      ? '交易对'
-      : alert && alert.target && alert.target.type === 'rule'
-        ? (alert.target.ruleKind === 'fixed' ? '固定' : '特殊')
-        : '路径';
-    const triggerLabel = alert && alert.triggerMode === 'delayed'
-      ? `⏱${Number(alert.confirmDelaySec || 0)}s`
-      : '⚡立即';
-    const statusLabel = alert && alert.enabled === false ? '⛔' : '✅';
-    let valueText = alert && alert.target && alert.target.type === 'quote'
-      ? String(alert.target.value != null ? alert.target.value : '--')
-      : `${String(alert && alert.thresholdBp != null ? alert.thresholdBp : '--')}bp`;
-    if (alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special') {
-      const specialRuleConfig = resolveSpecialRuleAlertConfig(alert.specialRuleConfig);
-      valueText = `>${String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--')} / >${String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--')}bp`;
-    }
-    return [
-      `🏷️${typeLabel}`,
-      `🎯${valueText}`,
-      triggerLabel,
-      `❄️${String(alert && alert.cooldownSec != null ? alert.cooldownSec : '--')}s`,
-      statusLabel
-    ].join(' · ');
-  }
-
-  function formatDismissedMetaLine(entry) {
-    const dismissedAtText = entry && entry.dismissedAt
-      ? new Date(entry.dismissedAt).toLocaleString()
-      : '--';
-    return `🗃️已忽略 · 🕒${dismissedAtText}`;
+    return `<div class="alert-item-route-lines">${window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(lines, 'alert-item-route-line')}</div>`;
   }
 
   function buildQuoteCandidates() {
@@ -907,28 +835,16 @@
     );
   }
 
-  function buildSectionConfigs(grouped) {
-    return [
-      { key: 'quote', id: 'quote-alert-section', title: '交易对报警', note: pageState.filterQuoteId ? '当前交易对上下文' : '按交易对汇率分组', items: grouped.quote, tagClass: 'quote' },
-      { key: 'rule', id: 'rule-alert-section', title: '固定规则', note: '直接展示实际路径腿', items: grouped.rule, tagClass: 'rule' },
-      { key: 'path', id: 'path-manual-section', title: '手工路径', note: '保留完整 legs', items: grouped.path, tagClass: 'path' },
-      { key: 'special', id: 'special-alert-section', title: '特殊规则', note: '特殊聚合逻辑', items: grouped.special, tagClass: 'special' }
-    ];
-  }
-
-  function buildCardRouteHtml(lines) {
-    const safeLines = Array.isArray(lines) ? lines.filter(Boolean) : [];
-    if (!safeLines.length) {
-      return '<div class="alert-card-route-line">--</div>';
-    }
-    return safeLines.map((line) => `<div class="alert-card-route-line">${escapeHtml(line)}</div>`).join('');
-  }
-
   function renderSectionCards(sectionKey, alerts) {
     return alerts.map((alert) => {
-      const title = getAlertPrimaryTitle(alert);
+      const title = window.PathAlertPageUtils.buildPathAlertCardTitle(alert, {
+        getDisplayTitle: getAlertDisplayTitle,
+        buildQuoteLabel: buildQuoteAlertQuoteLabel
+      });
       const summaryLines = buildAlertSummaryLines(alert);
-      const metaText = formatAlertMetaLine(alert);
+      const metaText = window.PathAlertPageUtils.buildPathAlertCardMetaText(alert, {
+        resolveSpecialRuleConfig: resolveSpecialRuleAlertConfig
+      });
       const subtitle = alert && alert.target && alert.target.type === 'quote'
         ? buildQuoteAlertRuleLine(alert.target)
         : alert && alert.target && alert.target.type === 'rule'
@@ -950,7 +866,7 @@
                   <span class="tag live">${alert.enabled === false ? '停用' : '启用'}</span>
                 </div>
               </div>
-              <div class="alert-card-route">${buildCardRouteHtml(summaryLines)}</div>
+              <div class="alert-card-route">${window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(summaryLines, 'alert-card-route-line')}</div>
               <div class="alert-card-foot">
                 <div class="alert-card-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
                 <div class="alert-card-actions">
@@ -1005,7 +921,9 @@
       return;
     }
     const grouped = window.PathAlertPageUtils.groupAlertsBySection(alerts);
-    listEl.innerHTML = buildSectionConfigs(grouped)
+    listEl.innerHTML = window.PathAlertPageUtils.buildPathAlertSectionConfigs(grouped, {
+      filterQuoteId: pageState.filterQuoteId
+    })
       .filter((section) => section.items.length)
       .map((section) => `
         <section id="${section.id}" class="panel section-block section-anchor">
@@ -1031,9 +949,9 @@
     dismissedListEl.innerHTML = filteredDismissed.length
       ? filteredDismissed.map((entry) => {
         const targetKey = buildDismissedIdentityKey(entry);
-        const title = getDismissedPrimaryTitle(entry);
+        const title = window.PathAlertPageUtils.buildDismissedTargetCardTitle(entry);
         const summaryLines = buildDismissedSummaryLines(entry);
-        const metaText = formatDismissedMetaLine(entry);
+        const metaText = window.PathAlertPageUtils.buildDismissedTargetMetaText(entry);
         return `
           <article class="alert-card">
             <div class="alert-card-shell">
@@ -1048,7 +966,7 @@
                     <span class="tag path">已忽略</span>
                   </div>
                 </div>
-                <div class="alert-card-route">${buildCardRouteHtml(summaryLines)}</div>
+                <div class="alert-card-route">${window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(summaryLines, 'alert-card-route-line')}</div>
                 <div class="alert-card-foot">
                   <div class="alert-card-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
                   <div class="alert-card-actions">
@@ -1230,7 +1148,7 @@
         <div class="editor-pane">
           <div class="editor-pane-title">${draft.sourceType === 'path' ? '已选路径' : '已选目标'}</div>
           ${renderSelectedLegs(draft)}
-          <div class="summary-box">${renderSummaryLinesHtml(targetSummaryLines, 'summary-line')}</div>
+          <div class="summary-box">${window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(targetSummaryLines, 'summary-line')}</div>
         </div>
         <div class="editor-pane editor-settings-pane">
           <div class="editor-pane-title">报警条件</div>
@@ -1818,8 +1736,17 @@
     buildFallbackQuoteCandidatesFromDashboard,
     buildAlertSummaryLines,
     buildAlertRouteHtml,
-    getAlertPrimaryTitle,
-    formatAlertMetaLine,
+    getAlertPrimaryTitle(alert) {
+      return window.PathAlertPageUtils.buildPathAlertCardTitle(alert, {
+        getDisplayTitle: getAlertDisplayTitle,
+        buildQuoteLabel: buildQuoteAlertQuoteLabel
+      });
+    },
+    formatAlertMetaLine(alert) {
+      return window.PathAlertPageUtils.buildPathAlertCardMetaText(alert, {
+        resolveSpecialRuleConfig: resolveSpecialRuleAlertConfig
+      });
+    },
     groupAlertsBySection: window.PathAlertPageUtils.groupAlertsBySection,
     buildDefaultAlertName,
     buildDefaultQuoteAlertNameForTarget(target, quote, candidates) {

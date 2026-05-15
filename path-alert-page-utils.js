@@ -244,14 +244,20 @@
             `;
   }
 
-  function renderPathAlertSummaryLinesHtml(lines) {
-    const safeLines = Array.isArray(lines) ? lines : [];
+  function renderPathAlertRouteLinesHtml(lines, className = 'path-alert-item-route-line', options = {}) {
+    const safeClassName = String(className || 'path-alert-item-route-line');
+    const sourceLines = Array.isArray(lines) ? lines : [];
+    const safeLines = options.filterEmpty === false ? sourceLines : sourceLines.filter(Boolean);
     if (!safeLines.length) {
-      return '<div class="path-alert-item-route-line">--</div>';
+      return `<div class="${escapeHtml(safeClassName)}">--</div>`;
     }
     return safeLines
-      .map((line) => `<div class="path-alert-item-route-line">${escapeHtml(line)}</div>`)
+      .map((line) => `<div class="${escapeHtml(safeClassName)}">${escapeHtml(line)}</div>`)
       .join('');
+  }
+
+  function renderPathAlertSummaryLinesHtml(lines) {
+    return renderPathAlertRouteLinesHtml(lines, 'path-alert-item-route-line', { filterEmpty: false });
   }
 
   function renderPathAlertPanelHtml(options = {}) {
@@ -283,6 +289,89 @@
       ].join(' | ');
     }
     return `阈值 ${String(alert && alert.thresholdBp)}bp | ${triggerText} | ${cooldownText}`;
+  }
+
+  function getTargetLegCount(target) {
+    return Array.isArray(target && target.legs) ? target.legs.length : 0;
+  }
+
+  function buildPathAlertCardTitle(alert, options = {}) {
+    const getDisplayTitle = typeof options.getDisplayTitle === 'function'
+      ? options.getDisplayTitle
+      : () => '';
+    const buildQuoteLabel = typeof options.buildQuoteLabel === 'function'
+      ? options.buildQuoteLabel
+      : null;
+    const title = getDisplayTitle(alert);
+    if (title) return title;
+
+    const target = alert && alert.target ? alert.target : null;
+    if (target && target.type === 'quote') {
+      return buildQuoteLabel ? buildQuoteLabel(target) : '交易对报警';
+    }
+    if (target && target.type === 'rule') {
+      return target.ruleKind === 'fixed' ? '固定规则' : '特殊规则';
+    }
+
+    const legCount = getTargetLegCount(target);
+    return legCount > 0 ? `路径规则 (${legCount}腿)` : '路径规则';
+  }
+
+  function buildDismissedTargetCardTitle(entry) {
+    const target = entry && entry.target ? entry.target : null;
+    if (!target) return '已忽略规则';
+    if (target.type === 'quote') return '已忽略交易对报警';
+    if (target.type === 'rule') {
+      return target.ruleKind === 'fixed' ? '已忽略固定规则' : '已忽略特殊规则';
+    }
+    const legCount = getTargetLegCount(target);
+    return legCount > 0 ? `已忽略手工路径 (${legCount}腿)` : '已忽略手工路径';
+  }
+
+  function getPathAlertTypeLabel(alert) {
+    const target = alert && alert.target ? alert.target : null;
+    if (target && target.type === 'quote') return '交易对';
+    if (target && target.type === 'rule') {
+      return target.ruleKind === 'fixed' ? '固定' : '特殊';
+    }
+    return '路径';
+  }
+
+  function buildPathAlertCardValueText(alert, resolveSpecialRuleConfig) {
+    const target = alert && alert.target ? alert.target : null;
+    if (target && target.type === 'quote') {
+      return String(target.value != null ? target.value : '--');
+    }
+    if (target && target.type === 'rule' && target.ruleKind === 'special') {
+      const specialRuleConfig = resolveSpecialRuleConfig(alert && alert.specialRuleConfig);
+      return `>${String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--')} / >${String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--')}bp`;
+    }
+    return `${String(alert && alert.thresholdBp != null ? alert.thresholdBp : '--')}bp`;
+  }
+
+  function buildPathAlertCardMetaText(alert, options = {}) {
+    const resolveSpecialRuleConfig = typeof options.resolveSpecialRuleConfig === 'function'
+      ? options.resolveSpecialRuleConfig
+      : (config) => (config && typeof config === 'object' ? config : {});
+    const triggerLabel = alert && alert.triggerMode === 'delayed'
+      ? `⏱${Number(alert.confirmDelaySec || 0)}s`
+      : '⚡立即';
+    const statusLabel = alert && alert.enabled === false ? '⛔' : '✅';
+    return [
+      `🏷️${getPathAlertTypeLabel(alert)}`,
+      `🎯${buildPathAlertCardValueText(alert, resolveSpecialRuleConfig)}`,
+      triggerLabel,
+      `❄️${String(alert && alert.cooldownSec != null ? alert.cooldownSec : '--')}s`,
+      statusLabel
+    ].join(' · ');
+  }
+
+  function buildDismissedTargetMetaText(entry, options = {}) {
+    const formatDate = typeof options.formatDate === 'function'
+      ? options.formatDate
+      : (value) => new Date(value).toLocaleString();
+    const dismissedAtText = entry && entry.dismissedAt ? formatDate(entry.dismissedAt) : '--';
+    return `🗃️已忽略 · 🕒${dismissedAtText}`;
   }
 
   function isQuoteScopedAlertTarget(target, quoteId) {
@@ -336,11 +425,56 @@
     return grouped;
   }
 
+  function buildPathAlertSectionConfigs(grouped, options = {}) {
+    const groups = grouped && typeof grouped === 'object' ? grouped : {};
+    const hasQuoteFilter = Boolean(String(options.filterQuoteId || '').trim());
+    return [
+      {
+        key: 'quote',
+        id: 'quote-alert-section',
+        title: '交易对报警',
+        note: hasQuoteFilter ? '当前交易对上下文' : '按交易对汇率分组',
+        items: Array.isArray(groups.quote) ? groups.quote : [],
+        tagClass: 'quote'
+      },
+      {
+        key: 'rule',
+        id: 'rule-alert-section',
+        title: '固定规则',
+        note: '直接展示实际路径腿',
+        items: Array.isArray(groups.rule) ? groups.rule : [],
+        tagClass: 'rule'
+      },
+      {
+        key: 'path',
+        id: 'path-manual-section',
+        title: '手工路径',
+        note: '保留完整 legs',
+        items: Array.isArray(groups.path) ? groups.path : [],
+        tagClass: 'path'
+      },
+      {
+        key: 'special',
+        id: 'special-alert-section',
+        title: '特殊规则',
+        note: '特殊聚合逻辑',
+        items: Array.isArray(groups.special) ? groups.special : [],
+        tagClass: 'special'
+      }
+    ];
+  }
+
   return {
     sanitizePathAlertDraft,
+    buildDismissedTargetCardTitle,
+    buildDismissedTargetMetaText,
+    buildPathAlertCardMetaText,
+    buildPathAlertCardTitle,
     buildPathAlertQuoteLabel,
+    buildPathAlertSectionConfigs,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
+    escapeHtml,
     filterAlertsByQuoteId,
     filterDismissedTargetsByQuoteId,
     groupAlertsBySection,
@@ -348,6 +482,7 @@
     pruneSelectionSet,
     renderPathAlertItemHtml,
     renderPathAlertPanelHtml,
+    renderPathAlertRouteLinesHtml,
     renderPathAlertSummaryLinesHtml,
     renderPathAlertToolbarHtml,
     shortenTokenText

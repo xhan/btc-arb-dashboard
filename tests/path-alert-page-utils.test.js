@@ -2,9 +2,15 @@ const assert = require('assert');
 
 const {
   sanitizePathAlertDraft,
+  buildDismissedTargetCardTitle,
+  buildDismissedTargetMetaText,
+  buildPathAlertCardMetaText,
+  buildPathAlertCardTitle,
   buildPathAlertQuoteLabel,
+  buildPathAlertSectionConfigs,
   buildPathAlertMetaText,
   buildPathAlertsPageHref,
+  escapeHtml,
   filterAlertsByQuoteId,
   filterDismissedTargetsByQuoteId,
   groupAlertsBySection,
@@ -12,11 +18,13 @@ const {
   pruneSelectionSet,
   renderPathAlertItemHtml,
   renderPathAlertPanelHtml,
+  renderPathAlertRouteLinesHtml,
   renderPathAlertSummaryLinesHtml,
   renderPathAlertToolbarHtml,
   shortenTokenText
 } = require('../path-alert-page-utils');
 
+assert.strictEqual(escapeHtml('<tag a="1">'), '&lt;tag a=&quot;1&quot;&gt;');
 assert.strictEqual(shortenTokenText(''), '--');
 assert.strictEqual(shortenTokenText('0x1234567890abcdef123456'), '0x123456...123456');
 assert.strictEqual(
@@ -60,6 +68,56 @@ assert.deepStrictEqual(Object.fromEntries(Object.entries(groupedAlerts).map(([ke
   path: ['p1'],
   special: ['s1']
 });
+assert.deepStrictEqual(
+  buildPathAlertSectionConfigs(groupedAlerts, { filterQuoteId: 101 }).map((section) => ({
+    key: section.key,
+    note: section.note,
+    count: section.items.length
+  })),
+  [
+    { key: 'quote', note: '当前交易对上下文', count: 1 },
+    { key: 'rule', note: '直接展示实际路径腿', count: 1 },
+    { key: 'path', note: '保留完整 legs', count: 1 },
+    { key: 'special', note: '特殊聚合逻辑', count: 1 }
+  ]
+);
+
+assert.strictEqual(
+  buildPathAlertCardTitle(
+    { name: '', target: { type: 'quote', quoteId: 101 } },
+    { buildQuoteLabel: (target) => `Quote #${target.quoteId}` }
+  ),
+  'Quote #101'
+);
+assert.strictEqual(
+  buildPathAlertCardTitle({ target: { type: 'path', legs: [{}, {}] } }),
+  '路径规则 (2腿)'
+);
+assert.strictEqual(
+  buildDismissedTargetCardTitle({ target: { type: 'rule', ruleKind: 'special' } }),
+  '已忽略特殊规则'
+);
+assert.strictEqual(
+  buildDismissedTargetCardTitle({ target: { type: 'path', legs: [{}] } }),
+  '已忽略手工路径 (1腿)'
+);
+assert.strictEqual(
+  buildPathAlertCardMetaText({
+    enabled: false,
+    triggerMode: 'delayed',
+    confirmDelaySec: 3,
+    cooldownSec: 60,
+    target: { type: 'rule', ruleKind: 'special' },
+    specialRuleConfig: { minNetProfit: 1.25, minNetProfitBp: 12 }
+  }, {
+    resolveSpecialRuleConfig: (config) => config
+  }),
+  '🏷️特殊 · 🎯>1.25 / >12bp · ⏱3s · ❄️60s · ⛔'
+);
+assert.strictEqual(
+  buildDismissedTargetMetaText({ dismissedAt: 1710000000000 }, { formatDate: () => '2024/3/9 12:00:00' }),
+  '🗃️已忽略 · 🕒2024/3/9 12:00:00'
+);
 
 const pathDraft = sanitizePathAlertDraft({
   name: 'WBTC 路径',
@@ -253,6 +311,11 @@ assert.ok(itemHtml.includes('利润 &gt; 1'));
 assert.strictEqual(
   renderPathAlertSummaryLinesHtml(['路径 <A>', 'ETH/USDC']),
   '<div class="path-alert-item-route-line">路径 &lt;A&gt;</div><div class="path-alert-item-route-line">ETH/USDC</div>'
+);
+
+assert.strictEqual(
+  renderPathAlertRouteLinesHtml(['', 'ETH/USDC'], 'alert-card-route-line'),
+  '<div class="alert-card-route-line">ETH/USDC</div>'
 );
 
 assert.strictEqual(
