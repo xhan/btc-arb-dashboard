@@ -102,6 +102,7 @@
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
     let arbPanelDirty = false;
+    let arbPanelRenderedHtml = '';
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
     let dataTerminalState = {
         visible: false,
@@ -5711,6 +5712,7 @@
 
         const panelData = buildArbPanelData();
         if (panelData.error) {
+            arbPanelRenderedHtml = '';
             arbPathContent.textContent = panelData.error;
             return;
         }
@@ -5721,7 +5723,7 @@
         arbOpportunityIdsByTargetKey = nextOpportunityIdsByTargetKey instanceof Map ? nextOpportunityIdsByTargetKey : new Map();
         refreshArbOpportunityStore(nextOpportunityMap);
 
-        arbPathContent.innerHTML = window.ArbPanelRenderer.renderArbGrid({
+        const nextArbPanelHtml = window.ArbPanelRenderer.renderArbGrid({
             columns,
             isMeaningfulPath: cycle => cycle && window.ArbPaths.isMeaningfulPath(cycle.legs),
             shouldIncludeLeg: leg => !isRuleLeg(leg),
@@ -5729,6 +5731,10 @@
             formatLegLine: formatArbPathLegLine,
             formatProfit: profitRate => window.ArbPaths.formatProfitWanfen(profitRate)
         });
+        if (nextArbPanelHtml !== arbPanelRenderedHtml) {
+            arbPathContent.innerHTML = nextArbPanelHtml;
+            arbPanelRenderedHtml = nextArbPanelHtml;
+        }
     }
 
     async function getEvmMetadata(chain, tokenAddress, signal) {
