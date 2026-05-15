@@ -162,6 +162,65 @@
     return `${pairText} ${getPathAlertQuoteDefaultNameSuffix(target)}`.trim();
   }
 
+  function buildPathAlertPageSummaryLines(alert, options = {}) {
+    const getDisplayTitle = typeof options.getDisplayTitle === 'function'
+      ? options.getDisplayTitle
+      : () => '';
+    const buildQuoteAlertThresholdLine = typeof options.buildQuoteAlertThresholdLine === 'function'
+      ? options.buildQuoteAlertThresholdLine
+      : () => '--';
+    const buildQuoteAlertQuoteLabel = typeof options.buildQuoteAlertQuoteLabel === 'function'
+      ? options.buildQuoteAlertQuoteLabel
+      : (target) => buildPathAlertQuoteDisplayLabel(target, null, options);
+    const buildQuoteAlertRuleLine = typeof options.buildQuoteAlertRuleLine === 'function'
+      ? options.buildQuoteAlertRuleLine
+      : () => '--';
+    const buildPathAlertSummaryLines = typeof options.buildPathAlertSummaryLines === 'function'
+      ? options.buildPathAlertSummaryLines
+      : null;
+    const formatLeg = typeof options.formatLeg === 'function'
+      ? options.formatLeg
+      : (leg) => buildPathAlertQuotePairLabel(leg && leg.chain, leg && leg.fromSymbol, leg && leg.toSymbol, '', options);
+    const findRule = typeof options.findRule === 'function'
+      ? options.findRule
+      : () => null;
+
+    if (alert && alert.target && alert.target.type === 'quote') {
+      const displayTitle = getDisplayTitle(alert);
+      if (displayTitle) {
+        return [
+          displayTitle,
+          buildQuoteAlertThresholdLine(alert.target)
+        ];
+      }
+      return [
+        buildQuoteAlertQuoteLabel(alert.target),
+        buildQuoteAlertRuleLine(alert.target)
+      ];
+    }
+    if (buildPathAlertSummaryLines) {
+      return buildPathAlertSummaryLines(alert, {
+        formatLeg,
+        findRule
+      });
+    }
+    if (!alert || !alert.target) return [];
+    if (alert.target.type === 'rule') {
+      const rule = findRule(alert.target.ruleKind, alert.target.ruleId);
+      return [rule ? rule.title : alert.target.ruleId];
+    }
+    return (alert.target.legs || []).map(formatLeg);
+  }
+
+  function buildDismissedPathAlertPageSummaryLines(entry, options = {}) {
+    const lines = Array.isArray(entry && entry.summaryLinesSnapshot)
+      ? entry.summaryLinesSnapshot.filter(Boolean)
+      : [];
+    if (lines.length) return lines;
+    if (!entry || !entry.target) return [];
+    return buildPathAlertPageSummaryLines({ target: entry.target }, options);
+  }
+
   function getEditorDefaultCooldownSec(options = {}) {
     return options.defaultCooldownSec || 180;
   }
@@ -940,10 +999,12 @@
     buildPathAlertQuoteLabel,
     buildPathAlertQuoteDisplayLabel,
     buildPathAlertQuotePairText,
+    buildPathAlertPageSummaryLines,
     buildPathAlertSectionConfigs,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
     buildPathAlertFromEditorDraft,
+    buildDismissedPathAlertPageSummaryLines,
     clonePathAlertEditorDraft,
     createPathAlertEditorDraft,
     escapeHtml,

@@ -207,43 +207,28 @@
     return '';
   }
 
+  function getAlertSummaryOptions() {
+    return {
+      getDisplayTitle: getAlertDisplayTitle,
+      buildQuoteAlertThresholdLine,
+      buildQuoteAlertQuoteLabel,
+      buildQuoteAlertRuleLine,
+      buildPathAlertSummaryLines: window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function'
+        ? window.PathAlertUtils.buildPathAlertSummaryLines
+        : null,
+      formatLeg(leg) {
+        return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+      },
+      findRule
+    };
+  }
+
   function buildAlertSummaryLines(alert) {
-    if (alert && alert.target && alert.target.type === 'quote') {
-      const displayTitle = getAlertDisplayTitle(alert);
-      if (displayTitle) {
-        return [
-          displayTitle,
-          buildQuoteAlertThresholdLine(alert.target)
-        ];
-      }
-      return [
-        buildQuoteAlertQuoteLabel(alert.target),
-        buildQuoteAlertRuleLine(alert.target)
-      ];
-    }
-    if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
-      return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
-        formatLeg(leg) {
-          return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
-        },
-        findRule
-      });
-    }
-    if (!alert || !alert.target) return [];
-    if (alert.target.type === 'rule') {
-      const rule = findRule(alert.target.ruleKind, alert.target.ruleId);
-      return [rule ? rule.title : alert.target.ruleId];
-    }
-    return (alert.target.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol));
+    return window.PathAlertPageUtils.buildPathAlertPageSummaryLines(alert, getAlertSummaryOptions());
   }
 
   function buildDismissedSummaryLines(entry) {
-    const lines = Array.isArray(entry && entry.summaryLinesSnapshot)
-      ? entry.summaryLinesSnapshot.filter(Boolean)
-      : [];
-    if (lines.length) return lines;
-    if (!entry || !entry.target) return [];
-    return buildAlertSummaryLines({ target: entry.target });
+    return window.PathAlertPageUtils.buildDismissedPathAlertPageSummaryLines(entry, getAlertSummaryOptions());
   }
 
   function getFilteredAlerts() {

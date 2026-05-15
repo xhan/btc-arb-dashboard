@@ -13,12 +13,14 @@ const {
   buildPathAlertDefaultQuoteAlertName,
   buildPathAlertQuoteDisplayLabel,
   buildPathAlertQuoteLabel,
+  buildPathAlertPageSummaryLines,
   buildPathAlertQuotePairText,
   buildPathAlertSectionConfigs,
   buildPathAlertMetaText,
   buildPathAlertsPageHref,
   clonePathAlertEditorDraft,
   createPathAlertEditorDraft,
+  buildDismissedPathAlertPageSummaryLines,
   escapeHtml,
   filterAlertsByQuoteId,
   filterDismissedTargetsByQuoteId,
@@ -80,6 +82,44 @@ assert.strictEqual(
     quotePairOptions
   ),
   'Avalanche AAA/BBB 上涨提醒'
+);
+assert.deepStrictEqual(
+  buildPathAlertPageSummaryLines({
+    name: 'BSC BTCB/syBTC 价格高于',
+    target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 0.100113 }
+  }, {
+    getDisplayTitle: (alert) => String(alert.name || '').trim(),
+    buildQuoteAlertThresholdLine: (target) => `阈值 ${target.value}`,
+    buildQuoteAlertQuoteLabel: (target) => `报价 #${target.quoteId}`,
+    buildQuoteAlertRuleLine: (target) => `规则 ${target.ruleKind}`
+  }),
+  ['BSC BTCB/syBTC 价格高于', '阈值 0.100113']
+);
+assert.deepStrictEqual(
+  buildPathAlertPageSummaryLines({
+    target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:btc' }
+  }, {
+    findRule: () => ({ title: '固定 BTC 规则' })
+  }),
+  ['固定 BTC 规则']
+);
+assert.deepStrictEqual(
+  buildPathAlertPageSummaryLines({
+    target: {
+      type: 'path',
+      legs: [{ chain: 'ethereum', fromSymbol: 'WETH', toSymbol: 'USDC' }]
+    }
+  }, {
+    formatLeg: (leg) => `${leg.chain}:${leg.fromSymbol}->${leg.toSymbol}`
+  }),
+  ['ethereum:WETH->USDC']
+);
+assert.deepStrictEqual(
+  buildDismissedPathAlertPageSummaryLines({
+    summaryLinesSnapshot: ['', 'snapshot line'],
+    target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:btc' }
+  }),
+  ['snapshot line']
 );
 
 const scopedAlerts = [
