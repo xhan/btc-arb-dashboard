@@ -129,7 +129,7 @@
         selectedOpportunity: null,
         cards: [],
         pausedDashboard: false,
-        loopToken: 0,
+        refreshToken: 0,
         isRefreshing: false,
         editingInputIndex: null,
         chartPreviewSignature: ''
@@ -4076,7 +4076,7 @@
         arbDetailState.opportunityId = null;
         arbDetailState.selectedOpportunity = null;
         arbDetailState.cards = [];
-        arbDetailState.loopToken += 1;
+        arbDetailState.refreshToken += 1;
         arbDetailState.isRefreshing = false;
         arbDetailState.editingInputIndex = null;
         arbDetailState.chartPreviewSignature = '';
@@ -4124,7 +4124,7 @@
             error: '',
             requestVersion: 0
         }));
-        arbDetailState.loopToken += 1;
+        arbDetailState.refreshToken += 1;
         arbDetailState.isRefreshing = false;
         arbDetailState.editingInputIndex = null;
         arbDetailState.chartPreviewSignature = '';
@@ -4134,7 +4134,7 @@
         setArbDetailDashboardPause(true);
         renderArbDetailModal(true);
         syncArbDetailChartAutoRefreshTimer();
-        startArbDetailLoop(arbDetailState.loopToken);
+        startArbDetailRefresh(arbDetailState.refreshToken);
     }
 
     function updateArbDetailInput(index, rawValue) {
@@ -4149,16 +4149,16 @@
         card.requestVersion = getArbDetailUtils().getNextArbDetailRequestVersion(card.requestVersion);
     }
 
-    function restartArbDetailLoop() {
+    function restartArbDetailRefresh() {
         if (!arbDetailState.visible) return;
         clearArbDetailRefreshTimer();
         if (arbDetailFetchController) {
             arbDetailFetchController.abort();
             arbDetailFetchController = null;
         }
-        arbDetailState.loopToken += 1;
+        arbDetailState.refreshToken += 1;
         arbDetailState.isRefreshing = false;
-        startArbDetailLoop(arbDetailState.loopToken);
+        startArbDetailRefresh(arbDetailState.refreshToken);
     }
 
     function commitArbDetailInput(index, rawValue) {
@@ -4178,10 +4178,10 @@
 
         updateArbDetailInput(index, parsed);
         renderArbDetailModal();
-        restartArbDetailLoop();
+        restartArbDetailRefresh();
     }
 
-    async function refreshArbDetailCards(runToken) {
+    async function refreshArbDetailCards(refreshToken) {
         const current = arbDetailState.selectedOpportunity;
         if (!current || !current.cycle) return false;
 
@@ -4193,7 +4193,7 @@
 
         try {
             for (const [cardIndex, card] of arbDetailState.cards.entries()) {
-                if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) return;
+                if (!arbDetailState.visible || arbDetailState.refreshToken !== refreshToken) return;
 
                 const requestVersion = Number(card.requestVersion) || 0;
 
@@ -4220,7 +4220,7 @@
                             beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)
                         });
 
-                        if (!arbDetailState.visible || arbDetailState.loopToken !== runToken) {
+                        if (!arbDetailState.visible || arbDetailState.refreshToken !== refreshToken) {
                             return;
                         }
                         if (!getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
@@ -4316,8 +4316,8 @@
         return true;
     }
 
-    function isArbDetailLoopActive(runToken) {
-        return arbDetailState.visible && arbDetailState.loopToken === runToken;
+    function isArbDetailRefreshActive(refreshToken) {
+        return arbDetailState.visible && arbDetailState.refreshToken === refreshToken;
     }
 
     function clearArbDetailRefreshTimer() {
@@ -4326,40 +4326,40 @@
         arbDetailRefreshTimer = null;
     }
 
-    function scheduleArbDetailRefresh(runToken, delayMs = 0) {
+    function scheduleArbDetailRefresh(refreshToken, delayMs = 0) {
         clearArbDetailRefreshTimer();
-        if (!isArbDetailLoopActive(runToken)) return;
+        if (!isArbDetailRefreshActive(refreshToken)) return;
         arbDetailRefreshTimer = setTimeout(() => {
             arbDetailRefreshTimer = null;
-            void runArbDetailRefreshTick(runToken);
+            void runArbDetailRefreshTick(refreshToken);
         }, Math.max(0, delayMs));
     }
 
-    async function runArbDetailRefreshTick(runToken) {
-        if (!isArbDetailLoopActive(runToken) || arbDetailState.isRefreshing) return;
+    async function runArbDetailRefreshTick(refreshToken) {
+        if (!isArbDetailRefreshActive(refreshToken) || arbDetailState.isRefreshing) return;
         arbDetailState.isRefreshing = true;
         let shouldScheduleNext = false;
 
         try {
-            const didRefresh = await refreshArbDetailCards(runToken);
-            shouldScheduleNext = Boolean(didRefresh) && isArbDetailLoopActive(runToken);
+            const didRefresh = await refreshArbDetailCards(refreshToken);
+            shouldScheduleNext = Boolean(didRefresh) && isArbDetailRefreshActive(refreshToken);
         } catch (error) {
-            if (isArbDetailLoopActive(runToken)) {
+            if (isArbDetailRefreshActive(refreshToken)) {
                 console.error('[arb-detail] refresh failed', error);
             }
         } finally {
-            if (arbDetailState.loopToken === runToken) {
+            if (arbDetailState.refreshToken === refreshToken) {
                 arbDetailState.isRefreshing = false;
             }
         }
 
         if (shouldScheduleNext) {
-            scheduleArbDetailRefresh(runToken, ARB_DETAIL_REFRESH_INTERVAL_MS);
+            scheduleArbDetailRefresh(refreshToken, ARB_DETAIL_REFRESH_INTERVAL_MS);
         }
     }
 
-    function startArbDetailLoop(runToken) {
-        scheduleArbDetailRefresh(runToken, 0);
+    function startArbDetailRefresh(refreshToken) {
+        scheduleArbDetailRefresh(refreshToken, 0);
     }
 
     function handleArbGlobalFilterInput(event) {

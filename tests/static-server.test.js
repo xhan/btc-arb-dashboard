@@ -358,7 +358,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('let arbDetailRefreshTimer = null;'));
     assert.ok(appJsResponse.body.includes('clearArbDetailRefreshTimer'));
     assert.ok(appJsResponse.body.includes('arbDetailRefreshTimer = setTimeout(() => {'));
-    assert.ok(!appJsResponse.body.includes('while (arbDetailState.visible && arbDetailState.loopToken === runToken)'));
+    assert.ok(appJsResponse.body.includes('refreshToken: 0'));
+    assert.ok(!appJsResponse.body.includes('loopToken'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-profit-card'));
     assert.ok(appJsResponse.body.includes('resolveEventTargetElement(event)'));
     assert.ok(appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
