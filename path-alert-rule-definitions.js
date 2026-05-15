@@ -89,7 +89,7 @@
       steps: 2,
       crossChain: true,
       excludeChains: ['Bybit', 'Binance'],
-      resultLimit: 2
+      resultLimit: 3
     },
     {
       id: 'fixed:susde-usdt',

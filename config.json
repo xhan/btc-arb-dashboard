@@ -550,16 +550,6 @@
           "kyberOnlyDirectPools": true
         },
         {
-          "id": 1777989090078,
-          "chain": "mantle",
-          "amount": 50000,
-          "preferredSource": "LI.FI",
-          "fromToken": "0x201EBa5CC46D216Ce6DC03F6a759e8E766e956aE",
-          "toToken": "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
-          "showInverse": true,
-          "paused": true
-        },
-        {
           "id": 1778105611291,
           "chain": "mantle",
           "amount": 50000,
@@ -575,6 +565,15 @@
           "preferredSource": "Kyber",
           "fromToken": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
           "toToken": "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34",
+          "showInverse": true
+        },
+        {
+          "id": 1778690327260,
+          "chain": "solana",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+          "toToken": "DEkqHyPN7GMRJ5cArtQFAWefqbZb33Hyf6s5iCwjEonT",
           "showInverse": true
         },
         {
