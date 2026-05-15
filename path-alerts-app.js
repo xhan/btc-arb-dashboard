@@ -577,17 +577,10 @@
       : [];
   }
 
-  function matchesCandidate(candidate, query) {
-    const tokens = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
-    if (!tokens.length) return true;
-    const haystack = String(candidate.searchText || candidate.label || '').toLowerCase();
-    return tokens.every((token) => haystack.includes(token));
-  }
-
   function getFilteredCandidates(query) {
-    return quoteCandidates
-      .filter((candidate) => matchesCandidate(candidate, query))
-      .slice(0, 12);
+    return window.PathAlertCandidateUtils
+      ? window.PathAlertCandidateUtils.filterPathAlertCandidates(quoteCandidates, query, 12)
+      : [];
   }
 
   function hideCandidateSuggestions() {

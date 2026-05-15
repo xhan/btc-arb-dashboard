@@ -110,7 +110,25 @@
     return candidates;
   }
 
+  function matchesPathAlertCandidate(candidate, query) {
+    const tokens = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return true;
+    const haystack = String(candidate && (candidate.searchText || candidate.label) || '').toLowerCase();
+    return tokens.every((token) => haystack.includes(token));
+  }
+
+  function filterPathAlertCandidates(candidates, query, limit = 12) {
+    const max = Number.isFinite(Number(limit)) && Number(limit) > 0
+      ? Math.floor(Number(limit))
+      : 12;
+    return (Array.isArray(candidates) ? candidates : [])
+      .filter((candidate) => matchesPathAlertCandidate(candidate, query))
+      .slice(0, max);
+  }
+
   return {
-    buildPathAlertCandidates
+    buildPathAlertCandidates,
+    filterPathAlertCandidates,
+    matchesPathAlertCandidate
   };
 });
