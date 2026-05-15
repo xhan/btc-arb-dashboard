@@ -596,9 +596,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(queueStatsResponse.body.includes('队列统计'));
     assert.ok(queueStatsResponse.body.includes('请求发起间隔'));
     assert.ok(queueStatsResponse.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(queueStatsResponse.body.includes('src="chain-defaults.js"'));
     assert.ok(queueStatsResponse.body.includes('src="request-channel-utils.js"'));
     assert.ok(
       queueStatsResponse.body.indexOf('src="quote-pause-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')
+    );
+    assert.ok(
+      queueStatsResponse.body.indexOf('src="chain-defaults.js"') < queueStatsResponse.body.indexOf('src="request-channel-utils.js"')
     );
     assert.ok(
       queueStatsResponse.body.indexOf('src="request-channel-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')

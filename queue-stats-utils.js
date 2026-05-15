@@ -5,12 +5,15 @@
   const requestChannelUtils = typeof module !== 'undefined' && module.exports
     ? require('./request-channel-utils')
     : root.RequestChannelUtils;
-  const api = factory(quotePauseUtils, requestChannelUtils);
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('./chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(quotePauseUtils, requestChannelUtils, chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   root.QueueStatsUtils = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils, requestChannelUtils) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils, requestChannelUtils, chainDefaults) {
   const DEFAULT_INTERVALS = requestChannelUtils && requestChannelUtils.DEFAULT_INTERVALS
     ? { ...requestChannelUtils.DEFAULT_INTERVALS }
     : {
@@ -26,16 +29,25 @@
     };
 
   function normalizeChain(chain) {
+    if (chainDefaults && typeof chainDefaults.normalizeChain === 'function') {
+      return chainDefaults.normalizeChain(chain);
+    }
     return typeof chain === 'string' ? chain.trim().toLowerCase() : '';
   }
 
   function isEvmChain(chain) {
+    if (chainDefaults && typeof chainDefaults.isEvmChain === 'function') {
+      return chainDefaults.isEvmChain(chain);
+    }
     const normalized = normalizeChain(chain);
     const nonEvm = new Set(['solana', 'sui', 'starknet', 'bybit', 'binance']);
     return !!normalized && !nonEvm.has(normalized);
   }
 
   function isCrossChainQuote(quote) {
+    if (chainDefaults && typeof chainDefaults.isCrossChainQuote === 'function') {
+      return chainDefaults.isCrossChainQuote(quote);
+    }
     const fromChain = normalizeChain(quote && quote.chain);
     const toChain = normalizeChain(quote && quote.toChain);
     return Boolean(fromChain && toChain && fromChain !== toChain);

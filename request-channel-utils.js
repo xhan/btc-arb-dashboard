@@ -1,10 +1,13 @@
 (function (root, factory) {
-  const api = factory();
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('./chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   root.RequestChannelUtils = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   const DEFAULT_REQUEST_CHANNEL_ID = 'default';
   const DEFAULT_REQUEST_CHANNEL_NAME = '默认通道';
   const DEFAULT_INTERVALS = {
@@ -34,16 +37,25 @@
   }
 
   function normalizeChain(chain) {
+    if (chainDefaults && typeof chainDefaults.normalizeChain === 'function') {
+      return chainDefaults.normalizeChain(chain);
+    }
     return normalizeString(chain).toLowerCase();
   }
 
   function isEvmChain(chain) {
+    if (chainDefaults && typeof chainDefaults.isEvmChain === 'function') {
+      return chainDefaults.isEvmChain(chain);
+    }
     const normalized = normalizeChain(chain);
     const nonEvm = new Set(['solana', 'sui', 'starknet', 'bybit', 'binance']);
     return !!normalized && !nonEvm.has(normalized);
   }
 
   function isCrossChainQuote(quote) {
+    if (chainDefaults && typeof chainDefaults.isCrossChainQuote === 'function') {
+      return chainDefaults.isCrossChainQuote(quote);
+    }
     const fromChain = normalizeChain(quote && quote.chain);
     const toChain = normalizeChain(quote && quote.toChain);
     return Boolean(fromChain && toChain && fromChain !== toChain);
