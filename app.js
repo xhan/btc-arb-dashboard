@@ -115,6 +115,8 @@
     };
     let dataTerminalRecordsCacheKey = '';
     let dataTerminalRecordsCache = null;
+    let dataTerminalCandidatesCacheKey = '';
+    let dataTerminalCandidatesCache = null;
     let quoteMarketStateRevision = 0;
     let arbRuleSnapshotCacheKey = '';
     let arbRuleSnapshotCache = null;
@@ -2973,6 +2975,17 @@
         return records;
     }
 
+    function buildDataTerminalCandidates(utils) {
+        const cacheKey = resolveDataTerminalRecordsCacheKey();
+        if (dataTerminalCandidatesCache && dataTerminalCandidatesCacheKey === cacheKey) {
+            return dataTerminalCandidatesCache;
+        }
+        const candidates = utils.buildDataTerminalCandidates(buildDataTerminalRecords());
+        dataTerminalCandidatesCacheKey = cacheKey;
+        dataTerminalCandidatesCache = candidates;
+        return candidates;
+    }
+
     function buildDataTerminalRowHtml(row, side, selectedKey) {
         const chainLabel = formatChainLabel(row.chain);
         const amountText = formatDetailNumber(Number(row.amount), 6);
@@ -3044,7 +3057,7 @@
             refs.diffToggle.checked = dataTerminalState.showDiff;
         }
 
-        const candidates = utils.buildDataTerminalCandidates(buildDataTerminalRecords());
+        const candidates = buildDataTerminalCandidates(utils);
         const viewModel = utils.buildDataTerminalViewModel(candidates, {
             query: dataTerminalState.query,
             aliasRules: getAliasRules(),

@@ -83,19 +83,18 @@
   - 提升交互稳定性
 - 建议改法：
   - 先从套利面板做增量更新或最小重绘
-  - 路径报警面板保持“仅在可见时刷新”
-  - 数据终端至少先做 records/candidates 缓存
+  - 路径报警面板已保持“仅在可见时刷新”
+  - 数据终端已完成 records/candidates 缓存
 
 ### 7. 数据终端缓存化
 - 目标：避免每次刷新都重建 records 和 candidates。
 - 现状：
-  - `renderDataTerminalPanel()` 每次都会从 `dashboardState + quoteMarketState` 重建全量数据
-  - 然后再跑搜索、别名、diff 计算
+  - 已用 `dataTerminalRecordsCacheKey` 缓存 `dashboardState + quoteMarketState` 生成的 records
+  - 已用同一 cache key 缓存 candidates，查询、别名、diff 变化只重跑 view model/filter
 - 预期收益：
-  - 降低数据终端打开后的持续 CPU
-- 建议改法：
-  - 维护基于 `quoteStateRevision` 的缓存
-  - 查询变化只重跑 filter，不重建底层 records
+  - 已降低数据终端打开后的持续 CPU
+- 后续建议：
+  - 若数据量继续增长，再对数据终端 DOM 做局部更新
 
 ### 8. sqlite 连接与 schema 初始化下沉
 - 目标：减少后端图表/快照接口的重复初始化成本。

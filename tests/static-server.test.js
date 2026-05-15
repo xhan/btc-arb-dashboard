@@ -361,6 +361,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('selectedRightKey'));
     assert.ok(appJsResponse.body.includes('buildDataTerminalSelectionSummary'));
     assert.ok(appJsResponse.body.includes('clearTimeout(dataTerminalState.timer);'));
+    assert.ok(appJsResponse.body.includes('let dataTerminalCandidatesCacheKey = \'\';'));
+    assert.ok(appJsResponse.body.includes('function buildDataTerminalCandidates(utils)'));
     assert.ok(appJsResponse.body.includes('dataTerminalState.domRefs = null;'));
     assert.ok(appJsResponse.body.includes('Token -&gt; Token'));
     assert.ok(appJsResponse.body.includes('window.CopyUtils'));
