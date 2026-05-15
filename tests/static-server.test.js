@@ -279,7 +279,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRequestUtilsResponse.body.includes('const MARKET_QUOTE_REQUESTS = Object.freeze({'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));
-    assert.ok(appJsResponse.body.includes('window.ChainDefaults.buildQuoteStrategy(quote)'));
+    assert.ok(appJsResponse.body.includes('function getChainDefaults()'));
+    assert.ok(appJsResponse.body.includes('ChainDefaults is not loaded'));
+    assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteStrategy(quote)'));
+    assert.ok(appJsResponse.body.includes('getChainDefaults().isCrossChainQuote(quote)'));
+    assert.ok(!appJsResponse.body.includes("const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];"));
     assert.ok(/buildQuoteResultMarketState\(\s*previousState,\s*data,/.test(appJsResponse.body));
     assert.ok(appJsResponse.body.includes('buildSwappedQuoteMarketState(state)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteResultMarketState(previousState, quoteResult, options = {})'));

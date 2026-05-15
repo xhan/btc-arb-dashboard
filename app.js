@@ -300,13 +300,15 @@
         return String(chain || '').trim().toLowerCase();
     }
 
-    function isCrossChainQuote(quote) {
-        if (window.ChainDefaults && typeof window.ChainDefaults.isCrossChainQuote === 'function') {
-            return window.ChainDefaults.isCrossChainQuote(quote);
+    function getChainDefaults() {
+        if (!window.ChainDefaults) {
+            throw new Error('ChainDefaults is not loaded');
         }
-        const fromChain = normalizeChainKey(quote && quote.chain);
-        const toChain = normalizeChainKey(quote && quote.toChain);
-        return Boolean(fromChain && toChain && fromChain !== toChain);
+        return window.ChainDefaults;
+    }
+
+    function isCrossChainQuote(quote) {
+        return getChainDefaults().isCrossChainQuote(quote);
     }
 
     function getSingleChainDisplayName(chain) {
@@ -324,11 +326,7 @@
     }
 
     function isCexOrderbookChain(chain) {
-        if (window.ChainDefaults && typeof window.ChainDefaults.isCexOrderbookChain === 'function') {
-            return window.ChainDefaults.isCexOrderbookChain(chain);
-        }
-        const normalized = normalizeChainKey(chain);
-        return normalized === 'bybit' || normalized === 'binance';
+        return getChainDefaults().isCexOrderbookChain(chain);
     }
 
     function parseCexTradingPairSymbol(symbol) {
@@ -362,16 +360,10 @@
         'mode': 34443
     };
     const ZEROX_SUPPORTED_CHAINS = Object.keys(ZEROX_CHAIN_IDS);
-    const defaultSourceResolver = (window.ChainDefaults && typeof window.ChainDefaults.getDefaultSourceForChain === 'function')
-        ? window.ChainDefaults.getDefaultSourceForChain
-        : () => 'Kyber';
+    const defaultSourceResolver = (chain) => getChainDefaults().getDefaultSourceForChain(chain);
 
     function isEvmChain(chain) {
-        if (window.ChainDefaults && typeof window.ChainDefaults.isEvmChain === 'function') {
-            return window.ChainDefaults.isEvmChain(chain);
-        }
-        const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];
-        return !!chain && !nonEvm.includes(normalizeChainKey(chain));
+        return getChainDefaults().isEvmChain(chain);
     }
 
     function is0xSupported(chain) {
@@ -5063,9 +5055,7 @@
         const requestQuote = isInverseFetch
             ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: requestedAmount, requestChannelId }
             : { ...quote, amount: requestedAmount, requestChannelId };
-        const strategy = window.ChainDefaults && typeof window.ChainDefaults.buildQuoteStrategy === 'function'
-            ? window.ChainDefaults.buildQuoteStrategy(quote)
-            : [];
+        const strategy = getChainDefaults().buildQuoteStrategy(quote);
         let fetchError = null;
         let successSource = null;
         let data = null;

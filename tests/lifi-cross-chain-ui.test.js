@@ -11,4 +11,4 @@ assert.ok(appJs.includes('newQuote.toChain = normalizedToChain'), '保存跨链�
 assert.ok(appJs.includes("newQuote.preferredSource = 'LI.FI'"), '跨链报价应强制使用 LI.FI');
 assert.ok(appJs.includes('function isCrossChainQuote'), '前端应有统一跨链报价判断');
 assert.ok(chainDefaultsJs.includes("if (isCrossChainQuote(quote)) return ['LI.FI'];"), '跨链报价刷新策略应只走 LI.FI');
-assert.ok(appJs.includes('window.ChainDefaults.buildQuoteStrategy(quote)'), '主看板应复用统一报价刷新策略');
+assert.ok(appJs.includes('getChainDefaults().buildQuoteStrategy(quote)'), '主看板应复用统一报价刷新策略');

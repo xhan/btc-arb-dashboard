@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+const chainDefaultsJs = fs.readFileSync(path.join(__dirname, '..', 'chain-defaults.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const quoteDisplayUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'quote-display-utils.js'), 'utf8');
 
@@ -15,8 +16,12 @@ assert.ok(
   'quote display 工具应生成 CEX 盘口 tooltip'
 );
 assert.ok(
-  appJs.includes("return normalized === 'bybit' || normalized === 'binance';"),
-  '前端应识别 Bybit 和 Binance 为同类 CEX quote'
+  appJs.includes('getChainDefaults().isCexOrderbookChain(chain)'),
+  '前端应通过 ChainDefaults 识别 CEX quote'
+);
+assert.ok(
+  chainDefaultsJs.includes("return normalized === 'bybit' || normalized === 'binance';"),
+  'ChainDefaults 应识别 Bybit 和 Binance 为同类 CEX quote'
 );
 assert.ok(
   appJs.includes("className: 'cex-orderbook-tooltip-host'"),
