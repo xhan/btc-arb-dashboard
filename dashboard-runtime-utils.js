@@ -59,6 +59,60 @@
     return result;
   }
 
+  function getQuoteResultSymbols(quoteResult) {
+    return quoteResult && quoteResult.symbols && typeof quoteResult.symbols === 'object'
+      ? quoteResult.symbols
+      : {};
+  }
+
+  function buildQuoteResultMarketState(previousState, quoteResult, options = {}) {
+    const baseState = previousState && typeof previousState === 'object'
+      ? { ...previousState }
+      : {};
+    const symbols = getQuoteResultSymbols(quoteResult);
+
+    if (options.isInverseFetch) {
+      return {
+        ...baseState,
+        inverseRawPrice: quoteResult && quoteResult.rawPrice,
+        inverseTotalAmountOut: quoteResult && quoteResult.finalAmountOut,
+        inverseFromSymbol: symbols.from || '',
+        inverseToSymbol: symbols.to || ''
+      };
+    }
+
+    return {
+      ...baseState,
+      fromSymbol: symbols.from || '',
+      toSymbol: symbols.to || '',
+      lastResultText: quoteResult && quoteResult.resultText || '',
+      lastRawPrice: quoteResult && quoteResult.rawPrice,
+      lastTotalAmountOut: quoteResult && quoteResult.finalAmountOut,
+      cexOrderbook: quoteResult && quoteResult.cexOrderbook || null,
+      usedSource: quoteResult && quoteResult.usedSource || '',
+      usedSourceReal: options.successSource || null
+    };
+  }
+
+  function buildSwappedQuoteMarketState(previousState) {
+    const source = previousState && typeof previousState === 'object' ? previousState : {};
+    const nextState = {
+      ...source,
+      lastRawPrice: null,
+      lastTotalAmountOut: null,
+      inverseRawPrice: null,
+      inverseTotalAmountOut: null
+    };
+
+    if (nextState.fromSymbol && nextState.toSymbol) {
+      const temp = nextState.fromSymbol;
+      nextState.fromSymbol = nextState.toSymbol;
+      nextState.toSymbol = temp;
+    }
+
+    return nextState;
+  }
+
   function isPanelVisible(panel, getComputedStyleImpl) {
     if (!panel) return false;
     const readStyle = typeof getComputedStyleImpl === 'function'
@@ -152,7 +206,9 @@
 
   return {
     buildDataTerminalRecordsCacheKey,
+    buildQuoteResultMarketState,
     buildQuoteMarketStateSignature,
+    buildSwappedQuoteMarketState,
     hasQuoteMarketStateChanged,
     sanitizeQuoteMarketState,
     hasActivePathAlertEvaluationTarget,

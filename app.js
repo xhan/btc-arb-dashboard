@@ -2172,32 +2172,7 @@
                 return Number(cardIndex) === 0;
             },
             buildArbDetailSnapshotMonitorState(previousState, quoteResult, options = {}) {
-                const baseState = previousState && typeof previousState === 'object'
-                    ? { ...previousState }
-                    : {};
-                const symbols = quoteResult && quoteResult.symbols && typeof quoteResult.symbols === 'object'
-                    ? quoteResult.symbols
-                    : {};
-                if (options.isInverseFetch) {
-                    return {
-                        ...baseState,
-                        inverseRawPrice: quoteResult?.rawPrice,
-                        inverseTotalAmountOut: quoteResult?.finalAmountOut,
-                        inverseFromSymbol: symbols.from || '',
-                        inverseToSymbol: symbols.to || ''
-                    };
-                }
-                return {
-                    ...baseState,
-                    fromSymbol: symbols.from || '',
-                    toSymbol: symbols.to || '',
-                    lastResultText: quoteResult?.resultText || '',
-                    lastRawPrice: quoteResult?.rawPrice,
-                    lastTotalAmountOut: quoteResult?.finalAmountOut,
-                    cexOrderbook: quoteResult?.cexOrderbook || null,
-                    usedSource: quoteResult?.usedSource || '',
-                    usedSourceReal: options.successSource || null
-                };
+                return getDashboardRuntimeUtils().buildQuoteResultMarketState(previousState, quoteResult, options);
             },
             buildArbDetailDexLink(config = {}) {
                 const utils = window.DexLinkUtils;
@@ -5331,13 +5306,11 @@
                     }
 
                     inverseEl.textContent = `${quote.amount || 1} ${data.symbols.from} ≈ ${data.finalAmountOut.toFixed(6)} ${data.symbols.to}`;
-                    const inverseState = {
-                        ...previousState,
-                        inverseRawPrice: data.rawPrice,
-                        inverseTotalAmountOut: data.finalAmountOut,
-                        inverseFromSymbol: data.symbols.from,
-                        inverseToSymbol: data.symbols.to
-                    };
+                    const inverseState = getDashboardRuntimeUtils().buildQuoteResultMarketState(
+                        previousState,
+                        data,
+                        { isInverseFetch: true }
+                    );
                     setQuoteMarketState(quote.id, inverseState);
                     inverseEl.textContent = getInverseQuoteDisplayText(quote, inverseState, inverseEl.textContent);
                     bindCopyHandler(
@@ -5349,17 +5322,11 @@
                 const oldPrice = previousState.lastRawPrice;
                 const oldSource = previousState.usedSourceReal;
 
-                const newState = {
-                    ...previousState,
-                    fromSymbol: data.symbols.from,
-                    toSymbol: data.symbols.to,
-                    lastResultText: data.resultText,
-                    lastRawPrice: data.rawPrice,
-                    lastTotalAmountOut: data.finalAmountOut,
-                    cexOrderbook: data.cexOrderbook || null,
-                    usedSource: data.usedSource,
-                    usedSourceReal: successSource
-                };
+                const newState = getDashboardRuntimeUtils().buildQuoteResultMarketState(
+                    previousState,
+                    data,
+                    { successSource }
+                );
 
                 quoteTextEl.textContent = getQuoteDisplayText(quote, newState);
                 updateQuotePairLabel(quote, newState);
@@ -6484,23 +6451,11 @@
 
         const state = quoteMarketState.get(quoteId);
         if (state) {
-            const nextState = {
-                ...state,
-                lastRawPrice: null,
-                lastTotalAmountOut: null,
-                inverseRawPrice: null,
-                inverseTotalAmountOut: null
-            };
+            const nextState = getDashboardRuntimeUtils().buildSwappedQuoteMarketState(state);
 
             const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
             if (arrowEl) {
                 arrowEl.className = 'trend-arrow';
-            }
-
-            if (nextState.fromSymbol && nextState.toSymbol) {
-                const temp = nextState.fromSymbol;
-                nextState.fromSymbol = nextState.toSymbol;
-                nextState.toSymbol = temp;
             }
 
             const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);

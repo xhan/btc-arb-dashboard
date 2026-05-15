@@ -237,6 +237,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
     const pathAlertPageUtilsResponse = await request('/path-alert-page-utils.js');
     assert.strictEqual(pathAlertPageUtilsResponse.statusCode, 200);
+    const dashboardRuntimeUtilsResponse = await request('/dashboard-runtime-utils.js');
+    assert.strictEqual(dashboardRuntimeUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
@@ -271,6 +273,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRequestUtilsResponse.body.includes('const MARKET_QUOTE_REQUESTS = Object.freeze({'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(appJsResponse.body.includes('window.ChainDefaults.buildQuoteStrategy(quote)'));
+    assert.ok(/buildQuoteResultMarketState\(\s*previousState,\s*data,/.test(appJsResponse.body));
+    assert.ok(appJsResponse.body.includes('buildSwappedQuoteMarketState(state)'));
+    assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteResultMarketState(previousState, quoteResult, options = {})'));
+    assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildSwappedQuoteMarketState(previousState)'));
     assert.ok(!appJsResponse.body.includes('function buildQuoteStrategy(quote)'));
     assert.ok(!appJsResponse.body.includes('function get0xQuote'));
     assert.ok(!appJsResponse.body.includes('function getVeloraQuote'));

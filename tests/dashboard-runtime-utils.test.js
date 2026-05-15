@@ -2,7 +2,9 @@ const assert = require('assert');
 
 const {
   buildDataTerminalRecordsCacheKey,
+  buildQuoteResultMarketState,
   buildQuoteMarketStateSignature,
+  buildSwappedQuoteMarketState,
   hasQuoteMarketStateChanged,
   sanitizeQuoteMarketState,
   hasActivePathAlertEvaluationTarget,
@@ -181,3 +183,70 @@ assert.deepStrictEqual(
   []
 );
 assert.strictEqual(sanitizedMarketState.lastRawPrice, marketState.lastRawPrice);
+
+assert.deepStrictEqual(
+  buildQuoteResultMarketState(
+    { hasUnreadAlert: true, fromSymbol: 'old' },
+    {
+      symbols: { from: 'ETH', to: 'USDC' },
+      resultText: 'ETH result',
+      rawPrice: 3200,
+      finalAmountOut: 6400,
+      usedSource: 'Velora',
+      cexOrderbook: { bestBidPrice: 3199, bestAskPrice: 3201 }
+    },
+    { successSource: 'Velora' }
+  ),
+  {
+    hasUnreadAlert: true,
+    fromSymbol: 'ETH',
+    toSymbol: 'USDC',
+    lastResultText: 'ETH result',
+    lastRawPrice: 3200,
+    lastTotalAmountOut: 6400,
+    cexOrderbook: { bestBidPrice: 3199, bestAskPrice: 3201 },
+    usedSource: 'Velora',
+    usedSourceReal: 'Velora'
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuoteResultMarketState(
+    { fromSymbol: 'ETH', toSymbol: 'USDC' },
+    {
+      symbols: { from: 'USDC', to: 'ETH' },
+      rawPrice: 0.0003125,
+      finalAmountOut: 0.625
+    },
+    { isInverseFetch: true }
+  ),
+  {
+    fromSymbol: 'ETH',
+    toSymbol: 'USDC',
+    inverseRawPrice: 0.0003125,
+    inverseTotalAmountOut: 0.625,
+    inverseFromSymbol: 'USDC',
+    inverseToSymbol: 'ETH'
+  }
+);
+
+assert.deepStrictEqual(
+  buildSwappedQuoteMarketState({
+    fromSymbol: 'ETH',
+    toSymbol: 'USDC',
+    lastRawPrice: 3200,
+    lastTotalAmountOut: 6400,
+    inverseRawPrice: 0.0003125,
+    inverseTotalAmountOut: 0.625,
+    usedSource: 'Kyber'
+  }),
+  {
+    fromSymbol: 'USDC',
+    toSymbol: 'ETH',
+    lastRawPrice: null,
+    lastTotalAmountOut: null,
+    inverseRawPrice: null,
+    inverseTotalAmountOut: null,
+    usedSource: 'Kyber'
+  }
+);
