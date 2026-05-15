@@ -996,14 +996,6 @@ for (const routeConfig of CEX_QUOTE_ROUTES) {
     registerCexQuoteRoute(routeConfig);
 }
 
-app.get('/api/solana-metadata', async (req, res) => {
-    const { mint } = req.query;
-    try {
-        const metadata = await marketClients.getSolanaTokenMeta(mint);
-        res.json(metadata);
-    } catch (error) { res.status(500).json({ error: `无法获取 ${mint} 的元数据` }); }
-});
-
 (async () => {
     await refreshRuntimeConfigCache();
     await marketClients.loadTokenMetaCache();
