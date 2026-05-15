@@ -4,6 +4,7 @@ const path = require('path');
 
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const quoteDisplayUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'quote-display-utils.js'), 'utf8');
 
 assert.ok(
   appJs.includes('function buildCexOrderbookSummary(symbol, orderbook)'),
@@ -30,8 +31,8 @@ assert.ok(
   '卡片应包含较小字号的交易对标签'
 );
 assert.ok(
-  appJs.includes('function getCexPairLabel(quote, state)'),
-  '前端应生成 CEX 交易对标签'
+  quoteDisplayUtilsJs.includes('function getCexPairLabel(quote, state)'),
+  'quote display 工具应生成 CEX 交易对标签'
 );
 assert.ok(
   indexHtml.includes('.cex-orderbook-tooltip'),

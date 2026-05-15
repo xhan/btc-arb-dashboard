@@ -207,6 +207,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/arb-detail-utils.js');
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
+    const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
+    assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
@@ -232,8 +234,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
-    assert.ok(appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
-    assert.ok(appJsResponse.body.includes('quote-direct-badge'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('quote-direct-badge'));
+    assert.ok(appJsResponse.body.includes('utils.buildQuotePairLabelHtml(quote, state)'));
+    assert.ok(!appJsResponse.body.includes('function getCexPairLabel(quote, state)'));
+    assert.ok(!appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(appJsResponse.body.includes('quote.kyberOnlyDirectPools = true;'));
     const scheduleArbUpdateMatch = appJsResponse.body.match(/function scheduleArbUpdate\(\) \{([\s\S]*?)function invalidateArbRuleSnapshotCache/);
     assert.ok(scheduleArbUpdateMatch);

@@ -2391,35 +2391,10 @@
         `;
     }
 
-    function getCexPairLabel(quote, state) {
-        if (!isCexOrderbookChain(quote && quote.chain)) return '';
-        if (state && state.fromSymbol && state.toSymbol) {
-            return `${state.fromSymbol}/${state.toSymbol}`;
-        }
-        return String(quote?.symbol || '').trim().toUpperCase();
-    }
-
-    function getQuotePairLabel(quote, state) {
-        if (!quote) return '';
-        if (state && state.fromSymbol && state.toSymbol) {
-            return `${state.fromSymbol}/${state.toSymbol}`;
-        }
-        return getCexPairLabel(quote, state);
-    }
-
-    function shouldShowKyberDirectPoolsBadge(quote) {
-        if (!quote || quote.kyberOnlyDirectPools !== true) return false;
-        const preferredSource = String(quote.preferredSource || 'Kyber').trim();
-        return preferredSource === 'Kyber' || preferredSource === 'Auto';
-    }
-
     function buildQuotePairLabelHtml(quote, state) {
-        const label = getQuotePairLabel(quote, state);
-        if (!label) return '';
-        const badgeHtml = shouldShowKyberDirectPoolsBadge(quote)
-            ? '<span class="quote-direct-badge" title="Kyber 仅直连池"></span>'
-            : '';
-        return `${escapeHtml(label)}${badgeHtml}`;
+        const utils = getQuoteDisplayUtils();
+        if (!utils || typeof utils.buildQuotePairLabelHtml !== 'function') return '';
+        return utils.buildQuotePairLabelHtml(quote, state);
     }
 
     function getQuoteDisplayText(quote, state) {

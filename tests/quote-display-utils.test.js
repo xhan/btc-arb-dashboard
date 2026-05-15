@@ -3,7 +3,11 @@ const assert = require('assert');
 const {
   QUOTE_DISPLAY_MODE_AMOUNT,
   QUOTE_DISPLAY_MODE_RATE,
+  buildQuotePairLabelHtml,
   buildQuoteDisplayText,
+  getCexPairLabel,
+  getQuotePairLabel,
+  shouldShowKyberDirectPoolsBadge,
   normalizeQuoteDisplayMode
 } = require('../quote-display-utils');
 
@@ -45,4 +49,42 @@ assert.strictEqual(
     fallbackText: '等待报价...'
   }),
   '等待报价...'
+);
+
+assert.strictEqual(
+  getCexPairLabel({ chain: 'Bybit', symbol: 'btcusdt' }, {}),
+  'BTCUSDT'
+);
+
+assert.strictEqual(
+  getCexPairLabel({ chain: 'Binance', symbol: 'ETHUSDT' }, { fromSymbol: 'ETH', toSymbol: 'USDT' }),
+  'ETH/USDT'
+);
+
+assert.strictEqual(
+  getCexPairLabel({ chain: 'ethereum', symbol: 'ETHUSDT' }, {}),
+  ''
+);
+
+assert.strictEqual(
+  getQuotePairLabel({ chain: 'ethereum' }, { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }),
+  'cb<BTC>/WBTC'
+);
+
+assert.strictEqual(
+  shouldShowKyberDirectPoolsBadge({ kyberOnlyDirectPools: true, preferredSource: 'Kyber' }),
+  true
+);
+
+assert.strictEqual(
+  shouldShowKyberDirectPoolsBadge({ kyberOnlyDirectPools: true, preferredSource: '0x' }),
+  false
+);
+
+assert.strictEqual(
+  buildQuotePairLabelHtml(
+    { chain: 'ethereum', kyberOnlyDirectPools: true, preferredSource: 'Auto' },
+    { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }
+  ),
+  'cb&lt;BTC&gt;/WBTC<span class="quote-direct-badge" title="Kyber 仅直连池"></span>'
 );
