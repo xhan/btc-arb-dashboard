@@ -5140,26 +5140,10 @@
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || `${options.source} API Request Failed`);
 
-        const cexOrderbook = {
-            bestBidPrice: data.bestBidPrice,
-            bestBidSize: data.bestBidSize,
-            bestAskPrice: data.bestAskPrice,
-            bestAskSize: data.bestAskSize,
-            bidsTop5: data.bidsTop5,
-            asksTop5: data.asksTop5,
-            bidsTopDepth: data.bidsTopDepth,
-            asksTopDepth: data.asksTopDepth,
-            feeRate: data.feeRate
-        };
-
-        return {
-            symbols: { from: data.fromSymbol, to: data.toSymbol },
-            finalAmountOut: data.amountOut,
-            rawPrice: data.raw_price,
-            usedSource: options.source,
-            resultText: buildCexOrderbookSummary(quote.symbol, cexOrderbook),
-            cexOrderbook
-        };
+        return getQuoteRequestUtils().buildCexOrderbookQuoteResult(data, quote, {
+            source: options.source,
+            buildSummary: buildCexOrderbookSummary
+        });
     }
 
     async function getBybitQuote(quote, signal) {

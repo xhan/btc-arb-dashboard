@@ -272,6 +272,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getMarketQuote(quote, signal, config)'));
     assert.ok(quoteRequestUtilsResponse.body.includes('const MARKET_QUOTE_REQUESTS = Object.freeze({'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));
     assert.ok(appJsResponse.body.includes('window.ChainDefaults.buildQuoteStrategy(quote)'));
     assert.ok(/buildQuoteResultMarketState\(\s*previousState,\s*data,/.test(appJsResponse.body));
     assert.ok(appJsResponse.body.includes('buildSwappedQuoteMarketState(state)'));

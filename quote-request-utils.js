@@ -36,8 +36,41 @@
     return result;
   }
 
+  function buildCexOrderbook(data) {
+    return {
+      bestBidPrice: data.bestBidPrice,
+      bestBidSize: data.bestBidSize,
+      bestAskPrice: data.bestAskPrice,
+      bestAskSize: data.bestAskSize,
+      bidsTop5: data.bidsTop5,
+      asksTop5: data.asksTop5,
+      bidsTopDepth: data.bidsTopDepth,
+      asksTopDepth: data.asksTopDepth,
+      feeRate: data.feeRate
+    };
+  }
+
+  function buildCexOrderbookQuoteResult(data, quote, options = {}) {
+    const cexOrderbook = buildCexOrderbook(data);
+    const buildSummary = typeof options.buildSummary === 'function'
+      ? options.buildSummary
+      : null;
+    return {
+      symbols: { from: data.fromSymbol, to: data.toSymbol },
+      finalAmountOut: data.amountOut,
+      rawPrice: data.raw_price,
+      usedSource: options.source,
+      resultText: buildSummary
+        ? buildSummary(quote && quote.symbol, cexOrderbook)
+        : '',
+      cexOrderbook
+    };
+  }
+
   return {
     MARKET_QUOTE_REQUESTS,
+    buildCexOrderbook,
+    buildCexOrderbookQuoteResult,
     buildMarketQuoteResult,
     resolveMarketQuoteRequestConfig
   };
