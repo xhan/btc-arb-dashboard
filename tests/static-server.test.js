@@ -571,7 +571,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function buildDataTerminalCandidates(utils)'));
     assert.ok(appJsResponse.body.includes('dataTerminalState.domRefs = null;'));
     assert.ok(dataTerminalUtilsResponse.body.includes('Token -&gt; Token'));
-    assert.ok(appJsResponse.body.includes('window.CopyUtils'));
+    assert.ok(appJsResponse.body.includes('function getCopyUtils()'));
+    assert.ok(appJsResponse.body.includes('CopyUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('window.enableAlertDebug ='));
     assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
     assert.ok(appJsResponse.body.includes('最近 1 小时'));

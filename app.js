@@ -5238,17 +5238,20 @@
         return numberMatch ? Number(numberMatch[0]) : null;
     }
 
+    function getCopyUtils() {
+        if (!window.CopyUtils) {
+            throw new Error('CopyUtils is not loaded');
+        }
+        return window.CopyUtils;
+    }
+
     async function copyTextToClipboard(text) {
         try {
-            if (window.CopyUtils && typeof window.CopyUtils.copyTextToClipboard === 'function') {
-                await window.CopyUtils.copyTextToClipboard(text);
-                return;
-            }
+            await getCopyUtils().copyTextToClipboard(text);
         } catch (error) {
             console.warn('Clipboard write failed', error);
             throw error;
         }
-        throw new Error('Clipboard unavailable');
     }
 
     async function copyDexLinkFromElement(targetEl) {
