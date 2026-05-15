@@ -2,14 +2,27 @@ const assert = require('assert');
 
 const {
   buildQuoteStrategy,
+  CHAIN_DISPLAY_NAMES,
   getDefaultSourceForChain,
+  getChainDisplayName,
   isCexOrderbookChain,
   isCrossChainQuote,
   isEvmChain,
-  normalizeChain
+  normalizeChain,
+  normalizeChainFilterToken
 } = require('../chain-defaults');
 
 assert.strictEqual(normalizeChain(' Ethereum '), 'ethereum');
+assert.strictEqual(CHAIN_DISPLAY_NAMES.ethereum, 'ETH');
+assert.strictEqual(getChainDisplayName('ethereum'), 'ETH');
+assert.strictEqual(getChainDisplayName(' Ethereum '), 'ETH');
+assert.strictEqual(getChainDisplayName('Bybit'), 'Bybit');
+assert.strictEqual(getChainDisplayName('unknown'), 'unknown');
+assert.strictEqual(normalizeChainFilterToken('ETH'), 'ethereum');
+assert.strictEqual(normalizeChainFilterToken('Arbitrum'), 'arbitrum');
+assert.strictEqual(normalizeChainFilterToken('MEGA'), 'megaeth');
+assert.strictEqual(normalizeChainFilterToken('Bybit'), 'Bybit');
+assert.strictEqual(normalizeChainFilterToken(''), '');
 assert.strictEqual(isEvmChain('ethereum'), true);
 assert.strictEqual(isEvmChain('solana'), false);
 assert.strictEqual(isCexOrderbookChain(' Bybit '), true);

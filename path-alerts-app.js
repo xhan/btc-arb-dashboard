@@ -2,44 +2,6 @@
   const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
   const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
   const PATH_ALERT_CONFIG_SYNC_SOURCE_MANAGE = 'path-alerts-manage';
-  const CHAIN_DISPLAY_NAMES = {
-    ethereum: 'ETH',
-    arbitrum: 'Arbitrum',
-    optimism: 'Optimism',
-    bsc: 'BSC',
-    polygon: 'Polygon',
-    avalanche: 'Avalanche',
-    base: 'Base',
-    linea: 'Linea',
-    mantle: 'Mantle',
-    sonic: 'Sonic',
-    berachain: 'Berachain',
-    ronin: 'Ronin',
-    unichain: 'Unichain',
-    hyperevm: 'HyperEVM',
-    plasma: 'Plasma',
-    scroll: 'Scroll',
-    blast: 'Blast',
-    mode: 'Mode',
-    monad: 'Monad',
-    etherlink: 'Etherlink',
-    fantom: 'Fantom',
-    cronos: 'Cronos',
-    moonbeam: 'Moonbeam',
-    boba: 'Boba',
-    gnosis: 'Gnosis',
-    celo: 'Celo',
-    hemi: 'Hemi',
-    katana: 'Katana',
-    solana: 'SOL',
-    sui: 'SUI',
-    starknet: 'Starknet',
-    Bybit: 'Bybit',
-    bybit: 'Bybit',
-    Binance: 'Binance',
-    binance: 'Binance'
-  };
-
   const statusEl = document.getElementById('path-alerts-status');
   const listEl = document.getElementById('path-alerts-sections');
   const dismissedListEl = document.getElementById('path-alerts-dismissed-list');
@@ -95,10 +57,15 @@
   }
 
   function formatChainLabel(chain) {
-    return CHAIN_DISPLAY_NAMES[chain] || chain || '';
+    return window.ChainDefaults && typeof window.ChainDefaults.getChainDisplayName === 'function'
+      ? window.ChainDefaults.getChainDisplayName(chain)
+      : (chain || '');
   }
 
   function isCexOrderbookChain(chain) {
+    if (window.ChainDefaults && typeof window.ChainDefaults.isCexOrderbookChain === 'function') {
+      return window.ChainDefaults.isCexOrderbookChain(chain);
+    }
     const normalized = String(chain || '').trim().toLowerCase();
     return normalized === 'bybit' || normalized === 'binance';
   }

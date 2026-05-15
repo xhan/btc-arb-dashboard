@@ -215,54 +215,6 @@
         dark: { icon: '🌙', title: '切换主题（当前：深色）' }
     };
     
-    const CHAIN_DISPLAY_NAMES = {
-        ethereum: 'ETH', solana: 'SOL', sui: 'SUI', polygon: 'Polygon',
-        arbitrum: 'Arbitrum', optimism: 'Optimism', bsc: 'BSC',
-        avalanche: 'Avalanche', base: 'Base', Bybit: 'Bybit', bybit: 'Bybit', Binance: 'Binance', binance: 'Binance',
-        linea: 'Linea', mantle: 'Mantle', sonic: 'Sonic', berachain: 'Berachain',
-        ronin: 'Ronin', unichain: 'Unichain', hyperevm: 'HyperEVM', plasma: 'Plasma',
-        scroll: 'Scroll', blast: 'Blast', mode: 'Mode', monad: 'Monad', etherlink: 'Etherlink',
-        fantom: 'Fantom', cronos: 'Cronos', moonbeam: 'Moonbeam', boba: 'Boba', gnosis: 'Gnosis', celo: 'Celo',
-        megaeth: 'MegaETH',
-        hemi: 'Hemi',
-        katana: 'Katana',
-        starknet: 'Starknet'
-    };
-
-    const CHAIN_FILTER_ALIASES = {
-        ETH: 'ethereum',
-        SOL: 'solana',
-        SUI: 'sui',
-        POLY: 'polygon',
-        MATIC: 'polygon',
-        ARB: 'arbitrum',
-        OP: 'optimism',
-        BSC: 'bsc',
-        BNB: 'bsc',
-        AVAX: 'avalanche',
-        BASE: 'base',
-        LINEA: 'linea',
-        MNT: 'mantle',
-        MANTLE: 'mantle',
-        SONIC: 'sonic',
-        BERA: 'berachain',
-        RON: 'ronin',
-        UNI: 'unichain',
-        HYPE: 'hyperevm',
-        SCROLL: 'scroll',
-        BLAST: 'blast',
-        MODE: 'mode',
-        MONAD: 'monad',
-        FTM: 'fantom',
-        CRO: 'cronos',
-        GLMR: 'moonbeam',
-        BOBA: 'boba',
-        GNO: 'gnosis',
-        CELO: 'celo',
-        MEGA: 'megaeth',
-        MEGAETH: 'megaeth'
-    };
-
     const CHAIN_ADDRESS_PLACEHOLDERS = {
         ethereum: '0x...', solana: 'Enter mint address...', sui: '0x...::module::TYPE',
         polygon: '0x...', arbitrum: '0x...', optimism: '0x...',
@@ -439,8 +391,7 @@
     }
 
     function getSingleChainDisplayName(chain) {
-        const normalized = normalizeChainKey(chain);
-        return CHAIN_DISPLAY_NAMES[normalized] || chain || '';
+        return getChainDefaults().getChainDisplayName(chain);
     }
 
     function getQuoteChainDisplayName(quote) {
@@ -1823,24 +1774,11 @@
     }
 
     function formatChainLabel(chain) {
-        return CHAIN_DISPLAY_NAMES[chain] || chain;
+        return getChainDefaults().getChainDisplayName(chain);
     }
 
     function normalizeArbChainFilterToken(chainToken) {
-        const token = String(chainToken || '').trim();
-        if (!token) return '';
-        if (Object.prototype.hasOwnProperty.call(CHAIN_DISPLAY_NAMES, token)) {
-            return token;
-        }
-
-        for (const [chainKey, displayName] of Object.entries(CHAIN_DISPLAY_NAMES)) {
-            if (displayName === token) {
-                return chainKey;
-            }
-        }
-
-        const aliasMatch = CHAIN_FILTER_ALIASES[token.toUpperCase()];
-        return aliasMatch || '';
+        return getChainDefaults().normalizeChainFilterToken(chainToken);
     }
 
     const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;

@@ -259,6 +259,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
+    const chainDefaultsResponse = await request('/chain-defaults.js');
+    assert.strictEqual(chainDefaultsResponse.statusCode, 200);
     const dashboardRendererResponse = await request('/dashboard-renderer.js');
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
     const pathAlertPageUtilsResponse = await request('/path-alert-page-utils.js');
@@ -312,6 +314,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));
     assert.ok(appJsResponse.body.includes('function getChainDefaults()'));
     assert.ok(appJsResponse.body.includes('ChainDefaults is not loaded'));
+    assert.ok(chainDefaultsResponse.body.includes('const CHAIN_DISPLAY_NAMES = Object.freeze({'));
+    assert.ok(chainDefaultsResponse.body.includes('function getChainDisplayName(chain)'));
+    assert.ok(chainDefaultsResponse.body.includes('function normalizeChainFilterToken(chainToken)'));
+    assert.ok(!appJsResponse.body.includes('const CHAIN_DISPLAY_NAMES = {'));
+    assert.ok(!appJsResponse.body.includes('const CHAIN_FILTER_ALIASES = {'));
+    assert.ok(appJsResponse.body.includes('getChainDefaults().getChainDisplayName(chain)'));
+    assert.ok(appJsResponse.body.includes('getChainDefaults().normalizeChainFilterToken(chainToken)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteStrategy(quote)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().isCrossChainQuote(quote)'));
     assert.ok(!appJsResponse.body.includes("const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];"));
@@ -876,6 +885,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsAppResponse.body.includes('path-alert-search-input'));
     assert.ok(pathAlertsAppResponse.body.includes('path-alert-add-leg-btn'));
     assert.ok(pathAlertsAppResponse.body.includes('path-alert-suggestions'));
+    assert.ok(!pathAlertsAppResponse.body.includes('const CHAIN_DISPLAY_NAMES = {'));
+    assert.ok(pathAlertsAppResponse.body.includes('window.ChainDefaults.getChainDisplayName(chain)'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertCandidateUtils'));
     assert.ok(pathAlertsAppResponse.body.includes('findDismissedTargetForDraft'));
     assert.ok(!pathAlertsAppResponse.body.includes('findDismissedEntryForDraft'));
