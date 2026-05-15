@@ -64,14 +64,15 @@
 ### 5. 把行情状态和 UI 状态拆开
 - 目标：避免 UI 变化误伤套利缓存。
 - 现状：
-  - `quoteMonitorState` 同时存价格、反向价格、趋势箭头 timer、未读报警等 UI 字段
-  - `setQuoteMonitorState()` 会统一触发套利快照失效
+  - `quoteMonitorState` 仍同时存价格、反向价格、趋势箭头 timer、未读报警等 UI 字段
+  - 已新增 market-state signature，`setQuoteMonitorState()` 只在市场字段变化时推进套利/数据终端 revision
+  - 后续仍应把 UI 字段迁出 `quoteMonitorState`
 - 预期收益：
-  - 减少不必要的套利缓存失效
-  - 降低前端重复计算
+  - 已减少 UI-only 更新导致的不必要套利缓存失效
+  - 继续降低前端重复计算
 - 建议改法：
-  - 拆成 `quoteMarketState` 和 `quoteUiState`
-  - 只有行情字段变更时才失效套利缓存
+  - 第二阶段再拆成 `quoteMarketState` 和 `quoteUiState`
+  - 保持只有行情字段变更时才失效套利缓存
 
 ### 6. 减少整块 `innerHTML` 重建
 - 目标：减少大面板反复全量重绘。

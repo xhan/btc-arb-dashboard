@@ -2,6 +2,8 @@ const assert = require('assert');
 
 const {
   buildDataTerminalRecordsCacheKey,
+  buildQuoteMarketStateSignature,
+  hasQuoteMarketStateChanged,
   hasActivePathAlertEvaluationTarget,
   isPanelVisible
 } = require('../dashboard-runtime-utils');
@@ -81,3 +83,45 @@ assert.notStrictEqual(firstKey, buildDataTerminalRecordsCacheKey(pausedDashboard
 const retokenizedDashboard = JSON.parse(JSON.stringify(dashboard));
 retokenizedDashboard[0].quotes[0].toToken = '0xccc';
 assert.notStrictEqual(firstKey, buildDataTerminalRecordsCacheKey(retokenizedDashboard, 1));
+
+const marketState = {
+  fromSymbol: 'cbBTC',
+  toSymbol: 'WBTC',
+  lastResultText: 'cbBTC ≈ 1.001 WBTC',
+  lastRawPrice: 1.001,
+  lastTotalAmountOut: 1.001,
+  inverseRawPrice: 0.999,
+  inverseTotalAmountOut: 0.999,
+  inverseFromSymbol: 'WBTC',
+  inverseToSymbol: 'cbBTC',
+  usedSource: 'Kyber',
+  usedSourceReal: 'Kyber',
+  cexOrderbook: null,
+  hasUnreadAlert: false,
+  logShown: false,
+  trendTimer: 123
+};
+
+const sameMarketStateWithUiChanges = {
+  ...marketState,
+  hasUnreadAlert: true,
+  logShown: true,
+  trendTimer: 456
+};
+
+assert.strictEqual(
+  buildQuoteMarketStateSignature(marketState),
+  buildQuoteMarketStateSignature(sameMarketStateWithUiChanges)
+);
+assert.strictEqual(hasQuoteMarketStateChanged(marketState, sameMarketStateWithUiChanges), false);
+assert.strictEqual(
+  hasQuoteMarketStateChanged(marketState, { ...marketState, lastRawPrice: 1.002 }),
+  true
+);
+assert.strictEqual(
+  hasQuoteMarketStateChanged(marketState, {
+    ...marketState,
+    cexOrderbook: { bestBidPrice: 100, bestAskPrice: 101 }
+  }),
+  true
+);

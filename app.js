@@ -112,7 +112,7 @@
     };
     let dataTerminalRecordsCacheKey = '';
     let dataTerminalRecordsCache = null;
-    let quoteStateRevision = 0;
+    let quoteMarketStateRevision = 0;
     let arbRuleSnapshotCacheKey = '';
     let arbRuleSnapshotCache = null;
     let arbPathTopologyCacheKey = '';
@@ -1810,7 +1810,7 @@
     }
 
     function invalidateArbRuleSnapshotCache() {
-        quoteStateRevision += 1;
+        quoteMarketStateRevision += 1;
         arbRuleSnapshotCache = null;
         arbRuleSnapshotCacheKey = '';
     }
@@ -1825,9 +1825,22 @@
         invalidateArbPathTopologyCache();
     }
 
+    function hasQuoteMarketStateChanged(previousState, nextState) {
+        const utils = getDashboardRuntimeUtils();
+        if (utils && typeof utils.hasQuoteMarketStateChanged === 'function') {
+            return utils.hasQuoteMarketStateChanged(previousState, nextState);
+        }
+        return previousState !== nextState;
+    }
+
     function setQuoteMonitorState(quoteId, nextState) {
+        const previousState = quoteMonitorState.get(quoteId) || null;
+        const marketStateChanged = hasQuoteMarketStateChanged(previousState, nextState);
         quoteMonitorState.set(quoteId, nextState);
-        invalidateArbRuleSnapshotCache();
+        if (marketStateChanged) {
+            invalidateArbRuleSnapshotCache();
+        }
+        return marketStateChanged;
     }
 
     function buildArbRuleSnapshotCacheKey() {
@@ -1842,7 +1855,7 @@
                 return `${category && category.name || ''}:${quoteIds}`;
             })
             .join('|');
-        return `${quoteStateRevision}|${categorySignature}`;
+        return `${quoteMarketStateRevision}|${categorySignature}`;
     }
 
     function buildQuotesByCategoryName() {
@@ -2808,9 +2821,9 @@
     function resolveDataTerminalRecordsCacheKey() {
         const utils = getDashboardRuntimeUtils();
         if (utils && typeof utils.buildDataTerminalRecordsCacheKey === 'function') {
-            return utils.buildDataTerminalRecordsCacheKey(dashboardState, quoteStateRevision);
+            return utils.buildDataTerminalRecordsCacheKey(dashboardState, quoteMarketStateRevision);
         }
-        return `${quoteStateRevision}|${dashboardState.length}`;
+        return `${quoteMarketStateRevision}|${dashboardState.length}`;
     }
 
     function clearDataTerminalTimer() {
@@ -5979,9 +5992,11 @@
                     newState.inverseToSymbol = null;
                 }
 
-                setQuoteMonitorState(quote.id, newState);
-                scheduleArbUpdate();
-                scheduleDataTerminalUpdate();
+                const marketStateChanged = setQuoteMonitorState(quote.id, newState);
+                if (marketStateChanged) {
+                    scheduleArbUpdate();
+                    scheduleDataTerminalUpdate();
+                }
                 
                 updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
                 checkPriceForAlerts(quote);

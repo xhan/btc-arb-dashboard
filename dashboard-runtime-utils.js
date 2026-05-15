@@ -7,6 +7,40 @@
     root.window.DashboardRuntimeUtils = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const QUOTE_MARKET_STATE_FIELDS = [
+    'fromSymbol',
+    'toSymbol',
+    'lastResultText',
+    'lastRawPrice',
+    'lastTotalAmountOut',
+    'inverseRawPrice',
+    'inverseTotalAmountOut',
+    'inverseFromSymbol',
+    'inverseToSymbol',
+    'usedSource',
+    'usedSourceReal',
+    'cexOrderbook'
+  ];
+
+  function normalizeMarketStateValue(value) {
+    if (value === undefined) return null;
+    if (value && typeof value === 'object') {
+      return JSON.stringify(value);
+    }
+    return value;
+  }
+
+  function buildQuoteMarketStateSignature(state) {
+    const source = state && typeof state === 'object' ? state : {};
+    return QUOTE_MARKET_STATE_FIELDS
+      .map((field) => `${field}:${String(normalizeMarketStateValue(source[field]))}`)
+      .join('|');
+  }
+
+  function hasQuoteMarketStateChanged(previousState, nextState) {
+    return buildQuoteMarketStateSignature(previousState) !== buildQuoteMarketStateSignature(nextState);
+  }
+
   function isPanelVisible(panel, getComputedStyleImpl) {
     if (!panel) return false;
     const readStyle = typeof getComputedStyleImpl === 'function'
@@ -37,8 +71,8 @@
     ));
   }
 
-  function buildDataTerminalRecordsCacheKey(dashboardState, quoteStateRevision) {
-    const revision = Number.isFinite(Number(quoteStateRevision)) ? Number(quoteStateRevision) : 0;
+  function buildDataTerminalRecordsCacheKey(dashboardState, quoteMarketStateRevision) {
+    const revision = Number.isFinite(Number(quoteMarketStateRevision)) ? Number(quoteMarketStateRevision) : 0;
     const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
     const topology = dashboard.map((category) => {
       const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
@@ -64,6 +98,8 @@
 
   return {
     buildDataTerminalRecordsCacheKey,
+    buildQuoteMarketStateSignature,
+    hasQuoteMarketStateChanged,
     hasActivePathAlertEvaluationTarget,
     isPanelVisible
   };
