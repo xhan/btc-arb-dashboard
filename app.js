@@ -348,6 +348,18 @@
         const normalized = normalizeChainKey(chain);
         return normalized === 'bybit' || normalized === 'binance';
     }
+
+    function parseCexTradingPairSymbol(symbol) {
+        if (window.TradingPairUtils && typeof window.TradingPairUtils.splitCompactTradingPairSymbol === 'function') {
+            const parsed = window.TradingPairUtils.splitCompactTradingPairSymbol(symbol);
+            if (parsed && parsed.fromSymbol && parsed.toSymbol) {
+                return parsed;
+            }
+        }
+        const [fromSymbol, toSymbol] = String(symbol || '').split('/').map((item) => item.trim());
+        if (!fromSymbol || !toSymbol) return null;
+        return { fromSymbol, toSymbol };
+    }
     
     const KYBER_SUPPORTED_CHAINS = [
         'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche', 

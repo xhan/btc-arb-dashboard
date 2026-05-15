@@ -82,6 +82,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="path-alert-notification-utils.js"'));
     assert.ok(!response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
+    assert.ok(response.body.includes('src="shared/trading-pair-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="quote-request-utils.js"'));
     assert.ok(response.body.includes('src="quote-display-utils.js"'));
@@ -97,6 +98,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="quote-request-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="shared/trading-pair-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="request-channel-utils.js"') < response.body.indexOf('src="app.js"')
@@ -341,6 +345,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));
     assert.ok(!appJsResponse.body.includes('quote.alerts'));
     assert.ok(appJsResponse.body.includes("function getQuoteAlertDirection(target)"));
+    assert.ok(appJsResponse.body.includes('function parseCexTradingPairSymbol(symbol)'));
+    assert.ok(appJsResponse.body.includes('window.TradingPairUtils.splitCompactTradingPairSymbol(symbol)'));
     assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertMessage(alert, evaluation, {'));
     assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertCurrentValueText(alert, evaluation, {'));
     assert.ok(!appJsResponse.body.includes('汇率已达到或超过目标'));
