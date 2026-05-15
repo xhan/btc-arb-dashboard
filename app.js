@@ -370,6 +370,13 @@
         return window.PriceSnapshotPayloadUtils;
     }
 
+    function getAlertLogUiUtils() {
+        if (!window.AlertLogUiUtils) {
+            throw new Error('AlertLogUiUtils is not loaded');
+        }
+        return window.AlertLogUiUtils;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -870,7 +877,7 @@
         bringFloatingPanelToFront(alertLogWindow);
         const now = new Date();
         const logEntry = window.DomRenderUtils.createElementFromHtml(
-            window.AlertLogUiUtils.buildGenericAlertLogEntryHtml({
+            getAlertLogUiUtils().buildGenericAlertLogEntryHtml({
                 title,
                 subtitle,
                 message,
@@ -896,11 +903,7 @@
     }
 
     function shouldAutoOpenAlertLogEntries(entries) {
-        if (window.AlertLogUiUtils && typeof window.AlertLogUiUtils.shouldAutoOpenAlertLogEntries === 'function') {
-            return window.AlertLogUiUtils.shouldAutoOpenAlertLogEntries(entries);
-        }
-        const list = Array.isArray(entries) ? entries : [];
-        return list.some((entry) => !(entry && entry.mutedEntry));
+        return getAlertLogUiUtils().shouldAutoOpenAlertLogEntries(entries);
     }
 
     function expandCollapsedAlertLogCard(card) {
@@ -1063,7 +1066,7 @@
             ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
             : null;
         const card = window.DomRenderUtils.createElementFromHtml(
-            window.AlertLogUiUtils.buildQuoteAlertLogHtml(entry, {
+            getAlertLogUiUtils().buildQuoteAlertLogHtml(entry, {
                 nowMs,
                 actionLink: entry && entry.actionLink ? entry.actionLink : buildQuoteAlertActionLink(quote),
                 mutedEntry,
@@ -1382,10 +1385,11 @@
         if (!alertLogMutedContent) return;
         pruneMutedPathTargetsInPlace(nowMs);
         pruneMutedPathLegsInPlace(nowMs);
+        const alertLogUi = getAlertLogUiUtils();
         const mutedPathItems = mutedPathTargets
             .slice()
             .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt))
-            .map((entry) => window.AlertLogUiUtils.buildMutedStateItemHtml({
+            .map((entry) => alertLogUi.buildMutedStateItemHtml({
                 title: entry.logTitleSnapshot || entry.summaryLinesSnapshot[0] || '路径沉默',
                 lines: entry.summaryLinesSnapshot,
                 status: buildMutedPathStatusText(entry, nowMs),
@@ -1397,7 +1401,7 @@
         const mutedLegItems = mutedPathLegs
             .slice()
             .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt))
-            .map((entry) => window.AlertLogUiUtils.buildMutedStateItemHtml({
+            .map((entry) => alertLogUi.buildMutedStateItemHtml({
                 title: entry.titleSnapshot || buildLiveQuoteLabel(entry.chain, entry.fromSymbol, entry.toSymbol),
                 lines: [],
                 status: buildMutedPathLegStatusText(entry, nowMs),
@@ -1407,8 +1411,8 @@
                 ]
             }));
         mutedAlertStateHtmlRenderer.render(alertLogMutedContent, [
-            window.AlertLogUiUtils.buildMutedStateSectionHtml('沉默的路径', mutedPathItems, '当前没有沉默中的路径'),
-            window.AlertLogUiUtils.buildMutedStateSectionHtml('屏蔽的腿', mutedLegItems, '当前没有屏蔽中的腿')
+            alertLogUi.buildMutedStateSectionHtml('沉默的路径', mutedPathItems, '当前没有沉默中的路径'),
+            alertLogUi.buildMutedStateSectionHtml('屏蔽的腿', mutedLegItems, '当前没有屏蔽中的腿')
         ].join(''));
     }
 
@@ -1510,7 +1514,7 @@
                 return;
             }
             const card = window.DomRenderUtils.createElementFromHtml(
-                window.AlertLogUiUtils.buildRestoredMutedAlertLogHtml(entry, {
+                getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(entry, {
                     nowMs,
                     targetKey,
                     statusText: buildMutedPathStatusText(entry, nowMs)
@@ -1539,7 +1543,7 @@
                 ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
                 : null;
             const card = window.DomRenderUtils.createElementFromHtml(
-                window.AlertLogUiUtils.buildPathAlertLogCardHtml(entry, {
+                getAlertLogUiUtils().buildPathAlertLogCardHtml(entry, {
                     nowMs,
                     mutedEntry,
                     targetKey: entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '',
