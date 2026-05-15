@@ -6594,10 +6594,10 @@
             ? window.RequestChannelUtils.resolveRequestChannelIdForQuote(quote, requestChannelOptions)
             : (quote.requestChannelId || 'default');
 
-        quoteRequestChannelSelect.innerHTML = (requestChannelOptions.channels || []).map((channel) => {
-            const suffix = channel.isDefault ? ' (默认)' : '';
-            return `<option value="${escapeHtml(channel.id)}">${escapeHtml(channel.name)}${suffix}</option>`;
-        }).join('');
+        quoteRequestChannelSelect.innerHTML = window.RequestChannelUtils
+            && typeof window.RequestChannelUtils.buildRequestChannelOptionsHtml === 'function'
+            ? window.RequestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])
+            : '';
         quoteRequestChannelSelect.value = currentChannelId;
     }
 

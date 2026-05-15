@@ -24,6 +24,15 @@
     return typeof value === 'string' ? value.trim() : '';
   }
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function normalizeChain(chain) {
     return normalizeString(chain).toLowerCase();
   }
@@ -175,6 +184,13 @@
     };
   }
 
+  function buildRequestChannelOptionsHtml(channels) {
+    return (Array.isArray(channels) ? channels : []).map((channel) => {
+      const suffix = channel && channel.isDefault ? ' (默认)' : '';
+      return `<option value="${escapeHtml(channel && channel.id)}">${escapeHtml(channel && channel.name)}${suffix}</option>`;
+    }).join('');
+  }
+
   function buildQueueKey(sourceKey, channelId) {
     const normalizedSourceKey = normalizeString(sourceKey).toLowerCase();
     if (!normalizedSourceKey) return '';
@@ -241,6 +257,7 @@
     DEFAULT_REQUEST_CHANNEL_ID,
     DEFAULT_REQUEST_CHANNEL_NAME,
     buildQueueKey,
+    buildRequestChannelOptionsHtml,
     getEffectiveRequestChannelIdForQuote,
     getEffectiveIntervalForQueue,
     getRequestChannelDisplayForQuote,

@@ -4,6 +4,7 @@ const {
   DEFAULT_REQUEST_CHANNEL_ID,
   DEFAULT_INTERVALS,
   buildQueueKey,
+  buildRequestChannelOptionsHtml,
   getEffectiveRequestChannelIdForQuote,
   getEffectiveIntervalForQueue,
   getQueueKeyForQuote,
@@ -138,6 +139,14 @@ assert.strictEqual(
 assert.strictEqual(buildQueueKey('kyber', 'HK-1'), 'kyber:HK-1');
 assert.strictEqual(buildQueueKey('kyber', DEFAULT_REQUEST_CHANNEL_ID), 'kyber:default');
 assert.strictEqual(buildQueueKey('sui', 'hk-1'), 'sui');
+
+assert.strictEqual(
+  buildRequestChannelOptionsHtml([
+    { id: 'default', name: '默认 <通道>', isDefault: true },
+    { id: 'HK-1', name: 'HK & 1', isDefault: false }
+  ]),
+  '<option value="default">默认 &lt;通道&gt; (默认)</option><option value="HK-1">HK &amp; 1</option>'
+);
 
 assert.strictEqual(
   getEffectiveIntervalForQueue('kyber:HK-1', DEFAULT_INTERVALS, channels),

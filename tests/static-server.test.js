@@ -240,6 +240,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/request-update-config'));
     assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
+    assert.ok(appJsResponse.body.includes('RequestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
