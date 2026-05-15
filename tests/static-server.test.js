@@ -439,6 +439,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function buildSpecialArbSections('));
     assert.ok(appJsResponse.body.includes('const fixedSections = buildFixedArbSections('));
     assert.ok(appJsResponse.body.includes('const specialSections = buildSpecialArbSections('));
+    assert.ok(!appJsResponse.body.includes('categoryTemplatesBySectionKey'));
+    assert.ok(!appJsResponse.body.includes('let lbtcSection = null'));
+    assert.ok(!appJsResponse.body.includes('const wbtcSection = categorySections.find'));
     assert.ok(appJsResponse.body.includes("emptyText: '无收益率'"));
     assert.ok(appJsResponse.body.includes("title: '关注列表'"));
     assert.ok(appJsResponse.body.includes('buildQuotePriceWatchEntries()'));

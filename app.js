@@ -1895,26 +1895,10 @@
         const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
         const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
         const quoteMetaById = buildQuoteMetaById();
-        const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
-        const targetCategories = dashboardState.filter((category) => targetNames.includes(category && category.name));
-        const categoryTemplatesBySectionKey = new Map();
         const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
         const allTopologyEdges = utils.buildTopologyEdges(allQuotes, quoteMarketState, null);
         const allTopologyEdgesWithRules = allTopologyEdges.concat(ruleEdges);
         const fixedTemplatesByRuleId = {};
-
-        for (const category of targetCategories) {
-            const sectionKey = buildArbSectionKey('category', category && (category.id || category.name));
-            const quotes = getActiveQuotes(Array.isArray(category && category.quotes) ? category.quotes : []);
-            const edges = utils.buildTopologyEdges(quotes, quoteMarketState, null);
-            const templates = utils.buildCycleTemplates(edges.concat(ruleEdges), {
-                maxDepth: 3,
-                limit: Number.MAX_SAFE_INTEGER,
-                acceptCycle: window.ArbPaths.isMeaningfulPath,
-                preferredStartSymbols: preferredCycleStartSymbols
-            });
-            categoryTemplatesBySectionKey.set(sectionKey, templates);
-        }
 
         const globalSourceCategories = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.resolveItemsBySelectors === 'function'
             ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
@@ -1942,7 +1926,6 @@
         arbPathTopologyCacheKey = cacheKey;
         arbPathTopologyCache = {
             ruleEdges,
-            categoryTemplatesBySectionKey,
             globalTemplates,
             fixedTemplatesByRuleId
         };
@@ -5015,60 +4998,6 @@
         const fixedSections = buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
         const specialSections = buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
 
-        const categorySections = [];
-        let lbtcSection = null;
-        for (const category of targetCategories) {
-            const sectionKey = buildArbSectionKey('category', category.id || category.name);
-            const cachedTemplates = topologyCache
-                ? topologyCache.categoryTemplatesBySectionKey.get(sectionKey) || []
-                : [];
-            const cycles = cachedTemplates.length && templateUtils
-                ? filterMutedArbCycles(cachedTemplates
-                    .map((template) => templateUtils.evaluateCycleTemplate(template, quoteMarketState))
-                    .filter(Boolean)
-                    .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)))
-                : window.ArbPaths.findTopCycles(
-                    buildVisibleArbEdges(
-                        getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []),
-                    ).concat(ruleEdges),
-                    {
-                        maxDepth: 3,
-                        limit: Number.MAX_SAFE_INTEGER,
-                        acceptCycle: window.ArbPaths.isMeaningfulPath,
-                        preferredStartSymbols: buildPreferredCycleStartSymbols(sharedRuleSnapshot.aliasRules, 'cbBTC')
-                    }
-                );
-            const cycleDisplayState = getCycleDisplayState(cycles, 4, arbExpandedSections.has(sectionKey));
-            const displayEntries = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'
-                ? window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles(cycles, cycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
-                    nextOpportunityMap,
-                    nextOpportunityIdsByTargetKey,
-                    cycle,
-                    `机会 ${index + 1}`,
-                    { section: category.name, alertPreset: { type: 'path' } }
-                ))
-                : cycleDisplayState.displayCycles
-                    .map((cycle, index) => createArbOpportunityEntry(
-                        nextOpportunityMap,
-                        nextOpportunityIdsByTargetKey,
-                        cycle,
-                        `机会 ${index + 1}`,
-                        { section: category.name, alertPreset: { type: 'path' } }
-                    ))
-                    .filter(Boolean);
-            const footerHtml = buildArbSectionToggleHtml(sectionKey, cycleDisplayState);
-            const sectionDef = {
-                title: category.name,
-                opportunities: displayEntries,
-                footerHtml
-            };
-            if (category.name === 'LBTC监控') {
-                lbtcSection = sectionDef;
-            } else {
-                categorySections.push(sectionDef);
-            }
-        }
-
         const globalSectionKey = buildArbSectionKey('global', 'all');
         const globalCycles = topologyCache && templateUtils
             ? filterMutedArbCycles(topologyCache.globalTemplates
@@ -5133,8 +5062,6 @@
         const fixedColumns = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.splitSectionsBySectionCount === 'function'
             ? window.ArbPanelLayoutUtils.splitSectionsBySectionCount(fixedSections, 6, 2)
             : [fixedSections, []];
-        const wbtcSection = categorySections.find((section) => section && section.title === 'WBTC监控') || { title: 'WBTC监控', opportunities: [], emptyText: '等待数据...' };
-        const tbtcSection = categorySections.find((section) => section && section.title === 'TBTC监控') || { title: 'TBTC监控', opportunities: [], emptyText: '等待数据...' };
         const columns = [
             fixedColumns[0] || [],
             fixedColumns[1] || [],
