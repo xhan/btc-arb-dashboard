@@ -78,7 +78,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="alert-debug-utils.js"'));
     assert.ok(response.body.includes('src="special-rule-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-notification-utils.js"'));
-    assert.ok(response.body.includes('src="quote-alert-config-utils.js"'));
+    assert.ok(!response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="quote-display-utils.js"'));
@@ -474,7 +474,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-dismissed-search-input"'));
     assert.ok(pathAlertsResponse.body.includes('src="shared/trading-pair-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
-    assert.ok(pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
+    assert.ok(!pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(
