@@ -10,6 +10,7 @@ const {
   buildQuoteDisplayText,
   buildQuoteDisplayTextForState,
   buildQuoteRequestChannelTagHtml,
+  extractPriceFromText,
   formatCexBookValue,
   getCexPairLabel,
   getQuotePairLabel,
@@ -102,6 +103,11 @@ assert.strictEqual(formatCexBookValue(1234.56789), '1234.57');
 assert.strictEqual(formatCexBookValue(1.23456789), '1.234568');
 assert.strictEqual(formatCexBookValue(0.0123456789), '0.01234568');
 assert.strictEqual(formatCexBookValue(null), '--');
+
+assert.strictEqual(extractPriceFromText('1 ETH ≈ 3456.789123 USDC'), 3456.789123);
+assert.strictEqual(extractPriceFromText('BTCUSDT: 100200.12'), 100200.12);
+assert.strictEqual(extractPriceFromText('raw 1.23e-4'), 0.000123);
+assert.strictEqual(extractPriceFromText('等待报价...'), null);
 
 assert.strictEqual(
   buildCexOrderbookSummary('BTCUSDT', {

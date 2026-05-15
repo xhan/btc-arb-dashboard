@@ -52,6 +52,15 @@
     return Number(value.toFixed(decimals)).toString();
   }
 
+  function extractPriceFromText(text) {
+    if (!text) return null;
+    const normalizedText = String(text);
+    const delimiterMatch = normalizedText.match(/(?:≈|=|:)\s*([-+]?\d*\.?\d+(?:e[+-]?\d+)?)/i);
+    if (delimiterMatch) return Number(delimiterMatch[1]);
+    const numberMatch = normalizedText.match(/[-+]?\d*\.?\d+(?:e[+-]?\d+)?/i);
+    return numberMatch ? Number(numberMatch[0]) : null;
+  }
+
   function buildCexOrderbookSummary(symbol, orderbook) {
     if (!orderbook) return `${symbol}: 等待盘口...`;
     const ask = `ASK ${formatCexBookValue(orderbook.bestAskPrice)} × ${formatCexBookValue(orderbook.bestAskSize, 6)}`;
@@ -203,6 +212,7 @@
     buildQuoteDisplayText,
     buildQuoteDisplayTextForState,
     buildQuoteRequestChannelTagHtml,
+    extractPriceFromText,
     formatCexBookValue,
     getCexPairLabel,
     getQuotePairLabel,

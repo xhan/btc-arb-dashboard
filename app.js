@@ -4684,14 +4684,6 @@
         }
     }
 
-    function extractPriceFromText(text) {
-        if (!text) return null;
-        const delimiterMatch = text.match(/(?:≈|=|:)\s*([-+]?\d*\.?\d+(?:e[+-]?\d+)?)/i);
-        if (delimiterMatch) return Number(delimiterMatch[1]);
-        const numberMatch = text.match(/[-+]?\d*\.?\d+(?:e[+-]?\d+)?/i);
-        return numberMatch ? Number(numberMatch[0]) : null;
-    }
-
     function getCopyUtils() {
         if (!window.CopyUtils) {
             throw new Error('CopyUtils is not loaded');
@@ -4751,7 +4743,7 @@
     }
 
     function copyPriceFromText(text) {
-        const price = extractPriceFromText(text);
+        const price = getQuoteDisplayUtils().extractPriceFromText(text);
         if (typeof price !== 'number' || Number.isNaN(price)) return;
         copyTextToClipboard(String(price));
         showCopyToast(`已复制: ${price}`);
