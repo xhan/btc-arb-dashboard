@@ -5,6 +5,14 @@
   }
   root.DomRenderUtils = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function createElementFromHtml(html, options = {}) {
+    const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
+    if (!documentImpl || typeof documentImpl.createElement !== 'function') return null;
+    const wrapper = documentImpl.createElement('div');
+    wrapper.innerHTML = String(html || '');
+    return wrapper.firstElementChild || null;
+  }
+
   function createStableHtmlRenderer(options = {}) {
     const setHtml = typeof options.setHtml === 'function'
       ? options.setHtml
@@ -38,6 +46,7 @@
   }
 
   return {
+    createElementFromHtml,
     createStableHtmlRenderer
   };
 }));

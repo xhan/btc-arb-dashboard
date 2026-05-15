@@ -1161,9 +1161,7 @@
             alertLogWindow.style.display = 'flex';
             bringFloatingPanelToFront(alertLogWindow);
         }
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = buildQuoteAlertLogHtml(entry, nowMs);
-        const card = wrapper.firstElementChild;
+        const card = window.DomRenderUtils.createElementFromHtml(buildQuoteAlertLogHtml(entry, nowMs));
         if (!card) return;
         if (entry && entry.mutedEntry) {
             appendMutedAlertLogCard(card, nowMs);
@@ -1725,9 +1723,7 @@
             if (alertLogMutedLogContent.querySelector(`.log-entry[data-muted-target-key="${escapedTargetKey}"]`)) {
                 return;
             }
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = buildRestoredMutedAlertLogHtml(entry, nowMs);
-            const card = wrapper.firstElementChild;
+            const card = window.DomRenderUtils.createElementFromHtml(buildRestoredMutedAlertLogHtml(entry, nowMs));
             if (card) {
                 alertLogMutedLogContent.prepend(card);
             }
@@ -1799,9 +1795,7 @@
             bringFloatingPanelToFront(alertLogWindow);
         }
         for (let index = list.length - 1; index >= 0; index -= 1) {
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = buildPathAlertLogCardHtml(list[index], nowMs);
-            const card = wrapper.firstElementChild;
+            const card = window.DomRenderUtils.createElementFromHtml(buildPathAlertLogCardHtml(list[index], nowMs));
             if (card) {
                 if (list[index] && list[index].mutedEntry) {
                     appendMutedAlertLogCard(card, nowMs);
