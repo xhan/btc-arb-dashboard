@@ -137,6 +137,48 @@ async function waitForServer(attempts = 15) {
       }
     ]);
 
+    const saveConfigResponse = await post('/api/save-config', JSON.stringify({
+      dashboard: [],
+      settings: {
+        kyber: 210,
+        zerox: 120,
+        solana: 3600,
+        sui: 700,
+        starknet: 1100,
+        bybit: 1200,
+        binance: 1200,
+        velora: 750,
+        lifi: 190
+      }
+    }));
+    assert.strictEqual(saveConfigResponse.statusCode, 200);
+
+    const savedConfigChannelsResponse = await request('/api/get-request-channels');
+    assert.strictEqual(savedConfigChannelsResponse.statusCode, 200);
+    const savedConfigPayload = JSON.parse(savedConfigChannelsResponse.body);
+    assert.deepStrictEqual(savedConfigPayload.channels[0].intervals, {
+      kyber: 210,
+      zerox: 120,
+      velora: 750,
+      lifi: 190,
+      bybit: 1200,
+      binance: 1200,
+      solana: 3600,
+      sui: 700,
+      starknet: 1100
+    });
+    assert.deepStrictEqual(savedConfigPayload.channels[1].intervals, {
+      kyber: 90,
+      zerox: 120,
+      velora: 750,
+      lifi: 190,
+      bybit: 1200,
+      binance: 1200,
+      solana: 3600,
+      sui: 700,
+      starknet: 1100
+    });
+
     fs.writeFileSync(configPath, JSON.stringify({ dashboard: [], settings: { kyber: 230, zerox: 110, solana: 3500, sui: 500, starknet: 1000, bybit: 1000, binance: 1000, velora: 700, lifi: 170 } }, null, 2));
     fs.writeFileSync(configMorePath, JSON.stringify({ kyberClientId: 'updated-default-client', jupiterApiKey: 'default-jupiter' }, null, 2));
     fs.writeFileSync(

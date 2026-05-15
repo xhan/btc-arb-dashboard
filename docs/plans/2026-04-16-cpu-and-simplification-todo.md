@@ -7,15 +7,14 @@
 ### 1. 后端请求配置缓存
 - 目标：去掉高频报价接口里的重复读文件、JSON 解析和 request-channel 归一化。
 - 现状：
-  - `server.js` 里的 `buildQuoteRequestInput()` 每次都会走 `getRequestChannelsConfig()`
-  - `getRequestChannelsConfig()` 每次都会重新读取 `config.json`、`config_more.json`、`request_channels.json`
+  - 已新增 `runtimeConfigCache`，`buildQuoteRequestInput()` 通过缓存读取 request-channel 配置
+  - `config.json`、`config_more.json`、`request_channels.json` 只在启动、`/api/request-update-config`、`/api/save-config` 后重读并归一化
+  - `tests/request-channels-api.test.js` 已覆盖 `/api/save-config` 后缓存刷新
 - 预期收益：
-  - 明显降低 Node CPU 和磁盘 IO
-  - 降低高频报价时的尾延迟
-- 建议改法：
-  - 增加内存缓存
-  - 在 `/api/save-config`、`/api/save-alert-config`、未来请求通道保存接口里做定向失效
-  - 把“启动时默认配置”和“运行时热更新配置”职责拆开
+  - 已降低高频报价接口的 Node CPU 和磁盘 IO
+  - 已降低 request-channel 归一化带来的尾延迟
+- 后续建议：
+  - 如果后续新增请求通道保存接口，也必须调用 `refreshRuntimeConfigCache()`
 
 ### 2. 套利面板隐藏时停止重算
 - 目标：套利大盘不可见时不再做全量路径重算和整块 DOM 重建。
