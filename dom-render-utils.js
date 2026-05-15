@@ -13,6 +13,15 @@
     return wrapper.firstElementChild || null;
   }
 
+  function escapeCssAttributeValue(value, options = {}) {
+    const cssImpl = options.cssImpl || (typeof CSS !== 'undefined' ? CSS : null);
+    const text = String(value || '');
+    if (cssImpl && typeof cssImpl.escape === 'function') {
+      return cssImpl.escape(text);
+    }
+    return text.replace(/["\\]/g, '\\$&');
+  }
+
   function createStableHtmlRenderer(options = {}) {
     const setHtml = typeof options.setHtml === 'function'
       ? options.setHtml
@@ -47,6 +56,7 @@
 
   return {
     createElementFromHtml,
-    createStableHtmlRenderer
+    createStableHtmlRenderer,
+    escapeCssAttributeValue
   };
 }));

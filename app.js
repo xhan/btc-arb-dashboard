@@ -1409,9 +1409,7 @@
 
     function removeRestoredMutedAlertLogCards(targetKey = '') {
         if (!targetKey) return;
-        const escapedTargetKey = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
-            ? CSS.escape(targetKey)
-            : targetKey.replace(/["\\]/g, '\\$&');
+        const escapedTargetKey = window.DomRenderUtils.escapeCssAttributeValue(targetKey);
         getAlertLogEntryContainers().forEach((container) => {
             container
                 .querySelectorAll(`.log-entry[data-muted-restored="1"][data-muted-target-key="${escapedTargetKey}"]`)
@@ -1587,9 +1585,7 @@
         sortedEntries.forEach((entry) => {
             const targetKey = buildMutedPathTargetKey(entry);
             if (!targetKey) return;
-            const escapedTargetKey = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
-                ? CSS.escape(targetKey)
-                : targetKey.replace(/["\\]/g, '\\$&');
+            const escapedTargetKey = window.DomRenderUtils.escapeCssAttributeValue(targetKey);
             if (alertLogMutedLogContent.querySelector(`.log-entry[data-muted-target-key="${escapedTargetKey}"]`)) {
                 return;
             }

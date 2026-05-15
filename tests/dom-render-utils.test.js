@@ -1,6 +1,10 @@
 const assert = require('assert');
 
-const { createElementFromHtml, createStableHtmlRenderer } = require('../dom-render-utils');
+const {
+  createElementFromHtml,
+  createStableHtmlRenderer,
+  escapeCssAttributeValue
+} = require('../dom-render-utils');
 
 const writes = [];
 const target = { innerHTML: '' };
@@ -47,3 +51,9 @@ assert.strictEqual(
 );
 assert.strictEqual(createElementFromHtml('', { documentImpl }), null);
 assert.strictEqual(createElementFromHtml('<div>Missing document</div>', { documentImpl: {} }), null);
+
+assert.strictEqual(escapeCssAttributeValue('a"b\\c'), 'a\\"b\\\\c');
+assert.strictEqual(
+  escapeCssAttributeValue('a b', { cssImpl: { escape: (value) => `escaped:${value}` } }),
+  'escaped:a b'
+);
