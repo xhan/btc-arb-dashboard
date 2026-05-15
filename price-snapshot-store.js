@@ -6,6 +6,8 @@ const {
   buildChartPairLabel
 } = require('./charts-utils');
 
+const schemaReadyDbPaths = new Set();
+
 function normalizePriceSnapshotConfig(configMore = {}) {
   const enabled = configMore.enablePriceSnapshot === true;
   const rawInterval = Number.parseInt(configMore.priceSnapshotIntervalSec, 10);
@@ -95,10 +97,20 @@ function ensureSchema(db) {
   `);
 }
 
+function markSchemaDirty(dbPath) {
+  schemaReadyDbPaths.delete(dbPath);
+}
+
+function ensureSchemaOnce(dbPath, db) {
+  if (schemaReadyDbPaths.has(dbPath)) return;
+  ensureSchema(db);
+  schemaReadyDbPaths.add(dbPath);
+}
+
 function withDatabase(dbPath, fn) {
   const db = new DatabaseSync(dbPath);
   try {
-    ensureSchema(db);
+    ensureSchemaOnce(dbPath, db);
     return fn(db);
   } finally {
     db.close();
@@ -174,6 +186,11 @@ function getSnapshotByBatchId(db, batchId) {
 async function appendPriceSnapshot(baseDir, payload = {}, now = new Date()) {
   await fs.mkdir(baseDir, { recursive: true });
   const dbPath = getPriceSnapshotDbPath(baseDir);
+  try {
+    await fs.access(dbPath);
+  } catch {
+    markSchemaDirty(dbPath);
+  }
   const entry = buildPriceSnapshotEntry(payload, now);
 
   withDatabase(dbPath, (db) => {
@@ -416,6 +433,7 @@ async function openSnapshotDatabase(baseDir) {
   try {
     await fs.access(dbPath);
   } catch {
+    markSchemaDirty(dbPath);
     return null;
   }
   return dbPath;

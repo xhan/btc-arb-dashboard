@@ -230,6 +230,12 @@ assert.strictEqual(dbPath, path.join('db/price', 'price-snapshots.db'));
     { time: Math.floor(thirdTime.getTime() / 1000), value: 39.5 }
   ]);
 
+  fs.rmSync(savedPath, { force: true });
+  await appendPriceSnapshot(tempDir, samplePayload, new Date('2026-02-28T13:00:00.000Z'));
+  const rebuilt = await getNearestPriceSnapshot(tempDir, new Date('2026-02-28T13:01:00.000Z'));
+  assert.strictEqual(rebuilt.capturedAt, '2026-02-28T13:00:00.000Z');
+  assert.strictEqual(rebuilt.quotes.length, 1);
+
   fs.rmSync(tempDir, { recursive: true, force: true });
 })().catch((error) => {
   console.error(error);

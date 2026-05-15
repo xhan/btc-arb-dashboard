@@ -101,13 +101,13 @@
 ### 8. sqlite 连接与 schema 初始化下沉
 - 目标：减少后端图表/快照接口的重复初始化成本。
 - 现状：
-  - `price-snapshot-store.js` 每次调用都会打开 DB，并执行 `ensureSchema()`
+  - `price-snapshot-store.js` 仍按调用打开/关闭 DB
+  - 已增加 per-dbPath schema-ready 缓存，避免每次调用重复执行 `ensureSchema()`
 - 预期收益：
-  - 降低 Node CPU
+  - 降低 Node CPU 和重复 schema 初始化成本
   - 降低图表预览自动刷新带来的额外成本
 - 建议改法：
-  - 启动期初始化 DB/schema
-  - 运行期复用连接或至少复用 schema-ready 状态
+  - 后续如仍有瓶颈，再评估启动期初始化和连接复用
 
 ## P2 结构精简
 
