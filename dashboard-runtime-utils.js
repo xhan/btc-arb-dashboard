@@ -71,6 +71,42 @@
     ));
   }
 
+  function getNextFutureExpiryMs(entries, nowMs) {
+    const items = Array.isArray(entries) ? entries : [];
+    let nextExpiry = Infinity;
+    for (const entry of items) {
+      const expiresAt = Number(entry && entry.expiresAt);
+      if (Number.isFinite(expiresAt) && expiresAt > nowMs && expiresAt < nextExpiry) {
+        nextExpiry = expiresAt;
+      }
+    }
+    return Number.isFinite(nextExpiry) ? nextExpiry : null;
+  }
+
+  function resolveMutedStateRefreshDelay(options = {}) {
+    const nowMs = Number.isFinite(Number(options.nowMs)) ? Number(options.nowMs) : Date.now();
+    const visibleRefreshMs = Number.isFinite(Number(options.visibleRefreshMs)) && Number(options.visibleRefreshMs) > 0
+      ? Number(options.visibleRefreshMs)
+      : 1000;
+    const hiddenMaxRefreshMs = Number.isFinite(Number(options.hiddenMaxRefreshMs)) && Number(options.hiddenMaxRefreshMs) > 0
+      ? Number(options.hiddenMaxRefreshMs)
+      : 60 * 1000;
+    const hiddenMinRefreshMs = Number.isFinite(Number(options.hiddenMinRefreshMs)) && Number(options.hiddenMinRefreshMs) > 0
+      ? Number(options.hiddenMinRefreshMs)
+      : 1000;
+    const entries = []
+      .concat(Array.isArray(options.mutedPathTargets) ? options.mutedPathTargets : [])
+      .concat(Array.isArray(options.mutedPathLegs) ? options.mutedPathLegs : []);
+
+    if (!entries.length) return null;
+    if (options.visible === true) return visibleRefreshMs;
+
+    const nextExpiry = getNextFutureExpiryMs(entries, nowMs);
+    if (nextExpiry === null) return hiddenMinRefreshMs;
+    const delayUntilExpiry = Math.max(hiddenMinRefreshMs, nextExpiry - nowMs + 50);
+    return Math.min(delayUntilExpiry, hiddenMaxRefreshMs);
+  }
+
   function buildDataTerminalRecordsCacheKey(dashboardState, quoteMarketStateRevision) {
     const revision = Number.isFinite(Number(quoteMarketStateRevision)) ? Number(quoteMarketStateRevision) : 0;
     const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
@@ -101,6 +137,7 @@
     buildQuoteMarketStateSignature,
     hasQuoteMarketStateChanged,
     hasActivePathAlertEvaluationTarget,
-    isPanelVisible
+    isPanelVisible,
+    resolveMutedStateRefreshDelay
   };
 });

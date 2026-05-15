@@ -146,10 +146,10 @@
 
 ### 12. muted 状态轮询降频或事件化
 - 现状：
-  - `syncMutedPathLogTimer()` 每秒刷新一次本地存储、日志状态和面板
+  - 已把 `syncMutedPathLogTimer()` 从固定 1 秒 `setInterval` 改成动态 `setTimeout`
+  - 日志面板可见时保留 1 秒倒计时刷新；隐藏时按最近过期时间唤醒，最长 60 秒检查一次
 - 建议：
-  - 改成“最接近过期时间”的动态 timer
-  - 或只在相关 tab 可见时刷新 UI
+  - 后续如果继续拆 `app.js`，把 muted runtime 独立到 `path-alerts` 模块
 
 ### 13. 多通道默认间隔再校准
 - 现状：

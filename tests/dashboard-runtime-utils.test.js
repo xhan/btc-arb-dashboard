@@ -5,7 +5,8 @@ const {
   buildQuoteMarketStateSignature,
   hasQuoteMarketStateChanged,
   hasActivePathAlertEvaluationTarget,
-  isPanelVisible
+  isPanelVisible,
+  resolveMutedStateRefreshDelay
 } = require('../dashboard-runtime-utils');
 
 assert.strictEqual(isPanelVisible(null), false);
@@ -50,6 +51,50 @@ assert.strictEqual(
     ]
   }),
   true
+);
+
+assert.strictEqual(resolveMutedStateRefreshDelay({ nowMs: 1000 }), null);
+assert.strictEqual(
+  resolveMutedStateRefreshDelay({
+    mutedPathTargets: [{ expiresAt: 5000 }],
+    nowMs: 1000,
+    visible: true
+  }),
+  1000
+);
+assert.strictEqual(
+  resolveMutedStateRefreshDelay({
+    mutedPathTargets: [{ expiresAt: 1500 }],
+    nowMs: 1000,
+    hiddenMinRefreshMs: 1000,
+    hiddenMaxRefreshMs: 60 * 1000
+  }),
+  1000
+);
+assert.strictEqual(
+  resolveMutedStateRefreshDelay({
+    mutedPathTargets: [{ expiresAt: 2500 }],
+    nowMs: 1000,
+    hiddenMinRefreshMs: 1000,
+    hiddenMaxRefreshMs: 60 * 1000
+  }),
+  1550
+);
+assert.strictEqual(
+  resolveMutedStateRefreshDelay({
+    mutedPathTargets: [{ expiresAt: 10 * 60 * 1000 }],
+    nowMs: 1000,
+    hiddenMaxRefreshMs: 60 * 1000
+  }),
+  60 * 1000
+);
+assert.strictEqual(
+  resolveMutedStateRefreshDelay({
+    mutedPathTargets: [{ expiresAt: null }],
+    nowMs: 1000,
+    hiddenMinRefreshMs: 1000
+  }),
+  1000
 );
 
 const dashboard = [

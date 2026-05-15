@@ -91,6 +91,8 @@
     const ARB_DETAIL_REFRESH_INTERVAL_MS = 2500;
     const MUTED_PATH_TARGETS_STORAGE_KEY = 'mutedPathTargets';
     const MUTED_PATH_LEGS_STORAGE_KEY = 'mutedPathLegs';
+    const MUTED_STATE_VISIBLE_REFRESH_MS = 1000;
+    const MUTED_STATE_HIDDEN_MAX_REFRESH_MS = 60 * 1000;
     let arbExpandedSections = new Set();
     let arbGlobalExcludedSymbolsInput = '';
     let arbGlobalExcludedChainsInput = '';
@@ -1592,34 +1594,69 @@
         }
     }
 
-    function syncMutedPathLogTimer() {
-        pruneMutedPathTargetsInPlace(Date.now());
-        pruneMutedPathLegsInPlace(Date.now());
-        if (!mutedPathTargets.length && !mutedPathLegs.length) {
-            if (mutedPathLogTimer) {
-                clearInterval(mutedPathLogTimer);
-                mutedPathLogTimer = null;
+    function resolveMutedStateRefreshDelay(nowMs = Date.now()) {
+        const utils = getDashboardRuntimeUtils();
+        if (utils && typeof utils.resolveMutedStateRefreshDelay === 'function') {
+            return utils.resolveMutedStateRefreshDelay({
+                mutedPathTargets,
+                mutedPathLegs,
+                nowMs,
+                visible: isAlertLogPanelVisible(),
+                visibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS,
+                hiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS
+            });
+        }
+        if (!mutedPathTargets.length && !mutedPathLegs.length) return null;
+        return isAlertLogPanelVisible()
+            ? MUTED_STATE_VISIBLE_REFRESH_MS
+            : MUTED_STATE_HIDDEN_MAX_REFRESH_MS;
+    }
+
+    function clearMutedPathLogTimer() {
+        if (!mutedPathLogTimer) return;
+        clearTimeout(mutedPathLogTimer);
+        mutedPathLogTimer = null;
+    }
+
+    function refreshMutedPathRuntime(nowMs = Date.now()) {
+        const previousLegKeys = mutedPathLegs.map((entry) => buildMutedPathLegKey(entry)).join('|');
+        pruneMutedPathTargetsInPlace(nowMs);
+        pruneMutedPathLegsInPlace(nowMs);
+        persistMutedPathTargets();
+        persistMutedPathLegs();
+        if (isAlertLogPanelVisible()) {
+            updateMutedPathAlertLogCards('', nowMs);
+            if (alertLogActiveTab === 'muted') {
+                renderMutedAlertStatePanel(nowMs);
             }
+        }
+        const nextLegKeys = mutedPathLegs.map((entry) => buildMutedPathLegKey(entry)).join('|');
+        if (previousLegKeys !== nextLegKeys) {
+            triggerMutedPathLegRefresh({ closeDetail: false });
+        }
+        return Boolean(mutedPathTargets.length || mutedPathLegs.length);
+    }
+
+    function scheduleMutedPathLogTimer(nowMs = Date.now()) {
+        clearMutedPathLogTimer();
+        const delayMs = resolveMutedStateRefreshDelay(nowMs);
+        if (delayMs === null) return;
+        mutedPathLogTimer = setTimeout(() => {
+            mutedPathLogTimer = null;
+            const nextNow = Date.now();
+            if (refreshMutedPathRuntime(nextNow)) {
+                scheduleMutedPathLogTimer(nextNow);
+            }
+        }, delayMs);
+    }
+
+    function syncMutedPathLogTimer() {
+        const nowMs = Date.now();
+        if (!refreshMutedPathRuntime(nowMs)) {
+            clearMutedPathLogTimer();
             return;
         }
-        if (mutedPathLogTimer) return;
-        mutedPathLogTimer = setInterval(() => {
-            const previousLegKeys = mutedPathLegs.map((entry) => buildMutedPathLegKey(entry)).join('|');
-            pruneMutedPathTargetsInPlace(Date.now());
-            pruneMutedPathLegsInPlace(Date.now());
-            persistMutedPathTargets();
-            persistMutedPathLegs();
-            updateMutedPathAlertLogCards('', Date.now());
-            renderMutedAlertStatePanel(Date.now());
-            const nextLegKeys = mutedPathLegs.map((entry) => buildMutedPathLegKey(entry)).join('|');
-            if (previousLegKeys !== nextLegKeys) {
-                triggerMutedPathLegRefresh({ closeDetail: false });
-            }
-            if (!mutedPathTargets.length && !mutedPathLegs.length && mutedPathLogTimer) {
-                clearInterval(mutedPathLogTimer);
-                mutedPathLogTimer = null;
-            }
-        }, 1000);
+        scheduleMutedPathLogTimer(nowMs);
     }
 
     function buildRestoredMutedAlertLogHtml(mutedEntry, nowMs = Date.now()) {
@@ -2803,6 +2840,15 @@
         }
         if (!arbPathWindow) return false;
         return window.getComputedStyle(arbPathWindow).display !== 'none';
+    }
+
+    function isAlertLogPanelVisible() {
+        const utils = getDashboardRuntimeUtils();
+        if (utils && typeof utils.isPanelVisible === 'function') {
+            return utils.isPanelVisible(alertLogWindow);
+        }
+        if (!alertLogWindow) return false;
+        return window.getComputedStyle(alertLogWindow).display !== 'none';
     }
 
     function hasActivePathAlertEvaluationTarget() {
@@ -5110,7 +5156,11 @@
         if (!alertLogWindow) return;
         const isHidden = window.getComputedStyle(alertLogWindow).display === 'none';
         alertLogWindow.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden) bringFloatingPanelToFront(alertLogWindow);
+        if (isHidden) {
+            bringFloatingPanelToFront(alertLogWindow);
+            renderAlertLogTabState();
+        }
+        syncMutedPathLogTimer();
     }
 
     function handleAlertLogClick(event) {
