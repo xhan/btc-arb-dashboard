@@ -6,8 +6,11 @@ const {
   DEFAULT_DISPLAY_MIN_PROFIT_BP,
   selectCyclesAboveDisplayThreshold,
   selectPositiveCyclesOrBest,
+  buildArbOpportunityDisplayEntry,
+  buildArbOpportunityStoreEntry,
   getCycleDisplayState,
   mapEntriesForDisplayCycles,
+  registerArbOpportunityHighlightTarget,
   selectFirstUnmutedDisplayedCycle
 } = require('../arb-panel-layout-utils');
 
@@ -169,3 +172,41 @@ assert.strictEqual(
   selectFirstUnmutedDisplayedCycle(fixedDisplayCycles, (cycle) => cycle.id === 'pos-1' || cycle.id === 'pos-2').id,
   'pos-1'
 );
+
+const opportunityCycle = { id: 'cycle-1', profitRate: 0.001, legs: [] };
+assert.deepStrictEqual(
+  buildArbOpportunityStoreEntry('op-1', opportunityCycle, '机会 1', { section: '全局路径' }),
+  {
+    id: 'op-1',
+    cycle: opportunityCycle,
+    label: '机会 1',
+    section: '全局路径'
+  }
+);
+
+assert.deepStrictEqual(
+  buildArbOpportunityDisplayEntry(
+    'op-1',
+    opportunityCycle,
+    '机会 1',
+    { clickable: false, displayMessage: 'line 1', hideLegs: true, entryType: 'special-rule' },
+    { isAlertHighlighted: true }
+  ),
+  {
+    label: '机会 1',
+    cycle: opportunityCycle,
+    opportunityId: 'op-1',
+    isAlertHighlighted: true,
+    clickable: false,
+    displayMessage: 'line 1',
+    hideLegs: true,
+    entryType: 'special-rule'
+  }
+);
+
+const highlightTargetMap = new Map();
+registerArbOpportunityHighlightTarget(highlightTargetMap, 'target-1', 'op-1');
+registerArbOpportunityHighlightTarget(highlightTargetMap, 'target-1', 'op-2');
+registerArbOpportunityHighlightTarget(highlightTargetMap, '', 'op-3');
+assert.deepStrictEqual(highlightTargetMap.get('target-1'), ['op-1', 'op-2']);
+assert.strictEqual(highlightTargetMap.has(''), false);

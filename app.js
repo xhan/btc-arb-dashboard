@@ -1051,13 +1051,18 @@
     }
 
     function registerArbOpportunityHighlightTarget(nextTargetMap, targetKey, opportunityId) {
-        if (!targetKey || !opportunityId) return;
-        const currentIds = nextTargetMap.get(targetKey);
-        if (currentIds) {
-            currentIds.push(opportunityId);
+        if (window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.registerArbOpportunityHighlightTarget === 'function') {
+            window.ArbPanelLayoutUtils.registerArbOpportunityHighlightTarget(nextTargetMap, targetKey, opportunityId);
             return;
         }
-        nextTargetMap.set(targetKey, [opportunityId]);
+        if (nextTargetMap instanceof Map && targetKey && opportunityId) {
+            const currentIds = nextTargetMap.get(targetKey);
+            if (currentIds) {
+                currentIds.push(opportunityId);
+                return;
+            }
+            nextTargetMap.set(targetKey, [opportunityId]);
+        }
     }
 
     function markTriggeredArbOpportunities(alert, evaluation, nowMs = Date.now()) {
@@ -3163,12 +3168,10 @@
             label || '',
             cycle
         );
-        const entry = {
-            id: opportunityId,
-            cycle,
-            label,
-            ...meta
-        };
+        const layoutUtils = window.ArbPanelLayoutUtils;
+        const entry = layoutUtils && typeof layoutUtils.buildArbOpportunityStoreEntry === 'function'
+            ? layoutUtils.buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta)
+            : { id: opportunityId, cycle, label, ...meta };
         targetMap.set(opportunityId, entry);
         registerArbOpportunityHighlightTarget(
             highlightTargetMap,
@@ -3176,6 +3179,11 @@
             opportunityId
         );
 
+        if (layoutUtils && typeof layoutUtils.buildArbOpportunityDisplayEntry === 'function') {
+            return layoutUtils.buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {
+                isAlertHighlighted: isArbOpportunityHighlighted(opportunityId)
+            });
+        }
         return {
             label,
             cycle,

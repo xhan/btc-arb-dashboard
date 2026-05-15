@@ -207,6 +207,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(appJsResponse.statusCode, 200);
     const alertLogUiResponse = await request('/alert-log-ui-utils.js');
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
+    const arbPanelLayoutUtilsResponse = await request('/arb-panel-layout-utils.js');
+    assert.strictEqual(arbPanelLayoutUtilsResponse.statusCode, 200);
     const dataTerminalUtilsResponse = await request('/data-terminal-utils.js');
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/arb-detail-utils.js');
@@ -317,6 +319,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("return { text: '监控中', className: 'path-alert-status-monitoring' };"));
     assert.ok(appJsResponse.body.includes('const arbPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();'));
     assert.ok(appJsResponse.body.includes('htmlRenderer: window.DomRenderUtils.createStableHtmlRenderer()'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta = {}, options = {})'));
+    assert.ok(appJsResponse.body.includes('layoutUtils.buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta)'));
+    assert.ok(appJsResponse.body.includes('layoutUtils.buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {'));
     assert.ok(appJsResponse.body.includes('renderer.renderArbSectionToggleHtml(sectionKey, {'));
     assert.ok(!appJsResponse.body.includes('data-arb-section-key="${sectionKey}"'));
     assert.ok((await request('/arb-panel-renderer.js')).body.includes('function renderArbSectionToggleHtml(sectionKey, cycleDisplayState)'));

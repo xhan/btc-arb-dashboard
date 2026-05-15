@@ -224,6 +224,38 @@
     return entries;
   }
 
+  function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {}) {
+    return {
+      id: opportunityId,
+      cycle,
+      label,
+      ...meta
+    };
+  }
+
+  function buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta = {}, options = {}) {
+    return {
+      label,
+      cycle,
+      opportunityId,
+      isAlertHighlighted: options.isAlertHighlighted === true,
+      clickable: meta.clickable !== false,
+      displayMessage: typeof meta.displayMessage === 'string' ? meta.displayMessage : '',
+      hideLegs: meta.hideLegs === true,
+      entryType: typeof meta.entryType === 'string' ? meta.entryType : ''
+    };
+  }
+
+  function registerArbOpportunityHighlightTarget(targetMap, targetKey, opportunityId) {
+    if (!(targetMap instanceof Map) || !targetKey || !opportunityId) return;
+    const currentIds = targetMap.get(targetKey);
+    if (currentIds) {
+      currentIds.push(opportunityId);
+      return;
+    }
+    targetMap.set(targetKey, [opportunityId]);
+  }
+
   return {
     splitSectionsIntoColumns,
     splitSectionsBySectionCount,
@@ -232,8 +264,11 @@
     normalizeDisplayMinProfitBp,
     selectCyclesAboveDisplayThreshold,
     selectPositiveCyclesOrBest,
+    buildArbOpportunityDisplayEntry,
+    buildArbOpportunityStoreEntry,
     getCycleDisplayState,
     mapEntriesForDisplayCycles,
+    registerArbOpportunityHighlightTarget,
     selectFirstUnmutedDisplayedCycle
   };
 }));
