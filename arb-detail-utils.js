@@ -266,6 +266,55 @@
     return `${chainText}${fromHtml} -> ${toHtml}`;
   }
 
+  function buildArbDetailRowsHtml(card = {}, options = {}) {
+    if (card.rows && card.rows.length) {
+      const buildPairHtml = typeof options.buildPairHtml === 'function'
+        ? options.buildPairHtml
+        : buildArbDetailPairHtml;
+      const buildSourceHtml = typeof options.buildSourceHtml === 'function'
+        ? options.buildSourceHtml
+        : () => '';
+
+      return card.rows.map((row, rowIndex) => `
+                <div class="arb-detail-leg">
+                    <div class="arb-detail-leg-line">
+                        <div class="arb-detail-leg-main">
+                            <div class="arb-detail-leg-pair">${buildPairHtml(row)}</div>
+                            <div class="arb-detail-leg-source">${buildSourceHtml(row, { cardIndex: options.cardIndex, rowIndex })}</div>
+                        </div>
+                        <div class="arb-detail-leg-amount-wrap">
+                            <span class="arb-detail-leg-amount">${escapeHtml(row.rateText || row.amountText || '--')}</span>
+                            ${row.rateDeltaText ? `<span class="arb-detail-leg-rate-delta ${escapeHtml(row.rateDeltaTone || 'neutral')}">${escapeHtml(row.rateDeltaText)}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    return `<div class="${card.error ? 'arb-detail-error' : 'arb-detail-loading'}">${escapeHtml(card.error || '等待报价...')}</div>`;
+  }
+
+  function buildArbDetailSummaryHtml(card = {}, options = {}) {
+    if (card.summary && typeof card.summary.profit === 'number') {
+      const bestProfitIndices = Array.isArray(options.bestProfitIndices) ? options.bestProfitIndices : [];
+      const bestProfitRateIndices = Array.isArray(options.bestProfitRateIndices) ? options.bestProfitRateIndices : [];
+      const formatNumber = typeof options.formatNumber === 'function'
+        ? options.formatNumber
+        : (value) => String(value);
+      const formatProfitRate = typeof options.formatProfitRate === 'function'
+        ? options.formatProfitRate
+        : (value) => String(value);
+      const profitClass = bestProfitIndices.includes(options.index) ? ' arb-detail-metric-best' : '';
+      const rateClass = bestProfitRateIndices.includes(options.index) ? ' arb-detail-metric-best' : '';
+      return `
+                <span class="arb-detail-metric${profitClass}">收益 ${formatNumber(card.summary.profit)} ${escapeHtml(card.summary.symbol || '')}</span>
+                <span class="arb-detail-metric${rateClass}">${formatProfitRate(card.summary.profitRate)}</span>
+            `;
+    }
+
+    return '<span class="arb-detail-metric">收益 --</span>';
+  }
+
   function buildArbOpportunityStableId(section, label, cycle) {
     const safeSection = String(section || '');
     const safeLabel = String(label || '');
@@ -337,6 +386,8 @@
     buildArbDetailDexLink,
     buildArbDetailTokenHtml,
     buildArbDetailPairHtml,
+    buildArbDetailRowsHtml,
+    buildArbDetailSummaryHtml,
     buildArbOpportunityStableId,
     buildUniqueArbOpportunityId,
     getNextArbDetailRequestVersion,

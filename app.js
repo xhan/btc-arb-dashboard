@@ -3331,25 +3331,15 @@
     }
 
     function buildArbDetailRowsHtml(card, cardIndex) {
-        if (card.rows && card.rows.length) {
-            const utils = getArbDetailUtils();
-            return card.rows.map((row, rowIndex) => `
-                <div class="arb-detail-leg">
-                    <div class="arb-detail-leg-line">
-                        <div class="arb-detail-leg-main">
-                            <div class="arb-detail-leg-pair">${typeof utils.buildArbDetailPairHtml === 'function' ? utils.buildArbDetailPairHtml(row) : ''}</div>
-                            <div class="arb-detail-leg-source">${buildArbDetailSourceHtml(row, { cardIndex, rowIndex })}</div>
-                        </div>
-                        <div class="arb-detail-leg-amount-wrap">
-                            <span class="arb-detail-leg-amount">${escapeHtml(row.rateText || row.amountText || '--')}</span>
-                            ${row.rateDeltaText ? `<span class="arb-detail-leg-rate-delta ${escapeHtml(row.rateDeltaTone || 'neutral')}">${escapeHtml(row.rateDeltaText)}</span>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+        const utils = getArbDetailUtils();
+        if (typeof utils.buildArbDetailRowsHtml === 'function') {
+            return utils.buildArbDetailRowsHtml(card, {
+                cardIndex,
+                buildSourceHtml: (row, options) => buildArbDetailSourceHtml(row, options)
+            });
         }
 
-        return `<div class="${card.error ? 'arb-detail-error' : 'arb-detail-loading'}">${escapeHtml(card.error || '等待报价...')}</div>`;
+        return '<div class="arb-detail-error">详情渲染模块未加载</div>';
     }
 
     function buildArbDetailMuteButtonHtml(cardIndex, rowIndex, quoteId) {
@@ -3412,13 +3402,15 @@
     }
 
     function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
-        if (card.summary && typeof card.summary.profit === 'number') {
-            const profitClass = bestProfitIndices.includes(index) ? ' arb-detail-metric-best' : '';
-            const rateClass = bestProfitRateIndices.includes(index) ? ' arb-detail-metric-best' : '';
-            return `
-                <span class="arb-detail-metric${profitClass}">收益 ${formatDetailNumber(card.summary.profit)} ${escapeHtml(card.summary.symbol || '')}</span>
-                <span class="arb-detail-metric${rateClass}">${formatDetailProfitRate(card.summary.profitRate)}</span>
-            `;
+        const utils = getArbDetailUtils();
+        if (typeof utils.buildArbDetailSummaryHtml === 'function') {
+            return utils.buildArbDetailSummaryHtml(card, {
+                index,
+                bestProfitIndices,
+                bestProfitRateIndices,
+                formatNumber: formatDetailNumber,
+                formatProfitRate: formatDetailProfitRate
+            });
         }
 
         return '<span class="arb-detail-metric">收益 --</span>';

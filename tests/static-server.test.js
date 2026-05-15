@@ -205,6 +205,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
     const dataTerminalUtilsResponse = await request('/data-terminal-utils.js');
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
+    const arbDetailUtilsResponse = await request('/arb-detail-utils.js');
+    assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
     assert.ok(appJsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
@@ -442,10 +444,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('height: 104'));
     assert.ok(appJsResponse.body.includes('showRightPriceScale: true'));
     assert.ok(appJsResponse.body.includes('mini: true'));
-    assert.ok(appJsResponse.body.includes('utils.buildArbDetailPairHtml(row) : \'\''));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailPairHtml'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRowsHtml'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSummaryHtml'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailTokenHtml'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailPairHtml'));
-    assert.ok(appJsResponse.body.includes('buildArbDetailSourceHtml(row, { cardIndex, rowIndex })'));
+    assert.ok(appJsResponse.body.includes('utils.buildArbDetailRowsHtml(card, {'));
+    assert.ok(appJsResponse.body.includes('buildSourceHtml: (row, options) => buildArbDetailSourceHtml(row, options)'));
+    assert.ok(appJsResponse.body.includes('utils.buildArbDetailSummaryHtml(card, {'));
+    assert.ok(!appJsResponse.body.includes('function buildArbDetailRowsHtml(card, cardIndex) {\n        if (card.rows && card.rows.length)'));
+    assert.ok(appJsResponse.body.includes('buildArbDetailSourceHtml(row, options)'));
     assert.ok(!appJsResponse.body.includes('arb-detail-leg-action-row'));
     assert.ok(response.body.includes('.arb-detail-leg-source {'));
     assert.ok(response.body.includes('.arb-detail-leg-source-actions {'));

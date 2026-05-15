@@ -25,7 +25,9 @@ const {
   buildArbDetailRateText,
   buildArbDetailRateDeltaText,
   buildArbDetailTokenHtml,
-  buildArbDetailPairHtml
+  buildArbDetailPairHtml,
+  buildArbDetailRowsHtml,
+  buildArbDetailSummaryHtml
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -88,6 +90,61 @@ assert.strictEqual(
   }),
   '（Ethereum &lt;Main&gt;）<span class="arb-detail-token" data-arb-detail-token-address="0xfrom" data-arb-detail-token-symbol="cb&lt;BTC&gt;" title="0xfrom">cb&lt;BTC&gt;</span> -> <span class="arb-detail-token" data-arb-detail-token-address="0xto" data-arb-detail-token-symbol="WBTC &amp; ETH" title="0xto">WBTC &amp; ETH</span>'
 );
+
+const detailRowsHtml = buildArbDetailRowsHtml(
+  {
+    rows: [
+      {
+        chainLabel: 'Ethereum',
+        fromSymbol: 'cbBTC',
+        fromTokenAddress: '0xfrom',
+        toSymbol: 'WBTC',
+        toTokenAddress: '0xto',
+        rateText: '1 cbBTC ≈ 1.001 WBTC',
+        rateDeltaText: '+1.2bp',
+        rateDeltaTone: 'positive'
+      }
+    ]
+  },
+  {
+    cardIndex: 0,
+    buildSourceHtml: (row, options) => `<span data-source="${options.cardIndex}:${options.rowIndex}">${row.fromSymbol}</span>`
+  }
+);
+
+assert.ok(detailRowsHtml.includes('arb-detail-leg'));
+assert.ok(detailRowsHtml.includes('arb-detail-leg-pair'));
+assert.ok(detailRowsHtml.includes('data-arb-detail-token-address="0xfrom"'));
+assert.ok(detailRowsHtml.includes('<span data-source="0:0">cbBTC</span>'));
+assert.ok(detailRowsHtml.includes('1 cbBTC ≈ 1.001 WBTC'));
+assert.ok(detailRowsHtml.includes('arb-detail-leg-rate-delta positive'));
+assert.ok(detailRowsHtml.includes('+1.2bp'));
+
+assert.strictEqual(
+  buildArbDetailRowsHtml({ rows: [], error: '失败 <原因>' }, {}),
+  '<div class="arb-detail-error">失败 &lt;原因&gt;</div>'
+);
+
+assert.strictEqual(
+  buildArbDetailRowsHtml({ rows: [] }, {}),
+  '<div class="arb-detail-loading">等待报价...</div>'
+);
+
+const detailSummaryHtml = buildArbDetailSummaryHtml(
+  { summary: { profit: 0.123456, profitRate: 0.0123, symbol: 'cb<BTC>' } },
+  {
+    index: 1,
+    bestProfitIndices: [1],
+    bestProfitRateIndices: [],
+    formatNumber: (value) => `N:${value}`,
+    formatProfitRate: (value) => `R:${value}`
+  }
+);
+
+assert.ok(detailSummaryHtml.includes('arb-detail-metric arb-detail-metric-best'));
+assert.ok(detailSummaryHtml.includes('收益 N:0.123456 cb&lt;BTC&gt;'));
+assert.ok(detailSummaryHtml.includes('R:0.0123'));
+assert.strictEqual(buildArbDetailSummaryHtml({ summary: null }, {}), '<span class="arb-detail-metric">收益 --</span>');
 
 assert.deepStrictEqual(
   summarizeDetailResult(0.2, 0.201),
