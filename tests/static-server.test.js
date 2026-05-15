@@ -892,8 +892,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pathAlertsAppResponse.body.includes('function matchesCandidate(candidate, query)'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function buildPathAlertQuoteLabel(options = {})'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function shortenTokenText(value)'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function groupAlertsBySection(alerts)'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function pruneSelectionSet(selection, validIds)'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertPageUtils.buildPathAlertQuoteLabel({'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertPageUtils.shortenTokenText(value)'));
+    assert.ok(pathAlertsAppResponse.body.includes('PathAlertPageUtils.filterAlertsByQuoteId(alertConfig.alerts, pageState.filterQuoteId)'));
+    assert.ok(pathAlertsAppResponse.body.includes('PathAlertPageUtils.groupAlertsBySection(alerts)'));
     assert.ok(pathAlertsAppResponse.body.includes('findDismissedTargetForDraft'));
     assert.ok(!pathAlertsAppResponse.body.includes('findDismissedEntryForDraft'));
     assert.ok(!pathAlertsAppResponse.body.includes('removeSelectedAlertIdsFromConfig'));

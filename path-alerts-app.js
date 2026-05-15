@@ -427,29 +427,11 @@
   }
 
   function getFilteredAlerts() {
-    const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
-    return alerts.filter((alert) => {
-      if (
-        pageState.filterQuoteId
-        && (!alert || !alert.target || alert.target.type !== 'quote' || String(alert.target.quoteId) !== String(pageState.filterQuoteId))
-      ) {
-        return false;
-      }
-      return true;
-    });
+    return window.PathAlertPageUtils.filterAlertsByQuoteId(alertConfig.alerts, pageState.filterQuoteId);
   }
 
   function getFilteredDismissedTargets() {
-    const items = Array.isArray(alertConfig.dismissedTargets) ? alertConfig.dismissedTargets : [];
-    return items.filter((entry) => {
-      if (
-        pageState.filterQuoteId
-        && (!entry || !entry.target || entry.target.type !== 'quote' || String(entry.target.quoteId) !== String(pageState.filterQuoteId))
-      ) {
-        return false;
-      }
-      return true;
-    });
+    return window.PathAlertPageUtils.filterDismissedTargetsByQuoteId(alertConfig.dismissedTargets, pageState.filterQuoteId);
   }
 
   function syncSelectionCounters() {
@@ -915,40 +897,14 @@
   }
 
   function syncSelectionSets() {
-    const alertIds = new Set((alertConfig.alerts || []).map((alert) => String(alert.id || '')));
-    pageState.selectedAlertIds = new Set(
-      Array.from(pageState.selectedAlertIds).filter((id) => alertIds.has(id))
+    pageState.selectedAlertIds = window.PathAlertPageUtils.pruneSelectionSet(
+      pageState.selectedAlertIds,
+      (alertConfig.alerts || []).map((alert) => alert.id)
     );
-
-    const dismissedKeys = new Set(
+    pageState.selectedDismissedKeys = window.PathAlertPageUtils.pruneSelectionSet(
+      pageState.selectedDismissedKeys,
       (alertConfig.dismissedTargets || []).map((entry) => buildAlertIdentityKey(entry.target))
     );
-    pageState.selectedDismissedKeys = new Set(
-      Array.from(pageState.selectedDismissedKeys).filter((key) => dismissedKeys.has(key))
-    );
-  }
-
-  function groupAlertsBySection(alerts) {
-    const grouped = {
-      quote: [],
-      rule: [],
-      path: [],
-      special: []
-    };
-    for (const alert of (alerts || [])) {
-      if (!alert || !alert.target) continue;
-      if (alert.target.type === 'quote') {
-        grouped.quote.push(alert);
-        continue;
-      }
-      if (alert.target.type === 'rule') {
-        if (alert.target.ruleKind === 'special') grouped.special.push(alert);
-        else grouped.rule.push(alert);
-        continue;
-      }
-      grouped.path.push(alert);
-    }
-    return grouped;
   }
 
   function buildSectionConfigs(grouped) {
@@ -1048,7 +1004,7 @@
       syncSelectionCounters();
       return;
     }
-    const grouped = groupAlertsBySection(alerts);
+    const grouped = window.PathAlertPageUtils.groupAlertsBySection(alerts);
     listEl.innerHTML = buildSectionConfigs(grouped)
       .filter((section) => section.items.length)
       .map((section) => `
@@ -1864,7 +1820,7 @@
     buildAlertRouteHtml,
     getAlertPrimaryTitle,
     formatAlertMetaLine,
-    groupAlertsBySection,
+    groupAlertsBySection: window.PathAlertPageUtils.groupAlertsBySection,
     buildDefaultAlertName,
     buildDefaultQuoteAlertNameForTarget(target, quote, candidates) {
       const pairText = buildQuoteAlertPairTextWithResolvedSymbols(target, quote, candidates);

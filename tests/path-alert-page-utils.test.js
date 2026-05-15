@@ -5,7 +5,11 @@ const {
   buildPathAlertQuoteLabel,
   buildPathAlertMetaText,
   buildPathAlertsPageHref,
+  filterAlertsByQuoteId,
+  filterDismissedTargetsByQuoteId,
+  groupAlertsBySection,
   parsePathAlertsPagePrefill,
+  pruneSelectionSet,
   renderPathAlertItemHtml,
   renderPathAlertPanelHtml,
   renderPathAlertSummaryLinesHtml,
@@ -25,6 +29,37 @@ assert.strictEqual(
   }),
   '(ETHEREUM) cbBTC -> WBTC [bid1]'
 );
+
+const scopedAlerts = [
+  { id: 'q1', target: { type: 'quote', quoteId: 101 } },
+  { id: 'q2', target: { type: 'quote', quoteId: 102 } },
+  { id: 'path1', target: { type: 'path', legs: [] } }
+];
+assert.deepStrictEqual(filterAlertsByQuoteId(scopedAlerts, '').map((item) => item.id), ['q1', 'q2', 'path1']);
+assert.deepStrictEqual(filterAlertsByQuoteId(scopedAlerts, '101').map((item) => item.id), ['q1']);
+assert.deepStrictEqual(
+  filterDismissedTargetsByQuoteId([
+    { target: { type: 'quote', quoteId: 101 } },
+    { target: { type: 'path', legs: [] } }
+  ], 101).map((item) => item.target.type),
+  ['quote']
+);
+assert.deepStrictEqual(
+  Array.from(pruneSelectionSet(new Set(['a', 'b', 'c']), ['b', 'c', 'd'])),
+  ['b', 'c']
+);
+const groupedAlerts = groupAlertsBySection([
+  { id: 'q1', target: { type: 'quote' } },
+  { id: 'r1', target: { type: 'rule', ruleKind: 'fixed' } },
+  { id: 's1', target: { type: 'rule', ruleKind: 'special' } },
+  { id: 'p1', target: { type: 'path' } }
+]);
+assert.deepStrictEqual(Object.fromEntries(Object.entries(groupedAlerts).map(([key, items]) => [key, items.map((item) => item.id)])), {
+  quote: ['q1'],
+  rule: ['r1'],
+  path: ['p1'],
+  special: ['s1']
+});
 
 const pathDraft = sanitizePathAlertDraft({
   name: 'WBTC 路径',

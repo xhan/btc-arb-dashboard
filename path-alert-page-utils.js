@@ -285,12 +285,67 @@
     return `阈值 ${String(alert && alert.thresholdBp)}bp | ${triggerText} | ${cooldownText}`;
   }
 
+  function isQuoteScopedAlertTarget(target, quoteId) {
+    const filterQuoteId = String(quoteId || '').trim();
+    if (!filterQuoteId) return true;
+    return Boolean(
+      target
+      && target.type === 'quote'
+      && String(target.quoteId) === filterQuoteId
+    );
+  }
+
+  function filterAlertsByQuoteId(alerts, quoteId) {
+    const items = Array.isArray(alerts) ? alerts : [];
+    return items.filter((alert) => isQuoteScopedAlertTarget(alert && alert.target, quoteId));
+  }
+
+  function filterDismissedTargetsByQuoteId(entries, quoteId) {
+    const items = Array.isArray(entries) ? entries : [];
+    return items.filter((entry) => isQuoteScopedAlertTarget(entry && entry.target, quoteId));
+  }
+
+  function pruneSelectionSet(selection, validIds) {
+    const validIdSet = new Set((Array.isArray(validIds) ? validIds : []).map((id) => String(id || '')));
+    return new Set(
+      Array.from(selection instanceof Set ? selection : new Set(selection || []))
+        .filter((id) => validIdSet.has(String(id || '')))
+    );
+  }
+
+  function groupAlertsBySection(alerts) {
+    const grouped = {
+      quote: [],
+      rule: [],
+      path: [],
+      special: []
+    };
+    for (const alert of (Array.isArray(alerts) ? alerts : [])) {
+      if (!alert || !alert.target) continue;
+      if (alert.target.type === 'quote') {
+        grouped.quote.push(alert);
+        continue;
+      }
+      if (alert.target.type === 'rule') {
+        if (alert.target.ruleKind === 'special') grouped.special.push(alert);
+        else grouped.rule.push(alert);
+        continue;
+      }
+      grouped.path.push(alert);
+    }
+    return grouped;
+  }
+
   return {
     sanitizePathAlertDraft,
     buildPathAlertQuoteLabel,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
+    filterAlertsByQuoteId,
+    filterDismissedTargetsByQuoteId,
+    groupAlertsBySection,
     parsePathAlertsPagePrefill,
+    pruneSelectionSet,
     renderPathAlertItemHtml,
     renderPathAlertPanelHtml,
     renderPathAlertSummaryLinesHtml,
