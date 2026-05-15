@@ -242,7 +242,6 @@
     buildQuoteAlertMessage,
     buildQuoteAlertThresholdLine,
     buildQuoteAlertRemotePayload,
-    getQuoteAlertDirection,
-    buildLegacyQuoteAlertRemotePayload: buildQuoteAlertRemotePayload
+    getQuoteAlertDirection
   };
 }));

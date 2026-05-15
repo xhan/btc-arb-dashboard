@@ -131,7 +131,7 @@
   - `quote-calculator.js` 里的旧计算器残留已在运行时边界重构中移除
   - `app.js` 内部 `legacy quote alert` 函数命名已收敛为 `quote alert`
   - 未被生产代码调用的 `quote-alert-config-utils.js` 旧迁移工具已移除
-  - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 仍作为兼容导出保留
+  - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
 - 建议改法：
   - 先删死代码和无生产调用 API

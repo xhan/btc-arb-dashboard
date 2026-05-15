@@ -427,6 +427,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertCurrentValueText(alert, evaluation, options = {})'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({'));
     assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
+    assert.ok(!pathAlertNotificationUtilsResponse.body.includes('buildLegacyQuoteAlertRemotePayload'));
     assert.ok(appJsResponse.body.includes('let quoteUiState = new Map();'));
     assert.ok(appJsResponse.body.includes('function getDashboardRuntimeUtils()'));
     assert.ok(appJsResponse.body.includes('DashboardRuntimeUtils is not loaded'));
