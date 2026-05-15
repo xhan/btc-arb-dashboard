@@ -396,6 +396,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('openPathAlertsManagementPage({'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertPanelHtml(options = {})'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertItemHtml(item = {})'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertSummaryLinesHtml(lines)'));
     assert.ok(appJsResponse.body.includes('PathAlertPageUtils.renderPathAlertPanelHtml(options)'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-delete'));

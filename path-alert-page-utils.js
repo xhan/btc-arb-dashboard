@@ -226,6 +226,16 @@
             `;
   }
 
+  function renderPathAlertSummaryLinesHtml(lines) {
+    const safeLines = Array.isArray(lines) ? lines : [];
+    if (!safeLines.length) {
+      return '<div class="path-alert-item-route-line">--</div>';
+    }
+    return safeLines
+      .map((line) => `<div class="path-alert-item-route-line">${escapeHtml(line)}</div>`)
+      .join('');
+  }
+
   function renderPathAlertPanelHtml(options = {}) {
     const toolbarHtml = renderPathAlertToolbarHtml(options);
     const items = Array.isArray(options.items) ? options.items : [];
@@ -241,6 +251,7 @@
     parsePathAlertsPagePrefill,
     renderPathAlertItemHtml,
     renderPathAlertPanelHtml,
+    renderPathAlertSummaryLinesHtml,
     renderPathAlertToolbarHtml
   };
 }));

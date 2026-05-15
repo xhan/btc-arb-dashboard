@@ -4251,11 +4251,11 @@
     }
 
     function renderPathAlertSummaryLinesHtml(alert) {
-        const lines = buildPathAlertSummaryLines(alert);
-        if (!lines.length) {
+        const utils = window.PathAlertPageUtils;
+        if (!utils || typeof utils.renderPathAlertSummaryLinesHtml !== 'function') {
             return '<div class="path-alert-item-route-line">--</div>';
         }
-        return lines.map((line) => `<div class="path-alert-item-route-line">${escapeHtml(line)}</div>`).join('');
+        return utils.renderPathAlertSummaryLinesHtml(buildPathAlertSummaryLines(alert));
     }
 
     function buildPathAlertLegDisplayLine(leg) {

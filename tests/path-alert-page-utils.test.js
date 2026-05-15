@@ -6,6 +6,7 @@ const {
   parsePathAlertsPagePrefill,
   renderPathAlertItemHtml,
   renderPathAlertPanelHtml,
+  renderPathAlertSummaryLinesHtml,
   renderPathAlertToolbarHtml
 } = require('../path-alert-page-utils');
 
@@ -197,6 +198,16 @@ assert.ok(itemHtml.includes('data-path-alert-delete="alert-1"'));
 assert.ok(itemHtml.includes('data-path-alert-dismiss-delete="alert-1"'));
 assert.ok(itemHtml.includes('path-alert-status-triggered'));
 assert.ok(itemHtml.includes('利润 &gt; 1'));
+
+assert.strictEqual(
+  renderPathAlertSummaryLinesHtml(['路径 <A>', 'ETH/USDC']),
+  '<div class="path-alert-item-route-line">路径 &lt;A&gt;</div><div class="path-alert-item-route-line">ETH/USDC</div>'
+);
+
+assert.strictEqual(
+  renderPathAlertSummaryLinesHtml([]),
+  '<div class="path-alert-item-route-line">--</div>'
+);
 
 const panelHtml = renderPathAlertPanelHtml({
   settings: { pathAlertEvalIntervalMs: 500 },
