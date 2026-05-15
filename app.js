@@ -323,6 +323,34 @@
         return window.ArbPanelLayoutUtils;
     }
 
+    function getPathAlertRuleDefinitionsUtils() {
+        if (!window.PathAlertRuleDefinitions) {
+            throw new Error('PathAlertRuleDefinitions is not loaded');
+        }
+        return window.PathAlertRuleDefinitions;
+    }
+
+    function getArbRuleSnapshotUtils() {
+        if (!window.ArbRuleSnapshotUtils) {
+            throw new Error('ArbRuleSnapshotUtils is not loaded');
+        }
+        return window.ArbRuleSnapshotUtils;
+    }
+
+    function getArbFixedUtils() {
+        if (!window.ArbFixedUtils) {
+            throw new Error('ArbFixedUtils is not loaded');
+        }
+        return window.ArbFixedUtils;
+    }
+
+    function getArbSpecialUtils() {
+        if (!window.ArbSpecialUtils) {
+            throw new Error('ArbSpecialUtils is not loaded');
+        }
+        return window.ArbSpecialUtils;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -1691,31 +1719,24 @@
         const allEdgesWithRules = allEdges.concat(ruleEdges);
         const quoteMetaById = buildQuoteMetaById();
         const quotesByCategoryName = buildQuotesByCategoryName();
-        const baseSnapshot = window.ArbRuleSnapshotUtils && typeof window.ArbRuleSnapshotUtils.buildArbRuleSnapshot === 'function'
-            ? window.ArbRuleSnapshotUtils.buildArbRuleSnapshot({
-                fixedRules: FIXED_PATH_RULES,
-                specialRules: SPECIAL_ARB_RULES,
-                allEdgesWithRules,
-                fixedTemplatesByRuleId: topologyCacheForFixed && topologyCacheForFixed.fixedTemplatesByRuleId
-                    ? topologyCacheForFixed.fixedTemplatesByRuleId
-                    : null,
-                quoteMetaById,
-                quotesByCategoryName,
-                quoteStateById: quoteMarketState,
-                aliasRules,
-                mutedPathLegs,
-                mutedPathLegUtils: getMutedPathLegUtils(),
-                preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
-                arbPathsApi: window.ArbPaths,
-                arbFixedUtils: window.ArbFixedUtils,
-                arbSpecialUtils: window.ArbSpecialUtils
-            })
-            : {
-                fixedResults: [],
-                fixedByRuleId: {},
-                specialResults: [],
-                specialByRuleId: {}
-            };
+        const baseSnapshot = getArbRuleSnapshotUtils().buildArbRuleSnapshot({
+            fixedRules: FIXED_PATH_RULES,
+            specialRules: SPECIAL_ARB_RULES,
+            allEdgesWithRules,
+            fixedTemplatesByRuleId: topologyCacheForFixed && topologyCacheForFixed.fixedTemplatesByRuleId
+                ? topologyCacheForFixed.fixedTemplatesByRuleId
+                : null,
+            quoteMetaById,
+            quotesByCategoryName,
+            quoteStateById: quoteMarketState,
+            aliasRules,
+            mutedPathLegs,
+            mutedPathLegUtils: getMutedPathLegUtils(),
+            preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
+            arbPathsApi: window.ArbPaths,
+            arbFixedUtils: getArbFixedUtils(),
+            arbSpecialUtils: getArbSpecialUtils()
+        });
 
         arbRuleSnapshotCacheKey = cacheKey;
         arbRuleSnapshotCache = {
@@ -1763,11 +1784,10 @@
             preferredStartSymbols: preferredCycleStartSymbols
         });
 
+        const arbFixedUtils = getArbFixedUtils();
         for (const rule of FIXED_PATH_RULES) {
             if (!rule) continue;
-            const filteredEdges = window.ArbFixedUtils && typeof window.ArbFixedUtils.filterEdgesForFixedRule === 'function'
-                ? window.ArbFixedUtils.filterEdgesForFixedRule(rule, allTopologyEdgesWithRules, quoteMetaById)
-                : allTopologyEdgesWithRules;
+            const filteredEdges = arbFixedUtils.filterEdgesForFixedRule(rule, allTopologyEdgesWithRules, quoteMetaById);
             fixedTemplatesByRuleId[rule.id] = utils.buildFixedPathTemplates(filteredEdges, rule, aliasRules, {
                 limit: Number(rule.resultLimit) || 1,
                 preferredStartSymbols: preferredCycleStartSymbols
@@ -1804,79 +1824,8 @@
         return aliasMatch || '';
     }
 
-    const FIXED_PATH_RULES = (window.PathAlertRuleDefinitions && Array.isArray(window.PathAlertRuleDefinitions.FIXED_PATH_RULES))
-        ? window.PathAlertRuleDefinitions.FIXED_PATH_RULES
-        : [
-        {
-            id: 'fixed:wbtc-eth-arb',
-            title: 'WBTC ETH <-> ARB',
-            base: 'cbBTC',
-            quote: 'WBTC',
-            categoryNames: ['WBTC监控'],
-            chains: ['ethereum', 'arbitrum'],
-            steps: 2
-        },
-        {
-            id: 'fixed:gho-usdc',
-            title: 'GHO <-> USDC',
-            base: 'GHO',
-            quote: 'USDC',
-            steps: 2,
-            crossChain: true
-        }
-    ];
-    const SPECIAL_ARB_RULES = (window.PathAlertRuleDefinitions && Array.isArray(window.PathAlertRuleDefinitions.SPECIAL_ARB_RULES))
-        ? window.PathAlertRuleDefinitions.SPECIAL_ARB_RULES
-        : [
-        {
-            id: 'special:wbtc-bybit',
-            title: 'WBTC <-> BYBIT',
-            type: 'pair-bybit',
-            categoryName: 'WBTC监控',
-            dexBase: 'cbBTC',
-            dexQuote: 'WBTC',
-            cexQuote: 'BTC',
-            cexChain: 'Bybit',
-            displayTargets: [1, 2, 3],
-            withdrawFee: 0.0001,
-            depthSizeDecimals: 5,
-            targetAmountDecimals: 5,
-            profitDecimals: 5,
-            bpDecimals: 1
-        },
-        {
-            id: 'special:usde-bybit',
-            title: 'USDe <-> BYBIT',
-            type: 'pair-bybit',
-            categoryName: 'USD监控',
-            dexBase: 'USDT',
-            dexQuote: 'USDe',
-            cexQuote: 'USDT',
-            cexChain: 'Bybit',
-            displayTargets: [100000, 200000],
-            withdrawFee: 0,
-            depthSizeDecimals: 1,
-            targetAmountDecimals: 1,
-            profitDecimals: 1,
-            bpDecimals: 1
-        },
-        {
-            id: 'special:usdtb-bybit',
-            title: 'USDtb <-> BYBIT',
-            type: 'pair-bybit',
-            categoryName: 'USD监控',
-            dexBase: 'USDT',
-            dexQuote: 'USDtb',
-            cexQuote: 'USDT',
-            cexChain: 'Bybit',
-            displayTargets: [100000, 200000],
-            withdrawFee: 0,
-            depthSizeDecimals: 1,
-            targetAmountDecimals: 1,
-            profitDecimals: 1,
-            bpDecimals: 1
-        }
-    ];
+    const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;
+    const SPECIAL_ARB_RULES = getPathAlertRuleDefinitionsUtils().SPECIAL_ARB_RULES;
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
     const ARB_PATH_CONFIG = window.ArbPathConfig || { watchItems: [] };
 
@@ -2627,7 +2576,7 @@
     }
 
     function getDefaultArbDisplayMinProfitBp() {
-        const ruleDefault = Number(window.PathAlertRuleDefinitions && window.PathAlertRuleDefinitions.DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP);
+        const ruleDefault = Number(getPathAlertRuleDefinitionsUtils().DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP);
         if (Number.isFinite(ruleDefault)) return Math.max(0, ruleDefault);
         return Math.max(0, Number(getArbPanelLayoutUtils().DEFAULT_DISPLAY_MIN_PROFIT_BP));
     }
@@ -3486,12 +3435,7 @@
     }
 
     function getPathAlertRuleDefinitions(sourceType) {
-        if (window.PathAlertRuleDefinitions && typeof window.PathAlertRuleDefinitions.getRuleDefinitions === 'function') {
-            return window.PathAlertRuleDefinitions.getRuleDefinitions(sourceType);
-        }
-        if (sourceType === 'fixed') return FIXED_PATH_RULES;
-        if (sourceType === 'special') return SPECIAL_ARB_RULES;
-        return [];
+        return getPathAlertRuleDefinitionsUtils().getRuleDefinitions(sourceType);
     }
 
     function resolveSpecialRuleAlertConfig(alert) {

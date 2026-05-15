@@ -148,6 +148,15 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="special-rule-alert-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
+      response.body.indexOf('src="arb-rule-snapshot-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="path-alert-rule-definitions.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="arb-fixed-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="muted-path-storage-utils.js"') < response.body.indexOf('src="path-alert-utils.js"')
     );
     assert.ok(!response.body.includes('id="alert-sound"'));
@@ -409,6 +418,19 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchDisplayEntry(options = {})'));
     assert.ok(appJsResponse.body.includes('function getArbPanelLayoutUtils()'));
     assert.ok(appJsResponse.body.includes('ArbPanelLayoutUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getPathAlertRuleDefinitionsUtils()'));
+    assert.ok(appJsResponse.body.includes('PathAlertRuleDefinitions is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getArbRuleSnapshotUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbRuleSnapshotUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getArbFixedUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbFixedUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getArbSpecialUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbSpecialUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;'));
+    assert.ok(appJsResponse.body.includes('getArbRuleSnapshotUtils().buildArbRuleSnapshot({'));
+    assert.ok(!appJsResponse.body.includes('window.ArbRuleSnapshotUtils &&'));
+    assert.ok(!appJsResponse.body.includes('fixed:gho-usdc'));
+    assert.ok(!appJsResponse.body.includes('special:usdtb-bybit'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta)'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildQuotePriceWatchDisplayEntry({'));
