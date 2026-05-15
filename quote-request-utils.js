@@ -121,6 +121,39 @@
     };
   }
 
+  function getQuoteErrorMessage(error) {
+    if (error && typeof error.message === 'string') return error.message;
+    const message = String(error == null ? '' : error);
+    return message || 'Unknown error';
+  }
+
+  function formatQuoteErrorMessage(error, options = {}) {
+    let displayMsg = getQuoteErrorMessage(error);
+    if (displayMsg.includes('ENOTFOUND')) displayMsg = '网络连接失败';
+
+    if (displayMsg.includes('ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT')) {
+      displayMsg = '流动性不足 (滑点过高)';
+    }
+    if (displayMsg.includes('Liquidity unavailable') || displayMsg.includes('Liquidity Unavailable')) {
+      displayMsg = '流动性不足 (0x)';
+    }
+    if (displayMsg.includes('INSUFFICIENT_ASSET_LIQUIDITY') || displayMsg.includes('Asset Liquidity')) {
+      displayMsg = '资产流动性不足 (0x)';
+    }
+
+    if (displayMsg.includes('429')) displayMsg = '请求过快 (Rate Limit)';
+
+    const maxLength = normalizePositiveAmount(options.maxLength, 40);
+    if (displayMsg.length > maxLength) {
+      return `${displayMsg.substring(0, maxLength)}...`;
+    }
+    return displayMsg;
+  }
+
+  function buildQuoteErrorTitle(error) {
+    return `详细错误: ${getQuoteErrorMessage(error)}`;
+  }
+
   function buildMarketQuoteResult(data, usedSource, options = {}) {
     const result = {
       symbols: { from: data.fromSymbol, to: data.toSymbol },
@@ -176,6 +209,8 @@
     buildCexOrderbookQuoteResult,
     buildMarketQuoteResult,
     buildQuoteRequestInput,
+    buildQuoteErrorTitle,
+    formatQuoteErrorMessage,
     resolveMarketQuoteRequestConfig,
     resolveQuoteRequestConfig,
     shouldDelayQuoteSource,

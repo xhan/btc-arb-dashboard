@@ -307,6 +307,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRequestUtilsResponse.body.includes('const CEX_ORDERBOOK_REQUESTS = Object.freeze({'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildQuoteRequestInput(quote, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function shouldSkipQuoteSource(source, quote, options = {})'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('function formatQuoteErrorMessage(error, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));
     assert.ok(appJsResponse.body.includes('function getChainDefaults()'));

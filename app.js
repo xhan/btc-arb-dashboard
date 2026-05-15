@@ -4654,6 +4654,8 @@
             
         } catch (error) {
             if (error.name === 'AbortError') return; 
+            const quoteRequestUtils = getQuoteRequestUtils();
+            const errorTitle = quoteRequestUtils.buildQuoteErrorTitle(error);
 
             if (isInverseFetch) {
                 let inverseEl = document.getElementById(`inverse-quote-${quote.id}`);
@@ -4665,29 +4667,15 @@
                         quoteDataEl.appendChild(inverseEl);
                     }
                     inverseEl.textContent = '反向报价失败';
-                    inverseEl.title = `详细错误: ${error.message}`;
+                    inverseEl.title = errorTitle;
                 }
             } else {
-                let displayMsg = error.message;
-                if (displayMsg.includes("ENOTFOUND")) displayMsg = "网络连接失败";
-                
-                if (displayMsg.includes("ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT")) {
-                    displayMsg = "流动性不足 (滑点过高)";
-                }
-                if (displayMsg.includes("Liquidity unavailable") || displayMsg.includes("Liquidity Unavailable")) {
-                    displayMsg = "流动性不足 (0x)";
-                }
-                if (displayMsg.includes("INSUFFICIENT_ASSET_LIQUIDITY") || displayMsg.includes("Asset Liquidity")) {
-                    displayMsg = "资产流动性不足 (0x)";
-                }
-                
-                if (displayMsg.includes("429")) displayMsg = "请求过快 (Rate Limit)";
-                if (displayMsg.length > 40) displayMsg = displayMsg.substring(0, 40) + '...';
+                const displayMsg = quoteRequestUtils.formatQuoteErrorMessage(error);
 
                 quoteTextEl.textContent = `❌ ${displayMsg}`;
                 quoteTextWrapperEl.classList.remove('loading-text');
                 quoteDataEl.classList.add('error');
-                quoteDataEl.title = `详细错误: ${error.message}`;
+                quoteDataEl.title = errorTitle;
             }
         } finally {
             if (activeFetchControllers.get(quote.id) === controller) {
