@@ -442,6 +442,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('height: 104'));
     assert.ok(appJsResponse.body.includes('showRightPriceScale: true'));
     assert.ok(appJsResponse.body.includes('mini: true'));
+    assert.ok(appJsResponse.body.includes('utils.buildArbDetailPairHtml(row) : \'\''));
+    assert.ok(!appJsResponse.body.includes('function buildArbDetailTokenHtml'));
+    assert.ok(!appJsResponse.body.includes('function buildArbDetailPairHtml'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSourceHtml(row, { cardIndex, rowIndex })'));
     assert.ok(!appJsResponse.body.includes('arb-detail-leg-action-row'));
     assert.ok(response.body.includes('.arb-detail-leg-source {'));

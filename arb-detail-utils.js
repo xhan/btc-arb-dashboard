@@ -15,6 +15,15 @@
     return amount;
   }
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function normalizeRoundedDetailAmount(value, fallback = 1) {
     const roundedToOneDecimal = Math.round(Number(value) * 10) / 10;
     return normalizePositiveAmount(roundedToOneDecimal, fallback);
@@ -239,6 +248,24 @@
     return buildDexLink(config);
   }
 
+  function buildArbDetailTokenHtml(symbol, address) {
+    const safeSymbol = escapeHtml(symbol || '');
+    if (!address) {
+      return safeSymbol;
+    }
+
+    const safeAddress = escapeHtml(address);
+    return `<span class="arb-detail-token" data-arb-detail-token-address="${safeAddress}" data-arb-detail-token-symbol="${safeSymbol}" title="${safeAddress}">${safeSymbol}</span>`;
+  }
+
+  function buildArbDetailPairHtml(row) {
+    if (!row) return '';
+    const chainText = `（${escapeHtml(row.chainLabel || '')}）`;
+    const fromHtml = buildArbDetailTokenHtml(row.fromSymbol, row.fromTokenAddress);
+    const toHtml = buildArbDetailTokenHtml(row.toSymbol, row.toTokenAddress);
+    return `${chainText}${fromHtml} -> ${toHtml}`;
+  }
+
   function buildArbOpportunityStableId(section, label, cycle) {
     const safeSection = String(section || '');
     const safeLabel = String(label || '');
@@ -308,6 +335,8 @@
     shouldSyncArbDetailSnapshotForCard,
     buildArbDetailSnapshotMonitorState,
     buildArbDetailDexLink,
+    buildArbDetailTokenHtml,
+    buildArbDetailPairHtml,
     buildArbOpportunityStableId,
     buildUniqueArbOpportunityId,
     getNextArbDetailRequestVersion,

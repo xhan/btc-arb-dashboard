@@ -3332,11 +3332,12 @@
 
     function buildArbDetailRowsHtml(card, cardIndex) {
         if (card.rows && card.rows.length) {
+            const utils = getArbDetailUtils();
             return card.rows.map((row, rowIndex) => `
                 <div class="arb-detail-leg">
                     <div class="arb-detail-leg-line">
                         <div class="arb-detail-leg-main">
-                            <div class="arb-detail-leg-pair">${buildArbDetailPairHtml(row)}</div>
+                            <div class="arb-detail-leg-pair">${typeof utils.buildArbDetailPairHtml === 'function' ? utils.buildArbDetailPairHtml(row) : ''}</div>
                             <div class="arb-detail-leg-source">${buildArbDetailSourceHtml(row, { cardIndex, rowIndex })}</div>
                         </div>
                         <div class="arb-detail-leg-amount-wrap">
@@ -3349,24 +3350,6 @@
         }
 
         return `<div class="${card.error ? 'arb-detail-error' : 'arb-detail-loading'}">${escapeHtml(card.error || '等待报价...')}</div>`;
-    }
-
-    function buildArbDetailTokenHtml(symbol, address) {
-        const safeSymbol = escapeHtml(symbol || '');
-        if (!address) {
-            return safeSymbol;
-        }
-
-        const safeAddress = escapeHtml(address);
-        return `<span class="arb-detail-token" data-arb-detail-token-address="${safeAddress}" data-arb-detail-token-symbol="${safeSymbol}" title="${safeAddress}">${safeSymbol}</span>`;
-    }
-
-    function buildArbDetailPairHtml(row) {
-        if (!row) return '';
-        const chainText = `（${escapeHtml(row.chainLabel || '')}）`;
-        const fromHtml = buildArbDetailTokenHtml(row.fromSymbol, row.fromTokenAddress);
-        const toHtml = buildArbDetailTokenHtml(row.toSymbol, row.toTokenAddress);
-        return `${chainText}${fromHtml} -> ${toHtml}`;
     }
 
     function buildArbDetailMuteButtonHtml(cardIndex, rowIndex, quoteId) {

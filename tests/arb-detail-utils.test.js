@@ -23,7 +23,9 @@ const {
   buildArbDetailSnapshotMonitorState,
   buildArbDetailDexLink,
   buildArbDetailRateText,
-  buildArbDetailRateDeltaText
+  buildArbDetailRateDeltaText,
+  buildArbDetailTokenHtml,
+  buildArbDetailPairHtml
 } = require('../arb-detail-utils');
 
 assert.deepStrictEqual(
@@ -64,6 +66,27 @@ assert.strictEqual(
 assert.strictEqual(
   buildArbDetailRateDeltaText(null, 1.0001),
   '--'
+);
+
+assert.strictEqual(
+  buildArbDetailTokenHtml('cb<BTC>', ''),
+  'cb&lt;BTC&gt;'
+);
+
+assert.strictEqual(
+  buildArbDetailTokenHtml('cb<BTC>', '0x"abc'),
+  '<span class="arb-detail-token" data-arb-detail-token-address="0x&quot;abc" data-arb-detail-token-symbol="cb&lt;BTC&gt;" title="0x&quot;abc">cb&lt;BTC&gt;</span>'
+);
+
+assert.strictEqual(
+  buildArbDetailPairHtml({
+    chainLabel: 'Ethereum <Main>',
+    fromSymbol: 'cb<BTC>',
+    fromTokenAddress: '0xfrom',
+    toSymbol: 'WBTC & ETH',
+    toTokenAddress: '0xto'
+  }),
+  '（Ethereum &lt;Main&gt;）<span class="arb-detail-token" data-arb-detail-token-address="0xfrom" data-arb-detail-token-symbol="cb&lt;BTC&gt;" title="0xfrom">cb&lt;BTC&gt;</span> -> <span class="arb-detail-token" data-arb-detail-token-address="0xto" data-arb-detail-token-symbol="WBTC &amp; ETH" title="0xto">WBTC &amp; ETH</span>'
 );
 
 assert.deepStrictEqual(
