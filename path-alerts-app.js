@@ -78,14 +78,17 @@
   }
 
   function shortToken(value) {
-    const text = String(value || '').trim();
-    if (!text) return '--';
-    if (text.length <= 18) return text;
-    return `${text.slice(0, 8)}...${text.slice(-6)}`;
+    return window.PathAlertPageUtils.shortenTokenText(value);
   }
 
   function buildQuoteLabel(chain, fromSymbol, toSymbol, suffix = '') {
-    return `(${formatChainLabel(chain)}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
+    return window.PathAlertPageUtils.buildPathAlertQuoteLabel({
+      chain,
+      fromSymbol,
+      toSymbol,
+      suffix,
+      formatChainLabel
+    });
   }
 
   function getDefaultThresholdBp() {

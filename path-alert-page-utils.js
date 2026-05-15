@@ -18,6 +18,24 @@
       .replace(/'/g, '&#39;');
   }
 
+  function shortenTokenText(value) {
+    const text = String(value || '').trim();
+    if (!text) return '--';
+    if (text.length <= 18) return text;
+    return `${text.slice(0, 8)}...${text.slice(-6)}`;
+  }
+
+  function buildPathAlertQuoteLabel(options = {}) {
+    const formatChainLabel = typeof options.formatChainLabel === 'function'
+      ? options.formatChainLabel
+      : (chain) => chain || '';
+    const chainLabel = formatChainLabel(options.chain);
+    const fromSymbol = options.fromSymbol || '--';
+    const toSymbol = options.toSymbol || '--';
+    const suffix = options.suffix || '';
+    return `(${chainLabel}) ${fromSymbol} -> ${toSymbol}${suffix}`;
+  }
+
   function sanitizeLeg(leg) {
     if (!leg || typeof leg !== 'object') return null;
     const quoteId = Number(leg.quoteId);
@@ -269,12 +287,14 @@
 
   return {
     sanitizePathAlertDraft,
+    buildPathAlertQuoteLabel,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
     parsePathAlertsPagePrefill,
     renderPathAlertItemHtml,
     renderPathAlertPanelHtml,
     renderPathAlertSummaryLinesHtml,
-    renderPathAlertToolbarHtml
+    renderPathAlertToolbarHtml,
+    shortenTokenText
   };
 }));

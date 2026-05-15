@@ -2,14 +2,29 @@ const assert = require('assert');
 
 const {
   sanitizePathAlertDraft,
+  buildPathAlertQuoteLabel,
   buildPathAlertMetaText,
   buildPathAlertsPageHref,
   parsePathAlertsPagePrefill,
   renderPathAlertItemHtml,
   renderPathAlertPanelHtml,
   renderPathAlertSummaryLinesHtml,
-  renderPathAlertToolbarHtml
+  renderPathAlertToolbarHtml,
+  shortenTokenText
 } = require('../path-alert-page-utils');
+
+assert.strictEqual(shortenTokenText(''), '--');
+assert.strictEqual(shortenTokenText('0x1234567890abcdef123456'), '0x123456...123456');
+assert.strictEqual(
+  buildPathAlertQuoteLabel({
+    chain: 'ethereum',
+    fromSymbol: 'cbBTC',
+    toSymbol: 'WBTC',
+    suffix: ' [bid1]',
+    formatChainLabel: (chain) => chain.toUpperCase()
+  }),
+  '(ETHEREUM) cbBTC -> WBTC [bid1]'
+);
 
 const pathDraft = sanitizePathAlertDraft({
   name: 'WBTC 路径',
