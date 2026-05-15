@@ -355,6 +355,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
     assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));
+    assert.ok(appJsResponse.body.includes('let arbDetailRefreshTimer = null;'));
+    assert.ok(appJsResponse.body.includes('clearArbDetailRefreshTimer'));
+    assert.ok(appJsResponse.body.includes('arbDetailRefreshTimer = setTimeout(() => {'));
+    assert.ok(!appJsResponse.body.includes('while (arbDetailState.visible && arbDetailState.loopToken === runToken)'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-profit-card'));
     assert.ok(appJsResponse.body.includes('resolveEventTargetElement(event)'));
     assert.ok(appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
