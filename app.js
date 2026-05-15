@@ -6001,9 +6001,9 @@
     function buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null) {
         if (
             window.PathAlertNotificationUtils
-            && typeof window.PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload === 'function'
+            && typeof window.PathAlertNotificationUtils.buildQuoteAlertRemotePayload === 'function'
         ) {
-            return window.PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({
+            return window.PathAlertNotificationUtils.buildQuoteAlertRemotePayload({
                 chainName: displayName,
                 label,
                 currentValueText,

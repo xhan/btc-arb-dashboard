@@ -110,7 +110,7 @@
     };
   }
 
-  function buildLegacyQuoteAlertRemotePayload(options = {}) {
+  function buildQuoteAlertRemotePayload(options = {}) {
     const chainName = String(options.chainName || '').trim() || '未知链';
     const label = String(options.label || '').trim();
     const currentValueText = String(options.currentValueText || '').trim();
@@ -152,6 +152,7 @@
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,
     buildPathAlertAggregatedLog,
-    buildLegacyQuoteAlertRemotePayload
+    buildQuoteAlertRemotePayload,
+    buildLegacyQuoteAlertRemotePayload: buildQuoteAlertRemotePayload
   };
 }));

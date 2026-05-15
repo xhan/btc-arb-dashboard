@@ -305,6 +305,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));
     assert.ok(!appJsResponse.body.includes('quote.alerts'));
     assert.ok(appJsResponse.body.includes("function getQuoteAlertDirection(target)"));
+    assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertRemotePayload({'));
+    assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
     assert.ok(appJsResponse.body.includes('let quoteUiState = new Map();'));
     assert.ok(appJsResponse.body.includes('function sanitizeQuoteMarketState(state)'));
     assert.ok(appJsResponse.body.includes('function setQuoteUiState(quoteId, nextState)'));

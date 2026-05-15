@@ -5,6 +5,7 @@ const {
   buildPathAlertNotificationTitle,
   buildPathAlertNotificationBody,
   buildPathAlertAggregatedLog,
+  buildQuoteAlertRemotePayload,
   buildLegacyQuoteAlertRemotePayload
 } = require('../path-alert-notification-utils');
 
@@ -114,7 +115,7 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
-  buildLegacyQuoteAlertRemotePayload({
+  buildQuoteAlertRemotePayload({
     chainName: 'Arbitrum',
     label: 'BTCB/syBTC',
     currentValueText: '0.1 -> 0.100115',
@@ -128,7 +129,7 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
-  buildLegacyQuoteAlertRemotePayload({
+  buildQuoteAlertRemotePayload({
     chainName: 'Bybit',
     label: 'BTCB/syBTC',
     currentValueText: '0.1 -> 0.100115',
@@ -142,7 +143,7 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
-  buildLegacyQuoteAlertRemotePayload({
+  buildQuoteAlertRemotePayload({
     chainName: 'ETH',
     label: 'cbBTC/BTC.b',
     currentValueText: '1 -> 1.000224',
@@ -158,3 +159,5 @@ assert.deepStrictEqual(
     telegramHtmlBody: '总价已达到或超过目标 1.00017\n<a href="https://swap.defillama.com/?chain=ethereum&amp;from=0x1&amp;tab=swap&amp;to=0x2">swap.defillama</a>'
   }
 );
+
+assert.strictEqual(buildLegacyQuoteAlertRemotePayload, buildQuoteAlertRemotePayload);
