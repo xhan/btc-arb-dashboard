@@ -2990,32 +2990,15 @@
             bringFloatingPanelToFront(dataTerminalState.domRefs.window);
             return;
         }
+        const utils = getDataTerminalUtils();
+        if (!utils || typeof utils.buildDataTerminalShellHtml !== 'function') {
+            appendAlertLogEntry('数据终端', '数据终端模块未加载');
+            return;
+        }
 
         const panel = document.createElement('div');
         panel.id = 'data-terminal-window';
-        panel.innerHTML = `
-            <div id="data-terminal-header">
-                <span>数据终端</span>
-                <div class="panel-header-actions">
-                    <button id="data-terminal-min-btn" type="button" title="关闭">－</button>
-                </div>
-            </div>
-            <div id="data-terminal-controls">
-                <div class="data-terminal-controls-row">
-                    <input id="data-terminal-search-input" type="text" placeholder="输入 1 或 2 个代币，空格或逗号分隔">
-                    <label class="data-terminal-toggle" for="data-terminal-alias-toggle">
-                        <input id="data-terminal-alias-toggle" type="checkbox" checked>
-                        <span>允许别名</span>
-                    </label>
-                    <label class="data-terminal-toggle" for="data-terminal-diff-toggle">
-                        <input id="data-terminal-diff-toggle" type="checkbox">
-                        <span>显示和 1 的差值</span>
-                    </label>
-                    <span id="data-terminal-profit-bp" class="data-terminal-profit-bp data-terminal-profit-bp-empty">--</span>
-                </div>
-            </div>
-            <div id="data-terminal-content"></div>
-        `;
+        panel.innerHTML = utils.buildDataTerminalShellHtml();
         panel.style.zIndex = String(FLOATING_PANEL_BASE_Z_INDEX);
         syncDataTerminalPanelDefaultSize(panel);
         positionDataTerminalWindow(panel);

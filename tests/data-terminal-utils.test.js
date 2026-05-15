@@ -6,6 +6,7 @@ const vm = require('vm');
 const {
   buildDataTerminalCandidates,
   buildDataTerminalPanelHtml,
+  buildDataTerminalShellHtml,
   buildDataTerminalSelectionSummary,
   buildDataTerminalViewModel,
   formatDataTerminalBp,
@@ -251,6 +252,16 @@ assert.ok(fallbackPanelHtml.includes('&lt;rate&gt;'));
 
 const emptyPanelHtml = buildDataTerminalPanelHtml({ mode: 'empty', emptyMessage: 'Type <token>' }, {});
 assert.strictEqual(emptyPanelHtml, '<div class="data-terminal-empty">Type &lt;token&gt;</div>');
+
+const shellHtml = buildDataTerminalShellHtml();
+assert.ok(shellHtml.includes('id="data-terminal-header"'));
+assert.ok(shellHtml.includes('id="data-terminal-min-btn"'));
+assert.ok(shellHtml.includes('id="data-terminal-search-input"'));
+assert.ok(shellHtml.includes('placeholder="输入 1 或 2 个代币，空格或逗号分隔"'));
+assert.ok(shellHtml.includes('id="data-terminal-alias-toggle"'));
+assert.ok(shellHtml.includes('id="data-terminal-diff-toggle"'));
+assert.ok(shellHtml.includes('id="data-terminal-profit-bp"'));
+assert.ok(shellHtml.includes('id="data-terminal-content"'));
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'data-terminal-utils.js'), 'utf8');
 const browserSandbox = { window: {} };
