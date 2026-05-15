@@ -30,6 +30,10 @@ const {
   pruneSelectionSet,
   renderPathAlertItemHtml,
   renderPathAlertPanelHtml,
+  renderPathAlertEditorCandidateSearchHtml,
+  renderPathAlertEditorQuoteTargetHtml,
+  renderPathAlertEditorRuleChoicesHtml,
+  renderPathAlertEditorSelectedLegsHtml,
   renderPathAlertRouteLinesHtml,
   renderPathAlertSummaryLinesHtml,
   renderPathAlertToolbarHtml,
@@ -440,6 +444,39 @@ assert.deepStrictEqual(
   }),
   ['固定 BTC 规则']
 );
+assert.ok(renderPathAlertEditorRuleChoicesHtml(
+  [{ id: 'fixed:btc', title: '固定 <BTC>' }],
+  'fixed:btc'
+).includes('固定 &lt;BTC&gt;'));
+assert.ok(renderPathAlertEditorCandidateSearchHtml(
+  { searchQuery: 'ETH <USDC>' },
+  { hasQuoteCandidates: false }
+).includes('暂无可选报价腿'));
+const quoteTargetHtml = renderPathAlertEditorQuoteTargetHtml(
+  {
+    selectedQuoteId: '202',
+    quoteDirection: 'inverse',
+    quoteRuleKind: 'percentDown',
+    quoteValue: 0.3,
+    quoteBasePrice: 1.001
+  },
+  [{ id: 202, label: 'ETH <USDC>' }],
+  { quoteSelectDisabled: true }
+);
+assert.ok(quoteTargetHtml.includes('<select id="editor-quote-id" disabled>'));
+assert.ok(quoteTargetHtml.includes('ETH &lt;USDC&gt;'));
+assert.ok(quoteTargetHtml.includes('id="editor-quote-base-price"'));
+const selectedLegsHtml = renderPathAlertEditorSelectedLegsHtml(
+  {
+    sourceType: 'path',
+    legs: [{ chain: 'ethereum', fromSymbol: 'WETH', toSymbol: 'USDC' }]
+  },
+  {
+    formatLeg: (leg) => `${leg.chain}:${leg.fromSymbol}->${leg.toSymbol}`
+  }
+);
+assert.ok(selectedLegsHtml.includes('ethereum:WETH-&gt;USDC'));
+assert.ok(selectedLegsHtml.includes('data-editor-remove-leg="0"'));
 assert.strictEqual(
   validatePathAlertEditorDraft({
     sourceType: 'quote',

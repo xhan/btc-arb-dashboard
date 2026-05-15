@@ -669,32 +669,16 @@
   }
 
   function renderRuleChoices(sourceType, selectedRuleId) {
-    const rules = getRuleDefinitions(sourceType);
-    if (!rules.length) return '<div class="empty">暂无可选规则</div>';
-    return `<div class="rule-list">${rules.map((rule) => `
-      <button
-        type="button"
-        class="rule-item${selectedRuleId === rule.id ? ' active' : ''}"
-        data-editor-rule-id="${escapeHtml(rule.id)}"
-      >${escapeHtml(rule.title)}</button>
-    `).join('')}</div>`;
+    return window.PathAlertPageUtils.renderPathAlertEditorRuleChoicesHtml(
+      getRuleDefinitions(sourceType),
+      selectedRuleId
+    );
   }
 
   function renderCandidateSearchArea(draft) {
-    const disabledAttr = quoteCandidates.length ? '' : 'disabled';
-    return `
-      <div class="form-group">
-        <label for="path-alert-search-input">搜索报价腿</label>
-        <div class="path-alert-search-row">
-          <div class="path-alert-search-shell">
-            <input id="path-alert-search-input" type="text" value="${escapeHtml(draft.searchQuery)}" placeholder="输入分区名、链名、代币、地址" ${disabledAttr}>
-            <div id="path-alert-suggestions" class="path-alert-suggestions"></div>
-          </div>
-          <button type="button" id="path-alert-add-leg-btn" ${disabledAttr}>添加</button>
-        </div>
-      </div>
-      ${quoteCandidates.length ? '' : '<div class="empty">暂无可选报价腿</div>'}
-    `;
+    return window.PathAlertPageUtils.renderPathAlertEditorCandidateSearchHtml(draft, {
+      hasQuoteCandidates: quoteCandidates.length > 0
+    });
   }
 
   function renderQuoteTargetEditor(draft) {
@@ -702,70 +686,22 @@
       const label = isCexOrderbookChain(quote.chain)
         ? `(${formatChainLabel(quote.chain)}) ${quote.symbol || '--'}`
         : buildQuoteLabel(quote.chain, shortToken(quote.fromToken), shortToken(quote.toToken));
-      return `<option value="${escapeHtml(String(quote.id))}" ${String(draft.selectedQuoteId || '') === String(quote.id) ? 'selected' : ''}>${escapeHtml(label)}</option>`;
-    }).join('');
-
-    return `
-      <div class="form-group">
-        <label for="editor-quote-id">报价</label>
-        <select id="editor-quote-id" ${pageState.filterQuoteId ? 'disabled' : ''}>
-          <option value="">请选择</option>
-          ${quoteOptions}
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="editor-quote-direction">方向</label>
-        <select id="editor-quote-direction">
-          <option value="forward" ${draft.quoteDirection === 'forward' ? 'selected' : ''}>正向</option>
-          <option value="inverse" ${draft.quoteDirection === 'inverse' ? 'selected' : ''}>反向</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="editor-quote-rule-kind">规则</label>
-        <select id="editor-quote-rule-kind">
-          <option value="targetAbove" ${draft.quoteRuleKind === 'targetAbove' ? 'selected' : ''}>汇率高于</option>
-          <option value="targetBelow" ${draft.quoteRuleKind === 'targetBelow' ? 'selected' : ''}>汇率低于</option>
-          <option value="percentUp" ${draft.quoteRuleKind === 'percentUp' ? 'selected' : ''}>相对基准上涨</option>
-          <option value="percentDown" ${draft.quoteRuleKind === 'percentDown' ? 'selected' : ''}>相对基准下跌</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="editor-quote-value">${draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown' ? '阈值 (%)' : '汇率阈值'}</label>
-        <input id="editor-quote-value" type="number" step="0.000001" value="${draft.quoteValue === '' ? '' : escapeHtml(String(draft.quoteValue))}">
-      </div>
-      ${(draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown') ? `
-        <div class="form-group">
-          <label for="editor-quote-base-price">基准汇率</label>
-          <input id="editor-quote-base-price" type="number" step="0.000001" value="${draft.quoteBasePrice === '' ? '' : escapeHtml(String(draft.quoteBasePrice))}">
-        </div>
-      ` : ''}
-    `;
+      return { id: quote.id, label };
+    });
+    return window.PathAlertPageUtils.renderPathAlertEditorQuoteTargetHtml(draft, quoteOptions, {
+      quoteSelectDisabled: Boolean(pageState.filterQuoteId)
+    });
   }
 
   function renderSelectedLegs(draft) {
-    if (draft.sourceType === 'quote') {
-      const target = collectEditorTarget(draft);
-      return `<div class="rule-list"><div class="rule-item active">${escapeHtml(buildQuoteAlertQuoteLabel(target))}</div><div class="rule-item active">${escapeHtml(buildQuoteAlertRuleLine(target))}</div></div>`;
-    }
-    if (draft.sourceType !== 'path') {
-      const rule = findRule(draft.sourceType, draft.selectedRuleId);
-      return rule
-        ? `<div class="rule-list"><div class="rule-item active">${escapeHtml(rule.title)}</div></div>`
-        : '<div class="empty">请选择一条规则</div>';
-    }
-    if (!draft.legs.length) {
-      return '<div class="empty">还没有添加路径腿</div>';
-    }
-    return `<div class="selected-legs">${draft.legs.map((leg, index) => `
-      <div class="selected-leg-item">
-        <div class="selected-leg-text">${escapeHtml(buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol))}</div>
-        <div class="selected-leg-actions">
-          <button type="button" data-editor-move-leg="up" data-editor-leg-index="${index}">↑</button>
-          <button type="button" data-editor-move-leg="down" data-editor-leg-index="${index}">↓</button>
-          <button type="button" data-editor-remove-leg="${index}">删</button>
-        </div>
-      </div>
-    `).join('')}</div>`;
+    return window.PathAlertPageUtils.renderPathAlertEditorSelectedLegsHtml(draft, {
+      formatLeg(leg) {
+        return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+      },
+      buildQuoteAlertQuoteLabel,
+      buildQuoteAlertRuleLine,
+      findRule
+    });
   }
 
   function renderEditor() {

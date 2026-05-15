@@ -447,6 +447,120 @@
     return [((findRule(draft.sourceType, draft.selectedRuleId) || {}).title || '--')];
   }
 
+  function renderPathAlertEditorRuleChoicesHtml(rules, selectedRuleId) {
+    const items = Array.isArray(rules) ? rules : [];
+    if (!items.length) return '<div class="empty">暂无可选规则</div>';
+    return `<div class="rule-list">${items.map((rule) => `
+      <button
+        type="button"
+        class="rule-item${selectedRuleId === rule.id ? ' active' : ''}"
+        data-editor-rule-id="${escapeHtml(rule.id)}"
+      >${escapeHtml(rule.title)}</button>
+    `).join('')}</div>`;
+  }
+
+  function renderPathAlertEditorCandidateSearchHtml(draft, options = {}) {
+    const hasQuoteCandidates = options.hasQuoteCandidates === true;
+    const disabledAttr = hasQuoteCandidates ? '' : 'disabled';
+    return `
+      <div class="form-group">
+        <label for="path-alert-search-input">搜索报价腿</label>
+        <div class="path-alert-search-row">
+          <div class="path-alert-search-shell">
+            <input id="path-alert-search-input" type="text" value="${escapeHtml(draft && draft.searchQuery)}" placeholder="输入分区名、链名、代币、地址" ${disabledAttr}>
+            <div id="path-alert-suggestions" class="path-alert-suggestions"></div>
+          </div>
+          <button type="button" id="path-alert-add-leg-btn" ${disabledAttr}>添加</button>
+        </div>
+      </div>
+      ${hasQuoteCandidates ? '' : '<div class="empty">暂无可选报价腿</div>'}
+    `;
+  }
+
+  function renderPathAlertEditorQuoteTargetHtml(draft, quoteOptions, options = {}) {
+    const items = Array.isArray(quoteOptions) ? quoteOptions : [];
+    const selectedQuoteId = String(draft && draft.selectedQuoteId || '');
+    const quoteRuleKind = String(draft && draft.quoteRuleKind || '');
+    const quoteOptionsHtml = items.map((quote) => {
+      const quoteId = String(quote && quote.id || '');
+      return `<option value="${escapeHtml(quoteId)}" ${selectedQuoteId === quoteId ? 'selected' : ''}>${escapeHtml(quote && quote.label)}</option>`;
+    }).join('');
+
+    return `
+      <div class="form-group">
+        <label for="editor-quote-id">报价</label>
+        <select id="editor-quote-id" ${options.quoteSelectDisabled ? 'disabled' : ''}>
+          <option value="">请选择</option>
+          ${quoteOptionsHtml}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editor-quote-direction">方向</label>
+        <select id="editor-quote-direction">
+          <option value="forward" ${draft && draft.quoteDirection === 'forward' ? 'selected' : ''}>正向</option>
+          <option value="inverse" ${draft && draft.quoteDirection === 'inverse' ? 'selected' : ''}>反向</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editor-quote-rule-kind">规则</label>
+        <select id="editor-quote-rule-kind">
+          <option value="targetAbove" ${quoteRuleKind === 'targetAbove' ? 'selected' : ''}>汇率高于</option>
+          <option value="targetBelow" ${quoteRuleKind === 'targetBelow' ? 'selected' : ''}>汇率低于</option>
+          <option value="percentUp" ${quoteRuleKind === 'percentUp' ? 'selected' : ''}>相对基准上涨</option>
+          <option value="percentDown" ${quoteRuleKind === 'percentDown' ? 'selected' : ''}>相对基准下跌</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editor-quote-value">${isPercentQuoteRuleKind(quoteRuleKind) ? '阈值 (%)' : '汇率阈值'}</label>
+        <input id="editor-quote-value" type="number" step="0.000001" value="${draft && draft.quoteValue === '' ? '' : escapeHtml(String(draft && draft.quoteValue))}">
+      </div>
+      ${isPercentQuoteRuleKind(quoteRuleKind) ? `
+        <div class="form-group">
+          <label for="editor-quote-base-price">基准汇率</label>
+          <input id="editor-quote-base-price" type="number" step="0.000001" value="${draft && draft.quoteBasePrice === '' ? '' : escapeHtml(String(draft && draft.quoteBasePrice))}">
+        </div>
+      ` : ''}
+    `;
+  }
+
+  function renderPathAlertEditorSelectedLegsHtml(draft, options = {}) {
+    const formatLeg = typeof options.formatLeg === 'function'
+      ? options.formatLeg
+      : (leg) => buildPathAlertQuotePairLabel(leg && leg.chain, leg && leg.fromSymbol, leg && leg.toSymbol, '', options);
+    const buildQuoteAlertQuoteLabel = typeof options.buildQuoteAlertQuoteLabel === 'function'
+      ? options.buildQuoteAlertQuoteLabel
+      : (target) => buildPathAlertQuoteDisplayLabel(target, null, options);
+    const buildQuoteAlertRuleLine = typeof options.buildQuoteAlertRuleLine === 'function'
+      ? options.buildQuoteAlertRuleLine
+      : () => '--';
+    const findRule = typeof options.findRule === 'function'
+      ? options.findRule
+      : () => null;
+
+    if (draft && draft.sourceType === 'quote') {
+      const target = buildPathAlertEditorTarget(draft);
+      return `<div class="rule-list"><div class="rule-item active">${escapeHtml(buildQuoteAlertQuoteLabel(target))}</div><div class="rule-item active">${escapeHtml(buildQuoteAlertRuleLine(target))}</div></div>`;
+    }
+    if (draft && draft.sourceType !== 'path') {
+      const rule = findRule(draft.sourceType, draft.selectedRuleId);
+      return rule
+        ? `<div class="rule-list"><div class="rule-item active">${escapeHtml(rule.title)}</div></div>`
+        : '<div class="empty">请选择一条规则</div>';
+    }
+    const legs = Array.isArray(draft && draft.legs) ? draft.legs : [];
+    if (!legs.length) return '<div class="empty">还没有添加路径腿</div>';
+    return `<div class="selected-legs">${legs.map((leg, index) => `
+      <div class="selected-leg-item">
+        <div class="selected-leg-text">${escapeHtml(formatLeg(leg))}</div>
+        <div class="selected-leg-actions">
+          <button type="button" data-editor-move-leg="up" data-editor-leg-index="${index}">↑</button>
+          <button type="button" data-editor-move-leg="down" data-editor-leg-index="${index}">↓</button>
+          <button type="button" data-editor-remove-leg="${index}">删</button>
+        </div>
+      </div>
+    `).join('')}</div>`;
+  }
+
   function isPercentQuoteRuleKind(ruleKind) {
     return ruleKind === 'percentUp' || ruleKind === 'percentDown';
   }
@@ -1044,6 +1158,10 @@
     pruneSelectionSet,
     renderPathAlertItemHtml,
     renderPathAlertPanelHtml,
+    renderPathAlertEditorCandidateSearchHtml,
+    renderPathAlertEditorQuoteTargetHtml,
+    renderPathAlertEditorRuleChoicesHtml,
+    renderPathAlertEditorSelectedLegsHtml,
     renderPathAlertRouteLinesHtml,
     renderPathAlertSummaryLinesHtml,
     renderPathAlertToolbarHtml,
