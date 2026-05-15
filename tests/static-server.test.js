@@ -225,6 +225,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(appJsResponse.body.includes('quote-direct-badge'));
     assert.ok(appJsResponse.body.includes('quote.kyberOnlyDirectPools = true;'));
+    const scheduleArbUpdateMatch = appJsResponse.body.match(/function scheduleArbUpdate\(\) \{([\s\S]*?)function invalidateArbRuleSnapshotCache/);
+    assert.ok(scheduleArbUpdateMatch);
+    assert.ok(scheduleArbUpdateMatch[1].includes('if (!isArbPanelVisible())'));
+    assert.ok(scheduleArbUpdateMatch[1].includes('updateArbPanel();'));
+    assert.ok(!scheduleArbUpdateMatch[1].includes('updateArbPanel({ force: true });'));
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
     assert.ok(appJsResponse.body.includes('let pathAlertPanelHidden = true;'));

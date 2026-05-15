@@ -21,14 +21,15 @@
 - 现状：
   - 每次主报价成功都会 `scheduleArbUpdate()`
   - `updateArbPanel()` 会全量构建 `buildArbPanelData()` 并 `innerHTML` 重建
-  - 即使 `arbPathWindow` 隐藏也会继续执行
+  - `scheduleArbUpdate()` 调度前会检查面板可见性；timer 触发时也重新走 `updateArbPanel()` 的可见性保护
+  - 面板隐藏时只标记 dirty，不再被已排队 timer 强制全量重算
 - 预期收益：
   - 明显降低前端主线程 CPU
   - 减少由报价更新触发的大对象构建和字符串拼接
 - 建议改法：
-  - 引入“面板是否可见”判定
-  - 隐藏时只标记 dirty，不立即重算
-  - 再次打开面板时补做一次最新重算
+  - 已引入“面板是否可见”判定
+  - 已做到隐藏时只标记 dirty，不立即重算
+  - 已做到再次打开面板时补做一次最新重算
 
 ### 3. 路径报警无任务时停表
 - 目标：没有有效路径报警时不跑 1s 评估循环。

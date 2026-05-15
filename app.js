@@ -1850,7 +1850,7 @@
         if (arbUpdateTimer) return;
         arbUpdateTimer = setTimeout(() => {
             arbUpdateTimer = null;
-            updateArbPanel({ force: true });
+            updateArbPanel();
         }, ARB_PANEL_UPDATE_DELAY_MS);
     }
 
