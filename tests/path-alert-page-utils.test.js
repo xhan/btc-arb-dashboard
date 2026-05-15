@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const {
   sanitizePathAlertDraft,
+  buildPathAlertMetaText,
   buildPathAlertsPageHref,
   parsePathAlertsPagePrefill,
   renderPathAlertItemHtml,
@@ -222,3 +223,34 @@ const emptyPanelHtml = renderPathAlertPanelHtml({
   emptyText: '暂无需要关注的路径报警'
 });
 assert.ok(emptyPanelHtml.includes('暂无需要关注的路径报警'));
+
+assert.strictEqual(
+  buildPathAlertMetaText({
+    target: { type: 'quote', value: 1.0001 },
+    triggerMode: 'delayed',
+    confirmDelaySec: 13,
+    cooldownSec: 180
+  }),
+  '报价 | 1.0001 | 延迟 13s | 冷却 180s'
+);
+
+assert.strictEqual(
+  buildPathAlertMetaText({
+    target: { type: 'rule', ruleKind: 'special' },
+    triggerMode: 'immediate',
+    cooldownSec: 300
+  }, {
+    resolveSpecialRuleConfig: () => ({ minNetProfit: 0.01, minNetProfitBp: 1.5 })
+  }),
+  '净收益 > 0.01 | 净收益率 > 1.5bp | 立即 | 冷却 300s'
+);
+
+assert.strictEqual(
+  buildPathAlertMetaText({
+    target: { type: 'path' },
+    thresholdBp: 2,
+    triggerMode: 'immediate',
+    cooldownSec: 120
+  }),
+  '阈值 2bp | 立即 | 冷却 120s'
+);

@@ -457,7 +457,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('.alert-log-entry-collapsed'));
     assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
     assert.ok(!appJsResponse.body.includes('导入当前全部机会'));
-    assert.ok(appJsResponse.body.includes('/path-alerts'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('/path-alerts'));
     assert.ok(appJsResponse.body.includes('if (pathAlertPanelHidden) return;'));
     assert.ok(appJsResponse.body.includes('if (isVisible) {'));
     assert.ok(appJsResponse.body.includes('renderPathAlertPanel();'));
@@ -465,7 +465,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertPanelHtml(options = {})'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertItemHtml(item = {})'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertSummaryLinesHtml(lines)'));
-    assert.ok(appJsResponse.body.includes('PathAlertPageUtils.renderPathAlertPanelHtml(options)'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function buildPathAlertMetaText(alert, options = {})'));
+    assert.ok(appJsResponse.body.includes('function getPathAlertPageUtils()'));
+    assert.ok(appJsResponse.body.includes('PathAlertPageUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().renderPathAlertPanelHtml(options)'));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertMetaText(alert, {'));
+    assert.ok(!appJsResponse.body.includes('return \'/path-alerts\';'));
+    assert.ok(!appJsResponse.body.includes('<div class="path-alert-empty">暂无路径报警</div>'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-delete'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-dismiss-delete'));

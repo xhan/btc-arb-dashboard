@@ -4105,12 +4105,15 @@
         return lines[0] || (alert && alert.target && alert.target.type === 'quote' ? '交易对报警' : '未配置路径');
     }
 
-    function renderPathAlertSummaryLinesHtml(alert) {
-        const utils = window.PathAlertPageUtils;
-        if (!utils || typeof utils.renderPathAlertSummaryLinesHtml !== 'function') {
-            return '<div class="path-alert-item-route-line">--</div>';
+    function getPathAlertPageUtils() {
+        if (!window.PathAlertPageUtils) {
+            throw new Error('PathAlertPageUtils is not loaded');
         }
-        return utils.renderPathAlertSummaryLinesHtml(buildPathAlertSummaryLines(alert));
+        return window.PathAlertPageUtils;
+    }
+
+    function renderPathAlertSummaryLinesHtml(alert) {
+        return getPathAlertPageUtils().renderPathAlertSummaryLinesHtml(buildPathAlertSummaryLines(alert));
     }
 
     function buildPathAlertLegDisplayLine(leg) {
@@ -4489,10 +4492,7 @@
     }
 
     function buildPathAlertsManagementHref(options = {}) {
-        if (window.PathAlertPageUtils && typeof window.PathAlertPageUtils.buildPathAlertsPageHref === 'function') {
-            return window.PathAlertPageUtils.buildPathAlertsPageHref(options);
-        }
-        return '/path-alerts';
+        return getPathAlertPageUtils().buildPathAlertsPageHref(options);
     }
 
     function openPathAlertsManagementPage(options = {}) {
@@ -4501,10 +4501,7 @@
     }
 
     function renderPathAlertPanelHtml(options = {}) {
-        if (window.PathAlertPageUtils && typeof window.PathAlertPageUtils.renderPathAlertPanelHtml === 'function') {
-            return window.PathAlertPageUtils.renderPathAlertPanelHtml(options);
-        }
-        return '<div class="path-alert-empty">暂无路径报警</div>';
+        return getPathAlertPageUtils().renderPathAlertPanelHtml(options);
     }
 
     async function loadPathAlertConfig(options = {}) {
@@ -4525,23 +4522,9 @@
     }
 
     function buildPathAlertMetaText(alert) {
-        const triggerText = alert.triggerMode === 'delayed'
-            ? `延迟 ${String(alert.confirmDelaySec)}s`
-            : '立即';
-        const cooldownText = `冷却 ${String(alert.cooldownSec)}s`;
-        if (alert && alert.target && alert.target.type === 'quote') {
-            return `报价 | ${String(alert.target.value != null ? alert.target.value : '--')} | ${triggerText} | ${cooldownText}`;
-        }
-        if (alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special') {
-            const specialRuleConfig = resolveSpecialRuleAlertConfig(alert);
-            return [
-                `净收益 > ${String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--')}`,
-                `净收益率 > ${String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--')}bp`,
-                triggerText,
-                cooldownText
-            ].join(' | ');
-        }
-        return `阈值 ${String(alert.thresholdBp)}bp | ${triggerText} | ${cooldownText}`;
+        return getPathAlertPageUtils().buildPathAlertMetaText(alert, {
+            resolveSpecialRuleConfig
+        });
     }
 
     function renderPathAlertPanel() {

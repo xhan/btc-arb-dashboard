@@ -245,8 +245,31 @@
     return `${toolbarHtml}<div class="path-alert-list">${items.map(renderPathAlertItemHtml).join('')}</div>`;
   }
 
+  function buildPathAlertMetaText(alert, options = {}) {
+    const triggerText = alert && alert.triggerMode === 'delayed'
+      ? `延迟 ${String(alert.confirmDelaySec)}s`
+      : '立即';
+    const cooldownText = `冷却 ${String(alert && alert.cooldownSec)}s`;
+    if (alert && alert.target && alert.target.type === 'quote') {
+      return `报价 | ${String(alert.target.value != null ? alert.target.value : '--')} | ${triggerText} | ${cooldownText}`;
+    }
+    if (alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special') {
+      const specialRuleConfig = typeof options.resolveSpecialRuleConfig === 'function'
+        ? options.resolveSpecialRuleConfig(alert)
+        : {};
+      return [
+        `净收益 > ${String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--')}`,
+        `净收益率 > ${String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--')}bp`,
+        triggerText,
+        cooldownText
+      ].join(' | ');
+    }
+    return `阈值 ${String(alert && alert.thresholdBp)}bp | ${triggerText} | ${cooldownText}`;
+  }
+
   return {
     sanitizePathAlertDraft,
+    buildPathAlertMetaText,
     buildPathAlertsPageHref,
     parsePathAlertsPagePrefill,
     renderPathAlertItemHtml,
