@@ -138,8 +138,15 @@
     let quoteSourceLastRequestAtByIntervalKey = new Map();
     let arbDetailChartPreviewCharts = [];
     let arbDetailChartPreviewRunId = 0;
-    let arbDetailRefreshTimer = null;
     let arbDetailChartAutoRefreshTimer = null;
+    const arbDetailRefreshScheduler = window.ArbDetailRefreshUtils.createArbDetailRefreshScheduler({
+        intervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
+        isActive: isArbDetailRefreshActive,
+        isRefreshing: () => arbDetailState.isRefreshing,
+        setRefreshing: setArbDetailRefreshing,
+        refresh: refreshArbDetailCards,
+        logError: logArbDetailRefreshError
+    });
     
     let hoverTimeout = null;        
     let currentHoveredQuoteId = null; 
@@ -4320,46 +4327,22 @@
         return arbDetailState.visible && arbDetailState.refreshToken === refreshToken;
     }
 
+    function setArbDetailRefreshing(refreshing, refreshToken) {
+        if (refreshing || arbDetailState.refreshToken === refreshToken) {
+            arbDetailState.isRefreshing = Boolean(refreshing);
+        }
+    }
+
+    function logArbDetailRefreshError(error) {
+        console.error('[arb-detail] refresh failed', error);
+    }
+
     function clearArbDetailRefreshTimer() {
-        if (!arbDetailRefreshTimer) return;
-        clearTimeout(arbDetailRefreshTimer);
-        arbDetailRefreshTimer = null;
-    }
-
-    function scheduleArbDetailRefresh(refreshToken, delayMs = 0) {
-        clearArbDetailRefreshTimer();
-        if (!isArbDetailRefreshActive(refreshToken)) return;
-        arbDetailRefreshTimer = setTimeout(() => {
-            arbDetailRefreshTimer = null;
-            void runArbDetailRefreshTick(refreshToken);
-        }, Math.max(0, delayMs));
-    }
-
-    async function runArbDetailRefreshTick(refreshToken) {
-        if (!isArbDetailRefreshActive(refreshToken) || arbDetailState.isRefreshing) return;
-        arbDetailState.isRefreshing = true;
-        let shouldScheduleNext = false;
-
-        try {
-            const didRefresh = await refreshArbDetailCards(refreshToken);
-            shouldScheduleNext = Boolean(didRefresh) && isArbDetailRefreshActive(refreshToken);
-        } catch (error) {
-            if (isArbDetailRefreshActive(refreshToken)) {
-                console.error('[arb-detail] refresh failed', error);
-            }
-        } finally {
-            if (arbDetailState.refreshToken === refreshToken) {
-                arbDetailState.isRefreshing = false;
-            }
-        }
-
-        if (shouldScheduleNext) {
-            scheduleArbDetailRefresh(refreshToken, ARB_DETAIL_REFRESH_INTERVAL_MS);
-        }
+        arbDetailRefreshScheduler.clear();
     }
 
     function startArbDetailRefresh(refreshToken) {
-        scheduleArbDetailRefresh(refreshToken, 0);
+        arbDetailRefreshScheduler.start(refreshToken);
     }
 
     function handleArbGlobalFilterInput(event) {

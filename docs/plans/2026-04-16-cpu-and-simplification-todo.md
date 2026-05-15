@@ -49,13 +49,13 @@
 - 现状：
   - 已移除 `startArbDetailLoop()` 内的长期 `while (...)` 循环
   - 详情刷新改为单次刷新完成后用 `setTimeout` 调度下一轮，并在关闭/重启时清理 timer
+  - 调度状态机已下沉到 `arb-detail-refresh-utils.js`，`app.js` 只保留业务回调和生命周期入口
   - 每轮仍会对每张卡片、每条腿串行请求；详情仍可能同步更新主报价状态
 - 预期收益：
   - 同时降低前端和后端 CPU
   - 明显降低详情页打开时的请求风暴
 - 建议改法：
   - 已改成 2.5s 固定间隔轮询
-  - 输入编辑时暂停自动刷新
   - 图表刷新和详情报价刷新共用预算，不双重拉取
 
 ## P1 高优先级
@@ -118,7 +118,7 @@
 - 建议拆分：
   - `quote-polling`
   - `arb-panel`
-  - `arb-detail`
+  - `arb-detail`：已先抽出刷新调度器 `arb-detail-refresh-utils.js`
   - `path-alerts`
   - `data-terminal`
   - `dashboard-persistence`

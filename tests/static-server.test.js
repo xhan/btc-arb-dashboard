@@ -73,6 +73,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="muted-path-storage-utils.js"'));
     assert.ok(response.body.includes('src="dex-link-utils.js"'));
+    assert.ok(response.body.includes('src="arb-detail-refresh-utils.js"'));
     assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="alert-debug-utils.js"'));
@@ -98,6 +99,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="dex-link-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="arb-detail-refresh-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
@@ -355,9 +359,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
     assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));
-    assert.ok(appJsResponse.body.includes('let arbDetailRefreshTimer = null;'));
+    assert.ok(appJsResponse.body.includes('createArbDetailRefreshScheduler'));
     assert.ok(appJsResponse.body.includes('clearArbDetailRefreshTimer'));
-    assert.ok(appJsResponse.body.includes('arbDetailRefreshTimer = setTimeout(() => {'));
+    assert.ok(!appJsResponse.body.includes('arbDetailRefreshTimer = setTimeout'));
     assert.ok(appJsResponse.body.includes('refreshToken: 0'));
     assert.ok(!appJsResponse.body.includes('loopToken'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-profit-card'));
