@@ -9,6 +9,7 @@ const {
   buildPathAlertEditorDraftFromAlert,
   buildPathAlertEditorDraftFromPrefill,
   buildPathAlertEditorTarget,
+  buildPathAlertFromEditorDraft,
   buildPathAlertQuoteLabel,
   buildPathAlertSectionConfigs,
   buildPathAlertMetaText,
@@ -26,7 +27,8 @@ const {
   renderPathAlertRouteLinesHtml,
   renderPathAlertSummaryLinesHtml,
   renderPathAlertToolbarHtml,
-  shortenTokenText
+  shortenTokenText,
+  validatePathAlertEditorDraft
 } = require('../path-alert-page-utils');
 
 assert.strictEqual(escapeHtml('<tag a="1">'), '&lt;tag a=&quot;1&quot;&gt;');
@@ -324,6 +326,143 @@ assert.deepStrictEqual(
         toSymbol: 'USDC'
       }
     ]
+  }
+);
+assert.strictEqual(
+  validatePathAlertEditorDraft({
+    sourceType: 'quote',
+    selectedQuoteId: 202,
+    quoteDirection: 'forward',
+    quoteRuleKind: 'targetAbove',
+    quoteValue: 1,
+    confirmDelaySec: -1,
+    cooldownSec: 60
+  }, {
+    quoteExists: () => true
+  }),
+  '延迟确认必须是大于等于 0 的数字'
+);
+assert.strictEqual(
+  validatePathAlertEditorDraft({
+    sourceType: 'quote',
+    selectedQuoteId: 202,
+    quoteDirection: 'inverse',
+    quoteRuleKind: 'percentDown',
+    quoteValue: 0.3,
+    quoteBasePrice: '',
+    confirmDelaySec: 0,
+    cooldownSec: 60
+  }, {
+    quoteExists: () => true
+  }),
+  '百分比规则必须填写有效基准汇率'
+);
+assert.strictEqual(
+  validatePathAlertEditorDraft({
+    sourceType: 'special',
+    selectedRuleId: 'special:btc',
+    thresholdBp: '',
+    specialRuleConfig: { minNetProfit: -1, minNetProfitBp: 5 },
+    confirmDelaySec: 0,
+    cooldownSec: 60
+  }, {
+    findRule: () => ({ id: 'special:btc' }),
+    resolveSpecialRuleConfig: (config) => config
+  }),
+  '净收益阈值必须是大于等于 0 的数字'
+);
+assert.strictEqual(
+  validatePathAlertEditorDraft({
+    sourceType: 'path',
+    thresholdBp: 1,
+    confirmDelaySec: 0,
+    cooldownSec: 60,
+    legs: [{ quoteId: 999 }]
+  }, {
+    quoteExists: () => false
+  }),
+  '路径腿引用的 live quote 不存在：999'
+);
+assert.strictEqual(
+  validatePathAlertEditorDraft({
+    sourceType: 'fixed',
+    selectedRuleId: 'fixed:btc',
+    thresholdBp: 1,
+    confirmDelaySec: 0,
+    cooldownSec: 60
+  }, {
+    findRule: () => ({ id: 'fixed:btc' }),
+    findDismissedTarget: () => ({ id: 'dismissed' })
+  }),
+  '该规则已被标记为忽略，请先在“已忽略规则”列表取消标记。'
+);
+assert.strictEqual(
+  validatePathAlertEditorDraft({
+    sourceType: 'quote',
+    selectedQuoteId: 202,
+    quoteDirection: 'forward',
+    quoteRuleKind: 'targetAbove',
+    quoteValue: 1,
+    confirmDelaySec: 0,
+    cooldownSec: 60
+  }, {
+    quoteExists: () => true,
+    findDuplicateAlert: () => ({ id: 'existing-alert' })
+  }),
+  '该报警已存在：existing-alert'
+);
+assert.strictEqual(
+  validatePathAlertEditorDraft({
+    sourceType: 'path',
+    thresholdBp: 1,
+    confirmDelaySec: 0,
+    cooldownSec: 60,
+    legs: [{ quoteId: 1 }]
+  }, {
+    quoteExists: () => true
+  }),
+  ''
+);
+assert.deepStrictEqual(
+  buildPathAlertFromEditorDraft({
+    id: '',
+    name: '',
+    enabled: true,
+    sourceType: 'special',
+    selectedRuleId: 'special:btc',
+    thresholdBp: 9,
+    triggerMode: 'delayed',
+    confirmDelaySec: '13',
+    cooldownSec: '',
+    specialRuleConfig: { minNetProfit: '2', minNetProfitBp: '5' }
+  }, {
+    defaultCooldownSec: 240,
+    buildAlertId: () => 'generated-alert',
+    buildDefaultAlertName: () => 'Default name',
+    resolveSpecialRuleConfig: (config) => ({
+      minNetProfit: Number(config.minNetProfit),
+      minNetProfitBp: Number(config.minNetProfitBp)
+    }),
+    normalizePathAlert: (alert) => ({ ...alert, normalized: true })
+  }),
+  {
+    id: 'generated-alert',
+    name: 'Default name',
+    enabled: true,
+    thresholdBp: 0,
+    triggerMode: 'delayed',
+    confirmDelaySec: 13,
+    cooldownSec: 240,
+    target: {
+      type: 'rule',
+      ruleKind: 'special',
+      ruleId: 'special:btc'
+    },
+    specialRuleConfig: {
+      minNetProfit: 2,
+      minNetProfitBp: 5
+    },
+    normalized: true
   }
 );
 

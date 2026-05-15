@@ -234,6 +234,145 @@
     };
   }
 
+  function isPercentQuoteRuleKind(ruleKind) {
+    return ruleKind === 'percentUp' || ruleKind === 'percentDown';
+  }
+
+  function getEditorDraftThresholdBp(draft) {
+    if (draft.sourceType === 'quote' || draft.sourceType === 'special') return 0;
+    return draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
+  }
+
+  function validatePathAlertEditorDraft(draft, options = {}) {
+    const quoteExists = typeof options.quoteExists === 'function'
+      ? options.quoteExists
+      : () => false;
+    const findRule = typeof options.findRule === 'function'
+      ? options.findRule
+      : () => null;
+    const findDuplicateAlert = typeof options.findDuplicateAlert === 'function'
+      ? options.findDuplicateAlert
+      : () => null;
+    const findDismissedTarget = typeof options.findDismissedTarget === 'function'
+      ? options.findDismissedTarget
+      : () => null;
+    const resolveSpecialRuleConfig = typeof options.resolveSpecialRuleConfig === 'function'
+      ? options.resolveSpecialRuleConfig
+      : (config) => (config && typeof config === 'object' ? config : {});
+
+    const confirmDelaySec = Number(draft && draft.confirmDelaySec);
+    if (!Number.isFinite(confirmDelaySec) || confirmDelaySec < 0) {
+      return '延迟确认必须是大于等于 0 的数字';
+    }
+    const cooldownSec = Number(draft && draft.cooldownSec);
+    if (!Number.isFinite(cooldownSec) || cooldownSec <= 0) {
+      return '冷却时间必须大于 0';
+    }
+
+    if (draft && draft.sourceType === 'quote') {
+      if (!quoteExists(Number(draft.selectedQuoteId))) {
+        return '请选择有效的报价';
+      }
+      if (!['forward', 'inverse'].includes(draft.quoteDirection)) {
+        return '请选择有效的监控方向';
+      }
+      if (!['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(draft.quoteRuleKind)) {
+        return '请选择有效的交易对报警规则';
+      }
+      if (!Number.isFinite(Number(draft.quoteValue))) {
+        return '汇率阈值必须是合法数字';
+      }
+      if (
+        isPercentQuoteRuleKind(draft.quoteRuleKind)
+        && (!Number.isFinite(Number(draft.quoteBasePrice)) || Number(draft.quoteBasePrice) <= 0)
+      ) {
+        return '百分比规则必须填写有效基准汇率';
+      }
+      const duplicateAlert = findDuplicateAlert(draft);
+      if (duplicateAlert) {
+        return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
+      }
+      return '';
+    }
+
+    const thresholdBp = draft ? getEditorDraftThresholdBp(draft) : Number(draft && draft.thresholdBp);
+    if (draft && draft.sourceType !== 'special' && !Number.isFinite(thresholdBp)) {
+      return '收益阈值必须是合法数字';
+    }
+
+    if (draft && (draft.sourceType === 'fixed' || draft.sourceType === 'special')) {
+      const rule = findRule(draft.sourceType, draft.selectedRuleId);
+      if (!rule) {
+        return '请选择有效的规则';
+      }
+      if (draft.sourceType === 'special') {
+        const specialRuleConfig = resolveSpecialRuleConfig(draft.specialRuleConfig);
+        if (!Number.isFinite(Number(specialRuleConfig.minNetProfit)) || Number(specialRuleConfig.minNetProfit) < 0) {
+          return '净收益阈值必须是大于等于 0 的数字';
+        }
+        if (!Number.isFinite(Number(specialRuleConfig.minNetProfitBp)) || Number(specialRuleConfig.minNetProfitBp) < 0) {
+          return '净收益率阈值必须是大于等于 0 的数字';
+        }
+      }
+      const dismissedTarget = findDismissedTarget(draft);
+      if (dismissedTarget) {
+        return '该规则已被标记为忽略，请先在“已忽略规则”列表取消标记。';
+      }
+      const duplicateAlert = findDuplicateAlert(draft);
+      if (duplicateAlert) {
+        return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
+      }
+      return '';
+    }
+
+    if (!Array.isArray(draft && draft.legs) || !draft.legs.length) {
+      return '至少需要一条路径腿';
+    }
+    const missingQuoteId = draft.legs.find((leg) => !quoteExists(Number(leg && leg.quoteId)));
+    if (missingQuoteId) {
+      return `路径腿引用的 live quote 不存在：${missingQuoteId.quoteId}`;
+    }
+    const dismissedTarget = findDismissedTarget(draft);
+    if (dismissedTarget) {
+      return '该规则已被标记为忽略，请先在“已忽略规则”列表取消标记。';
+    }
+    const duplicateAlert = findDuplicateAlert(draft);
+    if (duplicateAlert) {
+      return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
+    }
+    return '';
+  }
+
+  function buildPathAlertFromEditorDraft(draft, options = {}) {
+    const buildAlertId = typeof options.buildAlertId === 'function'
+      ? options.buildAlertId
+      : () => '';
+    const buildDefaultAlertName = typeof options.buildDefaultAlertName === 'function'
+      ? options.buildDefaultAlertName
+      : () => '';
+    const resolveSpecialRuleConfig = typeof options.resolveSpecialRuleConfig === 'function'
+      ? options.resolveSpecialRuleConfig
+      : (config) => (config && typeof config === 'object' ? config : {});
+    const normalizePathAlert = typeof options.normalizePathAlert === 'function'
+      ? options.normalizePathAlert
+      : (alert) => alert;
+    const thresholdBp = getEditorDraftThresholdBp(draft);
+    const alert = {
+      id: draft.id || buildAlertId(),
+      name: String(draft.name || '').trim() || buildDefaultAlertName(draft),
+      enabled: draft.enabled !== false,
+      thresholdBp,
+      triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
+      confirmDelaySec: Number(draft.confirmDelaySec || 0),
+      cooldownSec: Number(draft.cooldownSec || getEditorDefaultCooldownSec(options)),
+      target: buildPathAlertEditorTarget(draft)
+    };
+    if (draft.sourceType === 'special') {
+      alert.specialRuleConfig = resolveSpecialRuleConfig(draft.specialRuleConfig);
+    }
+    return normalizePathAlert(alert);
+  }
+
   function sanitizeLeg(leg) {
     if (!leg || typeof leg !== 'object') return null;
     const quoteId = Number(leg.quoteId);
@@ -675,6 +814,7 @@
     buildPathAlertSectionConfigs,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
+    buildPathAlertFromEditorDraft,
     clonePathAlertEditorDraft,
     createPathAlertEditorDraft,
     escapeHtml,
@@ -688,6 +828,7 @@
     renderPathAlertRouteLinesHtml,
     renderPathAlertSummaryLinesHtml,
     renderPathAlertToolbarHtml,
-    shortenTokenText
+    shortenTokenText,
+    validatePathAlertEditorDraft
   };
 }));

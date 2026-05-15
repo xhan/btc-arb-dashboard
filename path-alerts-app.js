@@ -539,110 +539,29 @@
   }
 
   function validateDraft(draft) {
-    const confirmDelaySec = Number(draft.confirmDelaySec);
-    if (!Number.isFinite(confirmDelaySec) || confirmDelaySec < 0) {
-      return '延迟确认必须是大于等于 0 的数字';
-    }
-    const cooldownSec = Number(draft.cooldownSec);
-    if (!Number.isFinite(cooldownSec) || cooldownSec <= 0) {
-      return '冷却时间必须大于 0';
-    }
-
-    if (draft.sourceType === 'quote') {
-      if (!quoteById.has(Number(draft.selectedQuoteId))) {
-        return '请选择有效的报价';
-      }
-      if (!['forward', 'inverse'].includes(draft.quoteDirection)) {
-        return '请选择有效的监控方向';
-      }
-      if (!['targetAbove', 'targetBelow', 'percentUp', 'percentDown'].includes(draft.quoteRuleKind)) {
-        return '请选择有效的交易对报警规则';
-      }
-      if (!Number.isFinite(Number(draft.quoteValue))) {
-        return '汇率阈值必须是合法数字';
-      }
-      if (
-        (draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown')
-        && (!Number.isFinite(Number(draft.quoteBasePrice)) || Number(draft.quoteBasePrice) <= 0)
-      ) {
-        return '百分比规则必须填写有效基准汇率';
-      }
-      const duplicateAlert = findDuplicateAlertForDraft(draft);
-      if (duplicateAlert) {
-        return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
-      }
-      return '';
-    }
-
-    const thresholdBp = draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
-    if (draft.sourceType !== 'special' && !Number.isFinite(thresholdBp)) {
-      return '收益阈值必须是合法数字';
-    }
-
-    if (draft.sourceType === 'fixed' || draft.sourceType === 'special') {
-      const rule = findRule(draft.sourceType, draft.selectedRuleId);
-      if (!rule) {
-        return '请选择有效的规则';
-      }
-      if (draft.sourceType === 'special') {
-        const specialRuleConfig = resolveSpecialRuleAlertConfig(draft.specialRuleConfig);
-        if (!Number.isFinite(Number(specialRuleConfig.minNetProfit)) || Number(specialRuleConfig.minNetProfit) < 0) {
-          return '净收益阈值必须是大于等于 0 的数字';
-        }
-        if (!Number.isFinite(Number(specialRuleConfig.minNetProfitBp)) || Number(specialRuleConfig.minNetProfitBp) < 0) {
-          return '净收益率阈值必须是大于等于 0 的数字';
-        }
-      }
-      const dismissedTarget = findDismissedTargetForDraft(draft);
-      if (dismissedTarget) {
-        return '该规则已被标记为忽略，请先在“已忽略规则”列表取消标记。';
-      }
-      const duplicateAlert = findDuplicateAlertForDraft(draft);
-      if (duplicateAlert) {
-        return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
-      }
-      return '';
-    }
-
-    if (!Array.isArray(draft.legs) || !draft.legs.length) {
-      return '至少需要一条路径腿';
-    }
-    const missingQuoteId = draft.legs.find((leg) => !quoteById.has(Number(leg.quoteId)));
-    if (missingQuoteId) {
-      return `路径腿引用的 live quote 不存在：${missingQuoteId.quoteId}`;
-    }
-    const dismissedTarget = findDismissedTargetForDraft(draft);
-    if (dismissedTarget) {
-      return '该规则已被标记为忽略，请先在“已忽略规则”列表取消标记。';
-    }
-    const duplicateAlert = findDuplicateAlertForDraft(draft);
-    if (duplicateAlert) {
-      return `该报警已存在：${duplicateAlert.name || duplicateAlert.id}`;
-    }
-    return '';
+    return window.PathAlertPageUtils.validatePathAlertEditorDraft(draft, {
+      quoteExists(quoteId) {
+        return quoteById.has(Number(quoteId));
+      },
+      findRule,
+      findDuplicateAlert: findDuplicateAlertForDraft,
+      findDismissedTarget: findDismissedTargetForDraft,
+      resolveSpecialRuleConfig: resolveSpecialRuleAlertConfig
+    });
   }
 
   function buildAlertFromDraft() {
-    const draft = pageState.draft;
-    const thresholdBp = draft.sourceType === 'quote' || draft.sourceType === 'special'
-      ? 0
-      : draft.thresholdBp === '' ? 0 : Number(draft.thresholdBp);
-    const alert = {
-      id: draft.id || buildAlertId(),
-      name: draft.name.trim() || buildDefaultAlertName(draft),
-      enabled: draft.enabled !== false,
-      thresholdBp,
-      triggerMode: draft.triggerMode === 'delayed' ? 'delayed' : 'immediate',
-      confirmDelaySec: Number(draft.confirmDelaySec || 0),
-      cooldownSec: Number(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180),
-      target: collectEditorTarget(draft)
-    };
-    if (draft.sourceType === 'special') {
-      alert.specialRuleConfig = resolveSpecialRuleAlertConfig(draft.specialRuleConfig);
-    }
-    return window.PathAlertUtils
-      ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
-      : alert;
+    return window.PathAlertPageUtils.buildPathAlertFromEditorDraft(pageState.draft, {
+      defaultCooldownSec: alertConfig.settings?.defaultCooldownSec || 180,
+      buildAlertId,
+      buildDefaultAlertName,
+      resolveSpecialRuleConfig: resolveSpecialRuleAlertConfig,
+      normalizePathAlert(alert) {
+        return window.PathAlertUtils
+          ? window.PathAlertUtils.normalizePathAlert(alert, alertConfig.settings || { defaultCooldownSec: 180 })
+          : alert;
+      }
+    });
   }
 
   function createDismissedEntryFromAlert(alert) {
