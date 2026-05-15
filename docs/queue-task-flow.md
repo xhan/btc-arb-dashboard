@@ -28,10 +28,12 @@
 
 - `showInverse = false`：只生成 `main` 任务
 - `showInverse = true` 且非 `Bybit`：生成 `main` + `inverse` 两个任务
+- task 生成、task key、去重入队、删除 quote task、defer 当前 task、managed queue key 和 task 状态判断都由 `queue-stats-utils.js` 统一维护。
+- `app.js` 只负责持有当前队列运行态、启动/停止 scheduler，以及在 task 状态为 `fetch` 时调用 `fetchSingleQuote()`。
 
 ## 当前有几个队列
 
-当前主看板固定有 `9` 个队列：
+默认数据源有 `9` 类：
 
 - `kyber`
 - `zerox`
@@ -42,6 +44,8 @@
 - `solana`
 - `sui`
 - `starknet`
+
+如果启用请求通道，支持通道的 source 会形成 `source:channel` 队列，例如 `kyber:default`、`kyber:hk-1`。不支持通道的 source，例如 `bybit` / `binance` / `sui`，仍使用单队列 key。
 
 队列选择规则：
 
@@ -99,7 +103,7 @@
 
 - `kyber`: `170ms`
 - `zerox`: `110ms`
-- `velora`: `200ms`
+- `velora`: `700ms`
 - `lifi`: `170ms`
 - `bybit`: `1000ms`
 - `binance`: `1000ms`
@@ -147,7 +151,7 @@
 ```mermaid
 flowchart TD
   A["addToQueue(quote)"] --> B["根据 quote 决定 queue type"]
-  B --> C{"showInverse 且非 Bybit?"}
+  B --> C{"QueueStatsUtils 生成 tasks"}
   C -- "否" --> D["入队 task: {quoteId, mode: main}"]
   C -- "是" --> E["入队 task: {quoteId, mode: main}"]
   E --> F["入队 task: {quoteId, mode: inverse}"]
@@ -155,9 +159,12 @@ flowchart TD
   G["scheduler tick"] --> H["processQueue(type)"]
   H --> I["取下一个 task"]
   I --> J["按 task.quoteId 查找 quote"]
-  J --> K{"task.mode"}
-  K -- "main" --> L["fetchSingleQuote(quote, main)"]
-  K -- "inverse" --> M["fetchSingleQuote(quote, inverse)"]
+  J --> K{"QueueStatsUtils task status"}
+  K -- "remove" --> P["删除 quote tasks"]
+  K -- "requeue" --> Q["删除后按当前 quote 重新入队"]
+  K -- "fetch" --> R{"task.mode"}
+  R -- "main" --> L["fetchSingleQuote(quote, main)"]
+  R -- "inverse" --> M["fetchSingleQuote(quote, inverse)"]
 
   L --> N["更新主报价 / 趋势 / 告警"]
   M --> O["更新反向报价小字"]
