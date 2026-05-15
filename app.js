@@ -4705,6 +4705,13 @@
         window.open(href, '_blank', 'noopener');
     }
 
+    function renderPathAlertPanelHtml(options = {}) {
+        if (window.PathAlertPageUtils && typeof window.PathAlertPageUtils.renderPathAlertPanelHtml === 'function') {
+            return window.PathAlertPageUtils.renderPathAlertPanelHtml(options);
+        }
+        return '<div class="path-alert-empty">暂无路径报警</div>';
+    }
+
     async function loadPathAlertConfig(options = {}) {
         if (!window.PathAlertUtils) return;
         const fallbackToDefault = options.fallbackToDefault !== false;
@@ -4728,18 +4735,18 @@
             : '立即';
         const cooldownText = `冷却 ${String(alert.cooldownSec)}s`;
         if (alert && alert.target && alert.target.type === 'quote') {
-            return `报价 | ${escapeHtml(String(alert.target.value != null ? alert.target.value : '--'))} | ${triggerText} | ${cooldownText}`;
+            return `报价 | ${String(alert.target.value != null ? alert.target.value : '--')} | ${triggerText} | ${cooldownText}`;
         }
         if (alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special') {
             const specialRuleConfig = resolveSpecialRuleAlertConfig(alert);
             return [
-                `净收益 > ${escapeHtml(String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--'))}`,
-                `净收益率 > ${escapeHtml(String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--'))}bp`,
+                `净收益 > ${String(specialRuleConfig.minNetProfit != null ? specialRuleConfig.minNetProfit : '--')}`,
+                `净收益率 > ${String(specialRuleConfig.minNetProfitBp != null ? specialRuleConfig.minNetProfitBp : '--')}bp`,
                 triggerText,
                 cooldownText
             ].join(' | ');
         }
-        return `阈值 ${escapeHtml(String(alert.thresholdBp))}bp | ${triggerText} | ${cooldownText}`;
+        return `阈值 ${String(alert.thresholdBp)}bp | ${triggerText} | ${cooldownText}`;
     }
 
     function renderPathAlertPanel() {
@@ -4748,28 +4755,13 @@
         const alerts = Array.isArray(pathAlertConfig.alerts) ? pathAlertConfig.alerts : [];
         const settings = pathAlertConfig.settings || {};
         const dismissedCount = Array.isArray(pathAlertConfig.dismissedTargets) ? pathAlertConfig.dismissedTargets.length : 0;
-        const toolbar = `
-            <div class="path-alert-toolbar">
-                <div class="path-alert-toolbar-meta">
-                    <label class="path-alert-toolbar-toggle">
-                        <input type="checkbox" data-path-alert-global-toggle="localSoundEnabled" ${settings.localSoundEnabled !== false ? 'checked' : ''}>
-                        <span>音效</span>
-                    </label>
-                    <label class="path-alert-toolbar-toggle">
-                        <input type="checkbox" data-path-alert-global-toggle="webhookEnabled" ${settings.webhookEnabled === true ? 'checked' : ''}>
-                        <span>远程</span>
-                    </label>
-                    <label class="path-alert-toolbar-toggle">
-                        <input type="checkbox" data-path-alert-force-immediate ${forceImmediateAlerts ? 'checked' : ''}>
-                        <span>全部立即</span>
-                    </label>
-                    <div class="path-alert-toolbar-cycle">周期 ${settings.pathAlertEvalIntervalMs}ms</div>
-                    <div class="path-alert-toolbar-cycle">已忽略 ${dismissedCount} 条</div>
-                </div>
-            </div>
-        `;
         if (!alerts.length) {
-            pathAlertPanelHtmlRenderer.render(pathAlertContent, `${toolbar}<div class="path-alert-empty">暂无路径报警</div>`);
+            pathAlertPanelHtmlRenderer.render(pathAlertContent, renderPathAlertPanelHtml({
+                settings,
+                dismissedCount,
+                forceImmediateAlerts,
+                emptyText: '暂无路径报警'
+            }));
             return;
         }
 
@@ -4792,14 +4784,16 @@
             ));
 
         if (!alertItems.length) {
-            pathAlertPanelHtmlRenderer.render(pathAlertContent, `${toolbar}<div class="path-alert-empty">暂无需要关注的路径报警</div>`);
+            pathAlertPanelHtmlRenderer.render(pathAlertContent, renderPathAlertPanelHtml({
+                settings,
+                dismissedCount,
+                forceImmediateAlerts,
+                emptyText: '暂无需要关注的路径报警'
+            }));
             return;
         }
 
         const items = alertItems.map(({ alert, runtime, evaluation, statusInfo }) => {
-            const statusTagHtml = statusInfo.text
-                ? `<span class="path-alert-status-tag ${statusInfo.className}">${statusInfo.text}</span>`
-                : '';
             const lastTriggeredText = runtime && runtime.lastTriggeredAt
                 ? new Date(runtime.lastTriggeredAt).toLocaleTimeString()
                 : '--';
@@ -4807,36 +4801,25 @@
                 mode: 'edit',
                 alertId: alert.id
             });
-            return `
-                <div class="path-alert-item">
-                    <div class="path-alert-item-head">
-                        <div>
-                            <div class="path-alert-item-title">${escapeHtml(buildPathAlertDisplayTitle(alert))}</div>
-                            <div class="path-alert-item-route">${renderPathAlertSummaryLinesHtml(alert)}</div>
-                            <div class="path-alert-item-meta">${buildPathAlertMetaText(alert)}</div>
-                        </div>
-                        <div class="path-alert-item-actions">
-                            <a
-                                class="path-alert-item-link"
-                                href="${escapeHtml(editHref)}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-path-alert-edit-link="${escapeHtml(alert.id)}"
-                            >编辑</a>
-                            <button type="button" data-path-alert-delete="${escapeHtml(alert.id)}">删除</button>
-                            <button type="button" data-path-alert-dismiss-delete="${escapeHtml(alert.id)}">标记并删除</button>
-                        </div>
-                    </div>
-                    <div class="path-alert-status-row">
-                        ${statusTagHtml}
-                        <span class="path-alert-profit">${formatPathAlertEvaluationText(evaluation)}</span>
-                    </div>
-                    <div class="path-alert-item-meta">上次报警: ${escapeHtml(lastTriggeredText)}</div>
-                </div>
-            `;
-        }).join('');
+            return {
+                alertId: alert.id,
+                title: buildPathAlertDisplayTitle(alert),
+                routeHtml: renderPathAlertSummaryLinesHtml(alert),
+                metaText: buildPathAlertMetaText(alert),
+                editHref,
+                statusText: statusInfo.text,
+                statusClassName: statusInfo.className,
+                evaluationText: formatPathAlertEvaluationText(evaluation),
+                lastTriggeredText
+            };
+        });
 
-        pathAlertPanelHtmlRenderer.render(pathAlertContent, `${toolbar}<div class="path-alert-list">${items}</div>`);
+        pathAlertPanelHtmlRenderer.render(pathAlertContent, renderPathAlertPanelHtml({
+            settings,
+            dismissedCount,
+            forceImmediateAlerts,
+            items
+        }));
     }
 
     function togglePathAlertPanel() {

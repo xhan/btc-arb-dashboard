@@ -3,7 +3,10 @@ const assert = require('assert');
 const {
   sanitizePathAlertDraft,
   buildPathAlertsPageHref,
-  parsePathAlertsPagePrefill
+  parsePathAlertsPagePrefill,
+  renderPathAlertItemHtml,
+  renderPathAlertPanelHtml,
+  renderPathAlertToolbarHtml
 } = require('../path-alert-page-utils');
 
 const pathDraft = sanitizePathAlertDraft({
@@ -159,3 +162,52 @@ assert.deepStrictEqual(parsePathAlertsPagePrefill('/path-alerts?mode=create&draf
   filterQuoteId: '',
   draft: null
 });
+
+const toolbarHtml = renderPathAlertToolbarHtml({
+  settings: {
+    localSoundEnabled: true,
+    webhookEnabled: false,
+    pathAlertEvalIntervalMs: 500
+  },
+  dismissedCount: 2,
+  forceImmediateAlerts: true
+});
+assert.ok(toolbarHtml.includes('data-path-alert-global-toggle="localSoundEnabled" checked'));
+assert.ok(toolbarHtml.includes('data-path-alert-global-toggle="webhookEnabled" '));
+assert.ok(toolbarHtml.includes('data-path-alert-force-immediate checked'));
+assert.ok(toolbarHtml.includes('周期 500ms'));
+assert.ok(toolbarHtml.includes('已忽略 2 条'));
+
+const itemHtml = renderPathAlertItemHtml({
+  alertId: 'alert-1',
+  title: '路径 <A>',
+  routeHtml: '<div class="path-alert-item-route-line">ETH/USDC</div>',
+  metaText: '阈值 <1>',
+  editHref: '/path-alerts?mode=edit&alertId=alert-1',
+  statusText: '触发',
+  statusClassName: 'path-alert-status-triggered',
+  evaluationText: '利润 > 1',
+  lastTriggeredText: '12:00:00'
+});
+assert.ok(itemHtml.includes('路径 &lt;A&gt;'));
+assert.ok(itemHtml.includes('<div class="path-alert-item-route-line">ETH/USDC</div>'));
+assert.ok(itemHtml.includes('阈值 &lt;1&gt;'));
+assert.ok(itemHtml.includes('data-path-alert-edit-link="alert-1"'));
+assert.ok(itemHtml.includes('data-path-alert-delete="alert-1"'));
+assert.ok(itemHtml.includes('data-path-alert-dismiss-delete="alert-1"'));
+assert.ok(itemHtml.includes('path-alert-status-triggered'));
+assert.ok(itemHtml.includes('利润 &gt; 1'));
+
+const panelHtml = renderPathAlertPanelHtml({
+  settings: { pathAlertEvalIntervalMs: 500 },
+  items: [{ alertId: 'alert-2', title: '报警', evaluationText: '等待', lastTriggeredText: '--' }]
+});
+assert.ok(panelHtml.includes('class="path-alert-toolbar"'));
+assert.ok(panelHtml.includes('class="path-alert-list"'));
+assert.ok(panelHtml.includes('data-path-alert-delete="alert-2"'));
+
+const emptyPanelHtml = renderPathAlertPanelHtml({
+  settings: { pathAlertEvalIntervalMs: 500 },
+  emptyText: '暂无需要关注的路径报警'
+});
+assert.ok(emptyPanelHtml.includes('暂无需要关注的路径报警'));
