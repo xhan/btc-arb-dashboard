@@ -386,50 +386,27 @@
         return getQueueStatsUtils().shouldQueueInverseFetch(quote);
     }
 
-    function isQuotePaused(quote) {
-        if (window.QuotePauseUtils && typeof window.QuotePauseUtils.isQuotePaused === 'function') {
-            return window.QuotePauseUtils.isQuotePaused(quote);
+    function getQuotePauseUtils() {
+        if (!window.QuotePauseUtils) {
+            throw new Error('QuotePauseUtils is not loaded');
         }
-        return !!quote && quote.paused === true;
+        return window.QuotePauseUtils;
+    }
+
+    function isQuotePaused(quote) {
+        return getQuotePauseUtils().isQuotePaused(quote);
     }
 
     function getActiveQuotes(quotes) {
-        if (window.QuotePauseUtils && typeof window.QuotePauseUtils.getActiveQuotes === 'function') {
-            return window.QuotePauseUtils.getActiveQuotes(quotes);
-        }
-        return Array.isArray(quotes) ? quotes.filter((quote) => !isQuotePaused(quote)) : [];
+        return getQuotePauseUtils().getActiveQuotes(quotes);
     }
 
     function getCategoryPauseAction(quotes) {
-        if (window.QuotePauseUtils && typeof window.QuotePauseUtils.getCategoryPauseAction === 'function') {
-            return window.QuotePauseUtils.getCategoryPauseAction(quotes);
-        }
-        const items = Array.isArray(quotes) ? quotes : [];
-        if (items.length > 0 && getActiveQuotes(items).length === 0) {
-            return 'resume';
-        }
-        return 'pause';
+        return getQuotePauseUtils().getCategoryPauseAction(quotes);
     }
 
     function buildPausedMonitorState(previousState) {
-        if (window.QuotePauseUtils && typeof window.QuotePauseUtils.buildPausedQuoteState === 'function') {
-            return window.QuotePauseUtils.buildPausedQuoteState(previousState);
-        }
-        const state = previousState && typeof previousState === 'object' ? previousState : {};
-        return {
-            fromSymbol: state.fromSymbol || '',
-            toSymbol: state.toSymbol || '',
-            lastRawPrice: null,
-            lastTotalAmountOut: null,
-            lastResultText: '',
-            inverseRawPrice: null,
-            inverseTotalAmountOut: null,
-            inverseFromSymbol: '',
-            inverseToSymbol: '',
-            usedSource: '',
-            usedSourceReal: '',
-            cexOrderbook: null
-        };
+        return getQuotePauseUtils().buildPausedQuoteState(previousState);
     }
 
     function getRequestChannelUtils() {

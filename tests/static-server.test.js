@@ -295,6 +295,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().shouldQueueInverseFetch(quote)'));
+    assert.ok(appJsResponse.body.includes('function getQuotePauseUtils()'));
+    assert.ok(appJsResponse.body.includes('QuotePauseUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildPausedQuoteState(previousState)'));
     assert.ok(!appJsResponse.body.includes("channels: [{ id: 'default', name: '默认通道'"));
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
