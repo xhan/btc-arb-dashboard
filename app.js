@@ -377,6 +377,13 @@
         return window.AlertLogUiUtils;
     }
 
+    function getSpecialRuleAlertConfigUtils() {
+        if (!window.SpecialRuleAlertConfigUtils) {
+            throw new Error('SpecialRuleAlertConfigUtils is not loaded');
+        }
+        return window.SpecialRuleAlertConfigUtils;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -3431,16 +3438,7 @@
     }
 
     function resolveSpecialRuleAlertConfig(alert) {
-        if (window.SpecialRuleAlertConfigUtils && typeof window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig === 'function') {
-            return window.SpecialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(alert && alert.specialRuleConfig);
-        }
-        const source = alert && alert.specialRuleConfig && typeof alert.specialRuleConfig === 'object'
-            ? alert.specialRuleConfig
-            : {};
-        return {
-            minNetProfit: Number.isFinite(Number(source.minNetProfit)) ? Number(source.minNetProfit) : null,
-            minNetProfitBp: Number.isFinite(Number(source.minNetProfitBp)) ? Number(source.minNetProfitBp) : null
-        };
+        return getSpecialRuleAlertConfigUtils().normalizeSpecialRuleAlertConfig(alert && alert.specialRuleConfig);
     }
 
     function splitAlertMessageLines(message) {
@@ -3480,18 +3478,8 @@
         if (!best || !best.cycle) {
             return { available: false };
         }
-        const primaryStats = best.stats && best.stats.primary ? best.stats.primary : null;
         const specialRuleConfig = resolveSpecialRuleAlertConfig(alert);
-        const triggerEvaluation = window.SpecialRuleAlertConfigUtils
-            && typeof window.SpecialRuleAlertConfigUtils.evaluateSpecialRuleTrigger === 'function'
-            ? window.SpecialRuleAlertConfigUtils.evaluateSpecialRuleTrigger(best.stats, specialRuleConfig)
-            : {
-                meetsTriggerCondition: false,
-                netProfit: Number(primaryStats && primaryStats.netProfit),
-                minNetProfit: Number(specialRuleConfig.minNetProfit),
-                netProfitBp: Number(primaryStats && primaryStats.netProfitBp),
-                minNetProfitBp: Number(specialRuleConfig.minNetProfitBp)
-            };
+        const triggerEvaluation = getSpecialRuleAlertConfigUtils().evaluateSpecialRuleTrigger(best.stats, specialRuleConfig);
         const meetsTriggerCondition = triggerEvaluation.meetsTriggerCondition === true;
         return {
             available: true,

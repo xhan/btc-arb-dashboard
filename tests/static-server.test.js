@@ -400,6 +400,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().getQuoteAlertDirection(target)'));
     assert.ok(appJsResponse.body.includes('function getPathAlertNotificationUtils()'));
     assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getSpecialRuleAlertConfigUtils()'));
+    assert.ok(appJsResponse.body.includes('SpecialRuleAlertConfigUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('return getSpecialRuleAlertConfigUtils().normalizeSpecialRuleAlertConfig(alert && alert.specialRuleConfig);'));
+    assert.ok(appJsResponse.body.includes('const triggerEvaluation = getSpecialRuleAlertConfigUtils().evaluateSpecialRuleTrigger(best.stats, specialRuleConfig);'));
+    assert.ok(!appJsResponse.body.includes('window.SpecialRuleAlertConfigUtils &&'));
+    assert.ok(!appJsResponse.body.includes('typeof window.SpecialRuleAlertConfigUtils'));
+    assert.ok(!appJsResponse.body.includes('meetsTriggerCondition: false,'));
     assert.ok(appJsResponse.body.includes('function parseCexTradingPairSymbol(symbol)'));
     assert.ok(appJsResponse.body.includes('window.TradingPairUtils.parseCexTradingPairSymbol(symbol)'));
     assert.ok(!appJsResponse.body.includes('window.TradingPairUtils.splitCompactTradingPairSymbol(symbol)'));
