@@ -65,6 +65,7 @@
 - 现状：
   - 已新增独立 `quoteUiState`，趋势箭头 timer、未读报警等 UI-only 字段不再写入 `quoteMarketState`
   - `setQuoteMarketState()` 会净化行情状态，避免 UI 字段重新混入市场状态 Map
+  - `quote-pause-utils.buildPausedQuoteState()` 已停止输出 UI-only 字段
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效

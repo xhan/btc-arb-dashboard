@@ -37,24 +37,25 @@ assert.strictEqual(
   'resume'
 );
 
+const pausedFromExistingState = quotePauseUtils.buildPausedQuoteState({
+  fromSymbol: 'WBTC',
+  toSymbol: 'cbBTC',
+  lastRawPrice: 1.001,
+  lastTotalAmountOut: 0.999,
+  lastResultText: 'WBTC ≈ 1.001 cbBTC',
+  inverseRawPrice: 0.999,
+  inverseTotalAmountOut: 1.001,
+  inverseFromSymbol: 'cbBTC',
+  inverseToSymbol: 'WBTC',
+  usedSource: 'Kyber',
+  usedSourceReal: 'KyberSwap',
+  cexOrderbook: { bids: [['1', '2']] },
+  hasUnreadAlert: true,
+  logShown: true,
+  isSoundActive: true
+});
 assert.deepStrictEqual(
-  quotePauseUtils.buildPausedQuoteState({
-    fromSymbol: 'WBTC',
-    toSymbol: 'cbBTC',
-    lastRawPrice: 1.001,
-    lastTotalAmountOut: 0.999,
-    lastResultText: 'WBTC ≈ 1.001 cbBTC',
-    inverseRawPrice: 0.999,
-    inverseTotalAmountOut: 1.001,
-    inverseFromSymbol: 'cbBTC',
-    inverseToSymbol: 'WBTC',
-    usedSource: 'Kyber',
-    usedSourceReal: 'KyberSwap',
-    cexOrderbook: { bids: [['1', '2']] },
-    hasUnreadAlert: true,
-    logShown: true,
-    isSoundActive: true
-  }),
+  pausedFromExistingState,
   {
     fromSymbol: 'WBTC',
     toSymbol: 'cbBTC',
@@ -67,11 +68,12 @@ assert.deepStrictEqual(
     inverseToSymbol: '',
     usedSource: '',
     usedSourceReal: '',
-    cexOrderbook: null,
-    hasUnreadAlert: false,
-    logShown: false,
-    isSoundActive: false
+    cexOrderbook: null
   }
+);
+assert.deepStrictEqual(
+  Object.keys(pausedFromExistingState).filter((field) => ['hasUnreadAlert', 'logShown', 'isSoundActive'].includes(field)),
+  []
 );
 
 assert.deepStrictEqual(
@@ -91,10 +93,7 @@ assert.deepStrictEqual(
     inverseToSymbol: '',
     usedSource: '',
     usedSourceReal: '',
-    cexOrderbook: null,
-    hasUnreadAlert: false,
-    logShown: false,
-    isSoundActive: false
+    cexOrderbook: null
   }
 );
 
@@ -112,10 +111,7 @@ assert.deepStrictEqual(
     inverseToSymbol: '',
     usedSource: '',
     usedSourceReal: '',
-    cexOrderbook: null,
-    hasUnreadAlert: false,
-    logShown: false,
-    isSoundActive: false
+    cexOrderbook: null
   }
 );
 

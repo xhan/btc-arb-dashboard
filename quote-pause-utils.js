@@ -38,10 +38,7 @@
       inverseToSymbol: '',
       usedSource: '',
       usedSourceReal: '',
-      cexOrderbook: null,
-      hasUnreadAlert: false,
-      logShown: false,
-      isSoundActive: false
+      cexOrderbook: null
     };
   }
 
