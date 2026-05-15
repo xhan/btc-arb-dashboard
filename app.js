@@ -535,9 +535,7 @@
 
     function buildRequestChannelTagHtml(quote) {
         const channel = getRequestChannelDisplayForQuote(quote);
-        const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.buildQuoteRequestChannelTagHtml !== 'function') return '';
-        return utils.buildQuoteRequestChannelTagHtml(quote, channel);
+        return getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, channel);
     }
 
     function updateRequestChannelTagForQuote(quote) {
@@ -2248,7 +2246,10 @@
     }
 
     function getQuoteDisplayUtils() {
-        return window.QuoteDisplayUtils || null;
+        if (!window.QuoteDisplayUtils) {
+            throw new Error('QuoteDisplayUtils is not loaded');
+        }
+        return window.QuoteDisplayUtils;
     }
 
     function getDexLinkUtils() {
@@ -2281,48 +2282,30 @@
     }
 
     function formatCexBookValue(value, maxDecimals = 10) {
-        const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.formatCexBookValue !== 'function') return '--';
-        return utils.formatCexBookValue(value, maxDecimals);
+        return getQuoteDisplayUtils().formatCexBookValue(value, maxDecimals);
     }
 
     function buildCexOrderbookSummary(symbol, orderbook) {
-        const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.buildCexOrderbookSummary !== 'function') return `${symbol}: 等待盘口...`;
-        return utils.buildCexOrderbookSummary(symbol, orderbook);
+        return getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook);
     }
 
     function buildCexOrderbookTooltipHtml(orderbook) {
-        const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.buildCexOrderbookTooltipHtml !== 'function') {
-            return '<div class="cex-orderbook-tooltip-empty">盘口等待数据...</div>';
-        }
-        return utils.buildCexOrderbookTooltipHtml(orderbook);
+        return getQuoteDisplayUtils().buildCexOrderbookTooltipHtml(orderbook);
     }
 
     function buildQuotePairLabelHtml(quote, state) {
-        const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.buildQuotePairLabelHtml !== 'function') return '';
-        return utils.buildQuotePairLabelHtml(quote, state);
+        return getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state);
     }
 
     function getQuoteDisplayText(quote, state) {
-        const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.buildQuoteDisplayTextForState !== 'function') {
-            return (state && state.lastResultText) || '...';
-        }
-        return utils.buildQuoteDisplayTextForState(quote, state, {
+        return getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state, {
             mode: quoteDisplayMode,
             paused: isQuotePaused(quote)
         });
     }
 
     function getInverseQuoteDisplayText(quote, state, fallbackText = '反向报价排队中...') {
-        const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.buildInverseQuoteDisplayTextForState !== 'function') {
-            return fallbackText;
-        }
-        return utils.buildInverseQuoteDisplayTextForState(quote, state, {
+        return getQuoteDisplayUtils().buildInverseQuoteDisplayTextForState(quote, state, {
             mode: quoteDisplayMode,
             fallbackText
         });
