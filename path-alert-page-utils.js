@@ -199,6 +199,41 @@
     return draft;
   }
 
+  function buildPathAlertEditorTarget(draft) {
+    if (!draft) return null;
+    if (draft.sourceType === 'quote') {
+      const target = {
+        type: 'quote',
+        quoteId: Number(draft.selectedQuoteId),
+        direction: draft.quoteDirection === 'inverse' ? 'inverse' : 'forward',
+        ruleKind: draft.quoteRuleKind,
+        value: Number(draft.quoteValue)
+      };
+      if (draft.quoteRuleKind === 'percentUp' || draft.quoteRuleKind === 'percentDown') {
+        target.basePrice = Number(draft.quoteBasePrice);
+      }
+      return target;
+    }
+    if (draft.sourceType === 'fixed' || draft.sourceType === 'special') {
+      return {
+        type: 'rule',
+        ruleKind: draft.sourceType,
+        ruleId: draft.selectedRuleId
+      };
+    }
+    return {
+      type: 'path',
+      legs: (draft.legs || []).map((leg) => ({
+        quoteId: Number(leg.quoteId),
+        direction: leg.direction === 'inverse' ? 'inverse' : 'forward',
+        pricingMode: ['raw', 'cex-bid1', 'cex-ask1-inverse'].includes(leg.pricingMode) ? leg.pricingMode : 'raw',
+        chain: String(leg.chain || ''),
+        fromSymbol: String(leg.fromSymbol || ''),
+        toSymbol: String(leg.toSymbol || '')
+      }))
+    };
+  }
+
   function sanitizeLeg(leg) {
     if (!leg || typeof leg !== 'object') return null;
     const quoteId = Number(leg.quoteId);
@@ -633,6 +668,7 @@
     buildDismissedTargetMetaText,
     buildPathAlertEditorDraftFromAlert,
     buildPathAlertEditorDraftFromPrefill,
+    buildPathAlertEditorTarget,
     buildPathAlertCardMetaText,
     buildPathAlertCardTitle,
     buildPathAlertQuoteLabel,

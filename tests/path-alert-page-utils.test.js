@@ -8,6 +8,7 @@ const {
   buildPathAlertCardTitle,
   buildPathAlertEditorDraftFromAlert,
   buildPathAlertEditorDraftFromPrefill,
+  buildPathAlertEditorTarget,
   buildPathAlertQuoteLabel,
   buildPathAlertSectionConfigs,
   buildPathAlertMetaText,
@@ -266,6 +267,63 @@ assert.deepStrictEqual(
     quoteRuleKind: 'percentDown',
     quoteValue: 0.3,
     quoteBasePrice: 1.001
+  }
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorTarget({
+    sourceType: 'quote',
+    selectedQuoteId: '202',
+    quoteDirection: 'inverse',
+    quoteRuleKind: 'percentDown',
+    quoteValue: '0.3',
+    quoteBasePrice: '1.001'
+  }),
+  {
+    type: 'quote',
+    quoteId: 202,
+    direction: 'inverse',
+    ruleKind: 'percentDown',
+    value: 0.3,
+    basePrice: 1.001
+  }
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorTarget({
+    sourceType: 'special',
+    selectedRuleId: 'special:btc'
+  }),
+  {
+    type: 'rule',
+    ruleKind: 'special',
+    ruleId: 'special:btc'
+  }
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorTarget({
+    sourceType: 'path',
+    legs: [
+      {
+        quoteId: '1',
+        direction: 'inverse',
+        pricingMode: 'unknown',
+        chain: 'ethereum',
+        fromSymbol: 'WETH',
+        toSymbol: 'USDC'
+      }
+    ]
+  }),
+  {
+    type: 'path',
+    legs: [
+      {
+        quoteId: 1,
+        direction: 'inverse',
+        pricingMode: 'raw',
+        chain: 'ethereum',
+        fromSymbol: 'WETH',
+        toSymbol: 'USDC'
+      }
+    ]
   }
 );
 
