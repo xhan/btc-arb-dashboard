@@ -363,6 +363,13 @@
         return window.ArbEquivalenceUtils;
     }
 
+    function getPriceSnapshotPayloadUtils() {
+        if (!window.PriceSnapshotPayloadUtils) {
+            throw new Error('PriceSnapshotPayloadUtils is not loaded');
+        }
+        return window.PriceSnapshotPayloadUtils;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -5544,16 +5551,11 @@
     }
 
     function buildPriceSnapshotPayload() {
-        return window.PriceSnapshotPayloadUtils
-            ? window.PriceSnapshotPayloadUtils.buildPriceSnapshotPayload({
-                dashboardState,
-                quoteStateById: quoteMarketState,
-                clientCapturedAt: new Date().toISOString()
-            })
-            : {
-                clientCapturedAt: new Date().toISOString(),
-                quotes: []
-            };
+        return getPriceSnapshotPayloadUtils().buildPriceSnapshotPayload({
+            dashboardState,
+            quoteStateById: quoteMarketState,
+            clientCapturedAt: new Date().toISOString()
+        });
     }
 
     async function savePriceSnapshot() {

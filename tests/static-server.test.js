@@ -99,6 +99,9 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
     );
     assert.ok(
+      response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="price-snapshot-payload-utils.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="quote-request-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
@@ -577,7 +580,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function renderPathAlertModal('));
     assert.ok(!appJsResponse.body.includes('function handlePathAlertModalClick('));
     assert.ok(!appJsResponse.body.includes("pathAlertModal.addEventListener('click', handlePathAlertModalClick)"));
-    assert.ok(appJsResponse.body.includes('PriceSnapshotPayloadUtils'));
+    assert.ok(appJsResponse.body.includes('function getPriceSnapshotPayloadUtils()'));
+    assert.ok(appJsResponse.body.includes('PriceSnapshotPayloadUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getPriceSnapshotPayloadUtils().buildPriceSnapshotPayload({'));
+    assert.ok(!appJsResponse.body.includes('window.PriceSnapshotPayloadUtils\n            ?'));
+    assert.ok(!appJsResponse.body.includes('clientCapturedAt: new Date().toISOString(),\n                quotes: []'));
     assert.ok(appJsResponse.body.includes('data-toggle-pause-id'));
     assert.ok(appJsResponse.body.includes('data-toggle-category-pause-id'));
     assert.ok(appJsResponse.body.includes('暂停分区'));
