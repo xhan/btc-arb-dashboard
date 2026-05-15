@@ -3716,32 +3716,29 @@
                         : `相对基准下跌 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`;
             return [label, ruleLine];
         }
-        if (window.PathAlertUtils && typeof window.PathAlertUtils.buildPathAlertSummaryLines === 'function') {
-            return window.PathAlertUtils.buildPathAlertSummaryLines(alert, {
-                formatLeg(leg) {
-                    const match = findQuoteById(Number(leg.quoteId));
-                    const state = match ? quoteMarketState.get(Number(leg.quoteId)) : null;
-                    if (state && state.fromSymbol && state.toSymbol) {
-                        if (leg.pricingMode === 'cex-ask1-inverse') {
-                            return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol, ' [ask1]');
-                        }
-                        if (leg.pricingMode === 'cex-bid1') {
-                            return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol, ' [bid1]');
-                        }
-                        if (leg.direction === 'inverse') {
-                            return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol);
-                        }
-                        return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol);
+        return getPathAlertUtils().buildPathAlertSummaryLines(alert, {
+            formatLeg(leg) {
+                const match = findQuoteById(Number(leg.quoteId));
+                const state = match ? quoteMarketState.get(Number(leg.quoteId)) : null;
+                if (state && state.fromSymbol && state.toSymbol) {
+                    if (leg.pricingMode === 'cex-ask1-inverse') {
+                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol, ' [ask1]');
                     }
-                    return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
-                },
-                findRule(ruleKind, ruleId) {
-                    const sourceList = getPathAlertRuleDefinitions(ruleKind);
-                    return sourceList.find((item) => item.id === ruleId) || null;
+                    if (leg.pricingMode === 'cex-bid1') {
+                        return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol, ' [bid1]');
+                    }
+                    if (leg.direction === 'inverse') {
+                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol);
+                    }
+                    return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol);
                 }
-            });
-        }
-        return [];
+                return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+            },
+            findRule(ruleKind, ruleId) {
+                const sourceList = getPathAlertRuleDefinitions(ruleKind);
+                return sourceList.find((item) => item.id === ruleId) || null;
+            }
+        });
     }
 
     function buildPathAlertDisplayTitle(alert) {
@@ -3840,20 +3837,11 @@
     }
 
     function getPathAlertRealLegCount(alert, evaluation) {
-        if (window.PathAlertUtils && typeof window.PathAlertUtils.countPathAlertRealLegs === 'function') {
-            return window.PathAlertUtils.countPathAlertRealLegs(alert, evaluation);
-        }
-        if (alert && alert.target && alert.target.type === 'path' && Array.isArray(alert.target.legs)) {
-            return alert.target.legs.length;
-        }
-        return 0;
+        return getPathAlertUtils().countPathAlertRealLegs(alert, evaluation);
     }
 
     function createDismissedTargetEntry(alert) {
-        if (!window.PathAlertUtils || typeof window.PathAlertUtils.createDismissedTargetEntry !== 'function') {
-            return null;
-        }
-        return window.PathAlertUtils.createDismissedTargetEntry(
+        return getPathAlertUtils().createDismissedTargetEntry(
             alert,
             buildPathAlertSummaryLines(alert),
             Date.now()
@@ -3869,12 +3857,12 @@
 
     function dismissPathAlertById(alertId) {
         const alert = (pathAlertConfig.alerts || []).find((item) => item.id === alertId);
-        if (!alert || !window.PathAlertUtils) {
+        if (!alert) {
             removePathAlertById(alertId);
             return;
         }
         const entry = createDismissedTargetEntry(alert);
-        if (entry && !window.PathAlertUtils.findDismissedPathAlert(pathAlertConfig.dismissedTargets, entry)) {
+        if (entry && !getPathAlertUtils().findDismissedPathAlert(pathAlertConfig.dismissedTargets, entry)) {
             const nextDismissed = Array.isArray(pathAlertConfig.dismissedTargets)
                 ? [...pathAlertConfig.dismissedTargets]
                 : [];
@@ -3973,21 +3961,13 @@
     }
 
     function sortTriggeredPathAlertEntries(entries) {
-        if (window.PathAlertUtils && typeof window.PathAlertUtils.sortTriggeredPathAlerts === 'function') {
-            return window.PathAlertUtils.sortTriggeredPathAlerts(entries).map((entry) => ({
-                ...entry,
-                realLegCount: entry.realLegCount ?? getPathAlertRealLegCount(entry.alert, entry.evaluation)
-            }));
-        }
-        return [...entries].sort((left, right) => {
-            const legDiff = left.realLegCount - right.realLegCount;
-            if (legDiff !== 0) return legDiff;
-            return Number(right.evaluation && right.evaluation.profitBp) - Number(left.evaluation && left.evaluation.profitBp);
-        });
+        return getPathAlertUtils().sortTriggeredPathAlerts(entries).map((entry) => ({
+            ...entry,
+            realLegCount: entry.realLegCount ?? getPathAlertRealLegCount(entry.alert, entry.evaluation)
+        }));
     }
 
     function evaluatePathAlertsOnce() {
-        if (!window.PathAlertUtils) return;
         const evaluationAlerts = getActivePathAlertEvaluationAlerts();
         if (!evaluationAlerts.length) {
             pruneInactiveAlertRuntimeState();
@@ -3997,22 +3977,19 @@
         pruneMutedPathTargetsInPlace(Date.now());
         const sharedRuleSnapshot = getSharedArbRuleSnapshot();
         const context = buildPathAlertEvaluationContext(sharedRuleSnapshot);
-        const allLegSnapshots = typeof window.PathAlertUtils.buildAllLegSnapshots === 'function'
-            ? window.PathAlertUtils.buildAllLegSnapshots(sharedRuleSnapshot.allQuotes || [], quoteMarketState)
-            : [];
+        const pathAlertUtils = getPathAlertUtils();
+        const allLegSnapshots = pathAlertUtils.buildAllLegSnapshots(sharedRuleSnapshot.allQuotes || [], quoteMarketState);
         const nowMs = Date.now();
         const logTriggeredEntries = [];
         const remoteTriggeredEntries = [];
         let shouldRefreshArbPanelHighlights = false;
 
         for (const alert of evaluationAlerts) {
-            const runtimeAlert = window.PathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
-            const evaluation = window.PathAlertUtils.evaluatePathAlert(alert, context);
+            const runtimeAlert = pathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
+            const evaluation = pathAlertUtils.evaluatePathAlert(alert, context);
             const previous = pathAlertRuntimeState.get(alert.id) || null;
-            const next = window.PathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, nowMs);
-            const snapshotState = typeof window.PathAlertUtils.resolvePathAlertSnapshotState === 'function'
-                ? window.PathAlertUtils.resolvePathAlertSnapshotState(runtimeAlert, previous, next, evaluation, allLegSnapshots)
-                : { currentSnapshots: [], baselineSnapshots: [] };
+            const next = pathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, nowMs);
+            const snapshotState = pathAlertUtils.resolvePathAlertSnapshotState(runtimeAlert, previous, next, evaluation, allLegSnapshots);
             next.evaluation = evaluation;
             const debugKind = alert && alert.target && alert.target.type === 'rule' && alert.target.ruleKind === 'special'
                 ? 'special'
@@ -4025,7 +4002,7 @@
             let isMuted = false;
             if (next.shouldTrigger) {
                 const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
-                const changedLegs = window.PathAlertUtils.buildChangedLegs(
+                const changedLegs = pathAlertUtils.buildChangedLegs(
                     snapshotState.currentSnapshots,
                     snapshotState.baselineSnapshots,
                     Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
@@ -4115,9 +4092,7 @@
     }
 
     async function persistPathAlertConfig() {
-        const normalized = window.PathAlertUtils
-            ? window.PathAlertUtils.normalizeAlertConfig(pathAlertConfig)
-            : pathAlertConfig;
+        const normalized = getPathAlertUtils().normalizeAlertConfig(pathAlertConfig);
         pathAlertConfig = normalized;
         await fetch(`${BACKEND_URL}/api/save-alert-config`, {
             method: 'POST',
@@ -4151,19 +4126,19 @@
     }
 
     async function loadPathAlertConfig(options = {}) {
-        if (!window.PathAlertUtils) return;
+        const pathAlertUtils = getPathAlertUtils();
         const fallbackToDefault = options.fallbackToDefault !== false;
         try {
             const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
             if (!response.ok) throw new Error('获取路径报警配置失败');
             const data = await response.json();
-            pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig(data);
+            pathAlertConfig = pathAlertUtils.normalizeAlertConfig(data);
         } catch (error) {
             if (!fallbackToDefault) {
                 throw error;
             }
             console.warn('加载路径报警配置失败:', error);
-            pathAlertConfig = window.PathAlertUtils.normalizeAlertConfig();
+            pathAlertConfig = pathAlertUtils.normalizeAlertConfig();
         }
     }
 
@@ -4348,13 +4323,11 @@
             const triggeredEntry = buildTriggeredPathAlertEntry(
                 alert,
                 runtime.evaluation,
-                window.PathAlertUtils && typeof window.PathAlertUtils.buildChangedLegs === 'function'
-                    ? window.PathAlertUtils.buildChangedLegs(
-                        Array.isArray(runtime.currentLegSnapshots) ? runtime.currentLegSnapshots : [],
-                        Array.isArray(runtime.baselineLegSnapshots) ? runtime.baselineLegSnapshots : [],
-                        Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
-                    )
-                    : []
+                getPathAlertUtils().buildChangedLegs(
+                    Array.isArray(runtime.currentLegSnapshots) ? runtime.currentLegSnapshots : [],
+                    Array.isArray(runtime.baselineLegSnapshots) ? runtime.baselineLegSnapshots : [],
+                    Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
+                )
             );
             mutePathAlertTarget(triggeredEntry, Date.now());
             return;
@@ -5399,15 +5372,11 @@
         let hasTriggeredThisTick = false;
 
         for (const alert of quoteAlerts) {
-            const runtimeAlert = window.PathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
+            const pathAlertUtils = getPathAlertUtils();
+            const runtimeAlert = pathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
             const previous = pathAlertRuntimeState.get(alert.id) || null;
-            const evaluation = window.PathAlertUtils
-                ? window.PathAlertUtils.evaluatePathAlert(alert, { quoteStateById: quoteMarketState })
-                : null;
-            const next = window.PathAlertUtils
-                ? window.PathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, Date.now())
-                : null;
-            if (!next) continue;
+            const evaluation = pathAlertUtils.evaluatePathAlert(alert, { quoteStateById: quoteMarketState });
+            const next = pathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, Date.now());
             next.evaluation = evaluation;
             next.isSoundActive = false;
             pathAlertRuntimeState.set(alert.id, next);

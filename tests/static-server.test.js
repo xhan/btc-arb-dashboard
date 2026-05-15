@@ -443,6 +443,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function pruneInactiveAlertRuntimeState()'));
     assert.ok(appJsResponse.body.includes('function getPathAlertUtils()'));
     assert.ok(appJsResponse.body.includes('PathAlertUtils is not loaded'));
+    const pathAlertUtilsWindowRefs = appJsResponse.body.match(/window\.PathAlertUtils/g) || [];
+    assert.strictEqual(pathAlertUtilsWindowRefs.length, 2);
+    assert.ok(!appJsResponse.body.includes('typeof window.PathAlertUtils'));
     assert.ok(appJsResponse.body.includes('function getMutedPathLegUtils()'));
     assert.ok(appJsResponse.body.includes('MutedPathLegUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getMutedPathStorageUtils()'));
