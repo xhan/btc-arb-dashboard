@@ -7,12 +7,12 @@ const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf
 const quoteDisplayUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'quote-display-utils.js'), 'utf8');
 
 assert.ok(
-  appJs.includes('function buildCexOrderbookSummary(symbol, orderbook)'),
-  '前端应生成 CEX 盘口摘要文本'
+  quoteDisplayUtilsJs.includes('function buildCexOrderbookSummary(symbol, orderbook)'),
+  'quote display 工具应生成 CEX 盘口摘要文本'
 );
 assert.ok(
-  appJs.includes('function buildCexOrderbookTooltipHtml(orderbook)'),
-  '前端应生成 CEX 盘口 tooltip'
+  quoteDisplayUtilsJs.includes('function buildCexOrderbookTooltipHtml(orderbook)'),
+  'quote display 工具应生成 CEX 盘口 tooltip'
 );
 assert.ok(
   appJs.includes("return normalized === 'bybit' || normalized === 'binance';"),

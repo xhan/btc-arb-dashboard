@@ -244,7 +244,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildInverseQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagHtml(quote, channel)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('quote-direct-badge'));
+    assert.ok(appJsResponse.body.includes('utils.buildCexOrderbookSummary(symbol, orderbook)'));
+    assert.ok(appJsResponse.body.includes('utils.buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(appJsResponse.body.includes('utils.buildQuotePairLabelHtml(quote, state)'));
     assert.ok(appJsResponse.body.includes('utils.buildQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('utils.buildInverseQuoteDisplayTextForState(quote, state'));

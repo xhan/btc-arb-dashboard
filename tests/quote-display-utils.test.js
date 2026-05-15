@@ -3,11 +3,14 @@ const assert = require('assert');
 const {
   QUOTE_DISPLAY_MODE_AMOUNT,
   QUOTE_DISPLAY_MODE_RATE,
+  buildCexOrderbookSummary,
+  buildCexOrderbookTooltipHtml,
   buildInverseQuoteDisplayTextForState,
   buildQuotePairLabelHtml,
   buildQuoteDisplayText,
   buildQuoteDisplayTextForState,
   buildQuoteRequestChannelTagHtml,
+  formatCexBookValue,
   getCexPairLabel,
   getQuotePairLabel,
   shouldShowKyberDirectPoolsBadge,
@@ -93,6 +96,33 @@ assert.strictEqual(
     { mode: QUOTE_DISPLAY_MODE_AMOUNT }
   ),
   '3 USDC ≈ 1.500000 ETH'
+);
+
+assert.strictEqual(formatCexBookValue(1234.56789), '1234.57');
+assert.strictEqual(formatCexBookValue(1.23456789), '1.234568');
+assert.strictEqual(formatCexBookValue(0.0123456789), '0.01234568');
+assert.strictEqual(formatCexBookValue(null), '--');
+
+assert.strictEqual(
+  buildCexOrderbookSummary('BTCUSDT', {
+    bestAskPrice: 101.1234567,
+    bestAskSize: 0.1234567,
+    bestBidPrice: 100.9876543,
+    bestBidSize: 0.7654321
+  }),
+  'ASK 101.123457 × 0.123457\nBID 100.987654 × 0.765432'
+);
+
+assert.ok(
+  buildCexOrderbookTooltipHtml({
+    feeRate: 0.001,
+    asksTop5: [{ price: 101.1234567, size: 0.1234567 }],
+    bidsTop5: [{ price: 100.9876543, size: 0.7654321 }]
+  }).includes('已计入手续费 0.10%')
+);
+
+assert.ok(
+  buildCexOrderbookTooltipHtml(null).includes('盘口等待数据...')
 );
 
 assert.strictEqual(
