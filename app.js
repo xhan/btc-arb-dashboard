@@ -1426,21 +1426,14 @@
     }
 
     function resolveMutedStateRefreshDelay(nowMs = Date.now()) {
-        const utils = getDashboardRuntimeUtils();
-        if (utils && typeof utils.resolveMutedStateRefreshDelay === 'function') {
-            return utils.resolveMutedStateRefreshDelay({
-                mutedPathTargets,
-                mutedPathLegs,
-                nowMs,
-                visible: isAlertLogPanelVisible(),
-                visibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS,
-                hiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS
-            });
-        }
-        if (!mutedPathTargets.length && !mutedPathLegs.length) return null;
-        return isAlertLogPanelVisible()
-            ? MUTED_STATE_VISIBLE_REFRESH_MS
-            : MUTED_STATE_HIDDEN_MAX_REFRESH_MS;
+        return getDashboardRuntimeUtils().resolveMutedStateRefreshDelay({
+            mutedPathTargets,
+            mutedPathLegs,
+            nowMs,
+            visible: isAlertLogPanelVisible(),
+            visibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS,
+            hiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS
+        });
     }
 
     function clearMutedPathLogTimer() {
@@ -1615,25 +1608,11 @@
     }
 
     function hasQuoteMarketStateChanged(previousState, nextState) {
-        const utils = getDashboardRuntimeUtils();
-        if (utils && typeof utils.hasQuoteMarketStateChanged === 'function') {
-            return utils.hasQuoteMarketStateChanged(previousState, nextState);
-        }
-        return previousState !== nextState;
+        return getDashboardRuntimeUtils().hasQuoteMarketStateChanged(previousState, nextState);
     }
 
     function sanitizeQuoteMarketState(state) {
-        const utils = getDashboardRuntimeUtils();
-        if (utils && typeof utils.sanitizeQuoteMarketState === 'function') {
-            return utils.sanitizeQuoteMarketState(state);
-        }
-        const source = state && typeof state === 'object' ? state : {};
-        const result = { ...source };
-        delete result.hasUnreadAlert;
-        delete result.logShown;
-        delete result.isSoundActive;
-        delete result.trendTimer;
-        return result;
+        return getDashboardRuntimeUtils().sanitizeQuoteMarketState(state);
     }
 
     function setQuoteMarketState(quoteId, nextState) {
@@ -2467,38 +2446,22 @@
     }
 
     function getDashboardRuntimeUtils() {
-        return window.DashboardRuntimeUtils || null;
+        if (!window.DashboardRuntimeUtils) {
+            throw new Error('DashboardRuntimeUtils is not loaded');
+        }
+        return window.DashboardRuntimeUtils;
     }
 
     function isArbPanelVisible() {
-        const utils = getDashboardRuntimeUtils();
-        if (utils && typeof utils.isPanelVisible === 'function') {
-            return utils.isPanelVisible(arbPathWindow);
-        }
-        if (!arbPathWindow) return false;
-        return window.getComputedStyle(arbPathWindow).display !== 'none';
+        return getDashboardRuntimeUtils().isPanelVisible(arbPathWindow);
     }
 
     function isAlertLogPanelVisible() {
-        const utils = getDashboardRuntimeUtils();
-        if (utils && typeof utils.isPanelVisible === 'function') {
-            return utils.isPanelVisible(alertLogWindow);
-        }
-        if (!alertLogWindow) return false;
-        return window.getComputedStyle(alertLogWindow).display !== 'none';
+        return getDashboardRuntimeUtils().isPanelVisible(alertLogWindow);
     }
 
     function hasActivePathAlertEvaluationTarget() {
-        const utils = getDashboardRuntimeUtils();
-        if (utils && typeof utils.hasActivePathAlertEvaluationTarget === 'function') {
-            return utils.hasActivePathAlertEvaluationTarget(pathAlertConfig);
-        }
-        return (pathAlertConfig.alerts || []).some((alert) => (
-            alert
-                && alert.enabled !== false
-                && alert.target
-                && alert.target.type !== 'quote'
-        ));
+        return getDashboardRuntimeUtils().hasActivePathAlertEvaluationTarget(pathAlertConfig);
     }
 
     function getActivePathAlertEvaluationAlerts() {
@@ -2526,11 +2489,7 @@
     }
 
     function resolveDataTerminalRecordsCacheKey() {
-        const utils = getDashboardRuntimeUtils();
-        if (utils && typeof utils.buildDataTerminalRecordsCacheKey === 'function') {
-            return utils.buildDataTerminalRecordsCacheKey(dashboardState, quoteMarketStateRevision);
-        }
-        return `${quoteMarketStateRevision}|${dashboardState.length}`;
+        return getDashboardRuntimeUtils().buildDataTerminalRecordsCacheKey(dashboardState, quoteMarketStateRevision);
     }
 
     function clearDataTerminalTimer() {

@@ -379,7 +379,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({'));
     assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
     assert.ok(appJsResponse.body.includes('let quoteUiState = new Map();'));
+    assert.ok(appJsResponse.body.includes('function getDashboardRuntimeUtils()'));
+    assert.ok(appJsResponse.body.includes('DashboardRuntimeUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function sanitizeQuoteMarketState(state)'));
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().sanitizeQuoteMarketState(state)'));
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasQuoteMarketStateChanged(previousState, nextState)'));
+    assert.ok(!appJsResponse.body.includes('return previousState !== nextState;'));
     assert.ok(appJsResponse.body.includes('function setQuoteUiState(quoteId, nextState)'));
     const defaultQuoteUiStateMatch = appJsResponse.body.match(/function buildDefaultQuoteUiState\(\) \{([\s\S]*?)function normalizeQuoteStateKey/);
     assert.ok(defaultQuoteUiStateMatch);
