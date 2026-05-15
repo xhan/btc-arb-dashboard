@@ -33,11 +33,11 @@
     let pathAlertSaveTimer = null;
     let pathAlertEvalTimer = null;
     let pathAlertPanelHidden = true;
-    const pathAlertPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();
+    const pathAlertPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let pathAlertRuntimeState = new Map();
     let mutedPathTargets = [];
     let mutedPathLegs = [];
-    const mutedAlertStateHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();
+    const mutedAlertStateHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let mutedPathLogTimer = null;
     let pathAlertReloading = false;
     let pathAlertExternalReloadTimer = null;
@@ -66,7 +66,7 @@
     let arbOpportunityMap = new Map();
     let arbOpportunityStore = new Map();
     let arbPanelDirty = false;
-    const arbPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();
+    const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
     let dataTerminalState = {
         visible: false,
@@ -77,7 +77,7 @@
         selectedRightKey: '',
         timer: null,
         domRefs: null,
-        htmlRenderer: window.DomRenderUtils.createStableHtmlRenderer()
+        htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()
     };
     let dataTerminalRecordsCacheKey = '';
     let dataTerminalRecordsCache = null;
@@ -105,7 +105,7 @@
     let arbDetailChartPreviewCharts = [];
     let arbDetailChartPreviewRunId = 0;
     let arbDetailChartAutoRefreshTimer = null;
-    const arbDetailRefreshScheduler = window.ArbDetailRefreshUtils.createArbDetailRefreshScheduler({
+    const arbDetailRefreshScheduler = getArbDetailRefreshUtils().createArbDetailRefreshScheduler({
         intervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
         isActive: isArbDetailRefreshActive,
         isRefreshing: () => arbDetailState.isRefreshing,
@@ -121,18 +121,12 @@
     const PATH_ALERT_MUTE_EXTEND_DURATION_MS = getPathAlertUtils().PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000);
     const PATH_ALERT_MUTE_DURATION_MS = Number(getPathAlertUtils().PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
     const MUTED_PATH_LEG_EXTEND_DURATION_MS = 2 * 60 * 60 * 1000;
-    const alertDebugController = window.AlertDebugUtils
-        && typeof window.AlertDebugUtils.createAlertDebugController === 'function'
-        ? window.AlertDebugUtils.createAlertDebugController({
-            logger(message) {
-                console.info(message);
-            }
-        })
-        : null;
-    window.enableAlertDebug = function (enabled) {
-        if (!alertDebugController || typeof alertDebugController.enable !== 'function') {
-            return false;
+    const alertDebugController = getAlertDebugUtils().createAlertDebugController({
+        logger(message) {
+            console.info(message);
         }
+    });
+    window.enableAlertDebug = function (enabled) {
         return alertDebugController.enable(enabled === true);
     };
 
@@ -417,6 +411,27 @@
             throw new Error('ArbPathConfig is not loaded');
         }
         return window.ArbPathConfig;
+    }
+
+    function getDomRenderUtils() {
+        if (!window.DomRenderUtils) {
+            throw new Error('DomRenderUtils is not loaded');
+        }
+        return window.DomRenderUtils;
+    }
+
+    function getArbDetailRefreshUtils() {
+        if (!window.ArbDetailRefreshUtils) {
+            throw new Error('ArbDetailRefreshUtils is not loaded');
+        }
+        return window.ArbDetailRefreshUtils;
+    }
+
+    function getAlertDebugUtils() {
+        if (!window.AlertDebugUtils) {
+            throw new Error('AlertDebugUtils is not loaded');
+        }
+        return window.AlertDebugUtils;
     }
 
     function isCrossChainQuote(quote) {
@@ -915,7 +930,7 @@
         alertLogWindow.style.display = 'flex';
         bringFloatingPanelToFront(alertLogWindow);
         const now = new Date();
-        const logEntry = window.DomRenderUtils.createElementFromHtml(
+        const logEntry = getDomRenderUtils().createElementFromHtml(
             getAlertLogUiUtils().buildGenericAlertLogEntryHtml({
                 title,
                 subtitle,
@@ -1104,7 +1119,7 @@
         const mutedEntry = entry && entry.mutedTargetCandidate
             ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
             : null;
-        const card = window.DomRenderUtils.createElementFromHtml(
+        const card = getDomRenderUtils().createElementFromHtml(
             getAlertLogUiUtils().buildQuoteAlertLogHtml(entry, {
                 nowMs,
                 actionLink: entry && entry.actionLink ? entry.actionLink : buildQuoteAlertActionLink(quote),
@@ -1378,7 +1393,7 @@
 
     function removeRestoredMutedAlertLogCards(targetKey = '') {
         if (!targetKey) return;
-        const escapedTargetKey = window.DomRenderUtils.escapeCssAttributeValue(targetKey);
+        const escapedTargetKey = getDomRenderUtils().escapeCssAttributeValue(targetKey);
         getAlertLogEntryContainers().forEach((container) => {
             container
                 .querySelectorAll(`.log-entry[data-muted-restored="1"][data-muted-target-key="${escapedTargetKey}"]`)
@@ -1548,11 +1563,11 @@
         sortedEntries.forEach((entry) => {
             const targetKey = buildMutedPathTargetKey(entry);
             if (!targetKey) return;
-            const escapedTargetKey = window.DomRenderUtils.escapeCssAttributeValue(targetKey);
+            const escapedTargetKey = getDomRenderUtils().escapeCssAttributeValue(targetKey);
             if (alertLogMutedLogContent.querySelector(`.log-entry[data-muted-target-key="${escapedTargetKey}"]`)) {
                 return;
             }
-            const card = window.DomRenderUtils.createElementFromHtml(
+            const card = getDomRenderUtils().createElementFromHtml(
                 getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(entry, {
                     nowMs,
                     targetKey,
@@ -1581,7 +1596,7 @@
             const mutedEntry = entry && entry.mutedTargetCandidate
                 ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
                 : null;
-            const card = window.DomRenderUtils.createElementFromHtml(
+            const card = getDomRenderUtils().createElementFromHtml(
                 getAlertLogUiUtils().buildPathAlertLogCardHtml(entry, {
                     nowMs,
                     mutedEntry,
