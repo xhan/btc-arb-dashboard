@@ -346,7 +346,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('quote.alerts'));
     assert.ok(appJsResponse.body.includes("function getQuoteAlertDirection(target)"));
     assert.ok(appJsResponse.body.includes('function parseCexTradingPairSymbol(symbol)'));
-    assert.ok(appJsResponse.body.includes('window.TradingPairUtils.splitCompactTradingPairSymbol(symbol)'));
+    assert.ok(appJsResponse.body.includes('window.TradingPairUtils.parseCexTradingPairSymbol(symbol)'));
+    assert.ok(!appJsResponse.body.includes('window.TradingPairUtils.splitCompactTradingPairSymbol(symbol)'));
     assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertMessage(alert, evaluation, {'));
     assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertCurrentValueText(alert, evaluation, {'));
     assert.ok(!appJsResponse.body.includes('汇率已达到或超过目标'));

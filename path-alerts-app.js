@@ -104,16 +104,10 @@
   }
 
   function parseCexTradingPairSymbol(symbol) {
-    if (window.TradingPairUtils && typeof window.TradingPairUtils.splitCompactTradingPairSymbol === 'function') {
-      const parsed = window.TradingPairUtils.splitCompactTradingPairSymbol(symbol);
-      if (parsed && parsed.fromSymbol && parsed.toSymbol) {
-        return parsed;
-      }
+    if (window.TradingPairUtils && typeof window.TradingPairUtils.parseCexTradingPairSymbol === 'function') {
+      return window.TradingPairUtils.parseCexTradingPairSymbol(symbol);
     }
-
-    const [fromSymbol, toSymbol] = String(symbol || '').split('/').map((item) => item.trim());
-    if (!fromSymbol || !toSymbol) return null;
-    return { fromSymbol, toSymbol };
+    return null;
   }
 
   function shortToken(value) {

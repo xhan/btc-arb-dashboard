@@ -31,7 +31,19 @@
     return null;
   }
 
+  function parseCexTradingPairSymbol(symbol) {
+    const compactPair = splitCompactTradingPairSymbol(symbol);
+    if (compactPair && compactPair.fromSymbol && compactPair.toSymbol) {
+      return compactPair;
+    }
+
+    const [fromSymbol, toSymbol] = String(symbol || '').split('/').map((item) => item.trim().toUpperCase());
+    if (!fromSymbol || !toSymbol) return null;
+    return { fromSymbol, toSymbol };
+  }
+
   return {
+    parseCexTradingPairSymbol,
     splitCompactTradingPairSymbol
   };
 });
