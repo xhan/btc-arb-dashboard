@@ -2734,21 +2734,14 @@
     }
 
     function buildArbDetailRowsHtml(card, cardIndex) {
-        const utils = getArbDetailUtils();
-        if (typeof utils.buildArbDetailRowsHtml === 'function') {
-            return utils.buildArbDetailRowsHtml(card, {
-                cardIndex,
-                buildSourceHtml: (row, options) => buildArbDetailSourceHtml(row, options)
-            });
-        }
-
-        return '<div class="arb-detail-error">详情渲染模块未加载</div>';
+        return getArbDetailUtils().buildArbDetailRowsHtml(card, {
+            cardIndex,
+            buildSourceHtml: (row, options) => buildArbDetailSourceHtml(row, options)
+        });
     }
 
     function buildArbDetailSourceHtml(row, options = {}) {
-        const utils = getArbDetailUtils();
-        if (typeof utils.buildArbDetailSourceHtml !== 'function') return '';
-        return utils.buildArbDetailSourceHtml(row, options);
+        return getArbDetailUtils().buildArbDetailSourceHtml(row, options);
     }
 
     function promptMutedPathLegDurationHours() {
@@ -2767,18 +2760,13 @@
     }
 
     function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
-        const utils = getArbDetailUtils();
-        if (typeof utils.buildArbDetailSummaryHtml === 'function') {
-            return utils.buildArbDetailSummaryHtml(card, {
-                index,
-                bestProfitIndices,
-                bestProfitRateIndices,
-                formatNumber: formatDetailNumber,
-                formatProfitRate: formatDetailProfitRate
-            });
-        }
-
-        return '<span class="arb-detail-metric">收益 --</span>';
+        return getArbDetailUtils().buildArbDetailSummaryHtml(card, {
+            index,
+            bestProfitIndices,
+            bestProfitRateIndices,
+            formatNumber: formatDetailNumber,
+            formatProfitRate: formatDetailProfitRate
+        });
     }
 
     function shouldRebuildArbDetailShell() {
@@ -2796,10 +2784,7 @@
     }
 
     function renderArbDetailShell() {
-        const utils = getArbDetailUtils();
-        arbDetailGrid.innerHTML = typeof utils.buildArbDetailShellHtml === 'function'
-            ? utils.buildArbDetailShellHtml(arbDetailState.cards)
-            : '<div class="arb-detail-error">详情渲染模块未加载</div>';
+        arbDetailGrid.innerHTML = getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards);
     }
     function syncArbDetailInputValues() {
         arbDetailState.cards.forEach((card, index) => {

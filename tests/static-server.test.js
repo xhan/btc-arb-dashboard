@@ -621,6 +621,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('buildArbDetailRateDeltaText'));
     assert.ok(appJsResponse.body.includes('function getArbDetailUtils()'));
     assert.ok(appJsResponse.body.includes('ArbDetailUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRowsHtml(card, {'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailSummaryHtml(card, {'));
+    assert.ok(appJsResponse.body.includes('arbDetailGrid.innerHTML = getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards);'));
+    assert.ok(!appJsResponse.body.includes('详情渲染模块未加载'));
+    assert.ok(!appJsResponse.body.includes('typeof utils.buildArbDetail'));
     assert.ok(!appJsResponse.body.includes('buildDetailInputAmounts(baseAmount) {'));
     assert.ok(!appJsResponse.body.includes('findBestSummaryIndices(cards) {'));
     assert.ok(appJsResponse.body.includes('rateDeltaText'));
@@ -725,13 +730,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('ChartsUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('buildArbDetailChartPreviewStripHtml(pairs, {'));
     assert.ok(appJsResponse.body.includes('buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)'));
-    assert.ok(appJsResponse.body.includes('utils.buildArbDetailShellHtml(arbDetailState.cards)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards)'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailTokenHtml'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailPairHtml'));
     assert.ok(!appJsResponse.body.includes('const cardsHtml = arbDetailState.cards.map'));
-    assert.ok(appJsResponse.body.includes('utils.buildArbDetailRowsHtml(card, {'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRowsHtml(card, {'));
     assert.ok(appJsResponse.body.includes('buildSourceHtml: (row, options) => buildArbDetailSourceHtml(row, options)'));
-    assert.ok(appJsResponse.body.includes('utils.buildArbDetailSummaryHtml(card, {'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailSummaryHtml(card, {'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailRowsHtml(card, cardIndex) {\n        if (card.rows && card.rows.length)'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSourceHtml(row, options)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSourceHtml(row, options = {})'));
