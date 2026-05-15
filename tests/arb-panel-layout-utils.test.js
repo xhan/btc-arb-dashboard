@@ -8,6 +8,7 @@ const {
   selectPositiveCyclesOrBest,
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
+  buildQuotePriceWatchDisplayEntry,
   getCycleDisplayState,
   mapEntriesForDisplayCycles,
   registerArbOpportunityHighlightTarget,
@@ -210,3 +211,52 @@ registerArbOpportunityHighlightTarget(highlightTargetMap, 'target-1', 'op-2');
 registerArbOpportunityHighlightTarget(highlightTargetMap, '', 'op-3');
 assert.deepStrictEqual(highlightTargetMap.get('target-1'), ['op-1', 'op-2']);
 assert.strictEqual(highlightTargetMap.has(''), false);
+
+assert.deepStrictEqual(
+  buildQuotePriceWatchDisplayEntry({
+    title: 'ETH USDT/USDe',
+    hasQuote: true,
+    value: 1.00042,
+    priceText: '1.00042',
+    isPaused: false,
+    chainLabel: 'Ethereum',
+    pairLabel: 'USDT/USDe'
+  }),
+  {
+    entryType: 'quote-price',
+    title: 'ETH USDT/USDe',
+    priceText: '1.00042',
+    metaText: 'Ethereum · USDT/USDe',
+    statusText: '',
+    muted: false
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuotePriceWatchDisplayEntry({
+    title: '等待报价测试',
+    hasQuote: true,
+    value: null,
+    chainLabel: 'Ethereum',
+    pairLabel: 'cbBTC/syBTC'
+  }),
+  {
+    entryType: 'quote-price',
+    title: '等待报价测试',
+    priceText: '--',
+    metaText: 'Ethereum · cbBTC/syBTC',
+    statusText: '等待报价',
+    muted: true
+  }
+);
+
+assert.strictEqual(
+  buildQuotePriceWatchDisplayEntry({
+    title: '暂停测试',
+    hasQuote: true,
+    value: 1,
+    priceText: '1',
+    isPaused: true
+  }).statusText,
+  '报价暂停'
+);

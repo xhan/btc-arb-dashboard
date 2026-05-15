@@ -321,8 +321,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('htmlRenderer: window.DomRenderUtils.createStableHtmlRenderer()'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta = {}, options = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchDisplayEntry(options = {})'));
     assert.ok(appJsResponse.body.includes('layoutUtils.buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta)'));
     assert.ok(appJsResponse.body.includes('layoutUtils.buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {'));
+    assert.ok(appJsResponse.body.includes('ArbPanelLayoutUtils.buildQuotePriceWatchDisplayEntry({'));
     assert.ok(appJsResponse.body.includes('renderer.renderArbSectionToggleHtml(sectionKey, {'));
     assert.ok(!appJsResponse.body.includes('data-arb-section-key="${sectionKey}"'));
     assert.ok((await request('/arb-panel-renderer.js')).body.includes('function renderArbSectionToggleHtml(sectionKey, cycleDisplayState)'));

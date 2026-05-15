@@ -256,6 +256,25 @@
     targetMap.set(targetKey, [opportunityId]);
   }
 
+  function buildQuotePriceWatchDisplayEntry(options = {}) {
+    const hasQuote = options.hasQuote === true;
+    const hasValue = options.value !== null && options.value !== undefined;
+    let statusText = '';
+    if (!hasQuote || !hasValue) {
+      statusText = '等待报价';
+    } else if (options.isPaused) {
+      statusText = '报价暂停';
+    }
+    return {
+      entryType: 'quote-price',
+      title: String(options.title || ''),
+      priceText: hasValue ? String(options.priceText) : '--',
+      metaText: [options.chainLabel, options.pairLabel].filter(Boolean).join(' · '),
+      statusText,
+      muted: Boolean(statusText)
+    };
+  }
+
   return {
     splitSectionsIntoColumns,
     splitSectionsBySectionCount,
@@ -266,6 +285,7 @@
     selectPositiveCyclesOrBest,
     buildArbOpportunityDisplayEntry,
     buildArbOpportunityStoreEntry,
+    buildQuotePriceWatchDisplayEntry,
     getCycleDisplayState,
     mapEntriesForDisplayCycles,
     registerArbOpportunityHighlightTarget,

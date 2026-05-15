@@ -4875,15 +4875,27 @@
         const state = quote ? quoteMarketState.get(Number(quote.id)) || {} : {};
         const value = resolveQuotePriceWatchValue(item, state);
         const isPaused = quote ? isQuotePaused(quote) : false;
-        const statusText = !quote || value == null
-            ? '等待报价'
-            : isPaused
-                ? '报价暂停'
-                : '';
         const pairLabel = quote
             ? buildQuoteAlertDisplayLabel(quote, state, item.direction)
             : `报价 #${String(item.quoteId)}`;
         const chainLabel = quote ? formatChainLabel(quote.chain) : '未知链';
+        if (window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.buildQuotePriceWatchDisplayEntry === 'function') {
+            return window.ArbPanelLayoutUtils.buildQuotePriceWatchDisplayEntry({
+                title: item.title,
+                hasQuote: Boolean(quote),
+                value,
+                priceText: value == null ? '--' : String(formatDetailNumber(value, 8)),
+                isPaused,
+                chainLabel,
+                pairLabel
+            });
+        }
+        let statusText = '';
+        if (!quote || value == null) {
+            statusText = '等待报价';
+        } else if (isPaused) {
+            statusText = '报价暂停';
+        }
         return {
             entryType: 'quote-price',
             title: item.title,
