@@ -4024,15 +4024,15 @@
         return 'raw';
     }
 
+    function getPathAlertNotificationUtils() {
+        if (!window.PathAlertNotificationUtils) {
+            throw new Error('PathAlertNotificationUtils is not loaded');
+        }
+        return window.PathAlertNotificationUtils;
+    }
+
     function formatPathAlertEvaluationText(evaluation) {
-        if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.formatPathAlertEvaluationText === 'function') {
-            return window.PathAlertNotificationUtils.formatPathAlertEvaluationText(evaluation);
-        }
-        if (!evaluation || evaluation.available !== true || !Number.isFinite(evaluation.profitBp)) {
-            return '--';
-        }
-        const value = evaluation.profitBp;
-        return `${value >= 0 ? '+' : ''}${value.toFixed(2)}bp`;
+        return getPathAlertNotificationUtils().formatPathAlertEvaluationText(evaluation);
     }
 
     function getPathAlertStatusInfo(alert, runtime) {
@@ -4253,26 +4253,11 @@
     }
 
     function formatPathAlertNotificationTitle(triggeredEntries) {
-        if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.buildPathAlertNotificationTitle === 'function') {
-            return window.PathAlertNotificationUtils.buildPathAlertNotificationTitle(triggeredEntries);
-        }
-        const list = Array.isArray(triggeredEntries) ? triggeredEntries : [];
-        if (!list.length) return '路径报警';
-        return list.length === 1 ? (list[0].alert?.name || '路径报警') : `${list.length} 条`;
+        return getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries);
     }
 
     function buildPathAlertNotificationBody(triggeredEntries) {
-        if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.buildPathAlertNotificationBody === 'function') {
-            return window.PathAlertNotificationUtils.buildPathAlertNotificationBody(triggeredEntries);
-        }
-        const list = (Array.isArray(triggeredEntries) ? triggeredEntries : []).slice(0, 3);
-        return list.map((entry) => {
-            const customAlertMessage = String(entry && entry.customAlertMessage || '').trim();
-            if (customAlertMessage) {
-                return customAlertMessage;
-            }
-            return [formatPathAlertEvaluationText(entry.evaluation), ...entry.summaryLines].join('\n');
-        }).join('\n\n');
+        return getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries);
     }
 
     async function sendPathAlertWebhookNotification(triggeredEntries) {
@@ -5728,14 +5713,14 @@
     }
 
     function buildQuoteAlertMessage(alert, evaluation) {
-        return window.PathAlertNotificationUtils.buildQuoteAlertMessage(alert, evaluation, {
+        return getPathAlertNotificationUtils().buildQuoteAlertMessage(alert, evaluation, {
             formatNumber: formatDetailNumber
         });
     }
 
     function buildQuoteAlertCurrentValueText(quote, alert, evaluation) {
         if (!quote) return '';
-        return window.PathAlertNotificationUtils.buildQuoteAlertCurrentValueText(alert, evaluation, {
+        return getPathAlertNotificationUtils().buildQuoteAlertCurrentValueText(alert, evaluation, {
             formatNumber: formatDetailNumber
         });
     }
@@ -5844,23 +5829,13 @@
     }
 
     function buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null) {
-        if (
-            window.PathAlertNotificationUtils
-            && typeof window.PathAlertNotificationUtils.buildQuoteAlertRemotePayload === 'function'
-        ) {
-            return window.PathAlertNotificationUtils.buildQuoteAlertRemotePayload({
-                chainName: displayName,
-                label,
-                currentValueText,
-                message,
-                actionLink
-            });
-        }
-        return {
-            title: [[displayName || '未知链', [label, currentValueText].filter(Boolean).join('  ')].filter(Boolean).join(' ')].filter(Boolean).join('\n') || '监控命中',
-            body: [message].filter(Boolean).join('\n') || '监控命中',
-            telegramHtmlBody: ''
-        };
+        return getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({
+            chainName: displayName,
+            label,
+            currentValueText,
+            message,
+            actionLink
+        });
     }
 
     async function sendQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null) {
