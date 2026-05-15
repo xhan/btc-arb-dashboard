@@ -65,6 +65,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="charts-renderer.js"'));
     assert.ok(response.body.includes('src="copy-utils.js"'));
+    assert.ok(response.body.includes('src="arb-cycle-priority-utils.js"'));
+    assert.ok(response.body.includes('src="arb-equivalence-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="dom-render-utils.js"'));
@@ -149,6 +151,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="arb-rule-snapshot-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="arb-cycle-priority-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="arb-equivalence-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="path-alert-rule-definitions.js"') < response.body.indexOf('src="app.js"')
@@ -236,6 +244,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
     const arbPanelLayoutUtilsResponse = await request('/arb-panel-layout-utils.js');
     assert.strictEqual(arbPanelLayoutUtilsResponse.statusCode, 200);
+    const arbEquivalenceUtilsResponse = await request('/arb-equivalence-utils.js');
+    assert.strictEqual(arbEquivalenceUtilsResponse.statusCode, 200);
     const dataTerminalUtilsResponse = await request('/data-terminal-utils.js');
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/arb-detail-utils.js');
@@ -426,9 +436,22 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('ArbFixedUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getArbSpecialUtils()'));
     assert.ok(appJsResponse.body.includes('ArbSpecialUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getArbCyclePriorityUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbCyclePriorityUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getArbEquivalenceUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbEquivalenceUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;'));
+    assert.ok(appJsResponse.body.includes('const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;'));
     assert.ok(appJsResponse.body.includes('getArbRuleSnapshotUtils().buildArbRuleSnapshot({'));
+    assert.ok(appJsResponse.body.includes('getArbCyclePriorityUtils().buildPreferredCycleStartSymbols(aliasRules, configuredPriority)'));
+    assert.ok(appJsResponse.body.includes('getArbCyclePriorityUtils().normalizeArbCycleStartPriority(data && data.cycleStartPriority)'));
+    assert.ok(appJsResponse.body.includes('getArbEquivalenceUtils().DEFAULT_ASSET_EQUIVALENCE_GROUPS'));
+    assert.ok(appJsResponse.body.includes('getArbEquivalenceUtils().buildAliasRulesFromGroups(getAssetEquivalenceGroups())'));
     assert.ok(!appJsResponse.body.includes('window.ArbRuleSnapshotUtils &&'));
+    assert.ok(!appJsResponse.body.includes('window.ArbCyclePriorityUtils &&'));
+    assert.ok(!appJsResponse.body.includes('window.ArbEquivalenceUtils &&'));
+    assert.ok(!appJsResponse.body.includes('const symbols = new Set([canonicalSymbol]);'));
+    assert.ok(!appJsResponse.body.includes("USDTB: 'USDtb'"));
     assert.ok(!appJsResponse.body.includes('fixed:gho-usdc'));
     assert.ok(!appJsResponse.body.includes('special:usdtb-bybit'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta)'));
@@ -517,8 +540,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('toggleDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('toggleRequestChannelTags()'));
     assert.ok(appJsResponse.body.includes('let showRequestChannelTags = true;'));
-    assert.ok(appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));
-    assert.ok(appJsResponse.body.includes("USDE: 'USDe'"));
+    assert.ok(!appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));
+    assert.ok(!appJsResponse.body.includes("USDE: 'USDe'"));
+    assert.ok(arbEquivalenceUtilsResponse.body.includes("USDe: ['USDe', 'USDE']"));
+    assert.ok(arbEquivalenceUtilsResponse.body.includes('aliasRules[symbol] = canonicalSymbol;'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('音效'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('远程'));
     assert.ok(!appJsResponse.body.includes('path-alert-reload-btn'));

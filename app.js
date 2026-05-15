@@ -14,9 +14,7 @@
     let timers = {};
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
-    const DEFAULT_ARB_CYCLE_START_PRIORITY = window.ArbCyclePriorityUtils
-        ? window.ArbCyclePriorityUtils.DEFAULT_ARB_CYCLE_START_PRIORITY
-        : ['cbBTC', 'WBTC', 'ETH'];
+    const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
     let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
@@ -349,6 +347,20 @@
             throw new Error('ArbSpecialUtils is not loaded');
         }
         return window.ArbSpecialUtils;
+    }
+
+    function getArbCyclePriorityUtils() {
+        if (!window.ArbCyclePriorityUtils) {
+            throw new Error('ArbCyclePriorityUtils is not loaded');
+        }
+        return window.ArbCyclePriorityUtils;
+    }
+
+    function getArbEquivalenceUtils() {
+        if (!window.ArbEquivalenceUtils) {
+            throw new Error('ArbEquivalenceUtils is not loaded');
+        }
+        return window.ArbEquivalenceUtils;
     }
 
     function isCrossChainQuote(quote) {
@@ -2143,48 +2155,15 @@
         const configuredPriority = Array.isArray(arbCycleStartPriority) && arbCycleStartPriority.length
             ? arbCycleStartPriority
             : [canonicalSymbol];
-        if (window.ArbCyclePriorityUtils && typeof window.ArbCyclePriorityUtils.buildPreferredCycleStartSymbols === 'function') {
-            return window.ArbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
-        }
-        const symbols = new Set([canonicalSymbol]);
-        for (const [alias, mapped] of Object.entries(aliasRules || {})) {
-            if (mapped === canonicalSymbol) {
-                symbols.add(alias);
-                symbols.add(mapped);
-            }
-        }
-        return Array.from(symbols);
+        return getArbCyclePriorityUtils().buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
     }
 
     function getAssetEquivalenceGroups() {
-        if (window.ArbEquivalenceUtils && window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS) {
-            return window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS;
-        }
-        return {
-            cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
-            WBTC: ['WBTC', 'wBTC'],
-            tBTC: ['tBTC', 'TBTC'],
-            USDe: ['USDe', 'USDE'],
-            USDtb: ['USDtb', 'USDTB'],
-            USDT: ['USDT', 'USD₮0']
-        };
+        return getArbEquivalenceUtils().DEFAULT_ASSET_EQUIVALENCE_GROUPS;
     }
 
     function getAliasRules() {
-        const groups = getAssetEquivalenceGroups();
-        if (window.ArbEquivalenceUtils && typeof window.ArbEquivalenceUtils.buildAliasRulesFromGroups === 'function') {
-            return window.ArbEquivalenceUtils.buildAliasRulesFromGroups(groups);
-        }
-        return {
-            xBTC: 'cbBTC',
-            BTCB: 'cbBTC',
-            'BTC.b': 'cbBTC',
-            wBTC: 'WBTC',
-            TBTC: 'tBTC',
-            USDE: 'USDe',
-            USDTB: 'USDtb',
-            'USD₮0': 'USDT'
-        };
+        return getArbEquivalenceUtils().buildAliasRulesFromGroups(getAssetEquivalenceGroups());
     }
 
     function buildQuoteMetaById() {
@@ -5502,9 +5481,7 @@
             const response = await fetch(`${BACKEND_URL}/api/get-arb-settings`);
             if (!response.ok) throw new Error('获取套利路径配置失败');
             const data = await response.json();
-            const nextPriority = window.ArbCyclePriorityUtils && typeof window.ArbCyclePriorityUtils.normalizeArbCycleStartPriority === 'function'
-                ? window.ArbCyclePriorityUtils.normalizeArbCycleStartPriority(data && data.cycleStartPriority)
-                : Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
+            const nextPriority = getArbCyclePriorityUtils().normalizeArbCycleStartPriority(data && data.cycleStartPriority);
             arbCycleStartPriority = nextPriority;
         } catch (error) {
             console.warn('加载套利路径配置失败:', error);
