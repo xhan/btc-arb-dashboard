@@ -163,6 +163,26 @@
     return `<div class="${sectionClassName}">${titleRowHtml}${headerExtraHtml}${body}${footerHtml}</div>`;
   }
 
+  function renderArbSectionToggleHtml(sectionKey, cycleDisplayState) {
+    if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
+
+    const numericMinProfitBp = Number(cycleDisplayState.displayMinProfitBp);
+    const minProfitBp = Number.isFinite(numericMinProfitBp) ? Math.max(0, numericMinProfitBp) : 0;
+    const buttonText = cycleDisplayState.expanded
+      ? `已展开 ${cycleDisplayState.positiveCount} 条 > ${minProfitBp}bp，点击收起`
+      : `还有 ${cycleDisplayState.hiddenPositiveCount} 条 > ${minProfitBp}bp 未显示，点击展开全部`;
+
+    return `
+            <button
+                type="button"
+                class="arb-path-expand-toggle"
+                data-arb-section-key="${escapeAttr(sectionKey)}"
+                aria-expanded="${cycleDisplayState.expanded ? 'true' : 'false'}"
+                style="margin-top:6px;padding:0;border:none;background:none;color:#2563eb;cursor:pointer;font-size:12px;text-decoration:underline;"
+            >${escapeHtml(buttonText)}</button>
+        `;
+  }
+
   function renderArbGrid(config = {}) {
     const columns = Array.isArray(config.columns) ? config.columns : [];
     const options = {
@@ -183,6 +203,7 @@
   }
 
   return {
+    renderArbSectionToggleHtml,
     renderArbGrid
   };
 }));

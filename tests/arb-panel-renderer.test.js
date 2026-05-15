@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const { renderArbGrid } = require('../arb-panel-renderer');
+const { renderArbGrid, renderArbSectionToggleHtml } = require('../arb-panel-renderer');
 
 const html = renderArbGrid({
   columns: [
@@ -172,3 +172,28 @@ assert.ok(quotePriceHtml.includes('等待报价'));
 assert.ok(!quotePriceHtml.includes('正向'));
 assert.ok(!quotePriceHtml.includes('阈值'));
 assert.ok(!quotePriceHtml.includes('状态 未触发'));
+
+const collapsedToggleHtml = renderArbSectionToggleHtml('category:WBTC <main>', {
+  canToggleExpand: true,
+  expanded: false,
+  hiddenPositiveCount: 3,
+  positiveCount: 7,
+  displayMinProfitBp: 0.5
+});
+
+assert.ok(collapsedToggleHtml.includes('class="arb-path-expand-toggle"'));
+assert.ok(collapsedToggleHtml.includes('data-arb-section-key="category:WBTC &lt;main&gt;"'));
+assert.ok(collapsedToggleHtml.includes('aria-expanded="false"'));
+assert.ok(collapsedToggleHtml.includes('还有 3 条 &gt; 0.5bp 未显示，点击展开全部'));
+
+const expandedToggleHtml = renderArbSectionToggleHtml('global:all', {
+  canToggleExpand: true,
+  expanded: true,
+  hiddenPositiveCount: 0,
+  positiveCount: 7,
+  displayMinProfitBp: 1.25
+});
+
+assert.ok(expandedToggleHtml.includes('aria-expanded="true"'));
+assert.ok(expandedToggleHtml.includes('已展开 7 条 &gt; 1.25bp，点击收起'));
+assert.strictEqual(renderArbSectionToggleHtml('global:all', { canToggleExpand: false }), '');

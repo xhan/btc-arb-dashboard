@@ -317,6 +317,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("return { text: '监控中', className: 'path-alert-status-monitoring' };"));
     assert.ok(appJsResponse.body.includes('const arbPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();'));
     assert.ok(appJsResponse.body.includes('htmlRenderer: window.DomRenderUtils.createStableHtmlRenderer()'));
+    assert.ok(appJsResponse.body.includes('renderer.renderArbSectionToggleHtml(sectionKey, {'));
+    assert.ok(!appJsResponse.body.includes('data-arb-section-key="${sectionKey}"'));
+    assert.ok((await request('/arb-panel-renderer.js')).body.includes('function renderArbSectionToggleHtml(sectionKey, cycleDisplayState)'));
     assert.ok(appJsResponse.body.includes('const nextArbPanelHtml = window.ArbPanelRenderer.renderArbGrid({'));
     assert.ok(appJsResponse.body.includes('arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);'));
     assert.ok(appJsResponse.body.includes('dataTerminalState.htmlRenderer.render(refs.content'));

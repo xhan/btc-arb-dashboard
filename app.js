@@ -3093,21 +3093,12 @@
 
     function buildArbSectionToggleHtml(sectionKey, cycleDisplayState) {
         if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
-
-        const minProfitBp = normalizeArbDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp);
-        const buttonText = cycleDisplayState.expanded
-            ? `已展开 ${cycleDisplayState.positiveCount} 条 > ${minProfitBp}bp，点击收起`
-            : `还有 ${cycleDisplayState.hiddenPositiveCount} 条 > ${minProfitBp}bp 未显示，点击展开全部`;
-
-        return `
-            <button
-                type="button"
-                class="arb-path-expand-toggle"
-                data-arb-section-key="${sectionKey}"
-                aria-expanded="${cycleDisplayState.expanded ? 'true' : 'false'}"
-                style="margin-top:6px;padding:0;border:none;background:none;color:#2563eb;cursor:pointer;font-size:12px;text-decoration:underline;"
-            >${buttonText}</button>
-        `;
+        const renderer = window.ArbPanelRenderer;
+        if (!renderer || typeof renderer.renderArbSectionToggleHtml !== 'function') return '';
+        return renderer.renderArbSectionToggleHtml(sectionKey, {
+            ...cycleDisplayState,
+            displayMinProfitBp: normalizeArbDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp)
+        });
     }
 
     function buildArbSectionKey(prefix, idOrName) {
