@@ -384,6 +384,13 @@
         return window.SpecialRuleAlertConfigUtils;
     }
 
+    function getTradingPairUtils() {
+        if (!window.TradingPairUtils) {
+            throw new Error('TradingPairUtils is not loaded');
+        }
+        return window.TradingPairUtils;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -407,10 +414,7 @@
     }
 
     function parseCexTradingPairSymbol(symbol) {
-        if (window.TradingPairUtils && typeof window.TradingPairUtils.parseCexTradingPairSymbol === 'function') {
-            return window.TradingPairUtils.parseCexTradingPairSymbol(symbol);
-        }
-        return null;
+        return getTradingPairUtils().parseCexTradingPairSymbol(symbol);
     }
     
     const KYBER_SUPPORTED_CHAINS = [
