@@ -5129,28 +5129,11 @@
         arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);
     }
 
-    const MARKET_QUOTE_REQUESTS = {
-        '0x': { endpoint: '/api/get-0x-quote', source: '0x', errorMessage: '0x API Request Failed' },
-        'Velora': { endpoint: '/api/get-velora-quote', source: 'Velora', errorMessage: 'Velora API Request Failed' },
-        'LI.FI': { endpoint: '/api/get-lifi-quote', source: 'LI.FI', errorMessage: 'LI.FI API Request Failed', includeRouteMeta: true },
-        'Ekubo': { endpoint: '/api/get-ekubo-quote', source: 'Ekubo', errorMessage: 'Ekubo API Request Failed' },
-        'Jupiter': { endpoint: '/api/get-jupiter-quote', source: 'Jupiter', errorMessage: 'Jupiter API Request Failed' }
-    };
-
-    function buildMarketQuoteResult(data, usedSource, options = {}) {
-        const result = {
-            symbols: { from: data.fromSymbol, to: data.toSymbol },
-            finalAmountOut: data.amountOut,
-            rawPrice: data.raw_price,
-            usedSource,
-            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
-        };
-        if (options.includeRouteMeta) {
-            result.fromChain = data.fromChain;
-            result.toChain = data.toChain;
-            result.isCrossChain = data.isCrossChain === true;
+    function getQuoteRequestUtils() {
+        if (!window.QuoteRequestUtils) {
+            throw new Error('QuoteRequestUtils is not loaded');
         }
-        return result;
+        return window.QuoteRequestUtils;
     }
 
     async function getMarketQuote(quote, signal, config) {
@@ -5168,7 +5151,7 @@
         const usedSource = typeof config.resolveUsedSource === 'function'
             ? config.resolveUsedSource(data, quote)
             : config.source;
-        return buildMarketQuoteResult(data, usedSource, config);
+        return getQuoteRequestUtils().buildMarketQuoteResult(data, usedSource, config);
     }
 
     async function getCexOrderbookQuote(quote, signal, options) {
@@ -5219,7 +5202,7 @@
     }
 
     async function apiGetQuote(quote, signal, targetSource) {
-        const marketConfig = MARKET_QUOTE_REQUESTS[targetSource];
+        const marketConfig = getQuoteRequestUtils().resolveMarketQuoteRequestConfig(targetSource);
         if (marketConfig) {
             return getMarketQuote(quote, signal, marketConfig);
         }

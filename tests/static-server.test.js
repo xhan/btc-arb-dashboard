@@ -83,6 +83,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(response.body.includes('src="quote-request-utils.js"'));
     assert.ok(response.body.includes('src="quote-display-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
@@ -93,6 +94,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
       response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="quote-request-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="request-channel-utils.js"') < response.body.indexOf('src="app.js"')
@@ -225,6 +229,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
     const dexLinkUtilsResponse = await request('/dex-link-utils.js');
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
+    const quoteRequestUtilsResponse = await request('/quote-request-utils.js');
+    assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
     const dashboardRendererResponse = await request('/dashboard-renderer.js');
@@ -258,8 +264,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
     assert.ok(!appJsResponse.body.includes('/api/get-evm-meta'));
     assert.ok(!appJsResponse.body.includes('function getEvmMetadata'));
-    assert.ok(appJsResponse.body.includes('const MARKET_QUOTE_REQUESTS = {'));
+    assert.ok(!appJsResponse.body.includes('const MARKET_QUOTE_REQUESTS = {'));
+    assert.ok(appJsResponse.body.includes('QuoteRequestUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getQuoteRequestUtils().resolveMarketQuoteRequestConfig(targetSource)'));
     assert.ok(appJsResponse.body.includes('function getMarketQuote(quote, signal, config)'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('const MARKET_QUOTE_REQUESTS = Object.freeze({'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(appJsResponse.body.includes('window.ChainDefaults.buildQuoteStrategy(quote)'));
     assert.ok(!appJsResponse.body.includes('function buildQuoteStrategy(quote)'));
     assert.ok(!appJsResponse.body.includes('function get0xQuote'));
