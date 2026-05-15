@@ -513,6 +513,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
     assert.ok(appJsResponse.body.includes('buildArbDetailRateDeltaText'));
+    assert.ok(appJsResponse.body.includes('function getArbDetailUtils()'));
+    assert.ok(appJsResponse.body.includes('ArbDetailUtils is not loaded'));
+    assert.ok(!appJsResponse.body.includes('buildDetailInputAmounts(baseAmount) {'));
+    assert.ok(!appJsResponse.body.includes('findBestSummaryIndices(cards) {'));
     assert.ok(appJsResponse.body.includes('rateDeltaText'));
     assert.ok(appJsResponse.body.includes('renderArbDetailCardContents();'));
     assert.ok(!appJsResponse.body.includes('function getActiveArbDetailInputIndex()'));
