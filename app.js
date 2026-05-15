@@ -398,6 +398,27 @@
         return window.ArbPathConfigUtils;
     }
 
+    function getArbPaths() {
+        if (!window.ArbPaths) {
+            throw new Error('ArbPaths is not loaded');
+        }
+        return window.ArbPaths;
+    }
+
+    function getArbPanelRenderer() {
+        if (!window.ArbPanelRenderer) {
+            throw new Error('ArbPanelRenderer is not loaded');
+        }
+        return window.ArbPanelRenderer;
+    }
+
+    function getArbPathConfig() {
+        if (!window.ArbPathConfig) {
+            throw new Error('ArbPathConfig is not loaded');
+        }
+        return window.ArbPathConfig;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -1741,7 +1762,7 @@
 
     function buildVisibleArbEdges(quotes, nowMs = Date.now()) {
         return filterMutedArbEdges(
-            window.ArbPaths.buildEdges(quotes, quoteMarketState, null),
+            getArbPaths().buildEdges(quotes, quoteMarketState, null),
             nowMs
         );
     }
@@ -1756,7 +1777,8 @@
         const aliasRules = getAliasRules();
         const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
         const allEdges = buildVisibleArbEdges(allQuotes);
-        const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
+        const arbPaths = getArbPaths();
+        const ruleEdges = arbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
         const quoteMetaById = buildQuoteMetaById();
         const quotesByCategoryName = buildQuotesByCategoryName();
@@ -1774,7 +1796,7 @@
             mutedPathLegs,
             mutedPathLegUtils: getMutedPathLegUtils(),
             preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
-            arbPathsApi: window.ArbPaths,
+            arbPathsApi: arbPaths,
             arbFixedUtils: getArbFixedUtils(),
             arbSpecialUtils: getArbSpecialUtils()
         });
@@ -1810,7 +1832,8 @@
 
         const aliasRules = getAliasRules();
         const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
-        const ruleEdges = window.ArbPaths.buildRuleEdges(aliasRules);
+        const arbPaths = getArbPaths();
+        const ruleEdges = arbPaths.buildRuleEdges(aliasRules);
         const quoteMetaById = buildQuoteMetaById();
         const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
         const allTopologyEdges = utils.buildTopologyEdges(allQuotes, quoteMarketState, null);
@@ -1823,7 +1846,7 @@
         const globalTemplates = utils.buildCycleTemplates(globalEdges.concat(ruleEdges), {
             maxDepth: 3,
             limit: Number.MAX_SAFE_INTEGER,
-            acceptCycle: window.ArbPaths.isMeaningfulPath,
+            acceptCycle: arbPaths.isMeaningfulPath,
             preferredStartSymbols: preferredCycleStartSymbols
         });
 
@@ -1870,12 +1893,12 @@
     const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;
     const SPECIAL_ARB_RULES = getPathAlertRuleDefinitionsUtils().SPECIAL_ARB_RULES;
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
-    const ARB_PATH_CONFIG = window.ArbPathConfig || { watchItems: [] };
+    const ARB_PATH_CONFIG = getArbPathConfig();
 
     function formatArbPathLegLine(leg) {
         const displayFrom = leg && leg.rawFrom ? leg.rawFrom : leg.from;
         const displayTo = leg && leg.rawTo ? leg.rawTo : leg.to;
-        const baseLine = window.ArbPaths.formatLegLine({
+        const baseLine = getArbPaths().formatLegLine({
             from: displayFrom,
             to: displayTo,
             rate: leg.rate,
@@ -1957,9 +1980,7 @@
 
     function formatDetailProfitRate(profitRate) {
         if (typeof profitRate !== 'number' || !Number.isFinite(profitRate)) return '--';
-        return window.ArbPaths && typeof window.ArbPaths.formatProfitWanfen === 'function'
-            ? window.ArbPaths.formatProfitWanfen(profitRate)
-            : `${(profitRate * 10000).toFixed(2)}‱`;
+        return getArbPaths().formatProfitWanfen(profitRate);
     }
 
     function formatCexBookValue(value, maxDecimals = 10) {
@@ -2608,9 +2629,7 @@
 
     function buildArbSectionToggleHtml(sectionKey, cycleDisplayState) {
         if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
-        const renderer = window.ArbPanelRenderer;
-        if (!renderer || typeof renderer.renderArbSectionToggleHtml !== 'function') return '';
-        return renderer.renderArbSectionToggleHtml(sectionKey, {
+        return getArbPanelRenderer().renderArbSectionToggleHtml(sectionKey, {
             ...cycleDisplayState,
             displayMinProfitBp: normalizeArbDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp)
         });
@@ -4399,12 +4418,6 @@
     }
 
     function buildArbPanelData() {
-        if (!window.ArbPaths) {
-            return { error: '路径模块未加载' };
-        }
-        if (!window.ArbPanelRenderer || typeof window.ArbPanelRenderer.renderArbGrid !== 'function') {
-            return { error: '路径渲染模块未加载' };
-        }
         const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
         const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
         if (!targetCategories.length) {
@@ -4462,13 +4475,14 @@
         arbOpportunityIdsByTargetKey = nextOpportunityIdsByTargetKey instanceof Map ? nextOpportunityIdsByTargetKey : new Map();
         refreshArbOpportunityStore(nextOpportunityMap);
 
-        const nextArbPanelHtml = window.ArbPanelRenderer.renderArbGrid({
+        const arbPaths = getArbPaths();
+        const nextArbPanelHtml = getArbPanelRenderer().renderArbGrid({
             columns,
-            isMeaningfulPath: cycle => cycle && window.ArbPaths.isMeaningfulPath(cycle.legs),
+            isMeaningfulPath: cycle => cycle && arbPaths.isMeaningfulPath(cycle.legs),
             shouldIncludeLeg: leg => !isRuleLeg(leg),
             formatChainLabel,
             formatLegLine: formatArbPathLegLine,
-            formatProfit: profitRate => window.ArbPaths.formatProfitWanfen(profitRate)
+            formatProfit: profitRate => arbPaths.formatProfitWanfen(profitRate)
         });
         arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);
     }
