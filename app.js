@@ -1290,14 +1290,6 @@
         return mutedPathLegs;
     }
 
-    function getMutedPathLegEntry(leg, nowMs = Date.now()) {
-        pruneMutedPathLegsInPlace(nowMs);
-        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.findMutedPathLeg !== 'function') {
-            return null;
-        }
-        return window.MutedPathLegUtils.findMutedPathLeg(mutedPathLegs, leg, nowMs);
-    }
-
     function triggerMutedPathLegRefresh(options = {}) {
         invalidateArbRuleSnapshotCache();
         evaluatePathAlertsOnce();
@@ -2075,15 +2067,6 @@
 
     function isRuleLeg(leg) {
         return Boolean(leg && (leg.rule || leg.chain === '规则'));
-    }
-
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
     }
 
     function getArbDetailUtils() {
@@ -3229,14 +3212,6 @@
         arbOpportunityStore = nextStore;
     }
 
-    function getPathAlertDefaultThresholdBp() {
-        const fallback = 1.1;
-        if (!window.PathAlertUtils || !Number.isFinite(window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP)) {
-            return fallback;
-        }
-        return window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP;
-    }
-
     function buildArbDetailRowsHtml(card, cardIndex) {
         const utils = getArbDetailUtils();
         if (typeof utils.buildArbDetailRowsHtml === 'function') {
@@ -4053,10 +4028,6 @@
         };
     }
 
-    function getPathAlertDefaultThresholdBp() {
-        return Number(window.PathAlertUtils && window.PathAlertUtils.DEFAULT_PATH_ALERT_THRESHOLD_BP) || 1.1;
-    }
-
     function buildQuoteAlertThresholdLine(target) {
         if (!target || target.type !== 'quote') return '--';
         const directionLabel = getQuoteAlertDirection(target) === 'inverse' ? '反向' : '正向';
@@ -4074,57 +4045,6 @@
         if (leg.cexLevelLabel === 'bid1') return 'cex-bid1';
         if (leg.cexLevelLabel === 'ask1') return 'cex-ask1-inverse';
         return 'raw';
-    }
-
-    function buildPathAlertDraftFromOpportunityEntry(entry) {
-        if (!entry) return null;
-        const preset = entry.alertPreset || { type: 'path' };
-        const settings = pathAlertConfig.settings || {};
-        const baseDraft = {
-            id: '',
-            name: '',
-            enabled: true,
-            thresholdBp: getPathAlertDefaultThresholdBp(),
-            triggerMode: 'delayed',
-            confirmDelaySec: 13,
-            cooldownSec: settings.defaultCooldownSec || 180
-        };
-
-        if (preset.type === 'rule') {
-            return {
-                ...baseDraft,
-                target: {
-                    type: 'rule',
-                    ruleKind: preset.ruleKind,
-                    ruleId: preset.ruleId
-                }
-            };
-        }
-
-        const legs = (entry.cycle?.legs || [])
-            .filter((leg) => !isRuleLeg(leg) && Number.isFinite(Number(leg.quoteId)))
-            .map((leg) => ({
-                quoteId: Number(leg.quoteId),
-                direction: leg.inverse ? 'inverse' : 'forward',
-                pricingMode: getPathAlertLegPricingMode(leg),
-                chain: leg.chain,
-                fromSymbol: leg.from,
-                toSymbol: leg.to
-            }));
-
-        if (!legs.length) return null;
-        return {
-            ...baseDraft,
-            target: {
-                type: 'path',
-                legs
-            }
-        };
-    }
-
-    function buildPathAlertDraftFromOpportunity(opportunityId) {
-        const entry = arbOpportunityStore.get(opportunityId);
-        return entry ? buildPathAlertDraftFromOpportunityEntry(entry) : null;
     }
 
     function formatPathAlertEvaluationText(evaluation) {
@@ -4209,10 +4129,6 @@
         return [];
     }
 
-    function buildPathAlertSummary(alert) {
-        return buildPathAlertSummaryLines(alert).join(' | ');
-    }
-
     function buildPathAlertDisplayTitle(alert) {
         const name = String(alert && alert.name || '').trim();
         if (name) return name;
@@ -4236,14 +4152,6 @@
                 ? ' [ask1]'
                 : '';
         return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol, suffix);
-    }
-
-    function buildPathAlertCycleSummaryLines(alert, evaluation) {
-        if (evaluation && evaluation.cycle && Array.isArray(evaluation.cycle.legs)) {
-            const lines = buildLegLines(evaluation.cycle.legs.filter((leg) => !isRuleLeg(leg)));
-            if (lines.length) return lines;
-        }
-        return buildPathAlertSummaryLines(alert);
     }
 
     function buildPathAlertLegKey(leg) {
@@ -4440,17 +4348,6 @@
             comparison: evaluation && evaluation.debugComparison && typeof evaluation.debugComparison === 'object'
                 ? { ...evaluation.debugComparison }
                 : null
-        };
-    }
-
-    function buildAggregatedPathAlertLog(triggeredEntries) {
-        if (window.PathAlertNotificationUtils && typeof window.PathAlertNotificationUtils.buildPathAlertAggregatedLog === 'function') {
-            return window.PathAlertNotificationUtils.buildPathAlertAggregatedLog(triggeredEntries);
-        }
-        return {
-            title: '[路径报警]',
-            subtitle: '',
-            message: buildPathAlertNotificationBody(triggeredEntries)
         };
     }
 
@@ -4942,13 +4839,6 @@
             pathAlertReloading = false;
             renderPathAlertPanel();
         }
-    }
-
-    function selectArbOpportunityEntriesByCycles(entries, cycles) {
-        const cycleSet = new Set(Array.isArray(cycles) ? cycles : []);
-        return Array.isArray(entries)
-            ? entries.filter((entry) => entry && entry.cycle && cycleSet.has(entry.cycle))
-            : [];
     }
 
     function getQuotePriceWatchItems() {
