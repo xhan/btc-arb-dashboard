@@ -15,7 +15,7 @@ assert.strictEqual(fixedRule.title, 'USDE - USDT');
 assert.deepStrictEqual(fixedRule.categoryNames, ['USD监控']);
 assert.strictEqual(fixedRule.base, 'USDe');
 assert.strictEqual(fixedRule.quote, 'USDT');
-assert.strictEqual(fixedRule.resultLimit, 2);
+assert.strictEqual(fixedRule.resultLimit, 3);
 assert.deepStrictEqual(fixedRule.excludeChains, ['Bybit', 'Binance']);
 
 assert.ok(fixedSusdeRule, 'missing fixed rule: fixed:susde-usdt');
