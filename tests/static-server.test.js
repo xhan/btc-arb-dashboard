@@ -237,6 +237,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
     assert.ok(appJsResponse.body.includes('let pathAlertPanelHidden = true;'));
+    assert.ok(appJsResponse.body.includes('const pathAlertPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();'));
+    assert.ok(appJsResponse.body.includes('const mutedAlertStateHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();'));
+    assert.ok(appJsResponse.body.includes('pathAlertPanelHtmlRenderer.render(pathAlertContent'));
+    assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));
+    assert.ok(!appJsResponse.body.includes('pathAlertContent.innerHTML = `${toolbar}'));
+    assert.ok(!appJsResponse.body.includes('alertLogMutedContent.innerHTML = ['));
     assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
     assert.ok(appJsResponse.body.includes("target.direction === 'inverse'"));
     assert.ok(!appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));

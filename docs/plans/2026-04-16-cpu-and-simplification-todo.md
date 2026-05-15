@@ -80,13 +80,13 @@
 - 目标：减少大面板反复全量重绘。
 - 现状：
   - 套利面板、路径报警面板、数据终端都大量依赖 `innerHTML`
-  - 已抽出 `dom-render-utils.js` 的 stable HTML renderer；套利面板和数据终端在生成结果完全一致时跳过 `innerHTML` 替换
+  - 已抽出 `dom-render-utils.js` 的 stable HTML renderer；套利面板、路径报警面板、muted 状态面板和数据终端在生成结果完全一致时跳过 `innerHTML` 替换
   - 数据量一大时，字符串构建和节点替换成本高
 - 预期收益：
   - 降低前端渲染抖动
   - 提升交互稳定性
 - 建议改法：
-  - 已先从套利面板和数据终端做最小重绘保护
+  - 已先从套利面板、路径报警面板、muted 状态面板和数据终端做最小重绘保护
   - 路径报警面板已保持“仅在可见时刷新”
   - 数据终端已完成 records/candidates 缓存
 

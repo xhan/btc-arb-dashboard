@@ -71,9 +71,11 @@
     let pathAlertSaveTimer = null;
     let pathAlertEvalTimer = null;
     let pathAlertPanelHidden = true;
+    const pathAlertPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();
     let pathAlertRuntimeState = new Map();
     let mutedPathTargets = [];
     let mutedPathLegs = [];
+    const mutedAlertStateHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();
     let mutedPathLogTimer = null;
     let pathAlertReloading = false;
     let pathAlertExternalReloadTimer = null;
@@ -1571,10 +1573,10 @@
                     { label: '恢复', dataAttr: 'data-muted-path-leg-restore', value: buildMutedPathLegKey(entry) }
                 ]
             }));
-        alertLogMutedContent.innerHTML = [
+        mutedAlertStateHtmlRenderer.render(alertLogMutedContent, [
             buildMutedStateSectionHtml('沉默的路径', mutedPathItems, '当前没有沉默中的路径'),
             buildMutedStateSectionHtml('屏蔽的腿', mutedLegItems, '当前没有屏蔽中的腿')
-        ].join('');
+        ].join(''));
     }
 
     function renderAlertLogTabState() {
@@ -5159,7 +5161,7 @@
             </div>
         `;
         if (!alerts.length) {
-            pathAlertContent.innerHTML = `${toolbar}<div class="path-alert-empty">暂无路径报警</div>`;
+            pathAlertPanelHtmlRenderer.render(pathAlertContent, `${toolbar}<div class="path-alert-empty">暂无路径报警</div>`);
             return;
         }
 
@@ -5182,7 +5184,7 @@
             ));
 
         if (!alertItems.length) {
-            pathAlertContent.innerHTML = `${toolbar}<div class="path-alert-empty">暂无需要关注的路径报警</div>`;
+            pathAlertPanelHtmlRenderer.render(pathAlertContent, `${toolbar}<div class="path-alert-empty">暂无需要关注的路径报警</div>`);
             return;
         }
 
@@ -5226,7 +5228,7 @@
             `;
         }).join('');
 
-        pathAlertContent.innerHTML = `${toolbar}<div class="path-alert-list">${items}</div>`;
+        pathAlertPanelHtmlRenderer.render(pathAlertContent, `${toolbar}<div class="path-alert-list">${items}</div>`);
     }
 
     function togglePathAlertPanel() {
