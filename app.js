@@ -2398,38 +2398,23 @@
     }
 
     function getQuoteDisplayText(quote, state) {
-        if (isQuotePaused(quote)) return '已暂停';
-        if (isCexOrderbookChain(quote && quote.chain)) {
-            return (state && state.lastResultText) || '...';
-        }
         const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.buildQuoteDisplayText !== 'function') {
+        if (!utils || typeof utils.buildQuoteDisplayTextForState !== 'function') {
             return (state && state.lastResultText) || '...';
         }
-        return utils.buildQuoteDisplayText({
+        return utils.buildQuoteDisplayTextForState(quote, state, {
             mode: quoteDisplayMode,
-            amount: quote && quote.amount ? quote.amount : 1,
-            fromSymbol: state && state.fromSymbol,
-            toSymbol: state && state.toSymbol,
-            totalAmountOut: state && state.lastTotalAmountOut,
-            rate: state && state.lastRawPrice,
-            hideAmountPrefix: !isCexOrderbookChain(quote && quote.chain),
-            fallbackText: (state && state.lastResultText) || '...'
+            paused: isQuotePaused(quote)
         });
     }
 
     function getInverseQuoteDisplayText(quote, state, fallbackText = '反向报价排队中...') {
         const utils = getQuoteDisplayUtils();
-        if (!utils || typeof utils.buildQuoteDisplayText !== 'function') {
+        if (!utils || typeof utils.buildInverseQuoteDisplayTextForState !== 'function') {
             return fallbackText;
         }
-        return utils.buildQuoteDisplayText({
+        return utils.buildInverseQuoteDisplayTextForState(quote, state, {
             mode: quoteDisplayMode,
-            amount: quote && quote.amount ? quote.amount : 1,
-            fromSymbol: state && state.inverseFromSymbol,
-            toSymbol: state && state.inverseToSymbol,
-            totalAmountOut: state && state.inverseTotalAmountOut,
-            rate: state && state.inverseRawPrice,
             fallbackText
         });
     }

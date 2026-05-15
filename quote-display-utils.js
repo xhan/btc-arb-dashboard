@@ -58,6 +58,38 @@
     return `1 ${fromSymbol} ≈ ${rateText} ${toSymbol}`;
   }
 
+  function buildQuoteDisplayTextForState(quote, state, options = {}) {
+    if (options.paused) return options.pausedText || '已暂停';
+
+    const fallbackText = (state && state.lastResultText) || options.fallbackText || '...';
+    if (isCexOrderbookChain(quote && quote.chain)) {
+      return fallbackText;
+    }
+
+    return buildQuoteDisplayText({
+      mode: options.mode,
+      amount: quote && quote.amount ? quote.amount : 1,
+      fromSymbol: state && state.fromSymbol,
+      toSymbol: state && state.toSymbol,
+      totalAmountOut: state && state.lastTotalAmountOut,
+      rate: state && state.lastRawPrice,
+      hideAmountPrefix: true,
+      fallbackText
+    });
+  }
+
+  function buildInverseQuoteDisplayTextForState(quote, state, options = {}) {
+    return buildQuoteDisplayText({
+      mode: options.mode,
+      amount: quote && quote.amount ? quote.amount : 1,
+      fromSymbol: state && state.inverseFromSymbol,
+      toSymbol: state && state.inverseToSymbol,
+      totalAmountOut: state && state.inverseTotalAmountOut,
+      rate: state && state.inverseRawPrice,
+      fallbackText: options.fallbackText || '反向报价排队中...'
+    });
+  }
+
   function getCexPairLabel(quote, state) {
     if (!isCexOrderbookChain(quote && quote.chain)) return '';
     if (state && state.fromSymbol && state.toSymbol) {
@@ -92,8 +124,10 @@
   return {
     QUOTE_DISPLAY_MODE_AMOUNT,
     QUOTE_DISPLAY_MODE_RATE,
+    buildInverseQuoteDisplayTextForState,
     buildQuotePairLabelHtml,
     buildQuoteDisplayText,
+    buildQuoteDisplayTextForState,
     getCexPairLabel,
     getQuotePairLabel,
     shouldShowKyberDirectPoolsBadge,

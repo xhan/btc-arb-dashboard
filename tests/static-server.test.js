@@ -235,8 +235,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildInverseQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('quote-direct-badge'));
     assert.ok(appJsResponse.body.includes('utils.buildQuotePairLabelHtml(quote, state)'));
+    assert.ok(appJsResponse.body.includes('utils.buildQuoteDisplayTextForState(quote, state'));
+    assert.ok(appJsResponse.body.includes('utils.buildInverseQuoteDisplayTextForState(quote, state'));
     assert.ok(!appJsResponse.body.includes('function getCexPairLabel(quote, state)'));
     assert.ok(!appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(appJsResponse.body.includes('quote.kyberOnlyDirectPools = true;'));

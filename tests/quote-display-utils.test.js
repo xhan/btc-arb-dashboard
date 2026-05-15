@@ -3,8 +3,10 @@ const assert = require('assert');
 const {
   QUOTE_DISPLAY_MODE_AMOUNT,
   QUOTE_DISPLAY_MODE_RATE,
+  buildInverseQuoteDisplayTextForState,
   buildQuotePairLabelHtml,
   buildQuoteDisplayText,
+  buildQuoteDisplayTextForState,
   getCexPairLabel,
   getQuotePairLabel,
   shouldShowKyberDirectPoolsBadge,
@@ -49,6 +51,47 @@ assert.strictEqual(
     fallbackText: '等待报价...'
   }),
   '等待报价...'
+);
+
+assert.strictEqual(
+  buildQuoteDisplayTextForState(
+    { chain: 'ethereum', amount: 2 },
+    { fromSymbol: 'ETH', toSymbol: 'USDC', lastTotalAmountOut: 6.5, lastRawPrice: 3.25, lastResultText: '旧报价' },
+    { mode: QUOTE_DISPLAY_MODE_AMOUNT }
+  ),
+  'ETH ≈ 6.500000 USDC'
+);
+
+assert.strictEqual(
+  buildQuoteDisplayTextForState(
+    { chain: 'ethereum', amount: 2 },
+    { fromSymbol: 'ETH', toSymbol: 'USDC', lastTotalAmountOut: 6.5, lastRawPrice: 3.25 },
+    { mode: QUOTE_DISPLAY_MODE_RATE }
+  ),
+  '1 ETH ≈ 3.250000 USDC'
+);
+
+assert.strictEqual(
+  buildQuoteDisplayTextForState(
+    { chain: 'Bybit' },
+    { lastResultText: 'bid 1 / ask 2' },
+    { mode: QUOTE_DISPLAY_MODE_RATE }
+  ),
+  'bid 1 / ask 2'
+);
+
+assert.strictEqual(
+  buildQuoteDisplayTextForState({}, {}, { paused: true }),
+  '已暂停'
+);
+
+assert.strictEqual(
+  buildInverseQuoteDisplayTextForState(
+    { chain: 'ethereum', amount: 3 },
+    { inverseFromSymbol: 'USDC', inverseToSymbol: 'ETH', inverseTotalAmountOut: 1.5, inverseRawPrice: 0.5 },
+    { mode: QUOTE_DISPLAY_MODE_AMOUNT }
+  ),
+  '3 USDC ≈ 1.500000 ETH'
 );
 
 assert.strictEqual(
