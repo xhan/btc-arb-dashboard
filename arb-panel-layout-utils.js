@@ -112,6 +112,12 @@
     return Number.isFinite(fallbackValue) ? Math.max(0, fallbackValue) : DEFAULT_DISPLAY_MIN_PROFIT_BP;
   }
 
+  function resolveDefaultDisplayMinProfitBp(source = {}, fallback = DEFAULT_DISPLAY_MIN_PROFIT_BP) {
+    const sourceValue = Number(source && source.DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP);
+    if (Number.isFinite(sourceValue)) return Math.max(0, sourceValue);
+    return normalizeDisplayMinProfitBp(fallback);
+  }
+
   function resolveDisplayMinProfitBp(options) {
     if (typeof options === 'number' || typeof options === 'string') {
       return normalizeDisplayMinProfitBp(options);
@@ -328,6 +334,7 @@
     resolveItemsBySelectors,
     DEFAULT_DISPLAY_MIN_PROFIT_BP,
     normalizeDisplayMinProfitBp,
+    resolveDefaultDisplayMinProfitBp,
     selectCyclesAboveDisplayThreshold,
     selectPositiveCyclesOrBest,
     buildArbOpportunityDisplayEntry,

@@ -4,6 +4,8 @@ const {
   splitSectionsBySectionCount,
   resolveItemsBySelectors,
   DEFAULT_DISPLAY_MIN_PROFIT_BP,
+  normalizeDisplayMinProfitBp,
+  resolveDefaultDisplayMinProfitBp,
   selectCyclesAboveDisplayThreshold,
   selectPositiveCyclesOrBest,
   buildArbOpportunityDisplayEntry,
@@ -97,6 +99,22 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(selectPositiveCyclesOrBest([]), []);
 
 assert.strictEqual(DEFAULT_DISPLAY_MIN_PROFIT_BP, 0.5);
+assert.strictEqual(normalizeDisplayMinProfitBp('1.25'), 1.25);
+assert.strictEqual(normalizeDisplayMinProfitBp(-1), 0);
+assert.strictEqual(normalizeDisplayMinProfitBp('bad', 2), 2);
+assert.strictEqual(normalizeDisplayMinProfitBp('bad', 'bad fallback'), DEFAULT_DISPLAY_MIN_PROFIT_BP);
+assert.strictEqual(
+  resolveDefaultDisplayMinProfitBp({ DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP: 1 }),
+  1
+);
+assert.strictEqual(
+  resolveDefaultDisplayMinProfitBp({ DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP: -2 }),
+  0
+);
+assert.strictEqual(
+  resolveDefaultDisplayMinProfitBp({ DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP: 'bad' }, 1.5),
+  1.5
+);
 
 assert.deepStrictEqual(
   selectCyclesAboveDisplayThreshold([

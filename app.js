@@ -2560,20 +2560,11 @@
     }
 
     function getDefaultArbDisplayMinProfitBp() {
-        const ruleDefault = Number(getPathAlertRuleDefinitionsUtils().DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP);
-        if (Number.isFinite(ruleDefault)) return Math.max(0, ruleDefault);
-        return Math.max(0, Number(getArbPanelLayoutUtils().DEFAULT_DISPLAY_MIN_PROFIT_BP));
-    }
-
-    function normalizeArbDisplayMinProfitBp(value, fallback = getDefaultArbDisplayMinProfitBp()) {
-        const numericValue = Number(value);
-        if (Number.isFinite(numericValue)) return Math.max(0, numericValue);
-        const fallbackValue = Number(fallback);
-        return Number.isFinite(fallbackValue) ? Math.max(0, fallbackValue) : getDefaultArbDisplayMinProfitBp();
+        return getArbPanelLayoutUtils().resolveDefaultDisplayMinProfitBp(getPathAlertRuleDefinitionsUtils());
     }
 
     function getFixedRuleDisplayMinProfitBp(rule) {
-        return normalizeArbDisplayMinProfitBp(rule && rule.displayMinProfitBp, getDefaultArbDisplayMinProfitBp());
+        return getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(rule && rule.displayMinProfitBp, getDefaultArbDisplayMinProfitBp());
     }
 
     function getCycleDisplayState(cycles, maxPositiveCount, expanded = false, options = null) {
@@ -2584,7 +2575,7 @@
         if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
         return getArbPanelRenderer().renderArbSectionToggleHtml(sectionKey, {
             ...cycleDisplayState,
-            displayMinProfitBp: normalizeArbDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp)
+            displayMinProfitBp: getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp)
         });
     }
 
