@@ -2084,9 +2084,7 @@
                 return getDashboardRuntimeUtils().buildQuoteResultMarketState(previousState, quoteResult, options);
             },
             buildArbDetailDexLink(config = {}) {
-                const utils = window.DexLinkUtils;
-                if (!utils || typeof utils.buildDexLink !== 'function') return null;
-                return utils.buildDexLink(config);
+                return getDexLinkUtils().buildDexLink(config);
             },
             findBestSummaryIndices(cards) {
                 let bestProfit = null;
@@ -2152,19 +2150,18 @@
     }
 
     function getDexLinkUtils() {
-        return window.DexLinkUtils || null;
+        if (!window.DexLinkUtils) {
+            throw new Error('DexLinkUtils is not loaded');
+        }
+        return window.DexLinkUtils;
     }
 
     function getDexLinkLabel(config = {}) {
-        const utils = getDexLinkUtils();
-        if (!utils || typeof utils.getDexLinkLabel !== 'function') return null;
-        return utils.getDexLinkLabel(config);
+        return getDexLinkUtils().getDexLinkLabel(config);
     }
 
     function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制') {
-        const utils = getDexLinkUtils();
-        if (!utils || typeof utils.buildDexLinkCopyButtonHtml !== 'function') return '';
-        return utils.buildDexLinkCopyButtonHtml(config, className, buttonText);
+        return getDexLinkUtils().buildDexLinkCopyButtonHtml(config, className, buttonText);
     }
 
     function formatDetailNumber(value, precision = 6) {
@@ -5257,11 +5254,6 @@
     async function copyDexLinkFromElement(targetEl) {
         if (!targetEl) return false;
         const utils = getDexLinkUtils();
-        if (!utils || typeof utils.buildDexLink !== 'function') {
-            showCopyToast('DEX 链接模块未加载');
-            return false;
-        }
-
         const dexLink = utils.buildDexLink({
             chain: targetEl.dataset.dexLinkChain || '',
             fromTokenAddress: targetEl.dataset.dexLinkFromTokenAddress || '',
