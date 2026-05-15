@@ -248,6 +248,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
     assert.ok(!appJsResponse.body.includes('/api/get-evm-meta'));
     assert.ok(!appJsResponse.body.includes('function getEvmMetadata'));
+    assert.ok(appJsResponse.body.includes('const MARKET_QUOTE_REQUESTS = {'));
+    assert.ok(appJsResponse.body.includes('function getMarketQuote(quote, signal, config)'));
+    assert.ok(!appJsResponse.body.includes('function get0xQuote'));
+    assert.ok(!appJsResponse.body.includes('function getVeloraQuote'));
+    assert.ok(!appJsResponse.body.includes('function getLifiQuote'));
     assert.ok(appJsResponse.body.includes('RequestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));

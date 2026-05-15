@@ -5120,107 +5120,46 @@
         arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);
     }
 
-    async function get0xQuote(quote, signal) {
-        const response = await fetch(`${BACKEND_URL}/api/get-0x-quote`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quote }), 
-            signal
-        });
+    const MARKET_QUOTE_REQUESTS = {
+        '0x': { endpoint: '/api/get-0x-quote', source: '0x', errorMessage: '0x API Request Failed' },
+        'Velora': { endpoint: '/api/get-velora-quote', source: 'Velora', errorMessage: 'Velora API Request Failed' },
+        'LI.FI': { endpoint: '/api/get-lifi-quote', source: 'LI.FI', errorMessage: 'LI.FI API Request Failed', includeRouteMeta: true },
+        'Ekubo': { endpoint: '/api/get-ekubo-quote', source: 'Ekubo', errorMessage: 'Ekubo API Request Failed' },
+        'Jupiter': { endpoint: '/api/get-jupiter-quote', source: 'Jupiter', errorMessage: 'Jupiter API Request Failed' }
+    };
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || '0x API Request Failed');
-        
-        return {
+    function buildMarketQuoteResult(data, usedSource, options = {}) {
+        const result = {
             symbols: { from: data.fromSymbol, to: data.toSymbol },
             finalAmountOut: data.amountOut,
             rawPrice: data.raw_price,
-            usedSource: '0x', 
+            usedSource,
             resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
         };
+        if (options.includeRouteMeta) {
+            result.fromChain = data.fromChain;
+            result.toChain = data.toChain;
+            result.isCrossChain = data.isCrossChain === true;
+        }
+        return result;
     }
 
-    async function getLifiQuote(quote, signal) {
-        const response = await fetch(`${BACKEND_URL}/api/get-lifi-quote`, {
+    async function getMarketQuote(quote, signal, config) {
+        const requestQuote = config.requestQuote || quote;
+        const response = await fetch(`${BACKEND_URL}${config.endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quote }),
+            body: JSON.stringify({ ...requestQuote }),
             signal
         });
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'LI.FI API Request Failed');
+        if (!response.ok) throw new Error(data.error || config.errorMessage || 'API Request Failed');
 
-        return {
-            symbols: { from: data.fromSymbol, to: data.toSymbol },
-            finalAmountOut: data.amountOut,
-            rawPrice: data.raw_price,
-            usedSource: 'LI.FI',
-            fromChain: data.fromChain,
-            toChain: data.toChain,
-            isCrossChain: data.isCrossChain === true,
-            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
-        };
-    }
-
-    async function getEkuboQuote(quote, signal) {
-        const response = await fetch(`${BACKEND_URL}/api/get-ekubo-quote`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quote }),
-            signal
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Ekubo API Request Failed');
-
-        return {
-            symbols: { from: data.fromSymbol, to: data.toSymbol },
-            finalAmountOut: data.amountOut,
-            rawPrice: data.raw_price,
-            usedSource: 'Ekubo',
-            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
-        };
-    }
-
-    async function getJupiterQuote(quote, signal) {
-        const response = await fetch(`${BACKEND_URL}/api/get-jupiter-quote`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quote }),
-            signal
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Jupiter API Request Failed');
-
-        return {
-            symbols: { from: data.fromSymbol, to: data.toSymbol },
-            finalAmountOut: data.amountOut,
-            rawPrice: data.raw_price,
-            usedSource: 'Jupiter',
-            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
-        };
-    }
-
-    async function getVeloraQuote(quote, signal) {
-        const response = await fetch(`${BACKEND_URL}/api/get-velora-quote`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quote }),
-            signal
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Velora API Request Failed');
-
-        return {
-            symbols: { from: data.fromSymbol, to: data.toSymbol },
-            finalAmountOut: data.amountOut,
-            rawPrice: data.raw_price,
-            usedSource: 'Velora',
-            resultText: `${data.fromSymbol} ≈ ${data.amountOut.toFixed(6)} ${data.toSymbol}`
-        };
+        const usedSource = typeof config.resolveUsedSource === 'function'
+            ? config.resolveUsedSource(data, quote)
+            : config.source;
+        return buildMarketQuoteResult(data, usedSource, config);
     }
 
     async function getCexOrderbookQuote(quote, signal, options) {
@@ -5271,46 +5210,24 @@
     }
 
     async function apiGetQuote(quote, signal, targetSource) {
-        let result = { resultText: '', rawPrice: 0, finalAmountOut: 0, symbols: {from:null, to:null}, usedSource: '' };
-
-        try {
-            if (targetSource === '0x') {
-                 result = await get0xQuote(quote, signal);
-            } else if (targetSource === 'Velora') {
-                result = await getVeloraQuote(quote, signal);
-            } else if (targetSource === 'LI.FI') {
-                result = await getLifiQuote(quote, signal);
-            } else if (targetSource === 'Ekubo') {
-                result = await getEkuboQuote(quote, signal);
-            } else if (targetSource === 'Jupiter') {
-                result = await getJupiterQuote(quote, signal);
-            } else if (targetSource === 'Bybit') {
-                result = await getBybitQuote(quote, signal);
-            } else if (targetSource === 'Binance') {
-                result = await getBinanceQuote(quote, signal);
-            } else {
-                const amountToFetch = quote.amount || 1;
-                const endpoint = quote.chain === 'sui' ? 'get-cetus-quote' : 'get-kyber-quote';
-                const response = await fetch(`${BACKEND_URL}/api/${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...quote, amount: amountToFetch }),
-                    signal
-                });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'API Request Failed');
-                
-                result.symbols = { from: data.fromSymbol, to: data.toSymbol };
-                result.finalAmountOut = data.amountOut;
-                result.rawPrice = data.raw_price;
-                result.usedSource = data.source || (quote.chain === 'sui' ? 'Cetus' : 'Unknown');
-                result.resultText = `${data.fromSymbol} ≈ ${result.finalAmountOut.toFixed(6)} ${data.toSymbol}`;
-            }
-        } catch (e) {
-            throw e;
+        const marketConfig = MARKET_QUOTE_REQUESTS[targetSource];
+        if (marketConfig) {
+            return getMarketQuote(quote, signal, marketConfig);
+        }
+        if (targetSource === 'Bybit') {
+            return getBybitQuote(quote, signal);
+        }
+        if (targetSource === 'Binance') {
+            return getBinanceQuote(quote, signal);
         }
 
-        return result;
+        const isSuiQuote = quote.chain === 'sui';
+        return getMarketQuote(quote, signal, {
+            endpoint: `/api/${isSuiQuote ? 'get-cetus-quote' : 'get-kyber-quote'}`,
+            errorMessage: 'API Request Failed',
+            requestQuote: { ...quote, amount: quote.amount || 1 },
+            resolveUsedSource: (data) => data.source || (isSuiQuote ? 'Cetus' : 'Unknown')
+        });
     }
 
     function sleep(ms) {
