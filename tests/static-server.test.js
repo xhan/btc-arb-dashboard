@@ -588,6 +588,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSummaryHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailShellHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailChartPreviewStripHtml'));
+    assert.ok(appJsResponse.body.includes('function getChartsUtils()'));
+    assert.ok(appJsResponse.body.includes('ChartsUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('buildArbDetailChartPreviewStripHtml(pairs, {'));
     assert.ok(appJsResponse.body.includes('buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)'));
     assert.ok(appJsResponse.body.includes('utils.buildArbDetailShellHtml(arbDetailState.cards)'));

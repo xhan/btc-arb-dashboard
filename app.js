@@ -2126,15 +2126,10 @@
     }
 
     function getChartsUtils() {
-        return window.ChartsUtils || {
-            buildChartsPageHref() {
-                return '/charts';
-            },
-            buildChartPairLabel(pair) {
-                const chain = pair?.chain ? `(${pair.chain}) ` : '';
-                return `${chain}${pair?.fromSymbol || '--'} -> ${pair?.toSymbol || '--'}`;
-            }
-        };
+        if (!window.ChartsUtils) {
+            throw new Error('ChartsUtils is not loaded');
+        }
+        return window.ChartsUtils;
     }
 
     function getChartsRenderer() {
