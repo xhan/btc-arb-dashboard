@@ -40,6 +40,16 @@ assert.ok(
 );
 
 assert.ok(
+  appJs.includes('getQueueStatsUtils().buildManagedQueueKeys({'),
+  '受管理队列集合应由 QueueStatsUtils 统一生成'
+);
+
+assert.ok(
+  !appJs.includes('const defaultChannelId = requestChannelOptions && requestChannelOptions.defaultChannelId'),
+  '主看板不应自己拼默认 request-channel 队列 key'
+);
+
+assert.ok(
   appJs.includes('getEffectiveRequestChannelIdForQuote(quote)'),
   '主看板请求与队列归类都应走生效渠道，而不是直接读原始 requestChannelId'
 );

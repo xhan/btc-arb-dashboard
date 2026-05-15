@@ -657,23 +657,12 @@
     }
 
     function buildManagedQueueKeys() {
-        const keys = new Set();
-        const defaultChannelId = requestChannelOptions && requestChannelOptions.defaultChannelId
-            ? requestChannelOptions.defaultChannelId
-            : 'default';
-
-        Object.keys(DEFAULT_INTERVALS).forEach((sourceKey) => {
-            keys.add(getRequestChannelUtils().buildQueueKey(sourceKey, defaultChannelId));
+        return getQueueStatsUtils().buildManagedQueueKeys({
+            defaultIntervals: DEFAULT_INTERVALS,
+            requestChannels: requestChannelOptions,
+            multiChannelEnabled,
+            quotes: dashboardState.flatMap((category) => category.quotes || [])
         });
-
-        dashboardState.forEach((category) => {
-            (category.quotes || []).forEach((quote) => {
-                if (isQuotePaused(quote)) return;
-                keys.add(getQueueTypeForQuote(quote));
-            });
-        });
-
-        return keys;
     }
 
     function addToQueue(quote) {

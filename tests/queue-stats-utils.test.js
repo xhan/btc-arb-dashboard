@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   DEFAULT_INTERVALS,
   appendQuoteQueueTasks,
+  buildManagedQueueKeys,
   buildQueueTasksForQuote,
   buildQueueSummary,
   deferQueueTask,
@@ -116,6 +117,16 @@ assert.deepStrictEqual(deferQueue, [
   { quoteId: 2, mode: 'main' }
 ]);
 
+const managedQueueKeys = buildManagedQueueKeys({
+  defaultIntervals: { kyber: 170, bybit: 1000 },
+  quotes: [
+    { id: 401, chain: 'ethereum', preferredSource: 'Kyber' },
+    { id: 402, chain: 'bybit', preferredSource: 'Bybit' },
+    { id: 403, chain: 'ethereum', preferredSource: 'Velora', paused: true }
+  ]
+});
+assert.deepStrictEqual(Array.from(managedQueueKeys).sort(), ['bybit', 'kyber']);
+
 const channelSummary = buildQueueSummary(
   {
     dashboard: [
@@ -173,3 +184,18 @@ assert.strictEqual(kyberHk.nominalLapMs, 180);
 assert.strictEqual(solanaSg.intervalMs, 1800);
 assert.strictEqual(suiDefault.quoteCount, 1);
 assert.strictEqual(suiDefault.intervalMs, 500);
+
+const managedChannelQueueKeys = buildManagedQueueKeys({
+  defaultIntervals: { kyber: 170, solana: 3500, bybit: 1000 },
+  requestChannels: channelSummary.requestChannels,
+  multiChannelEnabled: true,
+  quotes: [
+    { id: 404, chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'hk-1' },
+    { id: 405, chain: 'solana', preferredSource: 'Jupiter', requestChannelId: 'sg-1' },
+    { id: 406, chain: 'bybit', preferredSource: 'Bybit', requestChannelId: 'hk-1' }
+  ]
+});
+assert.deepStrictEqual(
+  Array.from(managedChannelQueueKeys).sort(),
+  ['bybit', 'kyber:default', 'kyber:hk-1', 'solana:default', 'solana:sg-1']
+);

@@ -112,6 +112,34 @@
     return (normalizedIndex - 1 + queue.length) % queue.length;
   }
 
+  function buildManagedQueueKeys(options = {}) {
+    const keys = new Set();
+    const intervals = options.defaultIntervals && typeof options.defaultIntervals === 'object'
+      ? options.defaultIntervals
+      : DEFAULT_INTERVALS;
+    const requestChannels = options.requestChannels || null;
+    const defaultChannelId = requestChannels && requestChannels.defaultChannelId
+      ? requestChannels.defaultChannelId
+      : 'default';
+    const buildQueueKey = requestChannels && requestChannelUtils && typeof requestChannelUtils.buildQueueKey === 'function'
+      ? requestChannelUtils.buildQueueKey
+      : (sourceKey) => sourceKey;
+
+    Object.keys(intervals).forEach((sourceKey) => {
+      keys.add(buildQueueKey(sourceKey, defaultChannelId));
+    });
+
+    const quotes = Array.isArray(options.quotes) ? options.quotes : [];
+    for (const quote of quotes) {
+      if (isQuotePaused(quote)) continue;
+      keys.add(getQueueTypeForQuote(quote, requestChannels, {
+        multiChannelEnabled: options.multiChannelEnabled !== false
+      }));
+    }
+
+    return keys;
+  }
+
   function isQuotePaused(quote) {
     if (quotePauseUtils && typeof quotePauseUtils.isQuotePaused === 'function') {
       return quotePauseUtils.isQuotePaused(quote);
@@ -290,6 +318,7 @@
   return {
     DEFAULT_INTERVALS,
     appendQuoteQueueTasks,
+    buildManagedQueueKeys,
     buildQueueTasksForQuote,
     buildQueueSummary,
     deferQueueTask,
