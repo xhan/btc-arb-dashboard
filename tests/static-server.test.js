@@ -211,6 +211,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/arb-detail-utils.js');
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
+    const dexLinkUtilsResponse = await request('/dex-link-utils.js');
+    assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
     const dashboardRendererResponse = await request('/dashboard-renderer.js');
@@ -220,7 +222,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
-    assert.ok(appJsResponse.body.includes('data-dex-link-chain'));
+    assert.ok(dexLinkUtilsResponse.body.includes('function buildDexLinkCopyButtonHtml(config = {}, className = \'\', buttonText = \'复制\')'));
+    assert.ok(dexLinkUtilsResponse.body.includes('data-dex-link-copy="1"'));
+    assert.ok(dexLinkUtilsResponse.body.includes('data-dex-link-chain'));
     assert.ok(appJsResponse.body.includes('copyDexLinkFromElement'));
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
     assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));

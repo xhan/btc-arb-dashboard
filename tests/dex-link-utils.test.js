@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const { buildDexLink, getDexLinkLabel } = require('../dex-link-utils');
+const { buildDexLink, buildDexLinkCopyButtonHtml, getDexLinkLabel } = require('../dex-link-utils');
 
 assert.strictEqual(getDexLinkLabel({ chain: 'sui' }), 'cetus');
 assert.strictEqual(getDexLinkLabel({ chain: 'solana' }), 'jup.ag');
@@ -80,6 +80,27 @@ assert.strictEqual(
     toTokenAddress: 'USDT'
   }),
   null
+);
+
+const dexLinkButtonHtml = buildDexLinkCopyButtonHtml(
+  {
+    chain: 'arbitrum',
+    fromTokenAddress: '0xaaa',
+    toTokenAddress: '0xbbb',
+    inputAmount: 1.25
+  },
+  'dex <btn>',
+  '打开 <DEX>'
+);
+assert.ok(dexLinkButtonHtml.includes('data-dex-link-copy="1"'));
+assert.ok(dexLinkButtonHtml.includes('class="dex &lt;btn&gt;"'));
+assert.ok(dexLinkButtonHtml.includes('data-dex-link-label="swap.defillama"'));
+assert.ok(dexLinkButtonHtml.includes('data-dex-link-input-amount="1.25"'));
+assert.ok(dexLinkButtonHtml.includes('>打开 &lt;DEX&gt;</button>'));
+
+assert.strictEqual(
+  buildDexLinkCopyButtonHtml({ chain: 'Binance', fromTokenAddress: 'BTC', toTokenAddress: 'USDT' }),
+  ''
 );
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'dex-link-utils.js'), 'utf8');

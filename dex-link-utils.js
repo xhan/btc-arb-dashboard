@@ -8,6 +8,15 @@
     root.window.DexLinkUtils = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function getDexLinkLabel(config = {}) {
     const chain = String(config.chain || '').trim().toLowerCase();
     if (!chain || chain === 'bybit' || chain === 'binance') return null;
@@ -71,8 +80,29 @@
     };
   }
 
+  function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制') {
+    const dexLabel = getDexLinkLabel(config);
+    if (!dexLabel) return '';
+    const inputAmount = Number(config.inputAmount);
+    const amountAttr = Number.isFinite(inputAmount) && inputAmount > 0
+      ? ` data-dex-link-input-amount="${escapeHtml(String(inputAmount))}"`
+      : '';
+    return `
+            <button
+                type="button"
+                class="${escapeHtml(className)}"
+                data-dex-link-copy="1"
+                data-dex-link-label="${escapeHtml(dexLabel)}"
+                data-dex-link-chain="${escapeHtml(config.chain || '')}"
+                data-dex-link-from-token-address="${escapeHtml(config.fromTokenAddress || '')}"
+                data-dex-link-to-token-address="${escapeHtml(config.toTokenAddress || '')}"${amountAttr}
+            >${escapeHtml(buttonText)}</button>
+        `;
+  }
+
   return {
     buildDexLink,
+    buildDexLinkCopyButtonHtml,
     getDexLinkLabel
   };
 });

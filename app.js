@@ -2301,23 +2301,9 @@
     }
 
     function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制') {
-        const dexLabel = getDexLinkLabel(config);
-        if (!dexLabel) return '';
-        const inputAmount = Number(config.inputAmount);
-        const amountAttr = Number.isFinite(inputAmount) && inputAmount > 0
-            ? ` data-dex-link-input-amount="${escapeHtml(String(inputAmount))}"`
-            : '';
-        return `
-            <button
-                type="button"
-                class="${escapeHtml(className)}"
-                data-dex-link-copy="1"
-                data-dex-link-label="${escapeHtml(dexLabel)}"
-                data-dex-link-chain="${escapeHtml(config.chain || '')}"
-                data-dex-link-from-token-address="${escapeHtml(config.fromTokenAddress || '')}"
-                data-dex-link-to-token-address="${escapeHtml(config.toTokenAddress || '')}"${amountAttr}
-            >${escapeHtml(buttonText)}</button>
-        `;
+        const utils = getDexLinkUtils();
+        if (!utils || typeof utils.buildDexLinkCopyButtonHtml !== 'function') return '';
+        return utils.buildDexLinkCopyButtonHtml(config, className, buttonText);
     }
 
     function formatDetailNumber(value, precision = 6) {
