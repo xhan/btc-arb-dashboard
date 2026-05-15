@@ -2282,6 +2282,10 @@
         return window.DataTerminalUtils || null;
     }
 
+    function getDashboardRenderer() {
+        return window.DashboardRenderer || null;
+    }
+
     function getQuoteDisplayUtils() {
         return window.QuoteDisplayUtils || null;
     }
@@ -6421,34 +6425,19 @@
         const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
         const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${buildQuotePairLabelHtml(quote, monitorState)}</span>`;
         const requestChannelTagHtml = buildRequestChannelTagHtml(quote);
-        const pauseButtonTitle = isQuotePaused(quote) ? '恢复' : '暂停';
-        const pauseButtonIcon = isQuotePaused(quote) ? '▶️' : '⏸️';
+        const renderer = getDashboardRenderer();
         
-        itemEl.innerHTML = `
-            <div class="quote-left-container">
-                <span class="quote-label-stack">
-                    <span class="quote-label-row">
-                        <span class="quote-label">${displayName}</span>
-                        ${requestChannelTagHtml}
-                    </span>
-                    ${pairLabelHtml}
-                </span>
-                <span id="trend-arrow-${quote.id}" class="trend-arrow"></span>
-            </div>
-            <div class="quote-result">
-                <div id="quote-data-${quote.id}" class="quote-data">
-                    <div style="display:flex; align-items:center;">
-                        ${amountInputHTML}
-                        <span class="quote-text-wrapper" id="quote-text-wrapper-${quote.id}">
-                            <span class="${quoteTextClassName}" id="quote-text-${quote.id}">${lastResultText}</span>
-                        </span>
-                    </div>
-                </div>
-                <div class="quote-actions">
-                    <button class="icon-btn" title="${pauseButtonTitle}" aria-label="${pauseButtonTitle}" aria-pressed="${isQuotePaused(quote) ? 'true' : 'false'}" data-toggle-pause-id="${quote.id}" data-category-id="${categoryId}">${pauseButtonIcon}</button>
-                    <button class="icon-btn" title="设置" data-edit-alert-id="${quote.id}" data-category-id="${categoryId}">⚙️</button>
-                </div>
-            </div>`;
+        itemEl.innerHTML = renderer.renderQuoteItemShell({
+            quoteId: quote.id,
+            categoryId,
+            displayName,
+            requestChannelTagHtml,
+            pairLabelHtml,
+            amountInputHtml: amountInputHTML,
+            quoteTextClassName,
+            lastResultText,
+            paused: isQuotePaused(quote)
+        });
         
         addDnDHandlers(itemEl, categoryId);
 
@@ -6501,18 +6490,12 @@
         moduleEl.className = 'module';
         moduleEl.id = `module-${category.id}`;
         const categoryPauseAction = getCategoryPauseAction(category.quotes || []);
-        const categoryPauseTitle = categoryPauseAction === 'resume' ? '恢复分区' : '暂停分区';
-        const categoryPauseIcon = categoryPauseAction === 'resume' ? '▶️' : '⏸️';
-        moduleEl.innerHTML = `
-            <div class="module-header">
-                <h2>${category.name}</h2>
-                <div class="module-header-actions">
-                    <button class="icon-btn add-quote-btn" title="添加报价" aria-label="添加报价" data-category-id="${category.id}">+</button>
-                    <button class="icon-btn" title="${categoryPauseTitle}" aria-label="${categoryPauseTitle}" aria-pressed="${categoryPauseAction === 'resume' ? 'true' : 'false'}" data-toggle-category-pause-id="${category.id}" data-category-id="${category.id}">${categoryPauseIcon}</button>
-                    <button class="icon-btn delete-btn" title="删除分区" data-category-id="${category.id}">×</button>
-                </div>
-            </div>
-            <ul class="quote-list" id="quote-list-${category.id}"></ul>`;
+        const renderer = getDashboardRenderer();
+        moduleEl.innerHTML = renderer.renderCategoryModuleShell({
+            categoryId: category.id,
+            categoryName: category.name,
+            categoryPauseAction
+        });
         const quoteListEl = moduleEl.querySelector('.quote-list');
         if (category.quotes) {
             category.quotes.forEach(quote => {

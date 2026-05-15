@@ -84,6 +84,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="quote-display-utils.js"'));
+    assert.ok(response.body.includes('src="dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
@@ -97,6 +98,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="dashboard-renderer.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="dex-link-utils.js"') < response.body.indexOf('src="app.js"')
@@ -209,6 +213,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
+    const dashboardRendererResponse = await request('/dashboard-renderer.js');
+    assert.strictEqual(dashboardRendererResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
@@ -217,8 +223,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
     assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
     assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
-    assert.ok(appJsResponse.body.includes('class="icon-btn add-quote-btn"'));
-    assert.ok(!appJsResponse.body.includes('>+ 添加报价</button>'));
+    assert.ok(dashboardRendererResponse.body.includes('class="icon-btn add-quote-btn"'));
+    assert.ok(!dashboardRendererResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
     assert.ok(appJsResponse.body.includes("arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput)"));
     assert.ok(appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
@@ -243,6 +249,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('utils.buildQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('utils.buildInverseQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('utils.buildQuoteRequestChannelTagHtml(quote, channel)'));
+    assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function renderCategoryModuleShell(config = {})'));
+    assert.ok(appJsResponse.body.includes('renderer.renderQuoteItemShell({'));
+    assert.ok(appJsResponse.body.includes('renderer.renderCategoryModuleShell({'));
     assert.ok(!appJsResponse.body.includes('function getCexPairLabel(quote, state)'));
     assert.ok(!appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(appJsResponse.body.includes('quote.kyberOnlyDirectPools = true;'));
