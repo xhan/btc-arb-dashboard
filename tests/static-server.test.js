@@ -341,10 +341,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('pathAlertContent.innerHTML = `${toolbar}'));
     assert.ok(!appJsResponse.body.includes('alertLogMutedContent.innerHTML = ['));
     assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
-    assert.ok(appJsResponse.body.includes("target.direction === 'inverse'"));
+    assert.ok(!appJsResponse.body.includes("target.direction === 'inverse' ? 'inverse' : 'forward'"));
     assert.ok(!appJsResponse.body.includes('reconcileLegacyQuoteAlertsIntoPathAlertConfig'));
     assert.ok(!appJsResponse.body.includes('quote.alerts'));
     assert.ok(appJsResponse.body.includes("function getQuoteAlertDirection(target)"));
+    assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().getQuoteAlertDirection(target)'));
     assert.ok(appJsResponse.body.includes('function getPathAlertNotificationUtils()'));
     assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function parseCexTradingPairSymbol(symbol)'));

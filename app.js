@@ -5646,7 +5646,7 @@
     }
 
     function getQuoteAlertDirection(target) {
-        return target && target.direction === 'inverse' ? 'inverse' : 'forward';
+        return getPathAlertNotificationUtils().getQuoteAlertDirection(target);
     }
 
     function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMarketState.get(quote.id) || {}, direction = 'forward') {
