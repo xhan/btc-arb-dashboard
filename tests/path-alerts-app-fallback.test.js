@@ -5,6 +5,7 @@ const vm = require('vm');
 
 const candidateUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-candidate-utils.js'), 'utf8');
 const tradingPairUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'shared', 'trading-pair-utils.js'), 'utf8');
+const notificationUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-notification-utils.js'), 'utf8');
 const appCode = fs.readFileSync(path.join(__dirname, '..', 'path-alerts-app.js'), 'utf8');
 
 function createElement() {
@@ -76,6 +77,7 @@ sandbox.window.clearTimeout = clearTimeout;
 vm.createContext(sandbox);
 vm.runInContext(candidateUtilsCode, sandbox);
 vm.runInContext(tradingPairUtilsCode, sandbox);
+vm.runInContext(notificationUtilsCode, sandbox);
 vm.runInContext(appCode, sandbox);
 
 const candidates = sandbox.window.PathAlertsAppTestHooks.buildFallbackQuoteCandidatesFromDashboard([

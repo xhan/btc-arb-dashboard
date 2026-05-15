@@ -4006,15 +4006,7 @@
     }
 
     function buildQuoteAlertThresholdLine(target) {
-        if (!target || target.type !== 'quote') return '--';
-        const directionLabel = getQuoteAlertDirection(target) === 'inverse' ? '反向' : '正向';
-        if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
-            return `${directionLabel} · 汇率阈值 ${String(target.value != null ? target.value : '--')}`;
-        }
-        if (target.ruleKind === 'percentUp' || target.ruleKind === 'percentDown') {
-            return `${directionLabel} · 阈值 ${String(target.value != null ? target.value : '--')}% | 基准汇率 ${String(target.basePrice != null ? target.basePrice : '--')}`;
-        }
-        return '--';
+        return getPathAlertNotificationUtils().buildQuoteAlertThresholdLine(target);
     }
 
     function getPathAlertLegPricingMode(leg) {

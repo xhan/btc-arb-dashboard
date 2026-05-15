@@ -316,11 +316,11 @@
   }
 
   function getQuoteDirection(target) {
-    return target && target.direction === 'inverse' ? 'inverse' : 'forward';
+    return window.PathAlertNotificationUtils.getQuoteAlertDirection(target);
   }
 
   function buildQuoteDirectionLabel(target) {
-    return getQuoteDirection(target) === 'inverse' ? '反向' : '正向';
+    return window.PathAlertNotificationUtils.buildQuoteAlertDirectionLabel(target);
   }
 
   function buildQuoteAlertQuoteLabel(target) {
@@ -348,32 +348,11 @@
   }
 
   function buildQuoteAlertThresholdLine(target) {
-    if (!target || target.type !== 'quote') return '--';
-    const directionLabel = buildQuoteDirectionLabel(target);
-    if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
-      return `${directionLabel} · 汇率阈值 ${String(target.value != null ? target.value : '--')}`;
-    }
-    if (target.ruleKind === 'percentUp' || target.ruleKind === 'percentDown') {
-      return `${directionLabel} · 阈值 ${String(target.value != null ? target.value : '--')}% | 基准汇率 ${String(target.basePrice != null ? target.basePrice : '--')}`;
-    }
-    return '--';
+    return window.PathAlertNotificationUtils.buildQuoteAlertThresholdLine(target);
   }
 
   function buildQuoteAlertRuleLine(target) {
-    if (!target || target.type !== 'quote') return '--';
-    if (target.ruleKind === 'targetAbove') {
-      return `汇率 >= ${String(target.value != null ? target.value : '--')}`;
-    }
-    if (target.ruleKind === 'targetBelow') {
-      return `汇率 <= ${String(target.value != null ? target.value : '--')}`;
-    }
-    if (target.ruleKind === 'percentUp') {
-      return `相对基准上涨 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
-    }
-    if (target.ruleKind === 'percentDown') {
-      return `相对基准下跌 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
-    }
-    return '--';
+    return window.PathAlertNotificationUtils.buildQuoteAlertRuleLine(target);
   }
 
   function buildQuoteAlertPairText(target) {

@@ -5,9 +5,13 @@ const {
   buildPathAlertNotificationTitle,
   buildPathAlertNotificationBody,
   buildPathAlertAggregatedLog,
+  buildQuoteAlertDirectionLabel,
   buildQuoteAlertCurrentValueText,
+  buildQuoteAlertRuleLine,
   buildQuoteAlertMessage,
+  buildQuoteAlertThresholdLine,
   buildQuoteAlertRemotePayload,
+  getQuoteAlertDirection,
   buildLegacyQuoteAlertRemotePayload
 } = require('../path-alert-notification-utils');
 
@@ -114,6 +118,27 @@ assert.deepStrictEqual(
       '（ETH）WBTC -> cbBTC @0.997992'
     ].join('\n')
   }
+);
+
+assert.strictEqual(getQuoteAlertDirection({ direction: 'inverse' }), 'inverse');
+assert.strictEqual(getQuoteAlertDirection({ direction: 'forward' }), 'forward');
+assert.strictEqual(getQuoteAlertDirection({}), 'forward');
+assert.strictEqual(buildQuoteAlertDirectionLabel({ direction: 'inverse' }), '反向');
+assert.strictEqual(
+  buildQuoteAlertThresholdLine({ type: 'quote', direction: 'inverse', ruleKind: 'targetAbove', value: 1.01 }),
+  '反向 · 汇率阈值 1.01'
+);
+assert.strictEqual(
+  buildQuoteAlertThresholdLine({ type: 'quote', direction: 'forward', ruleKind: 'percentDown', value: 0.2, basePrice: 1 }),
+  '正向 · 阈值 0.2% | 基准汇率 1'
+);
+assert.strictEqual(
+  buildQuoteAlertRuleLine({ type: 'quote', ruleKind: 'targetBelow', value: 0.99 }),
+  '汇率 <= 0.99'
+);
+assert.strictEqual(
+  buildQuoteAlertRuleLine({ type: 'quote', ruleKind: 'percentUp', value: 0.1, basePrice: 1.0001 }),
+  '相对基准上涨 >= 0.1%（基准 1.0001）'
 );
 
 assert.strictEqual(

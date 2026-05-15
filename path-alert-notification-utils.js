@@ -1,9 +1,13 @@
 (function (root, factory) {
+  const api = factory();
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = api;
     return;
   }
-  root.PathAlertNotificationUtils = factory();
+  root.PathAlertNotificationUtils = api;
+  if (root && root.window && root.window !== root) {
+    root.window.PathAlertNotificationUtils = api;
+  }
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function formatPathAlertEvaluationText(evaluation) {
     if (!evaluation || !Number.isFinite(evaluation.profitBp)) {
@@ -123,6 +127,43 @@
     return defaultQuoteAlertNumberFormatter(value);
   }
 
+  function getQuoteAlertDirection(target) {
+    return target && target.direction === 'inverse' ? 'inverse' : 'forward';
+  }
+
+  function buildQuoteAlertDirectionLabel(target) {
+    return getQuoteAlertDirection(target) === 'inverse' ? '反向' : '正向';
+  }
+
+  function buildQuoteAlertThresholdLine(target) {
+    if (!target || target.type !== 'quote') return '--';
+    const directionLabel = buildQuoteAlertDirectionLabel(target);
+    if (target.ruleKind === 'targetAbove' || target.ruleKind === 'targetBelow') {
+      return `${directionLabel} · 汇率阈值 ${String(target.value != null ? target.value : '--')}`;
+    }
+    if (target.ruleKind === 'percentUp' || target.ruleKind === 'percentDown') {
+      return `${directionLabel} · 阈值 ${String(target.value != null ? target.value : '--')}% | 基准汇率 ${String(target.basePrice != null ? target.basePrice : '--')}`;
+    }
+    return '--';
+  }
+
+  function buildQuoteAlertRuleLine(target) {
+    if (!target || target.type !== 'quote') return '--';
+    if (target.ruleKind === 'targetAbove') {
+      return `汇率 >= ${String(target.value != null ? target.value : '--')}`;
+    }
+    if (target.ruleKind === 'targetBelow') {
+      return `汇率 <= ${String(target.value != null ? target.value : '--')}`;
+    }
+    if (target.ruleKind === 'percentUp') {
+      return `相对基准上涨 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
+    }
+    if (target.ruleKind === 'percentDown') {
+      return `相对基准下跌 >= ${String(target.value != null ? target.value : '--')}%（基准 ${String(target.basePrice != null ? target.basePrice : '--')}）`;
+    }
+    return '--';
+  }
+
   function buildQuoteAlertMessage(alert, evaluation, options = {}) {
     if (!alert || !alert.target || !evaluation) return '';
     const target = alert.target;
@@ -195,9 +236,13 @@
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,
     buildPathAlertAggregatedLog,
+    buildQuoteAlertDirectionLabel,
     buildQuoteAlertCurrentValueText,
+    buildQuoteAlertRuleLine,
     buildQuoteAlertMessage,
+    buildQuoteAlertThresholdLine,
     buildQuoteAlertRemotePayload,
+    getQuoteAlertDirection,
     buildLegacyQuoteAlertRemotePayload: buildQuoteAlertRemotePayload
   };
 }));

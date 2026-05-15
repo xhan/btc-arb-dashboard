@@ -676,6 +676,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('src="chain-defaults.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="special-rule-alert-config-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="path-alert-notification-utils.js"'));
+    assert.ok(
+      pathAlertsResponse.body.indexOf('src="path-alert-notification-utils.js"') < pathAlertsResponse.body.indexOf('src="path-alerts-app.js"')
+    );
     assert.ok(
       pathAlertsResponse.body.indexOf('src="chain-defaults.js"') < pathAlertsResponse.body.indexOf('src="path-alert-candidate-utils.js"')
     );
@@ -695,6 +699,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsAppResponse.body.includes('findDismissedTargetForDraft'));
     assert.ok(pathAlertsAppResponse.body.includes('renderSectionCards'));
     assert.ok(pathAlertsAppResponse.body.includes('groupAlertsBySection'));
+    assert.ok(pathAlertsAppResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertRuleLine(target)'));
+    assert.ok(!pathAlertsAppResponse.body.includes('相对基准上涨 >='));
     assert.ok(pathAlertsAppResponse.body.includes('path-alerts-editor-modal'));
     assert.ok(pathAlertsAppResponse.body.includes('path-alerts-dismiss-selected-btn'));
     assert.ok(pathAlertsAppResponse.body.includes('data-alert-dismiss-delete'));
