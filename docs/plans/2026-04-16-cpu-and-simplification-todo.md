@@ -127,11 +127,12 @@
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
 - 现状：
   - `quote-calculator.js` 里的旧计算器残留已在运行时边界重构中移除
-  - `legacy quote alert` 相关逻辑已经并入统一 runtime，但命名仍分裂
+  - `app.js` 内部 `legacy quote alert` 函数命名已收敛为 `quote alert`
+  - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 仍作为兼容导出保留
   - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
-  - 再统一命名
+  - 继续统一剩余兼容边界命名
   - 最后收拢兼容逻辑边界
 
 ### 11. 后端报价路由工厂化

@@ -250,7 +250,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link-copy="1"'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-log-mute'));
-    assert.ok(appJsResponse.body.includes('buildLegacyQuoteAlertLogHtml'));
+    assert.ok(!appJsResponse.body.includes('buildLegacyQuoteAlertLogHtml'));
+    assert.ok(appJsResponse.body.includes('buildQuoteAlertLogHtml'));
     assert.ok(appJsResponse.body.includes('appendMutedAlertLogCard'));
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));

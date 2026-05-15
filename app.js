@@ -941,7 +941,7 @@
         });
     }
 
-    function buildLegacyQuoteAlertDexLink(quote) {
+    function buildQuoteAlertDexLink(quote) {
         if (!quote || isCrossChainQuote(quote)) return null;
         return getArbDetailUtils().buildArbDetailDexLink({
             chain: quote.chain,
@@ -951,8 +951,8 @@
         });
     }
 
-    function buildLegacyQuoteAlertActionLink(quote) {
-        const dexLink = buildLegacyQuoteAlertDexLink(quote);
+    function buildQuoteAlertActionLink(quote) {
+        const dexLink = buildQuoteAlertDexLink(quote);
         if (!dexLink || !dexLink.url) return null;
         return {
             label: dexLink.label || '交易链接',
@@ -960,12 +960,12 @@
         };
     }
 
-    function buildLegacyQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
+    function buildQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
         const displayName = getQuoteChainDisplayName(quote);
         const direction = getQuoteAlertDirection(alert && alert.target);
         const label = buildQuoteAlertDisplayLabel(quote, quoteMonitorState.get(quote.id) || {}, direction);
         const currentValueText = options.currentValueText || '';
-        const actionLink = buildLegacyQuoteAlertActionLink(quote);
+        const actionLink = buildQuoteAlertActionLink(quote);
         return {
             alert,
             quote,
@@ -1079,11 +1079,11 @@
         return changed;
     }
 
-    function buildLegacyQuoteAlertLogHtml(entry, nowMs = Date.now()) {
+    function buildQuoteAlertLogHtml(entry, nowMs = Date.now()) {
         const quote = entry && entry.quote ? entry.quote : null;
         const heading = [entry && entry.label, entry && entry.currentValueText].filter(Boolean).join('  ');
         const expandedTitle = entry && entry.displayName ? entry.displayName : '';
-        const actionLink = entry && entry.actionLink ? entry.actionLink : buildLegacyQuoteAlertActionLink(quote);
+        const actionLink = entry && entry.actionLink ? entry.actionLink : buildQuoteAlertActionLink(quote);
         const mutedEntry = entry && entry.mutedTargetCandidate
             ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
             : null;
@@ -1143,14 +1143,14 @@
         `;
     }
 
-    function appendLegacyQuoteAlertLogEntry(entry, nowMs = Date.now()) {
+    function appendQuoteAlertLogEntry(entry, nowMs = Date.now()) {
         if (!alertLogWindow || !alertLogContent) return;
         if (shouldAutoOpenAlertLogEntries([entry])) {
             alertLogWindow.style.display = 'flex';
             bringFloatingPanelToFront(alertLogWindow);
         }
         const wrapper = document.createElement('div');
-        wrapper.innerHTML = buildLegacyQuoteAlertLogHtml(entry, nowMs);
+        wrapper.innerHTML = buildQuoteAlertLogHtml(entry, nowMs);
         const card = wrapper.firstElementChild;
         if (!card) return;
         if (entry && entry.mutedEntry) {
@@ -5228,12 +5228,12 @@
             if (alert.target.type === 'quote') {
                 const quote = findDashboardQuoteById(alert.target.quoteId);
                 if (!quote) return;
-                const triggeredEntry = buildLegacyQuoteAlertTriggeredEntry(
+                const triggeredEntry = buildQuoteAlertTriggeredEntry(
                     alert,
                     quote,
                     buildQuoteAlertMessage(alert, runtime.evaluation),
                     {
-                        currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, alert, runtime.evaluation)
+                        currentValueText: buildQuoteAlertCurrentValueText(quote, alert, runtime.evaluation)
                     }
                 );
                 mutePathAlertTarget(triggeredEntry, Date.now());
@@ -6413,7 +6413,7 @@
         }
     }
 
-    function syncLegacyQuoteAlertDismissButton(resultDiv, state, quoteId) {
+    function syncQuoteAlertDismissButton(resultDiv, state, quoteId) {
         if (resultDiv && !resultDiv.querySelector('.dismiss-highlight-btn')) {
             if (state.hasUnreadAlert) {
                 const dismissBtn = document.createElement('button');
@@ -6448,7 +6448,7 @@
         return '';
     }
 
-    function buildLegacyQuoteAlertCurrentValueText(quote, alert, evaluation) {
+    function buildQuoteAlertCurrentValueText(quote, alert, evaluation) {
         if (!quote || !alert || !alert.target || !evaluation) return '';
         if (alert.target.ruleKind === 'targetAbove' || alert.target.ruleKind === 'targetBelow') {
             return Number.isFinite(Number(evaluation.currentValue))
@@ -6480,7 +6480,7 @@
     }
 
     function triggerAlert(quote, alert, message, options = {}) {
-        const entry = buildLegacyQuoteAlertTriggeredEntry(alert, quote, message, options);
+        const entry = buildQuoteAlertTriggeredEntry(alert, quote, message, options);
         const mutedEntry = entry.mutedTargetCandidate
             ? getMutedPathTargetEntry(entry.mutedTargetCandidate, Date.now())
             : null;
@@ -6495,7 +6495,7 @@
         if (mutedEntry) {
             entry.mutedEntry = mutedEntry;
         }
-        appendLegacyQuoteAlertLogEntry(entry, Date.now());
+        appendQuoteAlertLogEntry(entry, Date.now());
         if (mutedEntry) {
             console.info('[quote-alert] muted trigger skipped', {
                 alertId: alert && alert.id,
@@ -6504,7 +6504,7 @@
             return;
         }
         playPathAlertSoundOnce();
-        sendLegacyQuoteWebhookNotification(entry.displayName, entry.label, message, entry.currentValueText, entry.actionLink);
+        sendQuoteWebhookNotification(entry.displayName, entry.label, message, entry.currentValueText, entry.actionLink);
     }
 
     function checkPriceForAlerts(quote) {
@@ -6538,7 +6538,7 @@
             if (!next.shouldTrigger) continue;
             hasTriggeredThisTick = true;
             triggerAlert(quote, alert, buildQuoteAlertMessage(alert, evaluation), {
-                currentValueText: buildLegacyQuoteAlertCurrentValueText(quote, alert, evaluation)
+                currentValueText: buildQuoteAlertCurrentValueText(quote, alert, evaluation)
             });
         }
 
@@ -6558,12 +6558,12 @@
             }
         }
 
-        syncLegacyQuoteAlertDismissButton(resultDiv, state, quote.id);
+        syncQuoteAlertDismissButton(resultDiv, state, quote.id);
         setQuoteMonitorState(quote.id, state);
         updateAlertSoundState();
     }
 
-    function buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null) {
+    function buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null) {
         if (
             window.PathAlertNotificationUtils
             && typeof window.PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload === 'function'
@@ -6583,9 +6583,9 @@
         };
     }
 
-    async function sendLegacyQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null) {
+    async function sendQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null) {
         if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
-        const payload = buildLegacyQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink);
+        const payload = buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink);
         try {
             const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
                 method: 'POST',
@@ -6597,7 +6597,7 @@
                 throw new Error((data && data.error) || '请求失败');
             }
         } catch (error) {
-            console.error('老提醒远程推送失败:', error);
+            console.error('报价提醒远程推送失败:', error);
         }
     }
 
