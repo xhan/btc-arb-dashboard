@@ -929,69 +929,82 @@ function registerCexQuoteRoute({ routePath, providerKey, logSource, chainLabel }
     });
 }
 
-registerMarketQuoteRoute({
-    routePath: '/api/get-0x-quote',
-    providerKey: 'zerox',
-    sourceKey: 'zerox',
-    logSource: 'ZEROX'
-});
-registerMarketQuoteRoute({
-    routePath: '/api/get-lifi-quote',
-    providerKey: 'lifi',
-    sourceKey: 'lifi',
-    logSource: 'LIFI',
-    buildErrorContext: (body) => {
-        const { chain, toChain, fromToken, toToken, amount } = body;
-        const logChain = toChain && toChain !== chain ? `${chain}->${toChain}` : chain;
-        return { chain: logChain, fromToken, toToken, amount: amount || 1 };
+const MARKET_QUOTE_ROUTES = [
+    {
+        routePath: '/api/get-0x-quote',
+        providerKey: 'zerox',
+        sourceKey: 'zerox',
+        logSource: 'ZEROX'
+    },
+    {
+        routePath: '/api/get-lifi-quote',
+        providerKey: 'lifi',
+        sourceKey: 'lifi',
+        logSource: 'LIFI',
+        buildErrorContext: (body) => {
+            const { chain, toChain, fromToken, toToken, amount } = body;
+            const logChain = toChain && toChain !== chain ? `${chain}->${toChain}` : chain;
+            return { chain: logChain, fromToken, toToken, amount: amount || 1 };
+        }
+    },
+    {
+        routePath: '/api/get-ekubo-quote',
+        providerKey: 'ekubo',
+        sourceKey: 'starknet',
+        logSource: 'EKUBO'
+    },
+    {
+        routePath: '/api/get-jupiter-quote',
+        providerKey: 'jupiter',
+        sourceKey: 'solana',
+        logSource: 'JUPITER',
+        buildErrorContext: (body) => {
+            const { fromToken, toToken, amount } = body;
+            return { chain: 'solana', fromToken, toToken, amount: amount || 1 };
+        }
+    },
+    {
+        routePath: '/api/get-kyber-quote',
+        providerKey: 'kyber',
+        sourceKey: 'kyber',
+        logSource: 'KYBER'
+    },
+    {
+        routePath: '/api/get-velora-quote',
+        providerKey: 'velora',
+        sourceKey: 'velora',
+        logSource: 'VELORA'
+    },
+    {
+        routePath: '/api/get-cetus-quote',
+        providerKey: 'cetus',
+        sourceKey: 'sui',
+        logSource: 'CETUS'
     }
-});
-registerMarketQuoteRoute({
-    routePath: '/api/get-ekubo-quote',
-    providerKey: 'ekubo',
-    sourceKey: 'starknet',
-    logSource: 'EKUBO'
-});
-registerMarketQuoteRoute({
-    routePath: '/api/get-jupiter-quote',
-    providerKey: 'jupiter',
-    sourceKey: 'solana',
-    logSource: 'JUPITER',
-    buildErrorContext: (body) => {
-        const { fromToken, toToken, amount } = body;
-        return { chain: 'solana', fromToken, toToken, amount: amount || 1 };
+];
+
+const CEX_QUOTE_ROUTES = [
+    {
+        routePath: '/api/get-bybit-quote',
+        providerKey: 'bybit',
+        logSource: 'BYBIT',
+        chainLabel: 'Bybit'
+    },
+    {
+        routePath: '/api/get-binance-quote',
+        providerKey: 'binance',
+        logSource: 'BINANCE',
+        chainLabel: 'Binance'
     }
-});
-registerMarketQuoteRoute({
-    routePath: '/api/get-kyber-quote',
-    providerKey: 'kyber',
-    sourceKey: 'kyber',
-    logSource: 'KYBER'
-});
-registerMarketQuoteRoute({
-    routePath: '/api/get-velora-quote',
-    providerKey: 'velora',
-    sourceKey: 'velora',
-    logSource: 'VELORA'
-});
-registerMarketQuoteRoute({
-    routePath: '/api/get-cetus-quote',
-    providerKey: 'cetus',
-    sourceKey: 'sui',
-    logSource: 'CETUS'
-});
-registerCexQuoteRoute({
-    routePath: '/api/get-bybit-quote',
-    providerKey: 'bybit',
-    logSource: 'BYBIT',
-    chainLabel: 'Bybit'
-});
-registerCexQuoteRoute({
-    routePath: '/api/get-binance-quote',
-    providerKey: 'binance',
-    logSource: 'BINANCE',
-    chainLabel: 'Binance'
-});
+];
+
+for (const routeConfig of MARKET_QUOTE_ROUTES) {
+    registerMarketQuoteRoute(routeConfig);
+}
+
+for (const routeConfig of CEX_QUOTE_ROUTES) {
+    registerCexQuoteRoute(routeConfig);
+}
 
 app.get('/api/solana-metadata', async (req, res) => {
     const { mint } = req.query;

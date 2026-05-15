@@ -139,10 +139,10 @@
 ### 11. 后端报价路由工厂化
 - 目标：降低 `server.js` 的重复样板。
 - 现状：
-  - `/api/get-0x-quote`、`/api/get-lifi-quote`、`/api/get-ekubo-quote` 等路由结构高度重复
+  - 已提炼 `registerMarketQuoteRoute()` / `registerCexQuoteRoute()`
+  - DEX/CEX provider 路由注册已改成表驱动，新增 provider 时集中追加 route config
 - 建议改法：
-  - 提炼通用的 route factory
-  - 统一 requestContext 构建、错误日志、响应格式
+  - 后续如果 provider 继续增加，再把 route config 下沉到独立模块
 
 ## P3 观察项
 
