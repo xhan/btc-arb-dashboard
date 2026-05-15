@@ -4973,31 +4973,7 @@
             });
     }
 
-    function buildArbPanelData() {
-        if (!window.ArbPaths) {
-            return { error: '路径模块未加载' };
-        }
-        if (!window.ArbPanelRenderer || typeof window.ArbPanelRenderer.renderArbGrid !== 'function') {
-            return { error: '路径渲染模块未加载' };
-        }
-        const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
-        const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
-        if (!targetCategories.length) {
-            return { error: '暂无可用路径' };
-        }
-
-        const sharedRuleSnapshot = getSharedArbRuleSnapshot();
-        const topologyCache = getArbPathTopologyCache();
-        const templateUtils = getArbPathTemplateCacheUtils();
-        const ruleEdges = topologyCache && Array.isArray(topologyCache.ruleEdges)
-            ? topologyCache.ruleEdges
-            : sharedRuleSnapshot.ruleEdges;
-        const nextOpportunityMap = new Map();
-        const nextOpportunityIdsByTargetKey = new Map();
-
-        const fixedSections = buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
-        const specialSections = buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
-
+    function buildGlobalArbSection(sharedRuleSnapshot, topologyCache, templateUtils, ruleEdges, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
         const globalSectionKey = buildArbSectionKey('global', 'all');
         const globalCycles = topologyCache && templateUtils
             ? filterMutedArbCycles(topologyCache.globalTemplates
@@ -5040,7 +5016,7 @@
             : twoLegOnlyCycles;
         updateGlobalArbFilterBar();
         const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
-        const globalEntries = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'
+        const opportunities = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'
             ? window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles(globalCycles, globalCycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
                 nextOpportunityMap,
                 nextOpportunityIdsByTargetKey,
@@ -5057,8 +5033,47 @@
                     { section: '全局路径', alertPreset: { type: 'path' } }
                 ))
                 .filter(Boolean);
-        const globalFooterHtml = buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState);
-        const globalEmptyText = hasGlobalFilter ? '过滤后暂无路径' : '等待数据...';
+
+        return {
+            title: '全局路径',
+            opportunities,
+            footerHtml: buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState),
+            emptyText: hasGlobalFilter ? '过滤后暂无路径' : '等待数据...'
+        };
+    }
+
+    function buildArbPanelData() {
+        if (!window.ArbPaths) {
+            return { error: '路径模块未加载' };
+        }
+        if (!window.ArbPanelRenderer || typeof window.ArbPanelRenderer.renderArbGrid !== 'function') {
+            return { error: '路径渲染模块未加载' };
+        }
+        const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
+        const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
+        if (!targetCategories.length) {
+            return { error: '暂无可用路径' };
+        }
+
+        const sharedRuleSnapshot = getSharedArbRuleSnapshot();
+        const topologyCache = getArbPathTopologyCache();
+        const templateUtils = getArbPathTemplateCacheUtils();
+        const ruleEdges = topologyCache && Array.isArray(topologyCache.ruleEdges)
+            ? topologyCache.ruleEdges
+            : sharedRuleSnapshot.ruleEdges;
+        const nextOpportunityMap = new Map();
+        const nextOpportunityIdsByTargetKey = new Map();
+
+        const fixedSections = buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
+        const specialSections = buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
+        const globalSection = buildGlobalArbSection(
+            sharedRuleSnapshot,
+            topologyCache,
+            templateUtils,
+            ruleEdges,
+            nextOpportunityMap,
+            nextOpportunityIdsByTargetKey
+        );
         const fixedColumns = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.splitSectionsBySectionCount === 'function'
             ? window.ArbPanelLayoutUtils.splitSectionsBySectionCount(fixedSections, 6, 2)
             : [fixedSections, []];
@@ -5067,12 +5082,7 @@
             fixedColumns[1] || [],
             specialSections,
             [buildQuotePriceWatchSection()],
-            [{
-                title: '全局路径',
-                opportunities: globalEntries,
-                footerHtml: globalFooterHtml,
-                emptyText: globalEmptyText
-            }]
+            [globalSection]
         ];
 
         return {
