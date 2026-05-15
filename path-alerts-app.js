@@ -231,6 +231,17 @@
     return window.PathAlertPageUtils.buildDismissedPathAlertPageSummaryLines(entry, getAlertSummaryOptions());
   }
 
+  function buildEditorTargetSummaryLines(draft) {
+    return window.PathAlertPageUtils.buildPathAlertEditorTargetSummaryLines(draft, {
+      formatLeg(leg) {
+        return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+      },
+      buildQuoteAlertQuoteLabel,
+      buildQuoteAlertRuleLine,
+      findRule
+    });
+  }
+
   function getFilteredAlerts() {
     return window.PathAlertPageUtils.filterAlertsByQuoteId(alertConfig.alerts, pageState.filterQuoteId);
   }
@@ -768,11 +779,7 @@
     const draft = pageState.draft;
     const duplicateAlert = findDuplicateAlertForDraft(draft);
     const dismissedTarget = findDismissedTargetForDraft(draft);
-    const targetSummaryLines = draft.sourceType === 'path'
-      ? ((draft.legs || []).map((leg) => buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol)).filter(Boolean))
-      : draft.sourceType === 'quote'
-        ? [buildQuoteAlertQuoteLabel(collectEditorTarget(draft)), buildQuoteAlertRuleLine(collectEditorTarget(draft))]
-      : [((findRule(draft.sourceType, draft.selectedRuleId) || {}).title || '--')];
+    const targetSummaryLines = buildEditorTargetSummaryLines(draft);
     const errorHtml = pageState.errorMessage
       ? `<div id="editor-error-slot" class="status-message error">${escapeHtml(pageState.errorMessage)}</div>`
       : '<div id="editor-error-slot" class="status-message"></div>';

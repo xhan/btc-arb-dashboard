@@ -141,6 +141,7 @@
   - `path-alerts-app.js` 的编辑器草稿校验和 alert 构造规则已下沉到 `path-alert-page-utils.js`
   - `path-alerts-app.js` 的交易对报警展示 label、pair text 和默认名称规则已下沉到 `path-alert-page-utils.js`
   - `path-alerts-app.js` 的报警/已忽略项摘要行生成规则已下沉到 `path-alert-page-utils.js`
+  - `path-alerts-app.js` 的编辑器已选目标摘要行生成规则已下沉到 `path-alert-page-utils.js`
   - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
 - 建议改法：
   - 先删死代码和无生产调用 API

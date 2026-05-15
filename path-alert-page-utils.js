@@ -419,6 +419,34 @@
     };
   }
 
+  function buildPathAlertEditorTargetSummaryLines(draft, options = {}) {
+    const formatLeg = typeof options.formatLeg === 'function'
+      ? options.formatLeg
+      : (leg) => buildPathAlertQuotePairLabel(leg && leg.chain, leg && leg.fromSymbol, leg && leg.toSymbol, '', options);
+    const buildQuoteAlertQuoteLabel = typeof options.buildQuoteAlertQuoteLabel === 'function'
+      ? options.buildQuoteAlertQuoteLabel
+      : (target) => buildPathAlertQuoteDisplayLabel(target, null, options);
+    const buildQuoteAlertRuleLine = typeof options.buildQuoteAlertRuleLine === 'function'
+      ? options.buildQuoteAlertRuleLine
+      : () => '--';
+    const findRule = typeof options.findRule === 'function'
+      ? options.findRule
+      : () => null;
+
+    if (!draft) return [];
+    if (draft.sourceType === 'path') {
+      return (draft.legs || []).map(formatLeg).filter(Boolean);
+    }
+    if (draft.sourceType === 'quote') {
+      const target = buildPathAlertEditorTarget(draft);
+      return [
+        buildQuoteAlertQuoteLabel(target),
+        buildQuoteAlertRuleLine(target)
+      ];
+    }
+    return [((findRule(draft.sourceType, draft.selectedRuleId) || {}).title || '--')];
+  }
+
   function isPercentQuoteRuleKind(ruleKind) {
     return ruleKind === 'percentUp' || ruleKind === 'percentDown';
   }
@@ -993,6 +1021,7 @@
     buildPathAlertEditorDraftFromAlert,
     buildPathAlertEditorDraftFromPrefill,
     buildPathAlertEditorTarget,
+    buildPathAlertEditorTargetSummaryLines,
     buildPathAlertCardMetaText,
     buildPathAlertCardTitle,
     buildPathAlertDefaultQuoteAlertName,

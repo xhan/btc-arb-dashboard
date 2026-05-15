@@ -9,6 +9,7 @@ const {
   buildPathAlertEditorDraftFromAlert,
   buildPathAlertEditorDraftFromPrefill,
   buildPathAlertEditorTarget,
+  buildPathAlertEditorTargetSummaryLines,
   buildPathAlertFromEditorDraft,
   buildPathAlertDefaultQuoteAlertName,
   buildPathAlertQuoteDisplayLabel,
@@ -404,6 +405,40 @@ assert.deepStrictEqual(
       }
     ]
   }
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorTargetSummaryLines({
+    sourceType: 'path',
+    legs: [
+      { chain: 'ethereum', fromSymbol: 'WETH', toSymbol: 'USDC' },
+      { chain: '', fromSymbol: '', toSymbol: '' }
+    ]
+  }, {
+    formatLeg: (leg) => leg.chain ? `${leg.chain}:${leg.fromSymbol}->${leg.toSymbol}` : ''
+  }),
+  ['ethereum:WETH->USDC']
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorTargetSummaryLines({
+    sourceType: 'quote',
+    selectedQuoteId: '202',
+    quoteDirection: 'forward',
+    quoteRuleKind: 'targetAbove',
+    quoteValue: '1.001'
+  }, {
+    buildQuoteAlertQuoteLabel: (target) => `报价 #${target.quoteId}`,
+    buildQuoteAlertRuleLine: (target) => `规则 ${target.ruleKind}`
+  }),
+  ['报价 #202', '规则 targetAbove']
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorTargetSummaryLines({
+    sourceType: 'fixed',
+    selectedRuleId: 'fixed:btc'
+  }, {
+    findRule: () => ({ title: '固定 BTC 规则' })
+  }),
+  ['固定 BTC 规则']
 );
 assert.strictEqual(
   validatePathAlertEditorDraft({
