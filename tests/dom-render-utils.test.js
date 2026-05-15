@@ -1,9 +1,11 @@
 const assert = require('assert');
 
 const {
+  closestEventTarget,
   createElementFromHtml,
   createStableHtmlRenderer,
-  escapeCssAttributeValue
+  escapeCssAttributeValue,
+  resolveEventTargetElement
 } = require('../dom-render-utils');
 
 const writes = [];
@@ -57,3 +59,25 @@ assert.strictEqual(
   escapeCssAttributeValue('a b', { cssImpl: { escape: (value) => `escaped:${value}` } }),
   'escaped:a b'
 );
+
+class FakeElement {
+  constructor(match = null) {
+    this.match = match;
+    this.parentElement = null;
+  }
+
+  closest(selector) {
+    return this.match === selector ? this : null;
+  }
+}
+
+const targetEl = new FakeElement('button');
+const parentEl = new FakeElement('.parent');
+const textNode = { parentElement: parentEl };
+
+assert.strictEqual(resolveEventTargetElement({ target: targetEl }, { elementImpl: FakeElement }), targetEl);
+assert.strictEqual(resolveEventTargetElement({ target: textNode }, { elementImpl: FakeElement }), parentEl);
+assert.strictEqual(resolveEventTargetElement({ target: {} }, { elementImpl: FakeElement }), null);
+assert.strictEqual(resolveEventTargetElement({ target: targetEl }, { elementImpl: null }), null);
+assert.strictEqual(closestEventTarget({ target: targetEl }, 'button', { elementImpl: FakeElement }), targetEl);
+assert.strictEqual(closestEventTarget({ target: parentEl }, 'button', { elementImpl: FakeElement }), null);

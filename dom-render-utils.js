@@ -22,6 +22,30 @@
     return text.replace(/["\\]/g, '\\$&');
   }
 
+  function getElementImpl(options = {}) {
+    return options.elementImpl || (typeof Element !== 'undefined' ? Element : null);
+  }
+
+  function resolveEventTargetElement(event, options = {}) {
+    const ElementImpl = getElementImpl(options);
+    if (!ElementImpl) return null;
+    const target = event && event.target;
+    if (target instanceof ElementImpl) {
+      return target;
+    }
+    if (target && target.parentElement instanceof ElementImpl) {
+      return target.parentElement;
+    }
+    return null;
+  }
+
+  function closestEventTarget(event, selector, options = {}) {
+    const target = resolveEventTargetElement(event, options);
+    return target && typeof target.closest === 'function'
+      ? target.closest(selector)
+      : null;
+  }
+
   function createStableHtmlRenderer(options = {}) {
     const setHtml = typeof options.setHtml === 'function'
       ? options.setHtml
@@ -55,8 +79,10 @@
   }
 
   return {
+    closestEventTarget,
     createElementFromHtml,
     createStableHtmlRenderer,
-    escapeCssAttributeValue
+    escapeCssAttributeValue,
+    resolveEventTargetElement
   };
 }));

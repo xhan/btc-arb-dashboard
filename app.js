@@ -4707,21 +4707,11 @@
     }
 
     function resolveEventTargetElement(event) {
-        const target = event && event.target;
-        if (target instanceof Element) {
-            return target;
-        }
-        if (target && target.parentElement instanceof Element) {
-            return target.parentElement;
-        }
-        return null;
+        return getDomRenderUtils().resolveEventTargetElement(event);
     }
 
     function closestEventTarget(event, selector) {
-        const target = resolveEventTargetElement(event);
-        return target && typeof target.closest === 'function'
-            ? target.closest(selector)
-            : null;
+        return getDomRenderUtils().closestEventTarget(event, selector);
     }
 
     function copyPriceFromText(text) {
