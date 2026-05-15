@@ -520,10 +520,9 @@
 
     function buildRequestChannelTagHtml(quote) {
         const channel = getRequestChannelDisplayForQuote(quote);
-        if (!channel) {
-            return '';
-        }
-        return `<span class="quote-channel-tag" id="quote-channel-tag-${quote.id}">${escapeHtml(channel.name)}</span>`;
+        const utils = getQuoteDisplayUtils();
+        if (!utils || typeof utils.buildQuoteRequestChannelTagHtml !== 'function') return '';
+        return utils.buildQuoteRequestChannelTagHtml(quote, channel);
     }
 
     function updateRequestChannelTagForQuote(quote) {

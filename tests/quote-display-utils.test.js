@@ -7,6 +7,7 @@ const {
   buildQuotePairLabelHtml,
   buildQuoteDisplayText,
   buildQuoteDisplayTextForState,
+  buildQuoteRequestChannelTagHtml,
   getCexPairLabel,
   getQuotePairLabel,
   shouldShowKyberDirectPoolsBadge,
@@ -130,4 +131,14 @@ assert.strictEqual(
     { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }
   ),
   'cb&lt;BTC&gt;/WBTC<span class="quote-direct-badge" title="Kyber 仅直连池"></span>'
+);
+
+assert.strictEqual(
+  buildQuoteRequestChannelTagHtml({ id: 'quote-1' }, { name: '主通道 <A>' }),
+  '<span class="quote-channel-tag" id="quote-channel-tag-quote-1">主通道 &lt;A&gt;</span>'
+);
+
+assert.strictEqual(
+  buildQuoteRequestChannelTagHtml({ id: 'quote-1' }, null),
+  ''
 );

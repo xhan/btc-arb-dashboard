@@ -121,6 +121,11 @@
     return `${escapeHtml(label)}${badgeHtml}`;
   }
 
+  function buildQuoteRequestChannelTagHtml(quote, channel) {
+    if (!quote || !channel) return '';
+    return `<span class="quote-channel-tag" id="quote-channel-tag-${escapeHtml(quote.id)}">${escapeHtml(channel.name)}</span>`;
+  }
+
   return {
     QUOTE_DISPLAY_MODE_AMOUNT,
     QUOTE_DISPLAY_MODE_RATE,
@@ -128,6 +133,7 @@
     buildQuotePairLabelHtml,
     buildQuoteDisplayText,
     buildQuoteDisplayTextForState,
+    buildQuoteRequestChannelTagHtml,
     getCexPairLabel,
     getQuotePairLabel,
     shouldShowKyberDirectPoolsBadge,
