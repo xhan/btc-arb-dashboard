@@ -1926,9 +1926,7 @@
     }
 
     function formatDetailNumber(value, precision = 6) {
-        return (typeof value === 'number' && Number.isFinite(value))
-            ? Number(value.toFixed(precision))
-            : '--';
+        return getArbDetailUtils().formatDetailNumber(value, precision);
     }
 
     function formatDetailProfitRate(profitRate) {

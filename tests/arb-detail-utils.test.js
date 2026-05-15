@@ -27,6 +27,7 @@ const {
   buildArbDetailTokenHtml,
   buildArbDetailPairHtml,
   buildArbDetailMuteButtonHtml,
+  formatDetailNumber,
   buildArbDetailSourceActionsHtml,
   buildArbDetailSourceHtml,
   buildArbDetailSourceMetaHtml,
@@ -80,6 +81,10 @@ assert.strictEqual(
   buildArbDetailRateDeltaText(null, 1.0001),
   '--'
 );
+
+assert.strictEqual(formatDetailNumber(1.2345678), 1.234568);
+assert.strictEqual(formatDetailNumber('1.2345678', 4), 1.2346);
+assert.strictEqual(formatDetailNumber('bad'), '--');
 
 assert.strictEqual(
   buildArbDetailTokenHtml('cb<BTC>', ''),

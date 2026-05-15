@@ -35,6 +35,13 @@
     return normalizePositiveAmount(roundedToOneDecimal, fallback);
   }
 
+  function formatDetailNumber(value, precision = 6) {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue)
+      ? Number(numericValue.toFixed(precision))
+      : '--';
+  }
+
   function buildDetailInputAmounts(baseAmount) {
     const safeBaseAmount = normalizePositiveAmount(baseAmount, 1);
     return [
@@ -516,6 +523,7 @@
     buildDetailInputAmounts,
     buildArbDetailRateText,
     buildArbDetailRateDeltaText,
+    formatDetailNumber,
     summarizeDetailResult,
     getQuoteRunState,
     buildArbDetailChartPairs,
