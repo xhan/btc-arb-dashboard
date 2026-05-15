@@ -6,7 +6,8 @@ const {
   buildMutedStateItemHtml,
   buildMutedStateSectionHtml,
   buildRestoredMutedAlertLogHtml,
-  buildPathAlertLogCardHtml
+  buildPathAlertLogCardHtml,
+  buildQuoteAlertLogHtml
 } = require('../alert-log-ui-utils');
 
 assert.strictEqual(shouldAutoOpenAlertLogEntries([]), false);
@@ -124,3 +125,60 @@ assert.ok(mutedPathLogHtml.includes('alert-log-entry-collapsed'));
 assert.ok(mutedPathLogHtml.includes('data-alert-log-collapsed="1"'));
 assert.ok(mutedPathLogHtml.includes('延长 2 小时'));
 assert.ok(mutedPathLogHtml.includes('<div class="path-alert-log-line">--</div>'));
+
+const quoteLogHtml = buildQuoteAlertLogHtml(
+  {
+    alert: { id: 'quote"1' },
+    quote: {
+      chain: 'Ethereum',
+      fromToken: '0x<from>',
+      toToken: '0x>to',
+      amount: '1 & 2'
+    },
+    label: 'ETH < USDC',
+    currentValueText: '+1.2bp & rising',
+    displayName: 'ETH/USDC',
+    message: 'hit <threshold>',
+    mutedTargetCandidate: { type: 'quote' }
+  },
+  {
+    nowMs: 2000,
+    actionLink: { url: 'https://dex.example/swap?a=1&b=2', label: 'Open <Dex>' },
+    targetKey: 'quote<target>',
+    statusText: '已触发'
+  }
+);
+
+assert.ok(quoteLogHtml.includes('quote-alert-log-entry'));
+assert.ok(quoteLogHtml.includes('data-quote-alert-log-entry="quote&quot;1"'));
+assert.ok(quoteLogHtml.includes('data-muted-target-key="quote&lt;target&gt;"'));
+assert.ok(quoteLogHtml.includes('ETH &lt; USDC'));
+assert.ok(quoteLogHtml.includes('+1.2bp &amp; rising'));
+assert.ok(quoteLogHtml.includes('hit &lt;threshold&gt;'));
+assert.ok(quoteLogHtml.includes('href="https://dex.example/swap?a=1&amp;b=2"'));
+assert.ok(quoteLogHtml.includes('data-quote-alert-dex-link-copy="1"'));
+assert.ok(quoteLogHtml.includes('data-dex-link-label="Open &lt;Dex&gt;"'));
+assert.ok(quoteLogHtml.includes('data-dex-link-from-token-address="0x&lt;from&gt;"'));
+assert.ok(quoteLogHtml.includes('data-dex-link-to-token-address="0x&gt;to"'));
+assert.ok(quoteLogHtml.includes('data-dex-link-input-amount="1 &amp; 2"'));
+assert.ok(quoteLogHtml.includes('忽略 1 小时'));
+
+const mutedQuoteLogHtml = buildQuoteAlertLogHtml(
+  {
+    alert: { id: 'quote-2' },
+    label: 'cbBTC',
+    currentValueText: '+2bp',
+    displayName: 'cbBTC/syBTC',
+    mutedTargetCandidate: { type: 'quote' }
+  },
+  {
+    mutedEntry: { expiresAt: 123 },
+    statusText: '还剩 2 小时'
+  }
+);
+
+assert.ok(mutedQuoteLogHtml.includes('alert-log-entry-muted'));
+assert.ok(mutedQuoteLogHtml.includes('alert-log-entry-collapsed'));
+assert.ok(mutedQuoteLogHtml.includes('data-alert-log-collapsed="1"'));
+assert.ok(mutedQuoteLogHtml.includes('cbBTC/syBTC  cbBTC  +2bp'));
+assert.ok(mutedQuoteLogHtml.includes('延长 2 小时'));

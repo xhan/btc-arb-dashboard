@@ -201,6 +201,8 @@ async function waitForServer(attempts = 12) {
 
     const appJsResponse = await request('/app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
+    const alertLogUiResponse = await request('/alert-log-ui-utils.js');
+    assert.strictEqual(alertLogUiResponse.statusCode, 200);
     assert.ok(appJsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
@@ -239,7 +241,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('let pathAlertPanelHidden = true;'));
     assert.ok(appJsResponse.body.includes('const pathAlertPanelHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();'));
     assert.ok(appJsResponse.body.includes('const mutedAlertStateHtmlRenderer = window.DomRenderUtils.createStableHtmlRenderer();'));
-    assert.ok(appJsResponse.body.includes('window.DomRenderUtils.createElementFromHtml(buildQuoteAlertLogHtml(entry, nowMs))'));
+    assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildQuoteAlertLogHtml(entry, {'));
     assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildRestoredMutedAlertLogHtml(entry, {'));
     assert.ok(appJsResponse.body.includes('window.AlertLogUiUtils.buildPathAlertLogCardHtml(entry, {'));
     assert.ok(appJsResponse.body.includes('pathAlertPanelHtmlRenderer.render(pathAlertContent'));
@@ -250,6 +252,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function buildMutedStateSectionHtml'));
     assert.ok(!appJsResponse.body.includes('function buildRestoredMutedAlertLogHtml'));
     assert.ok(!appJsResponse.body.includes('function buildPathAlertLogCardHtml'));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteAlertLogHtml'));
+    assert.ok(!appJsResponse.body.includes('function buildAlertLogEntryDisplayState'));
     assert.ok(!appJsResponse.body.includes('pathAlertContent.innerHTML = `${toolbar}'));
     assert.ok(!appJsResponse.body.includes('alertLogMutedContent.innerHTML = ['));
     assert.ok(appJsResponse.body.includes("target.type === 'quote'"));
@@ -291,10 +295,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('markTriggeredArbOpportunities'));
     assert.ok(appJsResponse.body.includes('let arbGlobalTwoLegOnly = false;'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link'));
-    assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link-copy="1"'));
+    assert.ok(alertLogUiResponse.body.includes('data-quote-alert-dex-link-copy="1"'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-log-mute'));
     assert.ok(!appJsResponse.body.includes('buildLegacyQuoteAlertLogHtml'));
-    assert.ok(appJsResponse.body.includes('buildQuoteAlertLogHtml'));
+    assert.ok(appJsResponse.body.includes('buildQuoteAlertActionLink'));
     assert.ok(appJsResponse.body.includes('appendMutedAlertLogCard'));
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));

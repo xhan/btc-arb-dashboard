@@ -153,6 +153,69 @@
         `;
   }
 
+  function buildQuoteAlertLogHtml(entry, options = {}) {
+    const quote = entry && entry.quote ? entry.quote : null;
+    const heading = [entry && entry.label, entry && entry.currentValueText].filter(Boolean).join('  ');
+    const expandedTitle = entry && entry.displayName ? entry.displayName : '';
+    const actionLink = options.actionLink || entry && entry.actionLink || null;
+    const mutedEntry = options.mutedEntry || null;
+    const displayState = buildAlertLogEntryDisplayState({ ...entry, mutedEntry });
+    const collapsedTitle = [expandedTitle, heading].filter(Boolean).join('  ') || expandedTitle || '报价提醒';
+    const targetKey = options.targetKey || '';
+    const nowMs = Number(options.nowMs) || Date.now();
+    const statusText = options.statusText || (mutedEntry ? '' : '已触发');
+    const statusClass = mutedEntry ? 'path-alert-log-tag path-alert-log-tag-muted' : 'path-alert-log-tag';
+    const dexLinkHtml = actionLink && actionLink.url
+      ? `<a
+                    href="${escapeHtml(actionLink.url)}"
+                    class="quote-alert-log-link"
+                    data-quote-alert-dex-link="${escapeHtml(actionLink.url)}"
+                    data-quote-alert-dex-link-copy="1"
+                    data-dex-link-label="${escapeHtml(actionLink.label || '交易链接')}"
+                    data-dex-link-chain="${escapeHtml(quote && quote.chain || '')}"
+                    data-dex-link-from-token-address="${escapeHtml(quote && quote.fromToken || '')}"
+                    data-dex-link-to-token-address="${escapeHtml(quote && quote.toToken || '')}"
+                    data-dex-link-input-amount="${escapeHtml(quote && quote.amount || '')}"
+                >${escapeHtml(actionLink.label || '交易链接')}</a>`
+      : '';
+    const muteButtonHtml = entry && entry.mutedTargetCandidate
+      ? `<button
+                    type="button"
+                    class="path-alert-log-mute-btn"
+                    data-quote-alert-log-mute="${escapeHtml(entry.alert && entry.alert.id || '')}"
+                >${mutedEntry ? '延长 2 小时' : '忽略 1 小时'}</button>`
+      : '';
+    const cardClassName = [
+      'log-entry',
+      'quote-alert-log-entry',
+      displayState.muted ? 'alert-log-entry-muted' : '',
+      displayState.collapsed ? 'alert-log-entry-collapsed' : ''
+    ].filter(Boolean).join(' ');
+    const titleClassName = displayState.collapsed ? 'alert-log-title-muted' : '';
+    return `
+            <div
+                class="${cardClassName}"
+                data-quote-alert-log-entry="${escapeHtml(entry && entry.alert && entry.alert.id || '')}"
+                data-muted-target-key="${escapeHtml(targetKey)}"
+                data-alert-log-collapsed="${displayState.collapsed ? '1' : '0'}"
+            >
+                <div class="path-alert-log-head">
+                    <div>
+                        <div><strong class="${titleClassName}" data-alert-log-title data-alert-log-expanded-title="${escapeHtml(expandedTitle)}">${escapeHtml(displayState.collapsed ? collapsedTitle : expandedTitle)}</strong></div>
+                        ${heading ? `<div class="alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${escapeHtml(heading)}</div>` : ''}
+                        <div class="alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${escapeHtml(entry && entry.message || '')}</div>
+                        ${dexLinkHtml ? `<div class="quote-alert-log-link-row alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${dexLinkHtml}</div>` : ''}
+                    </div>
+                    <div class="path-alert-log-actions alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${muteButtonHtml}</div>
+                </div>
+                <div class="path-alert-log-foot alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>
+                    <span class="${statusClass}" data-path-alert-muted-status>${escapeHtml(statusText)}</span>
+                    <span class="log-time">${new Date(nowMs).toLocaleTimeString()}</span>
+                </div>
+            </div>
+        `;
+  }
+
   return {
     isMutedAlertLogEntry,
     shouldAutoOpenAlertLogEntries,
@@ -160,6 +223,7 @@
     buildMutedStateItemHtml,
     buildMutedStateSectionHtml,
     buildRestoredMutedAlertLogHtml,
-    buildPathAlertLogCardHtml
+    buildPathAlertLogCardHtml,
+    buildQuoteAlertLogHtml
   };
 }));
