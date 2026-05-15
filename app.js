@@ -316,6 +316,13 @@
         return window.ArbRuntimeMemoryUtils;
     }
 
+    function getArbPanelLayoutUtils() {
+        if (!window.ArbPanelLayoutUtils) {
+            throw new Error('ArbPanelLayoutUtils is not loaded');
+        }
+        return window.ArbPanelLayoutUtils;
+    }
+
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -973,18 +980,7 @@
     }
 
     function registerArbOpportunityHighlightTarget(nextTargetMap, targetKey, opportunityId) {
-        if (window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.registerArbOpportunityHighlightTarget === 'function') {
-            window.ArbPanelLayoutUtils.registerArbOpportunityHighlightTarget(nextTargetMap, targetKey, opportunityId);
-            return;
-        }
-        if (nextTargetMap instanceof Map && targetKey && opportunityId) {
-            const currentIds = nextTargetMap.get(targetKey);
-            if (currentIds) {
-                currentIds.push(opportunityId);
-                return;
-            }
-            nextTargetMap.set(targetKey, [opportunityId]);
-        }
+        getArbPanelLayoutUtils().registerArbOpportunityHighlightTarget(nextTargetMap, targetKey, opportunityId);
     }
 
     function markTriggeredArbOpportunities(alert, evaluation, nowMs = Date.now()) {
@@ -1757,9 +1753,7 @@
         const allTopologyEdgesWithRules = allTopologyEdges.concat(ruleEdges);
         const fixedTemplatesByRuleId = {};
 
-        const globalSourceCategories = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.resolveItemsBySelectors === 'function'
-            ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
-            : dashboardState.slice(0, 4);
+        const globalSourceCategories = getArbPanelLayoutUtils().resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS);
         const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
         const globalEdges = utils.buildTopologyEdges(globalSourceQuotes, quoteMarketState, null);
         const globalTemplates = utils.buildCycleTemplates(globalEdges.concat(ruleEdges), {
@@ -2635,8 +2629,7 @@
     function getDefaultArbDisplayMinProfitBp() {
         const ruleDefault = Number(window.PathAlertRuleDefinitions && window.PathAlertRuleDefinitions.DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP);
         if (Number.isFinite(ruleDefault)) return Math.max(0, ruleDefault);
-        const layoutDefault = Number(window.ArbPanelLayoutUtils && window.ArbPanelLayoutUtils.DEFAULT_DISPLAY_MIN_PROFIT_BP);
-        return Number.isFinite(layoutDefault) ? Math.max(0, layoutDefault) : 0.5;
+        return Math.max(0, Number(getArbPanelLayoutUtils().DEFAULT_DISPLAY_MIN_PROFIT_BP));
     }
 
     function normalizeArbDisplayMinProfitBp(value, fallback = getDefaultArbDisplayMinProfitBp()) {
@@ -2651,52 +2644,7 @@
     }
 
     function getCycleDisplayState(cycles, maxPositiveCount, expanded = false, options = null) {
-        if (window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.getCycleDisplayState === 'function') {
-            return window.ArbPanelLayoutUtils.getCycleDisplayState(cycles, maxPositiveCount, expanded, options);
-        }
-        const list = Array.isArray(cycles) ? cycles : [];
-        const maxCount = Math.max(1, Number(maxPositiveCount) || 1);
-        if (!list.length) {
-            return {
-                displayCycles: [],
-                positiveCount: 0,
-                hiddenPositiveCount: 0,
-                canToggleExpand: false,
-                expanded: false,
-                displayMinProfitBp: normalizeArbDisplayMinProfitBp(
-                    (typeof options === 'number' || typeof options === 'string') ? options : options && options.minProfitBp
-                )
-            };
-        }
-        const displayMinProfitBp = normalizeArbDisplayMinProfitBp(
-            (typeof options === 'number' || typeof options === 'string') ? options : options && options.minProfitBp
-        );
-        const positiveCycles = list.filter(cycle =>
-            cycle &&
-            Number.isFinite(Number(cycle.profitRate)) &&
-            Number(cycle.profitRate) * 10000 > displayMinProfitBp
-        );
-        if (positiveCycles.length) {
-            const canToggleExpand = positiveCycles.length > maxCount;
-            const shouldExpand = canToggleExpand && expanded;
-            const displayCycles = shouldExpand ? positiveCycles : positiveCycles.slice(0, maxCount);
-            return {
-                displayCycles,
-                positiveCount: positiveCycles.length,
-                hiddenPositiveCount: Math.max(0, positiveCycles.length - displayCycles.length),
-                canToggleExpand,
-                expanded: shouldExpand,
-                displayMinProfitBp
-            };
-        }
-        return {
-            displayCycles: [],
-            positiveCount: 0,
-            hiddenPositiveCount: 0,
-            canToggleExpand: false,
-            expanded: false,
-            displayMinProfitBp
-        };
+        return getArbPanelLayoutUtils().getCycleDisplayState(cycles, maxPositiveCount, expanded, options);
     }
 
     function buildArbSectionToggleHtml(sectionKey, cycleDisplayState) {
@@ -2771,10 +2719,7 @@
             label || '',
             cycle
         );
-        const layoutUtils = window.ArbPanelLayoutUtils;
-        const entry = layoutUtils && typeof layoutUtils.buildArbOpportunityStoreEntry === 'function'
-            ? layoutUtils.buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta)
-            : { id: opportunityId, cycle, label, ...meta };
+        const entry = getArbPanelLayoutUtils().buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta);
         targetMap.set(opportunityId, entry);
         registerArbOpportunityHighlightTarget(
             highlightTargetMap,
@@ -2782,21 +2727,9 @@
             opportunityId
         );
 
-        if (layoutUtils && typeof layoutUtils.buildArbOpportunityDisplayEntry === 'function') {
-            return layoutUtils.buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {
-                isAlertHighlighted: isArbOpportunityHighlighted(opportunityId)
-            });
-        }
-        return {
-            label,
-            cycle,
-            opportunityId,
+        return getArbPanelLayoutUtils().buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {
             isAlertHighlighted: isArbOpportunityHighlighted(opportunityId),
-            clickable: meta.clickable !== false,
-            displayMessage: typeof meta.displayMessage === 'string' ? meta.displayMessage : '',
-            hideLegs: meta.hideLegs === true,
-            entryType: typeof meta.entryType === 'string' ? meta.entryType : ''
-        };
+        });
     }
 
     function buildArbOpportunityChartHref(entry) {
@@ -3589,14 +3522,12 @@
                 ? sharedRuleSnapshot.fixedByRuleId[target.ruleId]
                 : null;
             const nowMs = Date.now();
-            const cycle = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.selectFirstUnmutedDisplayedCycle === 'function'
-                ? window.ArbPanelLayoutUtils.selectFirstUnmutedDisplayedCycle(cycles, (candidate) => {
-                    const muteTarget = candidate && Array.isArray(candidate.legs)
-                        ? buildMutedPathTargetFromCycleLegs(candidate.legs)
-                        : null;
-                    return Boolean(muteTarget && getMutedPathTargetEntry(muteTarget, nowMs));
-                })
-                : (Array.isArray(cycles) && cycles.length ? cycles[0] : null);
+            const cycle = getArbPanelLayoutUtils().selectFirstUnmutedDisplayedCycle(cycles, (candidate) => {
+                const muteTarget = candidate && Array.isArray(candidate.legs)
+                    ? buildMutedPathTargetFromCycleLegs(candidate.legs)
+                    : null;
+                return Boolean(muteTarget && getMutedPathTargetEntry(muteTarget, nowMs));
+            });
             return cycle
                 ? { available: true, profitRate: cycle.profitRate, label: rule.title, cycle }
                 : { available: false };
@@ -4419,31 +4350,15 @@
             ? buildQuoteAlertDisplayLabel(quote, state, item.direction)
             : `报价 #${String(item.quoteId)}`;
         const chainLabel = quote ? formatChainLabel(quote.chain) : '未知链';
-        if (window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.buildQuotePriceWatchDisplayEntry === 'function') {
-            return window.ArbPanelLayoutUtils.buildQuotePriceWatchDisplayEntry({
-                title: item.title,
-                hasQuote: Boolean(quote),
-                value,
-                priceText: value == null ? '--' : String(formatDetailNumber(value, 8)),
-                isPaused,
-                chainLabel,
-                pairLabel
-            });
-        }
-        let statusText = '';
-        if (!quote || value == null) {
-            statusText = '等待报价';
-        } else if (isPaused) {
-            statusText = '报价暂停';
-        }
-        return {
-            entryType: 'quote-price',
+        return getArbPanelLayoutUtils().buildQuotePriceWatchDisplayEntry({
             title: item.title,
+            hasQuote: Boolean(quote),
+            value,
             priceText: value == null ? '--' : String(formatDetailNumber(value, 8)),
-            metaText: [chainLabel, pairLabel].filter(Boolean).join(' · '),
-            statusText,
-            muted: Boolean(statusText)
-        };
+            isPaused,
+            chainLabel,
+            pairLabel
+        });
     }
 
     function buildQuotePriceWatchEntries() {
@@ -4464,9 +4379,7 @@
         return sharedRuleSnapshot.fixedResults
             .map(({ rule, cycles }) => {
                 const displayMinProfitBp = getFixedRuleDisplayMinProfitBp(rule);
-                const displayCycles = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.selectCyclesAboveDisplayThreshold === 'function'
-                    ? window.ArbPanelLayoutUtils.selectCyclesAboveDisplayThreshold(cycles, displayMinProfitBp)
-                    : (Array.isArray(cycles) ? cycles.filter((cycle) => cycle && Number(cycle.profitRate) * 10000 > displayMinProfitBp) : []);
+                const displayCycles = getArbPanelLayoutUtils().selectCyclesAboveDisplayThreshold(cycles, displayMinProfitBp);
                 const opportunities = displayCycles
                     .map((cycle, index, items) => createArbOpportunityEntry(
                         nextOpportunityMap,
@@ -4538,9 +4451,7 @@
                 .filter(Boolean)
                 .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)))
             : (() => {
-                const globalSourceCategories = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.resolveItemsBySelectors === 'function'
-                    ? window.ArbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS)
-                    : dashboardState.slice(0, 4);
+                const globalSourceCategories = getArbPanelLayoutUtils().resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS);
                 const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
                 const globalEdges = buildVisibleArbEdges(globalSourceQuotes);
                 return window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges), {
@@ -4550,7 +4461,7 @@
                     preferredStartSymbols: buildPreferredCycleStartSymbols(sharedRuleSnapshot.aliasRules, 'cbBTC')
                 });
             })();
-        const layoutUtils = window.ArbPanelLayoutUtils;
+        const layoutUtils = getArbPanelLayoutUtils();
         const excludedSymbols = layoutUtils.parseFilterInput(arbGlobalExcludedSymbolsInput);
         const excludedChains = Array.from(new Set(
             layoutUtils.parseFilterInput(arbGlobalExcludedChainsInput)
@@ -4569,23 +4480,13 @@
         const hasGlobalFilter = filterState.hasFilter;
         updateGlobalArbFilterBar();
         const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
-        const opportunities = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles === 'function'
-            ? window.ArbPanelLayoutUtils.mapEntriesForDisplayCycles(globalCycles, globalCycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
-                nextOpportunityMap,
-                nextOpportunityIdsByTargetKey,
-                cycle,
-                `机会 ${index + 1}`,
-                { section: '全局路径', alertPreset: { type: 'path' } }
-            ))
-            : globalCycleDisplayState.displayCycles
-                .map((cycle, index) => createArbOpportunityEntry(
-                    nextOpportunityMap,
-                    nextOpportunityIdsByTargetKey,
-                    cycle,
-                    `机会 ${index + 1}`,
-                    { section: '全局路径', alertPreset: { type: 'path' } }
-                ))
-                .filter(Boolean);
+        const opportunities = layoutUtils.mapEntriesForDisplayCycles(globalCycles, globalCycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
+            nextOpportunityMap,
+            nextOpportunityIdsByTargetKey,
+            cycle,
+            `机会 ${index + 1}`,
+            { section: '全局路径', alertPreset: { type: 'path' } }
+        ));
 
         return {
             title: '全局路径',
@@ -4627,9 +4528,7 @@
             nextOpportunityMap,
             nextOpportunityIdsByTargetKey
         );
-        const fixedColumns = window.ArbPanelLayoutUtils && typeof window.ArbPanelLayoutUtils.splitSectionsBySectionCount === 'function'
-            ? window.ArbPanelLayoutUtils.splitSectionsBySectionCount(fixedSections, 6, 2)
-            : [fixedSections, []];
+        const fixedColumns = getArbPanelLayoutUtils().splitSectionsBySectionCount(fixedSections, 6, 2);
         const columns = [
             fixedColumns[0] || [],
             fixedColumns[1] || [],
