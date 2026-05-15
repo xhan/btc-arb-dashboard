@@ -16,8 +16,109 @@
     Jupiter: Object.freeze({ endpoint: '/api/get-jupiter-quote', source: 'Jupiter', errorMessage: 'Jupiter API Request Failed' })
   });
 
+  const CEX_ORDERBOOK_REQUESTS = Object.freeze({
+    Bybit: Object.freeze({ endpoint: '/api/get-bybit-quote', source: 'Bybit' }),
+    Binance: Object.freeze({ endpoint: '/api/get-binance-quote', source: 'Binance' })
+  });
+
+  function normalizeString(value) {
+    return typeof value === 'string' ? value.trim() : '';
+  }
+
+  function normalizePositiveAmount(value, fallback = 1) {
+    const amount = Number(value);
+    if (Number.isFinite(amount) && amount > 0) return amount;
+    const fallbackAmount = Number(fallback);
+    return Number.isFinite(fallbackAmount) && fallbackAmount > 0 ? fallbackAmount : 1;
+  }
+
+  function normalizeRequestChannelId(value, fallback = '') {
+    return normalizeString(value) || normalizeString(fallback);
+  }
+
   function resolveMarketQuoteRequestConfig(source) {
     return MARKET_QUOTE_REQUESTS[source] || null;
+  }
+
+  function resolveQuoteRequestConfig(source, quote) {
+    const marketConfig = resolveMarketQuoteRequestConfig(source);
+    if (marketConfig) {
+      return { type: 'market', config: marketConfig };
+    }
+    if (CEX_ORDERBOOK_REQUESTS[source]) {
+      return { type: 'cex', config: CEX_ORDERBOOK_REQUESTS[source] };
+    }
+
+    const quoteChain = normalizeString(quote && quote.chain).toLowerCase();
+    const isSuiQuote = quoteChain === 'sui';
+    return {
+      type: 'market',
+      config: {
+        endpoint: `/api/${isSuiQuote ? 'get-cetus-quote' : 'get-kyber-quote'}`,
+        errorMessage: 'API Request Failed',
+        requestQuote: { ...(quote || {}), amount: quote && quote.amount || 1 },
+        resolveUsedSource: (data) => data.source || (isSuiQuote ? 'Cetus' : 'Unknown')
+      }
+    };
+  }
+
+  function buildQuoteRequestInput(quote, options = {}) {
+    const baseQuote = quote && typeof quote === 'object' ? quote : {};
+    const requestedAmount = normalizePositiveAmount(
+      options.amount,
+      normalizePositiveAmount(baseQuote.amount, 1)
+    );
+    const requestChannelId = normalizeRequestChannelId(options.requestChannelId, options.defaultRequestChannelId);
+    const isInverseFetch = options.isInverseFetch === true;
+    const requestQuote = isInverseFetch
+      ? {
+          ...baseQuote,
+          fromToken: baseQuote.toToken,
+          toToken: baseQuote.fromToken,
+          amount: requestedAmount,
+          requestChannelId
+        }
+      : { ...baseQuote, amount: requestedAmount, requestChannelId };
+
+    return {
+      requestQuote,
+      requestedAmount,
+      requestChannelId,
+      isInverseFetch
+    };
+  }
+
+  function shouldSkipQuoteSource(source, quote, options = {}) {
+    if (source === 'Kyber' && typeof options.isKyberSupported === 'function') {
+      return !options.isKyberSupported(quote && quote.chain);
+    }
+    if (source === '0x' && typeof options.is0xSupported === 'function') {
+      return !options.is0xSupported(quote && quote.chain);
+    }
+    return false;
+  }
+
+  function shouldDelayQuoteSource(source, strategy, options = {}) {
+    return options.skipDelay !== true
+      && source === '0x'
+      && Array.isArray(strategy)
+      && strategy[0] !== '0x';
+  }
+
+  function applyAutoFallbackSourceLabel(data, quote, source, options = {}) {
+    if (
+      !data
+      || options.isInverseFetch === true
+      || !quote
+      || quote.preferredSource !== 'Auto'
+      || source === 'Kyber'
+    ) {
+      return data;
+    }
+    return {
+      ...data,
+      usedSource: `${source} (Auto Fallback)`
+    };
   }
 
   function buildMarketQuoteResult(data, usedSource, options = {}) {
@@ -68,10 +169,16 @@
   }
 
   return {
+    CEX_ORDERBOOK_REQUESTS,
     MARKET_QUOTE_REQUESTS,
+    applyAutoFallbackSourceLabel,
     buildCexOrderbook,
     buildCexOrderbookQuoteResult,
     buildMarketQuoteResult,
-    resolveMarketQuoteRequestConfig
+    buildQuoteRequestInput,
+    resolveMarketQuoteRequestConfig,
+    resolveQuoteRequestConfig,
+    shouldDelayQuoteSource,
+    shouldSkipQuoteSource
   };
 });

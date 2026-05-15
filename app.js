@@ -4485,39 +4485,13 @@
         });
     }
 
-    async function getBybitQuote(quote, signal) {
-        return getCexOrderbookQuote(quote, signal, {
-            endpoint: '/api/get-bybit-quote',
-            source: 'Bybit'
-        });
-    }
-
-    async function getBinanceQuote(quote, signal) {
-        return getCexOrderbookQuote(quote, signal, {
-            endpoint: '/api/get-binance-quote',
-            source: 'Binance'
-        });
-    }
-
     async function apiGetQuote(quote, signal, targetSource) {
-        const marketConfig = getQuoteRequestUtils().resolveMarketQuoteRequestConfig(targetSource);
-        if (marketConfig) {
-            return getMarketQuote(quote, signal, marketConfig);
+        const quoteRequestUtils = getQuoteRequestUtils();
+        const requestConfig = quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote);
+        if (requestConfig.type === 'cex') {
+            return getCexOrderbookQuote(quote, signal, requestConfig.config);
         }
-        if (targetSource === 'Bybit') {
-            return getBybitQuote(quote, signal);
-        }
-        if (targetSource === 'Binance') {
-            return getBinanceQuote(quote, signal);
-        }
-
-        const isSuiQuote = quote.chain === 'sui';
-        return getMarketQuote(quote, signal, {
-            endpoint: `/api/${isSuiQuote ? 'get-cetus-quote' : 'get-kyber-quote'}`,
-            errorMessage: 'API Request Failed',
-            requestQuote: { ...quote, amount: quote.amount || 1 },
-            resolveUsedSource: (data) => data.source || (isSuiQuote ? 'Cetus' : 'Unknown')
-        });
+        return getMarketQuote(quote, signal, requestConfig.config);
     }
 
     function sleep(ms) {
@@ -4529,17 +4503,14 @@
         const beforeSourceAttempt = typeof options.beforeSourceAttempt === 'function'
             ? options.beforeSourceAttempt
             : null;
-        const isInverseFetch = Boolean(options.isInverseFetch);
-        const amountOverride = Number(options.amount);
-        const requestedAmount = Number.isFinite(amountOverride) && amountOverride > 0
-            ? amountOverride
-            : (quote.amount || 1);
-        const requestChannelId = typeof options.requestChannelId === 'string' && options.requestChannelId.trim()
-            ? options.requestChannelId.trim()
-            : getEffectiveRequestChannelIdForQuote(quote);
-        const requestQuote = isInverseFetch
-            ? { ...quote, fromToken: quote.toToken, toToken: quote.fromToken, amount: requestedAmount, requestChannelId }
-            : { ...quote, amount: requestedAmount, requestChannelId };
+        const quoteRequestUtils = getQuoteRequestUtils();
+        const requestInput = quoteRequestUtils.buildQuoteRequestInput(quote, {
+            amount: options.amount,
+            requestChannelId: options.requestChannelId,
+            defaultRequestChannelId: getEffectiveRequestChannelIdForQuote(quote),
+            isInverseFetch: options.isInverseFetch
+        });
+        const { requestQuote, isInverseFetch } = requestInput;
         const strategy = getChainDefaults().buildQuoteStrategy(quote);
         let fetchError = null;
         let successSource = null;
@@ -4547,14 +4518,18 @@
 
         for (const source of strategy) {
             try {
-                if (source === 'Kyber' && !isKyberSupported(quote.chain)) continue;
-                if (source === '0x' && !is0xSupported(quote.chain)) continue;
+                if (quoteRequestUtils.shouldSkipQuoteSource(source, quote, {
+                    isKyberSupported,
+                    is0xSupported
+                })) continue;
 
                 if (beforeSourceAttempt) {
                     await beforeSourceAttempt(source, requestQuote);
                 }
 
-                if (!options.skipDelay && source === '0x' && strategy[0] !== '0x') {
+                if (quoteRequestUtils.shouldDelayQuoteSource(source, strategy, {
+                    skipDelay: options.skipDelay
+                })) {
                     await sleep(600);
                 }
 
@@ -4562,9 +4537,7 @@
                 data = await apiGetQuote(requestQuote, signal, source);
                 if (data) {
                     successSource = source;
-                    if (!isInverseFetch && quote.preferredSource === 'Auto' && source !== 'Kyber') {
-                        data.usedSource = `${source} (Auto Fallback)`;
-                    }
+                    data = quoteRequestUtils.applyAutoFallbackSourceLabel(data, quote, source, { isInverseFetch });
                     break;
                 }
             } catch (error) {

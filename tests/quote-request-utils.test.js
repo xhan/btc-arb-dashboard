@@ -1,11 +1,17 @@
 const assert = require('assert');
 
 const {
+  CEX_ORDERBOOK_REQUESTS,
   MARKET_QUOTE_REQUESTS,
+  applyAutoFallbackSourceLabel,
   buildCexOrderbook,
   buildCexOrderbookQuoteResult,
   buildMarketQuoteResult,
-  resolveMarketQuoteRequestConfig
+  buildQuoteRequestInput,
+  resolveMarketQuoteRequestConfig,
+  resolveQuoteRequestConfig,
+  shouldDelayQuoteSource,
+  shouldSkipQuoteSource
 } = require('../quote-request-utils');
 
 assert.strictEqual(resolveMarketQuoteRequestConfig('Velora'), MARKET_QUOTE_REQUESTS.Velora);
@@ -16,6 +22,126 @@ assert.deepStrictEqual(resolveMarketQuoteRequestConfig('LI.FI'), {
   errorMessage: 'LI.FI API Request Failed',
   includeRouteMeta: true
 });
+
+assert.deepStrictEqual(resolveQuoteRequestConfig('Velora', { chain: 'ethereum' }), {
+  type: 'market',
+  config: MARKET_QUOTE_REQUESTS.Velora
+});
+
+assert.deepStrictEqual(resolveQuoteRequestConfig('Bybit', { chain: 'bybit' }), {
+  type: 'cex',
+  config: CEX_ORDERBOOK_REQUESTS.Bybit
+});
+
+const suiFallbackRequest = resolveQuoteRequestConfig('Cetus', {
+  chain: ' Sui ',
+  amount: 0,
+  fromToken: '0xfrom',
+  toToken: '0xto'
+});
+assert.strictEqual(suiFallbackRequest.type, 'market');
+assert.strictEqual(suiFallbackRequest.config.endpoint, '/api/get-cetus-quote');
+assert.deepStrictEqual(suiFallbackRequest.config.requestQuote, {
+  chain: ' Sui ',
+  amount: 1,
+  fromToken: '0xfrom',
+  toToken: '0xto'
+});
+assert.strictEqual(
+  suiFallbackRequest.config.resolveUsedSource({ amountOut: 10 }),
+  'Cetus'
+);
+
+const kyberFallbackRequest = resolveQuoteRequestConfig('Kyber', {
+  chain: 'ethereum',
+  amount: 2
+});
+assert.strictEqual(kyberFallbackRequest.config.endpoint, '/api/get-kyber-quote');
+assert.strictEqual(
+  kyberFallbackRequest.config.resolveUsedSource({ source: 'Kyber' }),
+  'Kyber'
+);
+
+assert.deepStrictEqual(
+  buildQuoteRequestInput(
+    {
+      id: 1,
+      amount: 3,
+      requestChannelId: 'stored',
+      fromToken: 'A',
+      toToken: 'B'
+    },
+    { amount: '5', requestChannelId: ' hk-1 ', defaultRequestChannelId: 'default' }
+  ),
+  {
+    requestQuote: {
+      id: 1,
+      amount: 5,
+      requestChannelId: 'hk-1',
+      fromToken: 'A',
+      toToken: 'B'
+    },
+    requestedAmount: 5,
+    requestChannelId: 'hk-1',
+    isInverseFetch: false
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuoteRequestInput(
+    {
+      id: 2,
+      amount: 4,
+      requestChannelId: 'stored',
+      fromToken: 'A',
+      toToken: 'B'
+    },
+    { amount: -1, defaultRequestChannelId: 'default', isInverseFetch: true }
+  ),
+  {
+    requestQuote: {
+      id: 2,
+      amount: 4,
+      requestChannelId: 'default',
+      fromToken: 'B',
+      toToken: 'A'
+    },
+    requestedAmount: 4,
+    requestChannelId: 'default',
+    isInverseFetch: true
+  }
+);
+
+assert.strictEqual(
+  shouldSkipQuoteSource('Kyber', { chain: 'unsupported' }, { isKyberSupported: () => false }),
+  true
+);
+assert.strictEqual(
+  shouldSkipQuoteSource('0x', { chain: 'solana' }, { is0xSupported: () => false }),
+  true
+);
+assert.strictEqual(
+  shouldSkipQuoteSource('Velora', { chain: 'ethereum' }, {}),
+  false
+);
+
+assert.strictEqual(shouldDelayQuoteSource('0x', ['Kyber', '0x'], {}), true);
+assert.strictEqual(shouldDelayQuoteSource('0x', ['0x'], {}), false);
+assert.strictEqual(shouldDelayQuoteSource('0x', ['Kyber', '0x'], { skipDelay: true }), false);
+
+const directData = { amountOut: 10, usedSource: 'Kyber' };
+assert.strictEqual(
+  applyAutoFallbackSourceLabel(directData, { preferredSource: 'Kyber' }, '0x'),
+  directData
+);
+assert.deepStrictEqual(
+  applyAutoFallbackSourceLabel({ amountOut: 10, usedSource: '0x' }, { preferredSource: 'Auto' }, '0x'),
+  { amountOut: 10, usedSource: '0x (Auto Fallback)' }
+);
+assert.deepStrictEqual(
+  applyAutoFallbackSourceLabel({ amountOut: 10, usedSource: '0x' }, { preferredSource: 'Auto' }, '0x', { isInverseFetch: true }),
+  { amountOut: 10, usedSource: '0x' }
+);
 
 assert.deepStrictEqual(
   buildMarketQuoteResult({

@@ -301,9 +301,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getEvmMetadata'));
     assert.ok(!appJsResponse.body.includes('const MARKET_QUOTE_REQUESTS = {'));
     assert.ok(appJsResponse.body.includes('QuoteRequestUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('getQuoteRequestUtils().resolveMarketQuoteRequestConfig(targetSource)'));
+    assert.ok(appJsResponse.body.includes('quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote)'));
     assert.ok(appJsResponse.body.includes('function getMarketQuote(quote, signal, config)'));
     assert.ok(quoteRequestUtilsResponse.body.includes('const MARKET_QUOTE_REQUESTS = Object.freeze({'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('const CEX_ORDERBOOK_REQUESTS = Object.freeze({'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('function buildQuoteRequestInput(quote, options = {})'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('function shouldSkipQuoteSource(source, quote, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));
     assert.ok(appJsResponse.body.includes('function getChainDefaults()'));
