@@ -1967,11 +1967,17 @@
     }
 
     function getDataTerminalUtils() {
-        return window.DataTerminalUtils || null;
+        if (!window.DataTerminalUtils) {
+            throw new Error('DataTerminalUtils is not loaded');
+        }
+        return window.DataTerminalUtils;
     }
 
     function getDashboardRenderer() {
-        return window.DashboardRenderer || null;
+        if (!window.DashboardRenderer) {
+            throw new Error('DashboardRenderer is not loaded');
+        }
+        return window.DashboardRenderer;
     }
 
     function getQuoteDisplayUtils() {
@@ -2353,11 +2359,7 @@
     }
 
     function hasDataTerminalActiveQuery() {
-        const utils = getDataTerminalUtils();
-        if (!utils || typeof utils.parseDataTerminalQuery !== 'function') {
-            return String(dataTerminalState.query || '').trim().length > 0;
-        }
-        return utils.parseDataTerminalQuery(dataTerminalState.query).length > 0;
+        return getDataTerminalUtils().parseDataTerminalQuery(dataTerminalState.query).length > 0;
     }
 
     function buildDataTerminalRecords() {
@@ -2404,13 +2406,6 @@
         const refs = dataTerminalState.domRefs;
         const utils = getDataTerminalUtils();
         if (!refs.content) return;
-        if (!utils
-            || typeof utils.buildDataTerminalCandidates !== 'function'
-            || typeof utils.buildDataTerminalViewModel !== 'function'
-            || typeof utils.buildDataTerminalPanelHtml !== 'function') {
-            dataTerminalState.htmlRenderer.render(refs.content, '<div class="data-terminal-empty">数据终端模块未加载</div>');
-            return;
-        }
 
         if (refs.searchInput && refs.searchInput.value !== dataTerminalState.query) {
             refs.searchInput.value = dataTerminalState.query;
@@ -2567,10 +2562,6 @@
             return;
         }
         const utils = getDataTerminalUtils();
-        if (!utils || typeof utils.buildDataTerminalShellHtml !== 'function') {
-            appendAlertLogEntry('数据终端', '数据终端模块未加载');
-            return;
-        }
 
         const panel = document.createElement('div');
         panel.id = 'data-terminal-window';

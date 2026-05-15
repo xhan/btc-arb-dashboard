@@ -255,6 +255,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('DexLinkUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('copyDexLinkFromElement'));
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
+    assert.ok(appJsResponse.body.includes('function getDataTerminalUtils()'));
+    assert.ok(appJsResponse.body.includes('DataTerminalUtils is not loaded'));
+    assert.ok(!appJsResponse.body.includes('数据终端模块未加载'));
     assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
     assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
     assert.ok(dashboardRendererResponse.body.includes('class="icon-btn add-quote-btn"'));
@@ -325,6 +328,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('return `${symbol}: 等待盘口...`;'));
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function renderCategoryModuleShell(config = {})'));
+    assert.ok(appJsResponse.body.includes('function getDashboardRenderer()'));
+    assert.ok(appJsResponse.body.includes('DashboardRenderer is not loaded'));
     assert.ok(appJsResponse.body.includes('renderer.renderQuoteItemShell({'));
     assert.ok(appJsResponse.body.includes('renderer.renderCategoryModuleShell({'));
     assert.ok(!appJsResponse.body.includes('function getCexPairLabel(quote, state)'));
@@ -410,7 +415,7 @@ async function waitForServer(attempts = 12) {
     assert.ok((await request('/arb-panel-renderer.js')).body.includes('function renderArbSectionToggleHtml(sectionKey, cycleDisplayState)'));
     assert.ok(appJsResponse.body.includes('const nextArbPanelHtml = window.ArbPanelRenderer.renderArbGrid({'));
     assert.ok(appJsResponse.body.includes('arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);'));
-    assert.ok(appJsResponse.body.includes('dataTerminalState.htmlRenderer.render(refs.content'));
+    assert.ok(/dataTerminalState\.htmlRenderer\.render\(\s*refs\.content,/.test(appJsResponse.body));
     assert.ok(!appJsResponse.body.includes('refs.content.innerHTML = buildDataTerminalPanelHtml'));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMarketState })'));
     assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
