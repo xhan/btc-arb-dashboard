@@ -1671,57 +1671,6 @@
         }
     }
 
-    function buildPathAlertLogCardHtml(entry, nowMs = Date.now()) {
-        const mutedEntry = entry && entry.mutedTargetCandidate
-            ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
-            : null;
-        const displayState = buildAlertLogEntryDisplayState({ ...entry, mutedEntry });
-        const targetKey = entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '';
-        const expandedTitle = `🚨 [路径报警] ${String(entry.alert && entry.alert.name || '路径报警')}`;
-        const title = escapeHtml(expandedTitle);
-        const profitText = escapeHtml(formatPathAlertEvaluationText(entry.evaluation));
-        const routeLinesHtml = (Array.isArray(entry.summaryLines) ? entry.summaryLines : [])
-            .map((line) => `<div class="path-alert-log-line">${escapeHtml(line)}</div>`)
-            .join('');
-        const statusText = mutedEntry ? buildMutedPathStatusText(mutedEntry, nowMs) : '已触发';
-        const statusClass = mutedEntry ? 'path-alert-log-tag path-alert-log-tag-muted' : 'path-alert-log-tag';
-        const muteButtonHtml = entry && entry.mutedTargetCandidate
-            ? `<button
-                    type="button"
-                    class="path-alert-log-mute-btn"
-                    data-path-alert-log-mute="${escapeHtml(entry.alert.id || '')}"
-                >${mutedEntry ? '延长 2 小时' : '忽略 1 小时'}</button>`
-            : '';
-        const cardClassName = [
-            'log-entry',
-            'path-alert-log-entry',
-            displayState.muted ? 'alert-log-entry-muted' : '',
-            displayState.collapsed ? 'alert-log-entry-collapsed' : ''
-        ].filter(Boolean).join(' ');
-        const titleClassName = displayState.collapsed ? 'alert-log-title-muted' : '';
-        return `
-            <div
-                class="${cardClassName}"
-                data-path-alert-log-entry="${escapeHtml(entry.alert && entry.alert.id || '')}"
-                data-muted-target-key="${escapeHtml(targetKey)}"
-                data-alert-log-collapsed="${displayState.collapsed ? '1' : '0'}"
-            >
-                <div class="path-alert-log-head">
-                    <div>
-                        <div><strong class="${titleClassName}" data-alert-log-title data-alert-log-expanded-title="${escapeHtml(expandedTitle)}">${title}</strong></div>
-                        <div class="path-alert-log-profit alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>📈 ${profitText}</div>
-                    </div>
-                    <div class="path-alert-log-actions alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${muteButtonHtml}</div>
-                </div>
-                <div class="path-alert-log-route alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>${routeLinesHtml || '<div class="path-alert-log-line">--</div>'}</div>
-                <div class="path-alert-log-foot alert-log-collapsible"${displayState.collapsed ? ' hidden' : ''}>
-                    <span class="${statusClass}" data-path-alert-muted-status>${escapeHtml(statusText)}</span>
-                    <span class="log-time">${new Date(nowMs).toLocaleTimeString()}</span>
-                </div>
-            </div>
-        `;
-    }
-
     function appendPathAlertLogEntries(entries, nowMs = Date.now()) {
         if (!alertLogWindow || !alertLogContent) return;
         const list = Array.isArray(entries) ? entries : [];
@@ -1731,9 +1680,21 @@
             bringFloatingPanelToFront(alertLogWindow);
         }
         for (let index = list.length - 1; index >= 0; index -= 1) {
-            const card = window.DomRenderUtils.createElementFromHtml(buildPathAlertLogCardHtml(list[index], nowMs));
+            const entry = list[index];
+            const mutedEntry = entry && entry.mutedTargetCandidate
+                ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
+                : null;
+            const card = window.DomRenderUtils.createElementFromHtml(
+                window.AlertLogUiUtils.buildPathAlertLogCardHtml(entry, {
+                    nowMs,
+                    mutedEntry,
+                    targetKey: entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '',
+                    statusText: mutedEntry ? buildMutedPathStatusText(mutedEntry, nowMs) : '已触发',
+                    profitText: formatPathAlertEvaluationText(entry && entry.evaluation)
+                })
+            );
             if (card) {
-                if (list[index] && list[index].mutedEntry) {
+                if (entry && entry.mutedEntry) {
                     appendMutedAlertLogCard(card, nowMs);
                 } else {
                     removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');

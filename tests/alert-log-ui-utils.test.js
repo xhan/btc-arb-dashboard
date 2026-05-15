@@ -5,7 +5,8 @@ const {
   buildAlertLogEntryDisplayState,
   buildMutedStateItemHtml,
   buildMutedStateSectionHtml,
-  buildRestoredMutedAlertLogHtml
+  buildRestoredMutedAlertLogHtml,
+  buildPathAlertLogCardHtml
 } = require('../alert-log-ui-utils');
 
 assert.strictEqual(shouldAutoOpenAlertLogEntries([]), false);
@@ -82,3 +83,44 @@ const fallbackRestoredLogHtml = buildRestoredMutedAlertLogHtml(
   { statusText: 'still muted' }
 );
 assert.ok(fallbackRestoredLogHtml.includes('fallback title'));
+
+const pathLogHtml = buildPathAlertLogCardHtml(
+  {
+    alert: { id: 'path"1', name: 'ARB <A>' },
+    summaryLines: ['USDC -> ETH & back'],
+    mutedTargetCandidate: { type: 'path' }
+  },
+  {
+    nowMs: 2000,
+    targetKey: 'target<1>',
+    statusText: '已触发',
+    profitText: '📈 +1.23bp'
+  }
+);
+
+assert.ok(pathLogHtml.includes('path-alert-log-entry'));
+assert.ok(pathLogHtml.includes('data-path-alert-log-entry="path&quot;1"'));
+assert.ok(pathLogHtml.includes('data-muted-target-key="target&lt;1&gt;"'));
+assert.ok(pathLogHtml.includes('🚨 [路径报警] ARB &lt;A&gt;'));
+assert.ok(pathLogHtml.includes('📈 +1.23bp'));
+assert.ok(pathLogHtml.includes('USDC -&gt; ETH &amp; back'));
+assert.ok(pathLogHtml.includes('data-path-alert-log-mute="path&quot;1"'));
+assert.ok(pathLogHtml.includes('忽略 1 小时'));
+
+const mutedPathLogHtml = buildPathAlertLogCardHtml(
+  {
+    alert: { id: 'path-2', name: 'Muted path' },
+    summaryLines: [],
+    mutedTargetCandidate: { type: 'path' }
+  },
+  {
+    mutedEntry: { expiresAt: 123 },
+    statusText: '还剩 2 小时'
+  }
+);
+
+assert.ok(mutedPathLogHtml.includes('alert-log-entry-muted'));
+assert.ok(mutedPathLogHtml.includes('alert-log-entry-collapsed'));
+assert.ok(mutedPathLogHtml.includes('data-alert-log-collapsed="1"'));
+assert.ok(mutedPathLogHtml.includes('延长 2 小时'));
+assert.ok(mutedPathLogHtml.includes('<div class="path-alert-log-line">--</div>'));
