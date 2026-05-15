@@ -441,6 +441,17 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));
     assert.ok(appJsResponse.body.includes('function getActivePathAlertEvaluationAlerts()'));
     assert.ok(appJsResponse.body.includes('function pruneInactiveAlertRuntimeState()'));
+    assert.ok(appJsResponse.body.includes('function getPathAlertUtils()'));
+    assert.ok(appJsResponse.body.includes('PathAlertUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getMutedPathLegUtils()'));
+    assert.ok(appJsResponse.body.includes('MutedPathLegUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getMutedPathStorageUtils()'));
+    assert.ok(appJsResponse.body.includes('MutedPathStorageUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();'));
+    assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathLegs, nowMs)'));
+    const pruneMutedPathTargetsMatch = appJsResponse.body.match(/function pruneMutedPathTargetsInPlace\([\s\S]*?\n    \}/);
+    assert.ok(pruneMutedPathTargetsMatch);
+    assert.ok(!pruneMutedPathTargetsMatch[0].includes('window.PathAlertUtils'));
     assert.ok(appJsResponse.body.includes('const evaluationAlerts = getActivePathAlertEvaluationAlerts();'));
     assert.ok(appJsResponse.body.includes('if (!evaluationAlerts.length) {'));
     assert.ok(appJsResponse.body.includes('extendMutedPathTargetFromLogButton'));

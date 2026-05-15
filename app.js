@@ -31,24 +31,7 @@
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
     let arbUpdateTimer = null;
-    let pathAlertConfig = window.PathAlertUtils
-        ? window.PathAlertUtils.normalizeAlertConfig()
-        : {
-            version: 1,
-            settings: {
-                pathAlertEvalIntervalMs: 1000,
-                defaultCooldownSec: 180,
-                changedLegMinBp: 0.1,
-                localSoundEnabled: true,
-                webhookEnabled: false,
-                dayAppEnabled: false,
-                telegramEnabled: true,
-                webhookUrl: 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder',
-                webhookSecret: ''
-            },
-            alerts: [],
-            dismissedTargets: []
-        };
+    let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();
     let pathAlertSaveTimer = null;
     let pathAlertEvalTimer = null;
     let pathAlertPanelHidden = true;
@@ -137,10 +120,8 @@
     let currentHoveredQuoteId = null; 
     let currentlyEditingQuote = null; 
     const MAX_ALERT_LOG_ENTRIES = 300;
-    const PATH_ALERT_MUTE_EXTEND_DURATION_MS = window.PathAlertUtils
-        ? window.PathAlertUtils.PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000)
-        : (2 * 60 * 60 * 1000);
-    const PATH_ALERT_MUTE_DURATION_MS = Number(window.PathAlertUtils && window.PathAlertUtils.PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
+    const PATH_ALERT_MUTE_EXTEND_DURATION_MS = getPathAlertUtils().PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000);
+    const PATH_ALERT_MUTE_DURATION_MS = Number(getPathAlertUtils().PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
     const MUTED_PATH_LEG_EXTEND_DURATION_MS = 2 * 60 * 60 * 1000;
     const alertDebugController = window.AlertDebugUtils
         && typeof window.AlertDebugUtils.createAlertDebugController === 'function'
@@ -305,6 +286,27 @@
             throw new Error('ChainDefaults is not loaded');
         }
         return window.ChainDefaults;
+    }
+
+    function getPathAlertUtils() {
+        if (!window.PathAlertUtils) {
+            throw new Error('PathAlertUtils is not loaded');
+        }
+        return window.PathAlertUtils;
+    }
+
+    function getMutedPathLegUtils() {
+        if (!window.MutedPathLegUtils) {
+            throw new Error('MutedPathLegUtils is not loaded');
+        }
+        return window.MutedPathLegUtils;
+    }
+
+    function getMutedPathStorageUtils() {
+        if (!window.MutedPathStorageUtils) {
+            throw new Error('MutedPathStorageUtils is not loaded');
+        }
+        return window.MutedPathStorageUtils;
     }
 
     function isCrossChainQuote(quote) {
@@ -1038,27 +1040,18 @@
     }
 
     function pruneMutedPathTargetsInPlace(nowMs = Date.now()) {
-        if (!window.PathAlertUtils || typeof window.PathAlertUtils.pruneExpiredMutedPathTargets !== 'function') {
-            return mutedPathTargets;
-        }
-        mutedPathTargets = window.PathAlertUtils.pruneExpiredMutedPathTargets(mutedPathTargets, nowMs);
+        mutedPathTargets = getPathAlertUtils().pruneExpiredMutedPathTargets(mutedPathTargets, nowMs);
         return mutedPathTargets;
     }
 
     function getMutedPathTargetEntry(alertOrTarget, nowMs = Date.now()) {
         pruneMutedPathTargetsInPlace(nowMs);
-        if (!window.PathAlertUtils || typeof window.PathAlertUtils.findMutedPathAlert !== 'function') {
-            return null;
-        }
-        return window.PathAlertUtils.findMutedPathAlert(mutedPathTargets, alertOrTarget, nowMs);
+        return getPathAlertUtils().findMutedPathAlert(mutedPathTargets, alertOrTarget, nowMs);
     }
 
     function buildMutedPathTargetKey(alertOrTarget) {
-        if (!window.PathAlertUtils || typeof window.PathAlertUtils.buildPathAlertTargetDuplicateKey !== 'function') {
-            return '';
-        }
         const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
-        return window.PathAlertUtils.buildPathAlertTargetDuplicateKey(target);
+        return getPathAlertUtils().buildPathAlertTargetDuplicateKey(target);
     }
 
     function loadMutedPathTargetsFromStorage() {
@@ -1068,9 +1061,7 @@
             const raw = storage.getItem(MUTED_PATH_TARGETS_STORAGE_KEY);
             if (!raw) return [];
             const parsed = JSON.parse(raw);
-            if (window.MutedPathStorageUtils && typeof window.MutedPathStorageUtils.normalizeStoredMutedPathTargets === 'function') {
-                return window.MutedPathStorageUtils.normalizeStoredMutedPathTargets(parsed);
-            }
+            return getMutedPathStorageUtils().normalizeStoredMutedPathTargets(parsed);
         } catch (error) {
             console.warn('读取沉默报警本地缓存失败:', error);
         }
@@ -1084,9 +1075,7 @@
             const raw = storage.getItem(MUTED_PATH_LEGS_STORAGE_KEY);
             if (!raw) return [];
             const parsed = JSON.parse(raw);
-            if (window.MutedPathLegUtils && typeof window.MutedPathLegUtils.pruneExpiredMutedPathLegs === 'function') {
-                return window.MutedPathLegUtils.pruneExpiredMutedPathLegs(parsed, Date.now());
-            }
+            return getMutedPathLegUtils().pruneExpiredMutedPathLegs(parsed, Date.now());
         } catch (error) {
             console.warn('读取屏蔽腿本地缓存失败:', error);
         }
@@ -1116,9 +1105,7 @@
         const storage = getLocalStorageSafe();
         if (!storage) return;
         try {
-            const list = window.MutedPathStorageUtils && typeof window.MutedPathStorageUtils.trimMutedPathTargetsForStorage === 'function'
-                ? window.MutedPathStorageUtils.trimMutedPathTargetsForStorage(mutedPathTargets)
-                : mutedPathTargets;
+            const list = getMutedPathStorageUtils().trimMutedPathTargetsForStorage(mutedPathTargets);
             mutedPathTargets = Array.isArray(list) ? list : [];
             storage.setItem(MUTED_PATH_TARGETS_STORAGE_KEY, JSON.stringify(mutedPathTargets));
         } catch (error) {
@@ -1130,9 +1117,7 @@
         const storage = getLocalStorageSafe();
         if (!storage) return;
         try {
-            const list = window.MutedPathLegUtils && typeof window.MutedPathLegUtils.trimMutedPathLegsForStorage === 'function'
-                ? window.MutedPathLegUtils.trimMutedPathLegsForStorage(mutedPathLegs)
-                : mutedPathLegs;
+            const list = getMutedPathLegUtils().trimMutedPathLegsForStorage(mutedPathLegs);
             mutedPathLegs = Array.isArray(list) ? list : [];
             storage.setItem(MUTED_PATH_LEGS_STORAGE_KEY, JSON.stringify(mutedPathLegs));
         } catch (error) {
@@ -1143,15 +1128,15 @@
     function mutePathAlertTarget(entry, nowMs = Date.now()) {
         const muteTarget = entry && entry.mutedTargetCandidate ? entry.mutedTargetCandidate : null;
         if (!muteTarget) return null;
-        if (!window.PathAlertUtils || typeof window.PathAlertUtils.createMutedPathTargetEntry !== 'function') return null;
+        const pathAlertUtils = getPathAlertUtils();
         const targetKey = buildMutedPathTargetKey(muteTarget);
         if (!targetKey) return null;
         const logTitleSnapshot = buildMutedPathLogTitleSnapshot(entry);
         pruneMutedPathTargetsInPlace(nowMs);
         const existingEntry = mutedPathTargets.find((item) => buildMutedPathTargetKey(item) === targetKey) || null;
-        const nextMutedEntry = existingEntry && typeof window.PathAlertUtils.extendMutedPathTargetEntry === 'function'
-            ? window.PathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS)
-            : window.PathAlertUtils.createMutedPathTargetEntry(
+        const nextMutedEntry = existingEntry
+            ? pathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS)
+            : pathAlertUtils.createMutedPathTargetEntry(
                 muteTarget,
                 entry.summaryLines,
                 nowMs,
@@ -1159,7 +1144,7 @@
                 { logTitleSnapshot }
             );
         const mutedEntry = nextMutedEntry && !String(nextMutedEntry.logTitleSnapshot || '').trim()
-            ? window.PathAlertUtils.normalizeMutedPathTarget({
+            ? pathAlertUtils.normalizeMutedPathTarget({
                 ...nextMutedEntry,
                 logTitleSnapshot
             })
@@ -1177,33 +1162,23 @@
     function buildMutedPathStatusText(mutedEntry, nowMs = Date.now()) {
         if (!mutedEntry) return '';
         const remainingMs = Math.max(0, Number(mutedEntry.expiresAt) - nowMs);
-        const countdown = window.PathAlertUtils && typeof window.PathAlertUtils.formatMutedCountdown === 'function'
-            ? window.PathAlertUtils.formatMutedCountdown(remainingMs)
-            : '--:--';
+        const countdown = getPathAlertUtils().formatMutedCountdown(remainingMs);
         return `沉默中 · ${countdown}`;
     }
 
     function buildMutedPathLegStatusText(mutedEntry, nowMs = Date.now()) {
         if (!mutedEntry) return '';
         const remainingMs = Math.max(0, Number(mutedEntry.expiresAt) - nowMs);
-        const countdown = window.PathAlertUtils && typeof window.PathAlertUtils.formatMutedCountdown === 'function'
-            ? window.PathAlertUtils.formatMutedCountdown(remainingMs)
-            : '--:--';
+        const countdown = getPathAlertUtils().formatMutedCountdown(remainingMs);
         return `屏蔽中 · ${countdown}`;
     }
 
     function buildMutedPathLegKey(legOrEntry) {
-        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.buildMutedPathLegKey !== 'function') {
-            return '';
-        }
-        return window.MutedPathLegUtils.buildMutedPathLegKey(legOrEntry);
+        return getMutedPathLegUtils().buildMutedPathLegKey(legOrEntry);
     }
 
     function pruneMutedPathLegsInPlace(nowMs = Date.now()) {
-        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.pruneExpiredMutedPathLegs !== 'function') {
-            return mutedPathLegs;
-        }
-        mutedPathLegs = window.MutedPathLegUtils.pruneExpiredMutedPathLegs(mutedPathLegs, nowMs);
+        mutedPathLegs = getMutedPathLegUtils().pruneExpiredMutedPathLegs(mutedPathLegs, nowMs);
         return mutedPathLegs;
     }
 
@@ -1224,26 +1199,25 @@
     }
 
     function muteArbDetailLeg(leg, durationHours, nowMs = Date.now()) {
-        if (!leg || !window.MutedPathLegUtils || typeof window.MutedPathLegUtils.createMutedPathLegEntry !== 'function') {
-            return null;
-        }
+        if (!leg) return null;
+        const mutedPathLegUtils = getMutedPathLegUtils();
         const durationMs = Number(durationHours) * 60 * 60 * 1000;
         if (!Number.isFinite(durationMs) || durationMs <= 0) return null;
         const legKey = buildMutedPathLegKey(leg);
         if (!legKey) return null;
         pruneMutedPathLegsInPlace(nowMs);
         const existingEntry = mutedPathLegs.find((entry) => buildMutedPathLegKey(entry) === legKey) || null;
-        const nextEntry = existingEntry && typeof window.MutedPathLegUtils.extendMutedPathLegEntry === 'function'
-            ? window.MutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, durationMs)
-            : window.MutedPathLegUtils.createMutedPathLegEntry(
+        const nextEntry = existingEntry
+            ? mutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, durationMs)
+            : mutedPathLegUtils.createMutedPathLegEntry(
                 leg,
                 nowMs,
                 durationMs,
                 { titleSnapshot: buildMutedPathLegTitleSnapshot(leg) }
             );
         if (!nextEntry) return null;
-        const mutedEntry = !String(nextEntry.titleSnapshot || '').trim() && typeof window.MutedPathLegUtils.normalizeMutedPathLeg === 'function'
-            ? window.MutedPathLegUtils.normalizeMutedPathLeg({
+        const mutedEntry = !String(nextEntry.titleSnapshot || '').trim()
+            ? mutedPathLegUtils.normalizeMutedPathLeg({
                 ...nextEntry,
                 titleSnapshot: buildMutedPathLegTitleSnapshot(leg)
             })
@@ -1258,13 +1232,11 @@
     }
 
     function extendMutedPathTargetByKey(targetKey, nowMs = Date.now()) {
-        if (!targetKey || !window.PathAlertUtils || typeof window.PathAlertUtils.extendMutedPathTargetEntry !== 'function') {
-            return null;
-        }
+        if (!targetKey) return null;
         pruneMutedPathTargetsInPlace(nowMs);
         const existingEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === targetKey) || null;
         if (!existingEntry) return null;
-        const nextEntry = window.PathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
+        const nextEntry = getPathAlertUtils().extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
         if (!nextEntry) return null;
         mutedPathTargets = mutedPathTargets.filter((entry) => buildMutedPathTargetKey(entry) !== targetKey);
         mutedPathTargets.push(nextEntry);
@@ -1285,13 +1257,11 @@
     }
 
     function extendMutedPathLegByKey(targetKey, nowMs = Date.now()) {
-        if (!targetKey || !window.MutedPathLegUtils || typeof window.MutedPathLegUtils.extendMutedPathLegEntry !== 'function') {
-            return null;
-        }
+        if (!targetKey) return null;
         pruneMutedPathLegsInPlace(nowMs);
         const existingEntry = mutedPathLegs.find((entry) => buildMutedPathLegKey(entry) === targetKey) || null;
         if (!existingEntry) return null;
-        const nextEntry = window.MutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, MUTED_PATH_LEG_EXTEND_DURATION_MS);
+        const nextEntry = getMutedPathLegUtils().extendMutedPathLegEntry(existingEntry, nowMs, MUTED_PATH_LEG_EXTEND_DURATION_MS);
         if (!nextEntry) return null;
         mutedPathLegs = mutedPathLegs.filter((entry) => buildMutedPathLegKey(entry) !== targetKey);
         mutedPathLegs.push(nextEntry);
@@ -1699,18 +1669,12 @@
 
     function filterMutedArbEdges(edges, nowMs = Date.now()) {
         pruneMutedPathLegsInPlace(nowMs);
-        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.filterMutedPathLegs !== 'function') {
-            return Array.isArray(edges) ? edges : [];
-        }
-        return window.MutedPathLegUtils.filterMutedPathLegs(edges, mutedPathLegs, nowMs);
+        return getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathLegs, nowMs);
     }
 
     function filterMutedArbCycles(cycles, nowMs = Date.now()) {
         pruneMutedPathLegsInPlace(nowMs);
-        if (!window.MutedPathLegUtils || typeof window.MutedPathLegUtils.filterMutedCycles !== 'function') {
-            return Array.isArray(cycles) ? cycles : [];
-        }
-        return window.MutedPathLegUtils.filterMutedCycles(cycles, mutedPathLegs, nowMs);
+        return getMutedPathLegUtils().filterMutedCycles(cycles, mutedPathLegs, nowMs);
     }
 
     function buildVisibleArbEdges(quotes, nowMs = Date.now()) {
@@ -1747,7 +1711,7 @@
                 quoteStateById: quoteMarketState,
                 aliasRules,
                 mutedPathLegs,
-                mutedPathLegUtils: window.MutedPathLegUtils,
+                mutedPathLegUtils: getMutedPathLegUtils(),
                 preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
                 arbPathsApi: window.ArbPaths,
                 arbFixedUtils: window.ArbFixedUtils,
