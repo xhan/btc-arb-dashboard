@@ -878,6 +878,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsAppResponse.body.includes('path-alert-suggestions'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertCandidateUtils'));
     assert.ok(pathAlertsAppResponse.body.includes('findDismissedTargetForDraft'));
+    assert.ok(!pathAlertsAppResponse.body.includes('findDismissedEntryForDraft'));
+    assert.ok(!pathAlertsAppResponse.body.includes('removeSelectedAlertIdsFromConfig'));
+    assert.ok(!pathAlertsAppResponse.body.includes('persistAndRefreshList'));
     assert.ok(pathAlertsAppResponse.body.includes('renderSectionCards'));
     assert.ok(pathAlertsAppResponse.body.includes('groupAlertsBySection'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertRuleLine(target)'));

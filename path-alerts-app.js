@@ -295,10 +295,6 @@
     return draft;
   }
 
-  function buildAlertSummary(alert) {
-    return buildAlertSummaryLines(alert).join(' | ') || '--';
-  }
-
   function buildDismissedIdentityKey(entry) {
     return buildAlertIdentityKey(entry && entry.target ? entry.target : entry);
   }
@@ -460,22 +456,6 @@
     return buildAlertSummaryLines({ target: entry.target });
   }
 
-  function buildDismissedSummary(entry) {
-    return buildDismissedSummaryLines(entry).join(' | ') || '--';
-  }
-
-  function findDismissedEntryForDraft(draft) {
-    if (!draft || !window.PathAlertUtils || typeof window.PathAlertUtils.findDismissedPathAlert !== 'function') {
-      return null;
-    }
-    return window.PathAlertUtils.findDismissedPathAlert(
-      Array.isArray(alertConfig.dismissedTargets) ? alertConfig.dismissedTargets : [],
-      {
-        target: collectEditorTarget(draft)
-      }
-    );
-  }
-
   function getFilteredAlerts() {
     const alerts = Array.isArray(alertConfig.alerts) ? alertConfig.alerts : [];
     return alerts.filter((alert) => {
@@ -518,48 +498,6 @@
     if (deleteDismissedSelectedBtn) {
       deleteDismissedSelectedBtn.disabled = pageState.selectedDismissedKeys.size === 0;
     }
-  }
-
-  function removeSelectedAlertIdsFromConfig(alertIds) {
-    const idSet = new Set(Array.isArray(alertIds) ? alertIds : []);
-    alertConfig.alerts = (alertConfig.alerts || []).filter((alert) => !idSet.has(alert.id));
-  }
-
-  function removeDismissedKeysFromConfig(keys) {
-    const keySet = new Set(Array.isArray(keys) ? keys : []);
-    alertConfig.dismissedTargets = (alertConfig.dismissedTargets || []).filter((entry) => !keySet.has(buildDismissedIdentityKey(entry)));
-  }
-
-  function markAlertDismissed(alert) {
-    if (!alert || !window.PathAlertUtils || typeof window.PathAlertUtils.createDismissedTargetEntry !== 'function') {
-      return false;
-    }
-    const entry = window.PathAlertUtils.createDismissedTargetEntry(alert, buildAlertSummaryLines(alert), Date.now());
-    if (!entry) return false;
-    const dismissed = Array.isArray(alertConfig.dismissedTargets) ? [...alertConfig.dismissedTargets] : [];
-    if (window.PathAlertUtils.findDismissedPathAlert(dismissed, entry)) {
-      return false;
-    }
-    dismissed.push(entry);
-    alertConfig.dismissedTargets = dismissed;
-    return true;
-  }
-
-  async function persistAndRefreshList(successMessage = '已保存，主看板会自动同步。') {
-    await persistAlertConfig();
-    if (successMessage) {
-      setStatus(successMessage, 'success');
-    }
-    renderList();
-    renderDismissedList();
-    renderEditor();
-  }
-
-  function matchesSearch(text, query) {
-    const tokens = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
-    if (!tokens.length) return true;
-    const haystack = String(text || '').toLowerCase();
-    return tokens.every((token) => haystack.includes(token));
   }
 
   function renderSummaryLinesHtml(lines, className) {
