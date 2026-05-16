@@ -3265,24 +3265,29 @@
         };
     }
 
-    async function sendPathAlertWebhookNotification(triggeredEntries) {
+    async function sendPathAlertWebhookPayload(payload, errorMessage) {
         if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
         try {
             const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries),
-                    body: getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries)
-                })
+                body: JSON.stringify(payload)
             });
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
                 throw new Error((data && data.error) || '请求失败');
             }
         } catch (error) {
-            console.error('路径报警 webhook 发送失败:', error);
+            console.error(errorMessage, error);
         }
+    }
+
+    async function sendPathAlertWebhookNotification(triggeredEntries) {
+        const payload = {
+            title: getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries),
+            body: getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries)
+        };
+        await sendPathAlertWebhookPayload(payload, '路径报警 webhook 发送失败:');
     }
 
     function recordAlertDebug(kind, id, snapshot) {
@@ -4478,21 +4483,8 @@
     }
 
     async function sendQuoteWebhookNotification(entry) {
-        if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
         const payload = getPathAlertNotificationUtils().buildQuoteAlertRemotePayloadForEntry(entry);
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                const data = await response.json().catch(() => null);
-                throw new Error((data && data.error) || '请求失败');
-            }
-        } catch (error) {
-            console.error('报价提醒远程推送失败:', error);
-        }
+        await sendPathAlertWebhookPayload(payload, '报价提醒远程推送失败:');
     }
 
     function addDnDHandlers(itemEl, categoryId) {
