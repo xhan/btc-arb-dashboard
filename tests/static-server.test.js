@@ -94,7 +94,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="chain-defaults.js"'));
     assert.ok(response.body.includes('src="theme-utils.js"'));
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
-    assert.ok(response.body.includes('src="data-terminal-utils.js"'));
+    assert.ok(response.body.includes('src="src/data-terminal/data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/muted-path-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
@@ -122,7 +122,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="src/quote/quote-display-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="data-terminal-utils.js"')
+      response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="src/data-terminal/data-terminal-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
@@ -283,7 +283,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbPathTemplateCacheUtilsResponse.statusCode, 200);
     const arbEquivalenceUtilsResponse = await request('/src/arb/arb-equivalence-utils.js');
     assert.strictEqual(arbEquivalenceUtilsResponse.statusCode, 200);
-    const dataTerminalUtilsResponse = await request('/data-terminal-utils.js');
+    const dataTerminalUtilsResponse = await request('/src/data-terminal/data-terminal-utils.js');
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/src/arb/arb-detail-utils.js');
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);

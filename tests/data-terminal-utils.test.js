@@ -18,7 +18,7 @@ const {
   parseDataTerminalQuery,
   resolveDataTerminalContentClickAction,
   resolveDataTerminalHeaderClickAction
-} = require('../data-terminal-utils');
+} = require('../src/data-terminal/data-terminal-utils');
 
 assert.deepStrictEqual(parseDataTerminalQuery('  WBTC, cbBTC extra  '), ['WBTC', 'cbBTC']);
 assert.deepStrictEqual(parseDataTerminalQuery(''), []);
@@ -477,7 +477,7 @@ assert.ok(shellHtml.includes('id="data-terminal-diff-toggle"'));
 assert.ok(shellHtml.includes('id="data-terminal-profit-bp"'));
 assert.ok(shellHtml.includes('id="data-terminal-content"'));
 
-const browserCode = fs.readFileSync(path.join(__dirname, '..', 'data-terminal-utils.js'), 'utf8');
+const browserCode = fs.readFileSync(path.join(__dirname, '..', 'src/data-terminal/data-terminal-utils.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
 assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));
