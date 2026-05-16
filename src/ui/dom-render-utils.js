@@ -114,6 +114,13 @@
     return true;
   }
 
+  function showTooltip(tooltipEl, targetEl, htmlContent, options = {}) {
+    return applyTooltipState(tooltipEl, targetEl, {
+      html: htmlContent,
+      className: options.className || ''
+    });
+  }
+
   function hideTooltip(tooltipEl) {
     if (!tooltipEl) return false;
     removeClasses(tooltipEl, ['visible']);
@@ -391,6 +398,7 @@
     hideTooltip,
     removeQuoteInverseElement,
     resetTrendArrow,
-    resolveEventTargetElement
+    resolveEventTargetElement,
+    showTooltip
   };
 }));

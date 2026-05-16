@@ -382,6 +382,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('DataTerminalUtils is not loaded'));
     assert.ok(!appJsResponse.body.includes('数据终端模块未加载'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyTooltipState(tooltipEl, targetEl, tooltipState = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function showTooltip(tooltipEl, targetEl, htmlContent, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function hideTooltip(tooltipEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyTrendArrowState(arrowEl, trendState, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function resetTrendArrow(arrowEl)'));
@@ -398,7 +399,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function removeQuoteInverseElement(inverseEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainResultDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainErrorDomState(refs = {}, options = {})'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().showTooltip(globalTooltip, targetEl, htmlContent, options)'));
+    assert.ok(!appJsResponse.body.includes('getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().hideTooltip(globalTooltip)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTrendArrowState(arrowEl, trendState)'));
     assert.ok(appJsResponse.body.includes("getDomRenderUtils().applyTrendArrowState(arrowEl, { action: 'hide' })"));

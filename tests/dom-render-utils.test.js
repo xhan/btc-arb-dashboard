@@ -21,6 +21,7 @@ const {
   createFloatingPanelZIndexRuntime,
   createStableHtmlRenderer,
   escapeCssAttributeValue,
+  showTooltip,
   hideTooltip,
   clearQuoteHighlightUi,
   removeQuoteInverseElement,
@@ -94,6 +95,14 @@ assert.strictEqual(tooltipEl.style.left, '40px');
 assert.strictEqual(hideTooltip(tooltipEl), true);
 assert.strictEqual(tooltipEl.classList.contains('visible'), false);
 assert.strictEqual(applyTooltipState(null, tooltipTargetEl, { html: 'x' }), false);
+assert.strictEqual(
+  showTooltip(tooltipEl, tooltipTargetEl, '<em>Velora</em>', { className: 'source-tooltip' }),
+  true
+);
+assert.strictEqual(tooltipEl.innerHTML, '<em>Velora</em>');
+assert.strictEqual(tooltipEl.classList.contains('visible'), true);
+assert.strictEqual(tooltipEl.classList.contains('source-tooltip'), true);
+assert.strictEqual(showTooltip(null, tooltipTargetEl, 'x'), false);
 
 const trendArrowEl = {
   classList: createClassList(['visible']),

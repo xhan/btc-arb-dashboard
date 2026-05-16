@@ -3833,10 +3833,7 @@
     }
 
     function showGlobalTooltip(htmlContent, targetEl, options = {}) {
-        getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {
-            html: htmlContent,
-            className: options.className
-        });
+        getDomRenderUtils().showTooltip(globalTooltip, targetEl, htmlContent, options);
     }
 
     function hideGlobalTooltip(quoteId) {
