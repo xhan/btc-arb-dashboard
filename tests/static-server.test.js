@@ -482,7 +482,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(defaultQuoteUiStateMatch[1].includes('trendTimer: null'));
     assert.ok(!defaultQuoteUiStateMatch[1].includes('logShown:'));
     assert.ok(!defaultQuoteUiStateMatch[1].includes('isSoundActive:'));
-    assert.ok(appJsResponse.body.includes('return getPathAlertPageUtils().getPathAlertStatusInfo(alert, runtime);'));
+    assert.ok(!appJsResponse.body.includes('function getPathAlertStatusInfo(alert, runtime)'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function getPathAlertStatusInfo(alert, runtime)'));
     assert.ok(pathAlertPageUtilsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
     assert.ok(pathAlertPageUtilsResponse.body.includes("return { text: '', className: '' };"));
     assert.ok(pathAlertPageUtilsResponse.body.includes('const statusTagHtml = item.statusText'));

@@ -3272,10 +3272,6 @@
         return getPathAlertNotificationUtils().formatPathAlertEvaluationText(evaluation);
     }
 
-    function getPathAlertStatusInfo(alert, runtime) {
-        return getPathAlertPageUtils().getPathAlertStatusInfo(alert, runtime);
-    }
-
     function buildPathAlertSummaryLines(alert) {
         if (alert && alert.target && alert.target.type === 'quote') {
             const displayTitle = String(alert.name || '').trim();
@@ -3655,7 +3651,6 @@
             dismissedCount,
             forceImmediateAlerts,
             getRuntime: (alert) => pathAlertRuntimeState.get(alert.id) || null,
-            getStatusInfo: getPathAlertStatusInfo,
             buildTitle: buildPathAlertDisplayTitle,
             renderSummaryLinesHtml: renderPathAlertSummaryLinesHtml,
             buildMetaText: buildPathAlertMetaText,
