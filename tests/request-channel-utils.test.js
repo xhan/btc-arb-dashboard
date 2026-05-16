@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   DEFAULT_REQUEST_CHANNEL_ID,
   DEFAULT_INTERVALS,
+  buildMultiChannelToggleState,
   buildQueueKey,
   buildRequestChannelOptionsHtml,
   getEffectiveRequestChannelIdForQuote,
@@ -31,6 +32,24 @@ const channels = getRequestChannelOptions({
 assert.strictEqual(DEFAULT_REQUEST_CHANNEL_ID, 'default');
 assert.strictEqual(channels.channels[0].id, 'default');
 assert.strictEqual(channels.channels[1].id, 'HK-1');
+assert.deepStrictEqual(
+  buildMultiChannelToggleState(true),
+  {
+    text: '多渠道: 开',
+    title: '已开启多渠道，点击后临时并入默认渠道',
+    ariaPressed: 'true',
+    active: true
+  }
+);
+assert.deepStrictEqual(
+  buildMultiChannelToggleState(false),
+  {
+    text: '多渠道: 关',
+    title: '已关闭多渠道，点击后恢复按交易对渠道请求',
+    ariaPressed: 'false',
+    active: false
+  }
+);
 
 assert.strictEqual(
   getQueueSourceKeyForQuote({ chain: 'ethereum', preferredSource: 'Kyber' }),

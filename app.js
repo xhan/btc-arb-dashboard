@@ -513,10 +513,11 @@
 
     function renderMultiChannelToggle() {
         if (!toggleMultiChannelBtn) return;
-        toggleMultiChannelBtn.textContent = `多渠道: ${multiChannelEnabled ? '开' : '关'}`;
-        toggleMultiChannelBtn.title = multiChannelEnabled ? '已开启多渠道，点击后临时并入默认渠道' : '已关闭多渠道，点击后恢复按交易对渠道请求';
-        toggleMultiChannelBtn.setAttribute('aria-pressed', multiChannelEnabled ? 'true' : 'false');
-        toggleMultiChannelBtn.classList.toggle('active', multiChannelEnabled);
+        const state = getRequestChannelUtils().buildMultiChannelToggleState(multiChannelEnabled);
+        toggleMultiChannelBtn.textContent = state.text;
+        toggleMultiChannelBtn.title = state.title;
+        toggleMultiChannelBtn.setAttribute('aria-pressed', state.ariaPressed);
+        toggleMultiChannelBtn.classList.toggle('active', state.active);
     }
 
     function getEffectiveRequestChannelIdForQuote(quote, options = {}) {

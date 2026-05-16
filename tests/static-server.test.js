@@ -263,6 +263,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quotePauseUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
+    const requestChannelUtilsResponse = await request('/request-channel-utils.js');
+    assert.strictEqual(requestChannelUtilsResponse.statusCode, 200);
     const chainDefaultsResponse = await request('/chain-defaults.js');
     assert.strictEqual(chainDefaultsResponse.statusCode, 200);
     const dashboardRendererResponse = await request('/dashboard-renderer.js');
@@ -346,6 +348,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getQueueStatsUtils()'));
     assert.ok(appJsResponse.body.includes('RequestChannelUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('QueueStatsUtils is not loaded'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function buildMultiChannelToggleState(enabled)'));
+    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildMultiChannelToggleState(multiChannelEnabled)'));
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().shouldQueueInverseFetch(quote)'));

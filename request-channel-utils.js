@@ -203,6 +203,18 @@
     }).join('');
   }
 
+  function buildMultiChannelToggleState(enabled) {
+    const active = enabled === true;
+    return {
+      text: `多渠道: ${active ? '开' : '关'}`,
+      title: active
+        ? '已开启多渠道，点击后临时并入默认渠道'
+        : '已关闭多渠道，点击后恢复按交易对渠道请求',
+      ariaPressed: active ? 'true' : 'false',
+      active
+    };
+  }
+
   function buildQueueKey(sourceKey, channelId) {
     const normalizedSourceKey = normalizeString(sourceKey).toLowerCase();
     if (!normalizedSourceKey) return '';
@@ -269,6 +281,7 @@
     DEFAULT_REQUEST_CHANNEL_ID,
     DEFAULT_REQUEST_CHANNEL_NAME,
     buildQueueKey,
+    buildMultiChannelToggleState,
     buildRequestChannelOptionsHtml,
     getEffectiveRequestChannelIdForQuote,
     getEffectiveIntervalForQueue,
