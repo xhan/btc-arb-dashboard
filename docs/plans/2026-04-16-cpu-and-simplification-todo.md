@@ -221,6 +221,7 @@
   - `src/app/dashboard-app.js` 的 CEX book format/summary 顶层过渡包装已移除，注入点直接委托 `src/quote/quote-display-utils.js`
   - `src/app/dashboard-app.js` 的 dex link label/button 顶层过渡包装已移除，调用点直接委托 `src/ui/dex-link-utils.js`
   - `src/app/dashboard-app.js` 的 request channel tag、quote pair label 和 arb detail source HTML 单用途包装已移除，调用点直接委托对应 utils
+  - `src/app/dashboard-app.js` 的报价显示模式按钮刷新单用途包装已移除，切换和初始化流程直接委托 quote display utils
   - `src/app/dashboard-app.js` 中未调用的 CEX trading pair parser 包装和 `TradingPairUtils` 入口已移除
   - `src/app/dashboard-app.js` 的 single-chain display name 和 paused monitor state 单用途包装已移除，调用点复用现有 helper / utils
   - `src/app/dashboard-app.js` 的多渠道开关 storage 值解析/序列化已下沉到 `src/request-channel/request-channel-utils.js`

@@ -1314,10 +1314,6 @@
         );
     }
 
-    function renderQuoteDisplayToggle() {
-        getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode);
-    }
-
     function rerenderQuoteDisplayTexts() {
         for (const category of dashboardState) {
             const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
@@ -1341,7 +1337,7 @@
 
     function toggleQuoteDisplayMode() {
         quoteDisplayMode = getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode);
-        renderQuoteDisplayToggle();
+        getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode);
         rerenderQuoteDisplayTexts();
     }
 
@@ -4017,7 +4013,7 @@
                 });
             }
 
-            renderQuoteDisplayToggle();
+            getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode);
             if (toggleArbBtn) {
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
             }

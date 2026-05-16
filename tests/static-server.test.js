@@ -816,6 +816,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildInverseQuoteDisplayTextForState(quote, state'));
+    assert.ok(!appJsResponse.body.includes('function renderQuoteDisplayToggle('));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode)'));
     assert.ok(!appJsResponse.body.includes('toggleQuoteDisplayBtn.textContent = state.text'));
     assert.ok(!appJsResponse.body.includes('toggleQuoteDisplayBtn.title = state.title'));
