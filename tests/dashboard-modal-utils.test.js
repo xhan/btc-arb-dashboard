@@ -4,15 +4,20 @@ const {
   applyAddQuoteFormViewState,
   applyQuoteSettingsModalWritePlan,
   applySettingsIntervalWritePlan,
+  closeAddCategoryModal,
+  closeConfirmModal,
+  openAddCategoryModal,
   readAddQuoteFormValues,
+  readAddCategoryFormValues,
   readQuoteSettingsFormValues,
   readSettingsIntervalFormValues,
   resetAddQuoteModal,
+  showConfirmModal,
   syncAddQuoteFormControls
 } = require('../src/dashboard/dashboard-modal-utils');
 
-function createClassList() {
-  const values = new Set(['visible']);
+function createClassList(initialValues = ['visible']) {
+  const values = new Set(initialValues);
   return {
     values,
     add(value) {
@@ -186,3 +191,39 @@ assert.deepStrictEqual(readSettingsIntervalFormValues(settingsIntervalRefs, {
   zerox: 111,
   missing: ''
 });
+
+let addCategoryFocusCount = 0;
+const addCategoryRefs = {
+  modal: { classList: createClassList([]) },
+  'add-category-name': {
+    value: 'stale name',
+    focus() {
+      addCategoryFocusCount += 1;
+    }
+  }
+};
+openAddCategoryModal(addCategoryRefs);
+assert.strictEqual(addCategoryRefs['add-category-name'].value, '');
+assert.strictEqual(addCategoryRefs.modal.classList.contains('visible'), true);
+assert.strictEqual(addCategoryFocusCount, 1);
+assert.deepStrictEqual(readAddCategoryFormValues(addCategoryRefs, {
+  readAddCategoryFormValues: ({ readValue }) => ({
+    name: readValue('add-category-name'),
+    missing: readValue('missing-input')
+  })
+}), {
+  name: '',
+  missing: ''
+});
+closeAddCategoryModal(addCategoryRefs);
+assert.strictEqual(addCategoryRefs.modal.classList.contains('visible'), false);
+
+const confirmRefs = {
+  modal: { classList: createClassList([]) },
+  message: { textContent: '' }
+};
+showConfirmModal(confirmRefs, '确定删除此报价吗？');
+assert.strictEqual(confirmRefs.message.textContent, '确定删除此报价吗？');
+assert.strictEqual(confirmRefs.modal.classList.contains('visible'), true);
+closeConfirmModal(confirmRefs);
+assert.strictEqual(confirmRefs.modal.classList.contains('visible'), false);

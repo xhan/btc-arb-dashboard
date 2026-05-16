@@ -23,6 +23,18 @@
     }
   }
 
+  function addClass(element, className) {
+    if (element && element.classList && typeof element.classList.add === 'function') {
+      element.classList.add(className);
+    }
+  }
+
+  function removeClass(element, className) {
+    if (element && element.classList && typeof element.classList.remove === 'function') {
+      element.classList.remove(className);
+    }
+  }
+
   function applyQuoteSettingsModalWritePlan(refs = {}, plan = {}) {
     (plan.text || []).forEach((item) => {
       const element = refs[item.id];
@@ -78,6 +90,39 @@
     };
   }
 
+  function openAddCategoryModal(refs = {}) {
+    const nameInput = refs['add-category-name'];
+    setElementValue(nameInput, '');
+    addClass(refs.modal, 'visible');
+    if (nameInput && typeof nameInput.focus === 'function') {
+      nameInput.focus();
+    }
+  }
+
+  function closeAddCategoryModal(refs = {}) {
+    removeClass(refs.modal, 'visible');
+  }
+
+  function readAddCategoryFormValues(refs = {}, options = {}) {
+    const readAddCategoryFormValues = typeof options.readAddCategoryFormValues === 'function'
+      ? options.readAddCategoryFormValues
+      : () => ({});
+    return readAddCategoryFormValues({
+      readValue: (id) => readElementValue(refs[id])
+    });
+  }
+
+  function showConfirmModal(refs = {}, message = '') {
+    if (refs.message) {
+      refs.message.textContent = message;
+    }
+    addClass(refs.modal, 'visible');
+  }
+
+  function closeConfirmModal(refs = {}) {
+    removeClass(refs.modal, 'visible');
+  }
+
   function applyAddQuoteFormViewState(refs = {}, viewState = {}) {
     setDisplay(refs.toChainGroup, viewState.targetChainVisible ? 'block' : 'none');
     if (refs.toChainSelect && refs.toChainSelect.value !== viewState.toChainValue) {
@@ -119,9 +164,7 @@
     if (typeof options.syncControls === 'function') {
       options.syncControls();
     }
-    if (refs.modal && refs.modal.classList && typeof refs.modal.classList.remove === 'function') {
-      refs.modal.classList.remove('visible');
-    }
+    removeClass(refs.modal, 'visible');
     return { currentCategoryIdToAdd: null };
   }
 
@@ -129,10 +172,15 @@
     applyAddQuoteFormViewState,
     applyQuoteSettingsModalWritePlan,
     applySettingsIntervalWritePlan,
+    closeAddCategoryModal,
+    closeConfirmModal,
+    openAddCategoryModal,
     readAddQuoteFormValues,
+    readAddCategoryFormValues,
     readQuoteSettingsFormValues,
     readSettingsIntervalFormValues,
     resetAddQuoteModal,
+    showConfirmModal,
     syncAddQuoteFormControls
   };
 });

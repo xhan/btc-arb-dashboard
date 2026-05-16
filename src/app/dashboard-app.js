@@ -246,6 +246,14 @@
     const confirmCancelBtn = document.getElementById('confirm-cancel');
     const addCategoryModal = document.getElementById('add-category-modal');
     const addCategoryNameInput = document.getElementById('add-category-name');
+    const addCategoryModalRefs = {
+        modal: addCategoryModal,
+        'add-category-name': addCategoryNameInput
+    };
+    const confirmModalRefs = {
+        modal: confirmModal,
+        message: confirmMessageEl
+    };
     const globalTooltip = document.getElementById('global-tooltip');
     const copyToast = document.getElementById('copy-toast');
     const arbPathWindow = document.getElementById('arb-path-window');
@@ -4453,18 +4461,16 @@
     });
 
     function openAddCategoryModal() {
-        addCategoryNameInput.value = '';
-        addCategoryModal.classList.add('visible');
-        addCategoryNameInput.focus();
+        getDashboardModalUtils().openAddCategoryModal(addCategoryModalRefs);
     }
 
     function closeAddCategoryModal() {
-        addCategoryModal.classList.remove('visible');
+        getDashboardModalUtils().closeAddCategoryModal(addCategoryModalRefs);
     }
 
     function getAddCategoryFormValues() {
-        return getDashboardRenderer().readAddCategoryFormValues({
-            readValue: (id) => (id === 'add-category-name' ? addCategoryNameInput.value : '')
+        return getDashboardModalUtils().readAddCategoryFormValues(addCategoryModalRefs, {
+            readAddCategoryFormValues: getDashboardRenderer().readAddCategoryFormValues
         });
     }
 
@@ -4491,13 +4497,12 @@
     dashboardEl.addEventListener('input', handleDashboardInput);
 
     function showConfirmation(message, callback) {
-        if (confirmMessageEl) confirmMessageEl.textContent = message;
+        getDashboardModalUtils().showConfirmModal(confirmModalRefs, message);
         onConfirmAction = callback;
-        confirmModal.classList.add('visible');
     }
 
     function closeConfirmModal() {
-        confirmModal.classList.remove('visible');
+        getDashboardModalUtils().closeConfirmModal(confirmModalRefs);
         onConfirmAction = null;
     }
 
