@@ -199,7 +199,10 @@
     const arbDetailGrid = document.getElementById('arb-detail-grid');
     const requestChannelSelectGroup = document.getElementById('request-channel-select-group');
     const quoteRequestChannelSelect = document.getElementById('quote-request-channel');
-    let copyToastTimer = null;
+    const copyToastRuntime = getCopyUtils().createCopyToastRuntime({
+        setTimeout,
+        clearTimeout
+    });
     const THEME_ORDER = ['light', 'warm', 'dark'];
     const THEME_META = {
         light: { icon: '☀️', title: '切换主题（当前：浅色）' },
@@ -3955,16 +3958,7 @@
     }
 
     function showCopyToast(message) {
-        if (!copyToast) return;
-        if (copyToastTimer) {
-            clearTimeout(copyToastTimer);
-            copyToastTimer = null;
-        }
-        copyToast.textContent = message;
-        copyToast.classList.add('visible');
-        copyToastTimer = setTimeout(() => {
-            copyToast.classList.remove('visible');
-        }, 1200);
+        copyToastRuntime.show(copyToast, message);
     }
 
     function handleQuoteHover(event, quoteId) {

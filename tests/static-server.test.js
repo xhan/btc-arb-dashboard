@@ -1065,6 +1065,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('Token -&gt; Token'));
     assert.ok(appJsResponse.body.includes('function getCopyUtils()'));
     assert.ok(appJsResponse.body.includes('CopyUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('const copyToastRuntime = getCopyUtils().createCopyToastRuntime({'));
+    assert.ok(appJsResponse.body.includes('copyToastRuntime.show(copyToast, message);'));
+    assert.ok(!appJsResponse.body.includes('let copyToastTimer = null;'));
     assert.ok(appJsResponse.body.includes('function getAlertDebugUtils()'));
     assert.ok(appJsResponse.body.includes('AlertDebugUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('const alertDebugController = getAlertDebugUtils().createAlertDebugController({'));
@@ -1208,6 +1211,7 @@ async function waitForServer(attempts = 12) {
     const copyUtilsResponse = await request('/copy-utils.js');
     assert.strictEqual(copyUtilsResponse.statusCode, 200);
     assert.ok(copyUtilsResponse.body.includes('Clipboard fallback failed'));
+    assert.ok(copyUtilsResponse.body.includes('function createCopyToastRuntime(options = {})'));
 
     const chartsRendererResponse = await request('/charts-renderer.js');
     assert.strictEqual(chartsRendererResponse.statusCode, 200);

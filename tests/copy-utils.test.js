@@ -1,8 +1,48 @@
 const assert = require('assert');
 
-const { copyTextToClipboard } = require('../copy-utils');
+const {
+  createCopyToastRuntime,
+  copyTextToClipboard
+} = require('../copy-utils');
 
 async function run() {
+  let timerId = 0;
+  const timers = [];
+  const clearedTimers = [];
+  const classNames = new Set();
+  const toastRuntime = createCopyToastRuntime({
+    durationMs: 1200,
+    setTimeout(callback, delayMs) {
+      const timer = { id: ++timerId, callback, delayMs };
+      timers.push(timer);
+      return timer;
+    },
+    clearTimeout(timer) {
+      clearedTimers.push(timer.id);
+    }
+  });
+  const toastEl = {
+    textContent: '',
+    classList: {
+      add(className) {
+        classNames.add(className);
+      },
+      remove(className) {
+        classNames.delete(className);
+      }
+    }
+  };
+  assert.strictEqual(toastRuntime.show(toastEl, 'copied'), true);
+  assert.strictEqual(toastEl.textContent, 'copied');
+  assert.strictEqual(classNames.has('visible'), true);
+  assert.strictEqual(timers[0].delayMs, 1200);
+  toastRuntime.show(toastEl, 'copied again', 600);
+  assert.deepStrictEqual(clearedTimers, [1]);
+  assert.strictEqual(timers[1].delayMs, 600);
+  timers[1].callback();
+  assert.strictEqual(classNames.has('visible'), false);
+  assert.strictEqual(toastRuntime.getTimer(), null);
+
   let clipboardText = null;
   await copyTextToClipboard('hello', {
     navigator: {

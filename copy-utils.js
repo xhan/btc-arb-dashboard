@@ -57,7 +57,58 @@
     }
   }
 
+  function createCopyToastRuntime(options = {}) {
+    const setTimer = typeof options.setTimeout === 'function'
+      ? options.setTimeout
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimer = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const defaultDurationMs = Number.isFinite(Number(options.durationMs)) && Number(options.durationMs) >= 0
+      ? Number(options.durationMs)
+      : 1200;
+    const visibleClass = String(options.visibleClass || 'visible');
+    let timer = null;
+
+    function clear() {
+      if (timer === null) return false;
+      if (clearTimer) {
+        clearTimer(timer);
+      }
+      timer = null;
+      return true;
+    }
+
+    function show(toastEl, message, durationMs = defaultDurationMs) {
+      if (!toastEl) return false;
+      clear();
+      toastEl.textContent = message;
+      if (toastEl.classList && typeof toastEl.classList.add === 'function') {
+        toastEl.classList.add(visibleClass);
+      }
+      if (setTimer) {
+        const safeDurationMs = Number.isFinite(Number(durationMs)) && Number(durationMs) >= 0
+          ? Number(durationMs)
+          : defaultDurationMs;
+        timer = setTimer(() => {
+          timer = null;
+          if (toastEl.classList && typeof toastEl.classList.remove === 'function') {
+            toastEl.classList.remove(visibleClass);
+          }
+        }, safeDurationMs);
+      }
+      return true;
+    }
+
+    return {
+      clear,
+      getTimer: () => timer,
+      show
+    };
+  }
+
   return {
+    createCopyToastRuntime,
     copyTextToClipboard
   };
 });
