@@ -8,6 +8,7 @@ const {
   resolveDefaultDisplayMinProfitBp,
   selectCyclesAboveDisplayThreshold,
   selectPositiveCyclesOrBest,
+  buildArbPanelColumns,
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
   buildFixedArbSections,
@@ -34,6 +35,27 @@ const columns = splitSectionsIntoColumns(sections, 6, 2);
 assert.strictEqual(columns.length, 2);
 assert.deepStrictEqual(columns[0].map((item) => [item.title, item.opportunities.length]), [['固定路径', 6]]);
 assert.deepStrictEqual(columns[1].map((item) => [item.title, item.opportunities.length]), [['固定路径', 2], ['特殊规则', 3]]);
+
+assert.deepStrictEqual(
+  buildArbPanelColumns({
+    fixedSections: [
+      { title: '固定 1', opportunities: [] },
+      { title: '固定 2', opportunities: [] },
+      { title: '固定 3', opportunities: [] }
+    ],
+    fixedSectionLimit: 2,
+    specialSections: [{ title: '特殊', opportunities: [] }],
+    quoteSection: { title: '关注列表', opportunities: [] },
+    globalSection: { title: '全局路径', opportunities: [] }
+  }).map((column) => column.map((section) => section.title)),
+  [
+    ['固定 1', '固定 2'],
+    ['固定 3'],
+    ['特殊'],
+    ['关注列表'],
+    ['全局路径']
+  ]
+);
 
 const emptySections = Array.from({ length: 8 }, (_, index) => ({ title: `固定路径 ${index + 1}`, opportunities: [] }));
 const emptyColumns = splitSectionsIntoColumns(emptySections, 6, 2);

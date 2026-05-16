@@ -495,6 +495,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('window.DomRenderUtils.'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta = {}, options = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbPanelColumns(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildFixedArbSections(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbSection(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildSpecialArbSections(options = {})'));
@@ -747,7 +748,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes(".filter((item) => item && item.type === 'quote-price')"));
     assert.ok(!appJsResponse.body.includes('buildQuotePriceWatchEntries()'));
     assert.ok(!appJsResponse.body.includes('buildQuoteAlertWatchEntries'));
-    assert.ok(appJsResponse.body.includes('const columns = ['));
+    assert.ok(appJsResponse.body.includes('const columns = getArbPanelLayoutUtils().buildArbPanelColumns({'));
+    assert.ok(!appJsResponse.body.includes('const columns = ['));
     assert.ok(appJsResponse.body.includes('const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);'));
     assert.ok(!appJsResponse.body.includes('const filterState = layoutUtils.filterGlobalArbCycles(globalCycles, {'));
     assert.ok(!appJsResponse.body.includes('function parseArbFilterInput'));

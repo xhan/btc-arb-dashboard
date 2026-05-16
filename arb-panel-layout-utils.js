@@ -82,6 +82,21 @@
     return columns;
   }
 
+  function buildArbPanelColumns(options = {}) {
+    const fixedColumns = splitSectionsBySectionCount(
+      options.fixedSections,
+      options.fixedSectionLimit || 6,
+      options.fixedMaxColumns || 2
+    );
+    return [
+      fixedColumns[0] || [],
+      fixedColumns[1] || [],
+      Array.isArray(options.specialSections) ? options.specialSections : [],
+      options.quoteSection ? [options.quoteSection] : [],
+      options.globalSection ? [options.globalSection] : []
+    ];
+  }
+
   function resolveItemsBySelectors(items, selectors) {
     const safeItems = Array.isArray(items) ? items : [];
     const safeSelectors = Array.isArray(selectors) ? selectors : [];
@@ -444,6 +459,7 @@
   return {
     splitSectionsIntoColumns,
     splitSectionsBySectionCount,
+    buildArbPanelColumns,
     resolveItemsBySelectors,
     DEFAULT_DISPLAY_MIN_PROFIT_BP,
     normalizeDisplayMinProfitBp,

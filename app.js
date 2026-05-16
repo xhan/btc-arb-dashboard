@@ -3929,14 +3929,12 @@
             nextOpportunityMap,
             nextOpportunityIdsByTargetKey
         );
-        const fixedColumns = getArbPanelLayoutUtils().splitSectionsBySectionCount(fixedSections, 6, 2);
-        const columns = [
-            fixedColumns[0] || [],
-            fixedColumns[1] || [],
+        const columns = getArbPanelLayoutUtils().buildArbPanelColumns({
+            fixedSections,
             specialSections,
-            [buildQuotePriceWatchSection()],
-            [globalSection]
-        ];
+            quoteSection: buildQuotePriceWatchSection(),
+            globalSection
+        });
 
         return {
             columns,
