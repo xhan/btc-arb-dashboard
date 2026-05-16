@@ -411,6 +411,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteDisplayTextDomState({'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteDataError(quoteDataEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseQueuedDomState({'));
+    assert.ok(appJsResponse.body.includes('const inverseQueuedText = Number.isFinite(Number(newState.inverseRawPrice))'));
+    assert.ok(appJsResponse.body.includes('text: inverseQueuedText'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseResultDomState({'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseErrorDomState({'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().removeQuoteInverseElement(inverseEl)'));

@@ -3734,12 +3734,16 @@
                 updateQuotePairLabel(quote, newState);
 
                 if (shouldQueueInverseFetch(quote)) {
+                    const inverseQueuedText = Number.isFinite(Number(newState.inverseRawPrice))
+                        ? getInverseQuoteDisplayText(quote, newState, inverseEl && inverseEl.textContent || '反向报价排队中...')
+                        : '反向报价排队中...';
                     inverseEl = getDomRenderUtils().applyQuoteInverseQueuedDomState({
                         quoteDataEl,
                         inverseEl
                     }, {
                         id: inverseContainerId,
-                        documentImpl: document
+                        documentImpl: document,
+                        text: inverseQueuedText
                     });
                 } else {
                     getDomRenderUtils().removeQuoteInverseElement(inverseEl);
