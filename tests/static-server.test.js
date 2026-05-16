@@ -1774,7 +1774,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('return getArbDetailUtils().isArbRuleLeg(leg);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbOpportunityChartHref('));
-    assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg)'));
+    assert.ok(/getArbDetailUtils\(\)\.resolveArbOpportunityBaseAmount\(\s*current\.cycle,\s*findQuoteById,\s*isRuleLeg\s*\)/.test(appJsResponse.body));
+    assert.ok(!appJsResponse.body.includes('function doesArbDetailUseQuote('));
+    assert.ok(!appJsResponse.body.includes('function getArbOpportunityBaseAmount('));
+    assert.ok(!appJsResponse.body.includes('function getFixedRuleById('));
+    assert.ok(!appJsResponse.body.includes('function getSpecialRuleById('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShellDom(arbDetailState.cards, {'));
     assert.ok(appJsResponse.body.includes('gridEl: arbDetailGrid'));
     assert.ok(!appJsResponse.body.includes("arbDetailGrid.querySelectorAll('[data-arb-detail-card-index]')"));

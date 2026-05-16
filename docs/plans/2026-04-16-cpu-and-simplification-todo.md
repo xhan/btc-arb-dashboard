@@ -256,6 +256,7 @@
   - `src/app/dashboard-app.js` 的报价设置 Kyber direct pools 控件显示写入、请求渠道选择器 DOM 写入和 modal write plan 单行包装已收敛到 `src/dashboard/dashboard-modal-utils.js`
   - `src/app/dashboard-app.js` 的全局设置弹窗打开/取消/保存事件绑定和 interval 读写编排已下沉到 `src/dashboard/dashboard-modal-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 subtitle 文案/DOM 写入、shell/error HTML 写入和 modal visible class 切换已下沉到 `src/arb/arb-detail-utils.js`
+  - `src/app/dashboard-app.js` 的套利详情 quote 使用判断、base amount 解析和 rule id 查找单用途包装已移除，调用点直接委托 detail utils / rule definitions
   - `src/app/dashboard-app.js` 的套利详情 shell rebuild DOM 计数和元素存在性检查已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 input value 同步策略与写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 card rows/summary DOM 查找与写入已下沉到 `src/arb/arb-detail-utils.js`

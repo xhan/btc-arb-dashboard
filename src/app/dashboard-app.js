@@ -1581,10 +1581,6 @@
         }
     }
 
-    function doesArbDetailUseQuote(quoteId) {
-        return getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId);
-    }
-
     function nudgeArbDetailInput(index, delta) {
         const card = arbDetailState.cards[index];
         if (!card) return;
@@ -1605,10 +1601,6 @@
         return getDashboardRuntimeUtils().findDashboardQuoteMatchById(dashboardState, quoteId);
     }
 
-    function getArbOpportunityBaseAmount(cycle) {
-        return getArbDetailUtils().resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg);
-    }
-
     function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
         const configuredPriority = Array.isArray(arbCycleStartPriority) && arbCycleStartPriority.length
             ? arbCycleStartPriority
@@ -1624,14 +1616,6 @@
 
     function buildQuoteMetaById() {
         return getDashboardRuntimeUtils().buildQuoteMetaById(dashboardState);
-    }
-
-    function getFixedRuleById(ruleId) {
-        return FIXED_PATH_RULES.find((rule) => rule.id === ruleId) || null;
-    }
-
-    function getSpecialRuleById(ruleId) {
-        return SPECIAL_ARB_RULES.find((rule) => rule.id === ruleId) || null;
     }
 
     function buildLiveQuoteLabel(chain, fromSymbol, toSymbol, suffix = '') {
@@ -2283,7 +2267,11 @@
             arbDetailFetchController = null;
         }
 
-        const baseAmount = getArbOpportunityBaseAmount(current.cycle);
+        const baseAmount = getArbDetailUtils().resolveArbOpportunityBaseAmount(
+            current.cycle,
+            findQuoteById,
+            isRuleLeg
+        );
         arbDetailState = getArbDetailUtils().buildOpenArbDetailState(arbDetailState, {
             opportunityId,
             opportunity: current,
@@ -2558,7 +2546,7 @@
 
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
         if (target.ruleKind === 'fixed') {
-            const rule = getFixedRuleById(target.ruleId);
+            const rule = FIXED_PATH_RULES.find((item) => item.id === target.ruleId) || null;
             if (!rule) return { available: false };
             const cycles = sharedRuleSnapshot && sharedRuleSnapshot.fixedByRuleId
                 ? sharedRuleSnapshot.fixedByRuleId[target.ruleId]
@@ -2575,7 +2563,7 @@
                 : { available: false };
         }
 
-        const rule = getSpecialRuleById(target.ruleId);
+        const rule = SPECIAL_ARB_RULES.find((item) => item.id === target.ruleId) || null;
         if (!rule) {
             return { available: false };
         }
@@ -3980,7 +3968,7 @@
             resetQuoteUiRuntimeState(quoteId);
             applyPausedQuoteUiState(quote, getQuoteMarketState(quoteId) || {});
             updateSchedulers();
-            if (doesArbDetailUseQuote(quoteId)) {
+            if (getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId)) {
                 closeArbDetailModal();
             }
         } else {
