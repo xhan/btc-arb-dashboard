@@ -27,6 +27,7 @@ const {
 } = require('./src/path-alerts/path-alert-utils');
 const { buildPathAlertQuoteCandidatesFromConfig } = require('./src/server/path-alert-candidate-service');
 const { createCetusAggregatorClient } = require('./src/server/cetus-aggregator-config');
+const { createEvmProviders } = require('./src/server/evm-provider-utils');
 const { createRuntimeConfigStore, loadStartupCetusAggregatorConfig } = require('./src/server/runtime-config-utils');
 const { registerQuoteRoutes } = require('./src/server/quote-route-utils');
 const { sendPathAlertRemoteWebhooks } = require('./src/server/path-alert-webhook-utils');
@@ -239,54 +240,10 @@ async function getAlertConfig() {
     }
 }
 
-// chainlist.org RPC endpoints
-const RPC_URLS = {
-    ethereum: 'https://eth.llamarpc.com',
-    optimism: 'https://optimism-rpc.publicnode.com',
-    bsc: 'https://bsc-rpc.publicnode.com',
-    polygon: 'https://polygon-bor-rpc.publicnode.com',
-    base: 'https://base.llamarpc.com',
-    arbitrum: 'https://arbitrum-one-rpc.publicnode.com',
-    avalanche: 'https://api.avax.network/ext/bc/C/rpc',
-    linea: 'https://linea-rpc.publicnode.com',
-    scroll: 'https://rpc.scroll.io',
-    mantle: 'https://mantle-rpc.publicnode.com',
-    blast: 'https://rpc.blast.io',
-    mode: 'https://mainnet.mode.network',
-
-    sonic: 'https://rpc.soniclabs.com',
-    berachain: 'https://berachain-rpc.publicnode.com',
-    ronin: 'https://ronin.drpc.org',
-    unichain: 'https://sepolia.unichain.org',
-    hyperevm: 'https://rpc.hypurrscan.io',
-    plasma: 'https://rpc.plasma.to',
-    etherlink: 'https://node.mainnet.etherlink.com',
-    monad: 'https://monad-mainnet.drpc.org',
-    megaeth: 'https://mainnet.megaeth.com/rpc',
-
-    zksync: 'https://mainnet.era.zksync.io',
-    moonbeam: 'https://rpc.api.moonbeam.network',
-    boba: 'https://mainnet.boba.network',
-    gnosis: 'https://rpc.gnosischain.com',
-    rootstock: 'https://public-node.rsk.co',
-    'polygon-zkevm': 'https://zkevm-rpc.com',
-    taiko: 'https://rpc.mainnet.taiko.xyz',
-    sei: 'https://evm-rpc.sei-apis.com',
-    filecoin: 'https://api.node.glif.io/rpc/v1',
-    celo: 'https://forno.celo.org',
-    fantom: 'https://rpc.ftm.tools',
-    cronos: 'https://evm.cronos.org'
-};
-
-const evmProviders = {};
-for (const chain in RPC_URLS) {
-    try {
-        evmProviders[chain] = new ethers.JsonRpcProvider(RPC_URLS[chain]);
-    } catch (e) {
-        console.warn(`⚠️ ${chain} Provider 初始化失败:`, e.message);
-    }
-}
-console.log("所有 EVM Provider 初始化尝试完成");
+const evmProviders = createEvmProviders({
+    ProviderClass: ethers.JsonRpcProvider,
+    logger: console
+});
 
 const suiClient = new SuiClient({ url: getFullnodeUrl('mainnet') });
 const cetusAggregator = createCetusAggregatorClient(loadStartupCetusAggregatorConfig(CONFIG_MORE_PATH, {
