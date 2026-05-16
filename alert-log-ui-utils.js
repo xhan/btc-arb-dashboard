@@ -335,8 +335,6 @@
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
     buildRestoredMutedAlertLogPlan,
-    buildMutedStateItemHtml,
-    buildMutedStateSectionHtml,
     buildMutedAlertStatePanelHtml,
     buildRestoredMutedAlertLogHtml,
     buildPathAlertLogCardHtml,

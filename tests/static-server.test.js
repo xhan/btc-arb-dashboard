@@ -420,6 +420,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildMutedAlertStatePanelHtml({'));
     assert.ok(alertLogUiResponse.body.includes('function buildMutedAlertStatePanelHtml(config = {})'));
+    const alertLogUiExportBlock = alertLogUiResponse.body.match(/return \{\n    isMutedAlertLogEntry,[\s\S]*?\n  \};/);
+    assert.ok(alertLogUiExportBlock);
+    assert.ok(!alertLogUiExportBlock[0].includes('buildMutedStateItemHtml'));
+    assert.ok(!alertLogUiExportBlock[0].includes('buildMutedStateSectionHtml'));
     assert.ok(!appJsResponse.body.includes('alertLogUi.buildMutedStateItemHtml({'));
     assert.ok(!appJsResponse.body.includes('alertLogUi.buildMutedStateSectionHtml(\'沉默的路径\''));
     assert.ok(!appJsResponse.body.includes('window.AlertLogUiUtils.'));

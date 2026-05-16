@@ -7,8 +7,6 @@ const {
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
   buildRestoredMutedAlertLogPlan,
-  buildMutedStateItemHtml,
-  buildMutedStateSectionHtml,
   buildMutedAlertStatePanelHtml,
   buildRestoredMutedAlertLogHtml,
   buildPathAlertLogCardHtml,
@@ -105,41 +103,17 @@ assert.deepStrictEqual(
   ]
 );
 
-const itemHtml = buildMutedStateItemHtml({
-  title: 'A <B>',
-  lines: ['line & one', '', null],
-  status: '还剩 <1 分钟>',
-  actions: [
-    { label: '恢复 <now>', dataAttr: 'data-muted-restore', value: 'a"b' }
-  ]
-});
-
-assert.ok(itemHtml.includes('A &lt;B&gt;'));
-assert.ok(itemHtml.includes('line &amp; one'));
-assert.ok(!itemHtml.includes('<div></div>'));
-assert.ok(itemHtml.includes('还剩 &lt;1 分钟&gt;'));
-assert.ok(itemHtml.includes('data-muted-restore="a&quot;b"'));
-assert.ok(itemHtml.includes('恢复 &lt;now&gt;'));
-
-const emptySectionHtml = buildMutedStateSectionHtml('沉默 <路径>', [], '当前为空 & 可恢复');
-assert.ok(emptySectionHtml.includes('沉默 &lt;路径&gt;'));
-assert.ok(emptySectionHtml.includes('当前为空 &amp; 可恢复'));
-
-const listSectionHtml = buildMutedStateSectionHtml('屏蔽的腿', ['<div class="muted-state-item">A</div>'], '空');
-assert.ok(listSectionHtml.includes('<div class="muted-state-item">A</div>'));
-assert.ok(!listSectionHtml.includes('muted-state-empty'));
-
 const mutedStatePanelHtml = buildMutedAlertStatePanelHtml({
   mutedPathTargets: [
     { id: 'old-path', mutedAt: 1000, summaryLinesSnapshot: ['old line'] },
-    { id: 'new-path', mutedAt: 3000, logTitleSnapshot: 'New Path', summaryLinesSnapshot: ['new line'] }
+    { id: 'new"path', mutedAt: 3000, logTitleSnapshot: 'New <Path>', summaryLinesSnapshot: ['new line & more', '', null] }
   ],
   mutedPathLegs: [
     { key: 'old-leg', mutedAt: 1000, titleSnapshot: 'Old Leg' },
     { key: 'new-leg', mutedAt: 4000, chain: 'Base', fromSymbol: 'A', toSymbol: 'B' }
   ],
   buildPathTargetKey: (entry) => entry.id,
-  buildPathStatusText: (entry) => `path ${entry.id}`,
+  buildPathStatusText: (entry) => `path <${entry.id}>`,
   buildLegKey: (entry) => entry.key,
   buildLegTitle: (entry) => entry.titleSnapshot || `${entry.chain}:${entry.fromSymbol}->${entry.toSymbol}`,
   buildLegStatusText: (entry) => `leg ${entry.key}`
@@ -147,10 +121,15 @@ const mutedStatePanelHtml = buildMutedAlertStatePanelHtml({
 
 assert.ok(mutedStatePanelHtml.includes('沉默的路径'));
 assert.ok(mutedStatePanelHtml.includes('屏蔽的腿'));
-assert.ok(mutedStatePanelHtml.indexOf('New Path') < mutedStatePanelHtml.indexOf('old line'));
+assert.ok(mutedStatePanelHtml.indexOf('New &lt;Path&gt;') < mutedStatePanelHtml.indexOf('old line'));
 assert.ok(mutedStatePanelHtml.indexOf('Base:A-&gt;B') < mutedStatePanelHtml.indexOf('Old Leg'));
-assert.ok(mutedStatePanelHtml.includes('data-muted-path-target-extend="new-path"'));
+assert.ok(mutedStatePanelHtml.includes('new line &amp; more'));
+assert.ok(!mutedStatePanelHtml.includes('<div></div>'));
+assert.ok(mutedStatePanelHtml.includes('path &lt;new&quot;path&gt;'));
+assert.ok(mutedStatePanelHtml.includes('data-muted-path-target-extend="new&quot;path"'));
 assert.ok(mutedStatePanelHtml.includes('data-muted-path-leg-restore="old-leg"'));
+assert.ok(mutedStatePanelHtml.includes('延长 2 小时'));
+assert.ok(mutedStatePanelHtml.includes('恢复'));
 
 const emptyMutedStatePanelHtml = buildMutedAlertStatePanelHtml();
 assert.ok(emptyMutedStatePanelHtml.includes('当前没有沉默中的路径'));
