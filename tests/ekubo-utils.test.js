@@ -6,7 +6,7 @@ const {
   buildEkuboQuoteUrl,
   extractEkuboAmountOutRaw,
   buildEkuboQuoteResult
-} = require('../market-clients/providers/ekubo-utils');
+} = require('../src/market-clients/providers/ekubo-utils');
 
 assert.strictEqual(EKUBO_STARKNET_CHAIN_ID, '0x534e5f4d41494e');
 assert.strictEqual(EKUBO_STARKNET_QUOTER_CHAIN_ID, '23448594291968334');

@@ -6,7 +6,7 @@ const {
   normalizeDecimalAmount,
   normalizeTokenMetaCacheKey,
   toRawAmount
-} = require('../market-clients/token-meta');
+} = require('../src/market-clients/token-meta');
 
 (async () => {
   const writes = [];

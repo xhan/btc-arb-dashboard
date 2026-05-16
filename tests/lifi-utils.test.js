@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const { buildLifiChainIdMap, resolveLifiChainId } = require('../market-clients/providers/lifi-utils');
+const { buildLifiChainIdMap, resolveLifiChainId } = require('../src/market-clients/providers/lifi-utils');
 
 const sampleChains = [
   {

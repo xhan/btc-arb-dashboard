@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const { getDisplayedToAmountRaw } = require('../market-clients/providers/lifi-quote-utils');
+const { getDisplayedToAmountRaw } = require('../src/market-clients/providers/lifi-quote-utils');
 
 const quoteWithProtocolFee = {
   action: {

@@ -1,14 +1,14 @@
 const assert = require('assert');
 
-const { createBybitClient } = require('../market-clients/providers/bybit');
-const { createBinanceClient } = require('../market-clients/providers/binance');
-const { createJupiterClient } = require('../market-clients/providers/jupiter');
-const { createEkuboClient } = require('../market-clients/providers/ekubo');
-const { createKyberClient } = require('../market-clients/providers/kyber');
-const { createLifiClient } = require('../market-clients/providers/lifi');
-const { createVeloraClient } = require('../market-clients/providers/velora');
-const { createZeroXClient } = require('../market-clients/providers/zerox');
-const { createCetusClient } = require('../market-clients/providers/cetus');
+const { createBybitClient } = require('../src/market-clients/providers/bybit');
+const { createBinanceClient } = require('../src/market-clients/providers/binance');
+const { createJupiterClient } = require('../src/market-clients/providers/jupiter');
+const { createEkuboClient } = require('../src/market-clients/providers/ekubo');
+const { createKyberClient } = require('../src/market-clients/providers/kyber');
+const { createLifiClient } = require('../src/market-clients/providers/lifi');
+const { createVeloraClient } = require('../src/market-clients/providers/velora');
+const { createZeroXClient } = require('../src/market-clients/providers/zerox');
+const { createCetusClient } = require('../src/market-clients/providers/cetus');
 
 (async () => {
   const kyberRequests = [];

@@ -33,9 +33,9 @@ const ethersModule = require('ethers');
       enumerable: true,
       writable: true
     });
-    delete require.cache[require.resolve('../market-clients')];
-    delete require.cache[require.resolve('../market-clients/index.js')];
-    let { createMarketClients } = require('../market-clients');
+    delete require.cache[require.resolve('../src/market-clients')];
+    delete require.cache[require.resolve('../src/market-clients/index.js')];
+    let { createMarketClients } = require('../src/market-clients');
 
     const retryClients = createMarketClients({
       cachePath: '/tmp/market-diff-test-metadata-cache.json',
@@ -76,9 +76,9 @@ const ethersModule = require('ethers');
       enumerable: true,
       writable: true
     });
-    delete require.cache[require.resolve('../market-clients')];
-    delete require.cache[require.resolve('../market-clients/index.js')];
-    ({ createMarketClients } = require('../market-clients'));
+    delete require.cache[require.resolve('../src/market-clients')];
+    delete require.cache[require.resolve('../src/market-clients/index.js')];
+    ({ createMarketClients } = require('../src/market-clients'));
 
     const fallbackClients = createMarketClients({
       cachePath: '/tmp/market-diff-test-metadata-cache.json',
@@ -129,9 +129,9 @@ const ethersModule = require('ethers');
       enumerable: true,
       writable: true
     });
-    delete require.cache[require.resolve('../market-clients')];
-    delete require.cache[require.resolve('../market-clients/index.js')];
-    ({ createMarketClients } = require('../market-clients'));
+    delete require.cache[require.resolve('../src/market-clients')];
+    delete require.cache[require.resolve('../src/market-clients/index.js')];
+    ({ createMarketClients } = require('../src/market-clients'));
 
     const monadTokenListRequests = [];
     const monadFallbackClients = createMarketClients({

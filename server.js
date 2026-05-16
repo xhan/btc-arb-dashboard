@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const { ethers } = require('ethers');
 const { AggregatorClient } = require('@cetusprotocol/aggregator-sdk');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
-const { createMarketClients } = require('./market-clients');
+const { createMarketClients } = require('./src/market-clients');
 const {
     resolveRequestChannelContext
 } = require('./src/request-channel/request-channel-config');
