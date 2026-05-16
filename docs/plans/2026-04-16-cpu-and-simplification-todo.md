@@ -125,10 +125,10 @@
 ### 9. 拆分超大 `app.js`
 - 目标：降低复杂度，减少“一个状态牵一大片”的问题。
 - 现状：
-  - `app.js` 超过 7000 行，包含报价轮询、套利、详情、报警、日志、数据终端、保存、主题等多职责
+  - `app.js` 仍是超大文件，包含报价轮询、套利、详情、报警、日志、数据终端、保存、主题等多职责
 - 建议拆分：
   - `quote-polling`：队列运行态、scheduler 和消费状态机已下沉到 `quote-queue-runtime-utils.js`，`app.js` 只保留业务依赖注入和入口包装
-  - `arb-panel`
+  - `arb-panel`：snapshot / topology 缓存所有权已下沉到 `arb-path-template-cache-utils.js`，`app.js` 只保留缓存 key 构建和面板数据装配
   - `arb-detail`：已先抽出刷新调度器 `arb-detail-refresh-utils.js`
   - `path-alerts`
   - `data-terminal`

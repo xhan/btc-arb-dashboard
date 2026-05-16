@@ -250,12 +250,53 @@
     };
   }
 
+  function createKeyedCache() {
+    let cacheKey = '';
+    let cacheValue = null;
+
+    return {
+      get(nextKey) {
+        return cacheValue !== null && cacheKey === String(nextKey || '')
+          ? cacheValue
+          : null;
+      },
+      set(nextKey, nextValue) {
+        cacheKey = String(nextKey || '');
+        cacheValue = nextValue || null;
+        return cacheValue;
+      },
+      clear() {
+        cacheKey = '';
+        cacheValue = null;
+      }
+    };
+  }
+
+  function createArbPanelCache() {
+    const ruleSnapshotCache = createKeyedCache();
+    const topologyCache = createKeyedCache();
+
+    return {
+      getRuleSnapshot: ruleSnapshotCache.get,
+      setRuleSnapshot: ruleSnapshotCache.set,
+      clearRuleSnapshot: ruleSnapshotCache.clear,
+      getTopology: topologyCache.get,
+      setTopology: topologyCache.set,
+      clearTopology: topologyCache.clear,
+      clearAll() {
+        ruleSnapshotCache.clear();
+        topologyCache.clear();
+      }
+    };
+  }
+
   return {
     buildArbPathTopologyCacheKey,
     buildTopologyEdges,
     buildCycleTemplates,
     buildFixedPathTemplates,
     evaluateCycleTemplate,
-    evaluateFixedPathTemplate
+    evaluateFixedPathTemplate,
+    createArbPanelCache
   };
 }));

@@ -6,7 +6,8 @@ const {
   buildCycleTemplates,
   buildFixedPathTemplates,
   evaluateCycleTemplate,
-  evaluateFixedPathTemplate
+  evaluateFixedPathTemplate,
+  createArbPanelCache
 } = require('../arb-path-template-cache-utils');
 
 const dashboardState = [
@@ -35,6 +36,21 @@ assert.strictEqual(
   buildArbPathTopologyCacheKey(dashboardState, quoteStateB),
   'price-only changes should not invalidate topology cache'
 );
+
+const panelCache = createArbPanelCache();
+const snapshotA = { id: 'snapshot-a' };
+const topologyA = { id: 'topology-a' };
+assert.strictEqual(panelCache.getRuleSnapshot('a'), null, 'empty rule snapshot cache should miss');
+assert.strictEqual(panelCache.setRuleSnapshot('a', snapshotA), snapshotA);
+assert.strictEqual(panelCache.getRuleSnapshot('a'), snapshotA, 'matching rule snapshot key should hit');
+assert.strictEqual(panelCache.getRuleSnapshot('b'), null, 'different rule snapshot key should miss');
+assert.strictEqual(panelCache.setTopology('t-a', topologyA), topologyA);
+assert.strictEqual(panelCache.getTopology('t-a'), topologyA, 'matching topology key should hit');
+panelCache.clearRuleSnapshot();
+assert.strictEqual(panelCache.getRuleSnapshot('a'), null, 'clearing snapshot cache should not keep stale data');
+assert.strictEqual(panelCache.getTopology('t-a'), topologyA, 'clearing snapshot cache should not clear topology cache');
+panelCache.clearAll();
+assert.strictEqual(panelCache.getTopology('t-a'), null, 'clearAll should clear topology cache');
 
 const quoteStateC = new Map([
   [1, { fromSymbol: 'xBTC', toSymbol: 'WBTC', lastRawPrice: 1.001, inverseRawPrice: 0.999 }],

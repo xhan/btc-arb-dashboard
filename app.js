@@ -70,10 +70,7 @@
         domRefs: null,
         htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()
     };
-    let arbRuleSnapshotCacheKey = '';
-    let arbRuleSnapshotCache = null;
-    let arbPathTopologyCacheKey = '';
-    let arbPathTopologyCache = null;
+    const arbPanelCache = getArbPathTemplateCacheUtils().createArbPanelCache();
     let arbLastPointerOpenedOpportunityId = null;
     let arbDetailState = getArbDetailUtils().buildDefaultArbDetailState();
     let arbDetailFetchController = null;
@@ -1386,13 +1383,11 @@
         if (options.bumpRevision !== false) {
             quoteStateRuntime.bumpMarketRevision();
         }
-        arbRuleSnapshotCache = null;
-        arbRuleSnapshotCacheKey = '';
+        arbPanelCache.clearRuleSnapshot();
     }
 
     function invalidateArbPathTopologyCache() {
-        arbPathTopologyCache = null;
-        arbPathTopologyCacheKey = '';
+        arbPanelCache.clearTopology();
     }
 
     function invalidateArbCaches() {
@@ -1468,8 +1463,9 @@
     function getSharedArbRuleSnapshot() {
         const topologyCacheForFixed = getArbPathTopologyCache();
         const cacheKey = buildArbRuleSnapshotCacheKey();
-        if (arbRuleSnapshotCache && arbRuleSnapshotCacheKey === cacheKey) {
-            return arbRuleSnapshotCache;
+        const cachedSnapshot = arbPanelCache.getRuleSnapshot(cacheKey);
+        if (cachedSnapshot) {
+            return cachedSnapshot;
         }
 
         const aliasRules = getAliasRules();
@@ -1499,8 +1495,7 @@
             arbSpecialUtils: getArbSpecialUtils()
         });
 
-        arbRuleSnapshotCacheKey = cacheKey;
-        arbRuleSnapshotCache = {
+        return arbPanelCache.setRuleSnapshot(cacheKey, {
             ...baseSnapshot,
             aliasRules,
             allQuotes,
@@ -1509,8 +1504,7 @@
             allEdgesWithRules,
             quoteMetaById,
             quotesByCategoryName
-        };
-        return arbRuleSnapshotCache;
+        });
     }
 
     function getArbPathTemplateCacheUtils() {
@@ -1524,8 +1518,9 @@
         const utils = getArbPathTemplateCacheUtils();
 
         const cacheKey = `${utils.buildArbPathTopologyCacheKey(dashboardState, getQuoteMarketStateMap())}|${arbCycleStartPriority.join(',')}`;
-        if (arbPathTopologyCache && arbPathTopologyCacheKey === cacheKey) {
-            return arbPathTopologyCache;
+        const cachedTopology = arbPanelCache.getTopology(cacheKey);
+        if (cachedTopology) {
+            return cachedTopology;
         }
 
         const aliasRules = getAliasRules();
@@ -1558,13 +1553,11 @@
             });
         }
 
-        arbPathTopologyCacheKey = cacheKey;
-        arbPathTopologyCache = {
+        return arbPanelCache.setTopology(cacheKey, {
             ruleEdges,
             globalTemplates,
             fixedTemplatesByRuleId
-        };
-        return arbPathTopologyCache;
+        });
     }
 
     function formatChainLabel(chain) {

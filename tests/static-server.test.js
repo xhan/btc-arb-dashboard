@@ -267,6 +267,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbPanelLayoutUtilsResponse.statusCode, 200);
     const arbRuntimeMemoryUtilsResponse = await request('/arb-runtime-memory-utils.js');
     assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
+    const arbPathTemplateCacheUtilsResponse = await request('/arb-path-template-cache-utils.js');
+    assert.strictEqual(arbPathTemplateCacheUtilsResponse.statusCode, 200);
     const arbEquivalenceUtilsResponse = await request('/arb-equivalence-utils.js');
     assert.strictEqual(arbEquivalenceUtilsResponse.statusCode, 200);
     const dataTerminalUtilsResponse = await request('/data-terminal-utils.js');
@@ -911,6 +913,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function buildGlobalArbSection('));
     assert.ok(appJsResponse.body.includes('function getArbPathTemplateCacheUtils()'));
     assert.ok(appJsResponse.body.includes('ArbPathTemplateCacheUtils is not loaded'));
+    assert.ok(arbPathTemplateCacheUtilsResponse.body.includes('function createArbPanelCache()'));
+    assert.ok(appJsResponse.body.includes('const arbPanelCache = getArbPathTemplateCacheUtils().createArbPanelCache();'));
+    assert.ok(appJsResponse.body.includes('arbPanelCache.clearRuleSnapshot();'));
+    assert.ok(appJsResponse.body.includes('arbPanelCache.clearTopology();'));
+    assert.ok(appJsResponse.body.includes('arbPanelCache.getRuleSnapshot(cacheKey)'));
+    assert.ok(appJsResponse.body.includes('arbPanelCache.setRuleSnapshot(cacheKey, {'));
+    assert.ok(appJsResponse.body.includes('arbPanelCache.getTopology(cacheKey)'));
+    assert.ok(appJsResponse.body.includes('arbPanelCache.setTopology(cacheKey, {'));
+    assert.ok(!appJsResponse.body.includes('arbRuleSnapshotCacheKey'));
+    assert.ok(!appJsResponse.body.includes('arbRuleSnapshotCache ='));
+    assert.ok(!appJsResponse.body.includes('arbPathTopologyCacheKey'));
+    assert.ok(!appJsResponse.body.includes('arbPathTopologyCache ='));
     assert.ok(appJsResponse.body.includes('templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap())'));
     assert.ok(!appJsResponse.body.includes('topologyCache && templateUtils'));
     assert.ok(!appJsResponse.body.includes('window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges)'));
