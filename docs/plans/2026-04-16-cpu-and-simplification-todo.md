@@ -131,7 +131,7 @@
 - 建议拆分：
   - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `quote-queue-runtime-utils.js`，`app.js` 只保留业务依赖注入和入口包装
   - `quote-ui-runtime`：hover 延迟显示和 trend timer 已分别下沉到 `quote-display-utils.js` / `quote-state-runtime-utils.js`
-  - `arb-panel`：snapshot / topology 缓存和面板刷新 debounce 所有权已下沉到 `arb-path-template-cache-utils.js` / `arb-runtime-memory-utils.js`，`app.js` 只保留缓存 key 构建和面板数据装配
+  - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 所有权和面板内容事件动作解析已下沉到 `arb-path-template-cache-utils.js` / `arb-runtime-memory-utils.js` / `arb-panel-renderer.js`，`app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `arb-detail-refresh-utils.js`，source budget Map 所有权已下沉到 `arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML 和内容点击动作解析已下沉到 `data-terminal-utils.js`
