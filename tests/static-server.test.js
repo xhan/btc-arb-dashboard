@@ -359,6 +359,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes("function buildQuoteAlertDisplayLabel(quote, state = {}, direction = 'forward')"));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildInverseQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagHtml(quote, channel)'));
@@ -370,6 +371,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildInverseQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, channel)'));

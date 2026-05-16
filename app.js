@@ -4765,25 +4765,7 @@
     }
 
     function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMarketState.get(quote.id) || {}, direction = 'forward') {
-        if (!quote) return '--';
-        const isInverse = direction === 'inverse';
-        if (isCexOrderbookChain(quote.chain)) {
-            const parsed = parseCexTradingPairSymbol(quote.symbol);
-            if (parsed) {
-                const fromSymbol = isInverse ? parsed.toSymbol : parsed.fromSymbol;
-                const toSymbol = isInverse ? parsed.fromSymbol : parsed.toSymbol;
-                return `${fromSymbol}/${toSymbol}`;
-            }
-            return String(quote.symbol || '').trim() || '--';
-        }
-        if (monitorState.fromSymbol && monitorState.toSymbol) {
-            return isInverse
-                ? `${monitorState.toSymbol}/${monitorState.fromSymbol}`
-                : `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
-        }
-        const fromToken = isInverse ? quote.toToken : quote.fromToken;
-        const toToken = isInverse ? quote.fromToken : quote.toToken;
-        return `${String(fromToken || '').slice(0, 4)}.../${String(toToken || '').slice(0, 4)}...`;
+        return getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction);
     }
 
     function getQuoteAlertsForQuoteId(quoteId) {

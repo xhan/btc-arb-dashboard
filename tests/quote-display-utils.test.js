@@ -6,6 +6,7 @@ const {
   buildCexOrderbookSummary,
   buildCexOrderbookTooltipHtml,
   buildInverseQuoteDisplayTextForState,
+  buildQuoteAlertDisplayLabel,
   buildQuotePairLabelHtml,
   buildQuoteDisplayText,
   buildQuoteDisplayTextForState,
@@ -178,3 +179,38 @@ assert.strictEqual(
   buildQuoteRequestChannelTagHtml({ id: 'quote-1' }, null),
   ''
 );
+
+assert.strictEqual(
+  buildQuoteAlertDisplayLabel({ chain: 'Bybit', symbol: 'BTCUSDT' }, {}, 'forward'),
+  'BTC/USDT'
+);
+
+assert.strictEqual(
+  buildQuoteAlertDisplayLabel({ chain: 'Bybit', symbol: 'BTCUSDT' }, {}, 'inverse'),
+  'USDT/BTC'
+);
+
+assert.strictEqual(
+  buildQuoteAlertDisplayLabel({ chain: 'Bybit', symbol: '' }, {}, 'forward'),
+  '--'
+);
+
+assert.strictEqual(
+  buildQuoteAlertDisplayLabel(
+    { chain: 'ethereum', fromToken: '0xabc12345', toToken: '0xdef67890' },
+    { fromSymbol: 'WBTC', toSymbol: 'cbBTC' },
+    'inverse'
+  ),
+  'cbBTC/WBTC'
+);
+
+assert.strictEqual(
+  buildQuoteAlertDisplayLabel(
+    { chain: 'ethereum', fromToken: '0xabc12345', toToken: '0xdef67890' },
+    {},
+    'forward'
+  ),
+  '0xab.../0xde...'
+);
+
+assert.strictEqual(buildQuoteAlertDisplayLabel(null), '--');

@@ -68,6 +68,7 @@
   - `quoteUiState` 的默认值、key 规范化、merge、timer 清理已下沉到 `dashboard-runtime-utils.js`
   - `quote-pause-utils.buildPausedQuoteState()` 已停止输出 UI-only 字段
   - quote 暂停按钮和分区暂停按钮的展示状态模型已下沉到 `quote-pause-utils.js`
+  - quote alert display label 已下沉到 `quote-display-utils.js`
   - quote alert 按 quoteId 过滤规则已下沉到 `path-alert-utils.js`，避免 `app.js` 继续直接理解 alert target 结构
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
 - 预期收益：

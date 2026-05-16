@@ -2,7 +2,10 @@
   const chainDefaults = typeof module !== 'undefined' && module.exports
     ? require('./chain-defaults')
     : root.ChainDefaults;
-  const api = factory(chainDefaults);
+  const tradingPairUtils = typeof module !== 'undefined' && module.exports
+    ? require('./shared/trading-pair-utils')
+    : root.TradingPairUtils;
+  const api = factory(chainDefaults, tradingPairUtils);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
@@ -10,7 +13,7 @@
   if (root && root.window && root.window !== root) {
     root.window.QuoteDisplayUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults, tradingPairUtils) {
   const QUOTE_DISPLAY_MODE_RATE = 'rate';
   const QUOTE_DISPLAY_MODE_AMOUNT = 'amount';
 
@@ -35,6 +38,13 @@
     }
     const normalized = String(chain || '').trim().toLowerCase();
     return normalized === 'bybit' || normalized === 'binance';
+  }
+
+  function parseCexTradingPairSymbol(symbol) {
+    if (tradingPairUtils && typeof tradingPairUtils.parseCexTradingPairSymbol === 'function') {
+      return tradingPairUtils.parseCexTradingPairSymbol(symbol);
+    }
+    return null;
   }
 
   function formatQuoteDisplayNumber(value) {
@@ -197,6 +207,28 @@
     return `${escapeHtml(label)}${badgeHtml}`;
   }
 
+  function buildQuoteAlertDisplayLabel(quote, state = {}, direction = 'forward') {
+    if (!quote) return '--';
+    const isInverse = direction === 'inverse';
+    if (isCexOrderbookChain(quote.chain)) {
+      const parsed = parseCexTradingPairSymbol(quote.symbol);
+      if (parsed) {
+        const fromSymbol = isInverse ? parsed.toSymbol : parsed.fromSymbol;
+        const toSymbol = isInverse ? parsed.fromSymbol : parsed.toSymbol;
+        return `${fromSymbol}/${toSymbol}`;
+      }
+      return String(quote.symbol || '').trim() || '--';
+    }
+    if (state && state.fromSymbol && state.toSymbol) {
+      return isInverse
+        ? `${state.toSymbol}/${state.fromSymbol}`
+        : `${state.fromSymbol}/${state.toSymbol}`;
+    }
+    const fromToken = isInverse ? quote.toToken : quote.fromToken;
+    const toToken = isInverse ? quote.fromToken : quote.toToken;
+    return `${String(fromToken || '').slice(0, 4)}.../${String(toToken || '').slice(0, 4)}...`;
+  }
+
   function buildQuoteRequestChannelTagHtml(quote, channel) {
     if (!quote || !channel) return '';
     return `<span class="quote-channel-tag" id="quote-channel-tag-${escapeHtml(quote.id)}">${escapeHtml(channel.name)}</span>`;
@@ -208,6 +240,7 @@
     buildCexOrderbookSummary,
     buildCexOrderbookTooltipHtml,
     buildInverseQuoteDisplayTextForState,
+    buildQuoteAlertDisplayLabel,
     buildQuotePairLabelHtml,
     buildQuoteDisplayText,
     buildQuoteDisplayTextForState,
