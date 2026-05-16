@@ -393,6 +393,48 @@
         `;
   }
 
+  function createDataTerminalCache() {
+    let recordsCacheKey = '';
+    let recordsCache = null;
+    let candidatesCacheKey = '';
+    let candidatesCache = null;
+
+    function getRecords(cacheKey, buildRecords) {
+      const normalizedKey = String(cacheKey || '');
+      if (recordsCache !== null && recordsCacheKey === normalizedKey) {
+        return recordsCache;
+      }
+      const records = typeof buildRecords === 'function' ? buildRecords() : [];
+      recordsCacheKey = normalizedKey;
+      recordsCache = Array.isArray(records) ? records : [];
+      return recordsCache;
+    }
+
+    function getCandidates(cacheKey, buildCandidates) {
+      const normalizedKey = String(cacheKey || '');
+      if (candidatesCache !== null && candidatesCacheKey === normalizedKey) {
+        return candidatesCache;
+      }
+      const candidates = typeof buildCandidates === 'function' ? buildCandidates() : [];
+      candidatesCacheKey = normalizedKey;
+      candidatesCache = Array.isArray(candidates) ? candidates : [];
+      return candidatesCache;
+    }
+
+    function clear() {
+      recordsCacheKey = '';
+      recordsCache = null;
+      candidatesCacheKey = '';
+      candidatesCache = null;
+    }
+
+    return {
+      clear,
+      getCandidates,
+      getRecords
+    };
+  }
+
   return {
     buildDataTerminalCandidates,
     buildDataTerminalPanelHtml,
@@ -400,6 +442,7 @@
     buildDataTerminalShellHtml,
     buildDataTerminalSelectionSummary,
     buildDataTerminalViewModel,
+    createDataTerminalCache,
     parseDataTerminalQuery
   };
 });

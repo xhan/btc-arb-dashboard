@@ -73,10 +73,6 @@
         domRefs: null,
         htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()
     };
-    let dataTerminalRecordsCacheKey = '';
-    let dataTerminalRecordsCache = null;
-    let dataTerminalCandidatesCacheKey = '';
-    let dataTerminalCandidatesCache = null;
     let arbRuleSnapshotCacheKey = '';
     let arbRuleSnapshotCache = null;
     let arbPathTopologyCacheKey = '';
@@ -485,6 +481,7 @@
     const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
         dashboardRuntimeUtils: getDashboardRuntimeUtils()
     });
+    const dataTerminalCache = getDataTerminalUtils().createDataTerminalCache();
 
     function refreshRequestChannelOptions() {
         requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
@@ -1969,28 +1966,14 @@
 
     function buildDataTerminalRecords() {
         const cacheKey = resolveDataTerminalRecordsCacheKey();
-        if (dataTerminalRecordsCache && dataTerminalRecordsCacheKey === cacheKey) {
-            return dataTerminalRecordsCache;
-        }
-
-        const records = getDataTerminalUtils().buildDataTerminalRecords(dashboardState, getQuoteMarketStateMap(), {
+        return dataTerminalCache.getRecords(cacheKey, () => getDataTerminalUtils().buildDataTerminalRecords(dashboardState, getQuoteMarketStateMap(), {
             isQuoteActive: (quote) => !isQuotePaused(quote)
-        });
-
-        dataTerminalRecordsCacheKey = cacheKey;
-        dataTerminalRecordsCache = records;
-        return records;
+        }));
     }
 
     function buildDataTerminalCandidates(utils) {
         const cacheKey = resolveDataTerminalRecordsCacheKey();
-        if (dataTerminalCandidatesCache && dataTerminalCandidatesCacheKey === cacheKey) {
-            return dataTerminalCandidatesCache;
-        }
-        const candidates = utils.buildDataTerminalCandidates(buildDataTerminalRecords());
-        dataTerminalCandidatesCacheKey = cacheKey;
-        dataTerminalCandidatesCache = candidates;
-        return candidates;
+        return dataTerminalCache.getCandidates(cacheKey, () => utils.buildDataTerminalCandidates(buildDataTerminalRecords()));
     }
 
     function renderDataTerminalPanel() {

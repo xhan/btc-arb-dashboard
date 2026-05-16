@@ -10,11 +10,38 @@ const {
   buildDataTerminalShellHtml,
   buildDataTerminalSelectionSummary,
   buildDataTerminalViewModel,
+  createDataTerminalCache,
   parseDataTerminalQuery
 } = require('../data-terminal-utils');
 
 assert.deepStrictEqual(parseDataTerminalQuery('  WBTC, cbBTC extra  '), ['WBTC', 'cbBTC']);
 assert.deepStrictEqual(parseDataTerminalQuery(''), []);
+
+const cache = createDataTerminalCache();
+let recordsBuildCount = 0;
+assert.deepStrictEqual(
+  cache.getRecords('a', () => {
+    recordsBuildCount += 1;
+    return [{ id: 1 }];
+  }),
+  [{ id: 1 }]
+);
+assert.deepStrictEqual(cache.getRecords('a', () => [{ id: 2 }]), [{ id: 1 }]);
+assert.strictEqual(recordsBuildCount, 1);
+assert.deepStrictEqual(cache.getRecords('b', () => [{ id: 3 }]), [{ id: 3 }]);
+
+let candidatesBuildCount = 0;
+assert.deepStrictEqual(
+  cache.getCandidates('a', () => {
+    candidatesBuildCount += 1;
+    return [{ key: 'x' }];
+  }),
+  [{ key: 'x' }]
+);
+assert.deepStrictEqual(cache.getCandidates('a', () => [{ key: 'y' }]), [{ key: 'x' }]);
+assert.strictEqual(candidatesBuildCount, 1);
+cache.clear();
+assert.deepStrictEqual(cache.getCandidates('a', () => [{ key: 'z' }]), [{ key: 'z' }]);
 
 const dataTerminalRecords = buildDataTerminalRecords(
   [

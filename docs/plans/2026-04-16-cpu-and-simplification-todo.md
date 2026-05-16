@@ -100,9 +100,10 @@
 ### 7. 数据终端缓存化
 - 目标：避免每次刷新都重建 records 和 candidates。
 - 现状：
-  - 已用 `dataTerminalRecordsCacheKey` 缓存 `dashboardState + quoteMarketState` 生成的 records
+  - 已用 `dashboardState + quoteMarketState` cache key 缓存生成的 records
   - records 构建已下沉到 `data-terminal-utils.js`，`app.js` 只保留缓存生命周期
   - 已用同一 cache key 缓存 candidates，查询、别名、diff 变化只重跑 view model/filter
+  - records/candidates 缓存生命周期已下沉到 `data-terminal-utils.js` 的 `createDataTerminalCache()`，`app.js` 只提供 cache key 和构建函数
 - 预期收益：
   - 已降低数据终端打开后的持续 CPU
 - 后续建议：
