@@ -892,10 +892,6 @@
         });
     }
 
-    function buildMutedPathLogTitleSnapshot(entry) {
-        return getPathAlertUtils().buildMutedPathLogTitleSnapshot(entry);
-    }
-
     function buildMutedPathLegTitleSnapshot(leg) {
         return buildLiveQuoteLabel(
             leg && leg.chain,
@@ -935,7 +931,7 @@
         const pathAlertUtils = getPathAlertUtils();
         const targetKey = buildMutedPathTargetKey(muteTarget);
         if (!targetKey) return null;
-        const logTitleSnapshot = buildMutedPathLogTitleSnapshot(entry);
+        const logTitleSnapshot = getPathAlertUtils().buildMutedPathLogTitleSnapshot(entry);
         pruneMutedPathTargetsInPlace(nowMs);
         const existingEntry = pathAlertUtils.findMutedPathTargetByKey(mutedPathRuntime.getTargets(), targetKey);
         const nextMutedEntry = existingEntry

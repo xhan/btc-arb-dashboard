@@ -1254,7 +1254,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getPathAlertUtils().buildMutedPathStatusText('));
     assert.ok(appJsResponse.body.includes('getPathAlertUtils().buildMutedPathLegStatusText('));
     assert.ok(appJsResponse.body.includes('return getPathAlertUtils().buildMutedPathTargetKey(alertOrTarget);'));
-    assert.ok(appJsResponse.body.includes('return getPathAlertUtils().buildMutedPathLogTitleSnapshot(entry);'));
+    assert.ok(appJsResponse.body.includes('getPathAlertUtils().buildMutedPathLogTitleSnapshot(entry)'));
+    assert.ok(!appJsResponse.body.includes('function buildMutedPathLogTitleSnapshot(entry)'));
     assert.ok(appJsResponse.body.includes('getPathAlertUtils().getQuoteAlertsForQuoteId(pathAlertConfig, quote.id)'));
     assert.ok(!appJsResponse.body.includes('function getQuoteAlertsForQuoteId(quoteId)'));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathStatusText('));
