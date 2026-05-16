@@ -1604,8 +1604,10 @@
 
     function updateQuotePairLabel(quote, state) {
         const pairLabelEl = document.getElementById(`quote-pair-label-${quote.id}`);
-        if (!pairLabelEl) return;
-        pairLabelEl.innerHTML = getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state);
+        getDomRenderUtils().applyQuotePairLabelDomState(
+            pairLabelEl,
+            getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)
+        );
     }
 
     function renderQuoteDisplayToggle() {

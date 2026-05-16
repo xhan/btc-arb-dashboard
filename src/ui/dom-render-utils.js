@@ -293,6 +293,12 @@
     return changed;
   }
 
+  function applyQuotePairLabelDomState(pairLabelEl, html) {
+    if (!pairLabelEl) return false;
+    pairLabelEl.innerHTML = String(html || '');
+    return true;
+  }
+
   function ensureQuoteInverseElement(refs = {}, options = {}) {
     if (refs.inverseEl) return refs.inverseEl;
     if (!refs.quoteDataEl || typeof refs.quoteDataEl.appendChild !== 'function') return null;
@@ -433,6 +439,7 @@
     applyQuoteInverseResultDomState,
     applyQuoteMainErrorDomState,
     applyQuoteMainResultDomState,
+    applyQuotePairLabelDomState,
     applyQuoteSwitchingDomState,
     applyFloatingPanelDisplayState,
     applyTooltipState,

@@ -12,6 +12,7 @@ const {
   applyQuoteInverseResultDomState,
   applyQuoteMainErrorDomState,
   applyQuoteMainResultDomState,
+  applyQuotePairLabelDomState,
   applyQuoteSwitchingDomState,
   applyFloatingPanelDisplayState,
   bindDraggableElement,
@@ -297,6 +298,11 @@ assert.strictEqual(applyQuoteDisplayTextDomState(quoteDisplayTextRefs, {
 assert.strictEqual(quoteDisplayTextRefs.quoteTextEl.textContent, 'main only');
 assert.strictEqual(quoteDisplayTextRefs.inverseEl.textContent, '3000 USDC = 1 ETH');
 assert.strictEqual(applyQuoteDisplayTextDomState({}, { text: 'x' }), false);
+
+const quotePairLabelEl = { innerHTML: 'old' };
+assert.strictEqual(applyQuotePairLabelDomState(quotePairLabelEl, 'ETH&lt;USDC&gt;'), true);
+assert.strictEqual(quotePairLabelEl.innerHTML, 'ETH&lt;USDC&gt;');
+assert.strictEqual(applyQuotePairLabelDomState(null, 'x'), false);
 
 function createDocumentImpl(createdElements) {
   return {
