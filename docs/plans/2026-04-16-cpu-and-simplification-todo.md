@@ -163,7 +163,7 @@
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的路径腿 live quote label 格式化已委托给 `path-alert-page-utils.js`
-  - `fallbackToDefault` 这类配置加载降级语义仍在 `app.js`
+  - `app.js` 的 path alert 配置加载降级/严格加载语义已下沉到 `path-alert-utils.js` 的 `createPathAlertConfigClient()`
 - 建议改法：
   - 先删死代码和无生产调用 API
   - 继续统一剩余兼容边界命名
