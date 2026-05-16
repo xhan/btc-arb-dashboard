@@ -139,7 +139,7 @@
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `src/ui/copy-utils.js`
-  - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `src/ui/dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
+  - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `src/ui/dom-render-utils.js`，全局快捷键解析和输入目标判断已下沉到 `src/ui/keyboard-shortcut-utils.js`，`app.js` 只保留 z-index 状态所有权和快捷键动作分发
   - `file-layout`：在模块边界稳定后，把根目录里按职责增长的 utils/runtime/renderer/provider 文件迁入明确目录，例如 `src/quote/`、`src/arb/`、`src/path-alerts/`、`src/dashboard/`、`src/shared/`，并保留必要的兼容入口，避免一次性移动导致 review 噪声和路径风险
     - 已启动第一步：套利核心路径算法、套利详情工具、详情刷新 runtime、套利面板渲染器、套利面板 layout/runtime/cache 工具、规则快照、循环起点优先级、资产等价规则、fixed/special 套利工具、watchlist 配置及解析工具迁入 `src/arb/`，后续同类 arb 模块可按这个模式继续迁移
     - 已启动第二步：quote pause/request/display/state/queue runtime 迁入 `src/quote/`，后续同类 quote 模块可按这个模式继续迁移
@@ -151,7 +151,7 @@
     - 已启动第八步：price snapshot payload/store/replay 和快照页入口迁入 `src/price-snapshots/`，后续快照持久化与回放模块按这个目录维护
     - 已启动第九步：alert log UI、alert debug 和 special rule alert config 工具迁入 `src/alerts/`，后续告警支撑模块按这个目录维护
     - 已启动第十步：data terminal 工具迁入 `src/data-terminal/`，后续数据终端模块按这个目录维护
-    - 已启动第十一步：copy、dex link、dom render 和 theme 等浏览器 UI 支撑工具迁入 `src/ui/`，后续 UI shared 模块按这个目录维护
+    - 已启动第十一步：copy、dex link、dom render、theme 和 keyboard shortcut 等浏览器 UI 支撑工具迁入 `src/ui/`，后续 UI shared 模块按这个目录维护
     - 已启动第十二步：chain defaults、UTC+8 时间工具和 trading pair parser 迁入 `src/shared/`，后续跨前后端共享工具按这个目录维护
     - 已启动第十三步：fetch-once 与 Cetus aggregator 配置迁入 `src/server/`，根目录保留 `app.js` / `server.js` 作为前后端入口
 
