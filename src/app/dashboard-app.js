@@ -887,17 +887,17 @@
         });
     }
 
-    function buildQuoteAlertDexLink(quote) {
-        if (!quote || isCrossChainQuote(quote)) return null;
-        return getArbDetailUtils().buildArbDetailDexLink({
-            chain: quote.chain,
-            fromTokenAddress: quote.fromToken,
-            toTokenAddress: quote.toToken,
-            inputAmount: quote.amount
-        });
-    }
-
     function buildQuoteAlertTriggeredEntry(alert, quote, evaluation) {
+        let dexLink = null;
+        if (quote && !isCrossChainQuote(quote)) {
+            dexLink = getArbDetailUtils().buildArbDetailDexLink({
+                chain: quote.chain,
+                fromTokenAddress: quote.fromToken,
+                toTokenAddress: quote.toToken,
+                inputAmount: quote.amount
+            });
+        }
+
         return getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntryForQuote({
             alert,
             quote,
@@ -905,7 +905,7 @@
             displayName: getQuoteChainDisplayName(quote),
             evaluation,
             formatNumber: formatDetailNumber,
-            dexLink: buildQuoteAlertDexLink(quote),
+            dexLink,
             buildQuoteAlertDisplayLabel
         });
     }
@@ -1787,12 +1787,10 @@
         return getArbCyclePriorityUtils().buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
     }
 
-    function getAssetEquivalenceGroups() {
-        return getArbEquivalenceUtils().DEFAULT_ASSET_EQUIVALENCE_GROUPS;
-    }
-
     function getAliasRules() {
-        return getArbEquivalenceUtils().buildAliasRulesFromGroups(getAssetEquivalenceGroups());
+        return getArbEquivalenceUtils().buildAliasRulesFromGroups(
+            getArbEquivalenceUtils().DEFAULT_ASSET_EQUIVALENCE_GROUPS
+        );
     }
 
     function buildQuoteMetaById() {
@@ -2321,14 +2319,6 @@
         return Number.isFinite(configured) && configured > 0 ? configured : 0;
     }
 
-    function getQuoteSourceBudgetTimestamp(source) {
-        return arbDetailSourceBudgetRuntime.getTimestamp(source);
-    }
-
-    function recordQuoteSourceBudgetTimestamp(source, requestedAt = Date.now()) {
-        return arbDetailSourceBudgetRuntime.recordTimestamp(source, requestedAt);
-    }
-
     function syncArbDetailPrimaryCardQuoteState(quote, data, successSource, isInverseFetch) {
         if (!quote) return;
         const previousState = getQuoteMarketState(quote.id) || {};
@@ -2349,7 +2339,7 @@
         }
 
         const waitMs = getArbDetailUtils().getArbDetailRateLimitDelay(
-            getQuoteSourceBudgetTimestamp(source),
+            arbDetailSourceBudgetRuntime.getTimestamp(source),
             getArbDetailIntervalMsForSource(source)
         );
 
@@ -3233,12 +3223,8 @@
         });
     }
 
-    function buildPathAlertsManagementHref(options = {}) {
-        return getPathAlertPageUtils().buildPathAlertsPageHref(options);
-    }
-
     function openPathAlertsManagementPage(options = {}) {
-        const href = buildPathAlertsManagementHref(options);
+        const href = getPathAlertPageUtils().buildPathAlertsPageHref(options);
         window.open(href, '_blank', 'noopener');
     }
 
@@ -3586,7 +3572,7 @@
                     await sleep(600);
                 }
 
-                recordQuoteSourceBudgetTimestamp(source);
+                arbDetailSourceBudgetRuntime.recordTimestamp(source);
                 data = await apiGetQuote(requestQuote, signal, source);
                 if (data) {
                     successSource = source;

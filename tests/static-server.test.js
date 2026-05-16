@@ -1050,7 +1050,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbCyclePriorityUtils().buildPreferredCycleStartSymbols(aliasRules, configuredPriority)'));
     assert.ok(appJsResponse.body.includes('normalizePriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority'));
     assert.ok(appJsResponse.body.includes('getArbEquivalenceUtils().DEFAULT_ASSET_EQUIVALENCE_GROUPS'));
-    assert.ok(appJsResponse.body.includes('getArbEquivalenceUtils().buildAliasRulesFromGroups(getAssetEquivalenceGroups())'));
+    assert.ok(appJsResponse.body.includes('getArbEquivalenceUtils().buildAliasRulesFromGroups('));
+    assert.ok(!appJsResponse.body.includes('function getAssetEquivalenceGroups()'));
     assert.ok(!appJsResponse.body.includes('window.ArbRuleSnapshotUtils &&'));
     assert.ok(!appJsResponse.body.includes('window.ArbCyclePriorityUtils &&'));
     assert.ok(!appJsResponse.body.includes('window.ArbEquivalenceUtils &&'));
@@ -1376,8 +1377,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildOpenArbDetailState(arbDetailState, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildClosedArbDetailState(arbDetailState)'));
     assert.ok(appJsResponse.body.includes('const arbDetailSourceBudgetRuntime = getArbDetailUtils().createArbDetailSourceBudgetRuntime();'));
-    assert.ok(appJsResponse.body.includes('return arbDetailSourceBudgetRuntime.getTimestamp(source);'));
-    assert.ok(appJsResponse.body.includes('return arbDetailSourceBudgetRuntime.recordTimestamp(source, requestedAt);'));
+    assert.ok(appJsResponse.body.includes('arbDetailSourceBudgetRuntime.getTimestamp(source)'));
+    assert.ok(appJsResponse.body.includes('arbDetailSourceBudgetRuntime.recordTimestamp(source);'));
+    assert.ok(!appJsResponse.body.includes('function getQuoteSourceBudgetTimestamp(source)'));
+    assert.ok(!appJsResponse.body.includes('function recordQuoteSourceBudgetTimestamp(source'));
     assert.ok(!appJsResponse.body.includes('quoteSourceLastRequestAtByIntervalKey'));
     assert.ok(arbDetailUtilsResponse.body.includes('function createArbDetailSourceBudgetRuntime()'));
     assert.ok(!appJsResponse.body.includes('详情渲染模块未加载'));
