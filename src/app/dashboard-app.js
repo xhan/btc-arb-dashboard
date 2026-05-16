@@ -2887,14 +2887,6 @@
         });
     }
 
-    async function loadPathAlertConfig() {
-        pathAlertConfig = await pathAlertConfigClient.load();
-    }
-
-    async function loadPathAlertConfigStrict() {
-        pathAlertConfig = await pathAlertConfigClient.loadStrict();
-    }
-
     function toggleAlertLogPanel() {
         applyAlertLogPanelDisplay('toggle');
     }
@@ -2994,7 +2986,7 @@
         renderAlertSettingsPanel();
         try {
             pathAlertRuntimeState.reset({ forceImmediate: false });
-            await loadPathAlertConfigStrict();
+            pathAlertConfig = await pathAlertConfigClient.loadStrict();
             restartPathAlertScheduler();
         } finally {
             pathAlertReloading = false;
@@ -4291,7 +4283,7 @@
             refreshRequestChannelOptions();
             await loadRequestChannels();
 
-            await loadPathAlertConfig();
+            pathAlertConfig = await pathAlertConfigClient.load();
             
             renderDashboard();
             updateArbPanel();

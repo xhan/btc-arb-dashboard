@@ -1339,6 +1339,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const pathAlertConfigClient = getPathAlertUtils().createPathAlertConfigClient({'));
     assert.ok(appJsResponse.body.includes('pathAlertConfig = await pathAlertConfigClient.load();'));
     assert.ok(appJsResponse.body.includes('pathAlertConfig = await pathAlertConfigClient.loadStrict();'));
+    assert.ok(!appJsResponse.body.includes('async function loadPathAlertConfig('));
+    assert.ok(!appJsResponse.body.includes('async function loadPathAlertConfigStrict('));
     assert.ok(!appJsResponse.body.includes('fallbackToDefault'));
     assert.ok(pathAlertUtilsResponse.body.includes('function createPathAlertConfigClient(options = {})'));
     assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathRuntime.getLegs(), nowMs)'));
