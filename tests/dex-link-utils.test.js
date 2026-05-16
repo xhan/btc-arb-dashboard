@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const { buildDexLink, buildDexLinkCopyButtonHtml, getDexLinkLabel } = require('../dex-link-utils');
+const { buildDexLink, buildDexLinkCopyButtonHtml, getDexLinkLabel } = require('../src/ui/dex-link-utils');
 
 assert.strictEqual(getDexLinkLabel({ chain: 'sui' }), 'cetus');
 assert.strictEqual(getDexLinkLabel({ chain: 'solana' }), 'jup.ag');
@@ -103,7 +103,7 @@ assert.strictEqual(
   ''
 );
 
-const browserCode = fs.readFileSync(path.join(__dirname, '..', 'dex-link-utils.js'), 'utf8');
+const browserCode = fs.readFileSync(path.join(__dirname, '..', 'src/ui/dex-link-utils.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
 assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));

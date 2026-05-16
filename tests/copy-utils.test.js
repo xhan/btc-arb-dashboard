@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   createCopyToastRuntime,
   copyTextToClipboard
-} = require('../copy-utils');
+} = require('../src/ui/copy-utils');
 
 async function run() {
   let timerId = 0;

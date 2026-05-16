@@ -64,19 +64,19 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('#data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 807px;'));
     assert.ok(response.body.includes('src="src/charts/charts-utils.js"'));
     assert.ok(response.body.includes('src="src/charts/charts-renderer.js"'));
-    assert.ok(response.body.includes('src="copy-utils.js"'));
+    assert.ok(response.body.includes('src="src/ui/copy-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-paths.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-cycle-priority-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-equivalence-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-special-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-panel-layout-utils.js"'));
-    assert.ok(response.body.includes('src="dom-render-utils.js"'));
+    assert.ok(response.body.includes('src="src/ui/dom-render-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-path-config.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-path-config-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="src/alerts/alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/muted-path-storage-utils.js"'));
-    assert.ok(response.body.includes('src="dex-link-utils.js"'));
+    assert.ok(response.body.includes('src="src/ui/dex-link-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-detail-refresh-utils.js"'));
     assert.ok(response.body.includes('src="src/alerts/special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/path-alert-utils.js"'));
@@ -92,7 +92,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="src/price-snapshots/price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="chain-defaults.js"'));
-    assert.ok(response.body.includes('src="theme-utils.js"'));
+    assert.ok(response.body.includes('src="src/ui/theme-utils.js"'));
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(response.body.includes('src="src/data-terminal/data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-runtime-utils.js"'));
@@ -143,16 +143,16 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/dashboard/dashboard-renderer.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="dex-link-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/ui/dex-link-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/arb/arb-detail-refresh-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="dom-render-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/ui/dom-render-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="theme-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/ui/theme-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
@@ -289,7 +289,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
     const arbDetailRefreshUtilsResponse = await request('/src/arb/arb-detail-refresh-utils.js');
     assert.strictEqual(arbDetailRefreshUtilsResponse.statusCode, 200);
-    const dexLinkUtilsResponse = await request('/dex-link-utils.js');
+    const dexLinkUtilsResponse = await request('/src/ui/dex-link-utils.js');
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
     const quoteRequestUtilsResponse = await request('/src/quote/quote-request-utils.js');
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
@@ -329,9 +329,9 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(pathAlertNotificationUtilsResponse.statusCode, 200);
     const alertDebugUtilsResponse = await request('/src/alerts/alert-debug-utils.js');
     assert.strictEqual(alertDebugUtilsResponse.statusCode, 200);
-    const domRenderUtilsResponse = await request('/dom-render-utils.js');
+    const domRenderUtilsResponse = await request('/src/ui/dom-render-utils.js');
     assert.strictEqual(domRenderUtilsResponse.statusCode, 200);
-    const themeUtilsResponse = await request('/theme-utils.js');
+    const themeUtilsResponse = await request('/src/ui/theme-utils.js');
     assert.strictEqual(themeUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-token-address'));
@@ -1454,7 +1454,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!chartsUtilsExportBlock[0].includes('tokenizeChartSearch'));
     assert.ok(!chartsUtilsExportBlock[0].includes('buildChartSearchTerms'));
 
-    const copyUtilsResponse = await request('/copy-utils.js');
+    const copyUtilsResponse = await request('/src/ui/copy-utils.js');
     assert.strictEqual(copyUtilsResponse.statusCode, 200);
     assert.ok(copyUtilsResponse.body.includes('Clipboard fallback failed'));
     assert.ok(copyUtilsResponse.body.includes('function createCopyToastRuntime(options = {})'));

@@ -8,7 +8,7 @@ const {
   createStableHtmlRenderer,
   escapeCssAttributeValue,
   resolveEventTargetElement
-} = require('../dom-render-utils');
+} = require('../src/ui/dom-render-utils');
 
 const writes = [];
 const target = { innerHTML: '' };

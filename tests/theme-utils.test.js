@@ -4,7 +4,7 @@ const {
   buildThemeWritePlan,
   getNextTheme,
   normalizeTheme
-} = require('../theme-utils');
+} = require('../src/ui/theme-utils');
 
 assert.strictEqual(normalizeTheme('light'), 'light');
 assert.strictEqual(normalizeTheme('warm'), 'warm');
