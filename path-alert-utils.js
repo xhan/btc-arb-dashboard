@@ -13,6 +13,8 @@
   const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
   const PATH_ALERT_MUTE_DURATION_MS = 60 * 60 * 1000;
   const PATH_ALERT_MUTE_EXTEND_DURATION_MS = 2 * 60 * 60 * 1000;
+  const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
+  const PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN = 'main-dashboard';
   const DEFAULT_PATH_ALERT_SETTINGS = Object.freeze({
     pathAlertEvalIntervalMs: 1000,
     defaultCooldownSec: 180,
@@ -256,6 +258,41 @@
     return {
       load,
       loadStrict: requestConfig
+    };
+  }
+
+  function buildPathAlertConfigSyncPayload(source, nowMs = Date.now()) {
+    return JSON.stringify({
+      source: String(source || ''),
+      ts: Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now()
+    });
+  }
+
+  function resolvePathAlertConfigSyncStorageAction(event, options = {}) {
+    const syncKey = String(options.syncKey || PATH_ALERT_CONFIG_SYNC_KEY);
+    if (!event || event.key !== syncKey || !event.newValue) {
+      return { type: 'ignore' };
+    }
+
+    const localSource = String(options.localSource || PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN);
+    try {
+      const payload = JSON.parse(event.newValue);
+      if (payload && payload.source === localSource) {
+        return { type: 'ignore' };
+      }
+    } catch (error) {
+      return {
+        type: 'reload',
+        reason: 'storage',
+        invalidPayload: true,
+        error
+      };
+    }
+
+    return {
+      type: 'reload',
+      reason: 'storage',
+      invalidPayload: false
     };
   }
 
@@ -1134,6 +1171,8 @@
 
   return {
     DEFAULT_TELEGRAM_BOT_API_BASE_URL,
+    PATH_ALERT_CONFIG_SYNC_KEY,
+    PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN,
     PATH_ALERT_MUTE_DURATION_MS,
     PATH_ALERT_MUTE_EXTEND_DURATION_MS,
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
@@ -1149,6 +1188,7 @@
     buildMutedPathLegStatusText,
     buildMutedPathStatusText,
     buildMutedPathTargetKey,
+    buildPathAlertConfigSyncPayload,
     buildPathAlertTargetDuplicateKey,
     buildPathAlertSummaryLines,
     buildTelegramBotApiUrl,
@@ -1170,6 +1210,7 @@
     pruneExpiredMutedPathTargets,
     removeMutedPathTargetByKey,
     resolvePathAlertSnapshotState,
+    resolvePathAlertConfigSyncStorageAction,
     sortTriggeredPathAlerts,
     upsertMutedPathTargetEntry
   };

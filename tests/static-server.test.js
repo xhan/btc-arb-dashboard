@@ -851,7 +851,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: getQuoteMarketStateMap() })'));
     assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
     assert.ok(!appJsResponse.body.includes('syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);'));
-    assert.ok(appJsResponse.body.includes('path-alert-config-sync'));
+    assert.ok(pathAlertUtilsResponse.body.includes("const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';"));
     assert.ok(appJsResponse.body.includes('new Audio(pathAlertSound.currentSrc || pathAlertSound.src)'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildTriggeredPathAlertEntry({'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('customAlertMessage: String(evaluation && evaluation.alertMessage || \'\').trim()'));
@@ -1001,6 +1001,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('pathAlertSchedulerRuntime.restartEvaluation({'));
     assert.ok(appJsResponse.body.includes('pathAlertSchedulerRuntime.scheduleConfigSave(() => {'));
     assert.ok(appJsResponse.body.includes('pathAlertSchedulerRuntime.scheduleExternalReload(() => {'));
+    assert.ok(pathAlertUtilsResponse.body.includes('function buildPathAlertConfigSyncPayload(source, nowMs = Date.now())'));
+    assert.ok(pathAlertUtilsResponse.body.includes('function resolvePathAlertConfigSyncStorageAction(event, options = {})'));
+    assert.ok(appJsResponse.body.includes('utils.buildPathAlertConfigSyncPayload(source)'));
+    assert.ok(appJsResponse.body.includes('utils.resolvePathAlertConfigSyncStorageAction(event, {'));
+    assert.ok(!appJsResponse.body.includes("const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';"));
+    assert.ok(!appJsResponse.body.includes("const PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN = 'main-dashboard';"));
+    assert.ok(!appJsResponse.body.includes('const payload = JSON.parse(event.newValue);'));
     assert.ok(appJsResponse.body.includes('forceImmediate: pathAlertRuntimeState.isForceImmediateEnabled()'));
     assert.ok(appJsResponse.body.includes('forceImmediateAlerts: pathAlertRuntimeState.isForceImmediateEnabled()'));
     assert.ok(appJsResponse.body.includes('pathAlertRuntimeState.reset({ forceImmediate: false });'));

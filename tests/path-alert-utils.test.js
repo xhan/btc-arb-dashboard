@@ -26,12 +26,16 @@ const {
   buildMutedPathLegStatusText,
   buildMutedPathStatusText,
   buildMutedPathTargetKey,
+  buildPathAlertConfigSyncPayload,
   findMutedPathTargetByKey,
   removeMutedPathTargetByKey,
+  resolvePathAlertConfigSyncStorageAction,
   upsertMutedPathTargetEntry,
   sortTriggeredPathAlerts,
   PATH_ALERT_MUTE_DURATION_MS,
   PATH_ALERT_MUTE_EXTEND_DURATION_MS,
+  PATH_ALERT_CONFIG_SYNC_KEY,
+  PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN,
   createMutedPathTargetEntry,
   extendMutedPathTargetEntry,
   findMutedPathAlert,
@@ -58,6 +62,35 @@ assert.strictEqual(
   defaultPathAlertSettings.webhookUrl,
   'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder'
 );
+assert.strictEqual(PATH_ALERT_CONFIG_SYNC_KEY, 'path-alert-config-sync');
+assert.strictEqual(PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN, 'main-dashboard');
+assert.strictEqual(
+  buildPathAlertConfigSyncPayload('main-dashboard', 123),
+  '{"source":"main-dashboard","ts":123}'
+);
+assert.deepStrictEqual(resolvePathAlertConfigSyncStorageAction(null), { type: 'ignore' });
+assert.deepStrictEqual(
+  resolvePathAlertConfigSyncStorageAction({
+    key: PATH_ALERT_CONFIG_SYNC_KEY,
+    newValue: buildPathAlertConfigSyncPayload(PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN, 123)
+  }),
+  { type: 'ignore' }
+);
+assert.deepStrictEqual(
+  resolvePathAlertConfigSyncStorageAction({
+    key: PATH_ALERT_CONFIG_SYNC_KEY,
+    newValue: buildPathAlertConfigSyncPayload('path-alerts-page', 123)
+  }),
+  { type: 'reload', reason: 'storage', invalidPayload: false }
+);
+const invalidPathAlertConfigSyncAction = resolvePathAlertConfigSyncStorageAction({
+  key: PATH_ALERT_CONFIG_SYNC_KEY,
+  newValue: '{bad-json'
+});
+assert.strictEqual(invalidPathAlertConfigSyncAction.type, 'reload');
+assert.strictEqual(invalidPathAlertConfigSyncAction.reason, 'storage');
+assert.strictEqual(invalidPathAlertConfigSyncAction.invalidPayload, true);
+assert.ok(invalidPathAlertConfigSyncAction.error instanceof Error);
 
 async function testPathAlertConfigClient() {
   const requestedUrls = [];

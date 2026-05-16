@@ -3,8 +3,6 @@
     
     let isAudioUnlocked = false; 
     let onConfirmAction = null;
-    const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
-    const PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN = 'main-dashboard';
     const MULTI_CHANNEL_ENABLED_STORAGE_KEY = 'dashboard-multi-channel-enabled';
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
@@ -3322,14 +3320,14 @@
     }
 
     function emitPathAlertConfigSync(source) {
-        const payload = JSON.stringify({
-            source: String(source || ''),
-            ts: Date.now()
-        });
         try {
             const storage = getLocalStorageSafe();
             if (storage) {
-                storage.setItem(PATH_ALERT_CONFIG_SYNC_KEY, payload);
+                const utils = getPathAlertUtils();
+                storage.setItem(
+                    utils.PATH_ALERT_CONFIG_SYNC_KEY,
+                    utils.buildPathAlertConfigSyncPayload(source)
+                );
             }
         } catch (error) {
             console.warn('[path-alert-config] sync emit failed', error);
@@ -3345,14 +3343,15 @@
     }
 
     function handlePathAlertConfigSyncStorage(event) {
-        if (!event || event.key !== PATH_ALERT_CONFIG_SYNC_KEY || !event.newValue) return;
-        try {
-            const payload = JSON.parse(event.newValue);
-            if (payload && payload.source === PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN) return;
-        } catch (error) {
-            console.warn('[path-alert-config] invalid sync payload', error);
+        const utils = getPathAlertUtils();
+        const action = utils.resolvePathAlertConfigSyncStorageAction(event, {
+            localSource: utils.PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN
+        });
+        if (action.type !== 'reload') return;
+        if (action.invalidPayload) {
+            console.warn('[path-alert-config] invalid sync payload', action.error);
         }
-        scheduleExternalPathAlertReload('storage');
+        scheduleExternalPathAlertReload(action.reason);
     }
 
     async function persistPathAlertConfig() {
@@ -3365,7 +3364,7 @@
         });
         restartPathAlertScheduler();
         renderPathAlertPanel();
-        emitPathAlertConfigSync(PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN);
+        emitPathAlertConfigSync(getPathAlertUtils().PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN);
     }
 
     function queuePathAlertConfigSave() {
