@@ -252,9 +252,84 @@
     return `<span class="quote-channel-tag" id="quote-channel-tag-${escapeHtml(quote.id)}">${escapeHtml(channel.name)}</span>`;
   }
 
+  function createQuoteHoverRuntime(options = {}) {
+    const setTimer = typeof options.setTimeout === 'function'
+      ? options.setTimeout
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimerImpl = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const defaultDelayMs = Number.isFinite(Number(options.delayMs)) && Number(options.delayMs) >= 0
+      ? Number(options.delayMs)
+      : 100;
+    let timer = null;
+    let currentQuoteId = null;
+
+    function clearTimer() {
+      if (timer === null) return false;
+      if (clearTimerImpl) {
+        clearTimerImpl(timer);
+      }
+      timer = null;
+      return true;
+    }
+
+    function schedule(quoteId, onShow, delayMs = defaultDelayMs) {
+      clearTimer();
+      currentQuoteId = quoteId;
+      const safeDelayMs = Number.isFinite(Number(delayMs)) && Number(delayMs) >= 0
+        ? Number(delayMs)
+        : defaultDelayMs;
+      function showIfCurrent() {
+        if (currentQuoteId !== quoteId) return false;
+        if (typeof onShow === 'function') {
+          onShow(quoteId);
+        }
+        return true;
+      }
+      if (!setTimer) {
+        return showIfCurrent();
+      }
+      let scheduledTimer = null;
+      scheduledTimer = setTimer(() => {
+        if (timer !== scheduledTimer) return false;
+        timer = null;
+        return showIfCurrent();
+      }, safeDelayMs);
+      timer = scheduledTimer;
+      return true;
+    }
+
+    function hide(quoteId, onHide) {
+      clearTimer();
+      if (currentQuoteId !== quoteId) return false;
+      currentQuoteId = null;
+      if (typeof onHide === 'function') {
+        onHide(quoteId);
+      }
+      return true;
+    }
+
+    function reset() {
+      const cleared = clearTimer();
+      const hadCurrent = currentQuoteId !== null;
+      currentQuoteId = null;
+      return cleared || hadCurrent;
+    }
+
+    return {
+      getCurrentQuoteId: () => currentQuoteId,
+      hasTimer: () => timer !== null,
+      hide,
+      reset,
+      schedule
+    };
+  }
+
   return {
     buildCexOrderbookSummary,
     buildCexOrderbookTooltipHtml,
+    createQuoteHoverRuntime,
     buildInverseQuoteDisplayTextForState,
     buildQuoteAlertDisplayLabel,
     buildQuotePairLabelHtml,

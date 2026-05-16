@@ -449,6 +449,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayToggleState(quoteDisplayMode)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, channel)'));
+    assert.ok(appJsResponse.body.includes('const quoteHoverRuntime = getQuoteDisplayUtils().createQuoteHoverRuntime({'));
+    assert.ok(appJsResponse.body.includes('quoteHoverRuntime.schedule(quoteId, () => {'));
+    assert.ok(appJsResponse.body.includes('quoteHoverRuntime.hide(quoteId, () => {'));
+    assert.ok(!appJsResponse.body.includes('let hoverTimeout = null;'));
+    assert.ok(!appJsResponse.body.includes('let currentHoveredQuoteId = null;'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function createQuoteHoverRuntime(options = {})'));
     assert.ok(!appJsResponse.body.includes('return `${symbol}: 等待盘口...`;'));
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function renderCategoryModuleShell(config = {})'));
