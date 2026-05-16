@@ -4571,14 +4571,10 @@
         resetQuoteUiRuntimeState(quoteId);
         updateAlertSoundState();
 
-        const quoteTextEl = document.getElementById(`quote-text-${quoteId}`);
-        const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quoteId}`);
-        if (quoteTextEl && quoteTextWrapperEl) {
-            quoteTextEl.textContent = '切换中...';
-            quoteTextWrapperEl.classList.add('loading-text');
-            const inverseEl = document.getElementById(`inverse-quote-${quoteId}`);
-            if (inverseEl) inverseEl.textContent = '刷新中...';
-        }
+        getDomRenderUtils().applyQuoteSwitchingDomState({
+            ...getQuoteDomRefs(quoteId),
+            inverseEl: document.getElementById(`inverse-quote-${quoteId}`)
+        });
 
         saveData();
         removeFromQueue(quote.id);

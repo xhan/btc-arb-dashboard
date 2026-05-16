@@ -6,6 +6,7 @@ const {
   applyQuoteAlertHighlightUi,
   applyActiveQuoteDomState,
   applyPausedQuoteDomState,
+  applyQuoteSwitchingDomState,
   bindDraggableElement,
   bindFloatingPanelFocus,
   closestEventTarget,
@@ -210,6 +211,17 @@ assert.deepStrictEqual(activeQuoteRefs.quoteDataEl.removedAttributes, ['title'])
 assert.strictEqual(activeQuoteRefs.quoteTextWrapperEl.classList.contains('loading-text'), true);
 assert.strictEqual(activeQuoteRefs.quoteTextEl.textContent, '刷新中...');
 assert.strictEqual(applyActiveQuoteDomState({}, {}), false);
+
+const switchingQuoteRefs = {
+  quoteTextEl: { textContent: '' },
+  quoteTextWrapperEl: { classList: createClassList([]) },
+  inverseEl: { textContent: '' }
+};
+assert.strictEqual(applyQuoteSwitchingDomState(switchingQuoteRefs), true);
+assert.strictEqual(switchingQuoteRefs.quoteTextEl.textContent, '切换中...');
+assert.strictEqual(switchingQuoteRefs.quoteTextWrapperEl.classList.contains('loading-text'), true);
+assert.strictEqual(switchingQuoteRefs.inverseEl.textContent, '刷新中...');
+assert.strictEqual(applyQuoteSwitchingDomState({}), false);
 
 const htmlElement = { tagName: 'ARTICLE' };
 const documentImpl = {

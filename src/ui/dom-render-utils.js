@@ -187,6 +187,16 @@
     return changed;
   }
 
+  function applyQuoteSwitchingDomState(refs = {}) {
+    if (!refs.quoteTextEl || !refs.quoteTextWrapperEl) return false;
+    refs.quoteTextEl.textContent = '切换中...';
+    addClass(refs.quoteTextWrapperEl, 'loading-text');
+    if (refs.inverseEl) {
+      refs.inverseEl.textContent = '刷新中...';
+    }
+    return true;
+  }
+
   function bindDraggableElement(element, handle, options = {}) {
     if (!element || !handle) return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -260,6 +270,7 @@
   return {
     applyActiveQuoteDomState,
     applyPausedQuoteDomState,
+    applyQuoteSwitchingDomState,
     applyTooltipState,
     applyTrendArrowState,
     applyQuoteAlertHighlightUi,
