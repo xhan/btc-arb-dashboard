@@ -158,6 +158,7 @@
     - 已启动第十四步：主看板前端入口迁入 `src/app/dashboard-app.js`，页面 HTML 与音频资产迁入 `public/`，`server.js` 只显式暴露 `public/` 和 `/src`，避免把根目录配置文件作为静态资源暴露
     - 已启动第十五步：运行时配置默认值、`config_more` 归一化、request-channel 缓存刷新和 Cetus 启动配置读取迁入 `src/server/runtime-config-utils.js`，`server.js` 只保留路径注入和 API 触发刷新
     - 已启动第十六步：DEX/CEX 报价路由表和注册函数迁入 `src/server/quote-route-utils.js`，`server.js` 只注入 app、market clients、输入构造和错误日志依赖
+    - 已启动第十七步：path alert Day.app / Telegram 远程推送发送和组合结果判定迁入 `src/server/path-alert-webhook-utils.js`，`server.js` 只负责读取配置和返回 HTTP 响应
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
