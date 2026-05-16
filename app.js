@@ -4787,13 +4787,7 @@
     }
 
     function getQuoteAlertsForQuoteId(quoteId) {
-        const normalizedQuoteId = Number(quoteId);
-        return (pathAlertConfig.alerts || []).filter((alert) => (
-            alert
-            && alert.target
-            && alert.target.type === 'quote'
-            && Number(alert.target.quoteId) === normalizedQuoteId
-        ));
+        return getPathAlertUtils().getQuoteAlertsForQuoteId(pathAlertConfig, quoteId);
     }
 
     function evaluateQuoteAlertsOnce() {

@@ -19,6 +19,7 @@ const {
   createDismissedTargetEntry,
   findDuplicatePathAlert,
   findDismissedPathAlert,
+  getQuoteAlertsForQuoteId,
   buildAllLegSnapshots,
   resolvePathAlertSnapshotState,
   buildChangedLegs,
@@ -117,6 +118,17 @@ assert.strictEqual(normalizedConfig.alerts[1].target.quoteId, 101);
 assert.strictEqual(normalizedConfig.alerts[1].target.ruleKind, 'targetAbove');
 assert.strictEqual(normalizedConfig.alerts[1].target.value, 0.100113);
 assert.strictEqual(Object.prototype.hasOwnProperty.call(normalizedConfig.alerts[1], 'delivery'), false);
+assert.deepStrictEqual(
+  getQuoteAlertsForQuoteId({
+    alerts: [
+      normalizedConfig.alerts[0],
+      normalizedConfig.alerts[1],
+      { id: 'quote-disabled', enabled: false, target: { type: 'quote', quoteId: 101, direction: 'forward', ruleKind: 'targetBelow', value: 0.1 } },
+      { id: 'quote-other', target: { type: 'quote', quoteId: 102, direction: 'forward', ruleKind: 'targetAbove', value: 0.2 } }
+    ]
+  }, '101').map((alert) => alert.id),
+  ['quote-1', 'quote-disabled']
+);
 
 const normalizedDismissedConfig = normalizeAlertConfig({
   dismissedTargets: [

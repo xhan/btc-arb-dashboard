@@ -336,6 +336,19 @@
     return alertName ? `🚨 [路径报警] ${alertName}` : '🚨 [路径报警]';
   }
 
+  function getQuoteAlertsForQuoteId(alertConfig, quoteId) {
+    const normalizedQuoteId = Number(quoteId);
+    const alerts = Array.isArray(alertConfig && alertConfig.alerts)
+      ? alertConfig.alerts
+      : [];
+    return alerts.filter((alert) => (
+      alert
+        && alert.target
+        && alert.target.type === 'quote'
+        && Number(alert.target.quoteId) === normalizedQuoteId
+    ));
+  }
+
   function findDuplicatePathAlert(alerts, alertOrTarget, options = {}) {
     const items = Array.isArray(alerts) ? alerts : [];
     const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
@@ -920,6 +933,7 @@
     findMutedPathAlert,
     findDuplicatePathAlert,
     formatMutedCountdown,
+    getQuoteAlertsForQuoteId,
     isPathAlertConfirmDelayDisabled,
     normalizeAlertConfig,
     normalizeDismissedTarget,
