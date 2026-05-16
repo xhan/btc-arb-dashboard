@@ -1,9 +1,207 @@
 const assert = require('assert');
 
 const {
+  buildQuoteSettingsModalViewState,
+  resolveDashboardAmountInputAction,
+  resolveDashboardButtonClickAction,
   renderCategoryModuleShell,
   renderQuoteItemShell
 } = require('../dashboard-renderer');
+
+function resolveDashboardActionFor(resolver, matches, event = { type: 'click' }) {
+  return resolver(event, {
+    closestEventTarget: (sourceEvent, selector) => matches[selector] || null
+  });
+}
+
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardAmountInputAction, {
+    '.amount-input': {
+      value: '1.25',
+      dataset: {
+        categoryId: 'cat-1',
+        quoteId: '101'
+      }
+    }
+  }, { type: 'input' }),
+  {
+    type: 'update-amount',
+    categoryId: 'cat-1',
+    quoteId: 101,
+    amount: 1.25
+  }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardAmountInputAction, {
+    '.amount-input': {
+      value: '-1',
+      dataset: {
+        categoryId: 'cat-1',
+        quoteId: '101'
+      }
+    }
+  }, { type: 'input' }),
+  { type: 'none' }
+);
+
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardButtonClickAction, {
+    button: {
+      className: 'icon-btn dismiss-highlight-btn',
+      dataset: { dismissHighlightId: '101' }
+    }
+  }),
+  {
+    type: 'dismiss-highlight',
+    quoteId: 101,
+    button: {
+      className: 'icon-btn dismiss-highlight-btn',
+      dataset: { dismissHighlightId: '101' }
+    }
+  }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardButtonClickAction, {
+    button: {
+      dataset: {
+        categoryId: 'cat-1',
+        toggleCategoryPauseId: 'cat-1'
+      }
+    }
+  }),
+  { type: 'toggle-category-pause', categoryId: 'cat-1' }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardButtonClickAction, {
+    button: {
+      dataset: {
+        categoryId: 'cat-1',
+        togglePauseId: '102'
+      }
+    }
+  }),
+  { type: 'toggle-quote-pause', categoryId: 'cat-1', quoteId: 102 }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardButtonClickAction, {
+    button: {
+      dataset: {
+        categoryId: 'cat-1',
+        editAlertId: '103'
+      }
+    }
+  }),
+  { type: 'edit-quote', categoryId: 'cat-1', quoteId: 103 }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardButtonClickAction, {
+    button: {
+      className: 'icon-btn delete-btn',
+      dataset: {
+        categoryId: 'cat-1',
+        quoteId: '104'
+      }
+    }
+  }),
+  { type: 'delete-quote', categoryId: 'cat-1', quoteId: 104 }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardButtonClickAction, {
+    button: {
+      className: 'icon-btn delete-btn',
+      dataset: {
+        categoryId: 'cat-1'
+      }
+    }
+  }),
+  { type: 'delete-category', categoryId: 'cat-1' }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardButtonClickAction, {
+    button: {
+      className: 'icon-btn add-quote-btn',
+      dataset: {
+        categoryId: 'cat-1'
+      }
+    }
+  }),
+  { type: 'add-quote', categoryId: 'cat-1' }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardButtonClickAction, {
+    button: {
+      className: 'icon-btn swap-btn',
+      dataset: {
+        categoryId: 'cat-1',
+        quoteId: '105'
+      }
+    }
+  }),
+  { type: 'swap-quote', categoryId: 'cat-1', quoteId: 105 }
+);
+assert.deepStrictEqual(resolveDashboardActionFor(resolveDashboardButtonClickAction, {}), { type: 'none' });
+
+const modalViewState = buildQuoteSettingsModalViewState({
+  quote: {
+    chain: 'ethereum',
+    fromToken: '0xfrom',
+    toToken: '0xto',
+    preferredSource: '0x',
+    showInverse: true,
+    kyberOnlyDirectPools: true
+  },
+  monitorState: {
+    fromSymbol: 'WETH',
+    toSymbol: 'USDC'
+  },
+  isEvmChain: (chain) => chain === 'ethereum',
+  getQuoteChainDisplayName: () => 'Ethereum WETH/USDC',
+  getSingleChainDisplayName: (chain) => `Chain:${chain}`
+});
+assert.deepStrictEqual(modalViewState, {
+  title: '设置 · Ethereum WETH/USDC',
+  subtitle: 'WETH/USDC',
+  tokenAddresses: {
+    visible: true,
+    fromLine: 'WETH (Chain:ethereum) 0xfrom',
+    toLine: 'USDC (Chain:ethereum) 0xto'
+  },
+  sourceSelect: {
+    visible: true,
+    value: '0x',
+    disabled: false,
+    kyberOnlyDirectPoolsSource: '0x'
+  },
+  kyberOnlyDirectPoolsChecked: true,
+  inverse: {
+    visible: true,
+    checked: true
+  },
+  swapVisible: true,
+  deleteVisible: true
+});
+
+assert.deepStrictEqual(
+  buildQuoteSettingsModalViewState({
+    quote: { chain: 'arbitrum', toChain: 'base', preferredSource: 'Kyber' },
+    monitorState: {},
+    isCrossChainQuote: () => true,
+    getQuoteChainDisplayName: () => '跨链报价'
+  }).sourceSelect,
+  {
+    visible: true,
+    value: 'LI.FI',
+    disabled: true,
+    kyberOnlyDirectPoolsSource: ''
+  }
+);
+assert.strictEqual(
+  buildQuoteSettingsModalViewState({
+    quote: { chain: 'Bybit', symbol: 'BTCUSDT' },
+    isCexOrderbookChain: () => true
+  }).inverse.visible,
+  false
+);
 
 const quoteItemHtml = renderQuoteItemShell({
   quoteId: 'quote-1',

@@ -71,7 +71,195 @@
             <ul class="quote-list" id="quote-list-${categoryId}"></ul>`;
   }
 
+  function readDatasetValue(element, key) {
+    return String(element && element.dataset && element.dataset[key] || '').trim();
+  }
+
+  function readDatasetNumber(element, key) {
+    const value = readDatasetValue(element, key);
+    return value ? Number(value) : NaN;
+  }
+
+  function hasClass(element, className) {
+    if (!element) return false;
+    if (element.classList && typeof element.classList.contains === 'function') {
+      return element.classList.contains(className);
+    }
+    return String(element.className || '').split(/\s+/).includes(className);
+  }
+
+  function matchesSelector(element, selector) {
+    if (!element) return false;
+    if (typeof element.matches === 'function') {
+      return element.matches(selector);
+    }
+    if (selector.startsWith('.')) {
+      return hasClass(element, selector.slice(1));
+    }
+    return false;
+  }
+
+  function resolveClosest(event, selector, options) {
+    const closestEventTarget = typeof options.closestEventTarget === 'function'
+      ? options.closestEventTarget
+      : () => null;
+    return closestEventTarget(event, selector);
+  }
+
+  function resolveDashboardAmountInputAction(event, options = {}) {
+    const input = resolveClosest(event, '.amount-input', options);
+    if (!input) return { type: 'none' };
+
+    const categoryId = readDatasetValue(input, 'categoryId');
+    const quoteId = readDatasetNumber(input, 'quoteId');
+    const amount = Number(input.value);
+    if (!categoryId || !Number.isFinite(quoteId) || !Number.isFinite(amount) || amount < 0) {
+      return { type: 'none' };
+    }
+
+    return {
+      type: 'update-amount',
+      categoryId,
+      quoteId,
+      amount
+    };
+  }
+
+  function resolveDashboardButtonClickAction(event, options = {}) {
+    const button = resolveClosest(event, 'button', options);
+    if (!button) return { type: 'none' };
+
+    const categoryId = readDatasetValue(button, 'categoryId');
+    const quoteId = readDatasetNumber(button, 'quoteId');
+
+    if (matchesSelector(button, '.dismiss-highlight-btn')) {
+      const dismissQuoteId = readDatasetNumber(button, 'dismissHighlightId');
+      return Number.isFinite(dismissQuoteId)
+        ? { type: 'dismiss-highlight', quoteId: dismissQuoteId, button }
+        : { type: 'none' };
+    }
+
+    if (readDatasetValue(button, 'toggleCategoryPauseId')) {
+      return categoryId
+        ? { type: 'toggle-category-pause', categoryId }
+        : { type: 'none' };
+    }
+
+    if (readDatasetValue(button, 'togglePauseId')) {
+      const toggleQuoteId = readDatasetNumber(button, 'togglePauseId');
+      return categoryId && Number.isFinite(toggleQuoteId)
+        ? { type: 'toggle-quote-pause', categoryId, quoteId: toggleQuoteId }
+        : { type: 'none' };
+    }
+
+    if (readDatasetValue(button, 'editAlertId')) {
+      const editQuoteId = readDatasetNumber(button, 'editAlertId');
+      return categoryId && Number.isFinite(editQuoteId)
+        ? { type: 'edit-quote', categoryId, quoteId: editQuoteId }
+        : { type: 'none' };
+    }
+
+    if (matchesSelector(button, '.delete-btn')) {
+      if (categoryId && Number.isFinite(quoteId)) {
+        return { type: 'delete-quote', categoryId, quoteId };
+      }
+      return categoryId
+        ? { type: 'delete-category', categoryId }
+        : { type: 'none' };
+    }
+
+    if (matchesSelector(button, '.add-quote-btn')) {
+      return categoryId
+        ? { type: 'add-quote', categoryId }
+        : { type: 'none' };
+    }
+
+    if (matchesSelector(button, '.swap-btn')) {
+      return categoryId && Number.isFinite(quoteId)
+        ? { type: 'swap-quote', categoryId, quoteId }
+        : { type: 'none' };
+    }
+
+    return { type: 'none' };
+  }
+
+  function buildQuoteSettingsModalViewState(config = {}) {
+    const quote = config.quote && typeof config.quote === 'object' ? config.quote : {};
+    const monitorState = config.monitorState && typeof config.monitorState === 'object' ? config.monitorState : {};
+    const isCexOrderbookChain = typeof config.isCexOrderbookChain === 'function'
+      ? config.isCexOrderbookChain
+      : () => false;
+    const isCrossChainQuote = typeof config.isCrossChainQuote === 'function'
+      ? config.isCrossChainQuote
+      : () => false;
+    const isEvmChain = typeof config.isEvmChain === 'function'
+      ? config.isEvmChain
+      : () => false;
+    const getQuoteChainDisplayName = typeof config.getQuoteChainDisplayName === 'function'
+      ? config.getQuoteChainDisplayName
+      : () => '';
+    const getSingleChainDisplayName = typeof config.getSingleChainDisplayName === 'function'
+      ? config.getSingleChainDisplayName
+      : (chain) => String(chain || '');
+
+    const isCex = isCexOrderbookChain(quote.chain);
+    const isCrossChain = isCrossChainQuote(quote);
+    let subtitle = quote.symbol || '';
+    if (!subtitle && monitorState.fromSymbol && monitorState.toSymbol) {
+      subtitle = `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
+    }
+
+    const fromSymbolLabel = monitorState.fromSymbol || 'From Token';
+    const toSymbolLabel = monitorState.toSymbol || 'To Token';
+    const showTokenAddresses = !isCex && Boolean(quote.fromToken && quote.toToken);
+    const tokenAddresses = {
+      visible: showTokenAddresses,
+      fromLine: '',
+      toLine: ''
+    };
+    if (showTokenAddresses) {
+      const fromChainLabel = getSingleChainDisplayName(quote.chain);
+      const toChainLabel = getSingleChainDisplayName(quote.toChain || quote.chain);
+      tokenAddresses.fromLine = `${fromSymbolLabel} (${fromChainLabel}) ${quote.fromToken}`;
+      tokenAddresses.toLine = `${toSymbolLabel} (${toChainLabel}) ${quote.toToken}`;
+    }
+
+    const sourceSelect = {
+      visible: false,
+      value: '',
+      disabled: false,
+      kyberOnlyDirectPoolsSource: ''
+    };
+    if (isCrossChain) {
+      sourceSelect.visible = true;
+      sourceSelect.value = 'LI.FI';
+      sourceSelect.disabled = true;
+    } else if (isEvmChain(quote.chain) && String(quote.chain || '').toLowerCase() !== 'plasma') {
+      sourceSelect.visible = true;
+      sourceSelect.value = quote.preferredSource || 'Kyber';
+      sourceSelect.kyberOnlyDirectPoolsSource = sourceSelect.value;
+    }
+
+    const showInverse = !(isCex || isCrossChain);
+    return {
+      title: `设置 · ${getQuoteChainDisplayName(quote)}`,
+      subtitle: subtitle || '...',
+      tokenAddresses,
+      sourceSelect,
+      kyberOnlyDirectPoolsChecked: quote.kyberOnlyDirectPools === true,
+      inverse: {
+        visible: showInverse,
+        checked: !!quote.showInverse
+      },
+      swapVisible: showInverse,
+      deleteVisible: true
+    };
+  }
+
   return {
+    buildQuoteSettingsModalViewState,
+    resolveDashboardAmountInputAction,
+    resolveDashboardButtonClickAction,
     renderCategoryModuleShell,
     renderQuoteItemShell
   };

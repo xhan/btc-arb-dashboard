@@ -333,6 +333,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
     assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
     assert.ok(dashboardRendererResponse.body.includes('class="icon-btn add-quote-btn"'));
+    assert.ok(dashboardRendererResponse.body.includes('function resolveDashboardAmountInputAction(event, options = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function resolveDashboardButtonClickAction(event, options = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsModalViewState(config = {})'));
+    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget })'));
+    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget })'));
+    assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalViewState({'));
+    assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('input', handleDashboardInput)"));
+    assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('click', handleDashboardClick)"));
+    assert.ok(!appJsResponse.body.includes("const target = e.target.closest('button')"));
+    assert.ok(!appJsResponse.body.includes("e.target.matches('.amount-input')"));
+    assert.ok(!appJsResponse.body.includes("target.matches('.delete-btn')"));
+    assert.ok(!appJsResponse.body.includes('target.dataset.togglePauseId'));
     assert.ok(!dashboardRendererResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
     assert.ok(appJsResponse.body.includes("arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput)"));
@@ -626,7 +638,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createButtonFeedbackRuntime(options = {})'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createSaveButtonFeedbackRuntime(options = {})'));
     assert.ok(appJsResponse.body.includes('const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({'));
-    assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.schedule(quoteId, () => {'));
+    assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.schedule(action.quoteId, () => {'));
     assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.clear(quoteId);'));
     assert.ok(!appJsResponse.body.includes('let inputDebounceMap = new Map();'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createInputDebounceRuntime(options = {})'));

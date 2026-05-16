@@ -4573,30 +4573,25 @@
         addCategoryNameInput.focus();
     });
 
-    dashboardEl.addEventListener('input', (e) => {
-        if (e.target.matches('.amount-input')) {
-            const input = e.target;
-            const categoryId = input.dataset.categoryId;
-            const quoteId = parseInt(input.dataset.quoteId);
-            const category = dashboardState.find(c => c.id == categoryId);
-            if (!category) return;
-            const quote = category.quotes.find(q => q.id == quoteId);
-            if (!quote) return;
+    function handleDashboardInput(event) {
+        const action = getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget });
+        if (action.type !== 'update-amount') return;
+        const category = dashboardState.find(c => c.id == action.categoryId);
+        if (!category) return;
+        const quote = category.quotes.find(q => q.id == action.quoteId);
+        if (!quote) return;
 
-            const newAmount = parseFloat(input.value);
-            
-            if (!isNaN(newAmount) && newAmount >= 0) {
-                amountInputDebounceRuntime.schedule(quoteId, () => {
-                    quote.amount = newAmount;
-                    renderDataTerminalPanel();
-                    if (!isQuotePaused(quote)) {
-                        queueQuoteRefresh(quote);
-                    }
-                    saveData();
-                });
+        amountInputDebounceRuntime.schedule(action.quoteId, () => {
+            quote.amount = action.amount;
+            renderDataTerminalPanel();
+            if (!isQuotePaused(quote)) {
+                queueQuoteRefresh(quote);
             }
-        }
-    });
+            saveData();
+        });
+    }
+
+    dashboardEl.addEventListener('input', handleDashboardInput);
 
     function showConfirmation(message, callback) {
         document.getElementById('confirm-message').textContent = message;
@@ -4752,137 +4747,148 @@
         return true;
     }
 
-    dashboardEl.addEventListener('click', (e) => {
-        const target = e.target.closest('button');
-        if (!target) return;
-        const categoryId = target.dataset.categoryId;
-        const quoteId = parseInt(target.dataset.quoteId);
-        
-        if (target.matches('.dismiss-highlight-btn')) {
-            const quoteIdToDismiss = parseInt(target.dataset.dismissHighlightId);
-            setQuoteUiState(quoteIdToDismiss, {
-                hasUnreadAlert: false
-            });
-            const quoteItemEl = document.getElementById(`quote-item-${quoteIdToDismiss}`);
-            if(quoteItemEl) {
-                quoteItemEl.classList.remove('highlight');
-                quoteItemEl.classList.remove('highlight-past');
-            }
-            target.remove();
-        } else if (target.dataset.toggleCategoryPauseId) {
-            toggleCategoryPause(categoryId);
-        } else if (target.dataset.togglePauseId) {
-            const toggleQuoteId = parseInt(target.dataset.togglePauseId);
-            toggleQuotePause(categoryId, toggleQuoteId);
-        } else if (target.dataset.editAlertId) {
-            const editQuoteId = parseInt(target.dataset.editAlertId);
-            const category = dashboardState.find(c => c.id == categoryId);
-            if (!category) return;
-            const quote = category.quotes.find(q => q.id == editQuoteId);
-            if (!quote) return;
-            currentlyEditingQuote = { quote: quote, categoryId: categoryId };
-            const monitorState = getQuoteMarketState(quote.id) || {};
-            
-            let pairLabel = quote.symbol;
-            if(!pairLabel && monitorState.fromSymbol && monitorState.toSymbol){
-                pairLabel = `${monitorState.fromSymbol}/${monitorState.toSymbol}`;
-            }
-            document.getElementById('modal-title').textContent = `设置 · ${getQuoteChainDisplayName(quote)}`;
-            const modalSubtitleEl = document.getElementById('modal-subtitle');
-            if (modalSubtitleEl) {
-                modalSubtitleEl.textContent = pairLabel || '...';
-            }
-
-            const fromSymbolLabel = monitorState.fromSymbol || 'From Token';
-            const toSymbolLabel = monitorState.toSymbol || 'To Token';
-            if (quoteTokenAddressesEl && quoteFromTokenLineEl && quoteToTokenLineEl) {
-                if (isCexOrderbookChain(quote.chain) || !quote.fromToken || !quote.toToken) {
-                    quoteTokenAddressesEl.style.display = 'none';
-                } else {
-                    const fromChainLabel = getSingleChainDisplayName(quote.chain);
-                    const toChainLabel = getSingleChainDisplayName(quote.toChain || quote.chain);
-                    quoteFromTokenLineEl.textContent = `${fromSymbolLabel} (${fromChainLabel}) ${quote.fromToken}`;
-                    quoteToTokenLineEl.textContent = `${toSymbolLabel} (${toChainLabel}) ${quote.toToken}`;
-                    quoteTokenAddressesEl.style.display = 'block';
-                }
-            }
-            
-            const sourceGroup = document.getElementById('source-select-group');
-            if (quoteSourceSelect) quoteSourceSelect.disabled = false;
-            if (isCrossChainQuote(quote)) {
-                if (sourceGroup) sourceGroup.style.display = 'block';
-                if (quoteSourceSelect) {
-                    quoteSourceSelect.value = 'LI.FI';
-                    quoteSourceSelect.disabled = true;
-                }
-                syncKyberOnlyDirectPoolsControl(quote, '');
-            } else if (isEvmChain(quote.chain)) {
-                if (quote.chain.toLowerCase() === 'plasma') {
-                    if (sourceGroup) sourceGroup.style.display = 'none';
-                    syncKyberOnlyDirectPoolsControl(quote, '');
-                } else {
-                    if (sourceGroup) sourceGroup.style.display = 'block';
-                    const pref = quote.preferredSource || 'Kyber';
-                    if (quoteSourceSelect) quoteSourceSelect.value = pref;
-                    syncKyberOnlyDirectPoolsControl(quote, pref);
-                }
-            } else {
-                if (sourceGroup) sourceGroup.style.display = 'none';
-                syncKyberOnlyDirectPoolsControl(quote, '');
-            }
-
-            if (kyberOnlyDirectPoolsInput) {
-                kyberOnlyDirectPoolsInput.checked = quote.kyberOnlyDirectPools === true;
-            }
-
-            renderQuoteRequestChannelOptions(quote);
-
-            const inverseCheckbox = document.getElementById('show-inverse-quote');
-            if (isCexOrderbookChain(quote.chain) || isCrossChainQuote(quote)) {
-                 document.getElementById('inverse-toggle-group').style.display = 'none';
-            } else {
-                 document.getElementById('inverse-toggle-group').style.display = 'flex';
-                 inverseCheckbox.checked = !!quote.showInverse;
-            }
-
-            if (modalSwapQuoteBtn) {
-                modalSwapQuoteBtn.style.display = (isCexOrderbookChain(quote.chain) || isCrossChainQuote(quote)) ? 'none' : 'block';
-            }
-            if (modalDeleteQuoteBtn) {
-                modalDeleteQuoteBtn.style.display = 'block';
-            }
-
-            alertModal.classList.add('visible');
-
-        } else if (target.matches('.delete-btn')) {
-             if (quoteId && categoryId) {
-                showConfirmation('确定删除此报价吗？', () => {
-                    deleteQuoteFromCategory(categoryId, quoteId);
-                });
-            } else if (categoryId) {
-                const categoryIndex = dashboardState.findIndex(c => c.id == categoryId);
-                if (categoryIndex !== -1) {
-                     showConfirmation(`确定删除分区 "${dashboardState[categoryIndex].name}" 吗？`, () => {
-                        (dashboardState[categoryIndex].quotes || []).forEach(q => {
-                           removeFromQueue(q.id);
-                           deleteQuoteMarketState(q.id);
-                           deleteQuoteUiRuntimeState(q.id);
-                        });
-                        updateAlertSoundState();
-                        dashboardState.splice(categoryIndex, 1);
-                        document.getElementById(`module-${categoryId}`).remove();
-                        renderDataTerminalPanel();
-                        saveData();
-                    });
-                }
-            }
-        } else if (target.matches('.add-quote-btn')) {
-            currentCategoryIdToAdd = categoryId;
-            addQuoteModal.classList.add('visible');
-        } else if (target.matches('.swap-btn')) {
-            swapQuoteTokens(categoryId, quoteId);
+    function dismissQuoteHighlight(quoteId, button) {
+        setQuoteUiState(quoteId, {
+            hasUnreadAlert: false
+        });
+        const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
+        if (quoteItemEl) {
+            quoteItemEl.classList.remove('highlight');
+            quoteItemEl.classList.remove('highlight-past');
         }
-    });
+        if (button && typeof button.remove === 'function') {
+            button.remove();
+        }
+    }
+
+    function openQuoteSettingsModal(categoryId, quoteId) {
+        const category = dashboardState.find(c => c.id == categoryId);
+        if (!category) return false;
+        const quote = category.quotes.find(q => q.id == quoteId);
+        if (!quote) return false;
+        currentlyEditingQuote = { quote, categoryId };
+        const monitorState = getQuoteMarketState(quote.id) || {};
+        const modalState = getDashboardRenderer().buildQuoteSettingsModalViewState({
+            quote,
+            monitorState,
+            isCexOrderbookChain,
+            isCrossChainQuote,
+            isEvmChain,
+            getQuoteChainDisplayName,
+            getSingleChainDisplayName
+        });
+
+        document.getElementById('modal-title').textContent = modalState.title;
+        const modalSubtitleEl = document.getElementById('modal-subtitle');
+        if (modalSubtitleEl) {
+            modalSubtitleEl.textContent = modalState.subtitle;
+        }
+
+        if (quoteTokenAddressesEl && quoteFromTokenLineEl && quoteToTokenLineEl) {
+            if (!modalState.tokenAddresses.visible) {
+                quoteTokenAddressesEl.style.display = 'none';
+            } else {
+                quoteFromTokenLineEl.textContent = modalState.tokenAddresses.fromLine;
+                quoteToTokenLineEl.textContent = modalState.tokenAddresses.toLine;
+                quoteTokenAddressesEl.style.display = 'block';
+            }
+        }
+
+        const sourceGroup = document.getElementById('source-select-group');
+        if (sourceGroup) {
+            sourceGroup.style.display = modalState.sourceSelect.visible ? 'block' : 'none';
+        }
+        if (quoteSourceSelect) {
+            quoteSourceSelect.disabled = modalState.sourceSelect.disabled;
+            if (modalState.sourceSelect.value) {
+                quoteSourceSelect.value = modalState.sourceSelect.value;
+            }
+        }
+        syncKyberOnlyDirectPoolsControl(quote, modalState.sourceSelect.kyberOnlyDirectPoolsSource);
+
+        if (kyberOnlyDirectPoolsInput) {
+            kyberOnlyDirectPoolsInput.checked = modalState.kyberOnlyDirectPoolsChecked;
+        }
+
+        renderQuoteRequestChannelOptions(quote);
+
+        const inverseCheckbox = document.getElementById('show-inverse-quote');
+        if (!modalState.inverse.visible) {
+            document.getElementById('inverse-toggle-group').style.display = 'none';
+        } else {
+            document.getElementById('inverse-toggle-group').style.display = 'flex';
+            inverseCheckbox.checked = modalState.inverse.checked;
+        }
+
+        if (modalSwapQuoteBtn) {
+            modalSwapQuoteBtn.style.display = modalState.swapVisible ? 'block' : 'none';
+        }
+        if (modalDeleteQuoteBtn) {
+            modalDeleteQuoteBtn.style.display = modalState.deleteVisible ? 'block' : 'none';
+        }
+
+        alertModal.classList.add('visible');
+        return true;
+    }
+
+    function deleteCategoryFromDashboard(categoryId) {
+        const categoryIndex = dashboardState.findIndex(c => c.id == categoryId);
+        if (categoryIndex === -1) return false;
+        showConfirmation(`确定删除分区 "${dashboardState[categoryIndex].name}" 吗？`, () => {
+            (dashboardState[categoryIndex].quotes || []).forEach(q => {
+                removeFromQueue(q.id);
+                deleteQuoteMarketState(q.id);
+                deleteQuoteUiRuntimeState(q.id);
+            });
+            updateAlertSoundState();
+            dashboardState.splice(categoryIndex, 1);
+            const moduleEl = document.getElementById(`module-${categoryId}`);
+            if (moduleEl) moduleEl.remove();
+            renderDataTerminalPanel();
+            saveData();
+        });
+        return true;
+    }
+
+    function handleDashboardClick(event) {
+        const action = getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget });
+        if (action.type === 'dismiss-highlight') {
+            dismissQuoteHighlight(action.quoteId, action.button);
+            return;
+        }
+        if (action.type === 'toggle-category-pause') {
+            toggleCategoryPause(action.categoryId);
+            return;
+        }
+        if (action.type === 'toggle-quote-pause') {
+            toggleQuotePause(action.categoryId, action.quoteId);
+            return;
+        }
+        if (action.type === 'edit-quote') {
+            openQuoteSettingsModal(action.categoryId, action.quoteId);
+            return;
+        }
+        if (action.type === 'delete-quote') {
+            showConfirmation('确定删除此报价吗？', () => {
+                deleteQuoteFromCategory(action.categoryId, action.quoteId);
+            });
+            return;
+        }
+        if (action.type === 'delete-category') {
+            deleteCategoryFromDashboard(action.categoryId);
+            return;
+        }
+        if (action.type === 'add-quote') {
+            currentCategoryIdToAdd = action.categoryId;
+            addQuoteModal.classList.add('visible');
+            return;
+        }
+        if (action.type === 'swap-quote') {
+            swapQuoteTokens(action.categoryId, action.quoteId);
+        }
+    }
+
+    dashboardEl.addEventListener('click', handleDashboardClick);
 
     alertModal.addEventListener('click', (e) => {
         if (e.target.id === 'modal-cancel' || (e.target === alertModal && !e.target.closest('.modal-box'))) {
