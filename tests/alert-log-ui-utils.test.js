@@ -7,6 +7,7 @@ const {
   applyAlertLogTabDomState,
   applyAlertLogMutedStatusDomState,
   applyExpandedAlertLogCardDomState,
+  createAlertLogCardInsertionRuntime,
   createAlertLogTabRuntime,
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
@@ -309,6 +310,52 @@ const fakeRestoredContainer = {
 };
 assert.strictEqual(removeRestoredMutedAlertLogCards([fakeRestoredContainer, null], 'target'), 2);
 assert.deepStrictEqual(removedCards, ['a', 'b']);
+
+function createAlertLogContainer() {
+  return {
+    children: [],
+    prepend(card) {
+      this.children.unshift(card);
+    }
+  };
+}
+
+const activeAlertLogContainer = createAlertLogContainer();
+const mutedAlertLogContainer = createAlertLogContainer();
+activeAlertLogContainer.querySelectorAll = fakeRestoredContainer.querySelectorAll;
+const alertLogInsertionCalls = [];
+const alertLogInsertionRuntime = createAlertLogCardInsertionRuntime({
+  activeContainer: activeAlertLogContainer,
+  mutedContainer: mutedAlertLogContainer,
+  maxEntries: 2,
+  trimContainer(container, maxEntries) {
+    alertLogInsertionCalls.push(['trim', container, maxEntries]);
+  },
+  afterInsert(nowMs) {
+    alertLogInsertionCalls.push(['afterInsert', nowMs]);
+  }
+});
+const activeAlertLogCard = {
+  id: 'active-card',
+  dataset: { mutedTargetKey: 'target' }
+};
+const mutedAlertLogCard = {
+  id: 'muted-card',
+  dataset: {}
+};
+assert.strictEqual(alertLogInsertionRuntime.prepend({ mutedEntry: null }, activeAlertLogCard), 'active');
+assert.deepStrictEqual(activeAlertLogContainer.children, [activeAlertLogCard]);
+assert.deepStrictEqual(removedCards, ['a', 'b', 'a', 'b']);
+assert.strictEqual(alertLogInsertionRuntime.prepend({ mutedEntry: { expiresAt: 123 } }, mutedAlertLogCard), 'muted');
+assert.deepStrictEqual(mutedAlertLogContainer.children, [mutedAlertLogCard]);
+assert.strictEqual(alertLogInsertionRuntime.finalize(['active', '', 'muted'], 12345), true);
+assert.deepStrictEqual(alertLogInsertionCalls, [
+  ['afterInsert', 12345],
+  ['trim', activeAlertLogContainer, 2],
+  ['trim', mutedAlertLogContainer, 2]
+]);
+assert.strictEqual(alertLogInsertionRuntime.finalize([], 12345), false);
+assert.strictEqual(createAlertLogCardInsertionRuntime({ activeContainer: null }).prepend({}, {}), '');
 
 function resolveActionFor(matches) {
   return resolveAlertLogClickAction({ type: 'click' }, {

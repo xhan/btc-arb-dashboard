@@ -163,6 +163,19 @@
     const alertLogMutedLogContent = document.getElementById('alert-log-muted-log-content');
     const alertLogMutedContent = document.getElementById('alert-log-muted-content');
     const alertLogSettingsContent = document.getElementById('alert-log-settings-content');
+    const alertLogCardInsertionRuntime = getAlertLogUiUtils().createAlertLogCardInsertionRuntime({
+        getActiveContainer: () => alertLogContent,
+        getMutedContainer: () => alertLogMutedLogContent,
+        selectorOptions: {
+            escapeCssAttributeValue: (value) => getDomRenderUtils().escapeCssAttributeValue(value)
+        },
+        maxEntries: MAX_ALERT_LOG_ENTRIES,
+        trimContainer: (container, maxEntries) => getArbRuntimeMemoryUtils().trimContainerChildren(container, maxEntries),
+        afterInsert: (nowMs) => {
+            updateMutedPathAlertLogCards('', nowMs);
+            syncMutedPathLogTimer();
+        }
+    });
     const pathAlertSound = document.getElementById('path-alert-sound');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const themeRuntime = getThemeUtils().createThemeRuntime({
@@ -775,45 +788,6 @@
         );
     }
 
-    function getAlertLogEntryContainers() {
-        return [alertLogContent, alertLogMutedLogContent].filter(Boolean);
-    }
-
-    function getAlertLogSelectorOptions() {
-        return {
-            escapeCssAttributeValue: (value) => getDomRenderUtils().escapeCssAttributeValue(value)
-        };
-    }
-
-    function prependAlertLogCard(entry, card) {
-        if (!card) return '';
-        const targetKey = String(card.dataset && card.dataset.mutedTargetKey || '');
-        const placement = getAlertLogUiUtils().resolveAlertLogCardPlacement(entry, { targetKey });
-        const container = placement.destination === 'muted'
-            ? alertLogMutedLogContent
-            : alertLogContent;
-        if (!container) return '';
-        if (placement.removeRestoredTargetKey) {
-            removeRestoredMutedAlertLogCards(placement.removeRestoredTargetKey);
-        }
-        container.prepend(card);
-        return placement.destination;
-    }
-
-    function finalizeAlertLogCardInsertions(destinations, nowMs = Date.now()) {
-        const insertedDestinations = (Array.isArray(destinations) ? destinations : [destinations]).filter(Boolean);
-        if (!insertedDestinations.length) return;
-        updateMutedPathAlertLogCards('', nowMs);
-        syncMutedPathLogTimer();
-        const destinationSet = new Set(insertedDestinations);
-        if (destinationSet.has('active') && alertLogContent) {
-            getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
-        }
-        if (destinationSet.has('muted') && alertLogMutedLogContent) {
-            getArbRuntimeMemoryUtils().trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
-        }
-    }
-
     function expandCollapsedAlertLogCard(card) {
         getAlertLogUiUtils().applyExpandedAlertLogCardDomState(card);
     }
@@ -892,8 +866,8 @@
             })
         );
         if (!card) return;
-        const destination = prependAlertLogCard(logEntry, card);
-        finalizeAlertLogCardInsertions([destination], nowMs);
+        const destination = alertLogCardInsertionRuntime.prepend(logEntry, card);
+        alertLogCardInsertionRuntime.finalize([destination], nowMs);
     }
 
     function pruneMutedPathTargetsInPlace(nowMs = Date.now()) {
@@ -1106,14 +1080,16 @@
 
     function removeRestoredMutedAlertLogCards(targetKey = '') {
         getAlertLogUiUtils().removeRestoredMutedAlertLogCards(
-            getAlertLogEntryContainers(),
+            [alertLogContent, alertLogMutedLogContent].filter(Boolean),
             targetKey,
-            getAlertLogSelectorOptions()
+            {
+                escapeCssAttributeValue: (value) => getDomRenderUtils().escapeCssAttributeValue(value)
+            }
         );
     }
 
     function updateMutedPathAlertLogCards(targetKey = '', nowMs = Date.now()) {
-        const containers = getAlertLogEntryContainers();
+        const containers = [alertLogContent, alertLogMutedLogContent].filter(Boolean);
         if (!containers.length) return;
         pruneMutedPathTargetsInPlace(nowMs);
         containers.forEach((container) => {
@@ -1208,7 +1184,9 @@
             if (getAlertLogUiUtils().hasMutedTargetLogCard(
                 alertLogMutedLogContent,
                 item.targetKey,
-                getAlertLogSelectorOptions()
+                {
+                    escapeCssAttributeValue: (value) => getDomRenderUtils().escapeCssAttributeValue(value)
+                }
             )) {
                 return;
             }
@@ -1250,11 +1228,11 @@
                 })
             );
             if (card) {
-                const destination = prependAlertLogCard(entry, card);
+                const destination = alertLogCardInsertionRuntime.prepend(entry, card);
                 if (destination) destinations.push(destination);
             }
         }
-        finalizeAlertLogCardInsertions(destinations, nowMs);
+        alertLogCardInsertionRuntime.finalize(destinations, nowMs);
     }
 
     function unlockAudio() {

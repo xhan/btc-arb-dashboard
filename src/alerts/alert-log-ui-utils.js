@@ -222,6 +222,56 @@
     return removedCount;
   }
 
+  function createAlertLogCardInsertionRuntime(options = {}) {
+    const getActiveContainer = typeof options.getActiveContainer === 'function'
+      ? options.getActiveContainer
+      : () => options.activeContainer || null;
+    const getMutedContainer = typeof options.getMutedContainer === 'function'
+      ? options.getMutedContainer
+      : () => options.mutedContainer || null;
+    const getContainers = () => [getActiveContainer(), getMutedContainer()].filter(Boolean);
+    const selectorOptions = options.selectorOptions || {};
+    const trimContainer = typeof options.trimContainer === 'function' ? options.trimContainer : () => {};
+    const afterInsert = typeof options.afterInsert === 'function' ? options.afterInsert : () => {};
+    const maxEntries = Number.isFinite(Number(options.maxEntries)) ? Number(options.maxEntries) : 0;
+
+    function getContainer(destination) {
+      return destination === 'muted' ? getMutedContainer() : getActiveContainer();
+    }
+
+    function prepend(entry, card) {
+      if (!card) return '';
+      const targetKey = String(card.dataset && card.dataset.mutedTargetKey || '');
+      const placement = resolveAlertLogCardPlacement(entry, { targetKey });
+      const container = getContainer(placement.destination);
+      if (!container || typeof container.prepend !== 'function') return '';
+      if (placement.removeRestoredTargetKey) {
+        removeRestoredMutedAlertLogCards(getContainers(), placement.removeRestoredTargetKey, selectorOptions);
+      }
+      container.prepend(card);
+      return placement.destination;
+    }
+
+    function finalize(destinations, nowMs = Date.now()) {
+      const insertedDestinations = (Array.isArray(destinations) ? destinations : [destinations]).filter(Boolean);
+      if (!insertedDestinations.length) return false;
+      afterInsert(nowMs);
+      const destinationSet = new Set(insertedDestinations);
+      if (destinationSet.has('active')) {
+        trimContainer(getActiveContainer(), maxEntries);
+      }
+      if (destinationSet.has('muted')) {
+        trimContainer(getMutedContainer(), maxEntries);
+      }
+      return true;
+    }
+
+    return {
+      finalize,
+      prepend
+    };
+  }
+
   function applyExpandedAlertLogCardDomState(card) {
     if (!card || !card.dataset || card.dataset.alertLogCollapsed !== '1') return false;
     card.dataset.alertLogCollapsed = '0';
@@ -642,6 +692,7 @@
     buildRestoredMutedAlertLogHtml,
     buildPathAlertLogCardHtml,
     buildQuoteAlertLogHtml,
+    createAlertLogCardInsertionRuntime,
     createAlertLogTabRuntime,
     hasMutedTargetLogCard,
     removeRestoredMutedAlertLogCards,

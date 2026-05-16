@@ -890,7 +890,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("closestEventTarget(event, '[data-muted-path-target-extend]')"));
     assert.ok(!appJsResponse.body.includes("closestEventTarget(event, '[data-path-alert-log-mute]')"));
     assert.ok(!alertLogUiResponse.body.includes('buildGenericAlertLogEntryHtml'));
-    assert.ok(appJsResponse.body.includes('function getAlertLogSelectorOptions()'));
+    assert.ok(!appJsResponse.body.includes('function getAlertLogSelectorOptions()'));
     assert.ok(!appJsResponse.body.includes('querySelectorAll(`.log-entry[data-muted-restored="1"]'));
     assert.ok(!appJsResponse.body.includes('querySelector(`.log-entry[data-muted-target-key='));
     assert.ok(appJsResponse.body.includes('alertSettingsHtmlRenderer.render(alertLogSettingsContent'));
@@ -1211,8 +1211,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertLogUiResponse.body.includes('data-quote-alert-log-mute'));
     assert.ok(!appJsResponse.body.includes('buildLegacyQuoteAlertLogHtml'));
     assert.ok(!appJsResponse.body.includes('buildQuoteAlertActionLink'));
-    assert.ok(appJsResponse.body.includes('prependAlertLogCard'));
-    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().resolveAlertLogCardPlacement('));
+    assert.ok(appJsResponse.body.includes('const alertLogCardInsertionRuntime = getAlertLogUiUtils().createAlertLogCardInsertionRuntime({'));
+    assert.ok(appJsResponse.body.includes('alertLogCardInsertionRuntime.prepend('));
+    assert.ok(appJsResponse.body.includes('alertLogCardInsertionRuntime.finalize('));
+    assert.ok(!appJsResponse.body.includes('function prependAlertLogCard('));
+    assert.ok(!appJsResponse.body.includes('function finalizeAlertLogCardInsertions('));
     assert.ok(alertLogUiResponse.body.includes('function buildAlertLogAppendPlan(entries)'));
     assert.ok(alertLogUiResponse.body.includes('function buildAlertLogTabState(activeTab = \'log\')'));
     assert.ok(alertLogUiResponse.body.includes('function createAlertLogTabRuntime(options = {})'));
@@ -1224,6 +1227,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("window.getComputedStyle(alertLogWindow).display === 'none'"));
     assert.ok(appJsResponse.body.includes("alertLogTabRuntime.isActive('muted')"));
     assert.ok(alertLogUiResponse.body.includes('function resolveAlertLogCardPlacement(entry, options = {})'));
+    assert.ok(alertLogUiResponse.body.includes('function createAlertLogCardInsertionRuntime(options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function buildRestoredMutedAlertLogPlan(entries, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function hasMutedTargetLogCard(container, targetKey, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function removeRestoredMutedAlertLogCards(containers, targetKey, options = {})'));
@@ -1299,7 +1303,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('MUTED_PATH_LEGS_STORAGE_KEY'));
     assert.ok(appJsResponse.body.includes('function getArbRuntimeMemoryUtils()'));
     assert.ok(appJsResponse.body.includes('ArbRuntimeMemoryUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES)'));
+    assert.ok(appJsResponse.body.includes('trimContainer: (container, maxEntries) => getArbRuntimeMemoryUtils().trimContainerChildren(container, maxEntries)'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function buildRetainedArbOpportunityStore(currentOpportunities, retainedEntries)'));
     assert.ok(!appJsResponse.body.includes('window.ArbRuntimeMemoryUtils &&'));
     assert.ok(appJsResponse.body.includes('let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();'));

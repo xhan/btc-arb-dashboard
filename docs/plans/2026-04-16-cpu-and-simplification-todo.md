@@ -192,7 +192,7 @@
   - `quote-pause`：单报价/分区暂停按钮的 aria/title/icon DOM 应用已下沉到 `src/quote/quote-pause-utils.js`
   - `dom-render`：报价 pair label HTML 写入、quote run state tag 的 text/class 写入和 quote alert 确认按钮 DOM 写入已下沉到 `src/ui/dom-render-utils.js`
   - `quote-display`：报价显示模式按钮的 text/title DOM 应用已下沉到 `src/quote/quote-display-utils.js`
-  - alert log 的 restored muted selector、恢复卡片删除、折叠卡片展开 DOM 写入、muted 状态/按钮 DOM 写入、click action 解析和 active tab runtime 已下沉到 `src/alerts/alert-log-ui-utils.js`
+  - alert log 的 restored muted selector、恢复卡片删除、卡片插入/收尾 runtime、折叠卡片展开 DOM 写入、muted 状态/按钮 DOM 写入、click action 解析和 active tab runtime 已下沉到 `src/alerts/alert-log-ui-utils.js`
   - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `src/path-alerts/path-alert-utils.js`
   - 套利详情 muted leg 的屏蔽时长 prompt 文案和正整数解析已下沉到 `src/path-alerts/muted-path-leg-utils.js`
   - `src/app/dashboard-app.js` 中未调用的 muted path timer 包装函数已移除，保留唯一入口 `syncMutedPathLogTimer()`
@@ -261,6 +261,7 @@
   - `src/app/dashboard-app.js` 的浮窗拖拽实现、浮窗 focus 事件绑定和通用显示切换状态已下沉到 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的浮窗 z-index 计数和默认 z-index 写入已下沉到 `src/ui/dom-render-utils.js` 的 `createFloatingPanelZIndexRuntime()`
   - `src/app/dashboard-app.js` 的 alert log active tab 状态、tab DOM 状态和浮窗显示状态已下沉到 `src/alerts/alert-log-ui-utils.js`
+  - `src/app/dashboard-app.js` 的 alert log 卡片插入 placement、restored 卡片清理和插入后 trimming 编排已下沉到 `src/alerts/alert-log-ui-utils.js`
   - `src/app/dashboard-app.js` 的主题 metadata、循环顺序、storage 读取、主题写入计划、计划执行和 runtime 编排已下沉到 `src/ui/theme-utils.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
