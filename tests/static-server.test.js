@@ -352,6 +352,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('RequestChannelUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('QueueStatsUtils is not loaded'));
     assert.ok(requestChannelUtilsResponse.body.includes('function buildMultiChannelToggleState(enabled)'));
+    const requestChannelExportBlock = requestChannelUtilsResponse.body.match(/return \{\n    CHANNEL_AWARE_SOURCE_KEYS,[\s\S]*?\n  \};/);
+    assert.ok(requestChannelExportBlock);
+    assert.ok(!requestChannelExportBlock[0].includes('getQueueSourceKeyForQuote'));
+    assert.ok(!requestChannelExportBlock[0].includes('normalizeRequestChannelId'));
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildMultiChannelToggleState(multiChannelEnabled)'));
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'));

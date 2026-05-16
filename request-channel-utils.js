@@ -287,11 +287,9 @@
     getEffectiveIntervalForQueue,
     getRequestChannelDisplayForQuote,
     getQueueKeyForQuote,
-    getQueueSourceKeyForQuote,
     getRequestChannelOptions,
     isChannelAwareSourceKey,
     normalizeIntervals,
-    normalizeRequestChannelId,
     parseQueueKey,
     resolveRequestChannelIdForQuote,
     supportsRequestChannelForQuote

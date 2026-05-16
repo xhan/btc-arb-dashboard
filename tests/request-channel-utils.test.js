@@ -10,7 +10,6 @@ const {
   getEffectiveIntervalForQueue,
   getQueueKeyForQuote,
   getRequestChannelDisplayForQuote,
-  getQueueSourceKeyForQuote,
   getRequestChannelOptions,
   resolveRequestChannelIdForQuote,
   supportsRequestChannelForQuote
@@ -52,20 +51,20 @@ assert.deepStrictEqual(
 );
 
 assert.strictEqual(
-  getQueueSourceKeyForQuote({ chain: 'ethereum', preferredSource: 'Kyber' }),
-  'kyber'
+  getQueueKeyForQuote({ chain: 'ethereum', preferredSource: 'Kyber' }, channels),
+  'kyber:default'
 );
 assert.strictEqual(
-  getQueueSourceKeyForQuote({ chain: 'arbitrum', toChain: 'ethereum', preferredSource: 'Kyber' }),
-  'lifi'
+  getQueueKeyForQuote({ chain: 'arbitrum', toChain: 'ethereum', preferredSource: 'Kyber' }, channels),
+  'lifi:default'
 );
 assert.strictEqual(
-  getQueueSourceKeyForQuote({ chain: 'ethereum', preferredSource: '0x' }),
-  'zerox'
+  getQueueKeyForQuote({ chain: 'ethereum', preferredSource: '0x' }, channels),
+  'zerox:default'
 );
 assert.strictEqual(
-  getQueueSourceKeyForQuote({ chain: 'solana', preferredSource: 'Jupiter' }),
-  'solana'
+  getQueueKeyForQuote({ chain: 'solana', preferredSource: 'Jupiter' }, channels),
+  'solana:default'
 );
 
 assert.strictEqual(
