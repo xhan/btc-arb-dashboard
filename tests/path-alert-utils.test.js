@@ -24,6 +24,7 @@ const {
   buildChangedLegs,
   buildMutedPathLegStatusText,
   buildMutedPathStatusText,
+  buildMutedPathTargetKey,
   sortTriggeredPathAlerts,
   PATH_ALERT_MUTE_DURATION_MS,
   PATH_ALERT_MUTE_EXTEND_DURATION_MS,
@@ -559,8 +560,20 @@ assert.strictEqual(
   'path:101|forward|raw>202|inverse|raw'
 );
 assert.strictEqual(
+  buildMutedPathTargetKey(duplicateAlerts[0]),
+  'path:101|forward|raw>202|inverse|raw'
+);
+assert.strictEqual(
+  buildMutedPathTargetKey(duplicateAlerts[0].target),
+  'path:101|forward|raw>202|inverse|raw'
+);
+assert.strictEqual(
   buildPathAlertTargetDuplicateKey(duplicateAlerts[1].target),
   'rule:fixed:fixed:gho-usdc'
+);
+assert.strictEqual(
+  buildMutedPathTargetKey(null),
+  ''
 );
 assert.strictEqual(
   buildPathAlertTargetDuplicateKey({

@@ -1022,8 +1022,7 @@
     }
 
     function buildMutedPathTargetKey(alertOrTarget) {
-        const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
-        return getPathAlertUtils().buildPathAlertTargetDuplicateKey(target);
+        return getPathAlertUtils().buildMutedPathTargetKey(alertOrTarget);
     }
 
     function loadMutedPathTargetsFromStorage() {

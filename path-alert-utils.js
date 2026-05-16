@@ -320,6 +320,11 @@
     return `path:${rotations[0]}`;
   }
 
+  function buildMutedPathTargetKey(alertOrTarget) {
+    const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
+    return buildPathAlertTargetDuplicateKey(target);
+  }
+
   function findDuplicatePathAlert(alerts, alertOrTarget, options = {}) {
     const items = Array.isArray(alerts) ? alerts : [];
     const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
@@ -889,6 +894,7 @@
     buildChangedLegs,
     buildMutedPathLegStatusText,
     buildMutedPathStatusText,
+    buildMutedPathTargetKey,
     buildPathAlertTargetDuplicateKey,
     buildPathAlertSummaryLines,
     buildTelegramBotApiUrl,
