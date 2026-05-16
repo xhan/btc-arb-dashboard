@@ -3646,10 +3646,6 @@
             buildMetaText: (alert) => getPathAlertPageUtils().buildPathAlertMetaText(alert, {
                 resolveSpecialRuleConfig
             }),
-            buildEditHref: (alert) => buildPathAlertsManagementHref({
-                mode: 'edit',
-                alertId: alert.id
-            }),
             formatEvaluationText: formatPathAlertEvaluationText,
             formatTime: (value) => new Date(value).toLocaleTimeString()
         });

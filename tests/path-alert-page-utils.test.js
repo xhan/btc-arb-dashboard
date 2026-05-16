@@ -351,6 +351,12 @@ assert.deepStrictEqual(
     ]
   }
 );
+assert.strictEqual(
+  buildPathAlertPanelRenderOptions({
+    alerts: [{ id: 'default-edit', target: { type: 'path' }, enabled: false }]
+  }).items[0].editHref,
+  '/path-alerts?mode=edit&alertId=default-edit'
+);
 
 const alertCardHtml = renderPathAlertCardHtml({
   alertId: 'alert-1',

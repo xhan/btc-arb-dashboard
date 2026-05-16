@@ -505,7 +505,9 @@
     const buildTitle = typeof options.buildTitle === 'function' ? options.buildTitle : () => '';
     const renderSummaryLinesHtml = typeof options.renderSummaryLinesHtml === 'function' ? options.renderSummaryLinesHtml : () => '';
     const buildMetaText = typeof options.buildMetaText === 'function' ? options.buildMetaText : () => '';
-    const buildEditHref = typeof options.buildEditHref === 'function' ? options.buildEditHref : () => '';
+    const buildEditHref = typeof options.buildEditHref === 'function'
+      ? options.buildEditHref
+      : (alert) => buildPathAlertsPageHref({ mode: 'edit', alertId: alert && alert.id });
     const formatEvaluationText = typeof options.formatEvaluationText === 'function' ? options.formatEvaluationText : () => '--';
     const formatTime = typeof options.formatTime === 'function' ? options.formatTime : (value) => new Date(value).toLocaleTimeString();
     const baseOptions = {
