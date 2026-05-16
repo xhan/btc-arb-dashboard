@@ -20,6 +20,7 @@ const {
   escapeHtml,
   filterAlertsByQuoteId,
   filterDismissedTargetsByQuoteId,
+  getPathAlertStatusInfo,
   groupAlertsBySection,
   parsePathAlertsPagePrefill,
   pruneSelectionSet,
@@ -248,6 +249,30 @@ assert.strictEqual(getPathAlertSectionTypeClass('special'), 'special');
 assert.strictEqual(getPathAlertSectionTypeClass('unknown'), 'path');
 assert.strictEqual(getPathAlertSectionTypeLabel('quote'), '交易对');
 assert.strictEqual(getPathAlertSectionTypeLabel('unknown'), '路径');
+assert.deepStrictEqual(
+  getPathAlertStatusInfo({ enabled: false }, { status: 'cooldown' }),
+  { text: '已禁用', className: 'path-alert-status-disabled' }
+);
+assert.deepStrictEqual(
+  getPathAlertStatusInfo({ target: { type: 'quote' } }, null),
+  { text: '等待报价', className: 'path-alert-status-unavailable' }
+);
+assert.deepStrictEqual(
+  getPathAlertStatusInfo({ target: { type: 'path' } }, { status: 'unavailable' }),
+  { text: '缺报价', className: 'path-alert-status-unavailable' }
+);
+assert.deepStrictEqual(
+  getPathAlertStatusInfo({ target: { type: 'path' } }, { status: 'pending_confirm' }),
+  { text: '待确认', className: 'path-alert-status-pending' }
+);
+assert.deepStrictEqual(
+  getPathAlertStatusInfo({ target: { type: 'path' } }, { status: 'cooldown' }),
+  { text: '冷却中', className: 'path-alert-status-cooldown' }
+);
+assert.deepStrictEqual(
+  getPathAlertStatusInfo({ target: { type: 'path' } }, { status: 'idle' }),
+  { text: '', className: '' }
+);
 
 const alertCardHtml = renderPathAlertCardHtml({
   alertId: 'alert-1',

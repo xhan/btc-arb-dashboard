@@ -3291,22 +3291,7 @@
     }
 
     function getPathAlertStatusInfo(alert, runtime) {
-        if (!alert || alert.enabled === false) {
-            return { text: '已禁用', className: 'path-alert-status-disabled' };
-        }
-        if (!runtime || runtime.status === 'unavailable') {
-            if (alert && alert.target && alert.target.type === 'quote') {
-                return { text: '等待报价', className: 'path-alert-status-unavailable' };
-            }
-            return { text: '缺报价', className: 'path-alert-status-unavailable' };
-        }
-        if (runtime.status === 'pending_confirm') {
-            return { text: '待确认', className: 'path-alert-status-pending' };
-        }
-        if (runtime.status === 'cooldown') {
-            return { text: '冷却中', className: 'path-alert-status-cooldown' };
-        }
-        return { text: '', className: '' };
+        return getPathAlertPageUtils().getPathAlertStatusInfo(alert, runtime);
     }
 
     function buildPathAlertSummaryLines(alert) {
