@@ -7,6 +7,7 @@ const {
   closeAddCategoryModal,
   closeConfirmModal,
   createConfirmActionRuntime,
+  createModalSelectionRuntime,
   hideModal,
   openAddCategoryModal,
   readAddQuoteFormValues,
@@ -119,8 +120,18 @@ assert.strictEqual(resetRefs.fromInput.value, '');
 assert.strictEqual(resetRefs.toInput.value, '');
 assert.strictEqual(resetRefs.symbolInput.value, '');
 assert.strictEqual(resetRefs.modal.classList.contains('visible'), false);
-assert.deepStrictEqual(resetResult, { currentCategoryIdToAdd: null });
+assert.strictEqual(resetResult, undefined);
 assert.strictEqual(resetSyncCount, 1);
+
+const modalSelectionRuntime = createModalSelectionRuntime();
+assert.strictEqual(modalSelectionRuntime.get(), null);
+assert.strictEqual(modalSelectionRuntime.set('category-1'), 'category-1');
+assert.strictEqual(modalSelectionRuntime.get(), 'category-1');
+const editingQuote = { categoryId: 'category-1', quote: { id: 'quote-1' } };
+assert.strictEqual(modalSelectionRuntime.set(editingQuote), editingQuote);
+assert.strictEqual(modalSelectionRuntime.get(), editingQuote);
+assert.strictEqual(modalSelectionRuntime.clear(), null);
+assert.strictEqual(modalSelectionRuntime.get(), null);
 
 function createQuoteSettingsRefs() {
   return {

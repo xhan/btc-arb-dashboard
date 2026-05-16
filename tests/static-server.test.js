@@ -477,6 +477,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('DashboardModalUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().syncAddQuoteFormControls(addQuoteModalRefs, {'));
+    assert.ok(appJsResponse.body.includes('const addQuoteModalSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();'));
+    assert.ok(appJsResponse.body.includes('const quoteSettingsSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function showModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function hideModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
@@ -487,6 +489,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardModalUtilsResponse.body.includes('function openAddCategoryModal(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function closeAddCategoryModal(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readAddCategoryFormValues(refs = {}, options = {})'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function createModalSelectionRuntime()'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function showConfirmModal(refs = {}, message = \'\')'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function closeConfirmModal(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function createConfirmActionRuntime(options = {})'));
@@ -534,6 +537,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("document.getElementById('setting-kyber-interval').value = apiIntervals.kyber"));
     assert.ok(!appJsResponse.body.includes('const categoryName = addCategoryNameInput.value.trim();'));
     assert.ok(!appJsResponse.body.includes('const newCategory = { name: categoryName, id: Date.now(), quotes: [] };'));
+    assert.ok(!appJsResponse.body.includes('let currentlyEditingQuote = null;'));
+    assert.ok(!appJsResponse.body.includes('let currentCategoryIdToAdd = null;'));
     assert.ok(!appJsResponse.body.includes('let onConfirmAction = null;'));
     assert.ok(!appJsResponse.body.includes("typeof onConfirmAction === 'function'"));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-cancel'"));

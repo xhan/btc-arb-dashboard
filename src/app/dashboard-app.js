@@ -135,7 +135,6 @@
         delayMs: 100
     });
 
-    let currentlyEditingQuote = null;
     const MAX_ALERT_LOG_ENTRIES = 300;
     const PATH_ALERT_MUTE_EXTEND_DURATION_MS = getPathAlertUtils().PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000);
     const PATH_ALERT_MUTE_DURATION_MS = Number(getPathAlertUtils().PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
@@ -242,7 +241,8 @@
         symbolField: addQuoteSymbolField,
         saveButton: addQuoteSaveBtn
     };
-    let currentCategoryIdToAdd = null;
+    const addQuoteModalSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();
+    const quoteSettingsSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();
     const confirmModal = document.getElementById('confirm-modal');
     const confirmMessageEl = document.getElementById('confirm-message');
     const confirmOkBtn = document.getElementById('confirm-ok');
@@ -4576,7 +4576,7 @@
         if (!category) return false;
         const quote = category.quotes.find(q => q.id == quoteId);
         if (!quote) return false;
-        currentlyEditingQuote = { quote, categoryId };
+        quoteSettingsSelectionRuntime.set({ quote, categoryId });
         const monitorState = getQuoteMarketState(quote.id) || {};
         const modalState = getDashboardRenderer().buildQuoteSettingsModalViewState({
             quote,
@@ -4599,7 +4599,7 @@
 
     function closeQuoteSettingsModal() {
         getDashboardModalUtils().hideModal(alertModal);
-        currentlyEditingQuote = null;
+        quoteSettingsSelectionRuntime.clear();
     }
 
     function getQuoteSettingsFormValues(quote) {
@@ -4658,7 +4658,7 @@
             return;
         }
         if (action.type === 'add-quote') {
-            currentCategoryIdToAdd = action.categoryId;
+            addQuoteModalSelectionRuntime.set(action.categoryId);
             getDashboardModalUtils().showModal(addQuoteModal);
             return;
         }
@@ -4676,21 +4676,22 @@
             return;
         }
 
-        if (!currentlyEditingQuote || !currentlyEditingQuote.quote) return;
+        const editingQuote = quoteSettingsSelectionRuntime.get();
+        if (!editingQuote || !editingQuote.quote) return;
         if (action.type === 'swap') {
-            swapQuoteTokens(currentlyEditingQuote.categoryId, currentlyEditingQuote.quote.id);
+            swapQuoteTokens(editingQuote.categoryId, editingQuote.quote.id);
         } else if (action.type === 'delete') {
-            const { categoryId, quote } = currentlyEditingQuote;
+            const { categoryId, quote } = editingQuote;
             closeQuoteSettingsModal();
             showConfirmation('确定删除此报价吗？', () => {
                 deleteQuoteFromCategory(categoryId, quote.id);
             });
         } else if (action.type === 'manage-alerts') {
             openPathAlertsManagementPage({
-                filterQuoteId: currentlyEditingQuote.quote.id
+                filterQuoteId: editingQuote.quote.id
             });
         } else if (action.type === 'save') {
-            const { quote } = currentlyEditingQuote;
+            const { quote } = editingQuote;
             const formValues = getQuoteSettingsFormValues(quote);
             const updatePlan = getDashboardRenderer().buildQuoteSettingsUpdatePlan({
                 quote,
@@ -4737,7 +4738,8 @@
 
     if (quoteSourceSelect) {
         quoteSourceSelect.addEventListener('change', () => {
-            const currentQuote = currentlyEditingQuote && currentlyEditingQuote.quote ? currentlyEditingQuote.quote : null;
+            const editingQuote = quoteSettingsSelectionRuntime.get();
+            const currentQuote = editingQuote && editingQuote.quote ? editingQuote.quote : null;
             syncKyberOnlyDirectPoolsControl(currentQuote, quoteSourceSelect.value);
         });
     }
@@ -4760,9 +4762,10 @@
     });
 
     function resetAndCloseAddQuoteModal() {
-        currentCategoryIdToAdd = getDashboardModalUtils().resetAddQuoteModal(addQuoteModalRefs, {
+        addQuoteModalSelectionRuntime.clear();
+        getDashboardModalUtils().resetAddQuoteModal(addQuoteModalRefs, {
             syncControls: syncAddQuoteFormControls
-        }).currentCategoryIdToAdd;
+        });
     }
 
     function getAddQuoteFormValues() {
@@ -4795,7 +4798,8 @@
         if (action.type === 'close') {
             resetAndCloseAddQuoteModal();
         } else if (action.type === 'save') {
-            if (currentCategoryIdToAdd === null) return;
+            const categoryIdToAdd = addQuoteModalSelectionRuntime.get();
+            if (categoryIdToAdd === null) return;
             const newQuote = getDashboardRenderer().buildAddQuoteDraft({
                 ...getAddQuoteFormValues(),
                 quoteId: Date.now(),
@@ -4804,7 +4808,7 @@
                 defaultSourceResolver
             });
             if (!newQuote) return;
-            const category = dashboardState.find(c => c.id == currentCategoryIdToAdd);
+            const category = dashboardState.find(c => c.id == categoryIdToAdd);
             if (!category) return;
             if (!category.quotes) category.quotes = [];
             category.quotes.push(newQuote);

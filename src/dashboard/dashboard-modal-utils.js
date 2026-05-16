@@ -120,6 +120,24 @@
     });
   }
 
+  function createModalSelectionRuntime() {
+    let currentSelection = null;
+
+    return {
+      get() {
+        return currentSelection;
+      },
+      set(selection = null) {
+        currentSelection = selection;
+        return currentSelection;
+      },
+      clear() {
+        currentSelection = null;
+        return currentSelection;
+      }
+    };
+  }
+
   function showConfirmModal(refs = {}, message = '') {
     if (refs.message) {
       refs.message.textContent = message;
@@ -195,7 +213,6 @@
       options.syncControls();
     }
     hideModal(refs.modal);
-    return { currentCategoryIdToAdd: null };
   }
 
   return {
@@ -205,6 +222,7 @@
     closeAddCategoryModal,
     closeConfirmModal,
     createConfirmActionRuntime,
+    createModalSelectionRuntime,
     openAddCategoryModal,
     readAddQuoteFormValues,
     readAddCategoryFormValues,
