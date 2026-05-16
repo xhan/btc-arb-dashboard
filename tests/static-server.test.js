@@ -447,6 +447,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRequestUtilsResponse.body.includes('const CEX_ORDERBOOK_REQUESTS = Object.freeze({'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildQuoteRequestInput(quote, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function shouldSkipQuoteSource(source, quote, options = {})'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('function isKyberSupportedChain(chain)'));
+    assert.ok(quoteRequestUtilsResponse.body.includes('function isZeroxSupportedChain(chain)'));
+    assert.ok(!appJsResponse.body.includes('const KYBER_SUPPORTED_CHAINS = ['));
+    assert.ok(!appJsResponse.body.includes('const ZEROX_CHAIN_IDS = {'));
+    assert.ok(!appJsResponse.body.includes('function is0xSupported(chain)'));
+    assert.ok(!appJsResponse.body.includes('function isKyberSupported(chain)'));
+    assert.ok(appJsResponse.body.includes('quoteRequestUtils.shouldSkipQuoteSource(source, quote)'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function formatQuoteErrorMessage(error, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));

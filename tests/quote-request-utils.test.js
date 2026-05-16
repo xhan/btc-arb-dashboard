@@ -10,6 +10,8 @@ const {
   buildQuoteRequestInput,
   buildQuoteErrorTitle,
   formatQuoteErrorMessage,
+  isKyberSupportedChain,
+  isZeroxSupportedChain,
   requestCexOrderbookQuote,
   requestMarketQuote,
   requestResolvedQuote,
@@ -125,6 +127,14 @@ assert.strictEqual(
   shouldSkipQuoteSource('0x', { chain: 'solana' }, { is0xSupported: () => false }),
   true
 );
+assert.strictEqual(isKyberSupportedChain('Arbitrum'), true);
+assert.strictEqual(isKyberSupportedChain('unsupported'), false);
+assert.strictEqual(isZeroxSupportedChain('base'), true);
+assert.strictEqual(isZeroxSupportedChain('solana'), false);
+assert.strictEqual(shouldSkipQuoteSource('Kyber', { chain: 'ethereum' }), false);
+assert.strictEqual(shouldSkipQuoteSource('Kyber', { chain: 'solana' }), true);
+assert.strictEqual(shouldSkipQuoteSource('0x', { chain: 'base' }), false);
+assert.strictEqual(shouldSkipQuoteSource('0x', { chain: 'sui' }), true);
 assert.strictEqual(
   shouldSkipQuoteSource('Velora', { chain: 'ethereum' }, {}),
   false

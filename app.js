@@ -270,10 +270,6 @@
         clearTimeout
     });
 
-    function normalizeChainKey(chain) {
-        return String(chain || '').trim().toLowerCase();
-    }
-
     function getChainDefaults() {
         if (!window.ChainDefaults) {
             throw new Error('ChainDefaults is not loaded');
@@ -454,42 +450,10 @@
         return getChainDefaults().isCexOrderbookChain(chain);
     }
 
-    const KYBER_SUPPORTED_CHAINS = [
-        'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche', 
-        'base', 'linea', 'mantle', 'sonic', 'berachain', 'ronin', 
-        'unichain', 'hyperevm', 'plasma', 'etherlink', 'monad', 'megaeth',
-        'cronos', 'zksync', 'fantom', 'polygon-zkevm', 
-        'scroll', 'aurora', 'bittorrent', 'velas', 'oasis', 'blast',
-        'moonbeam', 'boba', 'gnosis', 'celo', 'mode'
-    ];
-
-    const ZEROX_CHAIN_IDS = {
-        'ethereum': 1,
-        'optimism': 10,
-        'bsc': 56,
-        'polygon': 137,
-        'base': 8453,
-        'arbitrum': 42161,
-        'avalanche': 43114,
-        'linea': 59144,
-        'scroll': 534352,
-        'mantle': 5000,
-        'blast': 81457,
-        'mode': 34443
-    };
-    const ZEROX_SUPPORTED_CHAINS = Object.keys(ZEROX_CHAIN_IDS);
     const defaultSourceResolver = (chain) => getChainDefaults().getDefaultSourceForChain(chain);
 
     function isEvmChain(chain) {
         return getChainDefaults().isEvmChain(chain);
-    }
-
-    function is0xSupported(chain) {
-        return ZEROX_SUPPORTED_CHAINS.includes(normalizeChainKey(chain));
-    }
-
-    function isKyberSupported(chain) {
-        return KYBER_SUPPORTED_CHAINS.includes(normalizeChainKey(chain));
     }
 
     function shouldQueueInverseFetch(quote) {
@@ -3705,10 +3669,7 @@
 
         for (const source of strategy) {
             try {
-                if (quoteRequestUtils.shouldSkipQuoteSource(source, quote, {
-                    isKyberSupported,
-                    is0xSupported
-                })) continue;
+                if (quoteRequestUtils.shouldSkipQuoteSource(source, quote)) continue;
 
                 if (beforeSourceAttempt) {
                     await beforeSourceAttempt(source, requestQuote);

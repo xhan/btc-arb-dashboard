@@ -21,8 +21,26 @@
     Binance: Object.freeze({ endpoint: '/api/get-binance-quote', source: 'Binance' })
   });
 
+  const KYBER_SUPPORTED_CHAINS = Object.freeze([
+    'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche',
+    'base', 'linea', 'mantle', 'sonic', 'berachain', 'ronin',
+    'unichain', 'hyperevm', 'plasma', 'etherlink', 'monad', 'megaeth',
+    'cronos', 'zksync', 'fantom', 'polygon-zkevm',
+    'scroll', 'aurora', 'bittorrent', 'velas', 'oasis', 'blast',
+    'moonbeam', 'boba', 'gnosis', 'celo', 'mode'
+  ]);
+
+  const ZEROX_SUPPORTED_CHAINS = Object.freeze([
+    'ethereum', 'optimism', 'bsc', 'polygon', 'base', 'arbitrum',
+    'avalanche', 'linea', 'scroll', 'mantle', 'blast', 'mode'
+  ]);
+
   function normalizeString(value) {
     return typeof value === 'string' ? value.trim() : '';
+  }
+
+  function normalizeChainKey(chain) {
+    return normalizeString(chain).toLowerCase();
   }
 
   function normalizePositiveAmount(value, fallback = 1) {
@@ -88,12 +106,26 @@
     };
   }
 
+  function isKyberSupportedChain(chain) {
+    return KYBER_SUPPORTED_CHAINS.includes(normalizeChainKey(chain));
+  }
+
+  function isZeroxSupportedChain(chain) {
+    return ZEROX_SUPPORTED_CHAINS.includes(normalizeChainKey(chain));
+  }
+
   function shouldSkipQuoteSource(source, quote, options = {}) {
-    if (source === 'Kyber' && typeof options.isKyberSupported === 'function') {
-      return !options.isKyberSupported(quote && quote.chain);
+    if (source === 'Kyber') {
+      const isSupported = typeof options.isKyberSupported === 'function'
+        ? options.isKyberSupported
+        : isKyberSupportedChain;
+      return !isSupported(quote && quote.chain);
     }
-    if (source === '0x' && typeof options.is0xSupported === 'function') {
-      return !options.is0xSupported(quote && quote.chain);
+    if (source === '0x') {
+      const isSupported = typeof options.is0xSupported === 'function'
+        ? options.is0xSupported
+        : isZeroxSupportedChain;
+      return !isSupported(quote && quote.chain);
     }
     return false;
   }
@@ -287,6 +319,8 @@
     buildQuoteRequestInput,
     buildQuoteErrorTitle,
     formatQuoteErrorMessage,
+    isKyberSupportedChain,
+    isZeroxSupportedChain,
     requestCexOrderbookQuote,
     requestMarketQuote,
     requestResolvedQuote,
