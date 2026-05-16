@@ -1626,11 +1626,6 @@
         return getArbDetailUtils().formatDetailNumber(value, precision);
     }
 
-    function formatDetailProfitRate(profitRate) {
-        if (typeof profitRate !== 'number' || !Number.isFinite(profitRate)) return '--';
-        return getArbPaths().formatProfitWanfen(profitRate);
-    }
-
     function getQuoteDisplayText(quote, state) {
         return getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state, {
             mode: quoteDisplayMode,
@@ -2312,8 +2307,7 @@
             index,
             bestProfitIndices,
             bestProfitRateIndices,
-            formatNumber: formatDetailNumber,
-            formatProfitRate: formatDetailProfitRate
+            formatNumber: formatDetailNumber
         });
     }
 

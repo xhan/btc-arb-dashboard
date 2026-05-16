@@ -1,10 +1,10 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./dex-link-utils'));
+    module.exports = factory(require('./dex-link-utils'), require('./arb-paths'));
     return;
   }
-  root.ArbDetailUtils = factory(root.DexLinkUtils);
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (dexLinkUtils) {
+  root.ArbDetailUtils = factory(root.DexLinkUtils, root.ArbPaths);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (dexLinkUtils, arbPaths) {
   const buildDexLink = dexLinkUtils && typeof dexLinkUtils.buildDexLink === 'function'
     ? dexLinkUtils.buildDexLink
     : () => null;
@@ -39,6 +39,15 @@
     const numericValue = Number(value);
     return Number.isFinite(numericValue)
       ? Number(numericValue.toFixed(precision))
+      : '--';
+  }
+
+  function formatDetailProfitRate(profitRate) {
+    if (arbPaths && typeof arbPaths.formatProfitWanfen === 'function') {
+      return arbPaths.formatProfitWanfen(profitRate);
+    }
+    return typeof profitRate === 'number' && Number.isFinite(profitRate)
+      ? String(profitRate)
       : '--';
   }
 
@@ -657,7 +666,7 @@
         : (value) => String(value);
       const formatProfitRate = typeof options.formatProfitRate === 'function'
         ? options.formatProfitRate
-        : (value) => String(value);
+        : formatDetailProfitRate;
       const profitClass = bestProfitIndices.includes(options.index) ? ' arb-detail-metric-best' : '';
       const rateClass = bestProfitRateIndices.includes(options.index) ? ' arb-detail-metric-best' : '';
       return `
@@ -882,6 +891,7 @@
     buildArbDetailRow,
     applyArbDetailRateDeltas,
     formatDetailNumber,
+    formatDetailProfitRate,
     summarizeDetailResult,
     getQuoteRunState,
     isArbRuleLeg,

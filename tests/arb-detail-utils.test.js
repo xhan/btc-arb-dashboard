@@ -41,6 +41,7 @@ const {
   buildArbDetailSourceHtml,
   buildArbDetailRowsHtml,
   buildArbDetailSummaryHtml,
+  formatDetailProfitRate,
   buildArbDetailShellHtml,
   buildArbDetailChartMessageHtml,
   buildArbDetailProfitPreviewMessageHtml,
@@ -444,6 +445,12 @@ const detailSummaryHtml = buildArbDetailSummaryHtml(
 assert.ok(detailSummaryHtml.includes('arb-detail-metric arb-detail-metric-best'));
 assert.ok(detailSummaryHtml.includes('收益 N:0.123456 cb&lt;BTC&gt;'));
 assert.ok(detailSummaryHtml.includes('R:0.0123'));
+assert.ok(buildArbDetailSummaryHtml(
+  { summary: { profit: 0.123456, profitRate: 0.0123, symbol: 'cbBTC' } },
+  { formatNumber: (value) => value }
+).includes('+123.00‱'));
+assert.strictEqual(formatDetailProfitRate(0.0123), '+123.00‱');
+assert.strictEqual(formatDetailProfitRate('bad'), '--');
 assert.strictEqual(buildArbDetailSummaryHtml({ summary: null }, {}), '<span class="arb-detail-metric">收益 --</span>');
 
 const detailShellHtml = buildArbDetailShellHtml([

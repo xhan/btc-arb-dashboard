@@ -874,7 +874,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbPanelRenderer().resolveArbPathContentClickAction(event, {'));
     assert.ok(appJsResponse.body.includes('getArbPanelRenderer().resolveArbPathContentKeydownAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getArbPanelRenderer().resolveArbPathContentPointerDownAction(event, { closestEventTarget })'));
-    assert.ok(appJsResponse.body.includes('getArbPaths().formatProfitWanfen(profitRate)'));
+    assert.ok(appJsResponse.body.includes('formatProfit: profitRate => arbPaths.formatProfitWanfen(profitRate)'));
+    assert.ok(!appJsResponse.body.includes('function formatDetailProfitRate(profitRate)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function formatDetailProfitRate(profitRate)'));
     assert.ok(!appJsResponse.body.includes('window.ArbPaths.'));
     assert.ok(!appJsResponse.body.includes('window.ArbPanelRenderer.'));
     assert.ok(!appJsResponse.body.includes('路径模块未加载'));
@@ -1132,6 +1134,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('ArbDetailUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRowsHtml(card, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailSummaryHtml(card, {'));
+    assert.ok(!appJsResponse.body.includes('formatProfitRate: formatDetailProfitRate'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbDetailGridMouseDownAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbDetailGridClickAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbDetailGridInputAction(event, { closestEventTarget })'));
