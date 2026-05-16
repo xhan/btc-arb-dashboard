@@ -61,8 +61,6 @@
     const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
     const ARB_DETAIL_REFRESH_INTERVAL_MS = 2500;
-    const MUTED_PATH_TARGETS_STORAGE_KEY = 'mutedPathTargets';
-    const MUTED_PATH_LEGS_STORAGE_KEY = 'mutedPathLegs';
     const MUTED_STATE_VISIBLE_REFRESH_MS = 1000;
     const MUTED_STATE_HIDDEN_MAX_REFRESH_MS = 60 * 1000;
     let arbExpandedSections = new Set();
@@ -1009,31 +1007,16 @@
     }
 
     function loadMutedPathTargetsFromStorage() {
-        const storage = getLocalStorageSafe();
-        if (!storage) return [];
-        try {
-            const raw = storage.getItem(MUTED_PATH_TARGETS_STORAGE_KEY);
-            if (!raw) return [];
-            const parsed = JSON.parse(raw);
-            return getMutedPathStorageUtils().normalizeStoredMutedPathTargets(parsed);
-        } catch (error) {
-            console.warn('读取沉默报警本地缓存失败:', error);
-        }
-        return [];
+        return getMutedPathStorageUtils().loadMutedPathTargetsFromStorage(getLocalStorageSafe(), {
+            onError: (error) => console.warn('读取沉默报警本地缓存失败:', error)
+        });
     }
 
     function loadMutedPathLegsFromStorage() {
-        const storage = getLocalStorageSafe();
-        if (!storage) return [];
-        try {
-            const raw = storage.getItem(MUTED_PATH_LEGS_STORAGE_KEY);
-            if (!raw) return [];
-            const parsed = JSON.parse(raw);
-            return getMutedPathLegUtils().pruneExpiredMutedPathLegs(parsed, Date.now());
-        } catch (error) {
-            console.warn('读取屏蔽腿本地缓存失败:', error);
-        }
-        return [];
+        return getMutedPathStorageUtils().loadMutedPathLegsFromStorage(getLocalStorageSafe(), {
+            mutedPathLegUtils: getMutedPathLegUtils(),
+            onError: (error) => console.warn('读取屏蔽腿本地缓存失败:', error)
+        });
     }
 
     function buildMutedPathLogTitleSnapshot(entry) {
@@ -1049,26 +1032,27 @@
     }
 
     function persistMutedPathTargets() {
-        const storage = getLocalStorageSafe();
-        if (!storage) return;
-        try {
-            const list = getMutedPathStorageUtils().trimMutedPathTargetsForStorage(mutedPathRuntime.getTargets());
+        const list = getMutedPathStorageUtils().persistMutedPathTargetsToStorage(
+            getLocalStorageSafe(),
+            mutedPathRuntime.getTargets(),
+            { onError: (error) => console.warn('保存沉默报警本地缓存失败:', error) }
+        );
+        if (Array.isArray(list)) {
             mutedPathRuntime.setTargets(list);
-            storage.setItem(MUTED_PATH_TARGETS_STORAGE_KEY, JSON.stringify(mutedPathRuntime.getTargets()));
-        } catch (error) {
-            console.warn('保存沉默报警本地缓存失败:', error);
         }
     }
 
     function persistMutedPathLegs() {
-        const storage = getLocalStorageSafe();
-        if (!storage) return;
-        try {
-            const list = getMutedPathLegUtils().trimMutedPathLegsForStorage(mutedPathRuntime.getLegs());
+        const list = getMutedPathStorageUtils().persistMutedPathLegsToStorage(
+            getLocalStorageSafe(),
+            mutedPathRuntime.getLegs(),
+            {
+                mutedPathLegUtils: getMutedPathLegUtils(),
+                onError: (error) => console.warn('保存屏蔽腿本地缓存失败:', error)
+            }
+        );
+        if (Array.isArray(list)) {
             mutedPathRuntime.setLegs(list);
-            storage.setItem(MUTED_PATH_LEGS_STORAGE_KEY, JSON.stringify(mutedPathRuntime.getLegs()));
-        } catch (error) {
-            console.warn('保存屏蔽腿本地缓存失败:', error);
         }
     }
 

@@ -1126,6 +1126,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(!mutedPathLegExportBlock[0].includes('findMutedPathLeg,'));
     assert.ok(appJsResponse.body.includes('function getMutedPathStorageUtils()'));
     assert.ok(appJsResponse.body.includes('MutedPathStorageUtils is not loaded'));
+    assert.ok(mutedPathStorageUtilsResponse.body.includes('function loadMutedPathTargetsFromStorage(storage, options = {})'));
+    assert.ok(mutedPathStorageUtilsResponse.body.includes('function loadMutedPathLegsFromStorage(storage, options = {})'));
+    assert.ok(mutedPathStorageUtilsResponse.body.includes('function persistMutedPathTargetsToStorage(storage, entries, options = {})'));
+    assert.ok(mutedPathStorageUtilsResponse.body.includes('function persistMutedPathLegsToStorage(storage, entries, options = {})'));
+    assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().loadMutedPathTargetsFromStorage(getLocalStorageSafe(), {'));
+    assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().loadMutedPathLegsFromStorage(getLocalStorageSafe(), {'));
+    assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().persistMutedPathTargetsToStorage('));
+    assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().persistMutedPathLegsToStorage('));
+    assert.ok(!appJsResponse.body.includes('MUTED_PATH_TARGETS_STORAGE_KEY'));
+    assert.ok(!appJsResponse.body.includes('MUTED_PATH_LEGS_STORAGE_KEY'));
     assert.ok(appJsResponse.body.includes('function getArbRuntimeMemoryUtils()'));
     assert.ok(appJsResponse.body.includes('ArbRuntimeMemoryUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES)'));
