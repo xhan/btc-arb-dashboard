@@ -201,6 +201,34 @@
     return removedCount;
   }
 
+  function applyExpandedAlertLogCardDomState(card) {
+    if (!card || !card.dataset || card.dataset.alertLogCollapsed !== '1') return false;
+    card.dataset.alertLogCollapsed = '0';
+    if (card.classList && typeof card.classList.remove === 'function') {
+      card.classList.remove('alert-log-entry-collapsed');
+    }
+
+    const titleEl = typeof card.querySelector === 'function'
+      ? card.querySelector('[data-alert-log-title]')
+      : null;
+    if (titleEl) {
+      if (titleEl.classList && typeof titleEl.classList.remove === 'function') {
+        titleEl.classList.remove('alert-log-title-muted');
+      }
+      const expandedTitle = titleEl.dataset && titleEl.dataset.alertLogExpandedTitle;
+      if (expandedTitle) {
+        titleEl.textContent = expandedTitle;
+      }
+    }
+
+    if (typeof card.querySelectorAll === 'function') {
+      card.querySelectorAll('.alert-log-collapsible[hidden]').forEach((element) => {
+        element.hidden = false;
+      });
+    }
+    return true;
+  }
+
   function readDatasetValue(element, key) {
     return String(element && element.dataset && element.dataset[key] || '').trim();
   }
@@ -583,6 +611,7 @@
     buildAlertSettingsPanelHtml,
     buildAlertLogTabState,
     applyAlertLogTabDomState,
+    applyExpandedAlertLogCardDomState,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
     buildMutedTargetLogCardSelector,

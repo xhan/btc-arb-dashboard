@@ -1185,10 +1185,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertLogUiResponse.body.includes('function buildRestoredMutedAlertLogPlan(entries, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function hasMutedTargetLogCard(container, targetKey, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function removeRestoredMutedAlertLogCards(containers, targetKey, options = {})'));
+    assert.ok(alertLogUiResponse.body.includes('function applyExpandedAlertLogCardDomState(card)'));
     assert.ok(alertLogUiResponse.body.includes('function resolveAlertLogClickAction(event, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(alertLogUiResponse.body.includes('data-alert-log-collapsed'));
-    assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().applyExpandedAlertLogCardDomState(card)'));
+    assert.ok(!appJsResponse.body.includes("card.dataset.alertLogCollapsed = '0'"));
+    assert.ok(!appJsResponse.body.includes("titleEl.classList.remove('alert-log-title-muted')"));
+    assert.ok(!appJsResponse.body.includes("card.querySelectorAll('.alert-log-collapsible[hidden]')"));
     assert.ok(appJsResponse.body.includes('function getActivePathAlertEvaluationAlerts()'));
     assert.ok(appJsResponse.body.includes('function pruneInactiveAlertRuntimeState()'));
     assert.ok(appJsResponse.body.includes('function getPathAlertUtils()'));

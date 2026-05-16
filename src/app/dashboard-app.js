@@ -848,20 +848,7 @@
     }
 
     function expandCollapsedAlertLogCard(card) {
-        if (!card || card.dataset.alertLogCollapsed !== '1') return;
-        card.dataset.alertLogCollapsed = '0';
-        card.classList.remove('alert-log-entry-collapsed');
-        const titleEl = card.querySelector('[data-alert-log-title]');
-        if (titleEl) {
-            titleEl.classList.remove('alert-log-title-muted');
-            const expandedTitle = titleEl.dataset.alertLogExpandedTitle;
-            if (expandedTitle) {
-                titleEl.textContent = expandedTitle;
-            }
-        }
-        card.querySelectorAll('.alert-log-collapsible[hidden]').forEach((element) => {
-            element.hidden = false;
-        });
+        getAlertLogUiUtils().applyExpandedAlertLogCardDomState(card);
     }
 
     function buildQuoteAlertTriggeredEntry(alert, quote, evaluation) {

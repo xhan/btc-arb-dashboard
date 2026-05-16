@@ -5,6 +5,7 @@ const {
   buildAlertSettingsPanelHtml,
   buildAlertLogTabState,
   applyAlertLogTabDomState,
+  applyExpandedAlertLogCardDomState,
   createAlertLogTabRuntime,
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
@@ -125,6 +126,43 @@ applyAlertLogTabDomState(alertLogDomRefs, buildAlertLogTabState('muted'), {
 assert.strictEqual(alertLogDomRefs.mutedTab.active, true);
 assert.strictEqual(alertLogDomRefs.mutedContent.hidden, false);
 assert.deepStrictEqual(alertLogDomCalls, ['settings', 'muted']);
+
+function createRemoveClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    remove(...classNames) {
+      classNames.forEach((className) => values.delete(className));
+    },
+    has(className) {
+      return values.has(className);
+    }
+  };
+}
+
+const collapsedTitleEl = {
+  textContent: 'collapsed title',
+  dataset: { alertLogExpandedTitle: 'expanded title' },
+  classList: createRemoveClassList(['alert-log-title-muted'])
+};
+const collapsedRows = [{ hidden: true }, { hidden: true }];
+const collapsedCardEl = {
+  dataset: { alertLogCollapsed: '1' },
+  classList: createRemoveClassList(['alert-log-entry-collapsed']),
+  querySelector(selector) {
+    return selector === '[data-alert-log-title]' ? collapsedTitleEl : null;
+  },
+  querySelectorAll(selector) {
+    return selector === '.alert-log-collapsible[hidden]' ? collapsedRows : [];
+  }
+};
+assert.strictEqual(applyExpandedAlertLogCardDomState(collapsedCardEl), true);
+assert.strictEqual(collapsedCardEl.dataset.alertLogCollapsed, '0');
+assert.strictEqual(collapsedCardEl.classList.has('alert-log-entry-collapsed'), false);
+assert.strictEqual(collapsedTitleEl.classList.has('alert-log-title-muted'), false);
+assert.strictEqual(collapsedTitleEl.textContent, 'expanded title');
+assert.deepStrictEqual(collapsedRows.map((element) => element.hidden), [false, false]);
+assert.strictEqual(applyExpandedAlertLogCardDomState({ dataset: { alertLogCollapsed: '0' } }), false);
+assert.strictEqual(applyExpandedAlertLogCardDomState(null), false);
 
 const alertSettingsPanelHtml = buildAlertSettingsPanelHtml({
   settings: {
