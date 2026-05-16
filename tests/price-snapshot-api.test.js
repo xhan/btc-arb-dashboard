@@ -5,7 +5,7 @@ const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const { appendPriceSnapshot } = require('../price-snapshot-store');
+const { appendPriceSnapshot } = require('../src/price-snapshots/price-snapshot-store');
 
 const port = 3457;
 

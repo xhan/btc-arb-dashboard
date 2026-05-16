@@ -10,8 +10,8 @@ const {
     getClosestPriceSnapshot,
     listRecentChartPairs,
     getChartSeries
-} = require('./price-snapshot-store');
-const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./price-snapshot-replay');
+} = require('./src/price-snapshots/price-snapshot-store');
+const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./src/price-snapshots/price-snapshot-replay');
 const { parseUtc8Input } = require('./time-utils');
 const { createMarketClients } = require('./market-clients');
 const { DEFAULT_INTERVALS, normalizeIntervals } = require('./src/request-channel/request-channel-utils');

@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   buildReplayFromSnapshot,
   renderReplayText
-} = require('../price-snapshot-replay');
+} = require('../src/price-snapshots/price-snapshot-replay');
 
 const snapshot = {
   capturedAt: '2026-03-01T00:00:10.000Z',

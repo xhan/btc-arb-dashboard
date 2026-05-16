@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   buildPriceSnapshotPayload,
   createPriceSnapshotTimerRuntime
-} = require('../price-snapshot-payload-utils');
+} = require('../src/price-snapshots/price-snapshot-payload-utils');
 
 const payload = buildPriceSnapshotPayload({
   dashboardState: [

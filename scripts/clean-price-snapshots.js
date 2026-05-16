@@ -2,7 +2,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { getPriceSnapshotDbPath, prunePriceSnapshots } = require('../price-snapshot-store');
+const { getPriceSnapshotDbPath, prunePriceSnapshots } = require('../src/price-snapshots/price-snapshot-store');
 
 function parseArgs(argv) {
   const out = {};

@@ -4,7 +4,7 @@ const { DatabaseSync } = require('node:sqlite');
 const {
   buildChartPairKey,
   buildChartPairLabel
-} = require('./src/charts/charts-utils');
+} = require('../charts/charts-utils');
 
 const schemaReadyDbPaths = new Set();
 

@@ -90,7 +90,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
-    assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
+    assert.ok(response.body.includes('src="src/price-snapshots/price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="chain-defaults.js"'));
     assert.ok(response.body.includes('src="theme-utils.js"'));
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
@@ -104,7 +104,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="src/queue-stats/queue-stats-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="price-snapshot-payload-utils.js"')
+      response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-request-utils.js"') < response.body.indexOf('src="app.js"')
@@ -155,7 +155,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="theme-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="alert-debug-utils.js"') < response.body.indexOf('src="app.js"')
@@ -295,7 +295,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
     const quotePauseUtilsResponse = await request('/src/quote/quote-pause-utils.js');
     assert.strictEqual(quotePauseUtilsResponse.statusCode, 200);
-    const priceSnapshotPayloadUtilsResponse = await request('/price-snapshot-payload-utils.js');
+    const priceSnapshotPayloadUtilsResponse = await request('/src/price-snapshots/price-snapshot-payload-utils.js');
     assert.strictEqual(priceSnapshotPayloadUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/src/quote/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
@@ -1421,7 +1421,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!snapshotResponse.body.includes('.arb-opportunity-chart-link {'));
     assert.ok(!snapshotResponse.body.includes('.arb-opportunity-add-alert-btn {'));
 
-    const snapshotAppResponse = await request('/snapshot-app.js');
+    const snapshotAppResponse = await request('/src/price-snapshots/snapshot-app.js');
     assert.strictEqual(snapshotAppResponse.statusCode, 200);
     assert.ok(snapshotAppResponse.body.includes('buildAliasRulesFromGroups'));
     assert.ok(snapshotAppResponse.body.includes('buildOpportunityChartHref'));

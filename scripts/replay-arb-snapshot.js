@@ -19,8 +19,8 @@
  * node scripts/replay-arb-snapshot.js --at 2026-03-01 00:00:00 --format json --max-gap-sec 30
  */
 
-const { getClosestPriceSnapshot } = require('../price-snapshot-store');
-const { buildReplayFromSnapshot, renderReplayText } = require('../price-snapshot-replay');
+const { getClosestPriceSnapshot } = require('../src/price-snapshots/price-snapshot-store');
+const { buildReplayFromSnapshot, renderReplayText } = require('../src/price-snapshots/price-snapshot-replay');
 const { parseUtc8Input } = require('../time-utils');
 const path = require('path');
 

@@ -1,6 +1,6 @@
 (function (root, factory) {
   const quotePauseUtils = typeof module !== 'undefined' && module.exports
-    ? require('./src/quote/quote-pause-utils')
+    ? require('../quote/quote-pause-utils')
     : root.QuotePauseUtils;
   const api = factory(quotePauseUtils);
   if (typeof module !== 'undefined' && module.exports) {

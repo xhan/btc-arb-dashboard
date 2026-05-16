@@ -1,11 +1,11 @@
-const ArbPaths = require('./src/arb/arb-paths');
-const { filterEdgesForFixedRule } = require('./src/arb/arb-fixed-utils');
-const { formatUtc8 } = require('./time-utils');
+const ArbPaths = require('../arb/arb-paths');
+const { filterEdgesForFixedRule } = require('../arb/arb-fixed-utils');
+const { formatUtc8 } = require('../../time-utils');
 const {
   DEFAULT_ARB_CYCLE_START_PRIORITY,
   normalizeArbCycleStartPriority,
   buildPreferredCycleStartSymbols
-} = require('./src/arb/arb-cycle-priority-utils');
+} = require('../arb/arb-cycle-priority-utils');
 
 const ALIAS_RULES = {
   xBTC: 'cbBTC',

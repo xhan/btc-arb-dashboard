@@ -14,7 +14,7 @@ const {
   getClosestPriceSnapshot,
   listRecentChartPairs,
   getChartSeries
-} = require('../price-snapshot-store');
+} = require('../src/price-snapshots/price-snapshot-store');
 
 const config = normalizePriceSnapshotConfig({
   enablePriceSnapshot: true,
