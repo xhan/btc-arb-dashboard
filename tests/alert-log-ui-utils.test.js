@@ -1,8 +1,6 @@
 const assert = require('assert');
 
 const {
-  shouldAutoOpenAlertLogEntries,
-  buildAlertLogEntryDisplayState,
   buildAlertLogAppendPlan,
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
@@ -13,31 +11,6 @@ const {
   buildQuoteAlertLogHtml
 } = require('../alert-log-ui-utils');
 
-assert.strictEqual(shouldAutoOpenAlertLogEntries([]), false);
-assert.strictEqual(
-  shouldAutoOpenAlertLogEntries([{ mutedEntry: { expiresAt: 123 } }]),
-  false
-);
-assert.strictEqual(
-  shouldAutoOpenAlertLogEntries([{ mutedEntry: { expiresAt: 123 } }, { mutedEntry: null }]),
-  true
-);
-
-assert.deepStrictEqual(
-  buildAlertLogEntryDisplayState({ mutedEntry: { expiresAt: 123 } }),
-  { muted: true, collapsed: true }
-);
-
-assert.deepStrictEqual(
-  buildAlertLogEntryDisplayState({ mutedEntry: { expiresAt: 123 } }, { expanded: true }),
-  { muted: true, collapsed: false }
-);
-
-assert.deepStrictEqual(
-  buildAlertLogEntryDisplayState({ mutedEntry: null }),
-  { muted: false, collapsed: false }
-);
-
 const appendPlan = buildAlertLogAppendPlan([
   { id: 'first', mutedEntry: null },
   { id: 'second', mutedEntry: { expiresAt: 123 } },
@@ -45,6 +18,11 @@ const appendPlan = buildAlertLogAppendPlan([
 ]);
 assert.strictEqual(appendPlan.shouldAutoOpen, true);
 assert.deepStrictEqual(appendPlan.entries.map((entry) => entry.id), ['third', 'second', 'first']);
+
+assert.deepStrictEqual(
+  buildAlertLogAppendPlan([]),
+  { entries: [], shouldAutoOpen: false }
+);
 
 assert.deepStrictEqual(
   buildAlertLogAppendPlan([{ id: 'muted-only', mutedEntry: { expiresAt: 123 } }]),

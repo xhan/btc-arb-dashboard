@@ -328,10 +328,7 @@
   }
 
   return {
-    isMutedAlertLogEntry,
-    shouldAutoOpenAlertLogEntries,
     buildAlertLogAppendPlan,
-    buildAlertLogEntryDisplayState,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
     buildRestoredMutedAlertLogPlan,

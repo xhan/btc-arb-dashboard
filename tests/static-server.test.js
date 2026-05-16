@@ -420,8 +420,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildMutedAlertStatePanelHtml({'));
     assert.ok(alertLogUiResponse.body.includes('function buildMutedAlertStatePanelHtml(config = {})'));
-    const alertLogUiExportBlock = alertLogUiResponse.body.match(/return \{\n    isMutedAlertLogEntry,[\s\S]*?\n  \};/);
+    const alertLogUiExportBlock = alertLogUiResponse.body.match(/return \{\n    buildAlertLogAppendPlan,[\s\S]*?\n  \};/);
     assert.ok(alertLogUiExportBlock);
+    assert.ok(!alertLogUiExportBlock[0].includes('isMutedAlertLogEntry'));
+    assert.ok(!alertLogUiExportBlock[0].includes('shouldAutoOpenAlertLogEntries'));
+    assert.ok(!alertLogUiExportBlock[0].includes('buildAlertLogEntryDisplayState'));
     assert.ok(!alertLogUiExportBlock[0].includes('buildMutedStateItemHtml'));
     assert.ok(!alertLogUiExportBlock[0].includes('buildMutedStateSectionHtml'));
     assert.ok(!appJsResponse.body.includes('alertLogUi.buildMutedStateItemHtml({'));
