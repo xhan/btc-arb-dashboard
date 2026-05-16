@@ -70,8 +70,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/arb/arb-special-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="dom-render-utils.js"'));
-    assert.ok(response.body.includes('src="arb-path-config.js"'));
-    assert.ok(response.body.includes('src="arb-path-config-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-path-config.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-path-config-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="muted-path-storage-utils.js"'));
@@ -163,10 +163,10 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="special-rule-alert-config-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="arb-path-config.js"') < response.body.indexOf('src="arb-path-config-utils.js"')
+      response.body.indexOf('src="src/arb/arb-path-config.js"') < response.body.indexOf('src="src/arb/arb-path-config-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="arb-path-config-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-path-config-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/arb/arb-rule-snapshot-utils.js"') < response.body.indexOf('src="app.js"')

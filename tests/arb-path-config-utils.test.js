@@ -4,7 +4,7 @@ const {
   getQuotePriceWatchItems,
   normalizeQuotePriceWatchItem,
   resolveQuotePriceValue
-} = require('../arb-path-config-utils');
+} = require('../src/arb/arb-path-config-utils');
 
 const config = {
   watchItems: [

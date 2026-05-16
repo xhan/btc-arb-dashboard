@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const config = require('../arb-path-config');
+const config = require('../src/arb/arb-path-config');
 
 assert.deepStrictEqual(Object.keys(config), ['watchItems']);
 assert.ok(Array.isArray(config.watchItems));
