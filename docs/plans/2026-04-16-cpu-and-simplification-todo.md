@@ -135,7 +135,7 @@
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML 和内容点击动作解析已下沉到 `data-terminal-utils.js`
-  - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析已下沉到 `dashboard-renderer.js`
+  - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析和添加报价表单状态已下沉到 `dashboard-renderer.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
 
 ### 10. 清理历史命名和过渡兼容层
@@ -166,6 +166,7 @@
   - `app.js` 的 path alert 配置加载降级/严格加载语义已下沉到 `path-alert-utils.js` 的 `createPathAlertConfigClient()`
   - `app.js` 中只定义未调用的 `resolveEventTargetElement()` 包装函数已移除，事件解析继续统一走各模块 action resolver
   - `app.js` 的 dashboard 金额输入、暂停、设置、删除、添加和交换按钮动作解析已下沉到 `dashboard-renderer.js`
+  - `app.js` 的添加报价表单可见性、占位符、保存校验、draft quote 构造和 modal click 动作解析已下沉到 `dashboard-renderer.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
   - 继续统一剩余兼容边界命名
