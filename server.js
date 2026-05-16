@@ -6,8 +6,7 @@ const { AggregatorClient } = require('@cetusprotocol/aggregator-sdk');
 const { SuiClient, getFullnodeUrl } = require('@mysten/sui.js/client');
 const { createMarketClients } = require('./market-clients');
 const {
-    resolveRequestChannelContext,
-    sanitizeRequestChannelsForClient
+    resolveRequestChannelContext
 } = require('./src/request-channel/request-channel-config');
 const {
     createRequestChannelAgentCache
@@ -26,11 +25,11 @@ const {
     resolveProjectFilePath
 } = require('./src/server/json-file-utils');
 const { createRuntimeConfigStore, loadStartupCetusAggregatorConfig } = require('./src/server/runtime-config-utils');
+const { registerConfigRoutes } = require('./src/server/config-route-utils');
 const { createQuoteLogger, withQuoteLogRequestChannel } = require('./src/server/quote-log-utils');
 const { registerQuoteRoutes } = require('./src/server/quote-route-utils');
 const { sendPathAlertRemoteWebhooks } = require('./src/server/path-alert-webhook-utils');
 const { registerPriceSnapshotRoutes } = require('./src/server/price-snapshot-route-utils');
-const { normalizeArbCycleStartPriority } = require('./src/arb/arb-cycle-priority-utils');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -191,26 +190,6 @@ const marketClients = createMarketClients({
     writeFile: (filePath, content, encoding) => fs.writeFile(filePath, content, encoding)
 });
 
-app.post('/api/save-config', async (req, res) => {
-    try {
-        await safeWriteConfig(req.body);
-        await refreshRuntimeConfigCache();
-        res.json({ message: '配置保存成功' });
-    } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-app.post('/api/request-update-config', async (req, res) => {
-    try {
-        const cache = await refreshRuntimeConfigCache();
-        res.json({
-            message: '运行时配置已刷新',
-            requestChannelCount: Array.isArray(cache.requestChannelsConfig.channels) ? cache.requestChannelsConfig.channels.length : 0
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 app.post('/api/save-alert-config', async (req, res) => {
     try {
         const normalized = normalizeAlertConfig(req.body);
@@ -221,35 +200,11 @@ app.post('/api/save-alert-config', async (req, res) => {
     }
 });
 
-app.get('/api/get-config', async (req, res) => {
-    try {
-        const parsedData = await readJsonFile(CONFIG_PATH);
-        res.json(parsedData);
-    } catch (error) {
-        if (error instanceof SyntaxError) {
-            console.error("Config JSON Parse Error:", error);
-            return res.json([]);
-        }
-        if (error.code === 'ENOENT') { return res.json([]); }
-        console.error("Config Read Error:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
 app.get('/api/get-alert-config', async (req, res) => {
     try {
         res.json(await getAlertConfig());
     } catch (error) {
         console.error('Alert Config Read Error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/get-request-channels', async (req, res) => {
-    try {
-        res.json(sanitizeRequestChannelsForClient(await getRequestChannelsConfig()));
-    } catch (error) {
-        console.error('Request Channel Read Error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -289,15 +244,15 @@ app.post('/api/send-path-alert-webhook', async (req, res) => {
     }
 });
 
-app.get('/api/get-arb-settings', async (req, res) => {
-    try {
-        const configMore = await getConfigMore();
-        res.json({
-            cycleStartPriority: normalizeArbCycleStartPriority(configMore.arbCycleStartPriority)
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+registerConfigRoutes({
+    app,
+    configPath: CONFIG_PATH,
+    readJsonFile,
+    safeWriteConfig,
+    refreshRuntimeConfigCache,
+    getRequestChannelsConfig,
+    getConfigMore,
+    logger: console
 });
 
 registerPriceSnapshotRoutes({
