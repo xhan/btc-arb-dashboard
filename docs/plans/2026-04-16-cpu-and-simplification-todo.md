@@ -114,9 +114,9 @@
 ### 8. sqlite 连接与 schema 初始化下沉
 - 目标：减少后端图表/快照接口的重复初始化成本。
 - 现状：
-  - `price-snapshot-store.js` 仍按调用打开/关闭 DB
+  - `src/price-snapshots/price-snapshot-store.js` 仍按调用打开/关闭 DB
   - 已增加 per-dbPath schema-ready 缓存，避免每次调用重复执行 `ensureSchema()`
-  - 前端 price snapshot interval timer 生命周期已下沉到 `price-snapshot-payload-utils.js`
+  - 前端 price snapshot interval timer 生命周期已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`
 - 预期收益：
   - 降低 Node CPU 和重复 schema 初始化成本
   - 降低图表预览自动刷新带来的额外成本
@@ -138,7 +138,7 @@
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
-  - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
+  - `snapshot/copy-ui`：价格快照 timer 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
   - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
   - `file-layout`：在模块边界稳定后，把根目录里按职责增长的 utils/runtime/renderer/provider 文件迁入明确目录，例如 `src/quote/`、`src/arb/`、`src/path-alerts/`、`src/dashboard/`、`src/shared/`，并保留必要的兼容入口，避免一次性移动导致 review 噪声和路径风险
     - 已启动第一步：套利核心路径算法、套利详情工具、详情刷新 runtime、套利面板渲染器、套利面板 layout/runtime/cache 工具、规则快照、循环起点优先级、资产等价规则、fixed/special 套利工具、watchlist 配置及解析工具迁入 `src/arb/`，后续同类 arb 模块可按这个模式继续迁移
@@ -148,6 +148,7 @@
     - 已启动第五步：path alert 主工具、通知、页面渲染、规则定义、候选构建、编辑器和独立页面入口迁入 `src/path-alerts/`，后续 path alert 模块按这个目录继续收敛
     - 已启动第六步：charts 页面入口、图表渲染器和图表工具迁入 `src/charts/`，后续历史图表模块按这个目录维护
     - 已启动第七步：queue stats 页面入口和队列统计工具迁入 `src/queue-stats/`，后续队列统计模块按这个目录维护
+    - 已启动第八步：price snapshot payload/store/replay 和快照页入口迁入 `src/price-snapshots/`，后续快照持久化与回放模块按这个目录维护
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
