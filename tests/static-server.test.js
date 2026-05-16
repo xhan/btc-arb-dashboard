@@ -580,6 +580,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('QuoteStateRuntimeUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getDashboardRuntimeUtils()'));
     assert.ok(appJsResponse.body.includes('DashboardRuntimeUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({'));
+    assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.schedule(quoteId, () => {'));
+    assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.clear(quoteId);'));
+    assert.ok(!appJsResponse.body.includes('let inputDebounceMap = new Map();'));
+    assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createInputDebounceRuntime(options = {})'));
     assert.ok(!appJsResponse.body.includes('function sanitizeQuoteMarketState(state)'));
     assert.ok(quoteStateRuntimeUtilsResponse.body.includes('function createQuoteStateRuntime(options = {})'));
     assert.ok(quoteStateRuntimeUtilsResponse.body.includes('dashboardRuntimeUtils.sanitizeQuoteMarketState(nextState)'));

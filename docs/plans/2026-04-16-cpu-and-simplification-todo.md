@@ -76,6 +76,7 @@
   - dashboardState 按 quoteId 查找 quote 的逻辑已下沉到 `dashboard-runtime-utils.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
   - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `quote-state-runtime-utils.js`，`app.js` 只通过 runtime wrapper 读写
+  - 金额输入 debounce timer Map 已下沉到 `dashboard-runtime-utils.js`，暂停 quote 时通过统一 runtime 清理待执行输入更新
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效
   - 继续降低前端重复计算

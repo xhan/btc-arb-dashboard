@@ -9,6 +9,7 @@
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
     const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
+    const AMOUNT_INPUT_DEBOUNCE_MS = 600;
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
     let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
@@ -62,6 +63,11 @@
     let arbPanelDirty = false;
     const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
+    const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({
+        setTimeout,
+        clearTimeout,
+        delayMs: AMOUNT_INPUT_DEBOUNCE_MS
+    });
     let dataTerminalState = {
         visible: false,
         query: '',
@@ -4657,7 +4663,6 @@
         addCategoryNameInput.focus();
     });
 
-    let inputDebounceMap = new Map();
     dashboardEl.addEventListener('input', (e) => {
         if (e.target.matches('.amount-input')) {
             const input = e.target;
@@ -4670,19 +4675,15 @@
 
             const newAmount = parseFloat(input.value);
             
-            if (inputDebounceMap.has(quoteId)) clearTimeout(inputDebounceMap.get(quoteId));
-
             if (!isNaN(newAmount) && newAmount >= 0) {
-                const timerId = setTimeout(() => {
+                amountInputDebounceRuntime.schedule(quoteId, () => {
                     quote.amount = newAmount;
                     renderDataTerminalPanel();
                     if (!isQuotePaused(quote)) {
                         queueQuoteRefresh(quote);
                     }
                     saveData();
-                    inputDebounceMap.delete(quoteId);
-                }, 600);
-                inputDebounceMap.set(quoteId, timerId);
+                });
             }
         }
     });
@@ -4733,10 +4734,7 @@
         const quoteId = quote.id;
         quote.paused = nextPaused;
 
-        if (inputDebounceMap.has(quoteId)) {
-            clearTimeout(inputDebounceMap.get(quoteId));
-            inputDebounceMap.delete(quoteId);
-        }
+        amountInputDebounceRuntime.clear(quoteId);
 
         if (nextPaused) {
             const previousState = getQuoteMarketState(quoteId) || {};

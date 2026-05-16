@@ -10,6 +10,7 @@ const {
   buildQuotesByCategoryName,
   buildSwappedQuoteMarketState,
   clearQuoteTrendTimer,
+  createInputDebounceRuntime,
   deleteQuoteUiRuntimeState,
   findDashboardQuoteById,
   findDashboardQuoteMatchById,
@@ -169,6 +170,33 @@ assert.strictEqual(
   }),
   1000
 );
+
+let debounceTimerId = 0;
+const debounceTimers = [];
+const clearedDebounceTimers = [];
+const inputDebounceRuntime = createInputDebounceRuntime({
+  delayMs: 600,
+  setTimeout(callback, delayMs) {
+    const timer = { id: ++debounceTimerId, callback, delayMs };
+    debounceTimers.push(timer);
+    return timer;
+  },
+  clearTimeout(timer) {
+    clearedDebounceTimers.push(timer.id);
+  }
+});
+let debouncedValue = '';
+assert.strictEqual(inputDebounceRuntime.schedule(101, () => { debouncedValue = 'first'; }).delayMs, 600);
+assert.strictEqual(inputDebounceRuntime.has(101), true);
+inputDebounceRuntime.schedule(101, () => { debouncedValue = 'second'; }, 250);
+assert.deepStrictEqual(clearedDebounceTimers, [1]);
+assert.strictEqual(debounceTimers[1].delayMs, 250);
+debounceTimers[1].callback();
+assert.strictEqual(debouncedValue, 'second');
+assert.strictEqual(inputDebounceRuntime.has(101), false);
+inputDebounceRuntime.schedule(202, () => {});
+assert.strictEqual(inputDebounceRuntime.clear(202), true);
+assert.strictEqual(inputDebounceRuntime.clear(202), false);
 
 const dashboard = [
   {

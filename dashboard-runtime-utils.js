@@ -324,6 +324,57 @@
     return Math.min(delayUntilExpiry, hiddenMaxRefreshMs);
   }
 
+  function createInputDebounceRuntime(options = {}) {
+    const timers = new Map();
+    const setTimer = typeof options.setTimeout === 'function'
+      ? options.setTimeout
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimer = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const defaultDelayMs = Number.isFinite(Number(options.delayMs)) && Number(options.delayMs) >= 0
+      ? Number(options.delayMs)
+      : 0;
+
+    function clear(key) {
+      if (!timers.has(key)) return false;
+      const timer = timers.get(key);
+      if (clearTimer) {
+        clearTimer(timer);
+      }
+      timers.delete(key);
+      return true;
+    }
+
+    function schedule(key, callback, delayMs = defaultDelayMs) {
+      clear(key);
+      if (typeof callback !== 'function' || !setTimer) return null;
+      const safeDelayMs = Number.isFinite(Number(delayMs)) && Number(delayMs) >= 0
+        ? Number(delayMs)
+        : defaultDelayMs;
+      const timer = setTimer(() => {
+        timers.delete(key);
+        callback();
+      }, safeDelayMs);
+      timers.set(key, timer);
+      return timer;
+    }
+
+    function clearAll() {
+      for (const key of Array.from(timers.keys())) {
+        clear(key);
+      }
+    }
+
+    return {
+      clear,
+      clearAll,
+      getTimers: () => timers,
+      has: (key) => timers.has(key),
+      schedule
+    };
+  }
+
   function buildDataTerminalRecordsCacheKey(dashboardState, quoteMarketStateRevision) {
     const revision = Number.isFinite(Number(quoteMarketStateRevision)) ? Number(quoteMarketStateRevision) : 0;
     const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
@@ -359,6 +410,7 @@
     buildQuotesByCategoryName,
     buildSwappedQuoteMarketState,
     clearQuoteTrendTimer,
+    createInputDebounceRuntime,
     deleteQuoteUiRuntimeState,
     findDashboardQuoteById,
     findDashboardQuoteMatchById,
