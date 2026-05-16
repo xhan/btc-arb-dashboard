@@ -489,6 +489,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardModalUtilsResponse.body.includes('function readAddCategoryFormValues(refs = {}, options = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function showConfirmModal(refs = {}, message = \'\')'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function closeConfirmModal(refs = {})'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function createConfirmActionRuntime(options = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function syncAddQuoteFormControls(refs = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applySettingsIntervalWritePlan(settingsIntervalInputRefs, writePlan)'));
@@ -499,8 +500,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().closeAddCategoryModal(addCategoryModalRefs)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readAddCategoryFormValues(addCategoryModalRefs, {'));
     assert.ok(appJsResponse.body.includes('readAddCategoryFormValues: getDashboardRenderer().readAddCategoryFormValues'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showConfirmModal(confirmModalRefs, message)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().closeConfirmModal(confirmModalRefs)'));
+    assert.ok(appJsResponse.body.includes('const confirmActionRuntime = getDashboardModalUtils().createConfirmActionRuntime();'));
+    assert.ok(appJsResponse.body.includes('confirmActionRuntime.show(confirmModalRefs, message, callback)'));
+    assert.ok(appJsResponse.body.includes('confirmActionRuntime.close(confirmModalRefs)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(settingsModal)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().hideModal(settingsModal)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(alertModal)'));
@@ -532,6 +534,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("document.getElementById('setting-kyber-interval').value = apiIntervals.kyber"));
     assert.ok(!appJsResponse.body.includes('const categoryName = addCategoryNameInput.value.trim();'));
     assert.ok(!appJsResponse.body.includes('const newCategory = { name: categoryName, id: Date.now(), quotes: [] };'));
+    assert.ok(!appJsResponse.body.includes('let onConfirmAction = null;'));
+    assert.ok(!appJsResponse.body.includes("typeof onConfirmAction === 'function'"));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-cancel'"));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-save'"));
     assert.ok(!appJsResponse.body.includes('if (e.target === confirmModal) closeConfirmModal();'));

@@ -131,6 +131,28 @@
     hideModal(refs.modal);
   }
 
+  function createConfirmActionRuntime(options = {}) {
+    const show = typeof options.showConfirmModal === 'function' ? options.showConfirmModal : showConfirmModal;
+    const close = typeof options.closeConfirmModal === 'function' ? options.closeConfirmModal : closeConfirmModal;
+    let currentAction = null;
+
+    return {
+      show(refs = {}, message = '', action = null) {
+        show(refs, message);
+        currentAction = typeof action === 'function' ? action : null;
+      },
+      confirm() {
+        if (typeof currentAction === 'function') {
+          currentAction();
+        }
+      },
+      close(refs = {}) {
+        close(refs);
+        currentAction = null;
+      }
+    };
+  }
+
   function applyAddQuoteFormViewState(refs = {}, viewState = {}) {
     setDisplay(refs.toChainGroup, viewState.targetChainVisible ? 'block' : 'none');
     if (refs.toChainSelect && refs.toChainSelect.value !== viewState.toChainValue) {
@@ -182,6 +204,7 @@
     applySettingsIntervalWritePlan,
     closeAddCategoryModal,
     closeConfirmModal,
+    createConfirmActionRuntime,
     openAddCategoryModal,
     readAddQuoteFormValues,
     readAddCategoryFormValues,

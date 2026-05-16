@@ -1,7 +1,5 @@
     const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
     let dashboardState = [];
-    
-    let onConfirmAction = null;
     const MULTI_CHANNEL_ENABLED_STORAGE_KEY = 'dashboard-multi-channel-enabled';
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
@@ -259,6 +257,7 @@
         modal: confirmModal,
         message: confirmMessageEl
     };
+    const confirmActionRuntime = getDashboardModalUtils().createConfirmActionRuntime();
     const globalTooltip = document.getElementById('global-tooltip');
     const copyToast = document.getElementById('copy-toast');
     const arbPathWindow = document.getElementById('arb-path-window');
@@ -4421,13 +4420,11 @@
     dashboardEl.addEventListener('input', handleDashboardInput);
 
     function showConfirmation(message, callback) {
-        getDashboardModalUtils().showConfirmModal(confirmModalRefs, message);
-        onConfirmAction = callback;
+        confirmActionRuntime.show(confirmModalRefs, message, callback);
     }
 
     function closeConfirmModal() {
-        getDashboardModalUtils().closeConfirmModal(confirmModalRefs);
-        onConfirmAction = null;
+        confirmActionRuntime.close(confirmModalRefs);
     }
 
     function deleteQuoteFromCategory(categoryId, quoteId) {
@@ -4726,8 +4723,8 @@
         if (action.type !== 'none' && typeof event.stopPropagation === 'function') {
             event.stopPropagation();
         }
-        if (action.type === 'confirm' && typeof onConfirmAction === 'function') {
-            onConfirmAction();
+        if (action.type === 'confirm') {
+            confirmActionRuntime.confirm();
         }
         if (action.type === 'confirm' || action.type === 'close') {
             closeConfirmModal();

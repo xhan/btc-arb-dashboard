@@ -6,6 +6,7 @@ const {
   applySettingsIntervalWritePlan,
   closeAddCategoryModal,
   closeConfirmModal,
+  createConfirmActionRuntime,
   hideModal,
   openAddCategoryModal,
   readAddQuoteFormValues,
@@ -235,3 +236,27 @@ assert.strictEqual(confirmRefs.message.textContent, '确定删除此报价吗？
 assert.strictEqual(confirmRefs.modal.classList.contains('visible'), true);
 closeConfirmModal(confirmRefs);
 assert.strictEqual(confirmRefs.modal.classList.contains('visible'), false);
+
+const confirmRuntimeCalls = [];
+const confirmActionRuntime = createConfirmActionRuntime({
+  showConfirmModal(refsToShow, message) {
+    confirmRuntimeCalls.push(['show', refsToShow, message]);
+  },
+  closeConfirmModal(refsToClose) {
+    confirmRuntimeCalls.push(['close', refsToClose]);
+  }
+});
+let confirmActionCount = 0;
+confirmActionRuntime.show(confirmRefs, '删除确认', () => {
+  confirmActionCount += 1;
+});
+assert.deepStrictEqual(confirmRuntimeCalls, [['show', confirmRefs, '删除确认']]);
+confirmActionRuntime.confirm();
+assert.strictEqual(confirmActionCount, 1);
+confirmActionRuntime.close(confirmRefs);
+assert.deepStrictEqual(confirmRuntimeCalls, [
+  ['show', confirmRefs, '删除确认'],
+  ['close', confirmRefs]
+]);
+confirmActionRuntime.confirm();
+assert.strictEqual(confirmActionCount, 1);
