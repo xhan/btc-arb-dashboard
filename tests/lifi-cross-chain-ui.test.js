@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const appJs = fs.readFileSync('app.js', 'utf8');
 const chainDefaultsJs = fs.readFileSync('chain-defaults.js', 'utf8');
-const dashboardRendererJs = fs.readFileSync('dashboard-renderer.js', 'utf8');
+const dashboardRendererJs = fs.readFileSync('src/dashboard/dashboard-renderer.js', 'utf8');
 const indexHtml = fs.readFileSync('index.html', 'utf8');
 
 assert.ok(indexHtml.includes('id="add-quote-to-chain"'), '添加报价弹窗应提供目标链选择');

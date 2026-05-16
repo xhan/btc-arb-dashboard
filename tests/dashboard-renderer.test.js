@@ -20,7 +20,7 @@ const {
   resolveQuoteSettingsModalClickAction,
   renderCategoryModuleShell,
   renderQuoteItemShell
-} = require('../dashboard-renderer');
+} = require('../src/dashboard/dashboard-renderer');
 
 function resolveDashboardActionFor(resolver, matches, event = { type: 'click' }) {
   return resolver(event, {

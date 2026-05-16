@@ -27,7 +27,7 @@ const {
   hasActivePathAlertEvaluationTarget,
   isPanelVisible,
   resolveMutedStateRefreshDelay
-} = require('../dashboard-runtime-utils');
+} = require('../src/dashboard/dashboard-runtime-utils');
 
 assert.strictEqual(isPanelVisible(null), false);
 assert.strictEqual(isPanelVisible({}), true);

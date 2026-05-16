@@ -89,13 +89,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
-    assert.ok(response.body.includes('src="dashboard-renderer.js"'));
+    assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="chain-defaults.js"'));
     assert.ok(response.body.includes('src="theme-utils.js"'));
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
-    assert.ok(response.body.includes('src="dashboard-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="src/dashboard/dashboard-runtime-utils.js"'));
     assert.ok(response.body.includes('src="muted-path-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
@@ -125,10 +125,10 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="data-terminal-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"')
+      response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"') < response.body.indexOf('src="app.js"')
@@ -140,7 +140,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="dashboard-renderer.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/dashboard/dashboard-renderer.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="dex-link-utils.js"') < response.body.indexOf('src="app.js"')
@@ -307,7 +307,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteQueueRuntimeUtilsResponse.statusCode, 200);
     const chainDefaultsResponse = await request('/chain-defaults.js');
     assert.strictEqual(chainDefaultsResponse.statusCode, 200);
-    const dashboardRendererResponse = await request('/dashboard-renderer.js');
+    const dashboardRendererResponse = await request('/src/dashboard/dashboard-renderer.js');
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
     const pathAlertUtilsResponse = await request('/path-alert-utils.js');
     assert.strictEqual(pathAlertUtilsResponse.statusCode, 200);
@@ -319,7 +319,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(pathAlertPageUtilsResponse.statusCode, 200);
     const pathAlertEditorUtilsResponse = await request('/path-alert-editor-utils.js');
     assert.strictEqual(pathAlertEditorUtilsResponse.statusCode, 200);
-    const dashboardRuntimeUtilsResponse = await request('/dashboard-runtime-utils.js');
+    const dashboardRuntimeUtilsResponse = await request('/src/dashboard/dashboard-runtime-utils.js');
     assert.strictEqual(dashboardRuntimeUtilsResponse.statusCode, 200);
     const quoteStateRuntimeUtilsResponse = await request('/src/quote/quote-state-runtime-utils.js');
     assert.strictEqual(quoteStateRuntimeUtilsResponse.statusCode, 200);

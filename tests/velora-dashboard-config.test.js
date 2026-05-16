@@ -7,7 +7,7 @@ const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf
 const {
   buildSettingsIntervalWritePlan,
   buildSettingsIntervalsFromFormValues
-} = require('../dashboard-renderer');
+} = require('../src/dashboard/dashboard-renderer');
 const { DEFAULT_INTERVALS, getQueueTypeForQuote } = require('../queue-stats-utils');
 
 assert.strictEqual(DEFAULT_INTERVALS.velora, 700, 'DEFAULT_INTERVALS 应包含 velora 默认 700ms');
