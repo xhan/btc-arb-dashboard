@@ -882,7 +882,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogPlan(mutedPathRuntime.getTargets(), {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(item.entry, {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().hasMutedTargetLogCard('));
-    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().removeRestoredMutedAlertLogCards('));
+    assert.ok(!appJsResponse.body.includes('getAlertLogUiUtils().removeRestoredMutedAlertLogCards('));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().resolveAlertLogClickAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildPathAlertLogCardHtml(entry, {'));
     assert.ok(!appJsResponse.body.includes('appendAlertLogEntry'));
@@ -1232,11 +1232,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertLogUiResponse.body.includes('function hasMutedTargetLogCard(container, targetKey, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function removeRestoredMutedAlertLogCards(containers, targetKey, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function applyExpandedAlertLogCardDomState(card)'));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().applyExpandedAlertLogCardDomState(action.card)'));
+    assert.ok(!appJsResponse.body.includes('function expandCollapsedAlertLogCard(card)'));
     assert.ok(alertLogUiResponse.body.includes('function applyAlertLogMutedStatusDomState(card, statusState = {})'));
     assert.ok(alertLogUiResponse.body.includes('function resolveAlertLogClickAction(event, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(alertLogUiResponse.body.includes('data-alert-log-collapsed'));
-    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().applyExpandedAlertLogCardDomState(card)'));
+    assert.ok(!appJsResponse.body.includes('getAlertLogUiUtils().applyExpandedAlertLogCardDomState(card)'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().applyAlertLogMutedStatusDomState(card, statusState)'));
     assert.ok(!appJsResponse.body.includes("card.dataset.alertLogCollapsed = '0'"));
     assert.ok(!appJsResponse.body.includes("titleEl.classList.remove('alert-log-title-muted')"));

@@ -788,10 +788,6 @@
         );
     }
 
-    function expandCollapsedAlertLogCard(card) {
-        getAlertLogUiUtils().applyExpandedAlertLogCardDomState(card);
-    }
-
     function buildQuoteAlertTriggeredEntry(alert, quote, evaluation) {
         let dexLink = null;
         if (quote && !isCrossChainQuote(quote)) {
@@ -1076,16 +1072,6 @@
         const targetKey = String(card && card.dataset && card.dataset.mutedTargetKey || '').trim();
         if (!targetKey) return false;
         return Boolean(extendMutedPathTargetByKey(targetKey, nowMs));
-    }
-
-    function removeRestoredMutedAlertLogCards(targetKey = '') {
-        getAlertLogUiUtils().removeRestoredMutedAlertLogCards(
-            [alertLogContent, alertLogMutedLogContent].filter(Boolean),
-            targetKey,
-            {
-                escapeCssAttributeValue: (value) => getDomRenderUtils().escapeCssAttributeValue(value)
-            }
-        );
     }
 
     function updateMutedPathAlertLogCards(targetKey = '', nowMs = Date.now()) {
@@ -3078,7 +3064,7 @@
         }
         if (action.type === 'ignore') return;
         if (action.type === 'expand-collapsed-card') {
-            expandCollapsedAlertLogCard(action.card);
+            getAlertLogUiUtils().applyExpandedAlertLogCardDomState(action.card);
             return;
         }
     }
