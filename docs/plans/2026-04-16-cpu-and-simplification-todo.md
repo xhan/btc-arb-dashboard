@@ -115,14 +115,16 @@
 ### 8. sqlite 连接与 schema 初始化下沉
 - 目标：减少后端图表/快照接口的重复初始化成本。
 - 现状：
-  - `src/price-snapshots/price-snapshot-store.js` 仍按调用打开/关闭 DB
+  - `src/price-snapshots/price-snapshot-store.js` 已提供 `createPriceSnapshotStore()`，同一 store 实例会复用当前 `dbPath` 的 SQLite 连接，并保留 `close()` 用于显式释放
   - 已增加 per-dbPath schema-ready 缓存，避免每次调用重复执行 `ensureSchema()`
+  - `src/server/price-snapshot-route-utils.js` 默认创建并复用 price snapshot store，旧的单函数注入路径仍保留给测试和脚本
   - 前端 price snapshot interval timer 生命周期已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`
 - 预期收益：
   - 降低 Node CPU 和重复 schema 初始化成本
+  - 降低图表/快照 HTTP 路由上的 SQLite open/close 抖动
   - 降低图表预览自动刷新带来的额外成本
 - 建议改法：
-  - 后续如仍有瓶颈，再评估启动期初始化和连接复用
+  - 后续如仍有瓶颈，再评估启动期预热和关闭钩子接入
 
 ## P2 结构精简
 
