@@ -80,7 +80,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="alert-debug-utils.js"'));
-    assert.ok(response.body.includes('src="special-rule-alert-utils.js"'));
+    assert.ok(!response.body.includes('src="special-rule-alert-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-notification-utils.js"'));
     assert.ok(!response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
@@ -148,9 +148,6 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="arb-path-config-utils.js"') < response.body.indexOf('src="app.js"')
-    );
-    assert.ok(
-      response.body.indexOf('src="special-rule-alert-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="arb-rule-snapshot-utils.js"') < response.body.indexOf('src="app.js"')
