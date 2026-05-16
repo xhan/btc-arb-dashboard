@@ -18,6 +18,7 @@ const {
   resolveDashboardAmountInputAction,
   resolveDashboardButtonClickAction,
   resolveQuoteSettingsModalClickAction,
+  createCategoryModuleShellElement,
   createQuoteItemShellElement,
   renderCategoryModuleShell,
   renderQuoteItemShell
@@ -662,3 +663,22 @@ assert.ok(categoryHtml.includes('data-category-id="cat-1"'));
 assert.ok(categoryHtml.includes('title="恢复分区"'));
 assert.ok(categoryHtml.includes('aria-pressed="true"'));
 assert.ok(categoryHtml.includes('id="quote-list-cat-1"'));
+
+let createdCategoryTag = '';
+const createdCategoryModuleEl = createCategoryModuleShellElement({
+  categoryId: 'cat-1',
+  categoryName: '主分区 <A>',
+  categoryPauseAction: 'resume'
+}, {
+  documentImpl: {
+    createElement(tagName) {
+      createdCategoryTag = tagName;
+      return { id: '', className: '', innerHTML: '' };
+    }
+  }
+});
+assert.strictEqual(createdCategoryTag, 'div');
+assert.strictEqual(createdCategoryModuleEl.id, 'module-cat-1');
+assert.strictEqual(createdCategoryModuleEl.className, 'module');
+assert.strictEqual(createdCategoryModuleEl.innerHTML, categoryHtml);
+assert.strictEqual(createCategoryModuleShellElement({}, { documentImpl: {} }), null);

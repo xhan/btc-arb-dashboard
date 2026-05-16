@@ -141,7 +141,7 @@
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、DOM refs 装配、浮窗定位/默认尺寸、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `src/data-terminal/data-terminal-utils.js`
-  - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、报价卡片 shell 创建、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、报价卡片和分区模块 shell 创建、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `dashboard-api-client`：后端配置刷新、看板配置加载、请求通道加载、price snapshot 配置/保存和配置保存请求已下沉到 `src/dashboard/dashboard-api-utils.js`，`src/app/dashboard-app.js` 只负责状态赋值、UI feedback 和后续调度
   - `dashboard-modal-dom`：add quote、add category、confirm 弹窗的 DOM 读写与显示/关闭适配、modal 当前选择状态和 confirm 动作回调 runtime 已下沉到 `src/dashboard/dashboard-modal-utils.js`，quote settings 弹窗和全局 settings interval 的 DOM 读写适配也已下沉，dashboard modal 的通用 show/hide 也统一走该边界，主入口只保留新增/更新 quote、保存设置和确认动作后的 dashboard 状态更新与刷新调度
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer、价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`

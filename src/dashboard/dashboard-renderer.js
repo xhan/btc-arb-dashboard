@@ -112,6 +112,16 @@
             <ul class="quote-list" id="quote-list-${categoryId}"></ul>`;
   }
 
+  function createCategoryModuleShellElement(config = {}, options = {}) {
+    const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
+    if (!documentImpl || typeof documentImpl.createElement !== 'function') return null;
+    const moduleEl = documentImpl.createElement('div');
+    moduleEl.className = 'module';
+    moduleEl.id = `module-${config.categoryId}`;
+    moduleEl.innerHTML = renderCategoryModuleShell(config);
+    return moduleEl;
+  }
+
   function buildSettingsIntervalWritePlan(intervals = {}) {
     return SETTINGS_INTERVAL_FIELDS.map((field) => ({
       id: field.id,
@@ -612,6 +622,7 @@
     resolveDashboardAmountInputAction,
     resolveDashboardButtonClickAction,
     resolveQuoteSettingsModalClickAction,
+    createCategoryModuleShellElement,
     createQuoteItemShellElement,
     renderCategoryModuleShell,
     renderQuoteItemShell

@@ -3937,16 +3937,14 @@
     }
     
     function createCategoryModule(category) {
-        const moduleEl = document.createElement('div');
-        moduleEl.className = 'module';
-        moduleEl.id = `module-${category.id}`;
         const categoryPauseAction = getCategoryPauseAction(category.quotes || []);
         const renderer = getDashboardRenderer();
-        moduleEl.innerHTML = renderer.renderCategoryModuleShell({
+        const moduleEl = renderer.createCategoryModuleShellElement({
             categoryId: category.id,
             categoryName: category.name,
             categoryPauseAction
-        });
+        }, { documentImpl: document });
+        if (!moduleEl) return null;
         const quoteListEl = moduleEl.querySelector('.quote-list');
         if (category.quotes) {
             category.quotes.forEach(quote => {
@@ -3964,7 +3962,8 @@
             return;
         }
         dashboardState.forEach(category => {
-            dashboardEl.appendChild(createCategoryModule(category));
+            const moduleEl = createCategoryModule(category);
+            if (moduleEl) dashboardEl.appendChild(moduleEl);
         });
     }
 
@@ -4449,7 +4448,8 @@
             });
             if (!newCategory) return;
             dashboardState.push(newCategory);
-            dashboardEl.appendChild(createCategoryModule(newCategory));
+            const moduleEl = createCategoryModule(newCategory);
+            if (moduleEl) dashboardEl.appendChild(moduleEl);
             saveData();
             closeAddCategoryModal();
         }

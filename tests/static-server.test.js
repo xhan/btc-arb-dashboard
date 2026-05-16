@@ -237,6 +237,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('#path-alert-window {'));
     assert.ok(response.body.includes('id="alert-log-settings-tab"'));
     assert.ok(response.body.includes('id="alert-log-settings-content"'));
+    assert.ok(
+        response.body.indexOf('id="alert-log-settings-tab"') > response.body.indexOf('id="alert-log-muted-tab"')
+    );
     assert.ok(response.body.includes('id="open-quote-alerts-manage"'));
     assert.ok(!response.body.includes('class="quote-alert-inline-grid"'));
     assert.ok(response.body.includes('id="modal-subtitle"'));
@@ -813,12 +816,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function createQuoteItemShellElement(config = {}, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function renderCategoryModuleShell(config = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function createCategoryModuleShellElement(config = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('function getDashboardRenderer()'));
     assert.ok(appJsResponse.body.includes('DashboardRenderer is not loaded'));
     assert.ok(appJsResponse.body.includes('renderer.createQuoteItemShellElement({'));
+    assert.ok(appJsResponse.body.includes('renderer.createCategoryModuleShellElement({'));
     assert.ok(!appJsResponse.body.includes("const itemEl = document.createElement('li');"));
     assert.ok(!appJsResponse.body.includes('itemEl.innerHTML = renderer.renderQuoteItemShell({'));
-    assert.ok(appJsResponse.body.includes('renderer.renderCategoryModuleShell({'));
+    assert.ok(!appJsResponse.body.includes("const moduleEl = document.createElement('div');"));
+    assert.ok(!appJsResponse.body.includes("moduleEl.className = 'module';"));
+    assert.ok(!appJsResponse.body.includes('moduleEl.innerHTML = renderer.renderCategoryModuleShell({'));
     assert.ok(!appJsResponse.body.includes('function getCexPairLabel(quote, state)'));
     assert.ok(!appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(dashboardRendererResponse.body.includes('updates.kyberOnlyDirectPools = true;'));
