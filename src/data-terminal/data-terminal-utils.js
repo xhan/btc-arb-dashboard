@@ -420,6 +420,32 @@
     };
   }
 
+  function getDataTerminalControlElements(refs = {}) {
+    return {
+      'data-terminal-search-input': refs.searchInput,
+      'data-terminal-alias-toggle': refs.aliasToggle,
+      'data-terminal-diff-toggle': refs.diffToggle
+    };
+  }
+
+  function applyDataTerminalControlWritePlan(plan = {}, refs = {}) {
+    const elements = getDataTerminalControlElements(refs);
+    let changed = false;
+    (plan.value || []).forEach((item) => {
+      const element = elements[item.id];
+      if (!element || element.value === item.value) return;
+      element.value = item.value;
+      changed = true;
+    });
+    (plan.checked || []).forEach((item) => {
+      const element = elements[item.id];
+      if (!element || element.checked === item.checked) return;
+      element.checked = item.checked;
+      changed = true;
+    });
+    return changed;
+  }
+
   function readEventTargetTextValue(event) {
     return (event && event.target && typeof event.target.value === 'string')
       ? event.target.value
@@ -647,6 +673,7 @@
     buildDataTerminalCandidates,
     buildDataTerminalControlEventPatch,
     buildDataTerminalControlWritePlan,
+    applyDataTerminalControlWritePlan,
     buildDataTerminalPanelHtml,
     buildDataTerminalRecords,
     buildDataTerminalShellHtml,

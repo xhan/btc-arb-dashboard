@@ -7,6 +7,7 @@ const {
   buildDataTerminalCandidates,
   buildDataTerminalControlEventPatch,
   buildDataTerminalControlWritePlan,
+  applyDataTerminalControlWritePlan,
   buildDataTerminalPanelHtml,
   applyDataTerminalDefaultSize,
   applyDataTerminalWindowPosition,
@@ -41,6 +42,28 @@ assert.deepStrictEqual(
     ]
   }
 );
+const dataTerminalControlRefs = {
+  searchInput: { value: 'old query' },
+  aliasToggle: { checked: false },
+  diffToggle: { checked: true }
+};
+assert.strictEqual(
+  applyDataTerminalControlWritePlan(
+    buildDataTerminalControlWritePlan({
+      query: 'WBTC cbBTC',
+      allowAliases: true,
+      showDiff: false
+    }),
+    dataTerminalControlRefs
+  ),
+  true
+);
+assert.deepStrictEqual(dataTerminalControlRefs, {
+  searchInput: { value: 'WBTC cbBTC' },
+  aliasToggle: { checked: true },
+  diffToggle: { checked: false }
+});
+assert.strictEqual(applyDataTerminalControlWritePlan({}, {}), false);
 assert.deepStrictEqual(
   buildDataTerminalControlEventPatch('query', { target: { value: 'ETH USDC' } }),
   { query: 'ETH USDC' }

@@ -1845,26 +1845,6 @@
         return dataTerminalCache.getCandidates(cacheKey, () => utils.buildDataTerminalCandidates(buildDataTerminalRecords()));
     }
 
-    function getDataTerminalControlElements(refs) {
-        return {
-            'data-terminal-search-input': refs && refs.searchInput,
-            'data-terminal-alias-toggle': refs && refs.aliasToggle,
-            'data-terminal-diff-toggle': refs && refs.diffToggle
-        };
-    }
-
-    function applyDataTerminalControlWritePlan(plan, refs) {
-        const elements = getDataTerminalControlElements(refs);
-        (plan.value || []).forEach((item) => {
-            const element = elements[item.id];
-            if (element && element.value !== item.value) element.value = item.value;
-        });
-        (plan.checked || []).forEach((item) => {
-            const element = elements[item.id];
-            if (element && element.checked !== item.checked) element.checked = item.checked;
-        });
-    }
-
     function applyDataTerminalControlPatch(patch) {
         if (Object.prototype.hasOwnProperty.call(patch, 'query')) {
             dataTerminalState.query = patch.query;
@@ -1892,7 +1872,7 @@
         const utils = getDataTerminalUtils();
         if (!refs.content) return;
 
-        applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
+        utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
 
         const candidates = buildDataTerminalCandidates(utils);
         const viewModel = utils.buildDataTerminalViewModel(candidates, {
@@ -2009,7 +1989,7 @@
         dataTerminalState.visible = true;
         dataTerminalState.domRefs = refs;
         dataTerminalState.htmlRenderer.reset();
-        applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
+        utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
 
         if (refs.searchInput) {
             refs.searchInput.addEventListener('input', (event) => {

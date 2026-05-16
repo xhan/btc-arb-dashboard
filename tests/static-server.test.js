@@ -1503,6 +1503,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('function resolveDataTerminalContentClickAction(event, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function resolveDataTerminalHeaderClickAction(event, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlWritePlan(state = {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalControlWritePlan(plan = {}, refs = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlEventPatch(field, event)'));
     assert.ok(dataTerminalUtilsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalDefaultSize(panel, options = {})'));
@@ -1515,7 +1516,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('utils.buildDataTerminalShellHtml()'));
     assert.ok(appJsResponse.body.includes('const refs = utils.getDataTerminalDomRefs(panel);'));
     assert.ok(!appJsResponse.body.includes("panel.querySelector('#data-terminal-header')"));
-    assert.ok(appJsResponse.body.includes('utils.buildDataTerminalControlWritePlan(dataTerminalState)'));
+    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs)'));
+    assert.ok(!appJsResponse.body.includes('function getDataTerminalControlElements(refs)'));
+    assert.ok(!appJsResponse.body.includes('function applyDataTerminalControlWritePlan(plan, refs)'));
     assert.ok(appJsResponse.body.includes("utils.buildDataTerminalControlEventPatch('query', event)"));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().buildDataTerminalSelectionPatch(dataTerminalState, action)'));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget })'));
