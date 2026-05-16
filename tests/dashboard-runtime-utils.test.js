@@ -16,6 +16,7 @@ const {
   findDashboardQuoteMatchById,
   getActivePathAlertEvaluationAlerts,
   getQuoteUiState,
+  hasActivePathAlertSound,
   hasQuoteMarketStateChanged,
   mergeQuoteUiState,
   normalizeQuoteStateKey,
@@ -356,6 +357,15 @@ assert.deepStrictEqual(
     highlightPast: false
   }
 );
+assert.strictEqual(hasActivePathAlertSound(new Map()), false);
+assert.strictEqual(
+  hasActivePathAlertSound(new Map([
+    ['a', { isSoundActive: false }],
+    ['b', { isSoundActive: true }]
+  ])),
+  true
+);
+assert.strictEqual(hasActivePathAlertSound([{ isSoundActive: true }]), false);
 
 const quoteUiState = new Map();
 assert.deepStrictEqual(getQuoteUiState(quoteUiState, 101), buildDefaultQuoteUiState());

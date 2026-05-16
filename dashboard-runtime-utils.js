@@ -95,6 +95,14 @@
     };
   }
 
+  function hasActivePathAlertSound(runtimeState) {
+    if (!(runtimeState instanceof Map)) return false;
+    for (const runtime of runtimeState.values()) {
+      if (runtime && runtime.isSoundActive) return true;
+    }
+    return false;
+  }
+
   function setQuoteUiState(stateMap, quoteId, nextState) {
     const map = stateMap instanceof Map ? stateMap : new Map();
     const key = normalizeQuoteStateKey(quoteId);
@@ -357,6 +365,7 @@
     findDashboardQuoteMatchById,
     getActivePathAlertEvaluationAlerts,
     getQuoteUiState,
+    hasActivePathAlertSound,
     hasQuoteMarketStateChanged,
     mergeQuoteUiState,
     normalizeQuoteStateKey,

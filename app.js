@@ -794,15 +794,7 @@
 
     function updateAlertSoundState() {
         if (!isAudioUnlocked) return;
-
-        let shouldPlayPathAlert = false;
-        for (const runtime of pathAlertRuntimeState.values()) {
-            if (runtime && runtime.isSoundActive) {
-                shouldPlayPathAlert = true;
-                break;
-            }
-        }
-        syncLoopingAlertSound(pathAlertSound, shouldPlayPathAlert);
+        syncLoopingAlertSound(pathAlertSound, getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState));
     }
 
     function bringFloatingPanelToFront(panel) {
