@@ -367,6 +367,37 @@
         `;
   }
 
+  function readDatasetValue(element, key) {
+    return String(element && element.dataset && element.dataset[key] || '').trim();
+  }
+
+  function resolveDataTerminalContentClickAction(event, options = {}) {
+    const closestEventTarget = typeof options.closestEventTarget === 'function'
+      ? options.closestEventTarget
+      : () => null;
+    function closest(selector) {
+      return closestEventTarget(event, selector);
+    }
+
+    const dexLinkEl = closest('[data-dex-link-copy]');
+    if (dexLinkEl) {
+      return { type: 'copy-dex-link', element: dexLinkEl };
+    }
+
+    const rowEl = closest('[data-data-terminal-row-key]');
+    const side = readDatasetValue(rowEl, 'dataTerminalSide');
+    const rowKey = readDatasetValue(rowEl, 'dataTerminalRowKey');
+    if ((side === 'left' || side === 'right') && rowKey) {
+      return {
+        type: 'toggle-row',
+        side,
+        rowKey
+      };
+    }
+
+    return { type: 'none' };
+  }
+
   function buildDataTerminalShellHtml() {
     return `
             <div id="data-terminal-header">
@@ -492,6 +523,7 @@
     buildDataTerminalViewModel,
     createDataTerminalCache,
     createDataTerminalUpdateRuntime,
-    parseDataTerminalQuery
+    parseDataTerminalQuery,
+    resolveDataTerminalContentClickAction
   };
 });

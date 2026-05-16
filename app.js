@@ -2046,27 +2046,21 @@
     }
 
     function handleDataTerminalContentClick(event) {
-        const eventTarget = resolveEventTargetElement(event);
-        if (!eventTarget) return;
-        const copyBtn = eventTarget.closest('[data-dex-link-copy]');
-        if (copyBtn) {
+        const action = getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget });
+        if (action.type === 'copy-dex-link') {
             event.preventDefault();
             event.stopPropagation();
-            void copyDexLinkFromElement(copyBtn);
+            void copyDexLinkFromElement(action.element);
             return;
         }
-        const rowEl = eventTarget.closest('[data-data-terminal-row-key]');
-        if (!rowEl) return;
-        const side = rowEl.dataset.dataTerminalSide;
-        const rowKey = rowEl.dataset.dataTerminalRowKey || '';
-        if (!rowKey) return;
-
-        if (side === 'left') {
-            dataTerminalState.selectedLeftKey = dataTerminalState.selectedLeftKey === rowKey ? '' : rowKey;
-        } else if (side === 'right') {
-            dataTerminalState.selectedRightKey = dataTerminalState.selectedRightKey === rowKey ? '' : rowKey;
-        } else {
+        if (action.type !== 'toggle-row') {
             return;
+        }
+
+        if (action.side === 'left') {
+            dataTerminalState.selectedLeftKey = dataTerminalState.selectedLeftKey === action.rowKey ? '' : action.rowKey;
+        } else {
+            dataTerminalState.selectedRightKey = dataTerminalState.selectedRightKey === action.rowKey ? '' : action.rowKey;
         }
 
         renderDataTerminalPanel();

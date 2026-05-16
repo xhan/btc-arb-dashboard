@@ -12,7 +12,8 @@ const {
   buildDataTerminalViewModel,
   createDataTerminalCache,
   createDataTerminalUpdateRuntime,
-  parseDataTerminalQuery
+  parseDataTerminalQuery,
+  resolveDataTerminalContentClickAction
 } = require('../data-terminal-utils');
 
 assert.deepStrictEqual(parseDataTerminalQuery('  WBTC, cbBTC extra  '), ['WBTC', 'cbBTC']);
@@ -79,6 +80,52 @@ dataTerminalUpdateRuntime.schedule();
 assert.strictEqual(dataTerminalUpdateRuntime.clear(), true);
 assert.deepStrictEqual(dataTerminalClearedTimers, ['data-terminal-2']);
 assert.strictEqual(dataTerminalUpdateRuntime.hasTimer(), false);
+
+function resolveContentActionFor(matches) {
+  return resolveDataTerminalContentClickAction({ type: 'click' }, {
+    closestEventTarget: (event, selector) => matches[selector] || null
+  });
+}
+
+const dataTerminalDexLinkEl = {};
+assert.deepStrictEqual(
+  resolveContentActionFor({ '[data-dex-link-copy]': dataTerminalDexLinkEl }),
+  { type: 'copy-dex-link', element: dataTerminalDexLinkEl }
+);
+assert.deepStrictEqual(
+  resolveContentActionFor({
+    '[data-data-terminal-row-key]': {
+      dataset: {
+        dataTerminalSide: 'left',
+        dataTerminalRowKey: 'left-row'
+      }
+    }
+  }),
+  { type: 'toggle-row', side: 'left', rowKey: 'left-row' }
+);
+assert.deepStrictEqual(
+  resolveContentActionFor({
+    '[data-data-terminal-row-key]': {
+      dataset: {
+        dataTerminalSide: 'right',
+        dataTerminalRowKey: 'right-row'
+      }
+    }
+  }),
+  { type: 'toggle-row', side: 'right', rowKey: 'right-row' }
+);
+assert.deepStrictEqual(
+  resolveContentActionFor({
+    '[data-data-terminal-row-key]': {
+      dataset: {
+        dataTerminalSide: 'center',
+        dataTerminalRowKey: 'row'
+      }
+    }
+  }),
+  { type: 'none' }
+);
+assert.deepStrictEqual(resolveContentActionFor({}), { type: 'none' });
 
 const dataTerminalRecords = buildDataTerminalRecords(
   [
