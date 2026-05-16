@@ -662,19 +662,24 @@
 
         const existingTag = itemEl.querySelector(`#quote-channel-tag-${quote.id}`);
         const channel = getRequestChannelDisplayForQuote(quote);
-        if (!channel) {
+        const patch = getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch(quote, channel, {
+            hasExistingTag: Boolean(existingTag)
+        });
+        if (!patch) return;
+
+        if (patch.action === 'remove') {
             if (existingTag) existingTag.remove();
             return;
         }
 
-        if (existingTag) {
-            existingTag.textContent = channel.name;
+        if (patch.action === 'update') {
+            if (existingTag) existingTag.textContent = patch.text;
             return;
         }
 
         const labelEl = labelRow.querySelector('.quote-label');
         if (!labelEl) return;
-        labelEl.insertAdjacentHTML('afterend', buildRequestChannelTagHtml(quote));
+        labelEl.insertAdjacentHTML('afterend', patch.html);
     }
 
     function syncRequestChannelTagVisibility() {

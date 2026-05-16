@@ -506,6 +506,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayToggleState(mode)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function getNextQuoteDisplayMode(mode)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagHtml(quote, channel)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagPatch(quote, channel, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteHoverTooltipState(quote, state, options = {})'));
@@ -531,6 +532,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayToggleState(quoteDisplayMode)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, channel)'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch(quote, channel, {'));
     assert.ok(appJsResponse.body.includes('const quoteHoverRuntime = getQuoteDisplayUtils().createQuoteHoverRuntime({'));
     assert.ok(appJsResponse.body.includes('quoteHoverRuntime.schedule(quoteId, () => {'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteHoverTooltipState(quote, state, { isEvmChain })'));
