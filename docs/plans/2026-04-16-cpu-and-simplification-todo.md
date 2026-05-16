@@ -173,6 +173,7 @@
     - 已启动第二十五步：市场客户端聚合器、provider 和 token metadata store 迁入 `src/market-clients/`，根目录不再保留 `market-clients/` 业务目录，`server.js` 从 `src/market-clients` 注入市场客户端
     - 已启动第二十六步：清理空的根目录 `shared/` 遗留目录，并用 project layout 测试约束共享工具只保留在 `src/shared/`
     - 已启动第二十七步：用户使用说明和补充说明迁入 `docs/user/`，根目录只保留运行配置、入口和包管理文件
+    - 已启动第二十八步：token metadata 运行态缓存默认迁入 `db/metadata-cache.json`，`src/market-clients/token-meta.js` 写入前确保缓存目录存在，根目录不再作为 metadata cache 默认落点
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
