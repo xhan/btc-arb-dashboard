@@ -212,6 +212,7 @@
   - `src/app/dashboard-app.js` 中未调用的 CEX trading pair parser 包装和 `TradingPairUtils` 入口已移除
   - `src/app/dashboard-app.js` 的 single-chain display name 和 paused monitor state 单用途包装已移除，调用点复用现有 helper / utils
   - `src/app/dashboard-app.js` 的多渠道开关 storage 值解析/序列化已下沉到 `src/request-channel/request-channel-utils.js`
+  - `src/app/dashboard-app.js` 的多渠道开关 localStorage 读写容错和按钮 DOM 写入已下沉到 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
   - `src/app/dashboard-app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`

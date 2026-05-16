@@ -3,16 +3,20 @@ const assert = require('assert');
 const {
   DEFAULT_REQUEST_CHANNEL_ID,
   DEFAULT_INTERVALS,
+  applyMultiChannelToggleButtonState,
   buildMultiChannelToggleState,
   buildQueueKey,
   buildRequestChannelOptionsHtml,
   formatMultiChannelEnabledStorageValue,
+  getBrowserLocalStorage,
   getEffectiveRequestChannelIdForQuote,
   getEffectiveIntervalForQueue,
   getQueueKeyForQuote,
   getRequestChannelDisplayForQuote,
   getRequestChannelOptions,
+  loadMultiChannelEnabledFromStorage,
   parseMultiChannelEnabledStorageValue,
+  persistMultiChannelEnabledToStorage,
   resolveRequestChannelIdForQuote,
   supportsRequestChannelForQuote
 } = require('../src/request-channel/request-channel-utils');
@@ -58,6 +62,79 @@ assert.strictEqual(parseMultiChannelEnabledStorageValue('true'), true);
 assert.strictEqual(parseMultiChannelEnabledStorageValue('unexpected'), true);
 assert.strictEqual(formatMultiChannelEnabledStorageValue(true), 'true');
 assert.strictEqual(formatMultiChannelEnabledStorageValue(false), 'false');
+
+const multiChannelStorage = {
+  values: new Map([['dashboard-multi-channel-enabled', 'false']]),
+  getItem(key) {
+    return this.values.has(key) ? this.values.get(key) : null;
+  },
+  setItem(key, value) {
+    this.values.set(key, value);
+  }
+};
+assert.strictEqual(loadMultiChannelEnabledFromStorage(multiChannelStorage), false);
+assert.strictEqual(persistMultiChannelEnabledToStorage(multiChannelStorage, true), true);
+assert.strictEqual(multiChannelStorage.values.get('dashboard-multi-channel-enabled'), 'true');
+assert.strictEqual(loadMultiChannelEnabledFromStorage(null), true);
+assert.strictEqual(persistMultiChannelEnabledToStorage(null, false), false);
+
+let multiChannelStorageError = null;
+assert.strictEqual(
+  loadMultiChannelEnabledFromStorage({
+    getItem() {
+      throw new Error('denied');
+    }
+  }, {
+    onError(error) {
+      multiChannelStorageError = error;
+    }
+  }),
+  true
+);
+assert.strictEqual(multiChannelStorageError.message, 'denied');
+
+const multiChannelToggleClasses = new Set();
+const multiChannelToggleEl = {
+  textContent: '',
+  title: '',
+  attributes: {},
+  setAttribute(name, value) {
+    this.attributes[name] = value;
+  },
+  classList: {
+    toggle(className, active) {
+      if (active) multiChannelToggleClasses.add(className);
+      else multiChannelToggleClasses.delete(className);
+    }
+  }
+};
+assert.strictEqual(applyMultiChannelToggleButtonState(multiChannelToggleEl, true), true);
+assert.strictEqual(multiChannelToggleEl.textContent, '多渠道: 开');
+assert.strictEqual(multiChannelToggleEl.attributes['aria-pressed'], 'true');
+assert.strictEqual(multiChannelToggleClasses.has('active'), true);
+assert.strictEqual(applyMultiChannelToggleButtonState(multiChannelToggleEl, false), true);
+assert.strictEqual(multiChannelToggleEl.textContent, '多渠道: 关');
+assert.strictEqual(multiChannelToggleClasses.has('active'), false);
+assert.strictEqual(applyMultiChannelToggleButtonState(null, true), false);
+
+const browserStorage = {};
+assert.strictEqual(getBrowserLocalStorage({ window: { localStorage: browserStorage } }), browserStorage);
+let browserStorageError = null;
+assert.strictEqual(
+  getBrowserLocalStorage({
+    window: Object.defineProperty({}, 'localStorage', {
+      get() {
+        throw new Error('blocked');
+      }
+    })
+  }, {
+    onError(error) {
+      browserStorageError = error;
+    }
+  }),
+  null
+);
+assert.strictEqual(browserStorageError.message, 'blocked');
 
 assert.strictEqual(
   getQueueKeyForQuote({ chain: 'ethereum', preferredSource: 'Kyber' }, channels),

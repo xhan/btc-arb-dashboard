@@ -1,6 +1,5 @@
     const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
     let dashboardState = [];
-    const MULTI_CHANNEL_ENABLED_STORAGE_KEY = 'dashboard-multi-channel-enabled';
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
     const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
@@ -603,47 +602,26 @@
         requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
     }
 
-    function getLocalStorageSafe() {
-        try {
-            return window.localStorage || null;
-        } catch (error) {
-            console.warn('访问浏览器本地缓存失败:', error);
-            return null;
-        }
-    }
-
     function loadMultiChannelEnabledFromStorage() {
-        const storage = getLocalStorageSafe();
-        if (!storage) return true;
-        try {
-            const raw = storage.getItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY);
-            return getRequestChannelUtils().parseMultiChannelEnabledStorageValue(raw);
-        } catch (error) {
-            console.warn('读取多渠道开关本地缓存失败:', error);
-        }
-        return true;
+        const utils = getRequestChannelUtils();
+        return utils.loadMultiChannelEnabledFromStorage(utils.getBrowserLocalStorage({ window }, {
+            onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
+        }), {
+            onError: (error) => console.warn('读取多渠道开关本地缓存失败:', error)
+        });
     }
 
     function persistMultiChannelEnabled() {
-        const storage = getLocalStorageSafe();
-        if (!storage) return;
-        try {
-            storage.setItem(
-                MULTI_CHANNEL_ENABLED_STORAGE_KEY,
-                getRequestChannelUtils().formatMultiChannelEnabledStorageValue(multiChannelEnabled)
-            );
-        } catch (error) {
-            console.warn('保存多渠道开关本地缓存失败:', error);
-        }
+        const utils = getRequestChannelUtils();
+        utils.persistMultiChannelEnabledToStorage(utils.getBrowserLocalStorage({ window }, {
+            onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
+        }), multiChannelEnabled, {
+            onError: (error) => console.warn('保存多渠道开关本地缓存失败:', error)
+        });
     }
 
     function renderMultiChannelToggle() {
-        if (!toggleMultiChannelBtn) return;
-        const state = getRequestChannelUtils().buildMultiChannelToggleState(multiChannelEnabled);
-        toggleMultiChannelBtn.textContent = state.text;
-        toggleMultiChannelBtn.title = state.title;
-        toggleMultiChannelBtn.setAttribute('aria-pressed', state.ariaPressed);
-        toggleMultiChannelBtn.classList.toggle('active', state.active);
+        getRequestChannelUtils().applyMultiChannelToggleButtonState(toggleMultiChannelBtn, multiChannelEnabled);
     }
 
     function getEffectiveRequestChannelIdForQuote(quote, options = {}) {

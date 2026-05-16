@@ -10,6 +10,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   const DEFAULT_REQUEST_CHANNEL_ID = 'default';
   const DEFAULT_REQUEST_CHANNEL_NAME = '默认通道';
+  const MULTI_CHANNEL_ENABLED_STORAGE_KEY = 'dashboard-multi-channel-enabled';
   const DEFAULT_INTERVALS = {
     kyber: 170,
     zerox: 110,
@@ -215,6 +216,20 @@
     };
   }
 
+  function applyMultiChannelToggleButtonState(buttonEl, enabled) {
+    if (!buttonEl) return false;
+    const state = buildMultiChannelToggleState(enabled);
+    buttonEl.textContent = state.text;
+    buttonEl.title = state.title;
+    if (typeof buttonEl.setAttribute === 'function') {
+      buttonEl.setAttribute('aria-pressed', state.ariaPressed);
+    }
+    if (buttonEl.classList && typeof buttonEl.classList.toggle === 'function') {
+      buttonEl.classList.toggle('active', state.active);
+    }
+    return true;
+  }
+
   function parseMultiChannelEnabledStorageValue(value, fallback = true) {
     if (value == null) return fallback !== false;
     return value !== 'false';
@@ -222,6 +237,51 @@
 
   function formatMultiChannelEnabledStorageValue(enabled) {
     return enabled === true ? 'true' : 'false';
+  }
+
+  function loadMultiChannelEnabledFromStorage(storage, options = {}) {
+    const fallback = options.fallback !== false;
+    if (!storage || typeof storage.getItem !== 'function') return fallback;
+    try {
+      return parseMultiChannelEnabledStorageValue(
+        storage.getItem(options.storageKey || MULTI_CHANNEL_ENABLED_STORAGE_KEY),
+        fallback
+      );
+    } catch (error) {
+      if (typeof options.onError === 'function') {
+        options.onError(error);
+      }
+      return fallback;
+    }
+  }
+
+  function persistMultiChannelEnabledToStorage(storage, enabled, options = {}) {
+    if (!storage || typeof storage.setItem !== 'function') return false;
+    try {
+      storage.setItem(
+        options.storageKey || MULTI_CHANNEL_ENABLED_STORAGE_KEY,
+        formatMultiChannelEnabledStorageValue(enabled)
+      );
+      return true;
+    } catch (error) {
+      if (typeof options.onError === 'function') {
+        options.onError(error);
+      }
+      return false;
+    }
+  }
+
+  function getBrowserLocalStorage(env = {}, options = {}) {
+    const runtimeWindow = env.window || (typeof window !== 'undefined' ? window : null);
+    if (!runtimeWindow) return null;
+    try {
+      return runtimeWindow.localStorage || null;
+    } catch (error) {
+      if (typeof options.onError === 'function') {
+        options.onError(error);
+      }
+      return null;
+    }
   }
 
   function buildQueueKey(sourceKey, channelId) {
@@ -289,19 +349,24 @@
     DEFAULT_INTERVALS,
     DEFAULT_REQUEST_CHANNEL_ID,
     DEFAULT_REQUEST_CHANNEL_NAME,
+    MULTI_CHANNEL_ENABLED_STORAGE_KEY,
+    applyMultiChannelToggleButtonState,
     buildQueueKey,
     buildMultiChannelToggleState,
     buildRequestChannelOptionsHtml,
     formatMultiChannelEnabledStorageValue,
+    getBrowserLocalStorage,
     getEffectiveRequestChannelIdForQuote,
     getEffectiveIntervalForQueue,
     getRequestChannelDisplayForQuote,
     getQueueKeyForQuote,
     getRequestChannelOptions,
     isChannelAwareSourceKey,
+    loadMultiChannelEnabledFromStorage,
     normalizeIntervals,
     parseMultiChannelEnabledStorageValue,
     parseQueueKey,
+    persistMultiChannelEnabledToStorage,
     resolveRequestChannelIdForQuote,
     supportsRequestChannelForQuote
   };
