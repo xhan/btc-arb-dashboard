@@ -13,6 +13,7 @@ const {
   applyQuoteMainErrorDomState,
   applyQuoteMainResultDomState,
   applyQuoteSwitchingDomState,
+  applyFloatingPanelDisplayState,
   bindDraggableElement,
   bindFloatingPanelFocus,
   clearQuoteDataError,
@@ -469,6 +470,45 @@ header.listeners.mousedown();
 header.listeners.click();
 panel.listeners.mousedown();
 assert.deepStrictEqual(focusCalls, [panel, panel, panel]);
+
+const displayPanel = { style: { display: 'none' } };
+const openDisplayResult = applyFloatingPanelDisplayState(displayPanel, 'open');
+assert.deepStrictEqual(openDisplayResult, {
+  panelFound: true,
+  visible: true,
+  shouldBringToFront: true,
+  shouldRender: true
+});
+assert.strictEqual(displayPanel.style.display, 'flex');
+
+const hideDisplayResult = applyFloatingPanelDisplayState(displayPanel, 'toggle', {
+  getComputedStyle: () => ({ display: 'flex' })
+});
+assert.deepStrictEqual(hideDisplayResult, {
+  panelFound: true,
+  visible: false,
+  shouldBringToFront: false,
+  shouldRender: false
+});
+assert.strictEqual(displayPanel.style.display, 'none');
+
+const showDisplayResult = applyFloatingPanelDisplayState(displayPanel, 'toggle', {
+  getComputedStyle: () => ({ display: 'none' })
+});
+assert.deepStrictEqual(showDisplayResult, {
+  panelFound: true,
+  visible: true,
+  shouldBringToFront: true,
+  shouldRender: true
+});
+assert.strictEqual(displayPanel.style.display, 'flex');
+
+assert.deepStrictEqual(applyFloatingPanelDisplayState(null, 'toggle'), {
+  panelFound: false,
+  visible: false,
+  shouldBringToFront: false,
+  shouldRender: false
+});
 
 const zIndexRuntime = createFloatingPanelZIndexRuntime({ baseZIndex: 2100 });
 const zIndexPanel = { style: {} };

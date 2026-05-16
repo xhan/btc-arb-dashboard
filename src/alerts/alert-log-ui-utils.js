@@ -95,45 +95,6 @@
     return state;
   }
 
-  function readElementDisplay(element, getComputedStyle) {
-    if (typeof getComputedStyle === 'function') {
-      const computedStyle = getComputedStyle(element);
-      return String(computedStyle && computedStyle.display || '');
-    }
-    return String(element && element.style && element.style.display || '');
-  }
-
-  function applyAlertLogPanelDisplayState(panelEl, action = 'toggle', options = {}) {
-    if (!panelEl || !panelEl.style) {
-      return {
-        panelFound: false,
-        visible: false,
-        shouldBringToFront: false,
-        shouldRender: false
-      };
-    }
-
-    const displayValue = String(options.displayValue || 'flex');
-    if (action === 'open') {
-      panelEl.style.display = displayValue;
-      return {
-        panelFound: true,
-        visible: true,
-        shouldBringToFront: true,
-        shouldRender: true
-      };
-    }
-
-    const isHidden = readElementDisplay(panelEl, options.getComputedStyle) === 'none';
-    panelEl.style.display = isHidden ? displayValue : 'none';
-    return {
-      panelFound: true,
-      visible: isHidden,
-      shouldBringToFront: isHidden,
-      shouldRender: isHidden
-    };
-  }
-
   function buildAlertLogAppendPlan(entries) {
     const list = Array.isArray(entries) ? entries.slice() : [];
     return {
@@ -622,7 +583,6 @@
     buildAlertSettingsPanelHtml,
     buildAlertLogTabState,
     applyAlertLogTabDomState,
-    applyAlertLogPanelDisplayState,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
     buildMutedTargetLogCardSelector,

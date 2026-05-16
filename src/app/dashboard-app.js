@@ -3208,19 +3208,29 @@
         window.open(href, '_blank', 'noopener');
     }
 
-    function applyAlertLogPanelDisplay(action) {
-        const result = getAlertLogUiUtils().applyAlertLogPanelDisplayState(alertLogWindow, action, {
-            getComputedStyle: (element) => window.getComputedStyle(element)
+    function applyFloatingPanelDisplay(panel, action, options = {}) {
+        const result = getDomRenderUtils().applyFloatingPanelDisplayState(panel, action, {
+            getComputedStyle: (element) => window.getComputedStyle(element),
+            displayValue: options.displayValue
         });
         if (!result.panelFound) return result;
         if (result.shouldBringToFront) {
-            bringFloatingPanelToFront(alertLogWindow);
+            bringFloatingPanelToFront(panel);
         }
-        if (result.shouldRender) {
-            renderAlertLogTabState();
+        if (result.shouldRender && typeof options.render === 'function') {
+            options.render(result);
         }
-        syncMutedPathLogTimer();
+        if (typeof options.afterApply === 'function') {
+            options.afterApply(result);
+        }
         return result;
+    }
+
+    function applyAlertLogPanelDisplay(action) {
+        return applyFloatingPanelDisplay(alertLogWindow, action, {
+            render: renderAlertLogTabState,
+            afterApply: syncMutedPathLogTimer
+        });
     }
 
     async function loadPathAlertConfig() {
@@ -3802,15 +3812,13 @@
     }
 
     function toggleArbPanel() {
-        if (!arbPathWindow) return;
-        const isHidden = window.getComputedStyle(arbPathWindow).display === 'none';
-        arbPathWindow.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden) {
-            bringFloatingPanelToFront(arbPathWindow);
-            if (arbPanelUpdateRuntime.isDirty()) {
-                updateArbPanel({ force: true });
+        applyFloatingPanelDisplay(arbPathWindow, 'toggle', {
+            render: () => {
+                if (arbPanelUpdateRuntime.isDirty()) {
+                    updateArbPanel({ force: true });
+                }
             }
-        }
+        });
     }
 
     function handleGlobalShortcuts(event) {
