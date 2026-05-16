@@ -1256,35 +1256,19 @@
         if (!alertLogMutedContent) return;
         pruneMutedPathTargetsInPlace(nowMs);
         pruneMutedPathLegsInPlace(nowMs);
-        const alertLogUi = getAlertLogUiUtils();
-        const mutedPathItems = mutedPathTargets
-            .slice()
-            .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt))
-            .map((entry) => alertLogUi.buildMutedStateItemHtml({
-                title: entry.logTitleSnapshot || entry.summaryLinesSnapshot[0] || '路径沉默',
-                lines: entry.summaryLinesSnapshot,
-                status: getPathAlertUtils().buildMutedPathStatusText(entry, nowMs),
-                actions: [
-                    { label: '延长 2 小时', dataAttr: 'data-muted-path-target-extend', value: buildMutedPathTargetKey(entry) },
-                    { label: '恢复', dataAttr: 'data-muted-path-target-restore', value: buildMutedPathTargetKey(entry) }
-                ]
-            }));
-        const mutedLegItems = mutedPathLegs
-            .slice()
-            .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt))
-            .map((entry) => alertLogUi.buildMutedStateItemHtml({
-                title: entry.titleSnapshot || buildLiveQuoteLabel(entry.chain, entry.fromSymbol, entry.toSymbol),
-                lines: [],
-                status: getPathAlertUtils().buildMutedPathLegStatusText(entry, nowMs),
-                actions: [
-                    { label: '延长 2 小时', dataAttr: 'data-muted-path-leg-extend', value: buildMutedPathLegKey(entry) },
-                    { label: '恢复', dataAttr: 'data-muted-path-leg-restore', value: buildMutedPathLegKey(entry) }
-                ]
-            }));
-        mutedAlertStateHtmlRenderer.render(alertLogMutedContent, [
-            alertLogUi.buildMutedStateSectionHtml('沉默的路径', mutedPathItems, '当前没有沉默中的路径'),
-            alertLogUi.buildMutedStateSectionHtml('屏蔽的腿', mutedLegItems, '当前没有屏蔽中的腿')
-        ].join(''));
+        const panelHtml = getAlertLogUiUtils().buildMutedAlertStatePanelHtml({
+            mutedPathTargets,
+            mutedPathLegs,
+            buildPathTargetKey: buildMutedPathTargetKey,
+            buildPathStatusText: (entry) => getPathAlertUtils().buildMutedPathStatusText(entry, nowMs),
+            buildLegKey: buildMutedPathLegKey,
+            buildLegTitle: (entry) => (
+                entry && entry.titleSnapshot
+                || buildLiveQuoteLabel(entry && entry.chain, entry && entry.fromSymbol, entry && entry.toSymbol)
+            ),
+            buildLegStatusText: (entry) => getPathAlertUtils().buildMutedPathLegStatusText(entry, nowMs)
+        });
+        mutedAlertStateHtmlRenderer.render(alertLogMutedContent, panelHtml);
     }
 
     function renderAlertLogTabState() {

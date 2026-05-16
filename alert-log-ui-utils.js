@@ -84,6 +84,60 @@
         `;
   }
 
+  function sortMutedEntriesByMutedAtDesc(entries) {
+    return (Array.isArray(entries) ? entries : [])
+      .slice()
+      .sort((left, right) => Number(right && right.mutedAt) - Number(left && left.mutedAt));
+  }
+
+  function buildMutedAlertStatePanelHtml(config = {}) {
+    const buildPathTargetKey = typeof config.buildPathTargetKey === 'function'
+      ? config.buildPathTargetKey
+      : () => '';
+    const buildPathStatusText = typeof config.buildPathStatusText === 'function'
+      ? config.buildPathStatusText
+      : () => '';
+    const buildLegKey = typeof config.buildLegKey === 'function'
+      ? config.buildLegKey
+      : () => '';
+    const buildLegTitle = typeof config.buildLegTitle === 'function'
+      ? config.buildLegTitle
+      : () => '';
+    const buildLegStatusText = typeof config.buildLegStatusText === 'function'
+      ? config.buildLegStatusText
+      : () => '';
+
+    const mutedPathItems = sortMutedEntriesByMutedAtDesc(config.mutedPathTargets)
+      .map((entry) => {
+        const summaryLines = Array.isArray(entry && entry.summaryLinesSnapshot) ? entry.summaryLinesSnapshot : [];
+        return buildMutedStateItemHtml({
+          title: entry && (entry.logTitleSnapshot || summaryLines[0]) || '路径沉默',
+          lines: summaryLines,
+          status: buildPathStatusText(entry),
+          actions: [
+            { label: '延长 2 小时', dataAttr: 'data-muted-path-target-extend', value: buildPathTargetKey(entry) },
+            { label: '恢复', dataAttr: 'data-muted-path-target-restore', value: buildPathTargetKey(entry) }
+          ]
+        });
+      });
+
+    const mutedLegItems = sortMutedEntriesByMutedAtDesc(config.mutedPathLegs)
+      .map((entry) => buildMutedStateItemHtml({
+        title: buildLegTitle(entry) || '路径腿',
+        lines: [],
+        status: buildLegStatusText(entry),
+        actions: [
+          { label: '延长 2 小时', dataAttr: 'data-muted-path-leg-extend', value: buildLegKey(entry) },
+          { label: '恢复', dataAttr: 'data-muted-path-leg-restore', value: buildLegKey(entry) }
+        ]
+      }));
+
+    return [
+      buildMutedStateSectionHtml('沉默的路径', mutedPathItems, '当前没有沉默中的路径'),
+      buildMutedStateSectionHtml('屏蔽的腿', mutedLegItems, '当前没有屏蔽中的腿')
+    ].join('');
+  }
+
   function buildRestoredMutedAlertLogHtml(mutedEntry, options = {}) {
     const displayState = buildAlertLogEntryDisplayState({ mutedEntry });
     const title = String(
@@ -246,6 +300,7 @@
     resolveAlertLogCardPlacement,
     buildMutedStateItemHtml,
     buildMutedStateSectionHtml,
+    buildMutedAlertStatePanelHtml,
     buildRestoredMutedAlertLogHtml,
     buildPathAlertLogCardHtml,
     buildQuoteAlertLogHtml

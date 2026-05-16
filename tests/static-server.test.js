@@ -417,9 +417,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().escapeCssAttributeValue(targetKey)'));
     assert.ok(appJsResponse.body.includes('pathAlertPanelHtmlRenderer.render(pathAlertContent'));
     assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));
-    assert.ok(appJsResponse.body.includes('const alertLogUi = getAlertLogUiUtils();'));
-    assert.ok(appJsResponse.body.includes('alertLogUi.buildMutedStateItemHtml({'));
-    assert.ok(appJsResponse.body.includes('alertLogUi.buildMutedStateSectionHtml(\'沉默的路径\''));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildMutedAlertStatePanelHtml({'));
+    assert.ok(alertLogUiResponse.body.includes('function buildMutedAlertStatePanelHtml(config = {})'));
+    assert.ok(!appJsResponse.body.includes('alertLogUi.buildMutedStateItemHtml({'));
+    assert.ok(!appJsResponse.body.includes('alertLogUi.buildMutedStateSectionHtml(\'沉默的路径\''));
     assert.ok(!appJsResponse.body.includes('window.AlertLogUiUtils.'));
     assert.ok(!appJsResponse.body.includes('window.AlertLogUiUtils &&'));
     assert.ok(!appJsResponse.body.includes('list.some((entry) => !(entry && entry.mutedEntry))'));
@@ -678,7 +679,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('renderMutedAlertStatePanel'));
     assert.ok(appJsResponse.body.includes('输入屏蔽时长（小时，正整数）'));
     assert.ok(!appJsResponse.body.includes('屏蔽 8 小时'));
-    assert.ok(appJsResponse.body.includes('沉默中'));
+    assert.ok(pathAlertUtilsResponse.body.includes('沉默中'));
     assert.ok(appJsResponse.body.includes("if (key === 'a')"));
     assert.ok(appJsResponse.body.includes("if (key === 'c')"));
     assert.ok(appJsResponse.body.includes("if (key === 'l')"));

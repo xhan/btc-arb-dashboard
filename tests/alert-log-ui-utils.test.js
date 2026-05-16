@@ -7,6 +7,7 @@ const {
   resolveAlertLogCardPlacement,
   buildMutedStateItemHtml,
   buildMutedStateSectionHtml,
+  buildMutedAlertStatePanelHtml,
   buildRestoredMutedAlertLogHtml,
   buildPathAlertLogCardHtml,
   buildQuoteAlertLogHtml
@@ -86,6 +87,33 @@ assert.ok(emptySectionHtml.includes('当前为空 &amp; 可恢复'));
 const listSectionHtml = buildMutedStateSectionHtml('屏蔽的腿', ['<div class="muted-state-item">A</div>'], '空');
 assert.ok(listSectionHtml.includes('<div class="muted-state-item">A</div>'));
 assert.ok(!listSectionHtml.includes('muted-state-empty'));
+
+const mutedStatePanelHtml = buildMutedAlertStatePanelHtml({
+  mutedPathTargets: [
+    { id: 'old-path', mutedAt: 1000, summaryLinesSnapshot: ['old line'] },
+    { id: 'new-path', mutedAt: 3000, logTitleSnapshot: 'New Path', summaryLinesSnapshot: ['new line'] }
+  ],
+  mutedPathLegs: [
+    { key: 'old-leg', mutedAt: 1000, titleSnapshot: 'Old Leg' },
+    { key: 'new-leg', mutedAt: 4000, chain: 'Base', fromSymbol: 'A', toSymbol: 'B' }
+  ],
+  buildPathTargetKey: (entry) => entry.id,
+  buildPathStatusText: (entry) => `path ${entry.id}`,
+  buildLegKey: (entry) => entry.key,
+  buildLegTitle: (entry) => entry.titleSnapshot || `${entry.chain}:${entry.fromSymbol}->${entry.toSymbol}`,
+  buildLegStatusText: (entry) => `leg ${entry.key}`
+});
+
+assert.ok(mutedStatePanelHtml.includes('沉默的路径'));
+assert.ok(mutedStatePanelHtml.includes('屏蔽的腿'));
+assert.ok(mutedStatePanelHtml.indexOf('New Path') < mutedStatePanelHtml.indexOf('old line'));
+assert.ok(mutedStatePanelHtml.indexOf('Base:A-&gt;B') < mutedStatePanelHtml.indexOf('Old Leg'));
+assert.ok(mutedStatePanelHtml.includes('data-muted-path-target-extend="new-path"'));
+assert.ok(mutedStatePanelHtml.includes('data-muted-path-leg-restore="old-leg"'));
+
+const emptyMutedStatePanelHtml = buildMutedAlertStatePanelHtml();
+assert.ok(emptyMutedStatePanelHtml.includes('当前没有沉默中的路径'));
+assert.ok(emptyMutedStatePanelHtml.includes('当前没有屏蔽中的腿'));
 
 const restoredLogHtml = buildRestoredMutedAlertLogHtml(
   {
