@@ -175,9 +175,12 @@
     const quoteFromTokenLineEl = document.getElementById('quote-from-token-line');
     const quoteToTokenLineEl = document.getElementById('quote-to-token-line');
     const quoteSourceSelect = document.getElementById('quote-source-pref');
+    const quoteSourceGroup = document.getElementById('source-select-group');
     const kyberDirectPoolsGroup = document.getElementById('kyber-direct-pools-group');
     const kyberDirectPoolsNote = document.getElementById('kyber-direct-pools-note');
     const kyberOnlyDirectPoolsInput = document.getElementById('kyber-only-direct-pools');
+    const inverseToggleGroup = document.getElementById('inverse-toggle-group');
+    const inverseCheckbox = document.getElementById('show-inverse-quote');
     
     const manualSaveBtn = document.getElementById('manual-save-btn');
     const manualSaveText = document.getElementById('manual-save-text');
@@ -4801,9 +4804,8 @@
             }
         }
 
-        const sourceGroup = document.getElementById('source-select-group');
-        if (sourceGroup) {
-            sourceGroup.style.display = modalState.sourceSelect.visible ? 'block' : 'none';
+        if (quoteSourceGroup) {
+            quoteSourceGroup.style.display = modalState.sourceSelect.visible ? 'block' : 'none';
         }
         if (quoteSourceSelect) {
             quoteSourceSelect.disabled = modalState.sourceSelect.disabled;
@@ -4819,11 +4821,10 @@
 
         renderQuoteRequestChannelOptions(quote);
 
-        const inverseCheckbox = document.getElementById('show-inverse-quote');
-        if (!modalState.inverse.visible) {
-            document.getElementById('inverse-toggle-group').style.display = 'none';
-        } else {
-            document.getElementById('inverse-toggle-group').style.display = 'flex';
+        if (inverseToggleGroup) {
+            inverseToggleGroup.style.display = modalState.inverse.visible ? 'flex' : 'none';
+        }
+        if (inverseCheckbox && modalState.inverse.visible) {
             inverseCheckbox.checked = modalState.inverse.checked;
         }
 
@@ -4841,6 +4842,33 @@
     function closeQuoteSettingsModal() {
         alertModal.classList.remove('visible');
         currentlyEditingQuote = null;
+    }
+
+    function getQuoteSettingsFormValues(quote) {
+        const values = getDashboardRenderer().readQuoteSettingsFormValues({
+            readValue: (id) => {
+                if (id === 'quote-source-pref') {
+                    return quoteSourceSelect ? quoteSourceSelect.value : '';
+                }
+                if (id === 'quote-request-channel') {
+                    return quoteRequestChannelSelect ? quoteRequestChannelSelect.value : '';
+                }
+                return '';
+            },
+            readChecked: (id) => {
+                if (id === 'kyber-only-direct-pools') {
+                    return Boolean(kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked);
+                }
+                if (id === 'show-inverse-quote') {
+                    return Boolean(inverseCheckbox && inverseCheckbox.checked);
+                }
+                return false;
+            }
+        });
+        return {
+            ...values,
+            sourceValue: values.sourceValue || (quote ? quote.preferredSource : '')
+        };
     }
 
     function deleteCategoryFromDashboard(categoryId) {
@@ -4924,13 +4952,14 @@
             });
         } else if (action.type === 'save') {
             const { quote } = currentlyEditingQuote;
+            const formValues = getQuoteSettingsFormValues(quote);
             const updatePlan = getDashboardRenderer().buildQuoteSettingsUpdatePlan({
                 quote,
-                sourceValue: quoteSourceSelect ? quoteSourceSelect.value : quote.preferredSource,
-                kyberOnlyDirectPools: kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true,
-                showInverse: document.getElementById('show-inverse-quote').checked,
+                sourceValue: formValues.sourceValue,
+                kyberOnlyDirectPools: formValues.kyberOnlyDirectPools,
+                showInverse: formValues.showInverse,
                 requestChannelEnabled: shouldShowRequestChannelForQuote(quote) && Boolean(quoteRequestChannelSelect),
-                requestChannelId: quoteRequestChannelSelect ? quoteRequestChannelSelect.value : '',
+                requestChannelId: formValues.requestChannelId,
                 isCrossChainQuote,
                 isEvmChain
             });

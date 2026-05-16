@@ -399,6 +399,21 @@
     };
   }
 
+  function readQuoteSettingsFormValues(options = {}) {
+    const readValue = typeof options.readValue === 'function'
+      ? options.readValue
+      : () => '';
+    const readChecked = typeof options.readChecked === 'function'
+      ? options.readChecked
+      : () => false;
+    return {
+      sourceValue: readValue('quote-source-pref'),
+      kyberOnlyDirectPools: readChecked('kyber-only-direct-pools'),
+      showInverse: readChecked('show-inverse-quote'),
+      requestChannelId: readValue('quote-request-channel')
+    };
+  }
+
   function buildAddQuoteFormViewState(config = {}) {
     const chain = String(config.chain || '');
     const normalizeChainKey = typeof config.normalizeChainKey === 'function'
@@ -527,6 +542,7 @@
     buildSettingsIntervalWritePlan,
     buildSettingsIntervalsFromFormValues,
     readAddCategoryFormValues,
+    readQuoteSettingsFormValues,
     readSettingsIntervalFormValues,
     resolveAddCategoryModalClickAction,
     resolveAddQuoteModalClickAction,

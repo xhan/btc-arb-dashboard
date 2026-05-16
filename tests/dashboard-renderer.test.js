@@ -9,6 +9,7 @@ const {
   buildSettingsIntervalWritePlan,
   buildSettingsIntervalsFromFormValues,
   readAddCategoryFormValues,
+  readQuoteSettingsFormValues,
   readSettingsIntervalFormValues,
   resolveAddCategoryModalClickAction,
   resolveAddQuoteModalClickAction,
@@ -298,6 +299,22 @@ const quoteSettingsOverlay = { id: 'alert-modal', closest: () => null };
 assert.deepStrictEqual(
   resolveQuoteSettingsModalClickAction({ target: quoteSettingsOverlay }, { modal: quoteSettingsOverlay }),
   { type: 'close' }
+);
+
+assert.deepStrictEqual(
+  readQuoteSettingsFormValues({
+    readValue: (id) => ({
+      'quote-source-pref': '0x',
+      'quote-request-channel': 'fast'
+    }[id] || ''),
+    readChecked: (id) => id === 'kyber-only-direct-pools'
+  }),
+  {
+    sourceValue: '0x',
+    kyberOnlyDirectPools: true,
+    showInverse: false,
+    requestChannelId: 'fast'
+  }
 );
 
 assert.deepStrictEqual(

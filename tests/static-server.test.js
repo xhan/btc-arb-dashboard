@@ -347,9 +347,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function resolveAddCategoryModalClickAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveQuoteSettingsModalClickAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsUpdatePlan(config = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function readQuoteSettingsFormValues(options = {})'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalViewState({'));
+    assert.ok(appJsResponse.body.includes('getDashboardRenderer().readQuoteSettingsFormValues({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsUpdatePlan({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddQuoteFormViewState({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddQuoteDraft({'));
@@ -379,6 +381,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-save'"));
     assert.ok(!appJsResponse.body.includes("const kyberOnlyDirectPools = !isCrossChainQuote(quote) && kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;"));
     assert.ok(!appJsResponse.body.includes("const showInverse = isCrossChainQuote(quote) ? false : document.getElementById('show-inverse-quote').checked;"));
+    assert.ok(!appJsResponse.body.includes("sourceValue: quoteSourceSelect ? quoteSourceSelect.value : quote.preferredSource"));
+    assert.ok(!appJsResponse.body.includes("showInverse: document.getElementById('show-inverse-quote').checked"));
     assert.ok(!dashboardRendererResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
     assert.ok(appJsResponse.body.includes("arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput)"));
