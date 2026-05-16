@@ -422,6 +422,51 @@ function createListenerTarget() {
   assert.strictEqual(bindGlobalArbFilterEvents({}, {}), 0);
 }
 
+{
+  const excludedSymbolsInput = createListenerTarget();
+  const excludedChainsInput = createListenerTarget();
+  const includedSymbolsInput = createListenerTarget();
+  const header = createListenerTarget();
+  const blurEvents = [];
+  const interactiveEvent = { closest: () => ({ tagName: 'BUTTON' }) };
+  const emptyHeaderEvent = { closest: () => null };
+
+  [excludedSymbolsInput, excludedChainsInput, includedSymbolsInput].forEach((input, index) => {
+    input.blur = () => blurEvents.push(index);
+  });
+
+  let activeElement = excludedSymbolsInput;
+  assert.strictEqual(bindGlobalArbFilterEvents({
+    excludedSymbolsInput,
+    excludedChainsInput,
+    includedSymbolsInput,
+    header
+  }, {
+    onPatch: () => {},
+    getActiveElement: () => activeElement,
+    closestEventTarget: (event, selector) => event.closest(selector)
+  }), 7);
+
+  let prevented = false;
+  excludedSymbolsInput.listeners.keydown({
+    key: 'Enter',
+    preventDefault: () => { prevented = true; }
+  });
+  assert.strictEqual(prevented, true);
+  assert.deepStrictEqual(blurEvents, [0]);
+
+  activeElement = excludedChainsInput;
+  excludedChainsInput.listeners.keydown({ key: 'Escape' });
+  assert.deepStrictEqual(blurEvents, [0]);
+
+  header.listeners.click(interactiveEvent);
+  assert.deepStrictEqual(blurEvents, [0]);
+
+  activeElement = includedSymbolsInput;
+  header.listeners.click(emptyHeaderEvent);
+  assert.deepStrictEqual(blurEvents, [0, 2]);
+}
+
 assert.deepStrictEqual(
   updateGlobalArbFilterState(
     {

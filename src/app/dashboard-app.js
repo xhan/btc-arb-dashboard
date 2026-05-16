@@ -2343,27 +2343,6 @@
         }
     }
 
-    function blurArbGlobalFilterInputs() {
-        const activeElement = document.activeElement;
-        if (activeElement === arbGlobalFilterInput || activeElement === arbGlobalChainFilterInput || activeElement === arbGlobalIncludeFilterInput) {
-            activeElement.blur();
-        }
-    }
-
-    function handleArbGlobalFilterKeydown(event) {
-        if (!event || event.key !== 'Enter') return;
-        event.preventDefault();
-        blurArbGlobalFilterInputs();
-    }
-
-    function handleArbPathHeaderClick(event) {
-        if (!event) return;
-        if (closestEventTarget(event, 'button, input, textarea, select, [contenteditable="true"]')) {
-            return;
-        }
-        blurArbGlobalFilterInputs();
-    }
-
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
         if (target.ruleKind === 'fixed') {
             const rule = FIXED_PATH_RULES.find((item) => item.id === target.ruleId) || null;
@@ -4240,15 +4219,14 @@
                 excludedChainsInput: arbGlobalChainFilterInput,
                 includedSymbolsInput: arbGlobalIncludeFilterInput,
                 twoLegOnlyInput: arbGlobalTwoLegOnlyInput,
-                clearButton: arbGlobalFilterClearBtn
+                clearButton: arbGlobalFilterClearBtn,
+                header: arbPathHeader
             }, {
                 onPatch: updateArbGlobalFilterState,
-                onKeydown: handleArbGlobalFilterKeydown,
-                onClear: handleArbGlobalFilterClear
+                onClear: handleArbGlobalFilterClear,
+                getActiveElement: () => document.activeElement,
+                closestEventTarget
             });
-            if (arbPathHeader) {
-                arbPathHeader.addEventListener('click', handleArbPathHeaderClick);
-            }
             document.addEventListener('keydown', handleGlobalShortcuts);
             if (arbPathMinBtn) {
                 arbPathMinBtn.addEventListener('click', (e) => {

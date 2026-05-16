@@ -295,10 +295,39 @@
     return 1;
   }
 
+  function getGlobalArbFilterInputs(refs = {}) {
+    return [
+      refs.excludedSymbolsInput,
+      refs.excludedChainsInput,
+      refs.includedSymbolsInput
+    ].filter(Boolean);
+  }
+
+  function blurGlobalArbFilterInputs(refs = {}, activeElement = null) {
+    if (!activeElement || typeof activeElement.blur !== 'function') return false;
+    if (!getGlobalArbFilterInputs(refs).includes(activeElement)) return false;
+    activeElement.blur();
+    return true;
+  }
+
   function bindGlobalArbFilterEvents(refs = {}, handlers = {}) {
     const onPatch = typeof handlers.onPatch === 'function' ? handlers.onPatch : () => {};
-    const onKeydown = typeof handlers.onKeydown === 'function' ? handlers.onKeydown : () => {};
     const onClear = typeof handlers.onClear === 'function' ? handlers.onClear : () => {};
+    const getActiveElement = typeof handlers.getActiveElement === 'function'
+      ? handlers.getActiveElement
+      : () => null;
+    const onKeydown = typeof handlers.onKeydown === 'function'
+      ? handlers.onKeydown
+      : (event) => {
+          if (!event || event.key !== 'Enter') return;
+          if (typeof event.preventDefault === 'function') {
+            event.preventDefault();
+          }
+          blurGlobalArbFilterInputs(refs, getActiveElement());
+        };
+    const closestEventTarget = typeof handlers.closestEventTarget === 'function'
+      ? handlers.closestEventTarget
+      : null;
     const inputBindings = [
       [refs.excludedSymbolsInput, 'excludedSymbolsInput'],
       [refs.excludedChainsInput, 'excludedChainsInput'],
@@ -316,6 +345,12 @@
       onPatch(buildGlobalArbFilterEventPatch('twoLegOnly', event), event);
     });
     boundCount += bindEvent(refs.clearButton, 'click', onClear);
+    boundCount += bindEvent(refs.header, 'click', (event) => {
+      if (closestEventTarget && closestEventTarget(event, 'button, input, textarea, select, [contenteditable="true"]')) {
+        return;
+      }
+      blurGlobalArbFilterInputs(refs, getActiveElement());
+    });
     return boundCount;
   }
 
@@ -563,6 +598,7 @@
     buildGlobalArbFilterState,
     buildGlobalArbFilterControlState,
     buildGlobalArbFilterEventPatch,
+    blurGlobalArbFilterInputs,
     bindGlobalArbFilterEvents,
     buildGlobalArbFilterWritePlan,
     updateGlobalArbFilterState,
