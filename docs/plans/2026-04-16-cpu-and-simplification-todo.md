@@ -67,15 +67,15 @@
   - `setQuoteMarketState()` 会净化行情状态，避免 UI 字段重新混入市场状态 Map
   - `quoteUiState` 的默认值、key 规范化、merge、timer 清理已下沉到 `dashboard-runtime-utils.js`
   - `quote-pause-utils.buildPausedQuoteState()` 已停止输出 UI-only 字段
-  - quote 暂停按钮和分区暂停按钮的展示状态模型已下沉到 `quote-pause-utils.js`
-  - quote alert display label 已下沉到 `quote-display-utils.js`
+  - quote 暂停按钮和分区暂停按钮的展示状态模型已下沉到 `src/quote/quote-pause-utils.js`
+  - quote alert display label 已下沉到 `src/quote/quote-display-utils.js`
   - quote alert 按 quoteId 过滤规则已下沉到 `path-alert-utils.js`，避免 `app.js` 继续直接理解 alert target 结构
   - quote alert trigger entry 的结构拼装已下沉到 `path-alert-notification-utils.js`
   - quote alert action link 的结构转换已下沉到 `path-alert-notification-utils.js`
   - quote 跨链显示名已下沉到 `chain-defaults.js`
   - dashboardState 按 quoteId 查找 quote 的逻辑已下沉到 `dashboard-runtime-utils.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
-  - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `quote-state-runtime-utils.js`，`app.js` 只通过 runtime wrapper 读写
+  - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `src/quote/quote-state-runtime-utils.js`，`app.js` 只通过 runtime wrapper 读写
   - 金额输入 debounce timer Map 已下沉到 `dashboard-runtime-utils.js`，暂停 quote 时通过统一 runtime 清理待执行输入更新
   - 主题切换的合法值、next-state 和 DOM/storage 写入计划已下沉到 `theme-utils.js`
 - 预期收益：
@@ -130,9 +130,9 @@
 - 现状：
   - `app.js` 仍是超大文件，包含报价轮询、套利、详情、报警、日志、数据终端、保存、主题等多职责
 - 建议拆分：
-  - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `quote-queue-runtime-utils.js`，`app.js` 只保留业务依赖注入和入口包装
-  - `quote-request`：source 支持链判断已下沉到 `quote-request-utils.js`，`app.js` 不再维护 Kyber/0x 支持链常量
-  - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `quote-display-utils.js` / `quote-state-runtime-utils.js`
+  - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `src/quote/quote-queue-runtime-utils.js`，`app.js` 只保留业务依赖注入和入口包装
+  - `quote-request`：source 支持链判断已下沉到 `src/quote/quote-request-utils.js`，`app.js` 不再维护 Kyber/0x 支持链常量
+  - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `src/quote/quote-display-utils.js` / `src/quote/quote-state-runtime-utils.js`
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 所有权、全局过滤栏读写计划和面板内容事件动作解析已下沉到 `src/arb/arb-path-template-cache-utils.js` / `src/arb/arb-runtime-memory-utils.js` / `src/arb/arb-panel-layout-utils.js` / `src/arb/arb-panel-renderer.js`，`app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`，面板 change/click action 解析已下沉到 `path-alert-page-utils.js`
@@ -142,6 +142,7 @@
   - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
   - `file-layout`：在模块边界稳定后，把根目录里按职责增长的 utils/runtime/renderer/provider 文件迁入明确目录，例如 `src/quote/`、`src/arb/`、`src/path-alerts/`、`src/dashboard/`、`src/shared/`，并保留必要的兼容入口，避免一次性移动导致 review 噪声和路径风险
     - 已启动第一步：套利核心路径算法、套利详情工具、详情刷新 runtime、套利面板渲染器、套利面板 layout/runtime/cache 工具、规则快照、循环起点优先级、资产等价规则、fixed/special 套利工具、watchlist 配置及解析工具迁入 `src/arb/`，后续同类 arb 模块可按这个模式继续迁移
+    - 已启动第二步：quote pause/request/display/state/queue runtime 迁入 `src/quote/`，后续同类 quote 模块可按这个模式继续迁移
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -167,12 +168,12 @@
   - `path-alerts-app.js` 的编辑器主模板已拆到 `path-alert-editor-utils.js`
   - `app.js` 的 path alert panel change/click action 解析已下沉到 `path-alert-page-utils.js`
   - `app.js` 的 path alert 配置同步 payload 构造和 storage event reload 判定已下沉到 `path-alert-utils.js`
-  - `app.js` 的 quote hover tooltip CEX/source/preference 展示模型已下沉到 `quote-display-utils.js`
-  - `app.js` 的 quote request channel tag 插入/更新/删除计划已下沉到 `quote-display-utils.js`
-  - `app.js` 的 quote trend arrow 涨跌/隐藏展示模型已下沉到 `quote-display-utils.js`
+  - `app.js` 的 quote hover tooltip CEX/source/preference 展示模型已下沉到 `src/quote/quote-display-utils.js`
+  - `app.js` 的 quote request channel tag 插入/更新/删除计划已下沉到 `src/quote/quote-display-utils.js`
+  - `app.js` 的 quote trend arrow 涨跌/隐藏展示模型已下沉到 `src/quote/quote-display-utils.js`
   - `app.js` 的 dashboard quote 查找和 quote alert 列表读取单用途包装已移除，调用点直接委托 runtime/path alert utils
   - `app.js` 的套利详情 summary 利润率格式化包装已移除，默认格式化归入 `src/arb/arb-detail-utils.js`
-  - `app.js` 的 CEX book format/summary 顶层过渡包装已移除，注入点直接委托 `quote-display-utils.js`
+  - `app.js` 的 CEX book format/summary 顶层过渡包装已移除，注入点直接委托 `src/quote/quote-display-utils.js`
   - `app.js` 的 dex link label/button 顶层过渡包装已移除，调用点直接委托 `dex-link-utils.js`
   - `app.js` 的 request channel tag、quote pair label 和 arb detail source HTML 单用途包装已移除，调用点直接委托对应 utils
   - `app.js` 中未调用的 CEX trading pair parser 包装和 `TradingPairUtils` 入口已移除
@@ -180,7 +181,7 @@
   - `app.js` 的多渠道开关 storage 值解析/序列化已下沉到 `request-channel-utils.js`
   - `app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `request-channel-utils.js` / `queue-stats-utils.js`
   - `app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `request-channel-utils.js`
-  - `app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `quote-request-utils.js`
+  - `app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`
   - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `data-terminal-utils.js`
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `src/arb/arb-runtime-memory-utils.js`
