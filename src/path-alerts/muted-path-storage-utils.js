@@ -62,6 +62,49 @@
     return entries;
   }
 
+  function createMutedPathStorageRuntime(options = {}) {
+    const getStorage = typeof options.getStorage === 'function' ? options.getStorage : () => options.storage || null;
+    const getMutedPathLegUtils = typeof options.getMutedPathLegUtils === 'function'
+      ? options.getMutedPathLegUtils
+      : () => options.mutedPathLegUtils || null;
+
+    function loadTargets() {
+      return loadMutedPathTargetsFromStorage(getStorage(), {
+        onError: options.onTargetsLoadError
+      });
+    }
+
+    function loadLegs() {
+      return loadMutedPathLegsFromStorage(getStorage(), {
+        mutedPathLegUtils: getMutedPathLegUtils(),
+        nowMs: options.nowMs,
+        onError: options.onLegsLoadError
+      });
+    }
+
+    function persistTargets(entries, persistOptions = {}) {
+      return persistMutedPathTargetsToStorage(getStorage(), entries, {
+        onError: options.onTargetsPersistError,
+        ...persistOptions
+      });
+    }
+
+    function persistLegs(entries, persistOptions = {}) {
+      return persistMutedPathLegsToStorage(getStorage(), entries, {
+        onError: options.onLegsPersistError,
+        ...persistOptions,
+        mutedPathLegUtils: persistOptions.mutedPathLegUtils || getMutedPathLegUtils()
+      });
+    }
+
+    return {
+      loadLegs,
+      loadTargets,
+      persistLegs,
+      persistTargets
+    };
+  }
+
   function writeJsonArrayToStorage(storage, key, entries, options = {}) {
     if (!storage || typeof storage.setItem !== 'function') return null;
     const list = Array.isArray(entries) ? entries : [];
@@ -91,6 +134,7 @@
     DEFAULT_MUTED_PATH_STORAGE_LIMIT,
     MUTED_PATH_LEGS_STORAGE_KEY,
     MUTED_PATH_TARGETS_STORAGE_KEY,
+    createMutedPathStorageRuntime,
     loadMutedPathLegsFromStorage,
     loadMutedPathTargetsFromStorage,
     normalizeStoredMutedPathTargets,

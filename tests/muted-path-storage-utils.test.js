@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   MUTED_PATH_LEGS_STORAGE_KEY,
   MUTED_PATH_TARGETS_STORAGE_KEY,
+  createMutedPathStorageRuntime,
   loadMutedPathLegsFromStorage,
   loadMutedPathTargetsFromStorage,
   normalizeStoredMutedPathTargets,
@@ -96,6 +97,21 @@ const legStorage = createStorage({
 assert.deepStrictEqual(
   loadMutedPathLegsFromStorage(legStorage, { mutedPathLegUtils, nowMs: 2000 }),
   [{ quoteId: 2, expiresAt: 3000 }]
+);
+const storageRuntime = createMutedPathStorageRuntime({
+  getStorage: () => legStorage,
+  getMutedPathLegUtils: () => mutedPathLegUtils,
+  nowMs: 2000
+});
+assert.deepStrictEqual(storageRuntime.loadLegs(), [{ quoteId: 2, expiresAt: 3000 }]);
+assert.deepStrictEqual(storageRuntime.loadTargets(), []);
+assert.deepStrictEqual(
+  storageRuntime.persistTargets(trimmed, { limit: 1 }).map((entry) => entry.target.quoteId),
+  [3]
+);
+assert.deepStrictEqual(
+  storageRuntime.persistLegs([{ quoteId: 1 }, { quoteId: 2 }, { quoteId: 3 }], { limit: 2 }),
+  [{ quoteId: 2 }, { quoteId: 3 }]
 );
 
 const persistedLegs = persistMutedPathLegsToStorage(legStorage, [

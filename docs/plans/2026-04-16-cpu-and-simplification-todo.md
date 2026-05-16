@@ -194,6 +194,7 @@
   - `quote-display`：报价显示模式按钮的 text/title DOM 应用已下沉到 `src/quote/quote-display-utils.js`
   - alert log 的 restored muted selector、恢复卡片删除、卡片插入/收尾 runtime、折叠卡片展开 DOM 写入、muted 状态/按钮 DOM 写入、click action 解析和 active tab runtime 已下沉到 `src/alerts/alert-log-ui-utils.js`
   - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `src/path-alerts/path-alert-utils.js`
+  - muted path target/leg 的本地缓存 load/persist runtime 已下沉到 `src/path-alerts/muted-path-storage-utils.js`
   - 套利详情 muted leg 的屏蔽时长 prompt 文案和正整数解析已下沉到 `src/path-alerts/muted-path-leg-utils.js`
   - `src/app/dashboard-app.js` 中未调用的 muted path timer 包装函数已移除，保留唯一入口 `syncMutedPathLogTimer()`
   - `src/path-alerts/path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数

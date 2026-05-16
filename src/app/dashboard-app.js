@@ -176,6 +176,14 @@
             syncMutedPathLogTimer();
         }
     });
+    const mutedPathStorageRuntime = getMutedPathStorageUtils().createMutedPathStorageRuntime({
+        getStorage: getDashboardLocalStorage,
+        getMutedPathLegUtils,
+        onTargetsLoadError: (error) => console.warn('读取沉默报警本地缓存失败:', error),
+        onLegsLoadError: (error) => console.warn('读取屏蔽腿本地缓存失败:', error),
+        onTargetsPersistError: (error) => console.warn('保存沉默报警本地缓存失败:', error),
+        onLegsPersistError: (error) => console.warn('保存屏蔽腿本地缓存失败:', error)
+    });
     const pathAlertSound = document.getElementById('path-alert-sound');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const themeRuntime = getThemeUtils().createThemeRuntime({
@@ -879,19 +887,6 @@
         return getPathAlertUtils().buildMutedPathTargetKey(alertOrTarget);
     }
 
-    function loadMutedPathTargetsFromStorage() {
-        return getMutedPathStorageUtils().loadMutedPathTargetsFromStorage(getDashboardLocalStorage(), {
-            onError: (error) => console.warn('读取沉默报警本地缓存失败:', error)
-        });
-    }
-
-    function loadMutedPathLegsFromStorage() {
-        return getMutedPathStorageUtils().loadMutedPathLegsFromStorage(getDashboardLocalStorage(), {
-            mutedPathLegUtils: getMutedPathLegUtils(),
-            onError: (error) => console.warn('读取屏蔽腿本地缓存失败:', error)
-        });
-    }
-
     function buildMutedPathLegTitleSnapshot(leg) {
         return buildLiveQuoteLabel(
             leg && leg.chain,
@@ -901,25 +896,14 @@
     }
 
     function persistMutedPathTargets() {
-        const list = getMutedPathStorageUtils().persistMutedPathTargetsToStorage(
-            getDashboardLocalStorage(),
-            mutedPathRuntime.getTargets(),
-            { onError: (error) => console.warn('保存沉默报警本地缓存失败:', error) }
-        );
+        const list = mutedPathStorageRuntime.persistTargets(mutedPathRuntime.getTargets());
         if (Array.isArray(list)) {
             mutedPathRuntime.setTargets(list);
         }
     }
 
     function persistMutedPathLegs() {
-        const list = getMutedPathStorageUtils().persistMutedPathLegsToStorage(
-            getDashboardLocalStorage(),
-            mutedPathRuntime.getLegs(),
-            {
-                mutedPathLegUtils: getMutedPathLegUtils(),
-                onError: (error) => console.warn('保存屏蔽腿本地缓存失败:', error)
-            }
-        );
+        const list = mutedPathStorageRuntime.persistLegs(mutedPathRuntime.getLegs());
         if (Array.isArray(list)) {
             mutedPathRuntime.setLegs(list);
         }
@@ -4403,8 +4387,8 @@
         await loadPriceSnapshotConfig();
         await loadArbSettings();
         themeRuntime.load();
-        mutedPathRuntime.setTargets(loadMutedPathTargetsFromStorage());
-        mutedPathRuntime.setLegs(loadMutedPathLegsFromStorage());
+        mutedPathRuntime.setTargets(mutedPathStorageRuntime.loadTargets());
+        mutedPathRuntime.setLegs(mutedPathStorageRuntime.loadLegs());
         
         try {
             const loadedConfig = await dashboardApiClient.loadDashboardConfig(DEFAULT_INTERVALS);
