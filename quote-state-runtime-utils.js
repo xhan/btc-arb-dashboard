@@ -75,6 +75,36 @@
       return dashboardRuntimeUtils.clearQuoteTrendTimer(quoteUiState, quoteId, clearTimeoutImpl);
     }
 
+    function scheduleTrendTimer(quoteId, onElapsed, options = {}) {
+      const setTimer = typeof options.setTimeout === 'function'
+        ? options.setTimeout
+        : (typeof setTimeout === 'function' ? setTimeout : null);
+      const clearTimer = typeof options.clearTimeout === 'function'
+        ? options.clearTimeout
+        : (typeof clearTimeout === 'function' ? clearTimeout : null);
+      const delayMs = Number.isFinite(Number(options.delayMs)) && Number(options.delayMs) >= 0
+        ? Number(options.delayMs)
+        : 30000;
+
+      clearTrendTimer(quoteId, clearTimer);
+      if (!setTimer) {
+        if (typeof onElapsed === 'function') {
+          onElapsed(quoteId);
+        }
+        setUiState(quoteId, { trendTimer: null });
+        return null;
+      }
+
+      const timer = setTimer(() => {
+        setUiState(quoteId, { trendTimer: null });
+        if (typeof onElapsed === 'function') {
+          onElapsed(quoteId);
+        }
+      }, delayMs);
+      setUiState(quoteId, { trendTimer: timer });
+      return timer;
+    }
+
     function resetUiRuntimeState(quoteId, clearTimeoutImpl) {
       return dashboardRuntimeUtils.resetQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeoutImpl);
     }
@@ -98,6 +128,7 @@
       getUiState,
       getUiStateMap,
       resetUiRuntimeState,
+      scheduleTrendTimer,
       setMarketState,
       setUiState
     };

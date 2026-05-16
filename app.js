@@ -4031,10 +4031,6 @@
         
         if (changeRatio < 0.0001) return; 
 
-        const uiState = getQuoteUiState(quoteId);
-        
-        if (uiState.trendTimer) clearTimeout(uiState.trendTimer);
-
         arrowEl.classList.remove('visible');
         
         void arrowEl.offsetWidth; 
@@ -4047,11 +4043,13 @@
             arrowEl.className = 'trend-arrow trend-down visible';
         }
 
-        const trendTimer = setTimeout(() => {
+        quoteStateRuntime.scheduleTrendTimer(quoteId, () => {
             arrowEl.classList.remove('visible');
-        }, 30000);
-        
-        setQuoteUiState(quoteId, { trendTimer });
+        }, {
+            setTimeout,
+            clearTimeout,
+            delayMs: 30000
+        });
     }
 
     function toggleArbPanel() {
