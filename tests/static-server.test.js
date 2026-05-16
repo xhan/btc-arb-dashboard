@@ -384,6 +384,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function applyActiveQuoteDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteSwitchingDomState(refs = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function clearQuoteDataError(quoteDataEl)'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteInverseQueuedDomState(refs = {}, options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteInverseResultDomState(refs = {}, options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteInverseErrorDomState(refs = {}, options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function removeQuoteInverseElement(inverseEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainResultDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainErrorDomState(refs = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {'));
@@ -398,6 +402,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyActiveQuoteDomState(getQuoteDomRefs(quote.id), options)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteSwitchingDomState({'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteDataError(quoteDataEl)'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseQueuedDomState({'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseResultDomState({'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseErrorDomState({'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().removeQuoteInverseElement(inverseEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteMainResultDomState({'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteMainErrorDomState({'));
     assert.ok(!appJsResponse.body.includes('globalTooltip.innerHTML = htmlContent'));
@@ -414,6 +422,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("quoteTextEl.textContent = '已暂停'"));
     assert.ok(!appJsResponse.body.includes("quoteTextEl.textContent = '切换中...'"));
     assert.ok(!appJsResponse.body.includes("inverseEl.textContent = '刷新中...'"));
+    assert.ok(!appJsResponse.body.includes("inverseEl.className = 'inverse-quote-text'"));
+    assert.ok(!appJsResponse.body.includes("inverseEl.textContent = '反向报价排队中...'"));
+    assert.ok(!appJsResponse.body.includes("inverseEl.textContent = '反向报价失败'"));
+    assert.ok(!appJsResponse.body.includes('inverseEl.title = errorTitle'));
+    assert.ok(!appJsResponse.body.includes('quoteDataEl.appendChild(inverseEl)'));
     assert.ok(!appJsResponse.body.includes('quoteTextEl.textContent = getQuoteDisplayText(quote, newState)'));
     assert.ok(!appJsResponse.body.includes("quoteDataEl.classList.remove('error')"));
     assert.ok(!appJsResponse.body.includes("quoteDataEl.classList.add('error')"));

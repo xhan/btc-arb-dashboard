@@ -3730,25 +3730,27 @@
 
             if (isInverseFetch) {
                 if (shouldQueueInverseFetch(quote)) {
-                    if (!inverseEl) {
-                        inverseEl = document.createElement('div');
-                        inverseEl.id = inverseContainerId;
-                        inverseEl.className = 'inverse-quote-text';
-                        quoteDataEl.appendChild(inverseEl);
-                    }
-
-                    inverseEl.textContent = `${quote.amount || 1} ${data.symbols.from} ≈ ${data.finalAmountOut.toFixed(6)} ${data.symbols.to}`;
+                    const inverseFallbackText = `${quote.amount || 1} ${data.symbols.from} ≈ ${data.finalAmountOut.toFixed(6)} ${data.symbols.to}`;
                     const inverseState = getDashboardRuntimeUtils().buildQuoteResultMarketState(
                         previousState,
                         data,
                         { isInverseFetch: true }
                     );
                     setQuoteMarketState(quote.id, inverseState);
-                    inverseEl.textContent = getInverseQuoteDisplayText(quote, inverseState, inverseEl.textContent);
-                    bindCopyHandler(
-                        inverseEl,
-                        () => inverseEl.textContent
-                    );
+                    inverseEl = getDomRenderUtils().applyQuoteInverseResultDomState({
+                        quoteDataEl,
+                        inverseEl
+                    }, {
+                        id: inverseContainerId,
+                        documentImpl: document,
+                        text: getInverseQuoteDisplayText(quote, inverseState, inverseFallbackText)
+                    });
+                    if (inverseEl) {
+                        bindCopyHandler(
+                            inverseEl,
+                            () => inverseEl.textContent
+                        );
+                    }
                 }
             } else {
                 const oldPrice = previousState.lastRawPrice;
@@ -3770,15 +3772,15 @@
                 updateQuotePairLabel(quote, newState);
 
                 if (shouldQueueInverseFetch(quote)) {
-                    if (!inverseEl) {
-                        inverseEl = document.createElement('div');
-                        inverseEl.id = inverseContainerId;
-                        inverseEl.className = 'inverse-quote-text';
-                        inverseEl.textContent = '反向报价排队中...';
-                        quoteDataEl.appendChild(inverseEl);
-                    }
+                    inverseEl = getDomRenderUtils().applyQuoteInverseQueuedDomState({
+                        quoteDataEl,
+                        inverseEl
+                    }, {
+                        id: inverseContainerId,
+                        documentImpl: document
+                    });
                 } else {
-                    if (inverseEl) inverseEl.remove();
+                    getDomRenderUtils().removeQuoteInverseElement(inverseEl);
                     newState.inverseRawPrice = null;
                     newState.inverseTotalAmountOut = null;
                     newState.inverseFromSymbol = null;
@@ -3803,14 +3805,14 @@
             if (isInverseFetch) {
                 let inverseEl = document.getElementById(`inverse-quote-${quote.id}`);
                 if (shouldQueueInverseFetch(quote)) {
-                    if (!inverseEl) {
-                        inverseEl = document.createElement('div');
-                        inverseEl.id = `inverse-quote-${quote.id}`;
-                        inverseEl.className = 'inverse-quote-text';
-                        quoteDataEl.appendChild(inverseEl);
-                    }
-                    inverseEl.textContent = '反向报价失败';
-                    inverseEl.title = errorTitle;
+                    getDomRenderUtils().applyQuoteInverseErrorDomState({
+                        quoteDataEl,
+                        inverseEl
+                    }, {
+                        id: `inverse-quote-${quote.id}`,
+                        documentImpl: document,
+                        title: errorTitle
+                    });
                 }
             } else {
                 const displayMsg = quoteRequestUtils.formatQuoteErrorMessage(error);

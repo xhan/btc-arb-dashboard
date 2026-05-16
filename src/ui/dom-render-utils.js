@@ -197,6 +197,51 @@
     return true;
   }
 
+  function ensureQuoteInverseElement(refs = {}, options = {}) {
+    if (refs.inverseEl) return refs.inverseEl;
+    if (!refs.quoteDataEl || typeof refs.quoteDataEl.appendChild !== 'function') return null;
+    const documentImpl = options.documentImpl
+      || refs.quoteDataEl.ownerDocument
+      || (typeof document !== 'undefined' ? document : null);
+    if (!documentImpl || typeof documentImpl.createElement !== 'function') return null;
+
+    const inverseEl = documentImpl.createElement('div');
+    inverseEl.id = options.id || '';
+    inverseEl.className = 'inverse-quote-text';
+    refs.quoteDataEl.appendChild(inverseEl);
+    return inverseEl;
+  }
+
+  function applyQuoteInverseQueuedDomState(refs = {}, options = {}) {
+    const inverseEl = ensureQuoteInverseElement(refs, options);
+    if (!inverseEl) return null;
+    inverseEl.textContent = options.text || '反向报价排队中...';
+    inverseEl.title = '';
+    return inverseEl;
+  }
+
+  function applyQuoteInverseResultDomState(refs = {}, options = {}) {
+    const inverseEl = ensureQuoteInverseElement(refs, options);
+    if (!inverseEl) return null;
+    inverseEl.textContent = options.text || '';
+    inverseEl.title = '';
+    return inverseEl;
+  }
+
+  function applyQuoteInverseErrorDomState(refs = {}, options = {}) {
+    const inverseEl = ensureQuoteInverseElement(refs, options);
+    if (!inverseEl) return null;
+    inverseEl.textContent = options.text || '反向报价失败';
+    inverseEl.title = options.title || '';
+    return inverseEl;
+  }
+
+  function removeQuoteInverseElement(inverseEl) {
+    if (!inverseEl || typeof inverseEl.remove !== 'function') return false;
+    inverseEl.remove();
+    return true;
+  }
+
   function applyQuoteMainResultDomState(refs = {}, options = {}) {
     if (!refs.quoteTextEl || !refs.quoteTextWrapperEl) return false;
     refs.quoteTextEl.textContent = options.text || '';
@@ -286,6 +331,9 @@
   return {
     applyActiveQuoteDomState,
     applyPausedQuoteDomState,
+    applyQuoteInverseErrorDomState,
+    applyQuoteInverseQueuedDomState,
+    applyQuoteInverseResultDomState,
     applyQuoteMainErrorDomState,
     applyQuoteMainResultDomState,
     applyQuoteSwitchingDomState,
@@ -301,6 +349,7 @@
     createStableHtmlRenderer,
     escapeCssAttributeValue,
     hideTooltip,
+    removeQuoteInverseElement,
     resetTrendArrow,
     resolveEventTargetElement
   };

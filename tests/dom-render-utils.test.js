@@ -6,6 +6,9 @@ const {
   applyQuoteAlertHighlightUi,
   applyActiveQuoteDomState,
   applyPausedQuoteDomState,
+  applyQuoteInverseErrorDomState,
+  applyQuoteInverseQueuedDomState,
+  applyQuoteInverseResultDomState,
   applyQuoteMainErrorDomState,
   applyQuoteMainResultDomState,
   applyQuoteSwitchingDomState,
@@ -18,6 +21,7 @@ const {
   escapeCssAttributeValue,
   hideTooltip,
   clearQuoteHighlightUi,
+  removeQuoteInverseElement,
   resetTrendArrow,
   resolveEventTargetElement
 } = require('../src/ui/dom-render-utils');
@@ -237,6 +241,80 @@ assert.strictEqual(switchingQuoteRefs.quoteTextEl.textContent, '切换中...');
 assert.strictEqual(switchingQuoteRefs.quoteTextWrapperEl.classList.contains('loading-text'), true);
 assert.strictEqual(switchingQuoteRefs.inverseEl.textContent, '刷新中...');
 assert.strictEqual(applyQuoteSwitchingDomState({}), false);
+
+function createDocumentImpl(createdElements) {
+  return {
+    createElement(tagName) {
+      const element = {
+        tagName,
+        id: '',
+        className: '',
+        textContent: '',
+        title: ''
+      };
+      createdElements.push(element);
+      return element;
+    }
+  };
+}
+
+function createQuoteDataElement() {
+  return {
+    children: [],
+    appendChild(element) {
+      this.children.push(element);
+      element.parentNode = this;
+    }
+  };
+}
+
+const queuedInverseCreatedElements = [];
+const queuedInverseQuoteDataEl = createQuoteDataElement();
+const queuedInverseEl = applyQuoteInverseQueuedDomState({
+  quoteDataEl: queuedInverseQuoteDataEl
+}, {
+  id: 'inverse-quote-1',
+  documentImpl: createDocumentImpl(queuedInverseCreatedElements)
+});
+assert.strictEqual(queuedInverseEl.id, 'inverse-quote-1');
+assert.strictEqual(queuedInverseEl.className, 'inverse-quote-text');
+assert.strictEqual(queuedInverseEl.textContent, '反向报价排队中...');
+assert.strictEqual(queuedInverseQuoteDataEl.children[0], queuedInverseEl);
+assert.strictEqual(queuedInverseCreatedElements.length, 1);
+assert.strictEqual(applyQuoteInverseQueuedDomState({ inverseEl: queuedInverseEl }), queuedInverseEl);
+
+const inverseResultCreatedElements = [];
+const inverseResultQuoteDataEl = createQuoteDataElement();
+const inverseResultEl = applyQuoteInverseResultDomState({
+  quoteDataEl: inverseResultQuoteDataEl
+}, {
+  id: 'inverse-quote-2',
+  documentImpl: createDocumentImpl(inverseResultCreatedElements),
+  text: '1 ETH ≈ 3000 USDC'
+});
+assert.strictEqual(inverseResultEl.textContent, '1 ETH ≈ 3000 USDC');
+assert.strictEqual(inverseResultEl.title, '');
+assert.strictEqual(inverseResultQuoteDataEl.children[0], inverseResultEl);
+
+const inverseErrorEl = applyQuoteInverseErrorDomState({
+  quoteDataEl: createQuoteDataElement()
+}, {
+  id: 'inverse-quote-3',
+  documentImpl: createDocumentImpl([]),
+  title: 'RPC timeout'
+});
+assert.strictEqual(inverseErrorEl.textContent, '反向报价失败');
+assert.strictEqual(inverseErrorEl.title, 'RPC timeout');
+
+const removableInverseEl = {
+  removed: false,
+  remove() {
+    this.removed = true;
+  }
+};
+assert.strictEqual(removeQuoteInverseElement(removableInverseEl), true);
+assert.strictEqual(removableInverseEl.removed, true);
+assert.strictEqual(removeQuoteInverseElement(null), false);
 
 const mainResultRefs = {
   quoteTextEl: { textContent: 'old quote' },
