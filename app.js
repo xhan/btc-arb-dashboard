@@ -2025,6 +2025,15 @@
         }
     }
 
+    function applyDataTerminalSelectionPatch(patch) {
+        if (Object.prototype.hasOwnProperty.call(patch, 'selectedLeftKey')) {
+            dataTerminalState.selectedLeftKey = patch.selectedLeftKey;
+        }
+        if (Object.prototype.hasOwnProperty.call(patch, 'selectedRightKey')) {
+            dataTerminalState.selectedRightKey = patch.selectedRightKey;
+        }
+    }
+
     function renderDataTerminalPanel() {
         if (!dataTerminalState.visible || !dataTerminalState.domRefs) return;
         const refs = dataTerminalState.domRefs;
@@ -2105,12 +2114,7 @@
             return;
         }
 
-        if (action.side === 'left') {
-            dataTerminalState.selectedLeftKey = dataTerminalState.selectedLeftKey === action.rowKey ? '' : action.rowKey;
-        } else {
-            dataTerminalState.selectedRightKey = dataTerminalState.selectedRightKey === action.rowKey ? '' : action.rowKey;
-        }
-
+        applyDataTerminalSelectionPatch(getDataTerminalUtils().buildDataTerminalSelectionPatch(dataTerminalState, action));
         renderDataTerminalPanel();
     }
 

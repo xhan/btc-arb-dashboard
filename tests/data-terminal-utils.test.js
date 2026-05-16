@@ -10,6 +10,7 @@ const {
   buildDataTerminalPanelHtml,
   buildDataTerminalRecords,
   buildDataTerminalShellHtml,
+  buildDataTerminalSelectionPatch,
   buildDataTerminalSelectionSummary,
   buildDataTerminalViewModel,
   createDataTerminalCache,
@@ -49,6 +50,28 @@ assert.deepStrictEqual(
   { showDiff: true }
 );
 assert.deepStrictEqual(buildDataTerminalControlEventPatch('unknown', { target: { value: 'x' } }), {});
+assert.deepStrictEqual(
+  buildDataTerminalSelectionPatch(
+    { selectedLeftKey: 'old-left', selectedRightKey: 'old-right' },
+    { type: 'toggle-row', side: 'left', rowKey: 'new-left' }
+  ),
+  { selectedLeftKey: 'new-left' }
+);
+assert.deepStrictEqual(
+  buildDataTerminalSelectionPatch(
+    { selectedLeftKey: 'new-left' },
+    { type: 'toggle-row', side: 'left', rowKey: 'new-left' }
+  ),
+  { selectedLeftKey: '' }
+);
+assert.deepStrictEqual(
+  buildDataTerminalSelectionPatch(
+    { selectedRightKey: 'old-right' },
+    { type: 'toggle-row', side: 'right', rowKey: 'new-right' }
+  ),
+  { selectedRightKey: 'new-right' }
+);
+assert.deepStrictEqual(buildDataTerminalSelectionPatch({}, { type: 'none' }), {});
 
 const cache = createDataTerminalCache();
 let recordsBuildCount = 0;

@@ -429,6 +429,21 @@
     return {};
   }
 
+  function buildDataTerminalSelectionPatch(selectionState = {}, action = {}) {
+    if (!action || action.type !== 'toggle-row') return {};
+    const rowKey = String(action.rowKey || '');
+    if (!rowKey) return {};
+    if (action.side === 'left') {
+      const currentLeftKey = String(selectionState.selectedLeftKey || selectionState.leftKey || '');
+      return { selectedLeftKey: currentLeftKey === rowKey ? '' : rowKey };
+    }
+    if (action.side === 'right') {
+      const currentRightKey = String(selectionState.selectedRightKey || selectionState.rightKey || '');
+      return { selectedRightKey: currentRightKey === rowKey ? '' : rowKey };
+    }
+    return {};
+  }
+
   function buildDataTerminalShellHtml() {
     return `
             <div id="data-terminal-header">
@@ -552,6 +567,7 @@
     buildDataTerminalPanelHtml,
     buildDataTerminalRecords,
     buildDataTerminalShellHtml,
+    buildDataTerminalSelectionPatch,
     buildDataTerminalSelectionSummary,
     buildDataTerminalViewModel,
     createDataTerminalCache,
