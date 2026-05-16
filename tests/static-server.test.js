@@ -1482,7 +1482,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quotePauseUtilsResponse.body.includes('暂停分区'));
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(appJsResponse.body.includes('const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({'));
-    assert.ok(appJsResponse.body.includes('priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void priceSnapshotSaveRuntime.saveIfNeeded(); });'));
+    assert.ok(/priceSnapshotTimerRuntime\.start\(priceSnapshotConfig, \(\) => \{\s*void priceSnapshotSaveRuntime\.saveIfNeeded\(\);\s*\}\);/.test(appJsResponse.body));
+    assert.ok(!appJsResponse.body.includes('function startPriceSnapshotTimer('));
     assert.ok(!appJsResponse.body.includes('async function savePriceSnapshot()'));
     assert.ok(!appJsResponse.body.includes('let priceSnapshotTimer = null;'));
     assert.ok(priceSnapshotPayloadUtilsResponse.body.includes('function createPriceSnapshotTimerRuntime(options = {})'));

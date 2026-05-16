@@ -269,6 +269,7 @@
   - `src/app/dashboard-app.js` 的套利详情 chart/profit preview 清空、消息、strip、链接状态、已有内容检查、收益卡片 HTML、canvas/meta 查询、meta 文案和图表错误 DOM 写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的音频 unlock 状态、循环报警音同步和 quote alert 一次性播放实现已下沉到 `src/ui/audio-utils.js`
   - `src/app/dashboard-app.js` 的价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
+  - `src/app/dashboard-app.js` 的 price snapshot timer 启动单用途包装已移除，初始化流程直接委托 timer runtime
   - `src/app/dashboard-app.js` 的浮窗拖拽实现、浮窗 focus 事件绑定和通用显示切换状态已下沉到 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的浮窗 z-index 计数和默认 z-index 写入已下沉到 `src/ui/dom-render-utils.js` 的 `createFloatingPanelZIndexRuntime()`
   - `src/app/dashboard-app.js` 的 alert log active tab 状态、tab DOM 状态和浮窗显示状态已下沉到 `src/alerts/alert-log-ui-utils.js`

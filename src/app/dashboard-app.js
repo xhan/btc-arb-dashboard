@@ -3840,10 +3840,6 @@
         getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow);
     }
 
-    function startPriceSnapshotTimer() {
-        priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void priceSnapshotSaveRuntime.saveIfNeeded(); });
-    }
-
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
     
     themeToggleBtn.addEventListener('click', () => { themeRuntime.toggle(); });
@@ -4317,7 +4313,9 @@
 
             updateQuoteRunStateTag();
             updateSchedulers();
-            startPriceSnapshotTimer();
+            priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => {
+                void priceSnapshotSaveRuntime.saveIfNeeded();
+            });
             window.addEventListener('storage', handlePathAlertConfigSyncStorage);
             restartPathAlertScheduler();
             
