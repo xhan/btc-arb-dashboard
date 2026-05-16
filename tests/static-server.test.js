@@ -364,6 +364,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes("function buildQuoteAlertDisplayLabel(quote, state = {}, direction = 'forward')"));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildInverseQuoteDisplayTextForState(quote, state, options = {})'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayToggleState(mode)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function getNextQuoteDisplayMode(mode)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagHtml(quote, channel)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
@@ -376,6 +378,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildInverseQuoteDisplayTextForState(quote, state'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayToggleState(quoteDisplayMode)'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, channel)'));
     assert.ok(!appJsResponse.body.includes('return `${symbol}: 等待盘口...`;'));
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));

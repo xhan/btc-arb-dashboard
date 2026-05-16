@@ -23,6 +23,24 @@
       : QUOTE_DISPLAY_MODE_RATE;
   }
 
+  function buildQuoteDisplayToggleState(mode) {
+    const displayMode = normalizeQuoteDisplayMode(mode);
+    const isRateMode = displayMode === QUOTE_DISPLAY_MODE_RATE;
+    return {
+      text: isRateMode ? '价格: 汇率' : '价格: 数量',
+      title: isRateMode
+        ? '切换看板报价显示为数量 (P)'
+        : '切换看板报价显示为汇率 (P)',
+      mode: displayMode
+    };
+  }
+
+  function getNextQuoteDisplayMode(mode) {
+    return normalizeQuoteDisplayMode(mode) === QUOTE_DISPLAY_MODE_RATE
+      ? QUOTE_DISPLAY_MODE_AMOUNT
+      : QUOTE_DISPLAY_MODE_RATE;
+  }
+
   function escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -244,9 +262,11 @@
     buildQuotePairLabelHtml,
     buildQuoteDisplayText,
     buildQuoteDisplayTextForState,
+    buildQuoteDisplayToggleState,
     buildQuoteRequestChannelTagHtml,
     extractPriceFromText,
     formatCexBookValue,
+    getNextQuoteDisplayMode,
     getCexPairLabel,
     getQuotePairLabel,
     shouldShowKyberDirectPoolsBadge,

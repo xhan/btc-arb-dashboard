@@ -1799,11 +1799,9 @@
 
     function renderQuoteDisplayToggle() {
         if (!toggleQuoteDisplayBtn) return;
-        const isRateMode = quoteDisplayMode === DEFAULT_QUOTE_DISPLAY_MODE;
-        toggleQuoteDisplayBtn.textContent = isRateMode ? '价格: 汇率' : '价格: 数量';
-        toggleQuoteDisplayBtn.title = isRateMode
-            ? '切换看板报价显示为数量 (P)'
-            : '切换看板报价显示为汇率 (P)';
+        const state = getQuoteDisplayUtils().buildQuoteDisplayToggleState(quoteDisplayMode);
+        toggleQuoteDisplayBtn.textContent = state.text;
+        toggleQuoteDisplayBtn.title = state.title;
     }
 
     function rerenderQuoteDisplayTexts() {
@@ -1824,7 +1822,7 @@
     }
 
     function toggleQuoteDisplayMode() {
-        quoteDisplayMode = quoteDisplayMode === DEFAULT_QUOTE_DISPLAY_MODE ? 'amount' : DEFAULT_QUOTE_DISPLAY_MODE;
+        quoteDisplayMode = getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode);
         renderQuoteDisplayToggle();
         rerenderQuoteDisplayTexts();
     }

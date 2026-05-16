@@ -10,10 +10,12 @@ const {
   buildQuotePairLabelHtml,
   buildQuoteDisplayText,
   buildQuoteDisplayTextForState,
+  buildQuoteDisplayToggleState,
   buildQuoteRequestChannelTagHtml,
   extractPriceFromText,
   formatCexBookValue,
   getCexPairLabel,
+  getNextQuoteDisplayMode,
   getQuotePairLabel,
   shouldShowKyberDirectPoolsBadge,
   normalizeQuoteDisplayMode
@@ -22,6 +24,25 @@ const {
 assert.strictEqual(normalizeQuoteDisplayMode(), QUOTE_DISPLAY_MODE_RATE);
 assert.strictEqual(normalizeQuoteDisplayMode('amount'), QUOTE_DISPLAY_MODE_AMOUNT);
 assert.strictEqual(normalizeQuoteDisplayMode('unknown'), QUOTE_DISPLAY_MODE_RATE);
+assert.deepStrictEqual(
+  buildQuoteDisplayToggleState(QUOTE_DISPLAY_MODE_RATE),
+  {
+    text: '价格: 汇率',
+    title: '切换看板报价显示为数量 (P)',
+    mode: QUOTE_DISPLAY_MODE_RATE
+  }
+);
+assert.deepStrictEqual(
+  buildQuoteDisplayToggleState(QUOTE_DISPLAY_MODE_AMOUNT),
+  {
+    text: '价格: 数量',
+    title: '切换看板报价显示为汇率 (P)',
+    mode: QUOTE_DISPLAY_MODE_AMOUNT
+  }
+);
+assert.strictEqual(getNextQuoteDisplayMode(QUOTE_DISPLAY_MODE_RATE), QUOTE_DISPLAY_MODE_AMOUNT);
+assert.strictEqual(getNextQuoteDisplayMode(QUOTE_DISPLAY_MODE_AMOUNT), QUOTE_DISPLAY_MODE_RATE);
+assert.strictEqual(getNextQuoteDisplayMode('bad'), QUOTE_DISPLAY_MODE_AMOUNT);
 
 assert.strictEqual(
   buildQuoteDisplayText({
