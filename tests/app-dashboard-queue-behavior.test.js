@@ -3,10 +3,46 @@ const fs = require('fs');
 const path = require('path');
 
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'quote-queue-runtime-utils.js'), 'utf8');
 
 assert.ok(
-  appJs.includes('function processQueue(type)'),
-  '主看板应保留 processQueue 作为队列消费入口'
+  appJs.includes('const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({'),
+  '主看板应通过 QuoteQueueRuntimeUtils 创建队列运行时'
+);
+
+assert.ok(
+  appJs.includes('quoteQueueRuntime.addToQueue(quote);'),
+  '主看板添加报价时应委托队列运行时'
+);
+
+assert.ok(
+  appJs.includes('quoteQueueRuntime.removeFromQueue(quoteId);'),
+  '主看板删除报价任务时应委托队列运行时'
+);
+
+assert.ok(
+  appJs.includes('quoteQueueRuntime.updateSchedulers();'),
+  '主看板刷新 scheduler 时应委托队列运行时'
+);
+
+assert.ok(
+  !appJs.includes('function processQueue(type)'),
+  '主看板不应继续持有队列消费状态机'
+);
+
+assert.ok(
+  !appJs.includes('let queues = {};') && !appJs.includes('let indices = {};') && !appJs.includes('let timers = {};'),
+  '主看板不应继续持有队列、索引和定时器状态'
+);
+
+assert.ok(
+  queueRuntimeJs.includes('function processQueue(type)'),
+  '队列消费入口应下沉到 QuoteQueueRuntimeUtils'
+);
+
+assert.ok(
+  queueRuntimeJs.includes('const queues = {};') && queueRuntimeJs.includes('const indices = {};') && queueRuntimeJs.includes('const timers = {};'),
+  '队列运行时应集中持有队列、索引和定时器状态'
 );
 
 assert.ok(
@@ -20,18 +56,18 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('getQueueStatsUtils().appendQuoteQueueTasks(queue, quote);'),
-  '队列 task 构造和去重应下沉到 QueueStatsUtils'
+  appJs.includes('getQueueStatsUtils().appendQuoteQueueTasks(queue, quote)'),
+  '队列 task 构造和去重应继续复用 QueueStatsUtils'
 );
 
 assert.ok(
-  appJs.includes('getQueueStatsUtils().removeQuoteTasksFromQueues(queues, quoteId);'),
-  '删除 quote 任务应复用 QueueStatsUtils，避免多处维护队列结构'
+  appJs.includes('getQueueStatsUtils().removeQuoteTasksFromQueues(queueState, quoteId)'),
+  '删除 quote 任务应继续复用 QueueStatsUtils，避免多处维护队列结构'
 );
 
 assert.ok(
-  appJs.includes('getQueueStatsUtils().deferQueueTask(queue, indices[type]);'),
-  '当前任务 defer 的索引规则应由 QueueStatsUtils 统一维护'
+  appJs.includes('getQueueStatsUtils().deferQueueTask(queue, index)'),
+  '当前任务 defer 的索引规则应继续由 QueueStatsUtils 统一维护'
 );
 
 assert.ok(

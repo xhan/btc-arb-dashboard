@@ -9,10 +9,6 @@
     const PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN = 'main-dashboard';
     const MULTI_CHANNEL_ENABLED_STORAGE_KEY = 'dashboard-multi-channel-enabled';
 
-    let queues = {};
-    let indices = {};
-    let timers = {};
-
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
     const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
 
@@ -475,6 +471,13 @@
         return window.QueueStatsUtils;
     }
 
+    function getQuoteQueueRuntimeUtils() {
+        if (!window.QuoteQueueRuntimeUtils) {
+            throw new Error('QuoteQueueRuntimeUtils is not loaded');
+        }
+        return window.QuoteQueueRuntimeUtils;
+    }
+
     function refreshRequestChannelOptions() {
         requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
     }
@@ -580,33 +583,34 @@
         return getRequestChannelUtils().getEffectiveIntervalForQueue(type, apiIntervals, requestChannelOptions);
     }
 
-    function ensureQueueState(type) {
-        if (!Array.isArray(queues[type])) {
-            queues[type] = [];
-        }
-        if (!Number.isInteger(indices[type])) {
-            indices[type] = 0;
-        }
-        if (!(type in timers)) {
-            timers[type] = null;
-        }
-        return queues[type];
-    }
-
-    function buildManagedQueueKeys() {
-        return getQueueStatsUtils().buildManagedQueueKeys({
+    const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({
+        getDashboardState: () => dashboardState,
+        getQueueTypeForQuote,
+        getQueueIntervalMs,
+        getManagedQueueKeys: () => getQueueStatsUtils().buildManagedQueueKeys({
             defaultIntervals: DEFAULT_INTERVALS,
             requestChannels: requestChannelOptions,
             multiChannelEnabled,
             quotes: dashboardState.flatMap((category) => category.quotes || [])
-        });
-    }
+        }),
+        appendQuoteQueueTasks: (queue, quote) => getQueueStatsUtils().appendQuoteQueueTasks(queue, quote),
+        removeQuoteTasksFromQueues: (queueState, quoteId) => getQueueStatsUtils().removeQuoteTasksFromQueues(queueState, quoteId),
+        deferQueueTask: (queue, index) => getQueueStatsUtils().deferQueueTask(queue, index),
+        getQueueTaskStatus: (task, type, quote) => getQueueStatsUtils().getQueueTaskStatus(
+            task,
+            type,
+            quote,
+            requestChannelOptions,
+            { multiChannelEnabled }
+        ),
+        isSchedulerPaused: () => arbDetailState.pausedDashboard,
+        hasActiveFetchController: (quoteId) => activeFetchControllers.has(quoteId),
+        fetchQuote: (quote, mode) => fetchSingleQuote(quote, mode)
+    });
 
     function addToQueue(quote) {
         if (!quote || isQuotePaused(quote)) return;
-        const type = getQueueTypeForQuote(quote);
-        const queue = ensureQueueState(type);
-        getQueueStatsUtils().appendQuoteQueueTasks(queue, quote);
+        quoteQueueRuntime.addToQueue(quote);
     }
 
     function queueQuoteRefresh(quote, options = {}) {
@@ -666,73 +670,11 @@
     }
 
     function removeFromQueue(quoteId) {
-        getQueueStatsUtils().removeQuoteTasksFromQueues(queues, quoteId);
-    }
-
-    function deferCurrentQueueTask(type) {
-        const queue = ensureQueueState(type);
-        indices[type] = getQueueStatsUtils().deferQueueTask(queue, indices[type]);
-    }
-
-    function processQueue(type) {
-        const queue = ensureQueueState(type);
-        if (queue.length === 0) return;
-
-        indices[type] = (indices[type] + 1) % queue.length;
-        const taskFromQueue = queue[indices[type]];
-        
-        const category = dashboardState.find(c => c.quotes && c.quotes.some(q => q.id === taskFromQueue.quoteId));
-        const quoteToFetch = category ? category.quotes.find(q => q.id === taskFromQueue.quoteId) : null;
-        const taskStatus = getQueueStatsUtils().getQueueTaskStatus(
-            taskFromQueue,
-            type,
-            quoteToFetch,
-            requestChannelOptions,
-            { multiChannelEnabled }
-        );
-
-        if (taskStatus.action === 'remove') {
-            removeFromQueue(taskFromQueue.quoteId);
-            return;
-        }
-        if (taskStatus.action === 'requeue') {
-            removeFromQueue(taskFromQueue.quoteId);
-            addToQueue(quoteToFetch);
-            return;
-        }
-        if (!activeFetchControllers.has(quoteToFetch.id)) {
-            fetchSingleQuote(quoteToFetch, taskFromQueue.mode);
-        } else {
-            deferCurrentQueueTask(type);
-        }
+        quoteQueueRuntime.removeFromQueue(quoteId);
     }
 
     function updateSchedulers() {
-        const managedKeys = buildManagedQueueKeys();
-        const allKeys = new Set([...Object.keys(timers), ...managedKeys]);
-
-        allKeys.forEach((type) => {
-            if (timers[type]) clearInterval(timers[type]);
-            timers[type] = null;
-
-            if (!managedKeys.has(type) && (!queues[type] || queues[type].length === 0)) {
-                delete queues[type];
-                delete indices[type];
-                delete timers[type];
-                return;
-            }
-
-            ensureQueueState(type);
-
-            if (arbDetailState.pausedDashboard) {
-                return;
-            }
-
-            const intervalMs = getQueueIntervalMs(type);
-            if (intervalMs > 0) {
-                timers[type] = setInterval(() => processQueue(type), intervalMs);
-            }
-        });
+        quoteQueueRuntime.updateSchedulers();
     }
 
     settingsBtn.addEventListener('click', () => {

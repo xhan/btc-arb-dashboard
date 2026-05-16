@@ -94,6 +94,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="quote-queue-runtime-utils.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
       response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
@@ -121,6 +122,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="queue-stats-utils.js"') < response.body.indexOf('src="quote-queue-runtime-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="quote-queue-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="dashboard-renderer.js"') < response.body.indexOf('src="app.js"')
@@ -264,6 +271,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(requestChannelUtilsResponse.statusCode, 200);
     const queueStatsUtilsResponse = await request('/queue-stats-utils.js');
     assert.strictEqual(queueStatsUtilsResponse.statusCode, 200);
+    const quoteQueueRuntimeUtilsResponse = await request('/quote-queue-runtime-utils.js');
+    assert.strictEqual(quoteQueueRuntimeUtilsResponse.statusCode, 200);
     const chainDefaultsResponse = await request('/chain-defaults.js');
     assert.strictEqual(chainDefaultsResponse.statusCode, 200);
     const dashboardRendererResponse = await request('/dashboard-renderer.js');
