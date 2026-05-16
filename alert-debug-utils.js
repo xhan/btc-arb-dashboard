@@ -80,6 +80,35 @@
     ].join(' | ');
   }
 
+  function inferRuntimeDebugReason(previous, next) {
+    if (!next || typeof next !== 'object') return 'skip';
+    if (next.shouldTrigger) return 'trigger';
+    const previousEligibleSince = Number(previous && previous.eligibleSince);
+    const nextEligibleSince = Number(next.eligibleSince);
+    const hadEligibleSince = Number.isFinite(previousEligibleSince);
+    const hasEligibleSince = Number.isFinite(nextEligibleSince);
+    if (!hadEligibleSince && hasEligibleSince) return 'condition_on';
+    if (hadEligibleSince && !hasEligibleSince) return 'condition_off';
+    if (next.status === 'cooldown') return 'cooldown_block';
+    return next.status || 'idle';
+  }
+
+  function buildRuntimeDebugSnapshot(previous, next, evaluation, options = {}) {
+    if (!next || typeof next !== 'object') return null;
+    const nowMs = Number.isFinite(Number(options.nowMs)) ? Number(options.nowMs) : Date.now();
+    return {
+      now: nowMs,
+      status: next.shouldTrigger ? 'trigger' : (next.status || 'idle'),
+      reason: inferRuntimeDebugReason(previous, next),
+      eligibleSince: next.eligibleSince,
+      lastTriggeredAt: next.lastTriggeredAt,
+      cooldownUntil: next.cooldownUntil,
+      comparison: evaluation && evaluation.debugComparison && typeof evaluation.debugComparison === 'object'
+        ? { ...evaluation.debugComparison }
+        : null
+    };
+  }
+
   function createAlertDebugController(options = {}) {
     const logger = normalizeLogger(options.logger);
     const formatTime = typeof options.formatTime === 'function' ? options.formatTime : defaultFormatTime;
@@ -166,6 +195,8 @@
   }
 
   return {
+    buildRuntimeDebugSnapshot,
+    inferRuntimeDebugReason,
     createAlertDebugController
   };
 }));

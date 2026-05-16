@@ -1,6 +1,48 @@
 const assert = require('assert');
 
-const { createAlertDebugController } = require('../alert-debug-utils');
+const {
+  buildRuntimeDebugSnapshot,
+  createAlertDebugController,
+  inferRuntimeDebugReason
+} = require('../alert-debug-utils');
+
+assert.strictEqual(inferRuntimeDebugReason(null, null), 'skip');
+assert.strictEqual(inferRuntimeDebugReason(null, { shouldTrigger: true }), 'trigger');
+assert.strictEqual(inferRuntimeDebugReason({}, { eligibleSince: 1000, status: 'pending_confirm' }), 'condition_on');
+assert.strictEqual(inferRuntimeDebugReason({ eligibleSince: 1000 }, { status: 'idle' }), 'condition_off');
+assert.strictEqual(inferRuntimeDebugReason({ eligibleSince: 1000 }, { eligibleSince: 1000, status: 'cooldown' }), 'cooldown_block');
+assert.strictEqual(inferRuntimeDebugReason({ eligibleSince: 1000 }, { eligibleSince: 1000, status: 'pending_confirm' }), 'pending_confirm');
+assert.deepStrictEqual(
+  buildRuntimeDebugSnapshot(
+    { eligibleSince: 1000 },
+    {
+      status: 'cooldown',
+      eligibleSince: 1000,
+      lastTriggeredAt: 1200,
+      cooldownUntil: 2200
+    },
+    {
+      debugComparison: {
+        netProfit: 1,
+        minNetProfit: 2
+      }
+    },
+    { nowMs: 1500 }
+  ),
+  {
+    now: 1500,
+    status: 'cooldown',
+    reason: 'cooldown_block',
+    eligibleSince: 1000,
+    lastTriggeredAt: 1200,
+    cooldownUntil: 2200,
+    comparison: {
+      netProfit: 1,
+      minNetProfit: 2
+    }
+  }
+);
+assert.strictEqual(buildRuntimeDebugSnapshot(null, null, null, { nowMs: 1500 }), null);
 
 const logs = [];
 const controller = createAlertDebugController({

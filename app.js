@@ -3440,31 +3440,11 @@
     }
 
     function inferRuntimeDebugReason(previous, next) {
-        if (!next || typeof next !== 'object') return 'skip';
-        if (next.shouldTrigger) return 'trigger';
-        const previousEligibleSince = Number(previous && previous.eligibleSince);
-        const nextEligibleSince = Number(next.eligibleSince);
-        const hadEligibleSince = Number.isFinite(previousEligibleSince);
-        const hasEligibleSince = Number.isFinite(nextEligibleSince);
-        if (!hadEligibleSince && hasEligibleSince) return 'condition_on';
-        if (hadEligibleSince && !hasEligibleSince) return 'condition_off';
-        if (next.status === 'cooldown') return 'cooldown_block';
-        return next.status || 'idle';
+        return getAlertDebugUtils().inferRuntimeDebugReason(previous, next);
     }
 
     function buildRuntimeDebugSnapshot(previous, next, evaluation) {
-        if (!next || typeof next !== 'object') return null;
-        return {
-            now: Date.now(),
-            status: next.shouldTrigger ? 'trigger' : (next.status || 'idle'),
-            reason: inferRuntimeDebugReason(previous, next),
-            eligibleSince: next.eligibleSince,
-            lastTriggeredAt: next.lastTriggeredAt,
-            cooldownUntil: next.cooldownUntil,
-            comparison: evaluation && evaluation.debugComparison && typeof evaluation.debugComparison === 'object'
-                ? { ...evaluation.debugComparison }
-                : null
-        };
+        return getAlertDebugUtils().buildRuntimeDebugSnapshot(previous, next, evaluation);
     }
 
     function buildTriggeredPathAlertEntry(alert, evaluation, changedLegs) {
