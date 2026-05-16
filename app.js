@@ -171,6 +171,8 @@
     const togglePathAlertBtn = document.getElementById('toggle-path-alert-btn');
     const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
     const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
+    const modalTitleEl = document.getElementById('modal-title');
+    const modalSubtitleEl = document.getElementById('modal-subtitle');
     const quoteTokenAddressesEl = document.getElementById('quote-token-addresses');
     const quoteFromTokenLineEl = document.getElementById('quote-from-token-line');
     const quoteToTokenLineEl = document.getElementById('quote-to-token-line');
@@ -244,6 +246,20 @@
     const arbDetailGrid = document.getElementById('arb-detail-grid');
     const requestChannelSelectGroup = document.getElementById('request-channel-select-group');
     const quoteRequestChannelSelect = document.getElementById('quote-request-channel');
+    const quoteSettingsModalElements = {
+        'modal-title': modalTitleEl,
+        'modal-subtitle': modalSubtitleEl,
+        'quote-token-addresses': quoteTokenAddressesEl,
+        'quote-from-token-line': quoteFromTokenLineEl,
+        'quote-to-token-line': quoteToTokenLineEl,
+        'source-select-group': quoteSourceGroup,
+        'quote-source-pref': quoteSourceSelect,
+        'kyber-only-direct-pools': kyberOnlyDirectPoolsInput,
+        'inverse-toggle-group': inverseToggleGroup,
+        'show-inverse-quote': inverseCheckbox,
+        'modal-swap-quote': modalSwapQuoteBtn,
+        'modal-delete-quote': modalDeleteQuoteBtn
+    };
     const copyToastRuntime = getCopyUtils().createCopyToastRuntime({
         setTimeout,
         clearTimeout
@@ -4774,6 +4790,29 @@
         }
     }
 
+    function applyQuoteSettingsModalWritePlan(plan) {
+        (plan.text || []).forEach((item) => {
+            const element = quoteSettingsModalElements[item.id];
+            if (element) element.textContent = item.text;
+        });
+        (plan.display || []).forEach((item) => {
+            const element = quoteSettingsModalElements[item.id];
+            if (element) element.style.display = item.display;
+        });
+        (plan.disabled || []).forEach((item) => {
+            const element = quoteSettingsModalElements[item.id];
+            if (element) element.disabled = item.disabled;
+        });
+        (plan.value || []).forEach((item) => {
+            const element = quoteSettingsModalElements[item.id];
+            if (element) element.value = item.value;
+        });
+        (plan.checked || []).forEach((item) => {
+            const element = quoteSettingsModalElements[item.id];
+            if (element) element.checked = item.checked;
+        });
+    }
+
     function openQuoteSettingsModal(categoryId, quoteId) {
         const category = dashboardState.find(c => c.id == categoryId);
         if (!category) return false;
@@ -4790,53 +4829,11 @@
             getQuoteChainDisplayName,
             getSingleChainDisplayName
         });
-
-        document.getElementById('modal-title').textContent = modalState.title;
-        const modalSubtitleEl = document.getElementById('modal-subtitle');
-        if (modalSubtitleEl) {
-            modalSubtitleEl.textContent = modalState.subtitle;
-        }
-
-        if (quoteTokenAddressesEl && quoteFromTokenLineEl && quoteToTokenLineEl) {
-            if (!modalState.tokenAddresses.visible) {
-                quoteTokenAddressesEl.style.display = 'none';
-            } else {
-                quoteFromTokenLineEl.textContent = modalState.tokenAddresses.fromLine;
-                quoteToTokenLineEl.textContent = modalState.tokenAddresses.toLine;
-                quoteTokenAddressesEl.style.display = 'block';
-            }
-        }
-
-        if (quoteSourceGroup) {
-            quoteSourceGroup.style.display = modalState.sourceSelect.visible ? 'block' : 'none';
-        }
-        if (quoteSourceSelect) {
-            quoteSourceSelect.disabled = modalState.sourceSelect.disabled;
-            if (modalState.sourceSelect.value) {
-                quoteSourceSelect.value = modalState.sourceSelect.value;
-            }
-        }
-        syncKyberOnlyDirectPoolsControl(quote, modalState.sourceSelect.kyberOnlyDirectPoolsSource);
-
-        if (kyberOnlyDirectPoolsInput) {
-            kyberOnlyDirectPoolsInput.checked = modalState.kyberOnlyDirectPoolsChecked;
-        }
+        const writePlan = getDashboardRenderer().buildQuoteSettingsModalWritePlan(modalState);
+        applyQuoteSettingsModalWritePlan(writePlan);
+        syncKyberOnlyDirectPoolsControl(quote, writePlan.kyberOnlyDirectPoolsSource);
 
         renderQuoteRequestChannelOptions(quote);
-
-        if (inverseToggleGroup) {
-            inverseToggleGroup.style.display = modalState.inverse.visible ? 'flex' : 'none';
-        }
-        if (inverseCheckbox && modalState.inverse.visible) {
-            inverseCheckbox.checked = modalState.inverse.checked;
-        }
-
-        if (modalSwapQuoteBtn) {
-            modalSwapQuoteBtn.style.display = modalState.swapVisible ? 'block' : 'none';
-        }
-        if (modalDeleteQuoteBtn) {
-            modalDeleteQuoteBtn.style.display = modalState.deleteVisible ? 'block' : 'none';
-        }
 
         alertModal.classList.add('visible');
         return true;

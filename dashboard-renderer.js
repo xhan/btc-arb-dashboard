@@ -334,6 +334,48 @@
     };
   }
 
+  function buildQuoteSettingsModalWritePlan(viewState = {}) {
+    const tokenAddresses = viewState.tokenAddresses || {};
+    const sourceSelect = viewState.sourceSelect || {};
+    const inverse = viewState.inverse || {};
+    const text = [
+      { id: 'modal-title', text: viewState.title || '' },
+      { id: 'modal-subtitle', text: viewState.subtitle || '' }
+    ];
+    if (tokenAddresses.visible) {
+      text.push(
+        { id: 'quote-from-token-line', text: tokenAddresses.fromLine || '' },
+        { id: 'quote-to-token-line', text: tokenAddresses.toLine || '' }
+      );
+    }
+
+    const checked = [
+      { id: 'kyber-only-direct-pools', checked: viewState.kyberOnlyDirectPoolsChecked === true }
+    ];
+    if (inverse.visible) {
+      checked.push({ id: 'show-inverse-quote', checked: inverse.checked === true });
+    }
+
+    return {
+      text,
+      display: [
+        { id: 'quote-token-addresses', display: tokenAddresses.visible ? 'block' : 'none' },
+        { id: 'source-select-group', display: sourceSelect.visible ? 'block' : 'none' },
+        { id: 'inverse-toggle-group', display: inverse.visible ? 'flex' : 'none' },
+        { id: 'modal-swap-quote', display: viewState.swapVisible ? 'block' : 'none' },
+        { id: 'modal-delete-quote', display: viewState.deleteVisible ? 'block' : 'none' }
+      ],
+      disabled: [
+        { id: 'quote-source-pref', disabled: sourceSelect.disabled === true }
+      ],
+      value: sourceSelect.value
+        ? [{ id: 'quote-source-pref', value: sourceSelect.value }]
+        : [],
+      checked,
+      kyberOnlyDirectPoolsSource: sourceSelect.kyberOnlyDirectPoolsSource || ''
+    };
+  }
+
   function buildQuoteSettingsUpdatePlan(config = {}) {
     const quote = config.quote && typeof config.quote === 'object' ? config.quote : {};
     const isCrossChainQuote = typeof config.isCrossChainQuote === 'function'
@@ -547,6 +589,7 @@
     buildAddQuoteDraft,
     buildAddQuoteFormViewState,
     buildQuoteSettingsModalViewState,
+    buildQuoteSettingsModalWritePlan,
     buildQuoteSettingsUpdatePlan,
     buildSettingsIntervalWritePlan,
     buildSettingsIntervalsFromFormValues,

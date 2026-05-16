@@ -5,6 +5,7 @@ const {
   buildAddQuoteDraft,
   buildAddQuoteFormViewState,
   buildQuoteSettingsModalViewState,
+  buildQuoteSettingsModalWritePlan,
   buildQuoteSettingsUpdatePlan,
   buildSettingsIntervalWritePlan,
   buildSettingsIntervalsFromFormValues,
@@ -476,6 +477,32 @@ assert.deepStrictEqual(modalViewState, {
   },
   swapVisible: true,
   deleteVisible: true
+});
+assert.deepStrictEqual(buildQuoteSettingsModalWritePlan(modalViewState), {
+  text: [
+    { id: 'modal-title', text: '设置 · Ethereum WETH/USDC' },
+    { id: 'modal-subtitle', text: 'WETH/USDC' },
+    { id: 'quote-from-token-line', text: 'WETH (Chain:ethereum) 0xfrom' },
+    { id: 'quote-to-token-line', text: 'USDC (Chain:ethereum) 0xto' }
+  ],
+  display: [
+    { id: 'quote-token-addresses', display: 'block' },
+    { id: 'source-select-group', display: 'block' },
+    { id: 'inverse-toggle-group', display: 'flex' },
+    { id: 'modal-swap-quote', display: 'block' },
+    { id: 'modal-delete-quote', display: 'block' }
+  ],
+  disabled: [
+    { id: 'quote-source-pref', disabled: false }
+  ],
+  value: [
+    { id: 'quote-source-pref', value: '0x' }
+  ],
+  checked: [
+    { id: 'kyber-only-direct-pools', checked: true },
+    { id: 'show-inverse-quote', checked: true }
+  ],
+  kyberOnlyDirectPoolsSource: '0x'
 });
 
 assert.deepStrictEqual(
