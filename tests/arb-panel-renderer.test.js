@@ -1,6 +1,73 @@
 const assert = require('assert');
 
-const { renderArbGrid, renderArbSectionToggleHtml } = require('../arb-panel-renderer');
+const {
+  renderArbGrid,
+  renderArbSectionToggleHtml,
+  resolveArbPathContentClickAction,
+  resolveArbPathContentKeydownAction,
+  resolveArbPathContentPointerDownAction
+} = require('../arb-panel-renderer');
+
+function resolveArbActionFor(resolver, matches, event = { type: 'click' }, extraOptions = {}) {
+  return resolver(event, {
+    closestEventTarget: (sourceEvent, selector) => matches[selector] || null,
+    ...extraOptions
+  });
+}
+
+const expandToggleEl = { dataset: { arbSectionKey: 'category:btc' } };
+const opportunityEl = { dataset: { arbOpportunityId: 'opp-1' } };
+
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentClickAction, { '.arb-path-expand-toggle': expandToggleEl }),
+  { type: 'toggle-section', sectionKey: 'category:btc' }
+);
+assert.deepStrictEqual(
+  resolveArbActionFor(
+    resolveArbPathContentClickAction,
+    {
+      '.arb-path-expand-toggle': expandToggleEl,
+      '[data-arb-opportunity-id]': opportunityEl
+    },
+    { type: 'click' },
+    { containsElement: () => false }
+  ),
+  { type: 'open-opportunity', opportunityId: 'opp-1' }
+);
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentClickAction, { '[data-arb-opportunity-id]': opportunityEl }),
+  { type: 'open-opportunity', opportunityId: 'opp-1' }
+);
+assert.deepStrictEqual(resolveArbActionFor(resolveArbPathContentClickAction, {}), { type: 'none' });
+
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentPointerDownAction, { '[data-arb-opportunity-id]': opportunityEl }, { type: 'pointerdown', button: 0 }),
+  { type: 'open-opportunity', opportunityId: 'opp-1' }
+);
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentPointerDownAction, { '[data-arb-opportunity-id]': opportunityEl }, { type: 'pointerdown', button: 1 }),
+  { type: 'none' }
+);
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentPointerDownAction, {
+    '.arb-path-expand-toggle': expandToggleEl,
+    '[data-arb-opportunity-id]': opportunityEl
+  }, { type: 'pointerdown', button: 0 }),
+  { type: 'none' }
+);
+
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentKeydownAction, { '[data-arb-opportunity-id]': opportunityEl }, { type: 'keydown', key: 'Enter' }),
+  { type: 'open-opportunity', opportunityId: 'opp-1' }
+);
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentKeydownAction, { '[data-arb-opportunity-id]': opportunityEl }, { type: 'keydown', key: ' ' }),
+  { type: 'open-opportunity', opportunityId: 'opp-1' }
+);
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentKeydownAction, { '[data-arb-opportunity-id]': opportunityEl }, { type: 'keydown', key: 'Escape' }),
+  { type: 'none' }
+);
 
 const html = renderArbGrid({
   columns: [

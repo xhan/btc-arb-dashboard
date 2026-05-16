@@ -2249,52 +2249,41 @@
 
     function handleArbPathContentClick(event) {
         if (!arbPathContent) return;
-        const toggleBtn = closestEventTarget(event, '.arb-path-expand-toggle');
-        if (toggleBtn && arbPathContent.contains(toggleBtn)) {
-            const sectionKey = toggleBtn.dataset.arbSectionKey;
-            if (!sectionKey) return;
-
-            if (arbExpandedSections.has(sectionKey)) {
-                arbExpandedSections.delete(sectionKey);
+        const action = getArbPanelRenderer().resolveArbPathContentClickAction(event, {
+            closestEventTarget,
+            containsElement: (element) => arbPathContent.contains(element)
+        });
+        if (action.type === 'toggle-section') {
+            if (arbExpandedSections.has(action.sectionKey)) {
+                arbExpandedSections.delete(action.sectionKey);
             } else {
-                arbExpandedSections.add(sectionKey);
+                arbExpandedSections.add(action.sectionKey);
             }
             updateArbPanel();
             return;
         }
-
-        const opportunityEl = closestEventTarget(event, '[data-arb-opportunity-id]');
-        if (!opportunityEl) return;
-        const opportunityId = opportunityEl.dataset.arbOpportunityId;
-        if (!opportunityId) return;
-        if (arbLastPointerOpenedOpportunityId === opportunityId) {
+        if (action.type !== 'open-opportunity') return;
+        if (arbLastPointerOpenedOpportunityId === action.opportunityId) {
             arbLastPointerOpenedOpportunityId = null;
             return;
         }
-        openArbDetailModal(opportunityId);
+        openArbDetailModal(action.opportunityId);
     }
 
     function handleArbPathContentKeydown(event) {
         if (!arbPathContent) return;
-        const opportunityEl = closestEventTarget(event, '[data-arb-opportunity-id]');
-        if (!opportunityEl) return;
-        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const action = getArbPanelRenderer().resolveArbPathContentKeydownAction(event, { closestEventTarget });
+        if (action.type !== 'open-opportunity') return;
         event.preventDefault();
-        openArbDetailModal(opportunityEl.dataset.arbOpportunityId);
+        openArbDetailModal(action.opportunityId);
     }
 
     function handleArbPathContentPointerDown(event) {
         if (!arbPathContent) return;
-        if (typeof event.button === 'number' && event.button !== 0) return;
-        if (closestEventTarget(event, '.arb-path-expand-toggle')) return;
-
-        const opportunityEl = closestEventTarget(event, '[data-arb-opportunity-id]');
-        if (!opportunityEl) return;
-        const opportunityId = opportunityEl.dataset.arbOpportunityId;
-        if (!opportunityId) return;
-
-        arbLastPointerOpenedOpportunityId = opportunityId;
-        openArbDetailModal(opportunityId);
+        const action = getArbPanelRenderer().resolveArbPathContentPointerDownAction(event, { closestEventTarget });
+        if (action.type !== 'open-opportunity') return;
+        arbLastPointerOpenedOpportunityId = action.opportunityId;
+        openArbDetailModal(action.opportunityId);
     }
 
     function createArbOpportunityEntry(targetMap, highlightTargetMap, cycle, label, meta = {}) {

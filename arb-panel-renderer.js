@@ -202,7 +202,64 @@
     return `<div class="arb-path-grid">${columnHtml}</div>`;
   }
 
+  function readDatasetValue(element, key) {
+    return String(element && element.dataset && element.dataset[key] || '').trim();
+  }
+
+  function resolveClosest(event, selector, options) {
+    const closestEventTarget = typeof options.closestEventTarget === 'function'
+      ? options.closestEventTarget
+      : () => null;
+    return closestEventTarget(event, selector);
+  }
+
+  function resolveArbPathContentClickAction(event, options = {}) {
+    const containsElement = typeof options.containsElement === 'function'
+      ? options.containsElement
+      : () => true;
+    const toggleBtn = resolveClosest(event, '.arb-path-expand-toggle', options);
+    if (toggleBtn && containsElement(toggleBtn)) {
+      const sectionKey = readDatasetValue(toggleBtn, 'arbSectionKey');
+      return sectionKey
+        ? { type: 'toggle-section', sectionKey }
+        : { type: 'none' };
+    }
+
+    const opportunityEl = resolveClosest(event, '[data-arb-opportunity-id]', options);
+    const opportunityId = readDatasetValue(opportunityEl, 'arbOpportunityId');
+    return opportunityId
+      ? { type: 'open-opportunity', opportunityId }
+      : { type: 'none' };
+  }
+
+  function resolveArbPathContentPointerDownAction(event, options = {}) {
+    if (event && typeof event.button === 'number' && event.button !== 0) {
+      return { type: 'none' };
+    }
+    if (resolveClosest(event, '.arb-path-expand-toggle', options)) {
+      return { type: 'none' };
+    }
+
+    const opportunityEl = resolveClosest(event, '[data-arb-opportunity-id]', options);
+    const opportunityId = readDatasetValue(opportunityEl, 'arbOpportunityId');
+    return opportunityId
+      ? { type: 'open-opportunity', opportunityId }
+      : { type: 'none' };
+  }
+
+  function resolveArbPathContentKeydownAction(event, options = {}) {
+    const opportunityEl = resolveClosest(event, '[data-arb-opportunity-id]', options);
+    const opportunityId = readDatasetValue(opportunityEl, 'arbOpportunityId');
+    if (!opportunityId) return { type: 'none' };
+    const key = event && event.key;
+    if (key !== 'Enter' && key !== ' ') return { type: 'none' };
+    return { type: 'open-opportunity', opportunityId };
+  }
+
   return {
+    resolveArbPathContentClickAction,
+    resolveArbPathContentKeydownAction,
+    resolveArbPathContentPointerDownAction,
     renderArbSectionToggleHtml,
     renderArbGrid
   };
