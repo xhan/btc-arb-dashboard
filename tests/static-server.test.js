@@ -76,7 +76,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="muted-path-storage-utils.js"'));
     assert.ok(response.body.includes('src="dex-link-utils.js"'));
-    assert.ok(response.body.includes('src="arb-detail-refresh-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-detail-refresh-utils.js"'));
     assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-utils.js"'));
     assert.ok(response.body.includes('src="alert-debug-utils.js"'));
@@ -145,7 +145,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="dex-link-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="arb-detail-refresh-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-detail-refresh-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="dom-render-utils.js"') < response.body.indexOf('src="app.js"')
@@ -281,7 +281,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/src/arb/arb-detail-utils.js');
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
-    const arbDetailRefreshUtilsResponse = await request('/arb-detail-refresh-utils.js');
+    const arbDetailRefreshUtilsResponse = await request('/src/arb/arb-detail-refresh-utils.js');
     assert.strictEqual(arbDetailRefreshUtilsResponse.statusCode, 200);
     const dexLinkUtilsResponse = await request('/dex-link-utils.js');
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);

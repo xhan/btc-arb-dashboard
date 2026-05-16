@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   createArbDetailChartAutoRefreshRuntime,
   createArbDetailRefreshScheduler
-} = require('../arb-detail-refresh-utils');
+} = require('../src/arb/arb-detail-refresh-utils');
 
 let activeToken = 1;
 let refreshing = false;
