@@ -133,7 +133,7 @@
 - 建议拆分：
   - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `src/quote/quote-queue-runtime-utils.js`，`src/app/dashboard-app.js` 只保留业务依赖注入和入口包装
   - `quote-request`：source 支持链判断已下沉到 `src/quote/quote-request-utils.js`，`src/app/dashboard-app.js` 不再维护 Kyber/0x 支持链常量
-  - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `src/quote/quote-display-utils.js` / `src/quote/quote-state-runtime-utils.js`，tooltip 定位/显示和 trend arrow DOM patch 已下沉到 `src/ui/dom-render-utils.js`
+  - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `src/quote/quote-display-utils.js` / `src/quote/quote-state-runtime-utils.js`，tooltip 定位/显示和 trend arrow DOM patch/reset 已下沉到 `src/ui/dom-render-utils.js`
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 所有权、全局过滤栏读写计划和面板内容事件动作解析已下沉到 `src/arb/arb-path-template-cache-utils.js` / `src/arb/arb-runtime-memory-utils.js` / `src/arb/arb-panel-layout-utils.js` / `src/arb/arb-panel-renderer.js`，`src/app/dashboard-app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
