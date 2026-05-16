@@ -48,7 +48,7 @@ assert.strictEqual(resolveGlobalShortcutAction(createEvent('Escape'), { arbDetai
 assert.strictEqual(resolveGlobalShortcutAction(createEvent('T')), 'toggle-arb-panel');
 assert.strictEqual(resolveGlobalShortcutAction(createEvent('s')), 'toggle-data-terminal');
 assert.strictEqual(resolveGlobalShortcutAction(createEvent('p')), 'toggle-quote-display');
-assert.strictEqual(resolveGlobalShortcutAction(createEvent('a')), 'toggle-path-alert');
+assert.strictEqual(resolveGlobalShortcutAction(createEvent('a')), 'toggle-alert-settings');
 assert.strictEqual(resolveGlobalShortcutAction(createEvent('l')), 'toggle-alert-log');
 assert.strictEqual(resolveGlobalShortcutAction(createEvent('c')), 'toggle-request-channel-tags');
 

@@ -31,8 +31,7 @@
             console.warn('加载路径报警配置失败:', error);
         }
     });
-    let pathAlertPanelHidden = true;
-    const pathAlertPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
+    const alertSettingsHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     const pathAlertRuntimeState = getPathAlertUtils().createPathAlertRuntimeState();
     const pathAlertSchedulerRuntime = getPathAlertUtils().createPathAlertSchedulerRuntime({
         setInterval,
@@ -151,9 +150,11 @@
     const alertLogLogTab = document.getElementById('alert-log-log-tab');
     const alertLogMutedLogTab = document.getElementById('alert-log-muted-log-tab');
     const alertLogMutedTab = document.getElementById('alert-log-muted-tab');
+    const alertLogSettingsTab = document.getElementById('alert-log-settings-tab');
     const alertLogContent = document.getElementById('alert-log-content');
     const alertLogMutedLogContent = document.getElementById('alert-log-muted-log-content');
     const alertLogMutedContent = document.getElementById('alert-log-muted-content');
+    const alertLogSettingsContent = document.getElementById('alert-log-settings-content');
     const pathAlertSound = document.getElementById('path-alert-sound');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const audioNoticeEl = document.getElementById('audio-notice');
@@ -164,11 +165,7 @@
         onUnlocked: updateAlertSoundState
     });
     const alertModal = document.getElementById('alert-modal');
-    const pathAlertWindow = document.getElementById('path-alert-window');
-    const pathAlertContent = document.getElementById('path-alert-content');
-    const pathAlertHeader = document.getElementById('path-alert-header');
-    const pathAlertMinBtn = document.getElementById('path-alert-min-btn');
-    const togglePathAlertBtn = document.getElementById('toggle-path-alert-btn');
+    const alertSettingsBtn = document.getElementById('toggle-alert-settings-btn');
     const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
     const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
     const modalTitleEl = document.getElementById('modal-title');
@@ -1077,7 +1074,7 @@
         invalidateArbRuleSnapshotCache();
         evaluatePathAlertsOnce();
         renderMutedAlertStatePanel(Date.now());
-        renderPathAlertPanel();
+        renderAlertSettingsPanel();
         updateAlertSoundState();
         updateArbPanel();
         if (options.closeDetail !== false) {
@@ -1233,6 +1230,14 @@
         mutedAlertStateHtmlRenderer.render(alertLogMutedContent, panelHtml);
     }
 
+    function renderAlertSettingsPanel() {
+        if (!alertLogSettingsContent) return;
+        alertSettingsHtmlRenderer.render(alertLogSettingsContent, getAlertLogUiUtils().buildAlertSettingsPanelHtml({
+            settings: pathAlertConfig.settings || {},
+            forceImmediateAlerts: pathAlertRuntimeState.isForceImmediateEnabled()
+        }));
+    }
+
     function renderAlertLogTabState() {
         const tabState = alertLogTabRuntime.getState();
         if (alertLogLogTab) {
@@ -1244,6 +1249,9 @@
         if (alertLogMutedTab) {
             alertLogMutedTab.classList.toggle('active', tabState.showMutedStateTab);
         }
+        if (alertLogSettingsTab) {
+            alertLogSettingsTab.classList.toggle('active', tabState.showSettingsTab);
+        }
         if (alertLogContent) {
             alertLogContent.hidden = !tabState.showLogTab;
         }
@@ -1254,6 +1262,12 @@
             alertLogMutedContent.hidden = !tabState.showMutedStateTab;
             if (tabState.showMutedStateTab) {
                 renderMutedAlertStatePanel(Date.now());
+            }
+        }
+        if (alertLogSettingsContent) {
+            alertLogSettingsContent.hidden = !tabState.showSettingsTab;
+            if (tabState.showSettingsTab) {
+                renderAlertSettingsPanel();
             }
         }
     }
@@ -2992,7 +3006,7 @@
         pathAlertConfig.alerts = (pathAlertConfig.alerts || []).filter((item) => item.id !== alertId);
         pathAlertRuntimeState.delete(alertId);
         updateAlertSoundState();
-        renderPathAlertPanel();
+        renderAlertSettingsPanel();
     }
 
     function dismissPathAlertById(alertId) {
@@ -3152,7 +3166,7 @@
         if (shouldRefreshArbPanelHighlights) {
             updateArbPanel();
         }
-        renderPathAlertPanel();
+        renderAlertSettingsPanel();
     }
 
     function restartPathAlertScheduler() {
@@ -3209,7 +3223,7 @@
             body: JSON.stringify(normalized)
         });
         restartPathAlertScheduler();
-        renderPathAlertPanel();
+        renderAlertSettingsPanel();
         emitPathAlertConfigSync(getPathAlertUtils().PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN);
     }
 
@@ -3236,39 +3250,17 @@
         pathAlertConfig = await pathAlertConfigClient.loadStrict();
     }
 
-    function renderPathAlertPanel() {
-        if (!pathAlertContent) return;
-        if (pathAlertPanelHidden) return;
-        const alerts = Array.isArray(pathAlertConfig.alerts) ? pathAlertConfig.alerts : [];
-        const settings = pathAlertConfig.settings || {};
-        const dismissedCount = Array.isArray(pathAlertConfig.dismissedTargets) ? pathAlertConfig.dismissedTargets.length : 0;
-
-        const renderOptions = getPathAlertPageUtils().buildPathAlertPanelRenderOptions({
-            alerts,
-            settings,
-            dismissedCount,
-            forceImmediateAlerts: pathAlertRuntimeState.isForceImmediateEnabled(),
-            getRuntime: (alert) => pathAlertRuntimeState.get(alert.id),
-            buildTitle: buildPathAlertDisplayTitle,
-            renderSummaryLinesHtml: (alert) => getPathAlertPageUtils().renderPathAlertSummaryLinesHtml(buildPathAlertSummaryLines(alert)),
-            buildMetaText: (alert) => getPathAlertPageUtils().buildPathAlertMetaText(alert, {
-                resolveSpecialRuleConfig
-            }),
-            formatEvaluationText: formatPathAlertEvaluationText,
-            formatTime: (value) => new Date(value).toLocaleTimeString()
-        });
-        pathAlertPanelHtmlRenderer.render(pathAlertContent, getPathAlertPageUtils().renderPathAlertPanelHtml(renderOptions));
+    function openAlertLogTab(tab) {
+        if (!alertLogWindow) return;
+        alertLogTabRuntime.set(tab);
+        alertLogWindow.style.display = 'flex';
+        bringFloatingPanelToFront(alertLogWindow);
+        renderAlertLogTabState();
+        syncMutedPathLogTimer();
     }
 
-    function togglePathAlertPanel() {
-        if (!pathAlertWindow) return;
-        pathAlertPanelHidden = !pathAlertPanelHidden;
-        const isVisible = !pathAlertPanelHidden;
-        if (isVisible) {
-            renderPathAlertPanel();
-        }
-        pathAlertWindow.style.display = isVisible ? 'flex' : 'none';
-        if (isVisible) bringFloatingPanelToFront(pathAlertWindow);
+    function openAlertSettingsTab() {
+        openAlertLogTab('settings');
     }
 
     function toggleAlertLogPanel() {
@@ -3349,14 +3341,14 @@
         }
     }
 
-    function handlePathAlertPanelChange(event) {
-        const action = getPathAlertPageUtils().resolvePathAlertPanelChangeAction(event, { closestEventTarget });
+    function handleAlertSettingsChange(event) {
+        const action = getAlertLogUiUtils().resolveAlertSettingsChangeAction(event, { closestEventTarget });
         if (action.type === 'set-force-immediate') {
             const forceImmediateEnabled = pathAlertRuntimeState.setForceImmediate(action.checked);
             if (forceImmediateEnabled) {
                 evaluatePathAlertsOnce();
                 evaluateQuoteAlertsOnce();
-                renderPathAlertPanel();
+                renderAlertSettingsPanel();
                 return;
             }
             reloadPathAlertConfigFromServer().catch((error) => {
@@ -3368,33 +3360,20 @@
         pathAlertConfig.settings[action.key] = action.checked;
         queuePathAlertConfigSave();
         updateAlertSoundState();
-    }
-
-    function handlePathAlertPanelClick(event) {
-        const action = getPathAlertPageUtils().resolvePathAlertPanelClickAction(event, { closestEventTarget });
-        if (action.type === 'delete-alert') {
-            removePathAlertById(action.alertId);
-            queuePathAlertConfigSave();
-            return;
-        }
-
-        if (action.type === 'dismiss-delete-alert') {
-            dismissPathAlertById(action.alertId);
-            queuePathAlertConfigSave();
-        }
+        renderAlertSettingsPanel();
     }
 
     async function reloadPathAlertConfigFromServer() {
         if (pathAlertReloading) return;
         pathAlertReloading = true;
-        renderPathAlertPanel();
+        renderAlertSettingsPanel();
         try {
             pathAlertRuntimeState.reset({ forceImmediate: false });
             await loadPathAlertConfigStrict();
             restartPathAlertScheduler();
         } finally {
             pathAlertReloading = false;
-            renderPathAlertPanel();
+            renderAlertSettingsPanel();
         }
     }
 
@@ -3883,8 +3862,8 @@
             case 'toggle-quote-display':
                 toggleQuoteDisplayMode();
                 break;
-            case 'toggle-path-alert':
-                togglePathAlertPanel();
+            case 'toggle-alert-settings':
+                openAlertSettingsTab();
                 break;
             case 'toggle-alert-log':
                 toggleAlertLogPanel();
@@ -4782,7 +4761,7 @@
             renderDashboard();
             updateArbPanel();
             setArbPanelMaxHeight();
-            renderPathAlertPanel();
+            renderAlertSettingsPanel();
             
             const allQuotes = dashboardState.flatMap(c => c.quotes || []);
             
@@ -4800,21 +4779,14 @@
                 bindDraggableFloatingPanel(alertLogWindow, alertLogHeader);
                 bindFloatingPanelFocus(alertLogWindow, alertLogHeader);
             }
-            if (pathAlertWindow && pathAlertHeader) {
-                bindDraggableFloatingPanel(pathAlertWindow, pathAlertHeader);
-                bindFloatingPanelFocus(pathAlertWindow, pathAlertHeader);
-            }
             if (arbPathWindow && arbPathHeader) {
                 bindFloatingPanelFocus(arbPathWindow, arbPathHeader);
             }
-            [alertLogWindow, pathAlertWindow, arbPathWindow].forEach((panel) => {
+            [alertLogWindow, arbPathWindow].forEach((panel) => {
                 if (panel) {
                     floatingPanelZIndexRuntime.resetPanel(panel);
                 }
             });
-            if (pathAlertWindow && window.getComputedStyle(pathAlertWindow).display !== 'none') {
-                bringFloatingPanelToFront(pathAlertWindow);
-            }
 
             renderQuoteDisplayToggle();
             if (toggleArbBtn) {
@@ -4826,10 +4798,8 @@
             if (toggleDataTerminalBtn) {
                 toggleDataTerminalBtn.addEventListener('click', toggleDataTerminalPanel);
             }
-            if (togglePathAlertBtn) {
-                togglePathAlertBtn.addEventListener('click', () => {
-                    openPathAlertsManagementPage();
-                });
+            if (alertSettingsBtn) {
+                alertSettingsBtn.addEventListener('click', openAlertSettingsTab);
             }
             if (toggleAlertLogBtn) {
                 toggleAlertLogBtn.addEventListener('click', toggleAlertLogPanel);
@@ -4841,6 +4811,7 @@
             }
             if (alertLogWindow) {
                 alertLogWindow.addEventListener('click', handleAlertLogClick);
+                alertLogWindow.addEventListener('change', handleAlertSettingsChange);
             }
             if (alertLogMutedLogContent) {
                 restoreMutedAlertLogEntries(Date.now());
@@ -4848,10 +4819,6 @@
             renderMutedAlertStatePanel(Date.now());
             renderAlertLogTabState();
             syncMutedPathLogTimer();
-            if (pathAlertContent) {
-                pathAlertContent.addEventListener('click', handlePathAlertPanelClick);
-                pathAlertContent.addEventListener('change', handlePathAlertPanelChange);
-            }
             if (arbPathContent) {
                 arbPathContent.addEventListener('pointerdown', handleArbPathContentPointerDown);
                 arbPathContent.addEventListener('click', handleArbPathContentClick);
@@ -4949,12 +4916,6 @@
                 arbPathMinBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     toggleArbPanel();
-                });
-            }
-            if (pathAlertMinBtn) {
-                pathAlertMinBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    togglePathAlertPanel();
                 });
             }
             if (alertLogMinBtn) {

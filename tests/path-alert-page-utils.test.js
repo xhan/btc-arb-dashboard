@@ -16,9 +16,7 @@ const {
   buildPathAlertLegDisplayLine,
   buildPathAlertSummaryLegLine,
   buildPathAlertQuotePairText,
-  buildPathAlertPanelRenderOptions,
   buildPathAlertSectionConfigs,
-  buildPathAlertMetaText,
   buildPathAlertsPageHref,
   buildDismissedPathAlertPageSummaryLines,
   filterAlertsByQuoteId,
@@ -29,12 +27,8 @@ const {
   renderDismissedTargetCardHtml,
   renderPathAlertCardHtml,
   renderPathAlertContextBarHtml,
-  renderPathAlertPanelHtml,
   renderPathAlertRouteLinesHtml,
   renderPathAlertSectionHtml,
-  renderPathAlertSummaryLinesHtml,
-  resolvePathAlertPanelChangeAction,
-  resolvePathAlertPanelClickAction,
   getPathAlertSectionTypeClass,
   getPathAlertSectionTypeLabel,
   shortenTokenText
@@ -322,99 +316,6 @@ assert.strictEqual(getPathAlertSectionTypeClass('special'), 'special');
 assert.strictEqual(getPathAlertSectionTypeClass('unknown'), 'path');
 assert.strictEqual(getPathAlertSectionTypeLabel('quote'), '交易对');
 assert.strictEqual(getPathAlertSectionTypeLabel('unknown'), '路径');
-assert.deepStrictEqual(
-  buildPathAlertPanelRenderOptions({
-    alerts: [],
-    settings: { pathAlertEvalIntervalMs: 500 },
-    dismissedCount: 2,
-    forceImmediateAlerts: true
-  }),
-  {
-    settings: { pathAlertEvalIntervalMs: 500 },
-    dismissedCount: 2,
-    forceImmediateAlerts: true,
-    emptyText: '暂无路径报警'
-  }
-);
-assert.deepStrictEqual(
-  buildPathAlertPanelRenderOptions({
-    alerts: [{ id: 'unavailable', target: { type: 'path' } }],
-    getRuntime: () => ({ status: 'unavailable' })
-  }),
-  {
-    settings: {},
-    dismissedCount: 0,
-    forceImmediateAlerts: false,
-    emptyText: '暂无需要关注的路径报警'
-  }
-);
-assert.deepStrictEqual(
-  buildPathAlertPanelRenderOptions({
-    alerts: [
-      { id: 'disabled', name: '停用报警', target: { type: 'path' }, enabled: false },
-      { id: 'pending', name: '待确认报警', target: { type: 'path' } },
-      { id: 'cooldown', name: '冷却报警', target: { type: 'quote' } }
-    ],
-    settings: { localSoundEnabled: true },
-    dismissedCount: 1,
-    forceImmediateAlerts: true,
-    getRuntime: (alert) => alert.id === 'cooldown'
-      ? { status: 'cooldown', lastTriggeredAt: 1710000000000, evaluation: { profitBp: 1.23 } }
-      : (alert.id === 'pending' ? { status: 'pending_confirm', evaluation: { profitBp: 0.5 } } : null),
-    buildTitle: (alert) => `标题:${alert.name}`,
-    renderSummaryLinesHtml: (alert) => `<div>${alert.id}</div>`,
-    buildMetaText: (alert) => `meta:${alert.id}`,
-    buildEditHref: (alert) => `/path-alerts?mode=edit&alertId=${alert.id}`,
-    formatEvaluationText: (evaluation) => `eval:${evaluation && evaluation.profitBp || '--'}`,
-    formatTime: () => '12:00:00'
-  }),
-  {
-    settings: { localSoundEnabled: true },
-    dismissedCount: 1,
-    forceImmediateAlerts: true,
-    items: [
-      {
-        alertId: 'disabled',
-        title: '标题:停用报警',
-        routeHtml: '<div>disabled</div>',
-        metaText: 'meta:disabled',
-        editHref: '/path-alerts?mode=edit&alertId=disabled',
-        statusText: '已禁用',
-        statusClassName: 'path-alert-status-disabled',
-        evaluationText: 'eval:--',
-        lastTriggeredText: '--'
-      },
-      {
-        alertId: 'pending',
-        title: '标题:待确认报警',
-        routeHtml: '<div>pending</div>',
-        metaText: 'meta:pending',
-        editHref: '/path-alerts?mode=edit&alertId=pending',
-        statusText: '待确认',
-        statusClassName: 'path-alert-status-pending',
-        evaluationText: 'eval:0.5',
-        lastTriggeredText: '--'
-      },
-      {
-        alertId: 'cooldown',
-        title: '标题:冷却报警',
-        routeHtml: '<div>cooldown</div>',
-        metaText: 'meta:cooldown',
-        editHref: '/path-alerts?mode=edit&alertId=cooldown',
-        statusText: '冷却中',
-        statusClassName: 'path-alert-status-cooldown',
-        evaluationText: 'eval:1.23',
-        lastTriggeredText: '12:00:00'
-      }
-    ]
-  }
-);
-assert.strictEqual(
-  buildPathAlertPanelRenderOptions({
-    alerts: [{ id: 'default-edit', target: { type: 'path' }, enabled: false }]
-  }).items[0].editHref,
-  '/path-alerts?mode=edit&alertId=default-edit'
-);
 
 const alertCardHtml = renderPathAlertCardHtml({
   alertId: 'alert-1',
@@ -612,140 +513,7 @@ assert.deepStrictEqual(parsePathAlertsPagePrefill('/path-alerts?mode=create&draf
   draft: null
 });
 
-const toolbarHtml = renderPathAlertPanelHtml({
-  settings: {
-    localSoundEnabled: true,
-    webhookEnabled: false,
-    pathAlertEvalIntervalMs: 500
-  },
-  dismissedCount: 2,
-  forceImmediateAlerts: true
-});
-assert.ok(toolbarHtml.includes('data-path-alert-global-toggle="localSoundEnabled" checked'));
-assert.ok(toolbarHtml.includes('data-path-alert-global-toggle="webhookEnabled" '));
-assert.ok(toolbarHtml.includes('data-path-alert-force-immediate checked'));
-assert.ok(toolbarHtml.includes('周期 500ms'));
-assert.ok(toolbarHtml.includes('已忽略 2 条'));
-
-const itemHtml = renderPathAlertPanelHtml({
-  items: [{
-    alertId: 'alert-1',
-    title: '路径 <A>',
-    routeHtml: '<div class="path-alert-item-route-line">ETH/USDC</div>',
-    metaText: '阈值 <1>',
-    editHref: '/path-alerts?mode=edit&alertId=alert-1',
-    statusText: '触发',
-    statusClassName: 'path-alert-status-triggered',
-    evaluationText: '利润 > 1',
-    lastTriggeredText: '12:00:00'
-  }]
-});
-assert.ok(itemHtml.includes('路径 &lt;A&gt;'));
-assert.ok(itemHtml.includes('<div class="path-alert-item-route-line">ETH/USDC</div>'));
-assert.ok(itemHtml.includes('阈值 &lt;1&gt;'));
-assert.ok(itemHtml.includes('data-path-alert-edit-link="alert-1"'));
-assert.ok(itemHtml.includes('data-path-alert-delete="alert-1"'));
-assert.ok(itemHtml.includes('data-path-alert-dismiss-delete="alert-1"'));
-assert.ok(itemHtml.includes('path-alert-status-triggered'));
-assert.ok(itemHtml.includes('利润 &gt; 1'));
-
-assert.strictEqual(
-  renderPathAlertSummaryLinesHtml(['路径 <A>', 'ETH/USDC']),
-  '<div class="path-alert-item-route-line">路径 &lt;A&gt;</div><div class="path-alert-item-route-line">ETH/USDC</div>'
-);
-
 assert.strictEqual(
   renderPathAlertRouteLinesHtml(['', 'ETH/USDC'], 'alert-card-route-line'),
   '<div class="alert-card-route-line">ETH/USDC</div>'
-);
-
-assert.strictEqual(
-  renderPathAlertSummaryLinesHtml([]),
-  '<div class="path-alert-item-route-line">--</div>'
-);
-
-const panelHtml = renderPathAlertPanelHtml({
-  settings: { pathAlertEvalIntervalMs: 500 },
-  items: [{ alertId: 'alert-2', title: '报警', evaluationText: '等待', lastTriggeredText: '--' }]
-});
-assert.ok(panelHtml.includes('class="path-alert-toolbar"'));
-assert.ok(panelHtml.includes('class="path-alert-list"'));
-assert.ok(panelHtml.includes('data-path-alert-delete="alert-2"'));
-
-const emptyPanelHtml = renderPathAlertPanelHtml({
-  settings: { pathAlertEvalIntervalMs: 500 },
-  emptyText: '暂无需要关注的路径报警'
-});
-assert.ok(emptyPanelHtml.includes('暂无需要关注的路径报警'));
-
-function resolvePanelActionFor(resolver, matches) {
-  return resolver({ type: 'event' }, {
-    closestEventTarget: (event, selector) => matches[selector] || null
-  });
-}
-
-assert.deepStrictEqual(
-  resolvePanelActionFor(resolvePathAlertPanelChangeAction, {
-    '[data-path-alert-force-immediate]': { checked: true }
-  }),
-  { type: 'set-force-immediate', checked: true }
-);
-
-assert.deepStrictEqual(
-  resolvePanelActionFor(resolvePathAlertPanelChangeAction, {
-    '[data-path-alert-global-toggle]': {
-      checked: false,
-      dataset: { pathAlertGlobalToggle: 'webhookEnabled' }
-    }
-  }),
-  { type: 'set-global-toggle', key: 'webhookEnabled', checked: false }
-);
-
-assert.deepStrictEqual(resolvePanelActionFor(resolvePathAlertPanelChangeAction, {}), { type: 'none' });
-
-assert.deepStrictEqual(
-  resolvePanelActionFor(resolvePathAlertPanelClickAction, {
-    '[data-path-alert-delete]': { dataset: { pathAlertDelete: 'alert-delete' } }
-  }),
-  { type: 'delete-alert', alertId: 'alert-delete' }
-);
-
-assert.deepStrictEqual(
-  resolvePanelActionFor(resolvePathAlertPanelClickAction, {
-    '[data-path-alert-dismiss-delete]': { dataset: { pathAlertDismissDelete: 'alert-dismiss' } }
-  }),
-  { type: 'dismiss-delete-alert', alertId: 'alert-dismiss' }
-);
-
-assert.deepStrictEqual(resolvePanelActionFor(resolvePathAlertPanelClickAction, {}), { type: 'none' });
-
-assert.strictEqual(
-  buildPathAlertMetaText({
-    target: { type: 'quote', value: 1.0001 },
-    triggerMode: 'delayed',
-    confirmDelaySec: 13,
-    cooldownSec: 180
-  }),
-  '报价 | 1.0001 | 延迟 13s | 冷却 180s'
-);
-
-assert.strictEqual(
-  buildPathAlertMetaText({
-    target: { type: 'rule', ruleKind: 'special' },
-    triggerMode: 'immediate',
-    cooldownSec: 300
-  }, {
-    resolveSpecialRuleConfig: () => ({ minNetProfit: 0.01, minNetProfitBp: 1.5 })
-  }),
-  '净收益 > 0.01 | 净收益率 > 1.5bp | 立即 | 冷却 300s'
-);
-
-assert.strictEqual(
-  buildPathAlertMetaText({
-    target: { type: 'path' },
-    thresholdBp: 2,
-    triggerMode: 'immediate',
-    cooldownSec: 120
-  }),
-  '阈值 2bp | 立即 | 冷却 120s'
 );

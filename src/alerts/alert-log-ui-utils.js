@@ -25,7 +25,7 @@
 
   function normalizeAlertLogTab(tab) {
     const value = String(tab || '').trim();
-    return ['log', 'muted-log', 'muted'].includes(value) ? value : 'log';
+    return ['log', 'muted-log', 'muted', 'settings'].includes(value) ? value : 'log';
   }
 
   function buildAlertLogTabState(activeTab = 'log') {
@@ -34,7 +34,8 @@
       activeTab: normalizedTab,
       showLogTab: normalizedTab === 'log',
       showMutedLogTab: normalizedTab === 'muted-log',
-      showMutedStateTab: normalizedTab === 'muted'
+      showMutedStateTab: normalizedTab === 'muted',
+      showSettingsTab: normalizedTab === 'settings'
     };
   }
 
@@ -168,18 +169,21 @@
     return String(element && element.dataset && element.dataset[key] || '').trim();
   }
 
-  function resolveAlertLogClickAction(event, options = {}) {
+  function createClosestResolver(event, options = {}) {
     const closestEventTarget = typeof options.closestEventTarget === 'function'
       ? options.closestEventTarget
       : () => null;
-    function closest(selector) {
-      return closestEventTarget(event, selector);
-    }
+    return (selector) => closestEventTarget(event, selector);
+  }
+
+  function resolveAlertLogClickAction(event, options = {}) {
+    const closest = createClosestResolver(event, options);
 
     const tabActions = [
       ['#alert-log-log-tab', 'log'],
       ['#alert-log-muted-log-tab', 'muted-log'],
-      ['#alert-log-muted-tab', 'muted']
+      ['#alert-log-muted-tab', 'muted'],
+      ['#alert-log-settings-tab', 'settings']
     ];
     for (const [selector, tab] of tabActions) {
       if (closest(selector)) {
@@ -241,6 +245,60 @@
     const collapsedCard = closest('[data-alert-log-collapsed="1"]');
     if (collapsedCard) {
       return { type: 'expand-collapsed-card', card: collapsedCard };
+    }
+
+    return { type: 'none' };
+  }
+
+  function buildAlertSettingsPanelHtml(options = {}) {
+    const settings = options.settings && typeof options.settings === 'object' ? options.settings : {};
+    const rows = [
+      {
+        label: '音效',
+        dataAttr: 'data-alert-setting-toggle="localSoundEnabled"',
+        checked: settings.localSoundEnabled !== false
+      },
+      {
+        label: '远程推送',
+        dataAttr: 'data-alert-setting-toggle="webhookEnabled"',
+        checked: settings.webhookEnabled === true
+      },
+      {
+        label: '全部立即',
+        dataAttr: 'data-alert-force-immediate',
+        checked: options.forceImmediateAlerts === true
+      }
+    ];
+    return `
+            <div class="alert-settings-panel">
+                ${rows.map((row) => `
+                    <label class="alert-setting-row">
+                        <span>${escapeHtml(row.label)}</span>
+                        <input type="checkbox" ${row.dataAttr} ${row.checked ? 'checked' : ''}>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+  }
+
+  function resolveAlertSettingsChangeAction(event, options = {}) {
+    const closest = createClosestResolver(event, options);
+    const forceImmediateToggle = closest('[data-alert-force-immediate]');
+    if (forceImmediateToggle) {
+      return {
+        type: 'set-force-immediate',
+        checked: forceImmediateToggle.checked === true
+      };
+    }
+
+    const globalToggle = closest('[data-alert-setting-toggle]');
+    const key = readDatasetValue(globalToggle, 'alertSettingToggle');
+    if (key === 'localSoundEnabled' || key === 'webhookEnabled') {
+      return {
+        type: 'set-global-toggle',
+        key,
+        checked: globalToggle.checked === true
+      };
     }
 
     return { type: 'none' };
@@ -486,6 +544,7 @@
 
   return {
     buildAlertLogAppendPlan,
+    buildAlertSettingsPanelHtml,
     buildAlertLogTabState,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
@@ -498,6 +557,7 @@
     createAlertLogTabRuntime,
     hasMutedTargetLogCard,
     removeRestoredMutedAlertLogCards,
+    resolveAlertSettingsChangeAction,
     resolveAlertLogClickAction
   };
 }));

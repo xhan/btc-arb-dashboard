@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const {
   buildAlertLogAppendPlan,
+  buildAlertSettingsPanelHtml,
   buildAlertLogTabState,
   createAlertLogTabRuntime,
   resolveAlertLogCardPlacement,
@@ -14,6 +15,7 @@ const {
   buildQuoteAlertLogHtml,
   hasMutedTargetLogCard,
   removeRestoredMutedAlertLogCards,
+  resolveAlertSettingsChangeAction,
   resolveAlertLogClickAction
 } = require('../src/alerts/alert-log-ui-utils');
 
@@ -21,13 +23,22 @@ assert.deepStrictEqual(buildAlertLogTabState('muted-log'), {
   activeTab: 'muted-log',
   showLogTab: false,
   showMutedLogTab: true,
-  showMutedStateTab: false
+  showMutedStateTab: false,
+  showSettingsTab: false
+});
+assert.deepStrictEqual(buildAlertLogTabState('settings'), {
+  activeTab: 'settings',
+  showLogTab: false,
+  showMutedLogTab: false,
+  showMutedStateTab: false,
+  showSettingsTab: true
 });
 assert.deepStrictEqual(buildAlertLogTabState('unknown'), {
   activeTab: 'log',
   showLogTab: true,
   showMutedLogTab: false,
-  showMutedStateTab: false
+  showMutedStateTab: false,
+  showSettingsTab: false
 });
 
 const alertLogTabRuntime = createAlertLogTabRuntime();
@@ -38,10 +49,27 @@ assert.deepStrictEqual(alertLogTabRuntime.getState(), {
   activeTab: 'muted',
   showLogTab: false,
   showMutedLogTab: false,
-  showMutedStateTab: true
+  showMutedStateTab: true,
+  showSettingsTab: false
 });
+assert.strictEqual(alertLogTabRuntime.set('settings'), 'settings');
+assert.strictEqual(alertLogTabRuntime.isActive('settings'), true);
 assert.strictEqual(alertLogTabRuntime.set('bad-tab'), 'log');
 assert.strictEqual(alertLogTabRuntime.isActive('muted'), false);
+
+const alertSettingsPanelHtml = buildAlertSettingsPanelHtml({
+  settings: {
+    localSoundEnabled: false,
+    webhookEnabled: true
+  },
+  forceImmediateAlerts: true
+});
+assert.ok(alertSettingsPanelHtml.includes('data-alert-setting-toggle="localSoundEnabled"'));
+assert.ok(alertSettingsPanelHtml.includes('data-alert-setting-toggle="webhookEnabled" checked'));
+assert.ok(alertSettingsPanelHtml.includes('data-alert-force-immediate checked'));
+assert.ok(alertSettingsPanelHtml.includes('音效'));
+assert.ok(alertSettingsPanelHtml.includes('远程推送'));
+assert.ok(alertSettingsPanelHtml.includes('全部立即'));
 
 const appendPlan = buildAlertLogAppendPlan([
   { id: 'first', mutedEntry: null },
@@ -156,6 +184,32 @@ assert.deepStrictEqual(
   resolveActionFor({ '#alert-log-muted-tab': {} }),
   { type: 'set-tab', tab: 'muted' }
 );
+assert.deepStrictEqual(
+  resolveActionFor({ '#alert-log-settings-tab': {} }),
+  { type: 'set-tab', tab: 'settings' }
+);
+assert.deepStrictEqual(
+  resolveAlertSettingsChangeAction({ type: 'change' }, {
+    closestEventTarget: (event, selector) => ({
+      '[data-alert-force-immediate]': { checked: true }
+    })[selector] || null
+  }),
+  { type: 'set-force-immediate', checked: true }
+);
+assert.deepStrictEqual(
+  resolveAlertSettingsChangeAction({ type: 'change' }, {
+    closestEventTarget: (event, selector) => ({
+      '[data-alert-setting-toggle]': {
+        checked: false,
+        dataset: { alertSettingToggle: 'webhookEnabled' }
+      }
+    })[selector] || null
+  }),
+  { type: 'set-global-toggle', key: 'webhookEnabled', checked: false }
+);
+assert.deepStrictEqual(resolveAlertSettingsChangeAction({ type: 'change' }, {
+  closestEventTarget: () => null
+}), { type: 'none' });
 const quoteDexElement = {};
 assert.deepStrictEqual(
   resolveActionFor({ '[data-quote-alert-dex-link-copy]': quoteDexElement }),

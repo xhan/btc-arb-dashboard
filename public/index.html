@@ -656,9 +656,24 @@
         }
         #alert-log-content,
         #alert-log-muted-log-content,
-        #alert-log-muted-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain; padding: 15px; font-size: 14px; }
+        #alert-log-muted-content,
+        #alert-log-settings-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain; padding: 15px; font-size: 14px; }
         #alert-log-muted-log-content[hidden],
-        #alert-log-muted-content[hidden] { display: none; }
+        #alert-log-muted-content[hidden],
+        #alert-log-settings-content[hidden] { display: none; }
+        .alert-settings-panel { display: flex; flex-direction: column; gap: 10px; }
+        .alert-setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .alert-setting-row input { margin: 0; flex-shrink: 0; }
         .log-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
         .log-time { font-size: 0.8em; color: var(--text-color-light); display: block; }
         .alert-log-entry-muted { opacity: 0.78; }
@@ -777,7 +792,7 @@
         .dark-mode #arb-path-header { background-color: #1a202c; }
         .dark-mode #data-terminal-header { background-color: #1a202c; }
         .panel-header-actions { display: flex; align-items: center; gap: 8px; }
-        #arb-path-min-btn, #path-alert-min-btn, #alert-log-min-btn, #data-terminal-min-btn {
+        #arb-path-min-btn, #alert-log-min-btn, #data-terminal-min-btn {
             border: 1px solid rgba(255,255,255,0.3);
             background: transparent;
             color: #fff;
@@ -786,7 +801,7 @@
             cursor: pointer;
             font-weight: 700;
         }
-        #arb-path-min-btn:hover, #path-alert-min-btn:hover, #alert-log-min-btn:hover, #data-terminal-min-btn:hover { background-color: rgba(255,255,255,0.12); }
+        #arb-path-min-btn:hover, #alert-log-min-btn:hover, #data-terminal-min-btn:hover { background-color: rgba(255,255,255,0.12); }
         .arb-path-header-main { flex: 0 0 auto; min-width: 0; }
         .arb-path-header-controls { display: flex; align-items: center; gap: 8px; min-width: 0; margin-left: auto; }
         .arb-global-filter-row { display: flex; gap: 6px; align-items: center; }
@@ -1484,29 +1499,6 @@
             }
         }
 
-        #path-alert-window { position: fixed; top: 80px; right: 20px; width: 365px; height: 320px; background-color: var(--module-bg-color); border-radius: 12px; box-shadow: 0 10px 30px var(--shadow-color); display: none; flex-direction: column; z-index: 2100; overflow: hidden; resize: both; }
-        #path-alert-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; cursor: move; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .dark-mode #path-alert-header { background-color: #1a202c; }
-        #path-alert-header button {
-            border: 1px solid rgba(255,255,255,0.3);
-            background: transparent;
-            color: #fff;
-            border-radius: 6px;
-            padding: 2px 8px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-        #path-alert-header button:hover { background-color: rgba(255,255,255,0.12); }
-        #path-alert-content { flex-grow: 1; overflow-y: auto; overscroll-behavior: contain; padding: 10px; font-size: 12px; }
-        .path-alert-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
-        .path-alert-toolbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .path-alert-toolbar-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-        .path-alert-toolbar-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-color-light); cursor: pointer; }
-        .path-alert-toolbar-toggle input { margin: 0; }
-        .path-alert-toolbar-cycle { font-size: 12px; color: var(--text-color-light); }
-        .path-alert-toolbar button,
-        .path-alert-item button,
-        .path-alert-item-link,
         .path-alert-rule-chip,
         .path-alert-leg-action,
         .path-alert-candidate-add {
@@ -1516,34 +1508,6 @@
             border-radius: 8px;
             cursor: pointer;
         }
-        .path-alert-toolbar button { padding: 6px 10px; font-weight: 600; }
-        .path-alert-list { display: flex; flex-direction: column; gap: 8px; }
-        .path-alert-item { border: 1px solid var(--border-color); border-radius: 10px; padding: 8px; background-color: rgba(0,0,0,0.015); }
-        .dark-mode .path-alert-item { background-color: rgba(255,255,255,0.02); }
-        .path-alert-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-        .path-alert-item-title { font-weight: 700; line-height: 1.35; }
-        .path-alert-item-route { margin-top: 4px; }
-        .path-alert-item-route-line { color: var(--text-color); line-height: 1.35; white-space: normal; word-break: break-word; }
-        .path-alert-item-meta { margin-top: 4px; color: var(--text-color-light); line-height: 1.4; font-size: 11px; }
-        .path-alert-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
-        .path-alert-item-actions button { padding: 4px 8px; }
-        .path-alert-item-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px 8px;
-            text-decoration: none;
-            color: inherit;
-        }
-        .path-alert-status-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; align-items: center; }
-        .path-alert-status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-        .path-alert-status-monitoring { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
-        .path-alert-status-pending { background: rgba(202, 138, 4, 0.14); color: #a16207; }
-        .path-alert-status-cooldown { background: rgba(5, 150, 105, 0.14); color: #047857; }
-        .path-alert-status-unavailable { background: rgba(107, 114, 128, 0.14); color: #4b5563; }
-        .path-alert-status-disabled { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
-        .path-alert-profit { font-weight: 700; }
-        .path-alert-empty { color: var(--text-color-light); }
         #audio-notice {
             display: none;
             position: fixed;
@@ -1682,7 +1646,7 @@
              <button id="toggle-multi-channel-btn" title="临时开启或关闭多渠道">多渠道: 开</button>
              <button id="toggle-data-terminal-btn" title="显示/隐藏数据终端">数据终端</button>
              <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
-             <button id="toggle-path-alert-btn" title="打开报警管理页">🚨</button>
+             <button id="toggle-alert-settings-btn" title="提醒设置 (A)">🚨</button>
              <button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">📝</button>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">📸</a>
              <a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">📊</a>
@@ -1707,19 +1671,12 @@
             <button id="alert-log-log-tab" class="alert-log-tab active" type="button">日志</button>
             <button id="alert-log-muted-log-tab" class="alert-log-tab" type="button">屏蔽日志</button>
             <button id="alert-log-muted-tab" class="alert-log-tab" type="button">临时屏蔽</button>
+            <button id="alert-log-settings-tab" class="alert-log-tab" type="button">设置</button>
         </div>
         <div id="alert-log-content"></div>
         <div id="alert-log-muted-log-content" hidden></div>
         <div id="alert-log-muted-content" hidden></div>
-    </div>
-    <div id="path-alert-window">
-        <div id="path-alert-header">
-            <span>路径报警</span>
-            <div class="panel-header-actions">
-                <button id="path-alert-min-btn" title="最小化">－</button>
-            </div>
-        </div>
-        <div id="path-alert-content">等待配置...</div>
+        <div id="alert-log-settings-content" hidden></div>
     </div>
     <div id="arb-path-window">
         <div id="arb-path-header">
