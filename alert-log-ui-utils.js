@@ -23,12 +23,34 @@
     return list.some((entry) => !isMutedAlertLogEntry(entry));
   }
 
+  function buildAlertLogAppendPlan(entries) {
+    const list = Array.isArray(entries) ? entries.slice() : [];
+    return {
+      entries: list.slice().reverse(),
+      shouldAutoOpen: shouldAutoOpenAlertLogEntries(list)
+    };
+  }
+
   function buildAlertLogEntryDisplayState(entry, options = {}) {
     const muted = isMutedAlertLogEntry(entry);
     const expanded = Boolean(options && options.expanded);
     return {
       muted,
       collapsed: muted && !expanded
+    };
+  }
+
+  function resolveAlertLogCardPlacement(entry, options = {}) {
+    const targetKey = String(options && options.targetKey || '').trim();
+    if (isMutedAlertLogEntry(entry)) {
+      return {
+        destination: 'muted',
+        removeRestoredTargetKey: ''
+      };
+    }
+    return {
+      destination: 'active',
+      removeRestoredTargetKey: targetKey
     };
   }
 
@@ -219,7 +241,9 @@
   return {
     isMutedAlertLogEntry,
     shouldAutoOpenAlertLogEntries,
+    buildAlertLogAppendPlan,
     buildAlertLogEntryDisplayState,
+    resolveAlertLogCardPlacement,
     buildMutedStateItemHtml,
     buildMutedStateSectionHtml,
     buildRestoredMutedAlertLogHtml,

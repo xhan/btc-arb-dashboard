@@ -814,17 +814,33 @@
         return [alertLogContent, alertLogMutedLogContent].filter(Boolean);
     }
 
-    function appendMutedAlertLogCard(card, nowMs = Date.now()) {
-        if (!card || !alertLogMutedLogContent) return;
-        removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
-        alertLogMutedLogContent.prepend(card);
-        updateMutedPathAlertLogCards('', nowMs);
-        syncMutedPathLogTimer();
-        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
+    function prependAlertLogCard(entry, card) {
+        if (!card) return '';
+        const targetKey = String(card.dataset && card.dataset.mutedTargetKey || '');
+        const placement = getAlertLogUiUtils().resolveAlertLogCardPlacement(entry, { targetKey });
+        const container = placement.destination === 'muted'
+            ? alertLogMutedLogContent
+            : alertLogContent;
+        if (!container) return '';
+        if (placement.removeRestoredTargetKey) {
+            removeRestoredMutedAlertLogCards(placement.removeRestoredTargetKey);
+        }
+        container.prepend(card);
+        return placement.destination;
     }
 
-    function shouldAutoOpenAlertLogEntries(entries) {
-        return getAlertLogUiUtils().shouldAutoOpenAlertLogEntries(entries);
+    function finalizeAlertLogCardInsertions(destinations, nowMs = Date.now()) {
+        const insertedDestinations = (Array.isArray(destinations) ? destinations : [destinations]).filter(Boolean);
+        if (!insertedDestinations.length) return;
+        updateMutedPathAlertLogCards('', nowMs);
+        syncMutedPathLogTimer();
+        const destinationSet = new Set(insertedDestinations);
+        if (destinationSet.has('active') && alertLogContent) {
+            getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
+        }
+        if (destinationSet.has('muted') && alertLogMutedLogContent) {
+            getArbRuntimeMemoryUtils().trimContainerChildren(alertLogMutedLogContent, MAX_ALERT_LOG_ENTRIES);
+        }
     }
 
     function expandCollapsedAlertLogCard(card) {
@@ -942,31 +958,27 @@
 
     function appendQuoteAlertLogEntry(entry, nowMs = Date.now()) {
         if (!alertLogWindow || !alertLogContent) return;
-        if (shouldAutoOpenAlertLogEntries([entry])) {
+        const appendPlan = getAlertLogUiUtils().buildAlertLogAppendPlan([entry]);
+        if (!appendPlan.entries.length) return;
+        if (appendPlan.shouldAutoOpen) {
             alertLogWindow.style.display = 'flex';
             bringFloatingPanelToFront(alertLogWindow);
         }
-        const mutedEntry = entry && entry.mutedTargetCandidate
-            ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
+        const logEntry = appendPlan.entries[0];
+        const mutedEntry = logEntry && logEntry.mutedTargetCandidate
+            ? getMutedPathTargetEntry(logEntry.mutedTargetCandidate, nowMs)
             : null;
         const card = getDomRenderUtils().createElementFromHtml(
-            getAlertLogUiUtils().buildQuoteAlertLogHtml(entry, {
+            getAlertLogUiUtils().buildQuoteAlertLogHtml(logEntry, {
                 nowMs,
                 mutedEntry,
-                targetKey: entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '',
+                targetKey: logEntry && logEntry.mutedTargetCandidate ? buildMutedPathTargetKey(logEntry.mutedTargetCandidate) : '',
                 statusText: mutedEntry ? getPathAlertUtils().buildMutedPathStatusText(mutedEntry, nowMs) : '已触发'
             })
         );
         if (!card) return;
-        if (entry && entry.mutedEntry) {
-            appendMutedAlertLogCard(card, nowMs);
-            return;
-        }
-        removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
-        alertLogContent.prepend(card);
-        updateMutedPathAlertLogCards('', nowMs);
-        syncMutedPathLogTimer();
-        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
+        const destination = prependAlertLogCard(logEntry, card);
+        finalizeAlertLogCardInsertions([destination], nowMs);
     }
 
     function pruneMutedPathTargetsInPlace(nowMs = Date.now()) {
@@ -1390,14 +1402,14 @@
 
     function appendPathAlertLogEntries(entries, nowMs = Date.now()) {
         if (!alertLogWindow || !alertLogContent) return;
-        const list = Array.isArray(entries) ? entries : [];
-        if (!list.length) return;
-        if (shouldAutoOpenAlertLogEntries(list)) {
+        const appendPlan = getAlertLogUiUtils().buildAlertLogAppendPlan(entries);
+        if (!appendPlan.entries.length) return;
+        if (appendPlan.shouldAutoOpen) {
             alertLogWindow.style.display = 'flex';
             bringFloatingPanelToFront(alertLogWindow);
         }
-        for (let index = list.length - 1; index >= 0; index -= 1) {
-            const entry = list[index];
+        const destinations = [];
+        for (const entry of appendPlan.entries) {
             const mutedEntry = entry && entry.mutedTargetCandidate
                 ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
                 : null;
@@ -1411,17 +1423,11 @@
                 })
             );
             if (card) {
-                if (entry && entry.mutedEntry) {
-                    appendMutedAlertLogCard(card, nowMs);
-                } else {
-                    removeRestoredMutedAlertLogCards(card.dataset.mutedTargetKey || '');
-                    alertLogContent.prepend(card);
-                }
+                const destination = prependAlertLogCard(entry, card);
+                if (destination) destinations.push(destination);
             }
         }
-        updateMutedPathAlertLogCards('', nowMs);
-        syncMutedPathLogTimer();
-        getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES);
+        finalizeAlertLogCardInsertions(destinations, nowMs);
     }
 
     async function primeAlertAudio(audioEl) {

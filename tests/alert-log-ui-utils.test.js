@@ -3,6 +3,8 @@ const assert = require('assert');
 const {
   shouldAutoOpenAlertLogEntries,
   buildAlertLogEntryDisplayState,
+  buildAlertLogAppendPlan,
+  resolveAlertLogCardPlacement,
   buildMutedStateItemHtml,
   buildMutedStateSectionHtml,
   buildRestoredMutedAlertLogHtml,
@@ -33,6 +35,32 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   buildAlertLogEntryDisplayState({ mutedEntry: null }),
   { muted: false, collapsed: false }
+);
+
+const appendPlan = buildAlertLogAppendPlan([
+  { id: 'first', mutedEntry: null },
+  { id: 'second', mutedEntry: { expiresAt: 123 } },
+  { id: 'third', mutedEntry: null }
+]);
+assert.strictEqual(appendPlan.shouldAutoOpen, true);
+assert.deepStrictEqual(appendPlan.entries.map((entry) => entry.id), ['third', 'second', 'first']);
+
+assert.deepStrictEqual(
+  buildAlertLogAppendPlan([{ id: 'muted-only', mutedEntry: { expiresAt: 123 } }]),
+  {
+    entries: [{ id: 'muted-only', mutedEntry: { expiresAt: 123 } }],
+    shouldAutoOpen: false
+  }
+);
+
+assert.deepStrictEqual(
+  resolveAlertLogCardPlacement({ mutedEntry: { expiresAt: 123 } }, { targetKey: 'target-1' }),
+  { destination: 'muted', removeRestoredTargetKey: '' }
+);
+
+assert.deepStrictEqual(
+  resolveAlertLogCardPlacement({ mutedEntry: null }, { targetKey: 'target-1' }),
+  { destination: 'active', removeRestoredTargetKey: 'target-1' }
 );
 
 const itemHtml = buildMutedStateItemHtml({
