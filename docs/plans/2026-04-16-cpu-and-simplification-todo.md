@@ -137,6 +137,7 @@
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `dashboard-renderer.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
+  - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -176,6 +177,7 @@
   - `app.js` 的报价设置表单读取已下沉到 `dashboard-renderer.js`，主文件只提供 DOM read adapter
   - `app.js` 的确认弹窗 click 动作解析已下沉到 `dashboard-renderer.js`
   - `app.js` 的报价设置 modal viewState 写入规则已下沉到 `dashboard-renderer.js`，主文件只执行 DOM write plan
+  - `app.js` 的浮窗拖拽实现和浮窗 focus 事件绑定已下沉到 `dom-render-utils.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
   - 继续统一剩余兼容边界命名
