@@ -1724,17 +1724,6 @@
         });
     }
 
-    function buildArbOpportunityChartHref(entry) {
-        const chartsUtils = getChartsUtils();
-        if (!chartsUtils || typeof chartsUtils.buildChartsPageHref !== 'function') {
-            return '';
-        }
-        return getArbDetailUtils().buildArbOpportunityChartHref(
-            entry,
-            (chartPairs) => chartsUtils.buildChartsPageHref(chartPairs)
-        );
-    }
-
     function refreshArbOpportunityRuntime(nextOpportunityMap, nextOpportunityIdsByTargetKey) {
         const retainedEntries = [];
         if (arbDetailState && arbDetailState.selectedOpportunity && arbDetailState.selectedOpportunity.id) {
@@ -1887,7 +1876,13 @@
             ? getArbDetailUtils().buildArbDetailChartPairs(current.cycle)
             : [];
         const signature = getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs);
-        const chartHref = buildArbOpportunityChartHref(current);
+        const chartsUtils = getChartsUtils();
+        const chartHref = chartsUtils && typeof chartsUtils.buildChartsPageHref === 'function'
+            ? getArbDetailUtils().buildArbOpportunityChartHref(
+                current,
+                (chartPairs) => chartsUtils.buildChartsPageHref(chartPairs)
+            )
+            : '';
 
         setArbDetailChartLinkState(chartHref);
 

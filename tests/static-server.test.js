@@ -645,7 +645,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
     assert.ok(!appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
     assert.ok(!appJsResponse.body.includes("closest('[data-arb-opportunity-alert-id]')"));
-    assert.ok(appJsResponse.body.includes('function buildArbOpportunityChartHref(entry)'));
+    assert.ok(!appJsResponse.body.includes('function buildArbOpportunityChartHref(entry)'));
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
     assert.ok(appJsResponse.body.includes('function getDashboardApiUtils()'));
     assert.ok(appJsResponse.body.includes('DashboardApiUtils is not loaded'));
@@ -1837,6 +1837,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs)'));
     assert.ok(appJsResponse.body.includes('return getArbDetailUtils().isArbRuleLeg(leg);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId)'));
+    assert.ok(appJsResponse.body.includes('const chartHref = chartsUtils && typeof chartsUtils.buildChartsPageHref === \'function\''));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbOpportunityChartHref('));
     assert.ok(/getArbDetailUtils\(\)\.resolveArbOpportunityBaseAmount\(\s*current\.cycle,\s*findQuoteById,\s*isRuleLeg\s*\)/.test(appJsResponse.body));
     assert.ok(!appJsResponse.body.includes('function doesArbDetailUseQuote('));
