@@ -3818,20 +3818,12 @@
         return getDomRenderUtils().closestEventTarget(event, selector);
     }
 
-    function copyPriceFromText(text) {
-        const price = getQuoteDisplayUtils().extractPriceFromText(text);
-        if (typeof price !== 'number' || Number.isNaN(price)) return;
-        copyTextToClipboard(String(price));
-        showCopyToast(`已复制: ${price}`);
-    }
-
     function bindCopyHandler(targetEl, getText) {
-        if (!targetEl || targetEl.dataset.copyBound) return;
-        targetEl.dataset.copyBound = '1';
-        targetEl.addEventListener('click', (event) => {
-            event.stopPropagation();
-            const text = typeof getText === 'function' ? getText() : targetEl.textContent;
-            copyPriceFromText(text);
+        getCopyUtils().bindCopyPriceHandler(targetEl, {
+            getText,
+            extractPrice: (text) => getQuoteDisplayUtils().extractPriceFromText(text),
+            copyText: (text) => copyTextToClipboard(text),
+            showToast: (message) => showCopyToast(message)
         });
     }
 

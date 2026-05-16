@@ -1,7 +1,9 @@
 const assert = require('assert');
 
 const {
+  bindCopyPriceHandler,
   createCopyToastRuntime,
+  copyPriceFromText,
   copyTextToClipboard
 } = require('../src/ui/copy-utils');
 
@@ -133,6 +135,57 @@ async function run() {
     }),
     /Clipboard fallback failed/
   );
+
+  const copiedPrices = [];
+  const copyToasts = [];
+  assert.strictEqual(
+    copyPriceFromText('1 ETH ≈ 3000 USDC', {
+      extractPrice: () => 3000,
+      copyText: (value) => copiedPrices.push(value),
+      showToast: (message) => copyToasts.push(message)
+    }),
+    true
+  );
+  assert.deepStrictEqual(copiedPrices, ['3000']);
+  assert.deepStrictEqual(copyToasts, ['已复制: 3000']);
+  assert.strictEqual(
+    copyPriceFromText('no price', {
+      extractPrice: () => null,
+      copyText: (value) => copiedPrices.push(value),
+      showToast: (message) => copyToasts.push(message)
+    }),
+    false
+  );
+  assert.deepStrictEqual(copiedPrices, ['3000']);
+
+  const clickHandlers = {};
+  const copyTargetEl = {
+    dataset: {},
+    textContent: '1 BTC ≈ 100000 USDC',
+    addEventListener(type, handler) {
+      clickHandlers[type] = handler;
+    }
+  };
+  assert.strictEqual(
+    bindCopyPriceHandler(copyTargetEl, {
+      extractPrice: () => 100000,
+      copyText: (value) => copiedPrices.push(value),
+      showToast: (message) => copyToasts.push(message)
+    }),
+    true
+  );
+  assert.strictEqual(copyTargetEl.dataset.copyBound, '1');
+  assert.strictEqual(typeof clickHandlers.click, 'function');
+  let propagationStopped = false;
+  clickHandlers.click({
+    stopPropagation() {
+      propagationStopped = true;
+    }
+  });
+  assert.strictEqual(propagationStopped, true);
+  assert.strictEqual(copiedPrices[copiedPrices.length - 1], '100000');
+  assert.strictEqual(bindCopyPriceHandler(copyTargetEl, {}), false);
+  assert.strictEqual(bindCopyPriceHandler(null, {}), false);
 }
 
 run().catch((error) => {

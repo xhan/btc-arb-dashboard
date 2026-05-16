@@ -107,8 +107,42 @@
     };
   }
 
+  function copyPriceFromText(text, options = {}) {
+    const extractPrice = typeof options.extractPrice === 'function'
+      ? options.extractPrice
+      : null;
+    const price = extractPrice ? extractPrice(text) : null;
+    if (typeof price !== 'number' || Number.isNaN(price)) return false;
+
+    if (typeof options.copyText === 'function') {
+      options.copyText(String(price));
+    }
+    if (typeof options.showToast === 'function') {
+      options.showToast(`已复制: ${price}`);
+    }
+    return true;
+  }
+
+  function bindCopyPriceHandler(targetEl, options = {}) {
+    if (!targetEl || !targetEl.dataset || targetEl.dataset.copyBound) return false;
+    if (typeof targetEl.addEventListener !== 'function') return false;
+    targetEl.dataset.copyBound = '1';
+    targetEl.addEventListener('click', (event) => {
+      if (event && typeof event.stopPropagation === 'function') {
+        event.stopPropagation();
+      }
+      const text = typeof options.getText === 'function'
+        ? options.getText()
+        : targetEl.textContent;
+      copyPriceFromText(text, options);
+    });
+    return true;
+  }
+
   return {
+    bindCopyPriceHandler,
     createCopyToastRuntime,
+    copyPriceFromText,
     copyTextToClipboard
   };
 });
