@@ -664,7 +664,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertQuoteLabel({'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().renderPathAlertPanelHtml(renderOptions)'));
     assert.ok(!appJsResponse.body.includes('function renderPathAlertPanelHtml(options = {})'));
-    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertMetaText(alert, {'));
+    assert.ok(!appJsResponse.body.includes('function renderPathAlertSummaryLinesHtml(alert)'));
+    assert.ok(!appJsResponse.body.includes('function buildPathAlertMetaText(alert)'));
+    assert.ok(appJsResponse.body.includes('renderSummaryLinesHtml: (alert) => getPathAlertPageUtils().renderPathAlertSummaryLinesHtml(buildPathAlertSummaryLines(alert))'));
+    assert.ok(appJsResponse.body.includes('buildMetaText: (alert) => getPathAlertPageUtils().buildPathAlertMetaText(alert, {'));
     assert.ok(!appJsResponse.body.includes('return \'/path-alerts\';'));
     assert.ok(!appJsResponse.body.includes('<div class="path-alert-empty">暂无路径报警</div>'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-edit-link'));

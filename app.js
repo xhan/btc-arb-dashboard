@@ -3335,10 +3335,6 @@
         return window.PathAlertPageUtils;
     }
 
-    function renderPathAlertSummaryLinesHtml(alert) {
-        return getPathAlertPageUtils().renderPathAlertSummaryLinesHtml(buildPathAlertSummaryLines(alert));
-    }
-
     function buildPathAlertLegDisplayLine(leg) {
         if (!leg) return '--';
         const suffix = leg.pricingMode === 'cex-bid1'
@@ -3632,12 +3628,6 @@
         }
     }
 
-    function buildPathAlertMetaText(alert) {
-        return getPathAlertPageUtils().buildPathAlertMetaText(alert, {
-            resolveSpecialRuleConfig
-        });
-    }
-
     function renderPathAlertPanel() {
         if (!pathAlertContent) return;
         if (pathAlertPanelHidden) return;
@@ -3652,8 +3642,10 @@
             forceImmediateAlerts,
             getRuntime: (alert) => pathAlertRuntimeState.get(alert.id) || null,
             buildTitle: buildPathAlertDisplayTitle,
-            renderSummaryLinesHtml: renderPathAlertSummaryLinesHtml,
-            buildMetaText: buildPathAlertMetaText,
+            renderSummaryLinesHtml: (alert) => getPathAlertPageUtils().renderPathAlertSummaryLinesHtml(buildPathAlertSummaryLines(alert)),
+            buildMetaText: (alert) => getPathAlertPageUtils().buildPathAlertMetaText(alert, {
+                resolveSpecialRuleConfig
+            }),
             buildEditHref: (alert) => buildPathAlertsManagementHref({
                 mode: 'edit',
                 alertId: alert.id
