@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const { createFetchOnce } = require('../fetch-once');
+const { createFetchOnce } = require('../src/server/fetch-once');
 
 (async () => {
   let callCount = 0;

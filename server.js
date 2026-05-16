@@ -23,7 +23,7 @@ const {
 const {
     createRequestChannelAgentCache
 } = require('./src/request-channel/request-channel-http');
-const { createFetchOnce } = require('./fetch-once');
+const { createFetchOnce } = require('./src/server/fetch-once');
 const {
     buildPathAlertWebhookUrl,
     buildTelegramBotApiUrl,
@@ -35,7 +35,7 @@ const { splitCompactTradingPairSymbol } = require('./src/shared/trading-pair-uti
 const {
     createCetusAggregatorClient,
     normalizeCetusAggregatorConfig
-} = require('./cetus-aggregator-config');
+} = require('./src/server/cetus-aggregator-config');
 const {
     DEFAULT_ARB_CYCLE_START_PRIORITY,
     normalizeArbCycleStartPriority

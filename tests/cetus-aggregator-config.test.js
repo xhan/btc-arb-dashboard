@@ -4,7 +4,7 @@ const {
   DEFAULT_CETUS_AGGREGATOR_ENDPOINT,
   createCetusAggregatorClient,
   normalizeCetusAggregatorConfig
-} = require('../cetus-aggregator-config');
+} = require('../src/server/cetus-aggregator-config');
 
 (() => {
   assert.deepStrictEqual(
