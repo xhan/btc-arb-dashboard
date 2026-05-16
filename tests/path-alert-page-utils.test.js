@@ -33,6 +33,8 @@ const {
   renderPathAlertRouteLinesHtml,
   renderPathAlertSectionHtml,
   renderPathAlertSummaryLinesHtml,
+  resolvePathAlertPanelChangeAction,
+  resolvePathAlertPanelClickAction,
   getPathAlertSectionTypeClass,
   getPathAlertSectionTypeLabel,
   shortenTokenText
@@ -675,6 +677,47 @@ const emptyPanelHtml = renderPathAlertPanelHtml({
   emptyText: '暂无需要关注的路径报警'
 });
 assert.ok(emptyPanelHtml.includes('暂无需要关注的路径报警'));
+
+function resolvePanelActionFor(resolver, matches) {
+  return resolver({ type: 'event' }, {
+    closestEventTarget: (event, selector) => matches[selector] || null
+  });
+}
+
+assert.deepStrictEqual(
+  resolvePanelActionFor(resolvePathAlertPanelChangeAction, {
+    '[data-path-alert-force-immediate]': { checked: true }
+  }),
+  { type: 'set-force-immediate', checked: true }
+);
+
+assert.deepStrictEqual(
+  resolvePanelActionFor(resolvePathAlertPanelChangeAction, {
+    '[data-path-alert-global-toggle]': {
+      checked: false,
+      dataset: { pathAlertGlobalToggle: 'webhookEnabled' }
+    }
+  }),
+  { type: 'set-global-toggle', key: 'webhookEnabled', checked: false }
+);
+
+assert.deepStrictEqual(resolvePanelActionFor(resolvePathAlertPanelChangeAction, {}), { type: 'none' });
+
+assert.deepStrictEqual(
+  resolvePanelActionFor(resolvePathAlertPanelClickAction, {
+    '[data-path-alert-delete]': { dataset: { pathAlertDelete: 'alert-delete' } }
+  }),
+  { type: 'delete-alert', alertId: 'alert-delete' }
+);
+
+assert.deepStrictEqual(
+  resolvePanelActionFor(resolvePathAlertPanelClickAction, {
+    '[data-path-alert-dismiss-delete]': { dataset: { pathAlertDismissDelete: 'alert-dismiss' } }
+  }),
+  { type: 'dismiss-delete-alert', alertId: 'alert-dismiss' }
+);
+
+assert.deepStrictEqual(resolvePanelActionFor(resolvePathAlertPanelClickAction, {}), { type: 'none' });
 
 assert.strictEqual(
   buildPathAlertMetaText({

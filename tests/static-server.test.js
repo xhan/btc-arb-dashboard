@@ -1020,7 +1020,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertUtilsResponse.body.includes('function buildTriggeredPathAlertChangedLegs(snapshotState, settings = {})'));
     assert.ok(!appJsResponse.body.includes('const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);'));
     assert.ok(!appJsResponse.body.includes('next.isSoundActive = Boolean(next.shouldTrigger && !isMuted && pathAlertConfig.settings && pathAlertConfig.settings.localSoundEnabled !== false);'));
-    assert.ok(appJsResponse.body.includes("closestEventTarget(event, '[data-path-alert-force-immediate]')"));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function resolvePathAlertPanelChangeAction(event, options = {})'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function resolvePathAlertPanelClickAction(event, options = {})'));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().resolvePathAlertPanelChangeAction(event, { closestEventTarget })'));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().resolvePathAlertPanelClickAction(event, { closestEventTarget })'));
+    assert.ok(!appJsResponse.body.includes("closestEventTarget(event, '[data-path-alert-force-immediate]')"));
     assert.ok(response.body.includes('.alert-log-entry-collapsed'));
     assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
     assert.ok(!appJsResponse.body.includes('导入当前全部机会'));
@@ -1049,6 +1053,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-edit-link'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-delete'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-dismiss-delete'));
+    assert.ok(!appJsResponse.body.includes("closestEventTarget(event, '[data-path-alert-delete]')"));
+    assert.ok(!appJsResponse.body.includes("closestEventTarget(event, '[data-path-alert-dismiss-delete]')"));
     assert.ok(!appJsResponse.body.includes('function openPathAlertModal('));
     assert.ok(!appJsResponse.body.includes('function renderPathAlertModal('));
     assert.ok(!appJsResponse.body.includes('function handlePathAlertModalClick('));

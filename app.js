@@ -3508,9 +3508,9 @@
     }
 
     function handlePathAlertPanelChange(event) {
-        const forceImmediateToggle = closestEventTarget(event, '[data-path-alert-force-immediate]');
-        if (forceImmediateToggle) {
-            const forceImmediateEnabled = pathAlertRuntimeState.setForceImmediate(forceImmediateToggle.checked);
+        const action = getPathAlertPageUtils().resolvePathAlertPanelChangeAction(event, { closestEventTarget });
+        if (action.type === 'set-force-immediate') {
+            const forceImmediateEnabled = pathAlertRuntimeState.setForceImmediate(action.checked);
             if (forceImmediateEnabled) {
                 evaluatePathAlertsOnce();
                 evaluateQuoteAlertsOnce();
@@ -3522,26 +3522,22 @@
             });
             return;
         }
-        const toggle = closestEventTarget(event, '[data-path-alert-global-toggle]');
-        if (!toggle || !pathAlertConfig.settings) return;
-        const key = toggle.dataset.pathAlertGlobalToggle;
-        if (!key) return;
-        pathAlertConfig.settings[key] = toggle.checked;
+        if (action.type !== 'set-global-toggle' || !pathAlertConfig.settings) return;
+        pathAlertConfig.settings[action.key] = action.checked;
         queuePathAlertConfigSave();
         updateAlertSoundState();
     }
 
     function handlePathAlertPanelClick(event) {
-        const deleteBtn = closestEventTarget(event, '[data-path-alert-delete]');
-        if (deleteBtn) {
-            removePathAlertById(deleteBtn.dataset.pathAlertDelete);
+        const action = getPathAlertPageUtils().resolvePathAlertPanelClickAction(event, { closestEventTarget });
+        if (action.type === 'delete-alert') {
+            removePathAlertById(action.alertId);
             queuePathAlertConfigSave();
             return;
         }
 
-        const dismissDeleteBtn = closestEventTarget(event, '[data-path-alert-dismiss-delete]');
-        if (dismissDeleteBtn) {
-            dismissPathAlertById(dismissDeleteBtn.dataset.pathAlertDismissDelete);
+        if (action.type === 'dismiss-delete-alert') {
+            dismissPathAlertById(action.alertId);
             queuePathAlertConfigSave();
         }
     }

@@ -506,6 +506,57 @@
     return `${toolbarHtml}<div class="path-alert-list">${items.map(renderPathAlertItemHtml).join('')}</div>`;
   }
 
+  function readDatasetValue(element, key) {
+    return String(element && element.dataset && element.dataset[key] || '').trim();
+  }
+
+  function createClosestResolver(event, options = {}) {
+    const closestEventTarget = typeof options.closestEventTarget === 'function'
+      ? options.closestEventTarget
+      : () => null;
+    return (selector) => closestEventTarget(event, selector);
+  }
+
+  function resolvePathAlertPanelChangeAction(event, options = {}) {
+    const closest = createClosestResolver(event, options);
+    const forceImmediateToggle = closest('[data-path-alert-force-immediate]');
+    if (forceImmediateToggle) {
+      return {
+        type: 'set-force-immediate',
+        checked: forceImmediateToggle.checked === true
+      };
+    }
+
+    const globalToggle = closest('[data-path-alert-global-toggle]');
+    const key = readDatasetValue(globalToggle, 'pathAlertGlobalToggle');
+    if (key) {
+      return {
+        type: 'set-global-toggle',
+        key,
+        checked: globalToggle.checked === true
+      };
+    }
+
+    return { type: 'none' };
+  }
+
+  function resolvePathAlertPanelClickAction(event, options = {}) {
+    const closest = createClosestResolver(event, options);
+    const deleteBtn = closest('[data-path-alert-delete]');
+    const deleteAlertId = readDatasetValue(deleteBtn, 'pathAlertDelete');
+    if (deleteAlertId) {
+      return { type: 'delete-alert', alertId: deleteAlertId };
+    }
+
+    const dismissDeleteBtn = closest('[data-path-alert-dismiss-delete]');
+    const dismissDeleteAlertId = readDatasetValue(dismissDeleteBtn, 'pathAlertDismissDelete');
+    if (dismissDeleteAlertId) {
+      return { type: 'dismiss-delete-alert', alertId: dismissDeleteAlertId };
+    }
+
+    return { type: 'none' };
+  }
+
   function buildPathAlertMetaText(alert, options = {}) {
     const triggerText = alert && alert.triggerMode === 'delayed'
       ? `延迟 ${String(alert.confirmDelaySec)}s`
@@ -977,6 +1028,8 @@
     renderPathAlertRouteLinesHtml,
     renderPathAlertSectionHtml,
     renderPathAlertSummaryLinesHtml,
+    resolvePathAlertPanelChangeAction,
+    resolvePathAlertPanelClickAction,
     getPathAlertSectionTypeClass,
     getPathAlertSectionTypeLabel,
     shortenTokenText
