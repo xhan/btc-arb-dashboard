@@ -28,7 +28,7 @@ GET https://api.jup.ag/swap/v1/quote
 
 - Solana token metadata 走 `Helius RPC`
 - 代码位置：[src/market-clients/index.js:131](/Users/xhan/Desktop/market_diff/src/market-clients/index.js#L131)
-- RPC 配置位置：[server.js:470](/Users/xhan/Desktop/market_diff/server.js#L470)
+- RPC 配置位置：[src/server/server-app.js](/Users/xhan/Desktop/market_diff/src/server/server-app.js)
 - 当前调用方法：
 
 ```text

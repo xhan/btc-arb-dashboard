@@ -11,7 +11,7 @@
 
 服务端初始化位置：
 
-- [server.js](/Users/xhan/Desktop/market_diff/server.js)
+- [src/server/server-app.js](/Users/xhan/Desktop/market_diff/src/server/server-app.js)
 
 报价 provider 位置：
 
