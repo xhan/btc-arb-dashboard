@@ -309,6 +309,26 @@
     targetMap.set(targetKey, [opportunityId]);
   }
 
+  function buildFixedArbSections(options = {}) {
+    const fixedResults = Array.isArray(options.fixedResults) ? options.fixedResults : [];
+    const getDisplayMinProfitBp = typeof options.getDisplayMinProfitBp === 'function'
+      ? options.getDisplayMinProfitBp
+      : () => DEFAULT_DISPLAY_MIN_PROFIT_BP;
+    const buildEntry = typeof options.buildEntry === 'function' ? options.buildEntry : () => null;
+    return fixedResults.map(({ rule, cycles }) => {
+      const displayMinProfitBp = normalizeDisplayMinProfitBp(getDisplayMinProfitBp(rule));
+      const displayCycles = selectCyclesAboveDisplayThreshold(cycles, displayMinProfitBp);
+      const opportunities = displayCycles
+        .map((cycle, index, items) => buildEntry(cycle, index, items, rule, displayMinProfitBp))
+        .filter(Boolean);
+      return {
+        title: String(rule?.title || '固定路径'),
+        opportunities,
+        emptyText: `无收益率 > ${displayMinProfitBp}bp`
+      };
+    });
+  }
+
   function buildQuotePriceWatchDisplayEntry(options = {}) {
     const hasQuote = options.hasQuote === true;
     const hasValue = options.value !== null && options.value !== undefined;
@@ -373,6 +393,7 @@
     selectPositiveCyclesOrBest,
     buildArbOpportunityDisplayEntry,
     buildArbOpportunityStoreEntry,
+    buildFixedArbSections,
     buildQuotePriceWatchDisplayEntry,
     buildQuotePriceWatchSection,
     getCycleDisplayState,

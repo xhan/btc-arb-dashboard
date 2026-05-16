@@ -495,6 +495,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('window.DomRenderUtils.'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta = {}, options = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildFixedArbSections(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchDisplayEntry(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchSection(options = {})'));
     assert.ok(appJsResponse.body.includes('function getArbPanelLayoutUtils()'));
@@ -727,6 +728,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('categoryTemplatesBySectionKey'));
     assert.ok(!appJsResponse.body.includes('let lbtcSection = null'));
     assert.ok(!appJsResponse.body.includes('const wbtcSection = categorySections.find'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildFixedArbSections({'));
     assert.ok(appJsResponse.body.includes("emptyText: '无收益率'"));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes("title: '关注列表'"));
     assert.ok(appJsResponse.body.includes('function getArbPathConfigUtils()'));

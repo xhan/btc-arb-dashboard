@@ -10,6 +10,7 @@ const {
   selectPositiveCyclesOrBest,
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
+  buildFixedArbSections,
   buildQuotePriceWatchDisplayEntry,
   buildQuotePriceWatchSection,
   cycleContainsAnyChains,
@@ -383,4 +384,37 @@ assert.deepStrictEqual(
     opportunities: [],
     emptyText: '暂无关注价格'
   }
+);
+
+const fixedCycleA = { id: 'cycle-a', profitRate: 0.0002 };
+const fixedCycleB = { id: 'cycle-b', profitRate: 0.00015 };
+const fixedCycleLow = { id: 'cycle-low', profitRate: 0.00005 };
+assert.deepStrictEqual(
+  buildFixedArbSections({
+    fixedResults: [
+      { rule: { id: 'wbtc-route', title: 'WBTC 固定路径' }, cycles: [fixedCycleA, fixedCycleLow, fixedCycleB] },
+      { rule: {}, cycles: [] }
+    ],
+    getDisplayMinProfitBp: () => 1,
+    buildEntry: (cycle, index, items, rule) => ({
+      label: items.length > 1 ? `机会 ${index + 1}` : '',
+      cycleId: cycle.id,
+      section: `fixed:${rule.id || ''}`
+    })
+  }),
+  [
+    {
+      title: 'WBTC 固定路径',
+      opportunities: [
+        { label: '机会 1', cycleId: 'cycle-a', section: 'fixed:wbtc-route' },
+        { label: '机会 2', cycleId: 'cycle-b', section: 'fixed:wbtc-route' }
+      ],
+      emptyText: '无收益率 > 1bp'
+    },
+    {
+      title: '固定路径',
+      opportunities: [],
+      emptyText: '无收益率 > 1bp'
+    }
+  ]
 );

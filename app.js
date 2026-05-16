@@ -3839,25 +3839,17 @@
     }
 
     function buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
-        return sharedRuleSnapshot.fixedResults
-            .map(({ rule, cycles }) => {
-                const displayMinProfitBp = getFixedRuleDisplayMinProfitBp(rule);
-                const displayCycles = getArbPanelLayoutUtils().selectCyclesAboveDisplayThreshold(cycles, displayMinProfitBp);
-                const opportunities = displayCycles
-                    .map((cycle, index, items) => createArbOpportunityEntry(
-                        nextOpportunityMap,
-                        nextOpportunityIdsByTargetKey,
-                        cycle,
-                        items.length > 1 ? `机会 ${index + 1}` : '',
-                        { section: `fixed:${rule?.id || ''}`, alertPreset: { type: 'path' } }
-                    ))
-                    .filter(Boolean);
-                return {
-                    title: String(rule?.title || '固定路径'),
-                    opportunities,
-                    emptyText: `无收益率 > ${displayMinProfitBp}bp`
-                };
-            });
+        return getArbPanelLayoutUtils().buildFixedArbSections({
+            fixedResults: sharedRuleSnapshot.fixedResults,
+            getDisplayMinProfitBp: getFixedRuleDisplayMinProfitBp,
+            buildEntry: (cycle, index, items, rule) => createArbOpportunityEntry(
+                nextOpportunityMap,
+                nextOpportunityIdsByTargetKey,
+                cycle,
+                items.length > 1 ? `机会 ${index + 1}` : '',
+                { section: `fixed:${rule?.id || ''}`, alertPreset: { type: 'path' } }
+            )
+        });
     }
 
     function buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
