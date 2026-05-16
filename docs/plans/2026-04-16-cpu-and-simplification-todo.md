@@ -69,9 +69,9 @@
   - `quote-pause-utils.buildPausedQuoteState()` 已停止输出 UI-only 字段
   - quote 暂停按钮和分区暂停按钮的展示状态模型已下沉到 `src/quote/quote-pause-utils.js`
   - quote alert display label 已下沉到 `src/quote/quote-display-utils.js`
-  - quote alert 按 quoteId 过滤规则已下沉到 `path-alert-utils.js`，避免 `app.js` 继续直接理解 alert target 结构
-  - quote alert trigger entry 的结构拼装已下沉到 `path-alert-notification-utils.js`
-  - quote alert action link 的结构转换已下沉到 `path-alert-notification-utils.js`
+  - quote alert 按 quoteId 过滤规则已下沉到 `src/path-alerts/path-alert-utils.js`，避免 `app.js` 继续直接理解 alert target 结构
+  - quote alert trigger entry 的结构拼装已下沉到 `src/path-alerts/path-alert-notification-utils.js`
+  - quote alert action link 的结构转换已下沉到 `src/path-alerts/path-alert-notification-utils.js`
   - quote 跨链显示名已下沉到 `chain-defaults.js`
   - dashboardState 按 quoteId 查找 quote 的逻辑已下沉到 `src/dashboard/dashboard-runtime-utils.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
@@ -135,7 +135,7 @@
   - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `src/quote/quote-display-utils.js` / `src/quote/quote-state-runtime-utils.js`
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 所有权、全局过滤栏读写计划和面板内容事件动作解析已下沉到 `src/arb/arb-path-template-cache-utils.js` / `src/arb/arb-runtime-memory-utils.js` / `src/arb/arb-panel-layout-utils.js` / `src/arb/arb-panel-renderer.js`，`app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
-  - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`，面板 change/click action 解析已下沉到 `path-alert-page-utils.js`
+  - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
@@ -145,6 +145,7 @@
     - 已启动第二步：quote pause/request/display/state/queue runtime 迁入 `src/quote/`，后续同类 quote 模块可按这个模式继续迁移
     - 已启动第三步：dashboard renderer/runtime 迁入 `src/dashboard/`，后续 dashboard 模块按这个目录继续收敛
     - 已启动第四步：request channel 配置、前端工具和 HTTP proxy agent 工具迁入 `src/request-channel/`，后续请求通道边界按这个目录维护
+    - 已启动第五步：path alert 主工具、通知、页面渲染、规则定义、候选构建、编辑器和独立页面入口迁入 `src/path-alerts/`，后续 path alert 模块按这个目录继续收敛
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -155,21 +156,21 @@
   - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 未使用的 generic alert log 渲染路径已移除
   - alert log 的 restored muted selector、恢复卡片删除、click action 解析已下沉到 `alert-log-ui-utils.js`
-  - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `path-alert-utils.js`
+  - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `src/path-alerts/path-alert-utils.js`
   - `app.js` 中未调用的 muted path timer 包装函数已移除，保留唯一入口 `syncMutedPathLogTimer()`
-  - `path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
-  - `path-alerts-app.js` 的卡片标题、meta、section 配置和路线行渲染已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的报警卡片、已忽略卡片和 section HTML 片段已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的交易对上下文 bar label/HTML 已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的 dashboard quote 到候选报价转换已下沉到 `path-alert-candidate-utils.js`
-  - `path-alerts-app.js` 的编辑器草稿创建、克隆、prefill/alert 还原、target 转换、校验和 alert 构造规则已拆到 `path-alert-editor-utils.js`
-  - `path-alerts-app.js` 的交易对报警展示 label、pair text 和默认名称规则已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的报警/已忽略项摘要行生成规则已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的编辑器已选目标摘要行、规则选择、候选搜索、交易对目标和已选 legs 渲染片段已拆到 `path-alert-editor-utils.js`
-  - `path-alerts-app.js` 的候选报价建议项 HTML 已拆到 `path-alert-editor-utils.js`
-  - `path-alerts-app.js` 的编辑器主模板已拆到 `path-alert-editor-utils.js`
-  - `app.js` 的 path alert panel change/click action 解析已下沉到 `path-alert-page-utils.js`
-  - `app.js` 的 path alert 配置同步 payload 构造和 storage event reload 判定已下沉到 `path-alert-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
+  - `src/path-alerts/path-alerts-app.js` 的卡片标题、meta、section 配置和路线行渲染已下沉到 `src/path-alerts/path-alert-page-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的报警卡片、已忽略卡片和 section HTML 片段已下沉到 `src/path-alerts/path-alert-page-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的交易对上下文 bar label/HTML 已下沉到 `src/path-alerts/path-alert-page-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的 dashboard quote 到候选报价转换已下沉到 `src/path-alerts/path-alert-candidate-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的编辑器草稿创建、克隆、prefill/alert 还原、target 转换、校验和 alert 构造规则已拆到 `src/path-alerts/path-alert-editor-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的交易对报警展示 label、pair text 和默认名称规则已下沉到 `src/path-alerts/path-alert-page-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的报警/已忽略项摘要行生成规则已下沉到 `src/path-alerts/path-alert-page-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的编辑器已选目标摘要行、规则选择、候选搜索、交易对目标和已选 legs 渲染片段已拆到 `src/path-alerts/path-alert-editor-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的候选报价建议项 HTML 已拆到 `src/path-alerts/path-alert-editor-utils.js`
+  - `src/path-alerts/path-alerts-app.js` 的编辑器主模板已拆到 `src/path-alerts/path-alert-editor-utils.js`
+  - `app.js` 的 path alert panel change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
+  - `app.js` 的 path alert 配置同步 payload 构造和 storage event reload 判定已下沉到 `src/path-alerts/path-alert-utils.js`
   - `app.js` 的 quote hover tooltip CEX/source/preference 展示模型已下沉到 `src/quote/quote-display-utils.js`
   - `app.js` 的 quote request channel tag 插入/更新/删除计划已下沉到 `src/quote/quote-display-utils.js`
   - `app.js` 的 quote trend arrow 涨跌/隐藏展示模型已下沉到 `src/quote/quote-display-utils.js`
@@ -188,10 +189,10 @@
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `app.js` 的套利全局过滤栏 DOM 写入计划和事件 patch 构造已下沉到 `src/arb/arb-panel-layout-utils.js`
-  - `app.js` 的路径腿 live quote label 格式化已委托给 `path-alert-page-utils.js`
-  - `app.js` 的 path alert 配置加载降级/严格加载语义已下沉到 `path-alert-utils.js` 的 `createPathAlertConfigClient()`
+  - `app.js` 的路径腿 live quote label 格式化已委托给 `src/path-alerts/path-alert-page-utils.js`
+  - `app.js` 的 path alert 配置加载降级/严格加载语义已下沉到 `src/path-alerts/path-alert-utils.js` 的 `createPathAlertConfigClient()`
   - `app.js` 中只定义未调用的 `resolveEventTargetElement()` 包装函数已移除，事件解析继续统一走各模块 action resolver
-  - `app.js` 的 quote alert 触发消息和当前值文案包装已移除，触发条目构造统一由 `path-alert-notification-utils.js` 根据 evaluation 生成
+  - `app.js` 的 quote alert 触发消息和当前值文案包装已移除，触发条目构造统一由 `src/path-alerts/path-alert-notification-utils.js` 根据 evaluation 生成
   - `app.js` 的 dashboard 金额输入、暂停、设置、删除、添加和交换按钮动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `app.js` 的添加报价表单可见性、占位符、保存校验、draft quote 构造和 modal click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `app.js` 的全局设置 interval 表单回填、读取和默认值 fallback 解析已下沉到 `src/dashboard/dashboard-renderer.js`
