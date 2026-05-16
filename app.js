@@ -3825,46 +3825,17 @@
         }
     }
 
-    function getQuotePriceWatchItems() {
-        return getArbPathConfigUtils().getQuotePriceWatchItems(ARB_PATH_CONFIG);
-    }
-
-    function resolveQuotePriceWatchValue(item, state) {
-        return getArbPathConfigUtils().resolveQuotePriceValue(item, state);
-    }
-
-    function buildQuotePriceWatchEntry(item) {
-        const quote = findDashboardQuoteById(item.quoteId);
-        const state = quote ? quoteMarketState.get(Number(quote.id)) || {} : {};
-        const value = resolveQuotePriceWatchValue(item, state);
-        const isPaused = quote ? isQuotePaused(quote) : false;
-        const pairLabel = quote
-            ? buildQuoteAlertDisplayLabel(quote, state, item.direction)
-            : `报价 #${String(item.quoteId)}`;
-        const chainLabel = quote ? formatChainLabel(quote.chain) : '未知链';
-        return getArbPanelLayoutUtils().buildQuotePriceWatchDisplayEntry({
-            title: item.title,
-            hasQuote: Boolean(quote),
-            value,
-            priceText: value == null ? '--' : String(formatDetailNumber(value, 8)),
-            isPaused,
-            chainLabel,
-            pairLabel
-        });
-    }
-
-    function buildQuotePriceWatchEntries() {
-        return getQuotePriceWatchItems()
-            .map(buildQuotePriceWatchEntry)
-            .filter(Boolean);
-    }
-
     function buildQuotePriceWatchSection() {
-        return {
-            title: '关注列表',
-            opportunities: buildQuotePriceWatchEntries(),
-            emptyText: '暂无关注价格'
-        };
+        return getArbPanelLayoutUtils().buildQuotePriceWatchSection({
+            watchItems: getArbPathConfigUtils().getQuotePriceWatchItems(ARB_PATH_CONFIG),
+            findQuote: (item) => findDashboardQuoteById(item.quoteId),
+            getQuoteState: (quote) => quoteMarketState.get(Number(quote.id)) || {},
+            resolveValue: (item, state) => getArbPathConfigUtils().resolveQuotePriceValue(item, state),
+            isQuotePaused,
+            buildPairLabel: (quote, state, item) => buildQuoteAlertDisplayLabel(quote, state, item.direction),
+            formatChainLabel,
+            formatPrice: (value) => String(formatDetailNumber(value, 8))
+        });
     }
 
     function buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {

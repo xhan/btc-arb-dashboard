@@ -328,6 +328,40 @@
     };
   }
 
+  function buildQuotePriceWatchSection(options = {}) {
+    const watchItems = Array.isArray(options.watchItems) ? options.watchItems : [];
+    const findQuote = typeof options.findQuote === 'function' ? options.findQuote : () => null;
+    const getQuoteState = typeof options.getQuoteState === 'function' ? options.getQuoteState : () => ({});
+    const resolveValue = typeof options.resolveValue === 'function' ? options.resolveValue : () => null;
+    const isQuotePaused = typeof options.isQuotePaused === 'function' ? options.isQuotePaused : () => false;
+    const buildPairLabel = typeof options.buildPairLabel === 'function' ? options.buildPairLabel : () => '';
+    const formatChainLabel = typeof options.formatChainLabel === 'function' ? options.formatChainLabel : (chain) => String(chain || '');
+    const formatPrice = typeof options.formatPrice === 'function' ? options.formatPrice : (value) => value;
+    const opportunities = watchItems
+      .map((item) => {
+        if (!item || typeof item !== 'object') return null;
+        const quote = findQuote(item);
+        const hasQuote = Boolean(quote);
+        const state = hasQuote ? getQuoteState(quote, item) || {} : {};
+        const value = hasQuote ? resolveValue(item, state, quote) : null;
+        return buildQuotePriceWatchDisplayEntry({
+          title: item.title,
+          hasQuote,
+          value,
+          priceText: value == null ? '--' : formatPrice(value, item, state, quote),
+          isPaused: hasQuote ? isQuotePaused(quote, item, state) : false,
+          chainLabel: hasQuote ? formatChainLabel(quote.chain, quote, item, state) : '未知链',
+          pairLabel: hasQuote ? buildPairLabel(quote, state, item) : `报价 #${String(item.quoteId)}`
+        });
+      })
+      .filter(Boolean);
+    return {
+      title: '关注列表',
+      opportunities,
+      emptyText: '暂无关注价格'
+    };
+  }
+
   return {
     splitSectionsIntoColumns,
     splitSectionsBySectionCount,
@@ -340,6 +374,7 @@
     buildArbOpportunityDisplayEntry,
     buildArbOpportunityStoreEntry,
     buildQuotePriceWatchDisplayEntry,
+    buildQuotePriceWatchSection,
     getCycleDisplayState,
     mapEntriesForDisplayCycles,
     parseFilterInput,

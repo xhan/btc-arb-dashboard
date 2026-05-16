@@ -11,6 +11,7 @@ const {
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
   buildQuotePriceWatchDisplayEntry,
+  buildQuotePriceWatchSection,
   cycleContainsAnyChains,
   cycleContainsAnySymbols,
   filterGlobalArbCycles,
@@ -335,4 +336,51 @@ assert.strictEqual(
     isPaused: true
   }).statusText,
   '报价暂停'
+);
+
+assert.deepStrictEqual(
+  buildQuotePriceWatchSection({
+    watchItems: [
+      { title: '正向关注', quoteId: 11, direction: 'forward' },
+      { title: '缺失关注', quoteId: 404, direction: 'inverse' }
+    ],
+    findQuote: (item) => (item.quoteId === 11 ? { id: 11, chain: 'ethereum' } : null),
+    getQuoteState: () => ({ lastRawPrice: 1.23456 }),
+    resolveValue: (item, state) => Number(state.lastRawPrice),
+    isQuotePaused: () => false,
+    buildPairLabel: () => 'USDT/USDe',
+    formatChainLabel: (chain) => chain.toUpperCase(),
+    formatPrice: (value) => value.toFixed(4)
+  }),
+  {
+    title: '关注列表',
+    opportunities: [
+      {
+        entryType: 'quote-price',
+        title: '正向关注',
+        priceText: '1.2346',
+        metaText: 'ETHEREUM · USDT/USDe',
+        statusText: '',
+        muted: false
+      },
+      {
+        entryType: 'quote-price',
+        title: '缺失关注',
+        priceText: '--',
+        metaText: '未知链 · 报价 #404',
+        statusText: '等待报价',
+        muted: true
+      }
+    ],
+    emptyText: '暂无关注价格'
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuotePriceWatchSection({ watchItems: null }),
+  {
+    title: '关注列表',
+    opportunities: [],
+    emptyText: '暂无关注价格'
+  }
 );
