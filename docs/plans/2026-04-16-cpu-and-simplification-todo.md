@@ -72,7 +72,7 @@
   - quote alert 按 quoteId 过滤规则已下沉到 `src/path-alerts/path-alert-utils.js`，避免 `app.js` 继续直接理解 alert target 结构
   - quote alert trigger entry 的结构拼装已下沉到 `src/path-alerts/path-alert-notification-utils.js`
   - quote alert action link 的结构转换已下沉到 `src/path-alerts/path-alert-notification-utils.js`
-  - quote 跨链显示名已下沉到 `chain-defaults.js`
+  - quote 跨链显示名已下沉到 `src/shared/chain-defaults.js`
   - dashboardState 按 quoteId 查找 quote 的逻辑已下沉到 `src/dashboard/dashboard-runtime-utils.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
   - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `src/quote/quote-state-runtime-utils.js`，`app.js` 只通过 runtime wrapper 读写
@@ -152,6 +152,7 @@
     - 已启动第九步：alert log UI、alert debug 和 special rule alert config 工具迁入 `src/alerts/`，后续告警支撑模块按这个目录维护
     - 已启动第十步：data terminal 工具迁入 `src/data-terminal/`，后续数据终端模块按这个目录维护
     - 已启动第十一步：copy、dex link、dom render 和 theme 等浏览器 UI 支撑工具迁入 `src/ui/`，后续 UI shared 模块按这个目录维护
+    - 已启动第十二步：chain defaults、UTC+8 时间工具和 trading pair parser 迁入 `src/shared/`，后续跨前后端共享工具按这个目录维护
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
