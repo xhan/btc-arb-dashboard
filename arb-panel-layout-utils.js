@@ -266,6 +266,17 @@
     };
   }
 
+  function buildGlobalArbFilterControlState(state = {}) {
+    const nextState = buildGlobalArbFilterState(state);
+    return {
+      ...nextState,
+      clearDisabled: !nextState.excludedSymbolsInput.trim()
+        && !nextState.excludedChainsInput.trim()
+        && !nextState.includedSymbolsInput.trim()
+        && nextState.twoLegOnly !== true
+    };
+  }
+
   function updateGlobalArbFilterState(currentState, patch = {}) {
     const current = buildGlobalArbFilterState(currentState);
     const next = buildGlobalArbFilterState({
@@ -514,6 +525,7 @@
     mapEntriesForDisplayCycles,
     parseFilterInput,
     buildGlobalArbFilterState,
+    buildGlobalArbFilterControlState,
     updateGlobalArbFilterState,
     clearGlobalArbFilterState,
     cycleContainsAnySymbols,

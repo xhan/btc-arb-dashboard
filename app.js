@@ -2340,20 +2340,21 @@
     }
 
     function updateGlobalArbFilterBar() {
-        if (arbGlobalFilterInput && arbGlobalFilterInput.value !== arbGlobalExcludedSymbolsInput) {
-            arbGlobalFilterInput.value = arbGlobalExcludedSymbolsInput;
+        const filterState = getArbPanelLayoutUtils().buildGlobalArbFilterControlState(getArbGlobalFilterState());
+        if (arbGlobalFilterInput && arbGlobalFilterInput.value !== filterState.excludedSymbolsInput) {
+            arbGlobalFilterInput.value = filterState.excludedSymbolsInput;
         }
-        if (arbGlobalChainFilterInput && arbGlobalChainFilterInput.value !== arbGlobalExcludedChainsInput) {
-            arbGlobalChainFilterInput.value = arbGlobalExcludedChainsInput;
+        if (arbGlobalChainFilterInput && arbGlobalChainFilterInput.value !== filterState.excludedChainsInput) {
+            arbGlobalChainFilterInput.value = filterState.excludedChainsInput;
         }
-        if (arbGlobalIncludeFilterInput && arbGlobalIncludeFilterInput.value !== arbGlobalIncludedSymbolsInput) {
-            arbGlobalIncludeFilterInput.value = arbGlobalIncludedSymbolsInput;
+        if (arbGlobalIncludeFilterInput && arbGlobalIncludeFilterInput.value !== filterState.includedSymbolsInput) {
+            arbGlobalIncludeFilterInput.value = filterState.includedSymbolsInput;
         }
-        if (arbGlobalTwoLegOnlyInput && arbGlobalTwoLegOnlyInput.checked !== arbGlobalTwoLegOnly) {
-            arbGlobalTwoLegOnlyInput.checked = arbGlobalTwoLegOnly;
+        if (arbGlobalTwoLegOnlyInput && arbGlobalTwoLegOnlyInput.checked !== filterState.twoLegOnly) {
+            arbGlobalTwoLegOnlyInput.checked = filterState.twoLegOnly;
         }
-        if (arbGlobalFilterClearBtn) {
-            arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim() && !arbGlobalExcludedChainsInput.trim() && !arbGlobalIncludedSymbolsInput.trim() && arbGlobalTwoLegOnly !== true;
+        if (arbGlobalFilterClearBtn && arbGlobalFilterClearBtn.disabled !== filterState.clearDisabled) {
+            arbGlobalFilterClearBtn.disabled = filterState.clearDisabled;
         }
     }
 

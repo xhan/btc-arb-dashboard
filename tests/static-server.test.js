@@ -502,6 +502,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchDisplayEntry(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchSection(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterState(state = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterControlState(state = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function updateGlobalArbFilterState(currentState, patch = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function clearGlobalArbFilterState(currentState)'));
     assert.ok(appJsResponse.body.includes('function getArbPanelLayoutUtils()'));
@@ -739,8 +740,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let lbtcSection = null'));
     assert.ok(!appJsResponse.body.includes('const wbtcSection = categorySections.find'));
     assert.ok(appJsResponse.body.includes('function updateArbGlobalFilterState(patch)'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildGlobalArbFilterControlState(getArbGlobalFilterState())'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().updateGlobalArbFilterState(getArbGlobalFilterState(), patch)'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().clearGlobalArbFilterState(getArbGlobalFilterState())'));
+    assert.ok(!appJsResponse.body.includes('arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim()'));
     assert.ok(!appJsResponse.body.includes('if (nextValue === arbGlobalExcludedSymbolsInput)'));
     assert.ok(!appJsResponse.body.includes('if (nextValue === arbGlobalExcludedChainsInput)'));
     assert.ok(!appJsResponse.body.includes('if (nextValue === arbGlobalIncludedSymbolsInput)'));

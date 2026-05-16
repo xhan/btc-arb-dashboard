@@ -9,6 +9,7 @@ const {
   selectCyclesAboveDisplayThreshold,
   selectPositiveCyclesOrBest,
   buildGlobalArbFilterState,
+  buildGlobalArbFilterControlState,
   updateGlobalArbFilterState,
   clearGlobalArbFilterState,
   buildArbPanelColumns,
@@ -219,6 +220,42 @@ assert.deepStrictEqual(
     includedSymbolsInput: '',
     twoLegOnly: true
   }
+);
+
+assert.deepStrictEqual(
+  buildGlobalArbFilterControlState({
+    excludedSymbolsInput: '  ',
+    excludedChainsInput: '',
+    includedSymbolsInput: '',
+    twoLegOnly: false
+  }),
+  {
+    excludedSymbolsInput: '  ',
+    excludedChainsInput: '',
+    includedSymbolsInput: '',
+    twoLegOnly: false,
+    clearDisabled: true
+  }
+);
+
+assert.deepStrictEqual(
+  buildGlobalArbFilterControlState({
+    excludedSymbolsInput: 'cbBTC',
+    excludedChainsInput: '',
+    includedSymbolsInput: '',
+    twoLegOnly: false
+  }).clearDisabled,
+  false
+);
+
+assert.deepStrictEqual(
+  buildGlobalArbFilterControlState({
+    excludedSymbolsInput: '',
+    excludedChainsInput: '',
+    includedSymbolsInput: '',
+    twoLegOnly: true
+  }).clearDisabled,
+  false
 );
 
 assert.deepStrictEqual(
