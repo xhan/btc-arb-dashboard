@@ -65,7 +65,7 @@
   - 已新增独立 `quoteUiState`，趋势箭头 timer、未读报警等 UI-only 字段不再写入 `quoteMarketState`
   - `quoteUiState` 已移除旧 `logShown` / quote 级 `isSoundActive` 运行时字段，边界层仅保留对这些旧字段的过滤兼容
   - `setQuoteMarketState()` 会净化行情状态，避免 UI 字段重新混入市场状态 Map
-  - `quoteUiState` 的默认值、key 规范化、merge、timer 清理已下沉到 `dashboard-runtime-utils.js`
+  - `quoteUiState` 的默认值、key 规范化、merge、timer 清理已下沉到 `src/dashboard/dashboard-runtime-utils.js`
   - `quote-pause-utils.buildPausedQuoteState()` 已停止输出 UI-only 字段
   - quote 暂停按钮和分区暂停按钮的展示状态模型已下沉到 `src/quote/quote-pause-utils.js`
   - quote alert display label 已下沉到 `src/quote/quote-display-utils.js`
@@ -73,10 +73,10 @@
   - quote alert trigger entry 的结构拼装已下沉到 `path-alert-notification-utils.js`
   - quote alert action link 的结构转换已下沉到 `path-alert-notification-utils.js`
   - quote 跨链显示名已下沉到 `chain-defaults.js`
-  - dashboardState 按 quoteId 查找 quote 的逻辑已下沉到 `dashboard-runtime-utils.js`
+  - dashboardState 按 quoteId 查找 quote 的逻辑已下沉到 `src/dashboard/dashboard-runtime-utils.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
   - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `src/quote/quote-state-runtime-utils.js`，`app.js` 只通过 runtime wrapper 读写
-  - 金额输入 debounce timer Map 已下沉到 `dashboard-runtime-utils.js`，暂停 quote 时通过统一 runtime 清理待执行输入更新
+  - 金额输入 debounce timer Map 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，暂停 quote 时通过统一 runtime 清理待执行输入更新
   - 主题切换的合法值、next-state 和 DOM/storage 写入计划已下沉到 `theme-utils.js`
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效
@@ -137,12 +137,13 @@
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`，面板 change/click action 解析已下沉到 `path-alert-page-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `data-terminal-utils.js`
-  - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `dashboard-renderer.js`
+  - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
   - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
   - `file-layout`：在模块边界稳定后，把根目录里按职责增长的 utils/runtime/renderer/provider 文件迁入明确目录，例如 `src/quote/`、`src/arb/`、`src/path-alerts/`、`src/dashboard/`、`src/shared/`，并保留必要的兼容入口，避免一次性移动导致 review 噪声和路径风险
     - 已启动第一步：套利核心路径算法、套利详情工具、详情刷新 runtime、套利面板渲染器、套利面板 layout/runtime/cache 工具、规则快照、循环起点优先级、资产等价规则、fixed/special 套利工具、watchlist 配置及解析工具迁入 `src/arb/`，后续同类 arb 模块可按这个模式继续迁移
     - 已启动第二步：quote pause/request/display/state/queue runtime 迁入 `src/quote/`，后续同类 quote 模块可按这个模式继续迁移
+    - 已启动第三步：dashboard renderer/runtime 迁入 `src/dashboard/`，后续 dashboard 模块按这个目录继续收敛
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -190,15 +191,15 @@
   - `app.js` 的 path alert 配置加载降级/严格加载语义已下沉到 `path-alert-utils.js` 的 `createPathAlertConfigClient()`
   - `app.js` 中只定义未调用的 `resolveEventTargetElement()` 包装函数已移除，事件解析继续统一走各模块 action resolver
   - `app.js` 的 quote alert 触发消息和当前值文案包装已移除，触发条目构造统一由 `path-alert-notification-utils.js` 根据 evaluation 生成
-  - `app.js` 的 dashboard 金额输入、暂停、设置、删除、添加和交换按钮动作解析已下沉到 `dashboard-renderer.js`
-  - `app.js` 的添加报价表单可见性、占位符、保存校验、draft quote 构造和 modal click 动作解析已下沉到 `dashboard-renderer.js`
-  - `app.js` 的全局设置 interval 表单回填、读取和默认值 fallback 解析已下沉到 `dashboard-renderer.js`
-  - `app.js` 的新增分区表单读取、draft category 构造和 modal click 动作解析已下沉到 `dashboard-renderer.js`
-  - `app.js` 的报价设置 modal click 动作解析已下沉到 `dashboard-renderer.js`
-  - `app.js` 的报价设置保存更新计划已下沉到 `dashboard-renderer.js`，主文件只应用 patch、同步请求通道 tag 和调度刷新
-  - `app.js` 的报价设置表单读取已下沉到 `dashboard-renderer.js`，主文件只提供 DOM read adapter
-  - `app.js` 的确认弹窗 click 动作解析已下沉到 `dashboard-renderer.js`
-  - `app.js` 的报价设置 modal viewState 写入规则已下沉到 `dashboard-renderer.js`，主文件只执行 DOM write plan
+  - `app.js` 的 dashboard 金额输入、暂停、设置、删除、添加和交换按钮动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `app.js` 的添加报价表单可见性、占位符、保存校验、draft quote 构造和 modal click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `app.js` 的全局设置 interval 表单回填、读取和默认值 fallback 解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `app.js` 的新增分区表单读取、draft category 构造和 modal click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `app.js` 的报价设置 modal click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `app.js` 的报价设置保存更新计划已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只应用 patch、同步请求通道 tag 和调度刷新
+  - `app.js` 的报价设置表单读取已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只提供 DOM read adapter
+  - `app.js` 的确认弹窗 click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `app.js` 的报价设置 modal viewState 写入规则已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只执行 DOM write plan
   - `app.js` 的浮窗拖拽实现和浮窗 focus 事件绑定已下沉到 `dom-render-utils.js`
   - `app.js` 的主题 metadata、循环顺序和主题写入计划已下沉到 `theme-utils.js`
 - 建议改法：
