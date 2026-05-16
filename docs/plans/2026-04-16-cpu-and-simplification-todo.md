@@ -131,7 +131,7 @@
   - `app.js` 仍是超大文件，包含报价轮询、套利、详情、报警、日志、数据终端、保存、主题等多职责
 - 建议拆分：
   - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `quote-queue-runtime-utils.js`，`app.js` 只保留业务依赖注入和入口包装
-  - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、trend arrow 展示模型和 trend timer 已分别下沉到 `quote-display-utils.js` / `quote-state-runtime-utils.js`
+  - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `quote-display-utils.js` / `quote-state-runtime-utils.js`
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 所有权、全局过滤栏读写计划和面板内容事件动作解析已下沉到 `arb-path-template-cache-utils.js` / `arb-runtime-memory-utils.js` / `arb-panel-layout-utils.js` / `arb-panel-renderer.js`，`app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`，面板 change/click action 解析已下沉到 `path-alert-page-utils.js`
@@ -165,6 +165,7 @@
   - `app.js` 的 path alert panel change/click action 解析已下沉到 `path-alert-page-utils.js`
   - `app.js` 的 path alert 配置同步 payload 构造和 storage event reload 判定已下沉到 `path-alert-utils.js`
   - `app.js` 的 quote hover tooltip CEX/source/preference 展示模型已下沉到 `quote-display-utils.js`
+  - `app.js` 的 quote request channel tag 插入/更新/删除计划已下沉到 `quote-display-utils.js`
   - `app.js` 的 quote trend arrow 涨跌/隐藏展示模型已下沉到 `quote-display-utils.js`
   - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `data-terminal-utils.js`
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `arb-runtime-memory-utils.js`
