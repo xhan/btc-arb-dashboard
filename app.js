@@ -4562,11 +4562,23 @@
         applyTheme(getNextTheme(document.body.dataset.theme));
     });
 
-    addCategoryBtn.addEventListener('click', () => {
+    function openAddCategoryModal() {
         addCategoryNameInput.value = '';
         addCategoryModal.classList.add('visible');
         addCategoryNameInput.focus();
-    });
+    }
+
+    function closeAddCategoryModal() {
+        addCategoryModal.classList.remove('visible');
+    }
+
+    function getAddCategoryFormValues() {
+        return getDashboardRenderer().readAddCategoryFormValues({
+            readValue: (id) => (id === 'add-category-name' ? addCategoryNameInput.value : '')
+        });
+    }
+
+    addCategoryBtn.addEventListener('click', openAddCategoryModal);
 
     function handleDashboardInput(event) {
         const action = getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget });
@@ -4986,17 +4998,19 @@
     }
     
     addCategoryModal.addEventListener('click', (e) => {
-         if (e.target.id === 'add-category-cancel' || (e.target === addCategoryModal && !e.target.closest('.modal-box'))) {
-            addCategoryModal.classList.remove('visible');
-        } else if (e.target.id === 'add-category-save') {
-            const categoryName = addCategoryNameInput.value.trim();
-            if (categoryName) {
-                const newCategory = { name: categoryName, id: Date.now(), quotes: [] };
-                dashboardState.push(newCategory);
-                dashboardEl.appendChild(createCategoryModule(newCategory));
-                saveData();
-                addCategoryModal.classList.remove('visible');
-            }
+        const action = getDashboardRenderer().resolveAddCategoryModalClickAction(e, { modal: addCategoryModal });
+        if (action.type === 'close') {
+            closeAddCategoryModal();
+        } else if (action.type === 'save') {
+            const newCategory = getDashboardRenderer().buildAddCategoryDraft({
+                ...getAddCategoryFormValues(),
+                categoryId: Date.now()
+            });
+            if (!newCategory) return;
+            dashboardState.push(newCategory);
+            dashboardEl.appendChild(createCategoryModule(newCategory));
+            saveData();
+            closeAddCategoryModal();
         }
     });
 

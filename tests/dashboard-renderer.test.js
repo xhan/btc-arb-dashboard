@@ -1,12 +1,15 @@
 const assert = require('assert');
 
 const {
+  buildAddCategoryDraft,
   buildAddQuoteDraft,
   buildAddQuoteFormViewState,
   buildQuoteSettingsModalViewState,
   buildSettingsIntervalWritePlan,
   buildSettingsIntervalsFromFormValues,
+  readAddCategoryFormValues,
   readSettingsIntervalFormValues,
+  resolveAddCategoryModalClickAction,
   resolveAddQuoteModalClickAction,
   resolveDashboardAmountInputAction,
   resolveDashboardButtonClickAction,
@@ -227,6 +230,42 @@ assert.deepStrictEqual(
     sui: 500,
     starknet: 900
   }
+);
+
+assert.deepStrictEqual(
+  readAddCategoryFormValues({
+    readValue: (id) => (id === 'add-category-name' ? ' New section ' : '')
+  }),
+  { name: ' New section ' }
+);
+assert.deepStrictEqual(
+  buildAddCategoryDraft({
+    name: ' New section ',
+    categoryId: 123
+  }),
+  {
+    name: 'New section',
+    id: 123,
+    quotes: []
+  }
+);
+assert.strictEqual(buildAddCategoryDraft({ name: '   ', categoryId: 123 }), null);
+assert.deepStrictEqual(
+  resolveAddCategoryModalClickAction({ target: { id: 'add-category-cancel' } }),
+  { type: 'close' }
+);
+assert.deepStrictEqual(
+  resolveAddCategoryModalClickAction({ target: { id: 'add-category-save' } }),
+  { type: 'save' }
+);
+assert.deepStrictEqual(
+  resolveAddCategoryModalClickAction({ target: { id: 'other' } }),
+  { type: 'none' }
+);
+const addCategoryOverlay = { id: 'add-category-modal', closest: () => null };
+assert.deepStrictEqual(
+  resolveAddCategoryModalClickAction({ target: addCategoryOverlay }, { modal: addCategoryOverlay }),
+  { type: 'close' }
 );
 
 assert.deepStrictEqual(

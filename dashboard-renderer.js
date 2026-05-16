@@ -130,6 +130,25 @@
     }, {});
   }
 
+  function readAddCategoryFormValues(options = {}) {
+    const readValue = typeof options.readValue === 'function'
+      ? options.readValue
+      : () => '';
+    return {
+      name: readValue('add-category-name')
+    };
+  }
+
+  function buildAddCategoryDraft(config = {}) {
+    const name = String(config.name || '').trim();
+    if (!name) return null;
+    return {
+      name,
+      id: config.categoryId,
+      quotes: []
+    };
+  }
+
   function readDatasetValue(element, key) {
     return String(element && element.dataset && element.dataset[key] || '').trim();
   }
@@ -405,13 +424,29 @@
     return { type: 'none' };
   }
 
+  function resolveAddCategoryModalClickAction(event, options = {}) {
+    const target = event && event.target;
+    if (!target) return { type: 'none' };
+    if (target.id === 'add-category-cancel') return { type: 'close' };
+    if (target.id === 'add-category-save') return { type: 'save' };
+    const modal = options.modal || null;
+    if (modal && target === modal) {
+      const insideBox = typeof target.closest === 'function' ? target.closest('.modal-box') : null;
+      return insideBox ? { type: 'none' } : { type: 'close' };
+    }
+    return { type: 'none' };
+  }
+
   return {
+    buildAddCategoryDraft,
     buildAddQuoteDraft,
     buildAddQuoteFormViewState,
     buildQuoteSettingsModalViewState,
     buildSettingsIntervalWritePlan,
     buildSettingsIntervalsFromFormValues,
+    readAddCategoryFormValues,
     readSettingsIntervalFormValues,
+    resolveAddCategoryModalClickAction,
     resolveAddQuoteModalClickAction,
     resolveDashboardAmountInputAction,
     resolveDashboardButtonClickAction,
