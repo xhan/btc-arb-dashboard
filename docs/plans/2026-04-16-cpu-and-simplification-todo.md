@@ -165,6 +165,7 @@
     - 已启动第二十一步：price snapshot 配置、保存、历史快照、图表序列和回放 API 注册迁入 `src/server/price-snapshot-route-utils.js`，`server.js` 只注入目录、运行时配置和日志依赖
     - 已启动第二十二步：quote 请求/结果/错误日志格式、request-channel label 和错误日志上下文绑定迁入 `src/server/quote-log-utils.js`，相关测试从 `server.js` 文本 grep 改为行为断言
     - 已启动第二十三步：`/api/save-config`、运行时配置刷新、配置读取、request channel 暴露和 arb settings API 注册迁入 `src/server/config-route-utils.js`，`server.js` 只注入 runtime config store 和 JSON 读写依赖
+    - 已启动第二十四步：path alert 配置读写、候选报价列表和远程 webhook API 注册迁入 `src/server/path-alert-route-utils.js`，`server.js` 只注入配置路径、market clients、fetch 和运行时配置依赖
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
