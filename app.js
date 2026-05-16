@@ -3897,10 +3897,6 @@
         }
     }
 
-    function resolveEventTargetElement(event) {
-        return getDomRenderUtils().resolveEventTargetElement(event);
-    }
-
     function closestEventTarget(event, selector) {
         return getDomRenderUtils().closestEventTarget(event, selector);
     }
@@ -5241,40 +5237,26 @@
             }
             if (arbDetailGrid) {
                 arbDetailGrid.addEventListener('mousedown', (event) => {
-                    const eventTarget = resolveEventTargetElement(event);
-                    if (!eventTarget) return;
-                    const stepBtn = eventTarget.closest('[data-arb-detail-step-index]');
-                    if (stepBtn) {
+                    const action = getArbDetailUtils().resolveArbDetailGridMouseDownAction(event, { closestEventTarget });
+                    if (action.type === 'prevent-step-default') {
                         event.preventDefault();
                     }
                 });
                 arbDetailGrid.addEventListener('click', (event) => {
-                    const eventTarget = resolveEventTargetElement(event);
-                    if (!eventTarget) return;
-                    const tokenEl = eventTarget.closest('[data-arb-detail-token-address]');
-                    if (tokenEl) {
-                        const tokenAddress = tokenEl.dataset.arbDetailTokenAddress;
-                        const tokenSymbol = tokenEl.dataset.arbDetailTokenSymbol || 'Token';
-                        if (!tokenAddress) return;
-                        copyTextToClipboard(tokenAddress)
-                            .then(() => showCopyToast(`已复制 ${tokenSymbol} 地址`))
+                    const action = getArbDetailUtils().resolveArbDetailGridClickAction(event, { closestEventTarget });
+                    if (action.type === 'copy-token-address') {
+                        copyTextToClipboard(action.tokenAddress)
+                            .then(() => showCopyToast(`已复制 ${action.tokenSymbol} 地址`))
                             .catch(() => showCopyToast('复制失败'));
                         return;
                     }
-
-                    const dexLinkEl = eventTarget.closest('[data-dex-link-copy]');
-                    if (dexLinkEl) {
-                        void copyDexLinkFromElement(dexLinkEl);
+                    if (action.type === 'copy-dex-link') {
+                        void copyDexLinkFromElement(action.element);
                         return;
                     }
-
-                    const muteLegBtn = eventTarget.closest('[data-arb-detail-leg-mute]');
-                    if (muteLegBtn) {
-                        const cardIndex = Number(muteLegBtn.dataset.arbDetailCardIndex);
-                        const rowIndex = Number(muteLegBtn.dataset.arbDetailRowIndex);
-                        if (!Number.isFinite(cardIndex) || !Number.isFinite(rowIndex)) return;
-                        const row = arbDetailState.cards[cardIndex] && Array.isArray(arbDetailState.cards[cardIndex].rows)
-                            ? arbDetailState.cards[cardIndex].rows[rowIndex]
+                    if (action.type === 'mute-leg') {
+                        const row = arbDetailState.cards[action.cardIndex] && Array.isArray(arbDetailState.cards[action.cardIndex].rows)
+                            ? arbDetailState.cards[action.cardIndex].rows[action.rowIndex]
                             : null;
                         if (!row) return;
                         const durationHours = promptMutedPathLegDurationHours();
@@ -5282,37 +5264,26 @@
                         muteArbDetailLeg(row, durationHours, Date.now());
                         return;
                     }
-
-                    const stepBtn = eventTarget.closest('[data-arb-detail-step-index]');
-                    if (!stepBtn) return;
-                    const index = Number(stepBtn.dataset.arbDetailStepIndex);
-                    const step = Number(stepBtn.dataset.arbDetailStep);
-                    if (!Number.isFinite(index) || !Number.isFinite(step)) return;
-                    nudgeArbDetailInput(index, step);
+                    if (action.type === 'nudge-input') {
+                        nudgeArbDetailInput(action.index, action.step);
+                    }
                 });
                 arbDetailGrid.addEventListener('focusin', (event) => {
-                    const eventTarget = resolveEventTargetElement(event);
-                    if (!eventTarget) return;
-                    const input = eventTarget.closest('[data-arb-detail-input-index]');
-                    if (!input) return;
-                    arbDetailState.editingInputIndex = Number(input.dataset.arbDetailInputIndex);
+                    const action = getArbDetailUtils().resolveArbDetailGridInputAction(event, { closestEventTarget });
+                    if (action.type !== 'input') return;
+                    arbDetailState.editingInputIndex = action.index;
                 });
                 arbDetailGrid.addEventListener('focusout', (event) => {
-                    const eventTarget = resolveEventTargetElement(event);
-                    if (!eventTarget) return;
-                    const input = eventTarget.closest('[data-arb-detail-input-index]');
-                    if (!input) return;
+                    const action = getArbDetailUtils().resolveArbDetailGridInputAction(event, { closestEventTarget });
+                    if (action.type !== 'input') return;
                     arbDetailState.editingInputIndex = null;
-                    commitArbDetailInput(Number(input.dataset.arbDetailInputIndex), input.value);
+                    commitArbDetailInput(action.index, action.value);
                 });
                 arbDetailGrid.addEventListener('keydown', (event) => {
-                    const eventTarget = resolveEventTargetElement(event);
-                    if (!eventTarget) return;
-                    const input = eventTarget.closest('[data-arb-detail-input-index]');
-                    if (!input) return;
-                    if (!getArbDetailUtils().shouldCommitArbDetailInputOnKey(event.key)) return;
+                    const action = getArbDetailUtils().resolveArbDetailGridKeydownAction(event, { closestEventTarget });
+                    if (action.type !== 'commit-input') return;
                     event.preventDefault();
-                    input.blur();
+                    action.input.blur();
                 });
             }
             if (arbDetailCloseBtn) {

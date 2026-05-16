@@ -318,8 +318,8 @@ async function waitForServer(attempts = 12) {
     const alertDebugUtilsResponse = await request('/alert-debug-utils.js');
     assert.strictEqual(alertDebugUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
-    assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
-    assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
+    assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-token-address'));
+    assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-dex-link-copy]')"));
     assert.ok(dexLinkUtilsResponse.body.includes('function buildDexLinkCopyButtonHtml(config = {}, className = \'\', buttonText = \'复制\')'));
     assert.ok(dexLinkUtilsResponse.body.includes('data-dex-link-copy="1"'));
     assert.ok(dexLinkUtilsResponse.body.includes('data-dex-link-chain'));
@@ -880,7 +880,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertLogUiResponse.body.includes('[data-quote-alert-dex-link-copy]'));
     assert.ok(alertLogUiResponse.body.includes('忽略 1 小时'));
     assert.ok(alertLogUiResponse.body.includes('延长 2 小时'));
-    assert.ok(appJsResponse.body.includes('data-arb-detail-leg-mute'));
+    assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-leg-mute'));
     assert.ok(appJsResponse.body.includes('renderMutedAlertStatePanel'));
     assert.ok(appJsResponse.body.includes('输入屏蔽时长（小时，正整数）'));
     assert.ok(!appJsResponse.body.includes('屏蔽 8 小时'));
@@ -990,6 +990,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('ArbDetailUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRowsHtml(card, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailSummaryHtml(card, {'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbDetailGridMouseDownAction(event, { closestEventTarget })'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbDetailGridClickAction(event, { closestEventTarget })'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbDetailGridInputAction(event, { closestEventTarget })'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbDetailGridKeydownAction(event, { closestEventTarget })'));
+    assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-arb-detail-token-address]')"));
+    assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-arb-detail-leg-mute]')"));
+    assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-arb-detail-step-index]')"));
+    assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-arb-detail-input-index]')"));
     assert.ok(appJsResponse.body.includes('arbDetailGrid.innerHTML = getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards);'));
     assert.ok(appJsResponse.body.includes('let arbDetailState = getArbDetailUtils().buildDefaultArbDetailState();'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildOpenArbDetailState(arbDetailState, {'));
@@ -1089,8 +1097,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('refreshToken: 0'));
     assert.ok(!appJsResponse.body.includes('loopToken'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-profit-card'));
-    assert.ok(appJsResponse.body.includes('resolveEventTargetElement(event)'));
-    assert.ok(appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
+    assert.ok(!appJsResponse.body.includes('resolveEventTargetElement(event)'));
+    assert.ok(!appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
     assert.ok(appJsResponse.body.includes('function mountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function unmountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
@@ -1166,6 +1174,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function isArbRuleLeg(leg)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function doesArbDetailUseQuote(selectedOpportunity, quoteId)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRow(quote, quoteData, options = {})'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function resolveArbDetailGridClickAction(event, options = {})'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function resolveArbDetailGridInputAction(event, options = {})'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function resolveArbDetailGridKeydownAction(event, options = {})'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function resolveArbDetailGridMouseDownAction(event, options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailRateDeltas(rows, baseRows)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRateDeltaText(baseRate, nextRate, decimals = 1)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function getArbDetailRateDeltaTone(rateDeltaText)'));

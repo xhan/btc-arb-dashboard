@@ -20,6 +20,10 @@ const {
   parseCommittedArbDetailInput,
   applyArbDetailInputUpdate,
   shouldCommitArbDetailInputOnKey,
+  resolveArbDetailGridClickAction,
+  resolveArbDetailGridInputAction,
+  resolveArbDetailGridKeydownAction,
+  resolveArbDetailGridMouseDownAction,
   getArbDetailIntervalKey,
   getArbDetailRateLimitDelay,
   getArbDetailBudgetTimestamp,
@@ -44,6 +48,90 @@ const {
   buildArbDetailProfitPreviewState,
   buildArbDetailChartPreviewStripHtml
 } = require('../arb-detail-utils');
+
+function resolveGridActionFor(resolver, matches, event = { type: 'click' }) {
+  return resolver(event, {
+    closestEventTarget: (sourceEvent, selector) => matches[selector] || null
+  });
+}
+
+const detailStepButton = {
+  dataset: {
+    arbDetailStepIndex: '2',
+    arbDetailStep: '0.1'
+  }
+};
+const detailInput = {
+  value: '1.25',
+  dataset: {
+    arbDetailInputIndex: '2'
+  },
+  blurCalled: false,
+  blur() {
+    this.blurCalled = true;
+  }
+};
+const detailDexLinkEl = {};
+
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridMouseDownAction, { '[data-arb-detail-step-index]': detailStepButton }),
+  { type: 'prevent-step-default' }
+);
+assert.deepStrictEqual(resolveGridActionFor(resolveArbDetailGridMouseDownAction, {}), { type: 'none' });
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridClickAction, {
+    '[data-arb-detail-token-address]': {
+      dataset: {
+        arbDetailTokenAddress: '0xtoken',
+        arbDetailTokenSymbol: 'WBTC'
+      }
+    }
+  }),
+  { type: 'copy-token-address', tokenAddress: '0xtoken', tokenSymbol: 'WBTC' }
+);
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridClickAction, {
+    '[data-arb-detail-token-address]': {
+      dataset: {
+        arbDetailTokenAddress: ''
+      }
+    }
+  }),
+  { type: 'none' }
+);
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridClickAction, { '[data-dex-link-copy]': detailDexLinkEl }),
+  { type: 'copy-dex-link', element: detailDexLinkEl }
+);
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridClickAction, {
+    '[data-arb-detail-leg-mute]': {
+      dataset: {
+        arbDetailCardIndex: '1',
+        arbDetailRowIndex: '3'
+      }
+    }
+  }),
+  { type: 'mute-leg', cardIndex: 1, rowIndex: 3 }
+);
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridClickAction, { '[data-arb-detail-step-index]': detailStepButton }),
+  { type: 'nudge-input', index: 2, step: 0.1 }
+);
+assert.deepStrictEqual(resolveGridActionFor(resolveArbDetailGridClickAction, {}), { type: 'none' });
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridInputAction, { '[data-arb-detail-input-index]': detailInput }, { type: 'focusin' }),
+  { type: 'input', index: 2, input: detailInput, value: '1.25' }
+);
+assert.deepStrictEqual(resolveGridActionFor(resolveArbDetailGridInputAction, {}, { type: 'focusin' }), { type: 'none' });
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridKeydownAction, { '[data-arb-detail-input-index]': detailInput }, { type: 'keydown', key: 'Enter' }),
+  { type: 'commit-input', index: 2, input: detailInput }
+);
+assert.deepStrictEqual(
+  resolveGridActionFor(resolveArbDetailGridKeydownAction, { '[data-arb-detail-input-index]': detailInput }, { type: 'keydown', key: 'Escape' }),
+  { type: 'none' }
+);
 
 const expectedDetailCardsForBase2 = [
   { inputAmount: 2, rows: [], summary: null, error: '', requestVersion: 0 },

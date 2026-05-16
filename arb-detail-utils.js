@@ -365,6 +365,89 @@
     return key === 'Enter';
   }
 
+  function readDatasetValue(element, key) {
+    return String(element && element.dataset && element.dataset[key] || '').trim();
+  }
+
+  function readDatasetNumber(element, key) {
+    return Number(readDatasetValue(element, key));
+  }
+
+  function resolveClosest(event, selector, options) {
+    const closestEventTarget = typeof options.closestEventTarget === 'function'
+      ? options.closestEventTarget
+      : () => null;
+    return closestEventTarget(event, selector);
+  }
+
+  function resolveArbDetailGridMouseDownAction(event, options = {}) {
+    const stepBtn = resolveClosest(event, '[data-arb-detail-step-index]', options);
+    return stepBtn
+      ? { type: 'prevent-step-default' }
+      : { type: 'none' };
+  }
+
+  function resolveArbDetailGridClickAction(event, options = {}) {
+    const tokenEl = resolveClosest(event, '[data-arb-detail-token-address]', options);
+    if (tokenEl) {
+      const tokenAddress = readDatasetValue(tokenEl, 'arbDetailTokenAddress');
+      return tokenAddress
+        ? {
+            type: 'copy-token-address',
+            tokenAddress,
+            tokenSymbol: readDatasetValue(tokenEl, 'arbDetailTokenSymbol') || 'Token'
+          }
+        : { type: 'none' };
+    }
+
+    const dexLinkEl = resolveClosest(event, '[data-dex-link-copy]', options);
+    if (dexLinkEl) {
+      return { type: 'copy-dex-link', element: dexLinkEl };
+    }
+
+    const muteLegBtn = resolveClosest(event, '[data-arb-detail-leg-mute]', options);
+    if (muteLegBtn) {
+      const cardIndex = readDatasetNumber(muteLegBtn, 'arbDetailCardIndex');
+      const rowIndex = readDatasetNumber(muteLegBtn, 'arbDetailRowIndex');
+      return Number.isFinite(cardIndex) && Number.isFinite(rowIndex)
+        ? { type: 'mute-leg', cardIndex, rowIndex }
+        : { type: 'none' };
+    }
+
+    const stepBtn = resolveClosest(event, '[data-arb-detail-step-index]', options);
+    if (stepBtn) {
+      const index = readDatasetNumber(stepBtn, 'arbDetailStepIndex');
+      const step = readDatasetNumber(stepBtn, 'arbDetailStep');
+      return Number.isFinite(index) && Number.isFinite(step)
+        ? { type: 'nudge-input', index, step }
+        : { type: 'none' };
+    }
+
+    return { type: 'none' };
+  }
+
+  function resolveArbDetailGridInputAction(event, options = {}) {
+    const input = resolveClosest(event, '[data-arb-detail-input-index]', options);
+    if (!input) return { type: 'none' };
+    return {
+      type: 'input',
+      index: readDatasetNumber(input, 'arbDetailInputIndex'),
+      input,
+      value: input.value
+    };
+  }
+
+  function resolveArbDetailGridKeydownAction(event, options = {}) {
+    const action = resolveArbDetailGridInputAction(event, options);
+    if (action.type !== 'input') return { type: 'none' };
+    if (!shouldCommitArbDetailInputOnKey(event && event.key)) return { type: 'none' };
+    return {
+      type: 'commit-input',
+      index: action.index,
+      input: action.input
+    };
+  }
+
   function getArbDetailIntervalKey(source) {
     switch (source) {
       case 'Kyber':
@@ -815,6 +898,10 @@
     parseCommittedArbDetailInput,
     applyArbDetailInputUpdate,
     shouldCommitArbDetailInputOnKey,
+    resolveArbDetailGridClickAction,
+    resolveArbDetailGridInputAction,
+    resolveArbDetailGridKeydownAction,
+    resolveArbDetailGridMouseDownAction,
     getArbDetailIntervalKey,
     getArbDetailRateLimitDelay,
     getArbDetailBudgetTimestamp,
