@@ -1055,7 +1055,7 @@
         if (!targetKey) return null;
         const logTitleSnapshot = buildMutedPathLogTitleSnapshot(entry);
         pruneMutedPathTargetsInPlace(nowMs);
-        const existingEntry = mutedPathTargets.find((item) => buildMutedPathTargetKey(item) === targetKey) || null;
+        const existingEntry = pathAlertUtils.findMutedPathTargetByKey(mutedPathTargets, targetKey);
         const nextMutedEntry = existingEntry
             ? pathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS)
             : pathAlertUtils.createMutedPathTargetEntry(
@@ -1072,8 +1072,7 @@
             })
             : nextMutedEntry;
         if (!mutedEntry) return null;
-        mutedPathTargets = mutedPathTargets.filter((item) => buildMutedPathTargetKey(item) !== targetKey);
-        mutedPathTargets.push(mutedEntry);
+        mutedPathTargets = pathAlertUtils.upsertMutedPathTargetEntry(mutedPathTargets, mutedEntry);
         persistMutedPathTargets();
         renderMutedAlertStatePanel(nowMs);
         updateMutedPathAlertLogCards(targetKey, nowMs);
@@ -1114,7 +1113,7 @@
         const legKey = buildMutedPathLegKey(leg);
         if (!legKey) return null;
         pruneMutedPathLegsInPlace(nowMs);
-        const existingEntry = mutedPathLegs.find((entry) => buildMutedPathLegKey(entry) === legKey) || null;
+        const existingEntry = mutedPathLegUtils.findMutedPathLegByKey(mutedPathLegs, legKey);
         const nextEntry = existingEntry
             ? mutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, durationMs)
             : mutedPathLegUtils.createMutedPathLegEntry(
@@ -1131,8 +1130,7 @@
             })
             : nextEntry;
         if (!mutedEntry) return null;
-        mutedPathLegs = mutedPathLegs.filter((entry) => buildMutedPathLegKey(entry) !== legKey);
-        mutedPathLegs.push(mutedEntry);
+        mutedPathLegs = mutedPathLegUtils.upsertMutedPathLegEntry(mutedPathLegs, mutedEntry);
         persistMutedPathLegs();
         syncMutedPathLogTimer();
         triggerMutedPathLegRefresh({ closeDetail: true });
@@ -1141,13 +1139,13 @@
 
     function extendMutedPathTargetByKey(targetKey, nowMs = Date.now()) {
         if (!targetKey) return null;
+        const pathAlertUtils = getPathAlertUtils();
         pruneMutedPathTargetsInPlace(nowMs);
-        const existingEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === targetKey) || null;
+        const existingEntry = pathAlertUtils.findMutedPathTargetByKey(mutedPathTargets, targetKey);
         if (!existingEntry) return null;
-        const nextEntry = getPathAlertUtils().extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
+        const nextEntry = pathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
         if (!nextEntry) return null;
-        mutedPathTargets = mutedPathTargets.filter((entry) => buildMutedPathTargetKey(entry) !== targetKey);
-        mutedPathTargets.push(nextEntry);
+        mutedPathTargets = pathAlertUtils.upsertMutedPathTargetEntry(mutedPathTargets, nextEntry);
         persistMutedPathTargets();
         renderMutedAlertStatePanel(nowMs);
         updateMutedPathAlertLogCards(targetKey, nowMs);
@@ -1157,7 +1155,7 @@
 
     function removeMutedPathTargetByKey(targetKey, nowMs = Date.now()) {
         if (!targetKey) return;
-        mutedPathTargets = mutedPathTargets.filter((entry) => buildMutedPathTargetKey(entry) !== targetKey);
+        mutedPathTargets = getPathAlertUtils().removeMutedPathTargetByKey(mutedPathTargets, targetKey);
         persistMutedPathTargets();
         renderMutedAlertStatePanel(nowMs);
         updateMutedPathAlertLogCards(targetKey, nowMs);
@@ -1166,13 +1164,13 @@
 
     function extendMutedPathLegByKey(targetKey, nowMs = Date.now()) {
         if (!targetKey) return null;
+        const mutedPathLegUtils = getMutedPathLegUtils();
         pruneMutedPathLegsInPlace(nowMs);
-        const existingEntry = mutedPathLegs.find((entry) => buildMutedPathLegKey(entry) === targetKey) || null;
+        const existingEntry = mutedPathLegUtils.findMutedPathLegByKey(mutedPathLegs, targetKey);
         if (!existingEntry) return null;
-        const nextEntry = getMutedPathLegUtils().extendMutedPathLegEntry(existingEntry, nowMs, MUTED_PATH_LEG_EXTEND_DURATION_MS);
+        const nextEntry = mutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, MUTED_PATH_LEG_EXTEND_DURATION_MS);
         if (!nextEntry) return null;
-        mutedPathLegs = mutedPathLegs.filter((entry) => buildMutedPathLegKey(entry) !== targetKey);
-        mutedPathLegs.push(nextEntry);
+        mutedPathLegs = mutedPathLegUtils.upsertMutedPathLegEntry(mutedPathLegs, nextEntry);
         persistMutedPathLegs();
         syncMutedPathLogTimer();
         triggerMutedPathLegRefresh({ closeDetail: false });
@@ -1181,7 +1179,7 @@
 
     function removeMutedPathLegByKey(targetKey, nowMs = Date.now()) {
         if (!targetKey) return;
-        mutedPathLegs = mutedPathLegs.filter((entry) => buildMutedPathLegKey(entry) !== targetKey);
+        mutedPathLegs = getMutedPathLegUtils().removeMutedPathLegByKey(mutedPathLegs, targetKey);
         persistMutedPathLegs();
         syncMutedPathLogTimer();
         triggerMutedPathLegRefresh({ closeDetail: false });
@@ -1192,9 +1190,6 @@
         const card = buttonEl.closest('.log-entry[data-muted-target-key]');
         const targetKey = String(card && card.dataset && card.dataset.mutedTargetKey || '').trim();
         if (!targetKey) return false;
-        pruneMutedPathTargetsInPlace(nowMs);
-        const existingEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === targetKey) || null;
-        if (!existingEntry) return false;
         return Boolean(extendMutedPathTargetByKey(targetKey, nowMs));
     }
 
@@ -1216,7 +1211,10 @@
             const cards = container.querySelectorAll('.log-entry[data-muted-target-key]');
             cards.forEach((card) => {
                 if (targetKey && card.dataset.mutedTargetKey !== targetKey) return;
-                const resolvedEntry = mutedPathTargets.find((entry) => buildMutedPathTargetKey(entry) === card.dataset.mutedTargetKey) || null;
+                const resolvedEntry = getPathAlertUtils().findMutedPathTargetByKey(
+                    mutedPathTargets,
+                    card.dataset.mutedTargetKey
+                );
                 const statusEl = card.querySelector('[data-path-alert-muted-status]');
                 const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]');
                 if (resolvedEntry) {

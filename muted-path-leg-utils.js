@@ -110,6 +110,34 @@
     return null;
   }
 
+  function findMutedPathLegByKey(entries, legKey) {
+    const normalizedLegKey = String(legKey || '').trim();
+    if (!normalizedLegKey) return null;
+    const items = Array.isArray(entries) ? entries : [];
+    for (const entry of items) {
+      const normalizedEntry = normalizeMutedPathLeg(entry);
+      if (normalizedEntry && buildMutedPathLegKey(normalizedEntry) === normalizedLegKey) {
+        return normalizedEntry;
+      }
+    }
+    return null;
+  }
+
+  function removeMutedPathLegByKey(entries, legKey) {
+    const normalizedLegKey = String(legKey || '').trim();
+    const items = Array.isArray(entries) ? entries : [];
+    if (!normalizedLegKey) return items.slice();
+    return items.filter((entry) => buildMutedPathLegKey(entry) !== normalizedLegKey);
+  }
+
+  function upsertMutedPathLegEntry(entries, entry) {
+    const normalizedEntry = normalizeMutedPathLeg(entry);
+    if (!normalizedEntry) return Array.isArray(entries) ? entries.slice() : [];
+    const legKey = buildMutedPathLegKey(normalizedEntry);
+    if (!legKey) return Array.isArray(entries) ? entries.slice() : [];
+    return removeMutedPathLegByKey(entries, legKey).concat(normalizedEntry);
+  }
+
   function trimMutedPathLegsForStorage(entries, limit = DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT) {
     const items = Array.isArray(entries) ? entries.slice() : [];
     const max = Number.isFinite(Number(limit)) && Number(limit) > 0
@@ -155,6 +183,9 @@
     extendMutedPathLegEntry,
     pruneExpiredMutedPathLegs,
     findMutedPathLeg,
+    findMutedPathLegByKey,
+    removeMutedPathLegByKey,
+    upsertMutedPathLegEntry,
     trimMutedPathLegsForStorage,
     filterMutedPathLegs,
     filterMutedCycles

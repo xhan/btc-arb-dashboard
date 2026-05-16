@@ -7,6 +7,9 @@ const {
   extendMutedPathLegEntry,
   pruneExpiredMutedPathLegs,
   findMutedPathLeg,
+  findMutedPathLegByKey,
+  removeMutedPathLegByKey,
+  upsertMutedPathLegEntry,
   trimMutedPathLegsForStorage,
   filterMutedPathLegs
 } = require('../muted-path-leg-utils');
@@ -97,6 +100,44 @@ assert.strictEqual(findMutedPathLeg([mutedLeg], {
   pricingMode: 'raw'
 }, 1200), null);
 assert.deepStrictEqual(pruneExpiredMutedPathLegs([mutedLeg], mutedLeg.expiresAt + 1), []);
+const otherMutedLeg = createMutedPathLegEntry(
+  {
+    quoteId: 22,
+    direction: 'forward',
+    pricingMode: 'raw',
+    chain: 'base',
+    fromSymbol: 'cbBTC',
+    toSymbol: 'tBTC'
+  },
+  1000,
+  2 * 60 * 60 * 1000,
+  { titleSnapshot: '（Base）cbBTC -> tBTC' }
+);
+const replacedMutedLeg = createMutedPathLegEntry(
+  {
+    quoteId: 21,
+    direction: 'forward',
+    pricingMode: 'raw',
+    chain: 'ethereum',
+    fromSymbol: 'tBTC',
+    toSymbol: 'BTC.b'
+  },
+  3000,
+  2 * 60 * 60 * 1000,
+  { titleSnapshot: 'Updated tBTC -> BTC.b' }
+);
+assert.strictEqual(
+  findMutedPathLegByKey([mutedLeg, otherMutedLeg], '21:forward:raw').titleSnapshot,
+  '（ETH）tBTC -> BTC.b'
+);
+assert.deepStrictEqual(
+  upsertMutedPathLegEntry([mutedLeg, otherMutedLeg], replacedMutedLeg).map((entry) => entry.titleSnapshot),
+  ['（Base）cbBTC -> tBTC', 'Updated tBTC -> BTC.b']
+);
+assert.deepStrictEqual(
+  removeMutedPathLegByKey([mutedLeg, otherMutedLeg], '21:forward:raw').map((entry) => entry.titleSnapshot),
+  ['（Base）cbBTC -> tBTC']
+);
 
 const trimmed = trimMutedPathLegsForStorage([
   { quoteId: 1, direction: 'forward', pricingMode: 'raw', mutedAt: 1000, expiresAt: 2000 },

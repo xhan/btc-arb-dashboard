@@ -30,6 +30,9 @@ const {
   buildMutedPathLegStatusText,
   buildMutedPathStatusText,
   buildMutedPathTargetKey,
+  findMutedPathTargetByKey,
+  removeMutedPathTargetByKey,
+  upsertMutedPathTargetEntry,
   sortTriggeredPathAlerts,
   PATH_ALERT_MUTE_DURATION_MS,
   PATH_ALERT_MUTE_EXTEND_DURATION_MS,
@@ -332,6 +335,38 @@ assert.ok(findMutedPathAlert([mutedQuoteEntry], {
     value: 1.00025
   }
 }, 2000));
+const otherMutedQuoteEntry = createMutedPathTargetEntry(
+  {
+    target: {
+      type: 'quote',
+      quoteId: 102,
+      direction: 'forward',
+      ruleKind: 'targetBelow',
+      value: 0.999
+    }
+  },
+  ['ETH BTCB/syBTC']
+);
+const replacedMutedQuoteEntry = createMutedPathTargetEntry(
+  mutedQuoteEntry.target,
+  ['Updated BTCB/syBTC'],
+  3000,
+  PATH_ALERT_MUTE_DURATION_MS
+);
+assert.strictEqual(
+  findMutedPathTargetByKey([mutedQuoteEntry, otherMutedQuoteEntry], buildMutedPathTargetKey(mutedQuoteEntry)).summaryLinesSnapshot[0],
+  'ETH tBTC/cbBTC'
+);
+assert.deepStrictEqual(
+  upsertMutedPathTargetEntry([mutedQuoteEntry, otherMutedQuoteEntry], replacedMutedQuoteEntry)
+    .map((entry) => entry.summaryLinesSnapshot[0]),
+  ['ETH BTCB/syBTC', 'Updated BTCB/syBTC']
+);
+assert.deepStrictEqual(
+  removeMutedPathTargetByKey([mutedQuoteEntry, otherMutedQuoteEntry], buildMutedPathTargetKey(mutedQuoteEntry))
+    .map((entry) => entry.summaryLinesSnapshot[0]),
+  ['ETH BTCB/syBTC']
+);
 
 const quoteStateById = new Map([
   [11, {

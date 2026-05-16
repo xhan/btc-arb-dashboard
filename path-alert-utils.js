@@ -446,6 +446,34 @@
     return null;
   }
 
+  function findMutedPathTargetByKey(entries, targetKey) {
+    const normalizedTargetKey = String(targetKey || '').trim();
+    if (!normalizedTargetKey) return null;
+    const items = Array.isArray(entries) ? entries : [];
+    for (const entry of items) {
+      const normalizedEntry = normalizeMutedPathTarget(entry);
+      if (normalizedEntry && buildMutedPathTargetKey(normalizedEntry) === normalizedTargetKey) {
+        return normalizedEntry;
+      }
+    }
+    return null;
+  }
+
+  function removeMutedPathTargetByKey(entries, targetKey) {
+    const normalizedTargetKey = String(targetKey || '').trim();
+    const items = Array.isArray(entries) ? entries : [];
+    if (!normalizedTargetKey) return items.slice();
+    return items.filter((entry) => buildMutedPathTargetKey(entry) !== normalizedTargetKey);
+  }
+
+  function upsertMutedPathTargetEntry(entries, entry) {
+    const normalizedEntry = normalizeMutedPathTarget(entry);
+    if (!normalizedEntry) return Array.isArray(entries) ? entries.slice() : [];
+    const targetKey = buildMutedPathTargetKey(normalizedEntry);
+    if (!targetKey) return Array.isArray(entries) ? entries.slice() : [];
+    return removeMutedPathTargetByKey(entries, targetKey).concat(normalizedEntry);
+  }
+
   function formatMutedCountdown(remainingMs) {
     const safeRemainingMs = Math.max(0, Number(remainingMs) || 0);
     const totalSeconds = Math.floor(safeRemainingMs / 1000);
@@ -970,6 +998,7 @@
     evaluatePathAlert,
     findDismissedPathAlert,
     findMutedPathAlert,
+    findMutedPathTargetByKey,
     findDuplicatePathAlert,
     formatMutedCountdown,
     getQuoteAlertsForQuoteId,
@@ -979,7 +1008,9 @@
     normalizeMutedPathTarget,
     normalizePathAlert,
     pruneExpiredMutedPathTargets,
+    removeMutedPathTargetByKey,
     resolvePathAlertSnapshotState,
-    sortTriggeredPathAlerts
+    sortTriggeredPathAlerts,
+    upsertMutedPathTargetEntry
   };
 }));
