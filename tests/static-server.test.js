@@ -666,6 +666,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getLocalStorageSafe()'));
     assert.ok(!appJsResponse.body.includes('getLocalStorageSafe()'));
     assert.ok(appJsResponse.body.includes('function getDashboardLocalStorage()'));
+    assert.ok(appJsResponse.body.includes('return getDashboardRuntimeUtils().getBrowserLocalStorage({ window }, {'));
+    assert.ok(!appJsResponse.body.includes('return getRequestChannelUtils().getBrowserLocalStorage({ window }, {'));
     assert.ok(!appJsResponse.body.includes('parseMultiChannelEnabledStorageValue(raw)'));
     assert.ok(!appJsResponse.body.includes('formatMultiChannelEnabledStorageValue(multiChannelEnabled)'));
     assert.ok(!appJsResponse.body.includes("raw !== 'false'"));

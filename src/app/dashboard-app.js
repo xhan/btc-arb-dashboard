@@ -603,7 +603,7 @@
     }
 
     function getDashboardLocalStorage() {
-        return getRequestChannelUtils().getBrowserLocalStorage({ window }, {
+        return getDashboardRuntimeUtils().getBrowserLocalStorage({ window }, {
             onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
         });
     }

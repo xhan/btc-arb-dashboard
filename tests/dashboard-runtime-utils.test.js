@@ -18,6 +18,7 @@ const {
   findDashboardQuoteById,
   findDashboardQuoteMatchById,
   getActivePathAlertEvaluationAlerts,
+  getBrowserLocalStorage,
   getQuoteUiState,
   hasActivePathAlertSound,
   hasQuoteMarketStateChanged,
@@ -28,6 +29,27 @@ const {
   isPanelVisible,
   resolveMutedStateRefreshDelay
 } = require('../src/dashboard/dashboard-runtime-utils');
+
+assert.strictEqual(typeof getBrowserLocalStorage, 'function');
+const dashboardLocalStorage = { getItem() {}, setItem() {} };
+assert.strictEqual(getBrowserLocalStorage({ window: { localStorage: dashboardLocalStorage } }), dashboardLocalStorage);
+assert.strictEqual(getBrowserLocalStorage({ window: null }), null);
+let dashboardLocalStorageError = null;
+assert.strictEqual(
+  getBrowserLocalStorage({
+    window: Object.defineProperty({}, 'localStorage', {
+      get() {
+        throw new Error('blocked');
+      }
+    })
+  }, {
+    onError(error) {
+      dashboardLocalStorageError = error;
+    }
+  }),
+  null
+);
+assert.strictEqual(dashboardLocalStorageError && dashboardLocalStorageError.message, 'blocked');
 
 assert.strictEqual(isPanelVisible(null), false);
 assert.strictEqual(isPanelVisible({}), true);

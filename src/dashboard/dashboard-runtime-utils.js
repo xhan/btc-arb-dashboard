@@ -211,6 +211,18 @@
     }
   }
 
+  function getBrowserLocalStorage(env = {}, options = {}) {
+    try {
+      const runtimeWindow = env.window || (typeof window !== 'undefined' ? window : null);
+      return runtimeWindow && runtimeWindow.localStorage ? runtimeWindow.localStorage : null;
+    } catch (error) {
+      if (typeof options.onError === 'function') {
+        options.onError(error);
+      }
+      return null;
+    }
+  }
+
   function getActivePathAlertEvaluationAlerts(alertConfig) {
     const alerts = Array.isArray(alertConfig && alertConfig.alerts)
       ? alertConfig.alerts
@@ -594,6 +606,7 @@
     findDashboardQuoteById,
     findDashboardQuoteMatchById,
     getActivePathAlertEvaluationAlerts,
+    getBrowserLocalStorage,
     getQuoteUiState,
     hasActivePathAlertSound,
     hasQuoteMarketStateChanged,

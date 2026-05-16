@@ -78,6 +78,7 @@
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
   - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `src/quote/quote-state-runtime-utils.js`，`src/app/dashboard-app.js` 只通过 runtime wrapper 读写
   - 金额输入 debounce timer Map 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，暂停 quote 时通过统一 runtime 清理待执行输入更新
+  - 看板通用 localStorage 访问容错已下沉到 `src/dashboard/dashboard-runtime-utils.js`，避免主入口为主题、muted-path 等非 request-channel 状态继续耦合 request-channel 工具
   - 主题切换的合法值、next-state 和 DOM/storage 写入计划已下沉到 `src/ui/theme-utils.js`
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效
