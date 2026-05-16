@@ -153,6 +153,7 @@
   - `path-alerts-app.js` 的候选报价建议项 HTML 已拆到 `path-alert-editor-utils.js`
   - `path-alerts-app.js` 的编辑器主模板已拆到 `path-alert-editor-utils.js`
   - `app.js` 的套利机会高亮 Map prune / is-highlighted / mark 规则已下沉到 `arb-runtime-memory-utils.js`
+  - `app.js` 的路径腿 live quote label 格式化已委托给 `path-alert-page-utils.js`
   - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
 - 建议改法：
   - 先删死代码和无生产调用 API

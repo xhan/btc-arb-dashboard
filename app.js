@@ -2041,8 +2041,13 @@
     }
 
     function buildLiveQuoteLabel(chain, fromSymbol, toSymbol, suffix = '') {
-        const chainText = formatChainLabel(chain);
-        return `(${chainText}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
+        return getPathAlertPageUtils().buildPathAlertQuoteLabel({
+            chain,
+            fromSymbol,
+            toSymbol,
+            suffix,
+            formatChainLabel
+        });
     }
 
     function getDashboardRuntimeUtils() {
