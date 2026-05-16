@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   buildRetainedArbOpportunityStore,
   createArbOpportunityHighlightRuntime,
+  createArbOpportunityRuntime,
   getNextArbOpportunityHighlightExpiry,
   isArbOpportunityHighlighted,
   markArbOpportunityHighlights,
@@ -28,6 +29,23 @@ assert.deepStrictEqual(
 );
 assert.strictEqual(retainedStore.get('a').label, 'A');
 assert.strictEqual(retainedStore.get('detail-1').label, 'detail');
+
+const opportunityRuntime = createArbOpportunityRuntime();
+const targetIndex = new Map([
+  ['target-a', ['a', 'detail-1']]
+]);
+opportunityRuntime.setPanelOpportunities(nextOpportunityMap, targetIndex, [
+  { id: 'detail-1', label: 'detail' }
+]);
+assert.strictEqual(opportunityRuntime.getOpportunity('a').label, 'A');
+assert.strictEqual(opportunityRuntime.getOpportunity('detail-1').label, 'detail');
+assert.deepStrictEqual(opportunityRuntime.getOpportunityIdsForTarget('target-a'), ['a', 'detail-1']);
+assert.deepStrictEqual(opportunityRuntime.getOpportunityIdsForTarget('missing'), []);
+opportunityRuntime.setPanelOpportunities(new Map([
+  ['c', { id: 'c', label: 'C' }]
+]), null);
+assert.strictEqual(opportunityRuntime.getOpportunity('a'), null, 'runtime should replace stale current opportunities');
+assert.strictEqual(opportunityRuntime.getOpportunity('c').label, 'C');
 
 const nodes = Array.from({ length: 5 }, (_, index) => {
   const node = { index };

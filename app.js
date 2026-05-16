@@ -34,7 +34,7 @@
     let pathAlertExternalReloadTimer = null;
     let forceImmediateAlerts = false;
     let alertLogActiveTab = 'log';
-    let arbOpportunityIdsByTargetKey = new Map();
+    const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
     const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
         durationMs: 8000,
         setTimer: setTimeout,
@@ -57,8 +57,6 @@
     let arbGlobalExcludedChainsInput = '';
     let arbGlobalIncludedSymbolsInput = '';
     let arbGlobalTwoLegOnly = false;
-    let arbOpportunityMap = new Map();
-    let arbOpportunityStore = new Map();
     let arbPanelDirty = false;
     const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
@@ -878,7 +876,7 @@
     function markTriggeredArbOpportunities(alert, evaluation, nowMs = Date.now()) {
         const targetKey = buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation);
         if (!targetKey) return false;
-        const opportunityIds = arbOpportunityIdsByTargetKey.get(targetKey);
+        const opportunityIds = arbOpportunityRuntime.getOpportunityIdsForTarget(targetKey);
         if (!Array.isArray(opportunityIds) || !opportunityIds.length) return false;
 
         return arbOpportunityHighlightRuntime.mark(opportunityIds, nowMs);
@@ -2297,16 +2295,19 @@
         );
     }
 
-    function refreshArbOpportunityStore(nextOpportunityMap) {
+    function refreshArbOpportunityRuntime(nextOpportunityMap, nextOpportunityIdsByTargetKey) {
         const retainedEntries = [];
         if (arbDetailState && arbDetailState.selectedOpportunity && arbDetailState.selectedOpportunity.id) {
             retainedEntries.push(arbDetailState.selectedOpportunity);
         }
-        if (arbDetailState && arbDetailState.opportunityId && arbOpportunityStore.has(arbDetailState.opportunityId)) {
-            retainedEntries.push(arbOpportunityStore.get(arbDetailState.opportunityId));
+        const activeOpportunity = arbDetailState && arbDetailState.opportunityId
+            ? arbOpportunityRuntime.getOpportunity(arbDetailState.opportunityId)
+            : null;
+        if (activeOpportunity) {
+            retainedEntries.push(activeOpportunity);
         }
 
-        arbOpportunityStore = getArbRuntimeMemoryUtils().buildRetainedArbOpportunityStore(nextOpportunityMap, retainedEntries);
+        arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);
     }
 
     function buildArbDetailRowsHtml(card, cardIndex) {
@@ -2682,10 +2683,10 @@
 
     function openArbDetailModal(opportunityId) {
         clearArbDetailRefreshTimer();
-        let current = arbOpportunityMap.get(opportunityId) || arbOpportunityStore.get(opportunityId);
+        let current = arbOpportunityRuntime.getOpportunity(opportunityId);
         if (!current) {
             updateArbPanel();
-            current = arbOpportunityMap.get(opportunityId) || arbOpportunityStore.get(opportunityId);
+            current = arbOpportunityRuntime.getOpportunity(opportunityId);
         }
         if (!current || !current.cycle) return;
 
@@ -3679,9 +3680,7 @@
 
         const { columns, nextOpportunityMap, nextOpportunityIdsByTargetKey } = panelData;
 
-        arbOpportunityMap = nextOpportunityMap;
-        arbOpportunityIdsByTargetKey = nextOpportunityIdsByTargetKey instanceof Map ? nextOpportunityIdsByTargetKey : new Map();
-        refreshArbOpportunityStore(nextOpportunityMap);
+        refreshArbOpportunityRuntime(nextOpportunityMap, nextOpportunityIdsByTargetKey);
 
         const arbPaths = getArbPaths();
         const nextArbPanelHtml = getArbPanelRenderer().renderArbGrid({

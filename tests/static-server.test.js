@@ -711,6 +711,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] muted trigger skipped'"));
+    assert.ok(appJsResponse.body.includes('const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();'));
+    assert.ok(appJsResponse.body.includes('arbOpportunityRuntime.getOpportunityIdsForTarget(targetKey)'));
+    assert.ok(appJsResponse.body.includes('arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);'));
+    assert.ok(appJsResponse.body.includes('let current = arbOpportunityRuntime.getOpportunity(opportunityId);'));
+    assert.ok(!appJsResponse.body.includes('let arbOpportunityIdsByTargetKey = new Map();'));
+    assert.ok(!appJsResponse.body.includes('let arbOpportunityMap = new Map();'));
+    assert.ok(!appJsResponse.body.includes('let arbOpportunityStore = new Map();'));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function createArbOpportunityRuntime()'));
     assert.ok(appJsResponse.body.includes('const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({'));
     assert.ok(appJsResponse.body.includes('durationMs: 8000'));
     assert.ok(appJsResponse.body.includes('onExpired: () => updateArbPanel()'));
@@ -781,7 +789,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getArbRuntimeMemoryUtils()'));
     assert.ok(appJsResponse.body.includes('ArbRuntimeMemoryUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().trimContainerChildren(alertLogContent, MAX_ALERT_LOG_ENTRIES)'));
-    assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().buildRetainedArbOpportunityStore(nextOpportunityMap, retainedEntries)'));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function buildRetainedArbOpportunityStore(currentOpportunities, retainedEntries)'));
     assert.ok(!appJsResponse.body.includes('window.ArbRuntimeMemoryUtils &&'));
     assert.ok(appJsResponse.body.includes('let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();'));
     assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathRuntime.getLegs(), nowMs)'));

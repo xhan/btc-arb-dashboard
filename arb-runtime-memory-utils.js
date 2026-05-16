@@ -168,9 +168,43 @@
     };
   }
 
+  function createArbOpportunityRuntime() {
+    let opportunityMap = new Map();
+    let opportunityStore = new Map();
+    let opportunityIdsByTargetKey = new Map();
+
+    function setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries = []) {
+      opportunityMap = nextOpportunityMap instanceof Map ? nextOpportunityMap : new Map();
+      opportunityIdsByTargetKey = nextOpportunityIdsByTargetKey instanceof Map
+        ? nextOpportunityIdsByTargetKey
+        : new Map();
+      opportunityStore = buildRetainedArbOpportunityStore(opportunityMap, retainedEntries);
+      return opportunityStore;
+    }
+
+    function getOpportunity(opportunityId) {
+      if (!opportunityId) return null;
+      return opportunityMap.get(opportunityId) || opportunityStore.get(opportunityId) || null;
+    }
+
+    function getOpportunityIdsForTarget(targetKey) {
+      const opportunityIds = opportunityIdsByTargetKey.get(targetKey);
+      return Array.isArray(opportunityIds) ? opportunityIds : [];
+    }
+
+    return {
+      getOpportunity,
+      getOpportunityIdsForTarget,
+      getOpportunityMap: () => opportunityMap,
+      getOpportunityStore: () => opportunityStore,
+      setPanelOpportunities
+    };
+  }
+
   return {
     buildRetainedArbOpportunityStore,
     createArbOpportunityHighlightRuntime,
+    createArbOpportunityRuntime,
     getNextArbOpportunityHighlightExpiry,
     isArbOpportunityHighlighted,
     markArbOpportunityHighlights,
