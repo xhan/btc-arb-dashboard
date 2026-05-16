@@ -493,6 +493,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardModalUtilsResponse.body.includes('function hideModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyKyberDirectPoolsControlVisibility(refs = {}, visible = false)'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteRequestChannelOptionsState(refs = {}, state = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readQuoteSettingsFormValues(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applySettingsIntervalWritePlan(refs = {}, writePlan = [])'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readSettingsIntervalFormValues(refs = {}, options = {})'));
@@ -707,6 +708,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow)'));
     assert.ok(!appJsResponse.body.includes("kyberDirectPoolsGroup.style.display = shouldShow ? 'flex' : 'none'"));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {'));
+    assert.ok(!appJsResponse.body.includes('requestChannelSelectGroup.style.display'));
+    assert.ok(!appJsResponse.body.includes('quoteRequestChannelSelect.innerHTML'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes("function buildQuoteAlertDisplayLabel(quote, state = {}, direction = 'forward')"));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));

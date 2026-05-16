@@ -296,6 +296,7 @@
         'show-inverse-quote': inverseCheckbox,
         'modal-swap-quote': modalSwapQuoteBtn,
         'modal-delete-quote': modalDeleteQuoteBtn,
+        'request-channel-select-group': requestChannelSelectGroup,
         'quote-request-channel': quoteRequestChannelSelect
     };
     const copyToastRuntime = getCopyUtils().createCopyToastRuntime({
@@ -4137,19 +4138,19 @@
     }
 
     function renderQuoteRequestChannelOptions(quote) {
-        if (!requestChannelSelectGroup || !quoteRequestChannelSelect) return;
-
         if (!getRequestChannelUtils().supportsRequestChannelForQuote(quote)) {
-            requestChannelSelectGroup.style.display = 'none';
-            quoteRequestChannelSelect.innerHTML = '';
+            getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {
+                visible: false
+            });
             return;
         }
 
-        requestChannelSelectGroup.style.display = 'block';
         const currentChannelId = getRequestChannelUtils().resolveRequestChannelIdForQuote(quote, requestChannelOptions);
-
-        quoteRequestChannelSelect.innerHTML = getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || []);
-        quoteRequestChannelSelect.value = currentChannelId;
+        getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {
+            visible: true,
+            optionsHtml: getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || []),
+            value: currentChannelId
+        });
     }
 
     function buildPriceSnapshotPayload() {

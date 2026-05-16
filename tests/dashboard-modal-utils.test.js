@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   applyAddQuoteFormViewState,
   applyKyberDirectPoolsControlVisibility,
+  applyQuoteRequestChannelOptionsState,
   applyQuoteSettingsModalWritePlan,
   applySettingsIntervalWritePlan,
   closeAddCategoryModal,
@@ -150,6 +151,7 @@ function createQuoteSettingsRefs() {
     'show-inverse-quote': { checked: false },
     'modal-swap-quote': { style: { display: '' } },
     'modal-delete-quote': { style: { display: '' } },
+    'request-channel-select-group': { style: { display: '' } },
     'quote-request-channel': { value: 'default' }
   };
 }
@@ -189,12 +191,24 @@ assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-note'].style.display, '
 assert.strictEqual(applyKyberDirectPoolsControlVisibility(quoteSettingsRefs, false), false);
 assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-group'].style.display, 'none');
 assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-note'].style.display, 'none');
+assert.strictEqual(applyQuoteRequestChannelOptionsState(quoteSettingsRefs, {
+  visible: true,
+  optionsHtml: '<option value="default">默认通道</option><option value="fast">fast</option>',
+  value: 'fast'
+}), true);
+assert.strictEqual(quoteSettingsRefs['request-channel-select-group'].style.display, 'block');
+assert.strictEqual(quoteSettingsRefs['quote-request-channel'].innerHTML, '<option value="default">默认通道</option><option value="fast">fast</option>');
+assert.strictEqual(quoteSettingsRefs['quote-request-channel'].value, 'fast');
+assert.strictEqual(applyQuoteRequestChannelOptionsState(quoteSettingsRefs, { visible: false }), false);
+assert.strictEqual(quoteSettingsRefs['request-channel-select-group'].style.display, 'none');
+assert.strictEqual(quoteSettingsRefs['quote-request-channel'].innerHTML, '');
+assert.strictEqual(quoteSettingsRefs['quote-request-channel'].value, '');
 
 assert.deepStrictEqual(readQuoteSettingsFormValues(quoteSettingsRefs), {
   sourceValue: 'LI.FI',
   kyberOnlyDirectPools: true,
   showInverse: true,
-  requestChannelId: 'default'
+  requestChannelId: ''
 });
 
 const settingsIntervalRefs = {

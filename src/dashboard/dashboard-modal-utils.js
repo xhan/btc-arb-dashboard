@@ -70,6 +70,18 @@
     return visible === true;
   }
 
+  function applyQuoteRequestChannelOptionsState(refs = {}, state = {}) {
+    const visible = state.visible === true;
+    const selectEl = refs['quote-request-channel'];
+
+    setDisplay(refs['request-channel-select-group'], visible ? 'block' : 'none');
+    if (selectEl) {
+      selectEl.innerHTML = visible ? String(state.optionsHtml || '') : '';
+      selectEl.value = visible ? String(state.value || '') : '';
+    }
+    return visible;
+  }
+
   function applySettingsIntervalWritePlan(refs = {}, writePlan = []) {
     (writePlan || []).forEach((item) => {
       setElementValue(refs[item.id], item.value);
@@ -224,6 +236,7 @@
   return {
     applyAddQuoteFormViewState,
     applyKyberDirectPoolsControlVisibility,
+    applyQuoteRequestChannelOptionsState,
     applyQuoteSettingsModalWritePlan,
     applySettingsIntervalWritePlan,
     closeAddCategoryModal,
