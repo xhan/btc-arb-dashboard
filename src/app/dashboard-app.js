@@ -650,7 +650,6 @@
     }
 
     function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled) {
-        let touched = false;
         dashboardState.forEach((category) => {
             (category.quotes || []).forEach((quote) => {
                 if (!getRequestChannelUtils().supportsRequestChannelForQuote(quote)) {
@@ -663,14 +662,8 @@
                 }
                 removeFromQueue(quote.id);
                 queueQuoteRefresh(quote, { updateSchedulers: false });
-                touched = true;
             });
         });
-
-        if (!touched) {
-            updateSchedulers();
-            return;
-        }
         updateSchedulers();
     }
 

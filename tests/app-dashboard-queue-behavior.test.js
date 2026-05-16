@@ -71,6 +71,11 @@ assert.ok(
 );
 
 assert.ok(
+  !appJs.includes('let touched = false;') && !appJs.includes('if (!touched)'),
+  '多渠道队列重排不应保留无实际分支差异的 touched 状态'
+);
+
+assert.ok(
   appJs.includes('getQueueStatsUtils().appendQuoteQueueTasks(queue, quote)'),
   '队列 task 构造和去重应继续复用 QueueStatsUtils'
 );
