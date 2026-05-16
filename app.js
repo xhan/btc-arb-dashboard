@@ -2985,7 +2985,7 @@
                 try {
                     const startAmount = Number(card.inputAmount);
                     let rollingAmount = startAmount;
-                    const rows = [];
+                    let rows = [];
                     let finalSymbol = '';
                     let shouldSkipApply = false;
 
@@ -3024,27 +3024,12 @@
 
                         rollingAmount = data.finalAmountOut;
                         finalSymbol = data.symbols.to || finalSymbol;
-                        const isInverseLeg = Boolean(leg.inverse);
-                        rows.push({
-                            quoteId: Number(match.quote.id),
-                            direction: isInverseLeg ? 'inverse' : 'forward',
-                            pricingMode: 'raw',
-                            chain: match.quote.chain,
-                            chainLabel: formatChainLabel(match.quote.chain),
-                            fromSymbol: data.symbols.from,
-                            toSymbol: data.symbols.to,
-                            fromTokenAddress: isInverseLeg ? match.quote.toToken : match.quote.fromToken,
-                            toTokenAddress: isInverseLeg ? match.quote.fromToken : match.quote.toToken,
+                        rows.push(getArbDetailUtils().buildArbDetailRow(match.quote, data, {
                             inputAmount: legInputAmount,
-                            rawPrice: data.rawPrice,
-                            rateText: getArbDetailUtils().buildArbDetailRateText(
-                                data.rawPrice,
-                                data.symbols.from,
-                                data.symbols.to
-                            ),
-                            amountText: `${formatDetailNumber(data.finalAmountOut)}`,
-                            sourceText: data.usedSource || match.quote.preferredSource || 'Unknown'
-                        });
+                            isInverseFetch: Boolean(leg.inverse),
+                            formatChainLabel,
+                            formatAmount: (value) => `${formatDetailNumber(value)}`
+                        }));
                     }
 
                     if (shouldSkipApply || !getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
@@ -3054,15 +3039,7 @@
                     const summary = getArbDetailUtils().summarizeDetailResult(startAmount, rollingAmount);
                     if (cardIndex === 3) {
                         const baseRows = Array.isArray(arbDetailState.cards[0]?.rows) ? arbDetailState.cards[0].rows : [];
-                        rows.forEach((row, rowIndex) => {
-                            const baseRow = baseRows[rowIndex];
-                            const rateDeltaText = getArbDetailUtils().buildArbDetailRateDeltaText(
-                                baseRow && baseRow.rawPrice,
-                                row && row.rawPrice
-                            );
-                            row.rateDeltaText = rateDeltaText;
-                            row.rateDeltaTone = getArbDetailUtils().getArbDetailRateDeltaTone(rateDeltaText);
-                        });
+                        rows = getArbDetailUtils().applyArbDetailRateDeltas(rows, baseRows);
                     }
                     card.rows = rows;
                     card.summary = {

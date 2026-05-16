@@ -85,6 +85,56 @@
     return 'neutral';
   }
 
+  function buildArbDetailRow(quote, quoteData, options = {}) {
+    const isInverseFetch = options.isInverseFetch === true;
+    const symbols = quoteData && quoteData.symbols && typeof quoteData.symbols === 'object'
+      ? quoteData.symbols
+      : {};
+    const formatChainLabel = typeof options.formatChainLabel === 'function'
+      ? options.formatChainLabel
+      : (chain) => String(chain || '');
+    const formatAmount = typeof options.formatAmount === 'function'
+      ? options.formatAmount
+      : (value) => String(formatDetailNumber(value));
+    return {
+      quoteId: Number(quote && quote.id),
+      direction: isInverseFetch ? 'inverse' : 'forward',
+      pricingMode: 'raw',
+      chain: quote && quote.chain,
+      chainLabel: formatChainLabel(quote && quote.chain),
+      fromSymbol: symbols.from,
+      toSymbol: symbols.to,
+      fromTokenAddress: isInverseFetch ? quote && quote.toToken : quote && quote.fromToken,
+      toTokenAddress: isInverseFetch ? quote && quote.fromToken : quote && quote.toToken,
+      inputAmount: options.inputAmount,
+      rawPrice: quoteData && quoteData.rawPrice,
+      rateText: buildArbDetailRateText(
+        quoteData && quoteData.rawPrice,
+        symbols.from,
+        symbols.to
+      ),
+      amountText: formatAmount(quoteData && quoteData.finalAmountOut),
+      sourceText: (quoteData && quoteData.usedSource) || (quote && quote.preferredSource) || 'Unknown'
+    };
+  }
+
+  function applyArbDetailRateDeltas(rows, baseRows) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const safeBaseRows = Array.isArray(baseRows) ? baseRows : [];
+    return safeRows.map((row, rowIndex) => {
+      const baseRow = safeBaseRows[rowIndex];
+      const rateDeltaText = buildArbDetailRateDeltaText(
+        baseRow && baseRow.rawPrice,
+        row && row.rawPrice
+      );
+      return {
+        ...row,
+        rateDeltaText,
+        rateDeltaTone: getArbDetailRateDeltaTone(rateDeltaText)
+      };
+    });
+  }
+
   function summarizeDetailResult(startAmount, finalAmount) {
     const safeStart = normalizePositiveAmount(startAmount, 1);
     const safeFinal = Number(finalAmount);
@@ -552,6 +602,8 @@
     buildArbDetailRateText,
     buildArbDetailRateDeltaText,
     getArbDetailRateDeltaTone,
+    buildArbDetailRow,
+    applyArbDetailRateDeltas,
     formatDetailNumber,
     summarizeDetailResult,
     getQuoteRunState,

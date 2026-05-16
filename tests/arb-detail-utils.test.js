@@ -25,6 +25,8 @@ const {
   shouldSyncArbDetailSnapshotForCard,
   buildArbDetailSnapshotMonitorState,
   buildArbDetailDexLink,
+  buildArbDetailRow,
+  applyArbDetailRateDeltas,
   buildArbDetailRateText,
   buildArbDetailRateDeltaText,
   getArbDetailRateDeltaTone,
@@ -94,6 +96,96 @@ assert.strictEqual(getArbDetailRateDeltaTone('--'), 'neutral');
 assert.strictEqual(formatDetailNumber(1.2345678), 1.234568);
 assert.strictEqual(formatDetailNumber('1.2345678', 4), 1.2346);
 assert.strictEqual(formatDetailNumber('bad'), '--');
+
+assert.deepStrictEqual(
+  buildArbDetailRow(
+    {
+      id: 12,
+      chain: 'arbitrum',
+      fromToken: '0xfrom',
+      toToken: '0xto',
+      preferredSource: 'Kyber'
+    },
+    {
+      symbols: { from: 'cbBTC', to: 'WBTC' },
+      rawPrice: 1.00123,
+      finalAmountOut: 2.502,
+      usedSource: ''
+    },
+    {
+      inputAmount: 2.5,
+      isInverseFetch: false,
+      formatChainLabel: (chain) => `Chain:${chain}`,
+      formatAmount: (value) => `Amount:${value}`
+    }
+  ),
+  {
+    quoteId: 12,
+    direction: 'forward',
+    pricingMode: 'raw',
+    chain: 'arbitrum',
+    chainLabel: 'Chain:arbitrum',
+    fromSymbol: 'cbBTC',
+    toSymbol: 'WBTC',
+    fromTokenAddress: '0xfrom',
+    toTokenAddress: '0xto',
+    inputAmount: 2.5,
+    rawPrice: 1.00123,
+    rateText: '1 cbBTC ≈ 1.00123 WBTC',
+    amountText: 'Amount:2.502',
+    sourceText: 'Kyber'
+  }
+);
+
+assert.deepStrictEqual(
+  buildArbDetailRow(
+    {
+      id: 18,
+      chain: 'ethereum',
+      fromToken: '0xfrom',
+      toToken: '0xto'
+    },
+    {
+      symbols: { from: 'WBTC', to: 'cbBTC' },
+      rawPrice: 0.9998,
+      finalAmountOut: 1.5,
+      usedSource: '0x'
+    },
+    {
+      inputAmount: 1.499,
+      isInverseFetch: true,
+      formatChainLabel: String,
+      formatAmount: String
+    }
+  ),
+  {
+    quoteId: 18,
+    direction: 'inverse',
+    pricingMode: 'raw',
+    chain: 'ethereum',
+    chainLabel: 'ethereum',
+    fromSymbol: 'WBTC',
+    toSymbol: 'cbBTC',
+    fromTokenAddress: '0xto',
+    toTokenAddress: '0xfrom',
+    inputAmount: 1.499,
+    rawPrice: 0.9998,
+    rateText: '1 WBTC ≈ 0.9998 cbBTC',
+    amountText: '1.5',
+    sourceText: '0x'
+  }
+);
+
+assert.deepStrictEqual(
+  applyArbDetailRateDeltas(
+    [{ rawPrice: 1.001 }, { rawPrice: 0.9998 }],
+    [{ rawPrice: 1 }, { rawPrice: 1 }]
+  ),
+  [
+    { rawPrice: 1.001, rateDeltaText: '+10.0bp', rateDeltaTone: 'positive' },
+    { rawPrice: 0.9998, rateDeltaText: '-2.0bp', rateDeltaTone: 'negative' }
+  ]
+);
 
 assert.strictEqual(
   buildArbDetailTokenHtml('cb<BTC>', ''),

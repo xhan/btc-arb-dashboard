@@ -695,8 +695,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
     assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
-    assert.ok(appJsResponse.body.includes('buildArbDetailRateDeltaText'));
-    assert.ok(appJsResponse.body.includes('getArbDetailUtils().getArbDetailRateDeltaTone(rateDeltaText)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRow(match.quote, data, {'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailRateDeltas(rows, baseRows)'));
     assert.ok(appJsResponse.body.includes('function getArbDetailUtils()'));
     assert.ok(appJsResponse.body.includes('ArbDetailUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRowsHtml(card, {'));
@@ -706,7 +706,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('typeof utils.buildArbDetail'));
     assert.ok(!appJsResponse.body.includes('buildDetailInputAmounts(baseAmount) {'));
     assert.ok(!appJsResponse.body.includes('findBestSummaryIndices(cards) {'));
-    assert.ok(appJsResponse.body.includes('rateDeltaText'));
+    assert.ok(arbDetailUtilsResponse.body.includes('rateDeltaText'));
     assert.ok(appJsResponse.body.includes('renderArbDetailCardContents();'));
     assert.ok(!appJsResponse.body.includes('function getActiveArbDetailInputIndex()'));
     assert.ok(!appJsResponse.body.includes('draftInputValue'));
@@ -813,6 +813,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('mini: true'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailPairHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRowsHtml'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRow(quote, quoteData, options = {})'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailRateDeltas(rows, baseRows)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRateDeltaText(baseRate, nextRate, decimals = 1)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function getArbDetailRateDeltaTone(rateDeltaText)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSummaryHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailShellHtml'));
