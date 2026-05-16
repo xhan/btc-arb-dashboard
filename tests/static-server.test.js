@@ -538,7 +538,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildInverseQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayToggleState(quoteDisplayMode)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode)'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, channel)'));
+    assert.ok(!appJsResponse.body.includes('function buildRequestChannelTagHtml(quote)'));
+    assert.ok(!appJsResponse.body.includes('function buildQuotePairLabelHtml(quote, state)'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, monitorState)'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, requestChannel)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch(quote, channel, {'));
     assert.ok(appJsResponse.body.includes('const quoteHoverRuntime = getQuoteDisplayUtils().createQuoteHoverRuntime({'));
     assert.ok(appJsResponse.body.includes('quoteHoverRuntime.schedule(quoteId, () => {'));
@@ -1352,10 +1356,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function buildArbDetailPairHtml'));
     assert.ok(!appJsResponse.body.includes('const cardsHtml = arbDetailState.cards.map'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRowsHtml(card, {'));
-    assert.ok(appJsResponse.body.includes('buildSourceHtml: (row, options) => buildArbDetailSourceHtml(row, options)'));
+    assert.ok(!appJsResponse.body.includes('function buildArbDetailSourceHtml(row, options = {})'));
+    assert.ok(appJsResponse.body.includes('buildSourceHtml: (row, options) => getArbDetailUtils().buildArbDetailSourceHtml(row, options)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailSummaryHtml(card, {'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailRowsHtml(card, cardIndex) {\n        if (card.rows && card.rows.length)'));
-    assert.ok(appJsResponse.body.includes('buildArbDetailSourceHtml(row, options)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSourceHtml(row, options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSourceMetaHtml(row)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSourceActionsHtml(row, options = {})'));

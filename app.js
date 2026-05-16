@@ -647,11 +647,6 @@
         return getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
     }
 
-    function buildRequestChannelTagHtml(quote) {
-        const channel = getRequestChannelDisplayForQuote(quote);
-        return getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, channel);
-    }
-
     function updateRequestChannelTagForQuote(quote) {
         if (!quote) return;
         const itemEl = document.getElementById(`quote-item-${quote.id}`);
@@ -1705,10 +1700,6 @@
         return getArbPaths().formatProfitWanfen(profitRate);
     }
 
-    function buildQuotePairLabelHtml(quote, state) {
-        return getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state);
-    }
-
     function getQuoteDisplayText(quote, state) {
         return getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state, {
             mode: quoteDisplayMode,
@@ -1726,7 +1717,7 @@
     function updateQuotePairLabel(quote, state) {
         const pairLabelEl = document.getElementById(`quote-pair-label-${quote.id}`);
         if (!pairLabelEl) return;
-        pairLabelEl.innerHTML = buildQuotePairLabelHtml(quote, state);
+        pairLabelEl.innerHTML = getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state);
     }
 
     function renderQuoteDisplayToggle() {
@@ -2374,12 +2365,8 @@
     function buildArbDetailRowsHtml(card, cardIndex) {
         return getArbDetailUtils().buildArbDetailRowsHtml(card, {
             cardIndex,
-            buildSourceHtml: (row, options) => buildArbDetailSourceHtml(row, options)
+            buildSourceHtml: (row, options) => getArbDetailUtils().buildArbDetailSourceHtml(row, options)
         });
-    }
-
-    function buildArbDetailSourceHtml(row, options = {}) {
-        return getArbDetailUtils().buildArbDetailSourceHtml(row, options);
     }
 
     function promptMutedPathLegDurationHours() {
@@ -4313,8 +4300,9 @@
         const initialAmount = quote.amount || 1;
         const amountInputHTML = !isCexOrderbookChain(quote.chain) ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
         const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
-        const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${buildQuotePairLabelHtml(quote, monitorState)}</span>`;
-        const requestChannelTagHtml = buildRequestChannelTagHtml(quote);
+        const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, monitorState)}</span>`;
+        const requestChannel = getRequestChannelDisplayForQuote(quote);
+        const requestChannelTagHtml = getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, requestChannel);
         const renderer = getDashboardRenderer();
         
         itemEl.innerHTML = renderer.renderQuoteItemShell({
