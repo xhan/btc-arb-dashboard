@@ -6,7 +6,7 @@
 请先阅读并基于当前项目里的 dex url 共用实现做修改，不要重新发明一套。
 
 核心函数在：
-- /Users/xhan/Desktop/market_diff/dex-link-utils.js
+- /Users/xhan/Desktop/market_diff/src/ui/dex-link-utils.js
 
 当前对外接口：
 - buildDexLink(config)
@@ -26,14 +26,14 @@ config 结构：
 - 其他默认走 swap.defillama
 
 当前复用位置：
-- /Users/xhan/Desktop/market_diff/arb-detail-utils.js
+- /Users/xhan/Desktop/market_diff/src/arb/arb-detail-utils.js
 - /Users/xhan/Desktop/market_diff/app.js
 
 当前复制 dex url 的通用入口在：
 - /Users/xhan/Desktop/market_diff/app.js
 - 函数名：copyDexLinkFromElement(targetEl)
 
-如果你要修改 dex url 生成逻辑，请优先改 /Users/xhan/Desktop/market_diff/dex-link-utils.js，
+如果你要修改 dex url 生成逻辑，请优先改 /Users/xhan/Desktop/market_diff/src/ui/dex-link-utils.js，
 然后检查以下使用方是否仍然兼容：
 - 套利路径详情里的 dex 链接复制
 - 数据终端里的 dex 链接复制

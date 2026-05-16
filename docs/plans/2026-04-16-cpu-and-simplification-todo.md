@@ -77,7 +77,7 @@
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
   - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `src/quote/quote-state-runtime-utils.js`，`app.js` 只通过 runtime wrapper 读写
   - 金额输入 debounce timer Map 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，暂停 quote 时通过统一 runtime 清理待执行输入更新
-  - 主题切换的合法值、next-state 和 DOM/storage 写入计划已下沉到 `theme-utils.js`
+  - 主题切换的合法值、next-state 和 DOM/storage 写入计划已下沉到 `src/ui/theme-utils.js`
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效
   - 继续降低前端重复计算
@@ -89,7 +89,7 @@
 - 目标：减少大面板反复全量重绘。
 - 现状：
   - 套利面板、路径报警面板、数据终端都大量依赖 `innerHTML`
-  - 已抽出 `dom-render-utils.js` 的 stable HTML renderer；套利面板、路径报警面板、muted 状态面板和数据终端在生成结果完全一致时跳过 `innerHTML` 替换
+  - 已抽出 `src/ui/dom-render-utils.js` 的 stable HTML renderer；套利面板、路径报警面板、muted 状态面板和数据终端在生成结果完全一致时跳过 `innerHTML` 替换
   - 数据量一大时，字符串构建和节点替换成本高
 - 预期收益：
   - 降低前端渲染抖动
@@ -138,8 +138,8 @@
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
-  - `snapshot/copy-ui`：价格快照 timer 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
-  - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
+  - `snapshot/copy-ui`：价格快照 timer 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `src/ui/copy-utils.js`
+  - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `src/ui/dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
   - `file-layout`：在模块边界稳定后，把根目录里按职责增长的 utils/runtime/renderer/provider 文件迁入明确目录，例如 `src/quote/`、`src/arb/`、`src/path-alerts/`、`src/dashboard/`、`src/shared/`，并保留必要的兼容入口，避免一次性移动导致 review 噪声和路径风险
     - 已启动第一步：套利核心路径算法、套利详情工具、详情刷新 runtime、套利面板渲染器、套利面板 layout/runtime/cache 工具、规则快照、循环起点优先级、资产等价规则、fixed/special 套利工具、watchlist 配置及解析工具迁入 `src/arb/`，后续同类 arb 模块可按这个模式继续迁移
     - 已启动第二步：quote pause/request/display/state/queue runtime 迁入 `src/quote/`，后续同类 quote 模块可按这个模式继续迁移
@@ -151,6 +151,7 @@
     - 已启动第八步：price snapshot payload/store/replay 和快照页入口迁入 `src/price-snapshots/`，后续快照持久化与回放模块按这个目录维护
     - 已启动第九步：alert log UI、alert debug 和 special rule alert config 工具迁入 `src/alerts/`，后续告警支撑模块按这个目录维护
     - 已启动第十步：data terminal 工具迁入 `src/data-terminal/`，后续数据终端模块按这个目录维护
+    - 已启动第十一步：copy、dex link、dom render 和 theme 等浏览器 UI 支撑工具迁入 `src/ui/`，后续 UI shared 模块按这个目录维护
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -182,7 +183,7 @@
   - `app.js` 的 dashboard quote 查找和 quote alert 列表读取单用途包装已移除，调用点直接委托 runtime/path alert utils
   - `app.js` 的套利详情 summary 利润率格式化包装已移除，默认格式化归入 `src/arb/arb-detail-utils.js`
   - `app.js` 的 CEX book format/summary 顶层过渡包装已移除，注入点直接委托 `src/quote/quote-display-utils.js`
-  - `app.js` 的 dex link label/button 顶层过渡包装已移除，调用点直接委托 `dex-link-utils.js`
+  - `app.js` 的 dex link label/button 顶层过渡包装已移除，调用点直接委托 `src/ui/dex-link-utils.js`
   - `app.js` 的 request channel tag、quote pair label 和 arb detail source HTML 单用途包装已移除，调用点直接委托对应 utils
   - `app.js` 中未调用的 CEX trading pair parser 包装和 `TradingPairUtils` 入口已移除
   - `app.js` 的 single-chain display name 和 paused monitor state 单用途包装已移除，调用点复用现有 helper / utils
@@ -207,8 +208,8 @@
   - `app.js` 的报价设置表单读取已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只提供 DOM read adapter
   - `app.js` 的确认弹窗 click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `app.js` 的报价设置 modal viewState 写入规则已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只执行 DOM write plan
-  - `app.js` 的浮窗拖拽实现和浮窗 focus 事件绑定已下沉到 `dom-render-utils.js`
-  - `app.js` 的主题 metadata、循环顺序和主题写入计划已下沉到 `theme-utils.js`
+  - `app.js` 的浮窗拖拽实现和浮窗 focus 事件绑定已下沉到 `src/ui/dom-render-utils.js`
+  - `app.js` 的主题 metadata、循环顺序和主题写入计划已下沉到 `src/ui/theme-utils.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
   - 继续统一剩余兼容边界命名
