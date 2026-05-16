@@ -661,7 +661,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getPathAlertPageUtils()'));
     assert.ok(appJsResponse.body.includes('PathAlertPageUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertQuoteLabel({'));
-    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().renderPathAlertPanelHtml(options)'));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().renderPathAlertPanelHtml(renderOptions)'));
+    assert.ok(!appJsResponse.body.includes('function renderPathAlertPanelHtml(options = {})'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertMetaText(alert, {'));
     assert.ok(!appJsResponse.body.includes('return \'/path-alerts\';'));
     assert.ok(!appJsResponse.body.includes('<div class="path-alert-empty">暂无路径报警</div>'));

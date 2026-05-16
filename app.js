@@ -3619,10 +3619,6 @@
         window.open(href, '_blank', 'noopener');
     }
 
-    function renderPathAlertPanelHtml(options = {}) {
-        return getPathAlertPageUtils().renderPathAlertPanelHtml(options);
-    }
-
     async function loadPathAlertConfig(options = {}) {
         const pathAlertUtils = getPathAlertUtils();
         const fallbackToDefault = options.fallbackToDefault !== false;
@@ -3670,7 +3666,7 @@
             formatEvaluationText: formatPathAlertEvaluationText,
             formatTime: (value) => new Date(value).toLocaleTimeString()
         });
-        pathAlertPanelHtmlRenderer.render(pathAlertContent, renderPathAlertPanelHtml(renderOptions));
+        pathAlertPanelHtmlRenderer.render(pathAlertContent, getPathAlertPageUtils().renderPathAlertPanelHtml(renderOptions));
     }
 
     function togglePathAlertPanel() {
