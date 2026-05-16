@@ -680,7 +680,7 @@
         let touched = false;
         dashboardState.forEach((category) => {
             (category.quotes || []).forEach((quote) => {
-                if (!shouldShowRequestChannelForQuote(quote)) {
+                if (!getRequestChannelUtils().supportsRequestChannelForQuote(quote)) {
                     return;
                 }
                 const previousChannelId = getEffectiveRequestChannelIdForQuote(quote, { multiChannelEnabled: previousEnabled });
@@ -4385,10 +4385,6 @@
         });
     }
 
-    function shouldShowRequestChannelForQuote(quote) {
-        return getRequestChannelUtils().supportsRequestChannelForQuote(quote);
-    }
-
     function shouldShowKyberOnlyDirectPoolsControl(quote, selectedSource) {
         if (!quote || !isEvmChain(quote.chain) || quote.chain.toLowerCase() === 'plasma') {
             return false;
@@ -4409,7 +4405,7 @@
     function renderQuoteRequestChannelOptions(quote) {
         if (!requestChannelSelectGroup || !quoteRequestChannelSelect) return;
 
-        if (!shouldShowRequestChannelForQuote(quote)) {
+        if (!getRequestChannelUtils().supportsRequestChannelForQuote(quote)) {
             requestChannelSelectGroup.style.display = 'none';
             quoteRequestChannelSelect.innerHTML = '';
             return;
@@ -4852,7 +4848,7 @@
                 sourceValue: formValues.sourceValue,
                 kyberOnlyDirectPools: formValues.kyberOnlyDirectPools,
                 showInverse: formValues.showInverse,
-                requestChannelEnabled: shouldShowRequestChannelForQuote(quote) && Boolean(quoteRequestChannelSelect),
+                requestChannelEnabled: getRequestChannelUtils().supportsRequestChannelForQuote(quote) && Boolean(quoteRequestChannelSelect),
                 requestChannelId: formValues.requestChannelId,
                 isCrossChainQuote,
                 isEvmChain

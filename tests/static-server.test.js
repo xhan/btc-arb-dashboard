@@ -506,6 +506,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getRequestChannelDisplayForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('function getQueueTypeForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('function getQueueIntervalMs(type)'));
+    assert.ok(!appJsResponse.body.includes('function shouldShowRequestChannelForQuote(quote)'));
+    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().supportsRequestChannelForQuote(quote)'));
     const queueStatsExportBlock = queueStatsUtilsResponse.body.match(/return \{\n    DEFAULT_INTERVALS,[\s\S]*?\n  \};/);
     assert.ok(queueStatsExportBlock);
     assert.ok(!queueStatsExportBlock[0].includes('buildQueueTasksForQuote'));
