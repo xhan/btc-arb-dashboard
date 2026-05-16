@@ -68,7 +68,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="arb-cycle-priority-utils.js"'));
     assert.ok(response.body.includes('src="arb-equivalence-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
-    assert.ok(response.body.includes('src="arb-panel-layout-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="dom-render-utils.js"'));
     assert.ok(response.body.includes('src="arb-path-config.js"'));
     assert.ok(response.body.includes('src="arb-path-config-utils.js"'));
@@ -267,11 +267,11 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(appJsResponse.statusCode, 200);
     const alertLogUiResponse = await request('/alert-log-ui-utils.js');
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
-    const arbPanelLayoutUtilsResponse = await request('/arb-panel-layout-utils.js');
+    const arbPanelLayoutUtilsResponse = await request('/src/arb/arb-panel-layout-utils.js');
     assert.strictEqual(arbPanelLayoutUtilsResponse.statusCode, 200);
     const arbPanelRendererResponse = await request('/src/arb/arb-panel-renderer.js');
     assert.strictEqual(arbPanelRendererResponse.statusCode, 200);
-    const arbRuntimeMemoryUtilsResponse = await request('/arb-runtime-memory-utils.js');
+    const arbRuntimeMemoryUtilsResponse = await request('/src/arb/arb-runtime-memory-utils.js');
     assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
     const arbPathTemplateCacheUtilsResponse = await request('/arb-path-template-cache-utils.js');
     assert.strictEqual(arbPathTemplateCacheUtilsResponse.statusCode, 200);

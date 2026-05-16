@@ -21,7 +21,7 @@ const {
   parseFilterInput,
   registerArbOpportunityHighlightTarget,
   selectFirstUnmutedDisplayedCycle
-} = require('../arb-panel-layout-utils');
+} = require('../src/arb/arb-panel-layout-utils');
 
 const sections = [
   { title: '固定路径', opportunities: Array.from({ length: 8 }, (_, index) => ({ label: `F${index + 1}` })) },

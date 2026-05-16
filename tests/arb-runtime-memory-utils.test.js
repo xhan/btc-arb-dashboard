@@ -10,7 +10,7 @@ const {
   markArbOpportunityHighlights,
   pruneExpiredArbOpportunityHighlights,
   trimContainerChildren
-} = require('../arb-runtime-memory-utils');
+} = require('../src/arb/arb-runtime-memory-utils');
 
 const nextOpportunityMap = new Map([
   ['a', { id: 'a', label: 'A' }],
