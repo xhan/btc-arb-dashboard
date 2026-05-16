@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const { createMutedPathRuntime } = require('../muted-path-runtime-utils');
+const { createMutedPathRuntime } = require('../src/path-alerts/muted-path-runtime-utils');
 
 let nowMs = 1000;
 const scheduled = [];

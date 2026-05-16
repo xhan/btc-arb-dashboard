@@ -1,6 +1,6 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./path-alert-utils'));
+    module.exports = factory(require('../../path-alert-utils'));
     return;
   }
   root.MutedPathStorageUtils = factory(root.PathAlertUtils);

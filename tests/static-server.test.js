@@ -75,7 +75,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/arb/arb-path-config-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
-    assert.ok(response.body.includes('src="muted-path-storage-utils.js"'));
+    assert.ok(response.body.includes('src="src/path-alerts/muted-path-storage-utils.js"'));
     assert.ok(response.body.includes('src="dex-link-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-detail-refresh-utils.js"'));
     assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
@@ -96,7 +96,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-runtime-utils.js"'));
-    assert.ok(response.body.includes('src="muted-path-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="src/path-alerts/muted-path-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
@@ -188,13 +188,13 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/arb/arb-fixed-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="muted-path-storage-utils.js"') < response.body.indexOf('src="path-alert-utils.js"')
+      response.body.indexOf('src="src/path-alerts/muted-path-storage-utils.js"') < response.body.indexOf('src="path-alert-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="muted-path-leg-utils.js"') < response.body.indexOf('src="muted-path-runtime-utils.js"')
+      response.body.indexOf('src="src/path-alerts/muted-path-leg-utils.js"') < response.body.indexOf('src="src/path-alerts/muted-path-runtime-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="muted-path-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/path-alerts/muted-path-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(!response.body.includes('id="alert-sound"'));
     assert.ok(!response.body.includes('src="alert.mp3"'));
@@ -311,9 +311,11 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
     const pathAlertUtilsResponse = await request('/path-alert-utils.js');
     assert.strictEqual(pathAlertUtilsResponse.statusCode, 200);
-    const mutedPathLegUtilsResponse = await request('/muted-path-leg-utils.js');
+    const mutedPathStorageUtilsResponse = await request('/src/path-alerts/muted-path-storage-utils.js');
+    assert.strictEqual(mutedPathStorageUtilsResponse.statusCode, 200);
+    const mutedPathLegUtilsResponse = await request('/src/path-alerts/muted-path-leg-utils.js');
     assert.strictEqual(mutedPathLegUtilsResponse.statusCode, 200);
-    const mutedPathRuntimeUtilsResponse = await request('/muted-path-runtime-utils.js');
+    const mutedPathRuntimeUtilsResponse = await request('/src/path-alerts/muted-path-runtime-utils.js');
     assert.strictEqual(mutedPathRuntimeUtilsResponse.statusCode, 200);
     const pathAlertPageUtilsResponse = await request('/path-alert-page-utils.js');
     assert.strictEqual(pathAlertPageUtilsResponse.statusCode, 200);
@@ -1323,7 +1325,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="alert-log-muted-tab"'));
     assert.ok(response.body.includes('id="alert-log-muted-log-content"'));
     assert.ok(response.body.includes('id="alert-log-muted-content"'));
-    assert.ok(response.body.includes('src="muted-path-leg-utils.js"'));
+    assert.ok(response.body.includes('src="src/path-alerts/muted-path-leg-utils.js"'));
     assert.ok(arbDetailUtilsResponse.body.includes('arb-detail-chart-card arb-detail-profit-card'));
     assert.ok(appJsResponse.body.includes('height: 104'));
     assert.ok(appJsResponse.body.includes('showRightPriceScale: true'));

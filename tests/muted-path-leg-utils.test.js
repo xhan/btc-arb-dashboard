@@ -10,7 +10,7 @@ const {
   upsertMutedPathLegEntry,
   trimMutedPathLegsForStorage,
   filterMutedPathLegs
-} = require('../muted-path-leg-utils');
+} = require('../src/path-alerts/muted-path-leg-utils');
 
 const mutedLeg = createMutedPathLegEntry(
   {

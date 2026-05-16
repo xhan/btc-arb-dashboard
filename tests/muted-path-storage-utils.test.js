@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   normalizeStoredMutedPathTargets,
   trimMutedPathTargetsForStorage
-} = require('../muted-path-storage-utils');
+} = require('../src/path-alerts/muted-path-storage-utils');
 
 const normalized = normalizeStoredMutedPathTargets([
   {
