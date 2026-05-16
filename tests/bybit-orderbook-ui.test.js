@@ -24,8 +24,12 @@ assert.ok(
   'ChainDefaults 应识别 Bybit 和 Binance 为同类 CEX quote'
 );
 assert.ok(
-  appJs.includes("className: 'cex-orderbook-tooltip-host'"),
-  'CEX tooltip 应使用独立样式类'
+  quoteDisplayUtilsJs.includes("className: 'cex-orderbook-tooltip-host'"),
+  'quote display 工具应声明 CEX tooltip 独立样式类'
+);
+assert.ok(
+  appJs.includes('buildQuoteHoverTooltipState(quote, state, { isEvmChain })'),
+  '前端 hover 应消费 quote display 工具生成的 tooltip 状态'
 );
 assert.ok(
   indexHtml.includes('.quote-text.cex-orderbook-summary'),

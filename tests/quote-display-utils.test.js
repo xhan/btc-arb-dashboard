@@ -8,6 +8,7 @@ const {
   buildQuotePairLabelHtml,
   buildQuoteDisplayTextForState,
   buildQuoteDisplayToggleState,
+  buildQuoteHoverTooltipState,
   buildQuoteRequestChannelTagHtml,
   createQuoteHoverRuntime,
   extractPriceFromText,
@@ -197,6 +198,37 @@ assert.strictEqual(
   buildQuoteRequestChannelTagHtml({ id: 'quote-1' }, null),
   ''
 );
+
+assert.deepStrictEqual(
+  buildQuoteHoverTooltipState(
+    { chain: 'ethereum', preferredSource: '0x' },
+    { usedSource: 'Kyber' },
+    { isEvmChain: true }
+  ),
+  {
+    html: '<div>来源：<strong>Kyber</strong></div><div>偏好：0x</div>',
+    className: ''
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuoteHoverTooltipState(
+    { chain: 'sui' },
+    null,
+    { isEvmChain: false }
+  ),
+  {
+    html: '<div>来源：<strong>等待数据...</strong></div>',
+    className: ''
+  }
+);
+
+const cexHoverTooltipState = buildQuoteHoverTooltipState(
+  { chain: 'Bybit', symbol: 'BTCUSDT' },
+  { cexOrderbook: { asksTop5: [{ price: 1, size: 2 }], bidsTop5: [] } }
+);
+assert.strictEqual(cexHoverTooltipState.className, 'cex-orderbook-tooltip-host');
+assert.ok(cexHoverTooltipState.html.includes('cex-orderbook-tooltip'));
 
 assert.strictEqual(
   buildQuoteAlertDisplayLabel({ chain: 'Bybit', symbol: 'BTCUSDT' }, {}, 'forward'),

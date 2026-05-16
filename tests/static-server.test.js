@@ -508,6 +508,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagHtml(quote, channel)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteHoverTooltipState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('quote-direct-badge'));
     const quoteDisplayExportBlock = quoteDisplayUtilsResponse.body.match(/return \{\n    buildCexOrderbookSummary,[\s\S]*?\n  \};/);
     assert.ok(quoteDisplayExportBlock);
@@ -521,7 +522,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getQuoteDisplayUtils()'));
     assert.ok(appJsResponse.body.includes('QuoteDisplayUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook)'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildCexOrderbookTooltipHtml(orderbook)'));
+    assert.ok(!appJsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state'));
@@ -531,6 +532,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, channel)'));
     assert.ok(appJsResponse.body.includes('const quoteHoverRuntime = getQuoteDisplayUtils().createQuoteHoverRuntime({'));
     assert.ok(appJsResponse.body.includes('quoteHoverRuntime.schedule(quoteId, () => {'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteHoverTooltipState(quote, state, { isEvmChain })'));
     assert.ok(appJsResponse.body.includes('quoteHoverRuntime.hide(quoteId, () => {'));
     assert.ok(!appJsResponse.body.includes('let hoverTimeout = null;'));
     assert.ok(!appJsResponse.body.includes('let currentHoveredQuoteId = null;'));

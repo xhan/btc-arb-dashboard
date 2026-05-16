@@ -252,6 +252,29 @@
     return `<span class="quote-channel-tag" id="quote-channel-tag-${escapeHtml(quote.id)}">${escapeHtml(channel.name)}</span>`;
   }
 
+  function buildQuoteHoverTooltipState(quote, state, options = {}) {
+    if (!quote) return null;
+    if (isCexOrderbookChain(quote.chain)) {
+      return {
+        html: buildCexOrderbookTooltipHtml(state ? state.cexOrderbook : null),
+        className: 'cex-orderbook-tooltip-host'
+      };
+    }
+
+    const sourceInfo = state ? (state.usedSource || '未知') : '等待数据...';
+    const lines = [`<div>来源：<strong>${sourceInfo}</strong></div>`];
+    const isEvm = typeof options.isEvmChain === 'function'
+      ? options.isEvmChain(quote.chain)
+      : options.isEvmChain === true;
+    if (isEvm) {
+      lines.push(`<div>偏好：${quote.preferredSource || 'Kyber'}</div>`);
+    }
+    return {
+      html: lines.join(''),
+      className: ''
+    };
+  }
+
   function createQuoteHoverRuntime(options = {}) {
     const setTimer = typeof options.setTimeout === 'function'
       ? options.setTimeout
@@ -335,6 +358,7 @@
     buildQuotePairLabelHtml,
     buildQuoteDisplayTextForState,
     buildQuoteDisplayToggleState,
+    buildQuoteHoverTooltipState,
     buildQuoteRequestChannelTagHtml,
     extractPriceFromText,
     formatCexBookValue,

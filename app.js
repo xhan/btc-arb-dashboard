@@ -1716,10 +1716,6 @@
         return getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook);
     }
 
-    function buildCexOrderbookTooltipHtml(orderbook) {
-        return getQuoteDisplayUtils().buildCexOrderbookTooltipHtml(orderbook);
-    }
-
     function buildQuotePairLabelHtml(quote, state) {
         return getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state);
     }
@@ -3986,27 +3982,9 @@
         textWrapper.onmouseleave = () => hideGlobalTooltip(quoteId);
         
         quoteHoverRuntime.schedule(quoteId, () => {
-            if (isCexOrderbookChain(quote.chain)) {
-                showGlobalTooltip(
-                    buildCexOrderbookTooltipHtml(state ? state.cexOrderbook : null),
-                    textWrapper,
-                    { className: 'cex-orderbook-tooltip-host' }
-                );
-                return;
-            }
-
-            let content = '';
-            let sourceInfo = state ? (state.usedSource || '未知') : '等待数据...';
-
-            if (isEvmChain(quote.chain)) {
-                let pref = quote.preferredSource || 'Kyber';
-                content += `<div>来源：<strong>${sourceInfo}</strong></div>`;
-                content += `<div>偏好：${pref}</div>`;
-            } else {
-                content += `<div>来源：<strong>${sourceInfo}</strong></div>`;
-            }
-            
-            showGlobalTooltip(content, textWrapper);
+            const tooltipState = getQuoteDisplayUtils().buildQuoteHoverTooltipState(quote, state, { isEvmChain });
+            if (!tooltipState) return;
+            showGlobalTooltip(tooltipState.html, textWrapper, { className: tooltipState.className });
         });
     }
 
