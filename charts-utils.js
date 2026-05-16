@@ -219,16 +219,11 @@
   }
 
   return {
-    CHART_CHAIN_LABELS,
-    getChartChainLabel,
-    tokenizeChartSearch,
     buildChartPairKey,
     buildChartPairLabel,
     buildChartsPageHref,
     parseChartsPagePrefill,
-    buildChartSearchTerms,
-    matchesChartSearch
-    ,
+    matchesChartSearch,
     shiftChartPointsToUtc8,
     formatUtc8ChartTime,
     formatChartPrice,

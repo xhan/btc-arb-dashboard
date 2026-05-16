@@ -1072,6 +1072,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(chartsAppResponse.body.includes('syncChartAutoRefreshTimer'));
     assert.ok(chartsAppResponse.body.includes('chart-auto-refresh-toggle'));
 
+    const chartsUtilsResponse = await request('/charts-utils.js');
+    assert.strictEqual(chartsUtilsResponse.statusCode, 200);
+    const chartsUtilsExportBlock = chartsUtilsResponse.body.match(/return \{\n    buildChartPairKey,[\s\S]*?\n  \};/);
+    assert.ok(chartsUtilsExportBlock);
+    assert.ok(!chartsUtilsExportBlock[0].includes('CHART_CHAIN_LABELS'));
+    assert.ok(!chartsUtilsExportBlock[0].includes('getChartChainLabel'));
+    assert.ok(!chartsUtilsExportBlock[0].includes('tokenizeChartSearch'));
+    assert.ok(!chartsUtilsExportBlock[0].includes('buildChartSearchTerms'));
+
     const copyUtilsResponse = await request('/copy-utils.js');
     assert.strictEqual(copyUtilsResponse.statusCode, 200);
     assert.ok(copyUtilsResponse.body.includes('Clipboard fallback failed'));

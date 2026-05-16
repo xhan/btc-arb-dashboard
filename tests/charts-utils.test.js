@@ -5,9 +5,7 @@ const {
   buildChartPairLabel,
   buildChartsPageHref,
   parseChartsPagePrefill,
-  tokenizeChartSearch,
   matchesChartSearch,
-  getChartChainLabel,
   shiftChartPointsToUtc8,
   formatUtc8ChartTime,
   formatChartPrice,
@@ -33,8 +31,6 @@ assert.deepStrictEqual(parseChartsPagePrefill(prefillHref), [
 assert.deepStrictEqual(parseChartsPagePrefill('/charts?pairs=%5B%7B%22quoteId%22%3A1%2C%22direction%22%3A%22forward%22%7D%2C%7B%22quoteId%22%3A0%2C%22direction%22%3A%22oops%22%7D%5D'), [
   { quoteId: 1, direction: 'forward' }
 ]);
-assert.strictEqual(getChartChainLabel('arbitrum'), 'Arbitrum');
-assert.deepStrictEqual(tokenizeChartSearch(' eth  gho  us '), ['eth', 'gho', 'us']);
 assert.deepStrictEqual(shiftChartPointsToUtc8([
   { time: Math.floor(new Date('2026-02-28T16:05:10.000Z').getTime() / 1000), value: 0.9991 }
 ]), [
