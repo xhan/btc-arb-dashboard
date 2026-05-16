@@ -161,6 +161,7 @@
     - 已启动第十七步：path alert Day.app / Telegram 远程推送发送和组合结果判定迁入 `src/server/path-alert-webhook-utils.js`，`server.js` 只负责读取配置和返回 HTTP 响应
     - 已启动第十八步：path alert quote candidate 的 token symbol 解析、链 label 和 dashboard config 转候选列表迁入 `src/server/path-alert-candidate-service.js`，`server.js` 只负责注入 config path、JSON 读取和 market clients
     - 已启动第十九步：EVM RPC 默认列表和 provider 初始化容错迁入 `src/server/evm-provider-utils.js`，`server.js` 只注入 ethers Provider class
+    - 已启动第二十步：项目文件路径解析、BOM JSON 读取和串行安全写入队列迁入 `src/server/json-file-utils.js`，为后续配置目录迁移保留统一入口
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
