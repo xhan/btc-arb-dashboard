@@ -1,7 +1,7 @@
 const assert = require('assert');
 
 const { buildArbRuleSnapshot } = require('../src/arb/arb-rule-snapshot-utils');
-const ArbPaths = require('../arb-paths');
+const ArbPaths = require('../src/arb/arb-paths');
 
 const fixedEdges = [
   { from: 'cbBTC', to: 'WBTC', rate: 1.01, chain: 'ethereum', quoteId: 1 },

@@ -12,7 +12,7 @@ const {
   findBestFixedPath,
   formatProfitWanfen,
   isMeaningfulPath
-} = require('../arb-paths');
+} = require('../src/arb/arb-paths');
 
 const quotes = [
   { id: 1, chain: 'ethereum', showInverse: true },
@@ -304,7 +304,7 @@ const fixedExcludeSymbolCycles = findFixedPaths(fixedExcludeSymbolEdges, {
 assert.strictEqual(fixedExcludeSymbolCycles.length, 1);
 assert.ok(fixedExcludeSymbolCycles.every((cycle) => cycle.legs.every((leg) => leg.rawFrom !== 'USDC.e' && leg.rawTo !== 'USDC.e')));
 
-const browserCode = fs.readFileSync(path.join(__dirname, '..', 'arb-paths.js'), 'utf8');
+const browserCode = fs.readFileSync(path.join(__dirname, '..', 'src/arb/arb-paths.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
 assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));

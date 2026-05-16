@@ -65,6 +65,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="charts-renderer.js"'));
     assert.ok(response.body.includes('src="copy-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-paths.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-cycle-priority-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-equivalence-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-special-utils.js"'));
@@ -169,6 +170,9 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/arb/arb-path-config-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/arb/arb-paths.js"') < response.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/arb/arb-rule-snapshot-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
@@ -267,6 +271,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(appJsResponse.statusCode, 200);
     const alertLogUiResponse = await request('/alert-log-ui-utils.js');
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
+    const arbPathsResponse = await request('/src/arb/arb-paths.js');
+    assert.strictEqual(arbPathsResponse.statusCode, 200);
     const arbPanelLayoutUtilsResponse = await request('/src/arb/arb-panel-layout-utils.js');
     assert.strictEqual(arbPanelLayoutUtilsResponse.statusCode, 200);
     const arbPanelRendererResponse = await request('/src/arb/arb-panel-renderer.js');
@@ -1405,6 +1411,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('查看快照 JSON'));
     assert.ok(snapshotResponse.body.includes('查看回放 JSON'));
     assert.ok(snapshotResponse.body.includes('grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);'));
+    assert.ok(snapshotResponse.body.includes('src="src/arb/arb-paths.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-equivalence-utils.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-panel-renderer.js"'));
     assert.ok(snapshotResponse.body.includes('src="charts-utils.js"'));

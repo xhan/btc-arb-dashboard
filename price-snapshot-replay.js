@@ -1,4 +1,4 @@
-const ArbPaths = require('./arb-paths');
+const ArbPaths = require('./src/arb/arb-paths');
 const { filterEdgesForFixedRule } = require('./src/arb/arb-fixed-utils');
 const { formatUtc8 } = require('./time-utils');
 const {

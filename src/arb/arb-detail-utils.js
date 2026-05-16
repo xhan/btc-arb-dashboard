@@ -1,6 +1,6 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('../../dex-link-utils'), require('../../arb-paths'));
+    module.exports = factory(require('../../dex-link-utils'), require('./arb-paths'));
     return;
   }
   root.ArbDetailUtils = factory(root.DexLinkUtils, root.ArbPaths);
