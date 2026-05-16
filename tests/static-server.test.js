@@ -324,10 +324,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('ChainDefaults is not loaded'));
     assert.ok(chainDefaultsResponse.body.includes('const CHAIN_DISPLAY_NAMES = Object.freeze({'));
     assert.ok(chainDefaultsResponse.body.includes('function getChainDisplayName(chain)'));
+    assert.ok(chainDefaultsResponse.body.includes('function buildQuoteChainDisplayName(quote)'));
     assert.ok(chainDefaultsResponse.body.includes('function normalizeChainFilterToken(chainToken)'));
     assert.ok(!appJsResponse.body.includes('const CHAIN_DISPLAY_NAMES = {'));
     assert.ok(!appJsResponse.body.includes('const CHAIN_FILTER_ALIASES = {'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().getChainDisplayName(chain)'));
+    assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteChainDisplayName(quote)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().normalizeChainFilterToken(chainToken)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteStrategy(quote)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().isCrossChainQuote(quote)'));

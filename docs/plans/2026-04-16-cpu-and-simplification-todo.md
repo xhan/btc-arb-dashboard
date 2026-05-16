@@ -72,6 +72,7 @@
   - quote alert 按 quoteId 过滤规则已下沉到 `path-alert-utils.js`，避免 `app.js` 继续直接理解 alert target 结构
   - quote alert trigger entry 的结构拼装已下沉到 `path-alert-notification-utils.js`
   - quote alert action link 的结构转换已下沉到 `path-alert-notification-utils.js`
+  - quote 跨链显示名已下沉到 `chain-defaults.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效

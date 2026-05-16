@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   buildQuoteStrategy,
   CHAIN_DISPLAY_NAMES,
+  buildQuoteChainDisplayName,
   getDefaultSourceForChain,
   getChainDisplayName,
   isCexOrderbookChain,
@@ -18,6 +19,11 @@ assert.strictEqual(getChainDisplayName('ethereum'), 'ETH');
 assert.strictEqual(getChainDisplayName(' Ethereum '), 'ETH');
 assert.strictEqual(getChainDisplayName('Bybit'), 'Bybit');
 assert.strictEqual(getChainDisplayName('unknown'), 'unknown');
+assert.strictEqual(buildQuoteChainDisplayName(null), '');
+assert.strictEqual(buildQuoteChainDisplayName({ chain: 'arbitrum' }), 'Arbitrum');
+assert.strictEqual(buildQuoteChainDisplayName({ chain: 'arbitrum', toChain: ' Arbitrum ' }), 'Arbitrum');
+assert.strictEqual(buildQuoteChainDisplayName({ chain: 'arbitrum', toChain: 'ethereum' }), 'Arbitrum -> ETH');
+assert.strictEqual(buildQuoteChainDisplayName({ chain: 'unknown', toChain: 'ethereum' }), 'unknown -> ETH');
 assert.strictEqual(normalizeChainFilterToken('ETH'), 'ethereum');
 assert.strictEqual(normalizeChainFilterToken('Arbitrum'), 'arbitrum');
 assert.strictEqual(normalizeChainFilterToken('MEGA'), 'megaeth');

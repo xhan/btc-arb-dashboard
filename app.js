@@ -395,12 +395,7 @@
     }
 
     function getQuoteChainDisplayName(quote) {
-        if (!quote) return '';
-        const fromChain = normalizeChainKey(quote.chain);
-        const toChain = normalizeChainKey(quote.toChain);
-        const fromLabel = getSingleChainDisplayName(quote.chain);
-        if (!fromChain || !toChain || fromChain === toChain) return fromLabel;
-        return `${fromLabel} -> ${getSingleChainDisplayName(quote.toChain)}`;
+        return getChainDefaults().buildQuoteChainDisplayName(quote);
     }
 
     function isCexOrderbookChain(chain) {

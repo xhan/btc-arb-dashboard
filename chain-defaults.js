@@ -97,6 +97,15 @@
     return CHAIN_DISPLAY_NAMES[normalized] || raw;
   }
 
+  function buildQuoteChainDisplayName(quote) {
+    if (!quote) return '';
+    const fromChain = normalizeChain(quote.chain);
+    const toChain = normalizeChain(quote.toChain);
+    const fromLabel = getChainDisplayName(quote.chain);
+    if (!fromChain || !toChain || fromChain === toChain) return fromLabel;
+    return `${fromLabel} -> ${getChainDisplayName(quote.toChain)}`;
+  }
+
   function normalizeChainFilterToken(chainToken) {
     const token = String(chainToken || '').trim();
     if (!token) return '';
@@ -164,6 +173,7 @@
     normalizeChain,
     normalizeChainFilterToken,
     getChainDisplayName,
+    buildQuoteChainDisplayName,
     isCrossChainQuote,
     isCexOrderbookChain,
     isEvmChain,
