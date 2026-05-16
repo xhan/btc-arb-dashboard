@@ -1398,10 +1398,6 @@
         return getChainDefaults().getChainDisplayName(chain);
     }
 
-    function normalizeArbChainFilterToken(chainToken) {
-        return getChainDefaults().normalizeChainFilterToken(chainToken);
-    }
-
     const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;
     const SPECIAL_ARB_RULES = getPathAlertRuleDefinitionsUtils().SPECIAL_ARB_RULES;
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
@@ -1417,10 +1413,6 @@
 
     function formatArbPathLegLine(leg) {
         return getArbPanelLayoutUtils().buildArbPathLegLine(leg, buildArbPathLegLineOptions());
-    }
-
-    function buildLegLines(legs) {
-        return getArbPanelLayoutUtils().buildArbPathLegLines(legs, buildArbPathLegLineOptions());
     }
 
     function isRuleLeg(leg) {
@@ -1889,24 +1881,11 @@
         );
     }
 
-    function getDefaultArbDisplayMinProfitBp() {
-        return getArbPanelLayoutUtils().resolveDefaultDisplayMinProfitBp(getPathAlertRuleDefinitionsUtils());
-    }
-
     function getFixedRuleDisplayMinProfitBp(rule) {
-        return getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(rule && rule.displayMinProfitBp, getDefaultArbDisplayMinProfitBp());
-    }
-
-    function buildArbSectionToggleHtml(sectionKey, cycleDisplayState) {
-        if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
-        return getArbPanelRenderer().renderArbSectionToggleHtml(sectionKey, {
-            ...cycleDisplayState,
-            displayMinProfitBp: getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp)
-        });
-    }
-
-    function buildArbSectionKey(prefix, idOrName) {
-        return `${prefix}:${String(idOrName ?? '')}`;
+        return getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(
+            rule && rule.displayMinProfitBp,
+            getArbPanelLayoutUtils().resolveDefaultDisplayMinProfitBp(getPathAlertRuleDefinitionsUtils())
+        );
     }
 
     function handleArbPathContentClick(event) {
@@ -2245,7 +2224,8 @@
             return;
         }
 
-        const legLines = buildLegLines((current.cycle.legs || []).filter(leg => !isRuleLeg(leg)));
+        const visibleLegs = (current.cycle.legs || []).filter((leg) => !isRuleLeg(leg));
+        const legLines = getArbPanelLayoutUtils().buildArbPathLegLines(visibleLegs, buildArbPathLegLineOptions());
         getArbDetailUtils().applyArbDetailSubtitleText(
             arbDetailSubtitle,
             getArbDetailUtils().buildArbDetailSubtitleText(current, legLines)
@@ -3106,7 +3086,7 @@
     }
 
     function buildGlobalArbSection(topologyCache, templateUtils, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
-        const globalSectionKey = buildArbSectionKey('global', 'all');
+        const globalSectionKey = 'global:all';
         const globalCycles = filterMutedArbCycles(topologyCache.globalTemplates
             .map((template) => templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap()))
             .filter(Boolean)
@@ -3115,7 +3095,7 @@
         const excludedSymbols = layoutUtils.parseFilterInput(arbGlobalExcludedSymbolsInput);
         const excludedChains = Array.from(new Set(
             layoutUtils.parseFilterInput(arbGlobalExcludedChainsInput)
-                .map(normalizeArbChainFilterToken)
+                .map((chainToken) => getChainDefaults().normalizeChainFilterToken(chainToken))
                 .filter(Boolean)
         ));
         const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);
@@ -3136,7 +3116,13 @@
                 `机会 ${index + 1}`,
                 { section: '全局路径', alertPreset: { type: 'path' } }
             ),
-            buildFooterHtml: (cycleDisplayState) => buildArbSectionToggleHtml(globalSectionKey, cycleDisplayState)
+            buildFooterHtml: (cycleDisplayState) => {
+                if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
+                return getArbPanelRenderer().renderArbSectionToggleHtml(globalSectionKey, {
+                    ...cycleDisplayState,
+                    displayMinProfitBp: layoutUtils.normalizeDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp)
+                });
+            }
         });
     }
 

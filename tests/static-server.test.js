@@ -1144,7 +1144,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('ArbPaths is not loaded'));
     assert.ok(appJsResponse.body.includes('function getArbPanelRenderer()'));
     assert.ok(appJsResponse.body.includes('ArbPanelRenderer is not loaded'));
-    assert.ok(appJsResponse.body.includes('getArbPanelRenderer().renderArbSectionToggleHtml(sectionKey, {'));
+    assert.ok(appJsResponse.body.includes('getArbPanelRenderer().renderArbSectionToggleHtml(globalSectionKey, {'));
     assert.ok(appJsResponse.body.includes('getArbPanelRenderer().resolveArbPathContentClickAction(event, {'));
     assert.ok(appJsResponse.body.includes('getArbPanelRenderer().resolveArbPathContentKeydownAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getArbPanelRenderer().resolveArbPathContentPointerDownAction(event, { closestEventTarget })'));
@@ -1167,6 +1167,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);'));
     assert.ok(appJsResponse.body.includes('getArbPanelRenderer().applyArbPanelErrorText(arbPathContent, panelData.error);'));
     assert.ok(!appJsResponse.body.includes('arbPathContent.textContent = panelData.error'));
+    assert.ok(!appJsResponse.body.includes('function normalizeArbChainFilterToken('));
+    assert.ok(!appJsResponse.body.includes('function buildLegLines('));
+    assert.ok(!appJsResponse.body.includes('function getDefaultArbDisplayMinProfitBp('));
+    assert.ok(!appJsResponse.body.includes('function buildArbSectionToggleHtml('));
+    assert.ok(!appJsResponse.body.includes('function buildArbSectionKey('));
     assert.ok(/dataTerminalState\.htmlRenderer\.render\(\s*refs\.content,/.test(appJsResponse.body));
     assert.ok(!appJsResponse.body.includes('refs.content.innerHTML = buildDataTerminalPanelHtml'));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: getQuoteMarketStateMap() })'));
@@ -1558,7 +1563,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().updateGlobalArbFilterState(getArbGlobalFilterState(), patch)'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().clearGlobalArbFilterState(getArbGlobalFilterState())'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbPathLegLine(leg, buildArbPathLegLineOptions())'));
-    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbPathLegLines(legs, buildArbPathLegLineOptions())'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbPathLegLines(visibleLegs, buildArbPathLegLineOptions())'));
     assert.ok(!appJsResponse.body.includes('arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim()'));
     assert.ok(!appJsResponse.body.includes('if (nextValue === arbGlobalExcludedSymbolsInput)'));
     assert.ok(!appJsResponse.body.includes('if (nextValue === arbGlobalExcludedChainsInput)'));
