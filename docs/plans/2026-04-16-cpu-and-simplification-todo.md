@@ -20,9 +20,9 @@
 ### 2. 套利面板隐藏时停止重算
 - 目标：套利大盘不可见时不再做全量路径重算和整块 DOM 重建。
 - 现状：
-  - 每次主报价成功都会 `scheduleArbUpdate()`
+  - 每次主报价状态变化后都会直接调用 `arbPanelUpdateRuntime.schedule()`
   - `updateArbPanel()` 会全量构建 `buildArbPanelData()` 并 `innerHTML` 重建
-  - `scheduleArbUpdate()` 调度前会检查面板可见性；timer 触发时也重新走 `updateArbPanel()` 的可见性保护
+  - `arbPanelUpdateRuntime.schedule()` 调度前会检查面板可见性；timer 触发时也重新走 `updateArbPanel()` 的可见性保护
   - 面板隐藏时只标记 dirty，不再被已排队 timer 强制全量重算
 - 预期收益：
   - 明显降低前端主线程 CPU
@@ -240,6 +240,7 @@
   - `src/app/dashboard-app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利机会高亮 targetKey 构造和注册单层包装已下沉/移除，调用点直接委托 `src/arb/arb-panel-layout-utils.js`
   - `src/app/dashboard-app.js` 的套利面板 dirty flag 已下沉到 `src/arb/arb-runtime-memory-utils.js` 的 `createArbPanelUpdateRuntime()`
+  - `src/app/dashboard-app.js` 的套利面板更新调度单用途包装已移除，报价状态变更后直接调度 arb panel runtime
   - `src/app/dashboard-app.js` 的套利 topology cache 清理单用途包装已移除，组合失效入口直接清理 topology cache
   - `src/app/dashboard-app.js` 的套利全局过滤栏 DOM 写入计划和事件 patch 构造已下沉到 `src/arb/arb-panel-layout-utils.js`
   - `src/app/dashboard-app.js` 的套利全局过滤栏 input/change/clear 事件绑定已下沉到 `src/arb/arb-panel-layout-utils.js`

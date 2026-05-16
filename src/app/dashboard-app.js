@@ -1096,10 +1096,6 @@
     document.body.addEventListener('touchstart', unlockAudio, { once: true });
     document.body.addEventListener('keydown', unlockAudio, { once: true });
 
-    function scheduleArbUpdate() {
-        arbPanelUpdateRuntime.schedule();
-    }
-
     function invalidateArbRuleSnapshotCache(options = {}) {
         if (options.bumpRevision !== false) {
             quoteStateRuntime.bumpMarketRevision();
@@ -3056,7 +3052,7 @@
 
                 const marketStateChanged = setQuoteMarketState(quote.id, newState);
                 if (marketStateChanged) {
-                    scheduleArbUpdate();
+                    arbPanelUpdateRuntime.schedule();
                     dataTerminalUpdateRuntime.schedule();
                 }
                 
