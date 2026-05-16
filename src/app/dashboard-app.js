@@ -3830,15 +3830,13 @@
         });
     }
 
-    function shouldShowKyberOnlyDirectPoolsControl(quote, selectedSource) {
-        if (!quote || !isEvmChain(quote.chain) || quote.chain.toLowerCase() === 'plasma') {
-            return false;
-        }
-        return selectedSource === 'Kyber' || selectedSource === 'Auto';
-    }
-
     function syncKyberOnlyDirectPoolsControl(quote, selectedSource) {
-        const shouldShow = shouldShowKyberOnlyDirectPoolsControl(quote, selectedSource);
+        const shouldShow = Boolean(
+            quote
+            && isEvmChain(quote.chain)
+            && quote.chain.toLowerCase() !== 'plasma'
+            && (selectedSource === 'Kyber' || selectedSource === 'Auto')
+        );
         getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow);
     }
 
@@ -3872,12 +3870,6 @@
 
     function closeAddCategoryModal() {
         getDashboardModalUtils().closeAddCategoryModal(addCategoryModalRefs);
-    }
-
-    function getAddCategoryFormValues() {
-        return getDashboardModalUtils().readAddCategoryFormValues(addCategoryModalRefs, {
-            readAddCategoryFormValues: getDashboardRenderer().readAddCategoryFormValues
-        });
     }
 
     addCategoryBtn.addEventListener('click', openAddCategoryModal);
@@ -4081,14 +4073,6 @@
         quoteSettingsSelectionRuntime.clear();
     }
 
-    function getQuoteSettingsFormValues(quote) {
-        const values = getDashboardModalUtils().readQuoteSettingsFormValues(quoteSettingsModalElements);
-        return {
-            ...values,
-            sourceValue: values.sourceValue || (quote ? quote.preferredSource : '')
-        };
-    }
-
     function deleteCategoryFromDashboard(categoryId) {
         const categoryIndex = dashboardState.findIndex(c => c.id == categoryId);
         if (categoryIndex === -1) return false;
@@ -4171,7 +4155,11 @@
             });
         } else if (action.type === 'save') {
             const { quote } = editingQuote;
-            const formValues = getQuoteSettingsFormValues(quote);
+            const values = getDashboardModalUtils().readQuoteSettingsFormValues(quoteSettingsModalElements);
+            const formValues = {
+                ...values,
+                sourceValue: values.sourceValue || (quote ? quote.preferredSource : '')
+            };
             const updatePlan = getDashboardRenderer().buildQuoteSettingsUpdatePlan({
                 quote,
                 sourceValue: formValues.sourceValue,
@@ -4229,7 +4217,9 @@
             closeAddCategoryModal();
         } else if (action.type === 'save') {
             const newCategory = getDashboardRenderer().buildAddCategoryDraft({
-                ...getAddCategoryFormValues(),
+                ...getDashboardModalUtils().readAddCategoryFormValues(addCategoryModalRefs, {
+                    readAddCategoryFormValues: getDashboardRenderer().readAddCategoryFormValues
+                }),
                 categoryId: Date.now()
             });
             if (!newCategory) return;
@@ -4246,10 +4236,6 @@
         getDashboardModalUtils().resetAddQuoteModal(addQuoteModalRefs, {
             syncControls: syncAddQuoteFormControls
         });
-    }
-
-    function getAddQuoteFormValues() {
-        return getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs);
     }
 
     function syncAddQuoteFormControls() {
@@ -4281,7 +4267,7 @@
             const categoryIdToAdd = addQuoteModalSelectionRuntime.get();
             if (categoryIdToAdd === null) return;
             const newQuote = getDashboardRenderer().buildAddQuoteDraft({
-                ...getAddQuoteFormValues(),
+                ...getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs),
                 quoteId: Date.now(),
                 normalizeChainKey,
                 isCexOrderbookChain,

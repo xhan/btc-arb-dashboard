@@ -584,6 +584,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('if (e.target === confirmModal) closeConfirmModal();'));
     assert.ok(!appJsResponse.body.includes("const kyberOnlyDirectPools = !isCrossChainQuote(quote) && kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;"));
     assert.ok(!appJsResponse.body.includes("const showInverse = isCrossChainQuote(quote) ? false : document.getElementById('show-inverse-quote').checked;"));
+    assert.ok(!appJsResponse.body.includes('function shouldShowKyberOnlyDirectPoolsControl('));
+    assert.ok(!appJsResponse.body.includes('function getAddCategoryFormValues('));
+    assert.ok(!appJsResponse.body.includes('function getQuoteSettingsFormValues('));
+    assert.ok(!appJsResponse.body.includes('function getAddQuoteFormValues('));
     assert.ok(!appJsResponse.body.includes("sourceValue: quoteSourceSelect ? quoteSourceSelect.value : quote.preferredSource"));
     assert.ok(!appJsResponse.body.includes("showInverse: document.getElementById('show-inverse-quote').checked"));
     assert.ok(!appJsResponse.body.includes("document.getElementById('modal-title').textContent = modalState.title"));

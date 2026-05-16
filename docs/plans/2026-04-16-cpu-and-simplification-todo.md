@@ -252,6 +252,7 @@
   - `src/app/dashboard-app.js` 的报价设置 modal click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `src/app/dashboard-app.js` 的报价设置保存更新计划已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只应用 patch、同步请求通道 tag 和调度刷新
   - `src/app/dashboard-app.js` 的报价设置表单读取已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只提供 DOM read adapter
+  - `src/app/dashboard-app.js` 的报价设置 / 新增分区 / 新增报价表单读取单用途包装已移除，调用点直接委托 modal utils
   - `src/app/dashboard-app.js` 的确认弹窗 click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `src/app/dashboard-app.js` 的 add quote 目标分区和 quote settings 当前报价选择状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createModalSelectionRuntime()`
   - `src/app/dashboard-app.js` 的确认弹窗动作回调状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createConfirmActionRuntime()`
