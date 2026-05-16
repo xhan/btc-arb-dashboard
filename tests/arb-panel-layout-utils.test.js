@@ -8,6 +8,9 @@ const {
   resolveDefaultDisplayMinProfitBp,
   selectCyclesAboveDisplayThreshold,
   selectPositiveCyclesOrBest,
+  buildGlobalArbFilterState,
+  updateGlobalArbFilterState,
+  clearGlobalArbFilterState,
   buildArbPanelColumns,
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
@@ -202,6 +205,83 @@ assert.strictEqual(callbackCount, 2);
 assert.deepStrictEqual(mappedEntries, ['机会 2:pos-1', '机会 3:pos-2']);
 
 assert.deepStrictEqual(parseFilterInput('  cbBTC  WBTC cbBTC  USDe '), ['cbBTC', 'WBTC', 'USDe']);
+
+assert.deepStrictEqual(
+  buildGlobalArbFilterState({
+    excludedSymbolsInput: ' cbBTC ',
+    excludedChainsInput: 123,
+    includedSymbolsInput: null,
+    twoLegOnly: 1
+  }),
+  {
+    excludedSymbolsInput: ' cbBTC ',
+    excludedChainsInput: '',
+    includedSymbolsInput: '',
+    twoLegOnly: true
+  }
+);
+
+assert.deepStrictEqual(
+  updateGlobalArbFilterState(
+    {
+      excludedSymbolsInput: 'old',
+      excludedChainsInput: '',
+      includedSymbolsInput: '',
+      twoLegOnly: false
+    },
+    { excludedSymbolsInput: 'new' }
+  ),
+  {
+    changed: true,
+    state: {
+      excludedSymbolsInput: 'new',
+      excludedChainsInput: '',
+      includedSymbolsInput: '',
+      twoLegOnly: false
+    }
+  }
+);
+
+assert.strictEqual(
+  updateGlobalArbFilterState(
+    {
+      excludedSymbolsInput: 'same',
+      excludedChainsInput: '',
+      includedSymbolsInput: '',
+      twoLegOnly: false
+    },
+    { excludedSymbolsInput: 'same' }
+  ).changed,
+  false
+);
+
+assert.deepStrictEqual(
+  clearGlobalArbFilterState({
+    excludedSymbolsInput: 'cbBTC',
+    excludedChainsInput: 'ethereum',
+    includedSymbolsInput: 'WBTC',
+    twoLegOnly: true
+  }),
+  {
+    changed: true,
+    state: {
+      excludedSymbolsInput: '',
+      excludedChainsInput: '',
+      includedSymbolsInput: '',
+      twoLegOnly: false
+    }
+  }
+);
+
+assert.strictEqual(
+  clearGlobalArbFilterState({
+    excludedSymbolsInput: '',
+    excludedChainsInput: '',
+    includedSymbolsInput: '',
+    twoLegOnly: false
+  }).changed,
+  false
+);
 
 const globalFilterCycles = [
   {

@@ -253,6 +253,43 @@
     return Array.from(new Set(tokens));
   }
 
+  function normalizeTextInput(value) {
+    return typeof value === 'string' ? value : '';
+  }
+
+  function buildGlobalArbFilterState(state = {}) {
+    return {
+      excludedSymbolsInput: normalizeTextInput(state.excludedSymbolsInput),
+      excludedChainsInput: normalizeTextInput(state.excludedChainsInput),
+      includedSymbolsInput: normalizeTextInput(state.includedSymbolsInput),
+      twoLegOnly: state.twoLegOnly === true || state.twoLegOnly === 1
+    };
+  }
+
+  function updateGlobalArbFilterState(currentState, patch = {}) {
+    const current = buildGlobalArbFilterState(currentState);
+    const next = buildGlobalArbFilterState({
+      ...current,
+      ...patch
+    });
+    return {
+      changed: next.excludedSymbolsInput !== current.excludedSymbolsInput
+        || next.excludedChainsInput !== current.excludedChainsInput
+        || next.includedSymbolsInput !== current.includedSymbolsInput
+        || next.twoLegOnly !== current.twoLegOnly,
+      state: next
+    };
+  }
+
+  function clearGlobalArbFilterState(currentState) {
+    return updateGlobalArbFilterState(currentState, {
+      excludedSymbolsInput: '',
+      excludedChainsInput: '',
+      includedSymbolsInput: '',
+      twoLegOnly: false
+    });
+  }
+
   function cycleContainsAnySymbols(cycle, symbols) {
     if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(symbols) || !symbols.length) return false;
     const symbolSet = new Set(symbols);
@@ -476,6 +513,9 @@
     getCycleDisplayState,
     mapEntriesForDisplayCycles,
     parseFilterInput,
+    buildGlobalArbFilterState,
+    updateGlobalArbFilterState,
+    clearGlobalArbFilterState,
     cycleContainsAnySymbols,
     cycleContainsAnyChains,
     filterGlobalArbCycles,

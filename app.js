@@ -3068,40 +3068,56 @@
         arbDetailRefreshScheduler.start(refreshToken);
     }
 
-    function handleArbGlobalFilterInput(event) {
-        const nextValue = (event && event.target && typeof event.target.value === 'string') ? event.target.value : '';
-        if (nextValue === arbGlobalExcludedSymbolsInput) return;
-        arbGlobalExcludedSymbolsInput = nextValue;
+    function getArbGlobalFilterState() {
+        return getArbPanelLayoutUtils().buildGlobalArbFilterState({
+            excludedSymbolsInput: arbGlobalExcludedSymbolsInput,
+            excludedChainsInput: arbGlobalExcludedChainsInput,
+            includedSymbolsInput: arbGlobalIncludedSymbolsInput,
+            twoLegOnly: arbGlobalTwoLegOnly
+        });
+    }
+
+    function applyArbGlobalFilterState(state) {
+        const nextState = getArbPanelLayoutUtils().buildGlobalArbFilterState(state);
+        arbGlobalExcludedSymbolsInput = nextState.excludedSymbolsInput;
+        arbGlobalExcludedChainsInput = nextState.excludedChainsInput;
+        arbGlobalIncludedSymbolsInput = nextState.includedSymbolsInput;
+        arbGlobalTwoLegOnly = nextState.twoLegOnly;
+    }
+
+    function getEventTargetTextValue(event) {
+        return (event && event.target && typeof event.target.value === 'string') ? event.target.value : '';
+    }
+
+    function updateArbGlobalFilterState(patch) {
+        const result = getArbPanelLayoutUtils().updateGlobalArbFilterState(getArbGlobalFilterState(), patch);
+        if (!result.changed) return false;
+        applyArbGlobalFilterState(result.state);
         updateArbPanel();
+        return true;
+    }
+
+    function handleArbGlobalFilterInput(event) {
+        updateArbGlobalFilterState({ excludedSymbolsInput: getEventTargetTextValue(event) });
     }
 
     function handleArbGlobalChainFilterInput(event) {
-        const nextValue = (event && event.target && typeof event.target.value === 'string') ? event.target.value : '';
-        if (nextValue === arbGlobalExcludedChainsInput) return;
-        arbGlobalExcludedChainsInput = nextValue;
-        updateArbPanel();
+        updateArbGlobalFilterState({ excludedChainsInput: getEventTargetTextValue(event) });
     }
 
     function handleArbGlobalIncludeFilterInput(event) {
-        const nextValue = (event && event.target && typeof event.target.value === 'string') ? event.target.value : '';
-        if (nextValue === arbGlobalIncludedSymbolsInput) return;
-        arbGlobalIncludedSymbolsInput = nextValue;
-        updateArbPanel();
+        updateArbGlobalFilterState({ includedSymbolsInput: getEventTargetTextValue(event) });
     }
 
     function handleArbGlobalTwoLegOnlyChange(event) {
         const nextChecked = Boolean(event && event.target && event.target.checked);
-        if (nextChecked === arbGlobalTwoLegOnly) return;
-        arbGlobalTwoLegOnly = nextChecked;
-        updateArbPanel();
+        updateArbGlobalFilterState({ twoLegOnly: nextChecked });
     }
 
     function handleArbGlobalFilterClear() {
-        if (!arbGlobalExcludedSymbolsInput && !arbGlobalExcludedChainsInput && !arbGlobalIncludedSymbolsInput && !arbGlobalTwoLegOnly) return;
-        arbGlobalExcludedSymbolsInput = '';
-        arbGlobalExcludedChainsInput = '';
-        arbGlobalIncludedSymbolsInput = '';
-        arbGlobalTwoLegOnly = false;
+        const result = getArbPanelLayoutUtils().clearGlobalArbFilterState(getArbGlobalFilterState());
+        if (!result.changed) return;
+        applyArbGlobalFilterState(result.state);
         updateArbPanel();
         if (arbGlobalFilterInput) {
             arbGlobalFilterInput.focus();
