@@ -17,6 +17,7 @@ const {
   buildDataTerminalViewModel,
   createDataTerminalCache,
   createDataTerminalUpdateRuntime,
+  getDataTerminalDomRefs,
   parseDataTerminalQuery,
   resolveDataTerminalContentClickAction,
   resolveDataTerminalHeaderClickAction
@@ -119,6 +120,44 @@ assert.deepStrictEqual(dataTerminalSizePanel.style, {
 
 assert.strictEqual(applyDataTerminalWindowPosition(null), false);
 assert.strictEqual(applyDataTerminalDefaultSize(null), false);
+
+const dataTerminalRefLookups = [];
+const dataTerminalRefPanel = {
+  querySelector(selector) {
+    dataTerminalRefLookups.push(selector);
+    return { selector };
+  }
+};
+const dataTerminalRefs = getDataTerminalDomRefs(dataTerminalRefPanel);
+assert.deepStrictEqual(dataTerminalRefLookups, [
+  '#data-terminal-header',
+  '#data-terminal-min-btn',
+  '#data-terminal-search-input',
+  '#data-terminal-alias-toggle',
+  '#data-terminal-diff-toggle',
+  '#data-terminal-profit-bp',
+  '#data-terminal-content'
+]);
+assert.deepStrictEqual(dataTerminalRefs, {
+  window: dataTerminalRefPanel,
+  header: { selector: '#data-terminal-header' },
+  minBtn: { selector: '#data-terminal-min-btn' },
+  searchInput: { selector: '#data-terminal-search-input' },
+  aliasToggle: { selector: '#data-terminal-alias-toggle' },
+  diffToggle: { selector: '#data-terminal-diff-toggle' },
+  profitBp: { selector: '#data-terminal-profit-bp' },
+  content: { selector: '#data-terminal-content' }
+});
+assert.deepStrictEqual(getDataTerminalDomRefs(null), {
+  window: null,
+  header: null,
+  minBtn: null,
+  searchInput: null,
+  aliasToggle: null,
+  diffToggle: null,
+  profitBp: null,
+  content: null
+});
 
 assert.deepStrictEqual(
   buildDataTerminalSelectionPatch(

@@ -496,6 +496,22 @@
     return true;
   }
 
+  function getDataTerminalDomRefs(panel) {
+    const query = panel && typeof panel.querySelector === 'function'
+      ? panel.querySelector.bind(panel)
+      : () => null;
+    return {
+      window: panel || null,
+      header: query('#data-terminal-header'),
+      minBtn: query('#data-terminal-min-btn'),
+      searchInput: query('#data-terminal-search-input'),
+      aliasToggle: query('#data-terminal-alias-toggle'),
+      diffToggle: query('#data-terminal-diff-toggle'),
+      profitBp: query('#data-terminal-profit-bp'),
+      content: query('#data-terminal-content')
+    };
+  }
+
   function buildDataTerminalSelectionPatch(selectionState = {}, action = {}) {
     if (!action || action.type !== 'toggle-row') return {};
     const rowKey = String(action.rowKey || '');
@@ -641,6 +657,7 @@
     buildDataTerminalViewModel,
     createDataTerminalCache,
     createDataTerminalUpdateRuntime,
+    getDataTerminalDomRefs,
     parseDataTerminalQuery,
     resolveDataTerminalContentClickAction,
     resolveDataTerminalHeaderClickAction

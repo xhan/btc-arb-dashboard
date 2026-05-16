@@ -2012,16 +2012,7 @@
         positionDataTerminalWindow(panel);
         document.body.appendChild(panel);
 
-        const refs = {
-            window: panel,
-            header: panel.querySelector('#data-terminal-header'),
-            minBtn: panel.querySelector('#data-terminal-min-btn'),
-            searchInput: panel.querySelector('#data-terminal-search-input'),
-            aliasToggle: panel.querySelector('#data-terminal-alias-toggle'),
-            diffToggle: panel.querySelector('#data-terminal-diff-toggle'),
-            profitBp: panel.querySelector('#data-terminal-profit-bp'),
-            content: panel.querySelector('#data-terminal-content')
-        };
+        const refs = utils.getDataTerminalDomRefs(panel);
 
         dataTerminalState.visible = true;
         dataTerminalState.domRefs = refs;

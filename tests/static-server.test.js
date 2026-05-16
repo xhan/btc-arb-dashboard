@@ -1512,6 +1512,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalBp'));
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalValue'));
     assert.ok(appJsResponse.body.includes('utils.buildDataTerminalShellHtml()'));
+    assert.ok(appJsResponse.body.includes('const refs = utils.getDataTerminalDomRefs(panel);'));
+    assert.ok(!appJsResponse.body.includes("panel.querySelector('#data-terminal-header')"));
     assert.ok(appJsResponse.body.includes('utils.buildDataTerminalControlWritePlan(dataTerminalState)'));
     assert.ok(appJsResponse.body.includes("utils.buildDataTerminalControlEventPatch('query', event)"));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().buildDataTerminalSelectionPatch(dataTerminalState, action)'));
@@ -1539,6 +1541,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('dataTerminalCache.getCandidates(cacheKey, () => utils.buildDataTerminalCandidates(buildDataTerminalRecords()))'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function createDataTerminalCache()'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function createDataTerminalUpdateRuntime(options = {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function getDataTerminalDomRefs(panel)'));
     assert.ok(appJsResponse.body.includes('function buildDataTerminalCandidates(utils)'));
     assert.ok(appJsResponse.body.includes('dataTerminalState.domRefs = null;'));
     assert.ok(dataTerminalUtilsResponse.body.includes('Token -&gt; Token'));
