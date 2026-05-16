@@ -25,6 +25,13 @@
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
     let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();
+    const pathAlertConfigClient = getPathAlertUtils().createPathAlertConfigClient({
+        fetch,
+        url: `${BACKEND_URL}/api/get-alert-config`,
+        logWarning(error) {
+            console.warn('加载路径报警配置失败:', error);
+        }
+    });
     let pathAlertPanelHidden = true;
     const pathAlertPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     const pathAlertRuntimeState = getPathAlertUtils().createPathAlertRuntimeState();
@@ -3335,21 +3342,12 @@
         window.open(href, '_blank', 'noopener');
     }
 
-    async function loadPathAlertConfig(options = {}) {
-        const pathAlertUtils = getPathAlertUtils();
-        const fallbackToDefault = options.fallbackToDefault !== false;
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/get-alert-config`);
-            if (!response.ok) throw new Error('获取路径报警配置失败');
-            const data = await response.json();
-            pathAlertConfig = pathAlertUtils.normalizeAlertConfig(data);
-        } catch (error) {
-            if (!fallbackToDefault) {
-                throw error;
-            }
-            console.warn('加载路径报警配置失败:', error);
-            pathAlertConfig = pathAlertUtils.normalizeAlertConfig();
-        }
+    async function loadPathAlertConfig() {
+        pathAlertConfig = await pathAlertConfigClient.load();
+    }
+
+    async function loadPathAlertConfigStrict() {
+        pathAlertConfig = await pathAlertConfigClient.loadStrict();
     }
 
     function renderPathAlertPanel() {
@@ -3513,7 +3511,7 @@
         renderPathAlertPanel();
         try {
             pathAlertRuntimeState.reset({ forceImmediate: false });
-            await loadPathAlertConfig({ fallbackToDefault: false });
+            await loadPathAlertConfigStrict();
             restartPathAlertScheduler();
         } finally {
             pathAlertReloading = false;

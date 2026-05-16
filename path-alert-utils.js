@@ -222,6 +222,43 @@
     };
   }
 
+  function createPathAlertConfigClient(options = {}) {
+    const fetchConfig = typeof options.fetch === 'function'
+      ? options.fetch
+      : (root && typeof root.fetch === 'function' ? root.fetch.bind(root) : null);
+    const configUrl = String(options.url || '/api/get-alert-config');
+    const logWarning = typeof options.logWarning === 'function'
+      ? options.logWarning
+      : () => {};
+    const errorMessage = String(options.errorMessage || '获取路径报警配置失败');
+
+    async function requestConfig() {
+      if (!fetchConfig) {
+        throw new Error('Path alert config fetch unavailable');
+      }
+      const response = await fetchConfig(configUrl);
+      if (!response || !response.ok) {
+        throw new Error(errorMessage);
+      }
+      const data = await response.json();
+      return normalizeAlertConfig(data);
+    }
+
+    async function load() {
+      try {
+        return await requestConfig();
+      } catch (error) {
+        logWarning(error);
+        return normalizeAlertConfig();
+      }
+    }
+
+    return {
+      load,
+      loadStrict: requestConfig
+    };
+  }
+
   function buildPathAlertWebhookUrl(template, title, body) {
     const rawTemplate = String(template || DEFAULT_PATH_ALERT_SETTINGS.webhookUrl || '').trim();
     if (!rawTemplate) return '';
@@ -1117,6 +1154,7 @@
     buildTelegramBotApiUrl,
     buildPathAlertWebhookUrl,
     countPathAlertRealLegs,
+    createPathAlertConfigClient,
     createDismissedTargetEntry,
     createMutedPathTargetEntry,
     extendMutedPathTargetEntry,

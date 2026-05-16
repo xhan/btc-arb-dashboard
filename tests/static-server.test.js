@@ -848,6 +848,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function buildRetainedArbOpportunityStore(currentOpportunities, retainedEntries)'));
     assert.ok(!appJsResponse.body.includes('window.ArbRuntimeMemoryUtils &&'));
     assert.ok(appJsResponse.body.includes('let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();'));
+    assert.ok(appJsResponse.body.includes('const pathAlertConfigClient = getPathAlertUtils().createPathAlertConfigClient({'));
+    assert.ok(appJsResponse.body.includes('pathAlertConfig = await pathAlertConfigClient.load();'));
+    assert.ok(appJsResponse.body.includes('pathAlertConfig = await pathAlertConfigClient.loadStrict();'));
+    assert.ok(!appJsResponse.body.includes('fallbackToDefault'));
+    assert.ok(pathAlertUtilsResponse.body.includes('function createPathAlertConfigClient(options = {})'));
     assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathRuntime.getLegs(), nowMs)'));
     const pruneMutedPathTargetsMatch = appJsResponse.body.match(/function pruneMutedPathTargetsInPlace\([\s\S]*?\n    \}/);
     assert.ok(pruneMutedPathTargetsMatch);

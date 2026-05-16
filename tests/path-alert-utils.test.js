@@ -37,6 +37,7 @@ const {
   findMutedPathAlert,
   pruneExpiredMutedPathTargets,
   buildEffectiveRuntimeAlert,
+  createPathAlertConfigClient,
   createPathAlertSchedulerRuntime,
   createPathAlertRuntimeState
 } = require('../path-alert-utils');
@@ -57,6 +58,55 @@ assert.strictEqual(
   defaultPathAlertSettings.webhookUrl,
   'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder'
 );
+
+async function testPathAlertConfigClient() {
+  const requestedUrls = [];
+  const configClient = createPathAlertConfigClient({
+    url: '/api/get-alert-config',
+    fetch: async (url) => {
+      requestedUrls.push(url);
+      return {
+        ok: true,
+        async json() {
+          return {
+            alerts: [
+              {
+                id: 'quote-client-alert',
+                name: 'client alert',
+                target: {
+                  type: 'quote',
+                  quoteId: '101',
+                  ruleKind: 'targetAbove',
+                  value: '1.25'
+                }
+              }
+            ]
+          };
+        }
+      };
+    }
+  });
+  const loadedConfig = await configClient.load();
+  assert.deepStrictEqual(requestedUrls, ['/api/get-alert-config']);
+  assert.strictEqual(loadedConfig.alerts[0].id, 'quote-client-alert');
+  assert.strictEqual(loadedConfig.alerts[0].target.quoteId, 101);
+  assert.strictEqual(loadedConfig.alerts[0].target.value, 1.25);
+
+  const warningMessages = [];
+  const fallbackClient = createPathAlertConfigClient({
+    fetch: async () => ({ ok: false }),
+    logWarning(error) {
+      warningMessages.push(error.message);
+    }
+  });
+  const fallbackConfig = await fallbackClient.load();
+  assert.deepStrictEqual(fallbackConfig.alerts, []);
+  assert.deepStrictEqual(warningMessages, ['获取路径报警配置失败']);
+  await assert.rejects(
+    () => fallbackClient.loadStrict(),
+    /获取路径报警配置失败/
+  );
+}
 
 const normalizedConfig = normalizeAlertConfig({
   settings: {
@@ -1373,3 +1423,8 @@ assert.strictEqual(specialRuleEvaluation.profitBp, 3);
 assert.strictEqual(specialRuleEvaluation.meetsTriggerCondition, true);
 assert.strictEqual(specialRuleEvaluation.displayMessage, 'display line');
 assert.strictEqual(specialRuleEvaluation.alertMessage, 'alert line');
+
+testPathAlertConfigClient().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
