@@ -98,6 +98,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="src/price-snapshots/price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="src/shared/chain-defaults.js"'));
+    assert.ok(response.body.includes('src="src/ui/audio-utils.js"'));
     assert.ok(response.body.includes('src="src/ui/theme-utils.js"'));
     assert.ok(response.body.includes('src="src/ui/keyboard-shortcut-utils.js"'));
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
@@ -165,6 +166,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/ui/dom-render-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/ui/audio-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/ui/theme-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -353,6 +357,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(alertDebugUtilsResponse.statusCode, 200);
     const domRenderUtilsResponse = await request('/src/ui/dom-render-utils.js');
     assert.strictEqual(domRenderUtilsResponse.statusCode, 200);
+    const audioUtilsResponse = await request('/src/ui/audio-utils.js');
+    assert.strictEqual(audioUtilsResponse.statusCode, 200);
     const themeUtilsResponse = await request('/src/ui/theme-utils.js');
     assert.strictEqual(themeUtilsResponse.statusCode, 200);
     const keyboardShortcutUtilsResponse = await request('/src/ui/keyboard-shortcut-utils.js');
@@ -1042,8 +1048,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: getQuoteMarketStateMap() })'));
     assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
     assert.ok(!appJsResponse.body.includes('syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);'));
+    assert.ok(!appJsResponse.body.includes('let isAudioUnlocked = false;'));
+    assert.ok(!appJsResponse.body.includes('function syncLoopingAlertSound('));
+    assert.ok(!appJsResponse.body.includes('function primeAlertAudio('));
+    assert.ok(appJsResponse.body.includes('const alertAudioRuntime = getAudioUtils().createAudioUnlockRuntime({'));
+    assert.ok(/getAudioUtils\(\)\.syncLoopingAudio\(\s*pathAlertSound,/.test(appJsResponse.body));
     assert.ok(pathAlertUtilsResponse.body.includes("const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';"));
-    assert.ok(appJsResponse.body.includes('new Audio(pathAlertSound.currentSrc || pathAlertSound.src)'));
+    assert.ok(appJsResponse.body.includes('getAudioUtils().playAudioOnceFromSource(pathAlertSound, {'));
+    assert.ok(audioUtilsResponse.body.includes('function createAudioUnlockRuntime(options = {})'));
+    assert.ok(audioUtilsResponse.body.includes('function syncLoopingAudio(audioEl, shouldPlay, options = {})'));
+    assert.ok(audioUtilsResponse.body.includes('function playAudioOnceFromSource(sourceAudioEl, options = {})'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildTriggeredPathAlertEntry({'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('customAlertMessage: String(evaluation && evaluation.alertMessage || \'\').trim()'));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));

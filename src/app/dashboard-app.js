@@ -1,7 +1,6 @@
     const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
     let dashboardState = [];
     
-    let isAudioUnlocked = false; 
     let onConfirmAction = null;
     const MULTI_CHANNEL_ENABLED_STORAGE_KEY = 'dashboard-multi-channel-enabled';
 
@@ -166,6 +165,12 @@
     const pathAlertSound = document.getElementById('path-alert-sound');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const audioNoticeEl = document.getElementById('audio-notice');
+    const alertAudioRuntime = getAudioUtils().createAudioUnlockRuntime({
+        audioElements: [pathAlertSound],
+        noticeEl: audioNoticeEl,
+        logWarning: (...args) => console.warn(...args),
+        onUnlocked: updateAlertSoundState
+    });
     const alertModal = document.getElementById('alert-modal');
     const pathAlertWindow = document.getElementById('path-alert-window');
     const pathAlertContent = document.getElementById('path-alert-content');
@@ -466,6 +471,13 @@
             throw new Error('DomRenderUtils is not loaded');
         }
         return window.DomRenderUtils;
+    }
+
+    function getAudioUtils() {
+        if (!window.AudioUtils) {
+            throw new Error('AudioUtils is not loaded');
+        }
+        return window.AudioUtils;
     }
 
     function getThemeUtils() {
@@ -823,24 +835,13 @@
         });
     });
     
-    function syncLoopingAlertSound(audioEl, shouldPlay) {
-        if (!audioEl) return;
-        if (shouldPlay) {
-            if (audioEl.paused) {
-                audioEl.loop = true;
-                audioEl.play().catch((error) => console.error('Play failed', error));
-            }
-            return;
-        }
-        if (!audioEl.paused) {
-            audioEl.pause();
-            audioEl.currentTime = 0;
-        }
-    }
-
     function updateAlertSoundState() {
-        if (!isAudioUnlocked) return;
-        syncLoopingAlertSound(pathAlertSound, getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState.getState()));
+        if (!alertAudioRuntime.isUnlocked()) return;
+        getAudioUtils().syncLoopingAudio(
+            pathAlertSound,
+            getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState.getState()),
+            { logPlayError: (error) => console.error('Play failed', error) }
+        );
     }
 
     function bringFloatingPanelToFront(panel) {
@@ -1367,28 +1368,8 @@
         finalizeAlertLogCardInsertions(destinations, nowMs);
     }
 
-    async function primeAlertAudio(audioEl) {
-        if (!audioEl) return false;
-        audioEl.muted = true;
-        await audioEl.play();
-        audioEl.pause();
-        audioEl.currentTime = 0;
-        audioEl.muted = false;
-        return true;
-    }
-
     function unlockAudio() {
-        if (isAudioUnlocked) return;
-        audioNoticeEl.style.display = 'none';
-        Promise.allSettled([primeAlertAudio(pathAlertSound)]).then((results) => {
-            if (!results.some((result) => result.status === 'fulfilled' && result.value === true)) {
-                throw new Error('no audio unlocked');
-            }
-            isAudioUnlocked = true;
-            updateAlertSoundState();
-        }).catch(error => {
-            console.warn("Unlock failed", error);
-        });
+        void alertAudioRuntime.unlockAndReport();
     }
     document.body.addEventListener('click', unlockAudio, { once: true });
     document.body.addEventListener('pointerdown', unlockAudio, { once: true });
@@ -4018,14 +3999,14 @@
             console.warn('[quote-alert] sound skipped: path alert audio element missing');
             return;
         }
-        if (!isAudioUnlocked) {
+        if (!alertAudioRuntime.isUnlocked()) {
             console.warn('[quote-alert] sound skipped: audio not unlocked');
             return;
         }
-        const oneShotAudio = new Audio(pathAlertSound.currentSrc || pathAlertSound.src);
-        oneShotAudio.loop = false;
-        oneShotAudio.volume = pathAlertSound.volume;
-        oneShotAudio.play().catch((error) => console.error('[quote-alert] sound play failed', error));
+        getAudioUtils().playAudioOnceFromSource(pathAlertSound, {
+            AudioCtor: Audio,
+            logPlayError: (error) => console.error('[quote-alert] sound play failed', error)
+        });
     }
 
     function triggerAlert(quote, alert, evaluation) {
