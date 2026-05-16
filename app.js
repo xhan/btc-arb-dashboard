@@ -590,10 +590,6 @@
         });
     }
 
-    function getRequestChannelDisplayForQuote(quote) {
-        return getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
-    }
-
     function updateRequestChannelTagForQuote(quote) {
         if (!quote) return;
         const itemEl = document.getElementById(`quote-item-${quote.id}`);
@@ -603,7 +599,7 @@
         if (!labelRow) return;
 
         const existingTag = itemEl.querySelector(`#quote-channel-tag-${quote.id}`);
-        const channel = getRequestChannelDisplayForQuote(quote);
+        const channel = getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
         const patch = getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch(quote, channel, {
             hasExistingTag: Boolean(existingTag)
         });
@@ -633,18 +629,10 @@
         syncRequestChannelTagVisibility();
     }
 
-    function getQueueTypeForQuote(quote) {
-        return getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled });
-    }
-
-    function getQueueIntervalMs(type) {
-        return getRequestChannelUtils().getEffectiveIntervalForQueue(type, apiIntervals, requestChannelOptions);
-    }
-
     const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({
         getDashboardState: () => dashboardState,
-        getQueueTypeForQuote,
-        getQueueIntervalMs,
+        getQueueTypeForQuote: (quote) => getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled }),
+        getQueueIntervalMs: (type) => getRequestChannelUtils().getEffectiveIntervalForQueue(type, apiIntervals, requestChannelOptions),
         getManagedQueueKeys: () => getQueueStatsUtils().buildManagedQueueKeys({
             defaultIntervals: DEFAULT_INTERVALS,
             requestChannels: requestChannelOptions,
@@ -4228,7 +4216,7 @@
         const amountInputHTML = !isCexOrderbookChain(quote.chain) ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
         const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
         const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, monitorState)}</span>`;
-        const requestChannel = getRequestChannelDisplayForQuote(quote);
+        const requestChannel = getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
         const requestChannelTagHtml = getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, requestChannel);
         const renderer = getDashboardRenderer();
         
