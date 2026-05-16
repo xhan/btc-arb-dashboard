@@ -3,7 +3,7 @@
     ? require('../quote/quote-pause-utils')
     : root.QuotePauseUtils;
   const chainDefaults = typeof module !== 'undefined' && module.exports
-    ? require('../../chain-defaults')
+    ? require('../shared/chain-defaults')
     : root.ChainDefaults;
   const api = factory(quotePauseUtils, chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {

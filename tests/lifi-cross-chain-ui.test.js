@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 
 const appJs = fs.readFileSync('app.js', 'utf8');
-const chainDefaultsJs = fs.readFileSync('chain-defaults.js', 'utf8');
+const chainDefaultsJs = fs.readFileSync('src/shared/chain-defaults.js', 'utf8');
 const dashboardRendererJs = fs.readFileSync('src/dashboard/dashboard-renderer.js', 'utf8');
 const indexHtml = fs.readFileSync('index.html', 'utf8');
 

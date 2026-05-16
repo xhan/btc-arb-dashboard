@@ -11,7 +11,7 @@ const {
   isEvmChain,
   normalizeChain,
   normalizeChainFilterToken
-} = require('../chain-defaults');
+} = require('../src/shared/chain-defaults');
 
 assert.strictEqual(normalizeChain(' Ethereum '), 'ethereum');
 assert.strictEqual(CHAIN_DISPLAY_NAMES.ethereum, 'ETH');

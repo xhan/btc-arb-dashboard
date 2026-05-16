@@ -6,7 +6,7 @@
     ? require('../request-channel/request-channel-utils')
     : root.RequestChannelUtils;
   const chainDefaults = typeof module !== 'undefined' && module.exports
-    ? require('../../chain-defaults')
+    ? require('../shared/chain-defaults')
     : root.ChainDefaults;
   const api = factory(quotePauseUtils, requestChannelUtils, chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {

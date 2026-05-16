@@ -12,7 +12,7 @@ const {
     getChartSeries
 } = require('./src/price-snapshots/price-snapshot-store');
 const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./src/price-snapshots/price-snapshot-replay');
-const { parseUtc8Input } = require('./time-utils');
+const { parseUtc8Input } = require('./src/shared/time-utils');
 const { createMarketClients } = require('./market-clients');
 const { DEFAULT_INTERVALS, normalizeIntervals } = require('./src/request-channel/request-channel-utils');
 const {
@@ -31,7 +31,7 @@ const {
     normalizeAlertConfig
 } = require('./src/path-alerts/path-alert-utils');
 const { buildPathAlertCandidates } = require('./src/path-alerts/path-alert-candidate-utils');
-const { splitCompactTradingPairSymbol } = require('./shared/trading-pair-utils');
+const { splitCompactTradingPairSymbol } = require('./src/shared/trading-pair-utils');
 const {
     createCetusAggregatorClient,
     normalizeCetusAggregatorConfig

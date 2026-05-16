@@ -21,7 +21,7 @@
 
 const { getClosestPriceSnapshot } = require('../src/price-snapshots/price-snapshot-store');
 const { buildReplayFromSnapshot, renderReplayText } = require('../src/price-snapshots/price-snapshot-replay');
-const { parseUtc8Input } = require('../time-utils');
+const { parseUtc8Input } = require('../src/shared/time-utils');
 const path = require('path');
 
 function parseArgs(argv) {

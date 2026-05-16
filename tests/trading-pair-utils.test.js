@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   parseCexTradingPairSymbol,
   splitCompactTradingPairSymbol
-} = require('../shared/trading-pair-utils');
+} = require('../src/shared/trading-pair-utils');
 
 assert.deepStrictEqual(splitCompactTradingPairSymbol('BTCUSDT'), {
   fromSymbol: 'BTC',

@@ -1,6 +1,6 @@
 (function (root, factory) {
   const chainDefaults = typeof module !== 'undefined' && module.exports
-    ? require('../../chain-defaults')
+    ? require('../shared/chain-defaults')
     : root.ChainDefaults;
   const api = factory(chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {

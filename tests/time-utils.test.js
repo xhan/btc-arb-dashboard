@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   parseUtc8Input,
   formatUtc8
-} = require('../time-utils');
+} = require('../src/shared/time-utils');
 
 const parsed = parseUtc8Input('2026-03-01 00:00:00');
 assert.strictEqual(parsed.toISOString(), '2026-02-28T16:00:00.000Z');
