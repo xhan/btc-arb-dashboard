@@ -15,6 +15,7 @@ const {
   findBestSummaryIndices,
   getArbDetailCardDomIds,
   shouldRebuildArbDetailShell,
+  shouldRebuildArbDetailShellDom,
   shouldSyncArbDetailInput,
   syncArbDetailInputValues,
   buildNudgedArbDetailInputAmount,
@@ -867,6 +868,27 @@ assert.strictEqual(
   }),
   false
 );
+
+assert.strictEqual(shouldRebuildArbDetailShellDom([{}], {
+  gridEl: {
+    querySelectorAll(selector) {
+      assert.strictEqual(selector, '[data-arb-detail-card-index]');
+      return [{}];
+    }
+  },
+  getElementById: () => ({})
+}), false);
+
+assert.strictEqual(shouldRebuildArbDetailShellDom([{}], {
+  gridEl: {
+    querySelectorAll() {
+      return [];
+    }
+  },
+  getElementById: () => ({})
+}), true);
+
+assert.strictEqual(shouldRebuildArbDetailShellDom([{}], { gridEl: null }), false);
 
 assert.strictEqual(
   shouldSyncArbDetailInput(1, null),

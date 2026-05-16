@@ -2183,10 +2183,9 @@
     }
 
     function shouldRebuildArbDetailShell() {
-        if (!arbDetailGrid) return false;
-        return getArbDetailUtils().shouldRebuildArbDetailShell(arbDetailState.cards, {
-            getCardCount: () => arbDetailGrid.querySelectorAll('[data-arb-detail-card-index]').length,
-            hasElement: (id) => Boolean(document.getElementById(id))
+        return getArbDetailUtils().shouldRebuildArbDetailShellDom(arbDetailState.cards, {
+            gridEl: arbDetailGrid,
+            getElementById: (id) => document.getElementById(id)
         });
     }
 

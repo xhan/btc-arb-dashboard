@@ -338,6 +338,18 @@
     });
   }
 
+  function shouldRebuildArbDetailShellDom(cards, options = {}) {
+    const gridEl = options.gridEl;
+    if (!gridEl || typeof gridEl.querySelectorAll !== 'function') return false;
+    const getElementById = typeof options.getElementById === 'function'
+      ? options.getElementById
+      : () => null;
+    return shouldRebuildArbDetailShell(cards, {
+      getCardCount: () => gridEl.querySelectorAll('[data-arb-detail-card-index]').length,
+      hasElement: (id) => Boolean(getElementById(id))
+    });
+  }
+
   function shouldSyncArbDetailInput(index, editingInputIndex) {
     return index !== editingInputIndex;
   }
@@ -1091,6 +1103,7 @@
     findBestSummaryIndices,
     getArbDetailCardDomIds,
     shouldRebuildArbDetailShell,
+    shouldRebuildArbDetailShellDom,
     shouldSyncArbDetailInput,
     syncArbDetailInputValues,
     buildNudgedArbDetailInputAmount,

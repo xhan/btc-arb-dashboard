@@ -1653,7 +1653,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbOpportunityChartHref('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg)'));
-    assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShell(arbDetailState.cards, {'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShellDom(arbDetailState.cards, {'));
+    assert.ok(appJsResponse.body.includes('gridEl: arbDetailGrid'));
+    assert.ok(!appJsResponse.body.includes("arbDetailGrid.querySelectorAll('[data-arb-detail-card-index]')"));
+    assert.ok(arbDetailUtilsResponse.body.includes('function shouldRebuildArbDetailShellDom(cards, options = {})'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().syncArbDetailInputValues(arbDetailState.cards, {'));
     assert.ok(appJsResponse.body.includes('editingInputIndex: arbDetailState.editingInputIndex'));
     assert.ok(!appJsResponse.body.includes('const inputEl = document.getElementById(ids.inputId);'));
