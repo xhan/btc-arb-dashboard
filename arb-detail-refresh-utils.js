@@ -91,7 +91,55 @@
     };
   }
 
+  function createArbDetailChartAutoRefreshRuntime(options = {}) {
+    const setIntervalImpl = typeof options.setIntervalImpl === 'function'
+      ? options.setIntervalImpl
+      : setInterval;
+    const clearIntervalImpl = typeof options.clearIntervalImpl === 'function'
+      ? options.clearIntervalImpl
+      : clearInterval;
+    const isVisible = typeof options.isVisible === 'function'
+      ? options.isVisible
+      : () => false;
+    const isEnabled = typeof options.isEnabled === 'function'
+      ? options.isEnabled
+      : () => false;
+    const refresh = typeof options.refresh === 'function'
+      ? options.refresh
+      : () => {};
+    const intervalMs = toDelayMs(options.intervalMs);
+    let timer = null;
+
+    function clear() {
+      if (!timer) return false;
+      clearIntervalImpl(timer);
+      timer = null;
+      return true;
+    }
+
+    function hasTimer() {
+      return Boolean(timer);
+    }
+
+    function sync() {
+      clear();
+      if (!isVisible() || !isEnabled()) return false;
+      timer = setIntervalImpl(() => {
+        if (!isVisible()) return;
+        refresh();
+      }, intervalMs);
+      return true;
+    }
+
+    return {
+      clear,
+      hasTimer,
+      sync
+    };
+  }
+
   return {
+    createArbDetailChartAutoRefreshRuntime,
     createArbDetailRefreshScheduler
   };
 }));

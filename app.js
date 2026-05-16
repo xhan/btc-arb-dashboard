@@ -96,7 +96,6 @@
     const arbDetailSourceBudgetRuntime = getArbDetailUtils().createArbDetailSourceBudgetRuntime();
     let arbDetailChartPreviewCharts = [];
     let arbDetailChartPreviewRunId = 0;
-    let arbDetailChartAutoRefreshTimer = null;
     const arbDetailRefreshScheduler = getArbDetailRefreshUtils().createArbDetailRefreshScheduler({
         intervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
         isActive: isArbDetailRefreshActive,
@@ -104,6 +103,16 @@
         setRefreshing: setArbDetailRefreshing,
         refresh: refreshArbDetailCards,
         logError: logArbDetailRefreshError
+    });
+    const arbDetailChartAutoRefreshRuntime = getArbDetailRefreshUtils().createArbDetailChartAutoRefreshRuntime({
+        intervalMs: CHART_AUTO_REFRESH_INTERVAL_MS,
+        isVisible: () => arbDetailState.visible,
+        isEnabled: () => Boolean(arbDetailChartAutoRefreshToggle && arbDetailChartAutoRefreshToggle.checked),
+        refresh: () => {
+            void syncArbDetailChartPreview(arbDetailState.selectedOpportunity, {
+                forceReload: true
+            });
+        }
     });
     
     let hoverTimeout = null;        
@@ -2459,19 +2468,7 @@
     }
 
     function syncArbDetailChartAutoRefreshTimer() {
-        if (arbDetailChartAutoRefreshTimer) {
-            clearInterval(arbDetailChartAutoRefreshTimer);
-            arbDetailChartAutoRefreshTimer = null;
-        }
-        if (!arbDetailState.visible || !arbDetailChartAutoRefreshToggle || !arbDetailChartAutoRefreshToggle.checked) {
-            return;
-        }
-        arbDetailChartAutoRefreshTimer = setInterval(() => {
-            if (!arbDetailState.visible) return;
-            void syncArbDetailChartPreview(arbDetailState.selectedOpportunity, {
-                forceReload: true
-            });
-        }, CHART_AUTO_REFRESH_INTERVAL_MS);
+        arbDetailChartAutoRefreshRuntime.sync();
     }
 
     function renderArbDetailChartPreviewMessage(message) {
@@ -2669,10 +2666,7 @@
         arbDetailState = getArbDetailUtils().buildClosedArbDetailState(arbDetailState);
         arbDetailChartPreviewRunId += 1;
         destroyArbDetailChartPreview();
-        if (arbDetailChartAutoRefreshTimer) {
-            clearInterval(arbDetailChartAutoRefreshTimer);
-            arbDetailChartAutoRefreshTimer = null;
-        }
+        arbDetailChartAutoRefreshRuntime.clear();
         setArbDetailChartLinkState('');
         if (arbDetailModal) {
             arbDetailModal.classList.remove('visible');

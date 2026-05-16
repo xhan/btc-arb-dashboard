@@ -275,6 +275,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/arb-detail-utils.js');
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
+    const arbDetailRefreshUtilsResponse = await request('/arb-detail-refresh-utils.js');
+    assert.strictEqual(arbDetailRefreshUtilsResponse.statusCode, 200);
     const dexLinkUtilsResponse = await request('/dex-link-utils.js');
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
     const quoteRequestUtilsResponse = await request('/quote-request-utils.js');
@@ -1026,8 +1028,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getArbDetailRefreshUtils()'));
     assert.ok(appJsResponse.body.includes('ArbDetailRefreshUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbDetailRefreshUtils().createArbDetailRefreshScheduler({'));
+    assert.ok(appJsResponse.body.includes('getArbDetailRefreshUtils().createArbDetailChartAutoRefreshRuntime({'));
+    assert.ok(!appJsResponse.body.includes('let arbDetailChartAutoRefreshTimer = null;'));
     assert.ok(appJsResponse.body.includes('clearArbDetailRefreshTimer'));
     assert.ok(!appJsResponse.body.includes('arbDetailRefreshTimer = setTimeout'));
+    assert.ok(arbDetailRefreshUtilsResponse.body.includes('function createArbDetailChartAutoRefreshRuntime(options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('refreshToken: 0'));
     assert.ok(!appJsResponse.body.includes('loopToken'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-profit-card'));

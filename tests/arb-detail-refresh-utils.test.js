@@ -1,6 +1,9 @@
 const assert = require('assert');
 
-const { createArbDetailRefreshScheduler } = require('../arb-detail-refresh-utils');
+const {
+  createArbDetailChartAutoRefreshRuntime,
+  createArbDetailRefreshScheduler
+} = require('../arb-detail-refresh-utils');
 
 let activeToken = 1;
 let refreshing = false;
@@ -69,4 +72,51 @@ function createScheduler(refreshImpl, options = {}) {
   });
   assert.strictEqual(await failingScheduler.runTick(3), false);
   assert.deepStrictEqual(loggedErrors.at(-1), { message: 'refresh exploded', token: 3 });
+
+  let chartVisible = true;
+  let chartEnabled = true;
+  let chartRefreshCalls = 0;
+  let intervalId = 0;
+  const chartIntervals = [];
+  const chartClearedIntervals = [];
+  const chartAutoRefreshRuntime = createArbDetailChartAutoRefreshRuntime({
+    intervalMs: 5000,
+    isVisible: () => chartVisible,
+    isEnabled: () => chartEnabled,
+    refresh: () => {
+      chartRefreshCalls += 1;
+    },
+    setIntervalImpl(callback, delayMs) {
+      const id = `interval-${intervalId += 1}`;
+      chartIntervals.push({ id, callback, delayMs });
+      return id;
+    },
+    clearIntervalImpl(id) {
+      chartClearedIntervals.push(id);
+    }
+  });
+
+  assert.strictEqual(chartAutoRefreshRuntime.sync(), true);
+  assert.strictEqual(chartAutoRefreshRuntime.hasTimer(), true);
+  assert.deepStrictEqual(chartIntervals.map((entry) => entry.delayMs), [5000]);
+
+  chartAutoRefreshRuntime.sync();
+  assert.deepStrictEqual(chartClearedIntervals, ['interval-1']);
+  assert.strictEqual(chartIntervals.length, 2);
+
+  chartVisible = false;
+  chartIntervals.at(-1).callback();
+  assert.strictEqual(chartRefreshCalls, 0);
+
+  chartVisible = true;
+  chartIntervals.at(-1).callback();
+  assert.strictEqual(chartRefreshCalls, 1);
+
+  assert.strictEqual(chartAutoRefreshRuntime.clear(), true);
+  assert.deepStrictEqual(chartClearedIntervals, ['interval-1', 'interval-2']);
+  assert.strictEqual(chartAutoRefreshRuntime.hasTimer(), false);
+
+  chartEnabled = false;
+  assert.strictEqual(chartAutoRefreshRuntime.sync(), false);
+  assert.strictEqual(chartIntervals.length, 2);
 })();
