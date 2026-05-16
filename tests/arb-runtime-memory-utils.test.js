@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const {
   buildRetainedArbOpportunityStore,
+  createArbPanelUpdateRuntime,
   createArbOpportunityHighlightRuntime,
   createArbOpportunityRuntime,
   getNextArbOpportunityHighlightExpiry,
@@ -129,3 +130,46 @@ assert.strictEqual(highlightRuntime.getHighlightedUntilById().size, 0);
 highlightRuntime.mark(['target-b'], 10000);
 highlightRuntime.clear();
 assert.strictEqual(highlightRuntime.getHighlightedUntilById().size, 0, 'clear should remove all highlight state');
+
+let panelVisible = false;
+let panelDirtyCount = 0;
+let panelUpdateCount = 0;
+let panelTimerId = 0;
+const panelTimers = [];
+const panelClearedTimers = [];
+const panelUpdateRuntime = createArbPanelUpdateRuntime({
+  delayMs: 1000,
+  isVisible: () => panelVisible,
+  markDirty: () => {
+    panelDirtyCount += 1;
+  },
+  update: () => {
+    panelUpdateCount += 1;
+  },
+  setTimer(callback, delayMs) {
+    const id = `panel-${panelTimerId += 1}`;
+    panelTimers.push({ id, callback, delayMs });
+    return id;
+  },
+  clearTimer(id) {
+    panelClearedTimers.push(id);
+  }
+});
+
+assert.strictEqual(panelUpdateRuntime.schedule(), false);
+assert.strictEqual(panelDirtyCount, 1, 'hidden panel should be marked dirty instead of scheduling');
+assert.strictEqual(panelTimers.length, 0);
+
+panelVisible = true;
+assert.strictEqual(panelUpdateRuntime.schedule(), true);
+assert.strictEqual(panelUpdateRuntime.hasTimer(), true);
+assert.deepStrictEqual(panelTimers.map((entry) => entry.delayMs), [1000]);
+assert.strictEqual(panelUpdateRuntime.schedule(), false, 'runtime should not schedule duplicate panel updates');
+panelTimers[0].callback();
+assert.strictEqual(panelUpdateCount, 1);
+assert.strictEqual(panelUpdateRuntime.hasTimer(), false);
+
+panelUpdateRuntime.schedule();
+assert.strictEqual(panelUpdateRuntime.clear(), true);
+assert.deepStrictEqual(panelClearedTimers, ['panel-2']);
+assert.strictEqual(panelUpdateRuntime.hasTimer(), false);

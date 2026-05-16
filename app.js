@@ -24,7 +24,6 @@
     });
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
-    let arbUpdateTimer = null;
     let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();
     let pathAlertPanelHidden = true;
     const pathAlertPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
@@ -63,6 +62,16 @@
     let arbGlobalTwoLegOnly = false;
     let arbPanelDirty = false;
     const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
+    const arbPanelUpdateRuntime = getArbRuntimeMemoryUtils().createArbPanelUpdateRuntime({
+        setTimer: setTimeout,
+        clearTimer: clearTimeout,
+        delayMs: ARB_PANEL_UPDATE_DELAY_MS,
+        isVisible: isArbPanelVisible,
+        markDirty: () => {
+            arbPanelDirty = true;
+        },
+        update: updateArbPanel
+    });
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
     const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({
         setInterval,
@@ -1364,15 +1373,7 @@
     document.body.addEventListener('keydown', unlockAudio, { once: true });
 
     function scheduleArbUpdate() {
-        if (!isArbPanelVisible()) {
-            arbPanelDirty = true;
-            return;
-        }
-        if (arbUpdateTimer) return;
-        arbUpdateTimer = setTimeout(() => {
-            arbUpdateTimer = null;
-            updateArbPanel();
-        }, ARB_PANEL_UPDATE_DELAY_MS);
+        arbPanelUpdateRuntime.schedule();
     }
 
     function invalidateArbRuleSnapshotCache(options = {}) {

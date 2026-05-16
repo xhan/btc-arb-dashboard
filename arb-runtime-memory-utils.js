@@ -168,6 +168,60 @@
     };
   }
 
+  function createArbPanelUpdateRuntime(options = {}) {
+    const setTimer = typeof options.setTimer === 'function'
+      ? options.setTimer
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimer = typeof options.clearTimer === 'function'
+      ? options.clearTimer
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const delayMs = Number.isFinite(Number(options.delayMs)) && Number(options.delayMs) >= 0
+      ? Number(options.delayMs)
+      : 0;
+    const isVisible = typeof options.isVisible === 'function'
+      ? options.isVisible
+      : () => false;
+    const markDirty = typeof options.markDirty === 'function'
+      ? options.markDirty
+      : () => {};
+    const update = typeof options.update === 'function'
+      ? options.update
+      : () => {};
+    let timer = null;
+
+    function clear() {
+      if (timer === null) return false;
+      if (clearTimer) {
+        clearTimer(timer);
+      }
+      timer = null;
+      return true;
+    }
+
+    function schedule() {
+      if (!isVisible()) {
+        markDirty();
+        return false;
+      }
+      if (timer !== null) return false;
+      if (!setTimer) {
+        update();
+        return true;
+      }
+      timer = setTimer(() => {
+        timer = null;
+        update();
+      }, delayMs);
+      return true;
+    }
+
+    return {
+      clear,
+      hasTimer: () => timer !== null,
+      schedule
+    };
+  }
+
   function createArbOpportunityRuntime() {
     let opportunityMap = new Map();
     let opportunityStore = new Map();
@@ -203,6 +257,7 @@
 
   return {
     buildRetainedArbOpportunityStore,
+    createArbPanelUpdateRuntime,
     createArbOpportunityHighlightRuntime,
     createArbOpportunityRuntime,
     getNextArbOpportunityHighlightExpiry,
