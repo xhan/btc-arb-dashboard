@@ -98,6 +98,14 @@
     };
   }
 
+  function applyFloatingPanelViewportHeight(panelEl, viewportHeight, options = {}) {
+    if (!panelEl || !panelEl.style) return false;
+    const minHeight = Number.isFinite(Number(options.minHeight)) ? Number(options.minHeight) : 200;
+    const nextHeight = Math.max(minHeight, Number(viewportHeight) || 0);
+    panelEl.style.height = `${nextHeight}px`;
+    return true;
+  }
+
   function createFloatingPanelZIndexRuntime(options = {}) {
     const baseZIndex = Number.isFinite(Number(options.baseZIndex))
       ? Number(options.baseZIndex)
@@ -479,6 +487,7 @@
     applyQuoteRunStateTagDomState,
     applyQuoteSwitchingDomState,
     applyFloatingPanelDisplayState,
+    applyFloatingPanelViewportHeight,
     applyTooltipState,
     applyTrendArrowState,
     applyQuoteAlertDismissButtonState,

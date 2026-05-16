@@ -3691,9 +3691,7 @@
     }
 
     function setArbPanelMaxHeight() {
-        if (!arbPathWindow) return;
-        const maxHeight = Math.max(200, window.innerHeight);
-        arbPathWindow.style.height = `${maxHeight}px`;
+        getDomRenderUtils().applyFloatingPanelViewportHeight(arbPathWindow, window.innerHeight, { minHeight: 200 });
     }
 
     function buildQuoteAlertDisplayLabel(quote, monitorState = getQuoteMarketState(quote.id) || {}, direction = 'forward') {

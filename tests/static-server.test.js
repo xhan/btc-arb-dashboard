@@ -594,6 +594,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function bindDraggableElement(element, handle, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function bindFloatingPanelFocus(panel, header, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyFloatingPanelDisplayState(panelEl, action = \'toggle\', options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyFloatingPanelViewportHeight(panelEl, viewportHeight, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function createFloatingPanelZIndexRuntime(options = {})'));
     assert.ok(!appJsResponse.body.includes('function makeDraggable(element, handle)'));
     assert.ok(!appJsResponse.body.includes('makeDraggable(arbPathWindow, arbPathHeader)'));
@@ -1466,7 +1467,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("arbDetailGrid.addEventListener('mouseup'"));
     assert.ok(appJsResponse.body.includes('setArbPanelMaxHeight();'));
     assert.ok(appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
-    assert.ok(appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyFloatingPanelViewportHeight(arbPathWindow, window.innerHeight, { minHeight: 200 });'));
+    assert.ok(!appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
+    assert.ok(!appJsResponse.body.includes('arbPathWindow.style.height = `${maxHeight}px`;'));
     assert.ok(appJsResponse.body.includes('function buildFixedArbSections('));
     assert.ok(appJsResponse.body.includes('function buildSpecialArbSections('));
     assert.ok(appJsResponse.body.includes('function buildGlobalArbSection('));

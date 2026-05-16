@@ -17,6 +17,7 @@ const {
   applyQuoteRunStateTagDomState,
   applyQuoteSwitchingDomState,
   applyFloatingPanelDisplayState,
+  applyFloatingPanelViewportHeight,
   bindDraggableElement,
   bindFloatingPanelFocus,
   clearQuoteDataError,
@@ -577,6 +578,13 @@ assert.deepStrictEqual(applyFloatingPanelDisplayState(null, 'toggle'), {
   shouldBringToFront: false,
   shouldRender: false
 });
+
+const viewportHeightPanel = { style: {} };
+assert.strictEqual(applyFloatingPanelViewportHeight(viewportHeightPanel, 680), true);
+assert.strictEqual(viewportHeightPanel.style.height, '680px');
+assert.strictEqual(applyFloatingPanelViewportHeight(viewportHeightPanel, 120, { minHeight: 240 }), true);
+assert.strictEqual(viewportHeightPanel.style.height, '240px');
+assert.strictEqual(applyFloatingPanelViewportHeight(null, 680), false);
 
 const zIndexRuntime = createFloatingPanelZIndexRuntime({ baseZIndex: 2100 });
 const zIndexPanel = { style: {} };
