@@ -6,6 +6,7 @@ const {
   applyQuoteAlertHighlightUi,
   applyActiveQuoteDomState,
   applyPausedQuoteDomState,
+  applyQuoteDisplayTextDomState,
   applyQuoteInverseErrorDomState,
   applyQuoteInverseQueuedDomState,
   applyQuoteInverseResultDomState,
@@ -241,6 +242,23 @@ assert.strictEqual(switchingQuoteRefs.quoteTextEl.textContent, '切换中...');
 assert.strictEqual(switchingQuoteRefs.quoteTextWrapperEl.classList.contains('loading-text'), true);
 assert.strictEqual(switchingQuoteRefs.inverseEl.textContent, '刷新中...');
 assert.strictEqual(applyQuoteSwitchingDomState({}), false);
+
+const quoteDisplayTextRefs = {
+  quoteTextEl: { textContent: 'old main' },
+  inverseEl: { textContent: 'old inverse' }
+};
+assert.strictEqual(applyQuoteDisplayTextDomState(quoteDisplayTextRefs, {
+  text: '1 ETH = 3000 USDC',
+  inverseText: '3000 USDC = 1 ETH'
+}), true);
+assert.strictEqual(quoteDisplayTextRefs.quoteTextEl.textContent, '1 ETH = 3000 USDC');
+assert.strictEqual(quoteDisplayTextRefs.inverseEl.textContent, '3000 USDC = 1 ETH');
+assert.strictEqual(applyQuoteDisplayTextDomState(quoteDisplayTextRefs, {
+  text: 'main only'
+}), true);
+assert.strictEqual(quoteDisplayTextRefs.quoteTextEl.textContent, 'main only');
+assert.strictEqual(quoteDisplayTextRefs.inverseEl.textContent, '3000 USDC = 1 ETH');
+assert.strictEqual(applyQuoteDisplayTextDomState({}, { text: 'x' }), false);
 
 function createDocumentImpl(createdElements) {
   return {

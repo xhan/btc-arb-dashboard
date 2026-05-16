@@ -197,6 +197,19 @@
     return true;
   }
 
+  function applyQuoteDisplayTextDomState(refs = {}, options = {}) {
+    let changed = false;
+    if (refs.quoteTextEl) {
+      refs.quoteTextEl.textContent = options.text || '';
+      changed = true;
+    }
+    if (refs.inverseEl && options.inverseText) {
+      refs.inverseEl.textContent = options.inverseText;
+      changed = true;
+    }
+    return changed;
+  }
+
   function ensureQuoteInverseElement(refs = {}, options = {}) {
     if (refs.inverseEl) return refs.inverseEl;
     if (!refs.quoteDataEl || typeof refs.quoteDataEl.appendChild !== 'function') return null;
@@ -331,6 +344,7 @@
   return {
     applyActiveQuoteDomState,
     applyPausedQuoteDomState,
+    applyQuoteDisplayTextDomState,
     applyQuoteInverseErrorDomState,
     applyQuoteInverseQueuedDomState,
     applyQuoteInverseResultDomState,

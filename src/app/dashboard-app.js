@@ -1712,13 +1712,17 @@
             for (const quote of quotes) {
                 const state = getQuoteMarketState(quote.id) || {};
                 const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
-                if (quoteTextEl) {
-                    quoteTextEl.textContent = getQuoteDisplayText(quote, state);
-                }
                 const inverseEl = document.getElementById(`inverse-quote-${quote.id}`);
-                if (inverseEl && Number.isFinite(Number(state.inverseRawPrice))) {
-                    inverseEl.textContent = getInverseQuoteDisplayText(quote, state, inverseEl.textContent || '...');
-                }
+                const inverseText = inverseEl && Number.isFinite(Number(state.inverseRawPrice))
+                    ? getInverseQuoteDisplayText(quote, state, inverseEl.textContent || '...')
+                    : null;
+                getDomRenderUtils().applyQuoteDisplayTextDomState({
+                    quoteTextEl,
+                    inverseEl
+                }, {
+                    text: getQuoteDisplayText(quote, state),
+                    inverseText
+                });
             }
         }
     }
@@ -1763,7 +1767,7 @@
 
     function removeInverseQuoteElement(quoteId) {
         const inverseEl = document.getElementById(`inverse-quote-${quoteId}`);
-        if (inverseEl) inverseEl.remove();
+        getDomRenderUtils().removeQuoteInverseElement(inverseEl);
     }
 
     function abortQuoteFetch(quoteId) {
