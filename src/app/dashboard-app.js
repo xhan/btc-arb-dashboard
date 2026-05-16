@@ -794,11 +794,11 @@
 
     settingsBtn.addEventListener('click', () => {
         syncSettingsIntervalInputs();
-        settingsModal.classList.add('visible');
+        getDashboardModalUtils().showModal(settingsModal);
     });
 
     document.getElementById('settings-cancel').addEventListener('click', () => {
-        settingsModal.classList.remove('visible');
+        getDashboardModalUtils().hideModal(settingsModal);
     });
 
     settingsSaveBtn.addEventListener('click', () => {
@@ -811,7 +811,7 @@
         refreshRequestChannelOptions();
         updateSchedulers();
         saveData(); 
-        settingsModal.classList.remove('visible');
+        getDashboardModalUtils().hideModal(settingsModal);
 
         settingsSaveFeedbackRuntime.show({
             button: settingsSaveBtn,
@@ -4689,12 +4689,12 @@
 
         renderQuoteRequestChannelOptions(quote);
 
-        alertModal.classList.add('visible');
+        getDashboardModalUtils().showModal(alertModal);
         return true;
     }
 
     function closeQuoteSettingsModal() {
-        alertModal.classList.remove('visible');
+        getDashboardModalUtils().hideModal(alertModal);
         currentlyEditingQuote = null;
     }
 
@@ -4755,7 +4755,7 @@
         }
         if (action.type === 'add-quote') {
             currentCategoryIdToAdd = action.categoryId;
-            addQuoteModal.classList.add('visible');
+            getDashboardModalUtils().showModal(addQuoteModal);
             return;
         }
         if (action.type === 'swap-quote') {

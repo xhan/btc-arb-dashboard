@@ -6,6 +6,7 @@ const {
   applySettingsIntervalWritePlan,
   closeAddCategoryModal,
   closeConfirmModal,
+  hideModal,
   openAddCategoryModal,
   readAddQuoteFormValues,
   readAddCategoryFormValues,
@@ -13,6 +14,7 @@ const {
   readSettingsIntervalFormValues,
   resetAddQuoteModal,
   showConfirmModal,
+  showModal,
   syncAddQuoteFormControls
 } = require('../src/dashboard/dashboard-modal-utils');
 
@@ -55,6 +57,12 @@ assert.deepStrictEqual(readAddQuoteFormValues(refs), {
   toToken: '0xbbb',
   symbol: 'btcusdt'
 });
+
+const genericModal = { classList: createClassList([]) };
+showModal(genericModal);
+assert.strictEqual(genericModal.classList.contains('visible'), true);
+hideModal(genericModal);
+assert.strictEqual(genericModal.classList.contains('visible'), false);
 
 applyAddQuoteFormViewState(refs, {
   targetChainVisible: true,

@@ -35,6 +35,14 @@
     }
   }
 
+  function showModal(modal) {
+    addClass(modal, 'visible');
+  }
+
+  function hideModal(modal) {
+    removeClass(modal, 'visible');
+  }
+
   function applyQuoteSettingsModalWritePlan(refs = {}, plan = {}) {
     (plan.text || []).forEach((item) => {
       const element = refs[item.id];
@@ -93,14 +101,14 @@
   function openAddCategoryModal(refs = {}) {
     const nameInput = refs['add-category-name'];
     setElementValue(nameInput, '');
-    addClass(refs.modal, 'visible');
+    showModal(refs.modal);
     if (nameInput && typeof nameInput.focus === 'function') {
       nameInput.focus();
     }
   }
 
   function closeAddCategoryModal(refs = {}) {
-    removeClass(refs.modal, 'visible');
+    hideModal(refs.modal);
   }
 
   function readAddCategoryFormValues(refs = {}, options = {}) {
@@ -116,11 +124,11 @@
     if (refs.message) {
       refs.message.textContent = message;
     }
-    addClass(refs.modal, 'visible');
+    showModal(refs.modal);
   }
 
   function closeConfirmModal(refs = {}) {
-    removeClass(refs.modal, 'visible');
+    hideModal(refs.modal);
   }
 
   function applyAddQuoteFormViewState(refs = {}, viewState = {}) {
@@ -164,7 +172,7 @@
     if (typeof options.syncControls === 'function') {
       options.syncControls();
     }
-    removeClass(refs.modal, 'visible');
+    hideModal(refs.modal);
     return { currentCategoryIdToAdd: null };
   }
 
@@ -181,6 +189,8 @@
     readSettingsIntervalFormValues,
     resetAddQuoteModal,
     showConfirmModal,
+    hideModal,
+    showModal,
     syncAddQuoteFormControls
   };
 });

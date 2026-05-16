@@ -409,6 +409,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('DashboardModalUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().syncAddQuoteFormControls(addQuoteModalRefs, {'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function showModal(modal)'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function hideModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readQuoteSettingsFormValues(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applySettingsIntervalWritePlan(refs = {}, writePlan = [])'));
@@ -431,6 +433,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('readAddCategoryFormValues: getDashboardRenderer().readAddCategoryFormValues'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showConfirmModal(confirmModalRefs, message)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().closeConfirmModal(confirmModalRefs)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(settingsModal)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().hideModal(settingsModal)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(alertModal)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().hideModal(alertModal)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(addQuoteModal)'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddCategoryDraft({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveAddCategoryModalClickAction(e, { modal: addCategoryModal })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: alertModal })'));
@@ -445,6 +452,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function validateAddQuoteForm()'));
     assert.ok(!appJsResponse.body.includes('function updateAddQuoteTokenPlaceholders()'));
     assert.ok(!appJsResponse.body.includes('function syncAddQuoteCrossChainControls()'));
+    assert.ok(!appJsResponse.body.includes("settingsModal.classList.add('visible')"));
+    assert.ok(!appJsResponse.body.includes("settingsModal.classList.remove('visible')"));
+    assert.ok(!appJsResponse.body.includes("alertModal.classList.add('visible')"));
+    assert.ok(!appJsResponse.body.includes("alertModal.classList.remove('visible')"));
+    assert.ok(!appJsResponse.body.includes("addQuoteModal.classList.add('visible')"));
     assert.ok(!appJsResponse.body.includes("addQuoteChainSelect.value = '';"));
     assert.ok(!appJsResponse.body.includes('addQuoteFromInput.placeholder = viewState.fromPlaceholder'));
     assert.ok(!appJsResponse.body.includes('addQuoteSaveBtn.disabled = viewState.saveDisabled'));
