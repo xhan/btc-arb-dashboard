@@ -94,7 +94,6 @@
         showDiff: false,
         selectedLeftKey: '',
         selectedRightKey: '',
-        timer: null,
         domRefs: null,
         htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()
     };
@@ -526,6 +525,13 @@
         dashboardRuntimeUtils: getDashboardRuntimeUtils()
     });
     const dataTerminalCache = getDataTerminalUtils().createDataTerminalCache();
+    const dataTerminalUpdateRuntime = getDataTerminalUtils().createDataTerminalUpdateRuntime({
+        setTimeout,
+        clearTimeout,
+        delayMs: DATA_TERMINAL_UPDATE_DELAY_MS,
+        canUpdate: () => dataTerminalState.visible && dataTerminalState.domRefs && hasDataTerminalActiveQuery(),
+        update: renderDataTerminalPanel
+    });
     const mutedPathRuntime = getMutedPathRuntimeUtils().createMutedPathRuntime({
         pruneTargets: (entries, nowMs) => getPathAlertUtils().pruneExpiredMutedPathTargets(entries, nowMs),
         pruneLegs: (entries, nowMs) => getMutedPathLegUtils().pruneExpiredMutedPathLegs(entries, nowMs),
@@ -1922,10 +1928,7 @@
     }
 
     function clearDataTerminalTimer() {
-        if (dataTerminalState.timer) {
-            clearTimeout(dataTerminalState.timer);
-            dataTerminalState.timer = null;
-        }
+        dataTerminalUpdateRuntime.clear();
     }
 
     function hasDataTerminalActiveQuery() {
@@ -2048,14 +2051,7 @@
     }
 
     function scheduleDataTerminalUpdate() {
-        if (!dataTerminalState.visible || !dataTerminalState.domRefs || !hasDataTerminalActiveQuery()) {
-            return;
-        }
-        if (dataTerminalState.timer) return;
-        dataTerminalState.timer = setTimeout(() => {
-            dataTerminalState.timer = null;
-            renderDataTerminalPanel();
-        }, DATA_TERMINAL_UPDATE_DELAY_MS);
+        dataTerminalUpdateRuntime.schedule();
     }
 
     function handleDataTerminalHeaderClick(event) {

@@ -11,6 +11,7 @@ const {
   buildDataTerminalSelectionSummary,
   buildDataTerminalViewModel,
   createDataTerminalCache,
+  createDataTerminalUpdateRuntime,
   parseDataTerminalQuery
 } = require('../data-terminal-utils');
 
@@ -42,6 +43,42 @@ assert.deepStrictEqual(cache.getCandidates('a', () => [{ key: 'y' }]), [{ key: '
 assert.strictEqual(candidatesBuildCount, 1);
 cache.clear();
 assert.deepStrictEqual(cache.getCandidates('a', () => [{ key: 'z' }]), [{ key: 'z' }]);
+
+let dataTerminalCanUpdate = false;
+let dataTerminalUpdateCount = 0;
+let dataTerminalTimerId = 0;
+const dataTerminalTimers = [];
+const dataTerminalClearedTimers = [];
+const dataTerminalUpdateRuntime = createDataTerminalUpdateRuntime({
+  delayMs: 1000,
+  canUpdate: () => dataTerminalCanUpdate,
+  update: () => {
+    dataTerminalUpdateCount += 1;
+  },
+  setTimeout(callback, delayMs) {
+    const id = `data-terminal-${dataTerminalTimerId += 1}`;
+    dataTerminalTimers.push({ id, callback, delayMs });
+    return id;
+  },
+  clearTimeout(id) {
+    dataTerminalClearedTimers.push(id);
+  }
+});
+
+assert.strictEqual(dataTerminalUpdateRuntime.schedule(), false);
+assert.strictEqual(dataTerminalTimers.length, 0);
+dataTerminalCanUpdate = true;
+assert.strictEqual(dataTerminalUpdateRuntime.schedule(), true);
+assert.strictEqual(dataTerminalUpdateRuntime.hasTimer(), true);
+assert.deepStrictEqual(dataTerminalTimers.map((entry) => entry.delayMs), [1000]);
+assert.strictEqual(dataTerminalUpdateRuntime.schedule(), false);
+dataTerminalTimers[0].callback();
+assert.strictEqual(dataTerminalUpdateCount, 1);
+assert.strictEqual(dataTerminalUpdateRuntime.hasTimer(), false);
+dataTerminalUpdateRuntime.schedule();
+assert.strictEqual(dataTerminalUpdateRuntime.clear(), true);
+assert.deepStrictEqual(dataTerminalClearedTimers, ['data-terminal-2']);
+assert.strictEqual(dataTerminalUpdateRuntime.hasTimer(), false);
 
 const dataTerminalRecords = buildDataTerminalRecords(
   [

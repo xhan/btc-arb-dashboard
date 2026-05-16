@@ -435,6 +435,54 @@
     };
   }
 
+  function createDataTerminalUpdateRuntime(options = {}) {
+    const setTimer = typeof options.setTimeout === 'function'
+      ? options.setTimeout
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimerImpl = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const delayMs = Number.isFinite(Number(options.delayMs)) && Number(options.delayMs) >= 0
+      ? Number(options.delayMs)
+      : 0;
+    const canUpdate = typeof options.canUpdate === 'function'
+      ? options.canUpdate
+      : () => false;
+    const update = typeof options.update === 'function'
+      ? options.update
+      : () => {};
+    let timer = null;
+
+    function clear() {
+      if (timer === null) return false;
+      if (clearTimerImpl) {
+        clearTimerImpl(timer);
+      }
+      timer = null;
+      return true;
+    }
+
+    function schedule() {
+      if (!canUpdate()) return false;
+      if (timer !== null) return false;
+      if (!setTimer) {
+        update();
+        return true;
+      }
+      timer = setTimer(() => {
+        timer = null;
+        update();
+      }, delayMs);
+      return true;
+    }
+
+    return {
+      clear,
+      hasTimer: () => timer !== null,
+      schedule
+    };
+  }
+
   return {
     buildDataTerminalCandidates,
     buildDataTerminalPanelHtml,
@@ -443,6 +491,7 @@
     buildDataTerminalSelectionSummary,
     buildDataTerminalViewModel,
     createDataTerminalCache,
+    createDataTerminalUpdateRuntime,
     parseDataTerminalQuery
   };
 });
