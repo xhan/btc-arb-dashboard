@@ -1371,7 +1371,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('async function loadPathAlertConfigStrict('));
     assert.ok(!appJsResponse.body.includes('fallbackToDefault'));
     assert.ok(pathAlertUtilsResponse.body.includes('function createPathAlertConfigClient(options = {})'));
-    assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathRuntime.getLegs(), nowMs)'));
+    assert.ok(!appJsResponse.body.includes('function filterMutedArbEdges('));
+    assert.ok(!appJsResponse.body.includes('function filterMutedArbCycles('));
+    assert.ok(!appJsResponse.body.includes('function buildVisibleArbEdges('));
+    assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs('));
+    assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedCycles('));
     const pruneMutedPathTargetsMatch = appJsResponse.body.match(/function pruneMutedPathTargetsInPlace\([\s\S]*?\n    \}/);
     assert.ok(pruneMutedPathTargetsMatch);
     assert.ok(!pruneMutedPathTargetsMatch[0].includes('window.PathAlertUtils'));

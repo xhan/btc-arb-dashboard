@@ -243,6 +243,7 @@
   - `src/app/dashboard-app.js` 的套利面板 dirty flag 已下沉到 `src/arb/arb-runtime-memory-utils.js` 的 `createArbPanelUpdateRuntime()`
   - `src/app/dashboard-app.js` 的套利面板更新调度单用途包装已移除，报价状态变更后直接调度 arb panel runtime
   - `src/app/dashboard-app.js` 的套利 topology cache 和组合缓存失效单用途包装已移除，组合失效入口直接清理 rule snapshot / topology cache
+  - `src/app/dashboard-app.js` 的 muted arb edge/cycle 过滤单用途包装已移除，snapshot / global section 装配点直接调用 muted leg utils
   - `src/app/dashboard-app.js` 的套利全局过滤栏 DOM 写入计划和事件 patch 构造已下沉到 `src/arb/arb-panel-layout-utils.js`
   - `src/app/dashboard-app.js` 的套利全局过滤栏 input/change/clear 事件绑定已下沉到 `src/arb/arb-panel-layout-utils.js`
   - `src/app/dashboard-app.js` 的套利全局过滤栏 Enter blur 和 header blur 交互已下沉到 `src/arb/arb-panel-layout-utils.js`

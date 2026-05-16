@@ -1136,23 +1136,6 @@
         return getDashboardRuntimeUtils().buildQuotesByCategoryName(dashboardState, getActiveQuotes);
     }
 
-    function filterMutedArbEdges(edges, nowMs = Date.now()) {
-        pruneMutedPathLegsInPlace(nowMs);
-        return getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathRuntime.getLegs(), nowMs);
-    }
-
-    function filterMutedArbCycles(cycles, nowMs = Date.now()) {
-        pruneMutedPathLegsInPlace(nowMs);
-        return getMutedPathLegUtils().filterMutedCycles(cycles, mutedPathRuntime.getLegs(), nowMs);
-    }
-
-    function buildVisibleArbEdges(quotes, nowMs = Date.now()) {
-        return filterMutedArbEdges(
-            getArbPaths().buildEdges(quotes, getQuoteMarketStateMap(), null),
-            nowMs
-        );
-    }
-
     function getSharedArbRuleSnapshot() {
         const topologyCacheForFixed = getArbPathTopologyCache();
         const cacheKey = buildArbRuleSnapshotCacheKey();
@@ -1163,8 +1146,14 @@
 
         const aliasRules = getAliasRules();
         const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
-        const allEdges = buildVisibleArbEdges(allQuotes);
         const arbPaths = getArbPaths();
+        const nowMs = Date.now();
+        pruneMutedPathLegsInPlace(nowMs);
+        const allEdges = getMutedPathLegUtils().filterMutedPathLegs(
+            arbPaths.buildEdges(allQuotes, getQuoteMarketStateMap(), null),
+            mutedPathRuntime.getLegs(),
+            nowMs
+        );
         const ruleEdges = arbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
         const quoteMetaById = buildQuoteMetaById();
@@ -2764,10 +2753,16 @@
 
     function buildGlobalArbSection(topologyCache, templateUtils, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
         const globalSectionKey = 'global:all';
-        const globalCycles = filterMutedArbCycles(topologyCache.globalTemplates
-            .map((template) => templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap()))
-            .filter(Boolean)
-            .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)));
+        const nowMs = Date.now();
+        pruneMutedPathLegsInPlace(nowMs);
+        const globalCycles = getMutedPathLegUtils().filterMutedCycles(
+            topologyCache.globalTemplates
+                .map((template) => templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap()))
+                .filter(Boolean)
+                .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)),
+            mutedPathRuntime.getLegs(),
+            nowMs
+        );
         const layoutUtils = getArbPanelLayoutUtils();
         const filterState = arbGlobalFilterStateRuntime.get();
         const filterCriteria = layoutUtils.buildGlobalArbFilterCriteria(filterState, {
