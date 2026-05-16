@@ -12,10 +12,6 @@ const {
     createRequestChannelAgentCache
 } = require('./src/request-channel/request-channel-http');
 const { createFetchOnce } = require('./src/server/fetch-once');
-const {
-    normalizeAlertConfig
-} = require('./src/path-alerts/path-alert-utils');
-const { buildPathAlertQuoteCandidatesFromConfig } = require('./src/server/path-alert-candidate-service');
 const { createCetusAggregatorClient } = require('./src/server/cetus-aggregator-config');
 const { createEvmProviders } = require('./src/server/evm-provider-utils');
 const {
@@ -28,7 +24,7 @@ const { createRuntimeConfigStore, loadStartupCetusAggregatorConfig } = require('
 const { registerConfigRoutes } = require('./src/server/config-route-utils');
 const { createQuoteLogger, withQuoteLogRequestChannel } = require('./src/server/quote-log-utils');
 const { registerQuoteRoutes } = require('./src/server/quote-route-utils');
-const { sendPathAlertRemoteWebhooks } = require('./src/server/path-alert-webhook-utils');
+const { registerPathAlertRoutes } = require('./src/server/path-alert-route-utils');
 const { registerPriceSnapshotRoutes } = require('./src/server/price-snapshot-route-utils');
 const fs = require('fs').promises;
 const path = require('path');
@@ -153,18 +149,6 @@ async function buildQuoteRequestInput(body, sourceKey) {
     };
 }
 
-async function getAlertConfig() {
-    try {
-        const parsedData = await readJsonFile(ALERT_CONFIG_PATH);
-        return normalizeAlertConfig(parsedData);
-    } catch (error) {
-        if (error instanceof SyntaxError || error.code === 'ENOENT') {
-            return normalizeAlertConfig();
-        }
-        throw error;
-    }
-}
-
 const evmProviders = createEvmProviders({
     ProviderClass: ethers.JsonRpcProvider,
     logger: console
@@ -190,58 +174,17 @@ const marketClients = createMarketClients({
     writeFile: (filePath, content, encoding) => fs.writeFile(filePath, content, encoding)
 });
 
-app.post('/api/save-alert-config', async (req, res) => {
-    try {
-        const normalized = normalizeAlertConfig(req.body);
-        await safeWriteJsonFile(ALERT_CONFIG_PATH, normalized);
-        res.json({ message: '路径报警配置保存成功' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/get-alert-config', async (req, res) => {
-    try {
-        res.json(await getAlertConfig());
-    } catch (error) {
-        console.error('Alert Config Read Error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/path-alert-quote-candidates', async (req, res) => {
-    try {
-        res.json(await buildPathAlertQuoteCandidatesFromConfig({
-            configPath: CONFIG_PATH,
-            readJsonFile,
-            marketClients
-        }));
-    } catch (error) {
-        console.error('Path Alert Candidate Error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/send-path-alert-webhook', async (req, res) => {
-    try {
-        const result = await sendPathAlertRemoteWebhooks({
-            alertConfig: await getAlertConfig(),
-            configMore: await getConfigMore(),
-            title: req.body && req.body.title,
-            body: req.body && req.body.body,
-            telegramHtmlBody: req.body && req.body.telegramHtmlBody
-        }, {
-            fetchImpl: fetch,
-            telegramBotApiBaseUrlOverride: process.env.TELEGRAM_BOT_API_BASE_URL
-        });
-        if (result.statusCode >= 400) {
-            return res.status(result.statusCode).json(result.payload);
-        }
-        res.json(result.payload);
-    } catch (error) {
-        console.error('Path Alert Webhook Error:', error);
-        res.status(500).json({ error: error.message });
-    }
+registerPathAlertRoutes({
+    app,
+    alertConfigPath: ALERT_CONFIG_PATH,
+    configPath: CONFIG_PATH,
+    readJsonFile,
+    safeWriteJsonFile,
+    getConfigMore,
+    marketClients,
+    fetchImpl: fetch,
+    telegramBotApiBaseUrlOverride: process.env.TELEGRAM_BOT_API_BASE_URL,
+    logger: console
 });
 
 registerConfigRoutes({
