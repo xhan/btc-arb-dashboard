@@ -2,6 +2,8 @@ const assert = require('assert');
 
 const {
   buildAlertLogAppendPlan,
+  buildAlertLogTabState,
+  createAlertLogTabRuntime,
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
   buildMutedTargetLogCardSelector,
@@ -14,6 +16,32 @@ const {
   removeRestoredMutedAlertLogCards,
   resolveAlertLogClickAction
 } = require('../src/alerts/alert-log-ui-utils');
+
+assert.deepStrictEqual(buildAlertLogTabState('muted-log'), {
+  activeTab: 'muted-log',
+  showLogTab: false,
+  showMutedLogTab: true,
+  showMutedStateTab: false
+});
+assert.deepStrictEqual(buildAlertLogTabState('unknown'), {
+  activeTab: 'log',
+  showLogTab: true,
+  showMutedLogTab: false,
+  showMutedStateTab: false
+});
+
+const alertLogTabRuntime = createAlertLogTabRuntime();
+assert.strictEqual(alertLogTabRuntime.get(), 'log');
+assert.strictEqual(alertLogTabRuntime.set('muted'), 'muted');
+assert.strictEqual(alertLogTabRuntime.isActive('muted'), true);
+assert.deepStrictEqual(alertLogTabRuntime.getState(), {
+  activeTab: 'muted',
+  showLogTab: false,
+  showMutedLogTab: false,
+  showMutedStateTab: true
+});
+assert.strictEqual(alertLogTabRuntime.set('bad-tab'), 'log');
+assert.strictEqual(alertLogTabRuntime.isActive('muted'), false);
 
 const appendPlan = buildAlertLogAppendPlan([
   { id: 'first', mutedEntry: null },

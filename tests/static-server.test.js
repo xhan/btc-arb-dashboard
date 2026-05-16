@@ -1106,6 +1106,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('prependAlertLogCard'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().resolveAlertLogCardPlacement('));
     assert.ok(alertLogUiResponse.body.includes('function buildAlertLogAppendPlan(entries)'));
+    assert.ok(alertLogUiResponse.body.includes('function buildAlertLogTabState(activeTab = \'log\')'));
+    assert.ok(alertLogUiResponse.body.includes('function createAlertLogTabRuntime(options = {})'));
+    assert.ok(appJsResponse.body.includes('const alertLogTabRuntime = getAlertLogUiUtils().createAlertLogTabRuntime();'));
+    assert.ok(appJsResponse.body.includes('const tabState = alertLogTabRuntime.getState();'));
+    assert.ok(appJsResponse.body.includes("alertLogTabRuntime.isActive('muted')"));
     assert.ok(alertLogUiResponse.body.includes('function resolveAlertLogCardPlacement(entry, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function buildRestoredMutedAlertLogPlan(entries, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function hasMutedTargetLogCard(container, targetKey, options = {})'));
@@ -1190,7 +1195,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('extendMutedPathTargetFromLogButton'));
     assert.ok(appJsResponse.body.includes('if (extendMutedPathTargetFromLogButton(action.buttonEl, Date.now()))'));
     assert.ok(appJsResponse.body.includes("if (action.type === 'set-tab')"));
-    assert.ok(appJsResponse.body.includes('alertLogActiveTab = action.tab;'));
+    assert.ok(appJsResponse.body.includes('alertLogTabRuntime.set(action.tab);'));
+    assert.ok(!appJsResponse.body.includes("let alertLogActiveTab = 'log';"));
+    assert.ok(!appJsResponse.body.includes('alertLogActiveTab = action.tab;'));
     assert.ok(alertLogUiResponse.body.includes('#alert-log-muted-log-tab'));
     assert.ok(appJsResponse.body.includes("if (action.type === 'copy-quote-dex-link')"));
     assert.ok(appJsResponse.body.includes('event.preventDefault();'));

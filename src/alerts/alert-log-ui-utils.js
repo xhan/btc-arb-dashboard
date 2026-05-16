@@ -23,6 +23,41 @@
     return list.some((entry) => !isMutedAlertLogEntry(entry));
   }
 
+  function normalizeAlertLogTab(tab) {
+    const value = String(tab || '').trim();
+    return ['log', 'muted-log', 'muted'].includes(value) ? value : 'log';
+  }
+
+  function buildAlertLogTabState(activeTab = 'log') {
+    const normalizedTab = normalizeAlertLogTab(activeTab);
+    return {
+      activeTab: normalizedTab,
+      showLogTab: normalizedTab === 'log',
+      showMutedLogTab: normalizedTab === 'muted-log',
+      showMutedStateTab: normalizedTab === 'muted'
+    };
+  }
+
+  function createAlertLogTabRuntime(options = {}) {
+    let activeTab = normalizeAlertLogTab(options.activeTab || 'log');
+
+    return {
+      get() {
+        return activeTab;
+      },
+      getState() {
+        return buildAlertLogTabState(activeTab);
+      },
+      isActive(tab) {
+        return activeTab === normalizeAlertLogTab(tab);
+      },
+      set(tab) {
+        activeTab = normalizeAlertLogTab(tab);
+        return activeTab;
+      }
+    };
+  }
+
   function buildAlertLogAppendPlan(entries) {
     const list = Array.isArray(entries) ? entries.slice() : [];
     return {
@@ -451,6 +486,7 @@
 
   return {
     buildAlertLogAppendPlan,
+    buildAlertLogTabState,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
     buildMutedTargetLogCardSelector,
@@ -459,6 +495,7 @@
     buildRestoredMutedAlertLogHtml,
     buildPathAlertLogCardHtml,
     buildQuoteAlertLogHtml,
+    createAlertLogTabRuntime,
     hasMutedTargetLogCard,
     removeRestoredMutedAlertLogCards,
     resolveAlertLogClickAction

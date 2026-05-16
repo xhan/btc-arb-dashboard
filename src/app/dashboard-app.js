@@ -43,7 +43,7 @@
     });
     const mutedAlertStateHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let pathAlertReloading = false;
-    let alertLogActiveTab = 'log';
+    const alertLogTabRuntime = getAlertLogUiUtils().createAlertLogTabRuntime();
     const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
     const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
         durationMs: 8000,
@@ -1254,27 +1254,25 @@
     }
 
     function renderAlertLogTabState() {
-        const showLogTab = alertLogActiveTab === 'log';
-        const showMutedLogTab = alertLogActiveTab === 'muted-log';
-        const showMutedStateTab = alertLogActiveTab === 'muted';
+        const tabState = alertLogTabRuntime.getState();
         if (alertLogLogTab) {
-            alertLogLogTab.classList.toggle('active', showLogTab);
+            alertLogLogTab.classList.toggle('active', tabState.showLogTab);
         }
         if (alertLogMutedLogTab) {
-            alertLogMutedLogTab.classList.toggle('active', showMutedLogTab);
+            alertLogMutedLogTab.classList.toggle('active', tabState.showMutedLogTab);
         }
         if (alertLogMutedTab) {
-            alertLogMutedTab.classList.toggle('active', showMutedStateTab);
+            alertLogMutedTab.classList.toggle('active', tabState.showMutedStateTab);
         }
         if (alertLogContent) {
-            alertLogContent.hidden = !showLogTab;
+            alertLogContent.hidden = !tabState.showLogTab;
         }
         if (alertLogMutedLogContent) {
-            alertLogMutedLogContent.hidden = !showMutedLogTab;
+            alertLogMutedLogContent.hidden = !tabState.showMutedLogTab;
         }
         if (alertLogMutedContent) {
-            alertLogMutedContent.hidden = !showMutedStateTab;
-            if (showMutedStateTab) {
+            alertLogMutedContent.hidden = !tabState.showMutedStateTab;
+            if (tabState.showMutedStateTab) {
                 renderMutedAlertStatePanel(Date.now());
             }
         }
@@ -1288,7 +1286,7 @@
         persistMutedPathLegs();
         if (isAlertLogPanelVisible()) {
             updateMutedPathAlertLogCards('', nowMs);
-            if (alertLogActiveTab === 'muted') {
+            if (alertLogTabRuntime.isActive('muted')) {
                 renderMutedAlertStatePanel(nowMs);
             }
         }
@@ -3319,7 +3317,7 @@
     function handleAlertLogClick(event) {
         const action = getAlertLogUiUtils().resolveAlertLogClickAction(event, { closestEventTarget });
         if (action.type === 'set-tab') {
-            alertLogActiveTab = action.tab;
+            alertLogTabRuntime.set(action.tab);
             renderAlertLogTabState();
             return;
         }
