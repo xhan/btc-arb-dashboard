@@ -181,6 +181,7 @@
   - `app.js` 的路径腿 live quote label 格式化已委托给 `path-alert-page-utils.js`
   - `app.js` 的 path alert 配置加载降级/严格加载语义已下沉到 `path-alert-utils.js` 的 `createPathAlertConfigClient()`
   - `app.js` 中只定义未调用的 `resolveEventTargetElement()` 包装函数已移除，事件解析继续统一走各模块 action resolver
+  - `app.js` 的 quote alert 触发消息和当前值文案包装已移除，触发条目构造统一由 `path-alert-notification-utils.js` 根据 evaluation 生成
   - `app.js` 的 dashboard 金额输入、暂停、设置、删除、添加和交换按钮动作解析已下沉到 `dashboard-renderer.js`
   - `app.js` 的添加报价表单可见性、占位符、保存校验、draft quote 构造和 modal click 动作解析已下沉到 `dashboard-renderer.js`
   - `app.js` 的全局设置 interval 表单回填、读取和默认值 fallback 解析已下沉到 `dashboard-renderer.js`
