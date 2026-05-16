@@ -13,6 +13,7 @@ const {
   buildPathAlertQuoteLabel,
   buildPathAlertPageSummaryLines,
   buildPathAlertQuotePairText,
+  buildPathAlertPanelRenderOptions,
   buildPathAlertSectionConfigs,
   buildPathAlertMetaText,
   buildPathAlertsPageHref,
@@ -272,6 +273,83 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   getPathAlertStatusInfo({ target: { type: 'path' } }, { status: 'idle' }),
   { text: '', className: '' }
+);
+assert.deepStrictEqual(
+  buildPathAlertPanelRenderOptions({
+    alerts: [],
+    settings: { pathAlertEvalIntervalMs: 500 },
+    dismissedCount: 2,
+    forceImmediateAlerts: true
+  }),
+  {
+    settings: { pathAlertEvalIntervalMs: 500 },
+    dismissedCount: 2,
+    forceImmediateAlerts: true,
+    emptyText: '暂无路径报警'
+  }
+);
+assert.deepStrictEqual(
+  buildPathAlertPanelRenderOptions({
+    alerts: [{ id: 'unavailable', target: { type: 'path' } }],
+    getRuntime: () => ({ status: 'unavailable' }),
+    getStatusInfo: getPathAlertStatusInfo
+  }),
+  {
+    settings: {},
+    dismissedCount: 0,
+    forceImmediateAlerts: false,
+    emptyText: '暂无需要关注的路径报警'
+  }
+);
+assert.deepStrictEqual(
+  buildPathAlertPanelRenderOptions({
+    alerts: [
+      { id: 'disabled', name: '停用报警', target: { type: 'path' }, enabled: false },
+      { id: 'cooldown', name: '冷却报警', target: { type: 'quote' } }
+    ],
+    settings: { localSoundEnabled: true },
+    dismissedCount: 1,
+    forceImmediateAlerts: true,
+    getRuntime: (alert) => alert.id === 'cooldown'
+      ? { status: 'cooldown', lastTriggeredAt: 1710000000000, evaluation: { profitBp: 1.23 } }
+      : null,
+    getStatusInfo: getPathAlertStatusInfo,
+    buildTitle: (alert) => `标题:${alert.name}`,
+    renderSummaryLinesHtml: (alert) => `<div>${alert.id}</div>`,
+    buildMetaText: (alert) => `meta:${alert.id}`,
+    buildEditHref: (alert) => `/path-alerts?mode=edit&alertId=${alert.id}`,
+    formatEvaluationText: (evaluation) => `eval:${evaluation && evaluation.profitBp || '--'}`,
+    formatTime: () => '12:00:00'
+  }),
+  {
+    settings: { localSoundEnabled: true },
+    dismissedCount: 1,
+    forceImmediateAlerts: true,
+    items: [
+      {
+        alertId: 'disabled',
+        title: '标题:停用报警',
+        routeHtml: '<div>disabled</div>',
+        metaText: 'meta:disabled',
+        editHref: '/path-alerts?mode=edit&alertId=disabled',
+        statusText: '已禁用',
+        statusClassName: 'path-alert-status-disabled',
+        evaluationText: 'eval:--',
+        lastTriggeredText: '--'
+      },
+      {
+        alertId: 'cooldown',
+        title: '标题:冷却报警',
+        routeHtml: '<div>cooldown</div>',
+        metaText: 'meta:cooldown',
+        editHref: '/path-alerts?mode=edit&alertId=cooldown',
+        statusText: '冷却中',
+        statusClassName: 'path-alert-status-cooldown',
+        evaluationText: 'eval:1.23',
+        lastTriggeredText: '12:00:00'
+      }
+    ]
+  }
 );
 
 const alertCardHtml = renderPathAlertCardHtml({

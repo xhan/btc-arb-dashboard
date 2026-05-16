@@ -486,7 +486,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertPageUtilsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
     assert.ok(pathAlertPageUtilsResponse.body.includes("return { text: '', className: '' };"));
     assert.ok(pathAlertPageUtilsResponse.body.includes('const statusTagHtml = item.statusText'));
-    assert.ok(/\.filter\(\(\{ statusInfo \}\) => Boolean\(\s*statusInfo\s*&& statusInfo\.text\s*&& statusInfo\.className !== 'path-alert-status-unavailable'\s*\)\s*\)\s*/.test(appJsResponse.body));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertPanelRenderOptions({'));
+    assert.ok(/\.filter\(\(\{ statusInfo \}\) => Boolean\(\s*statusInfo\s*&& statusInfo\.text\s*&& statusInfo\.className !== 'path-alert-status-unavailable'\s*\)\s*\)\s*/.test(pathAlertPageUtilsResponse.body));
     assert.ok(!appJsResponse.body.includes("return { text: '监控中', className: 'path-alert-status-monitoring' };"));
     assert.ok(appJsResponse.body.includes('const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();'));
     assert.ok(appJsResponse.body.includes('htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()'));

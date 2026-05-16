@@ -495,6 +495,73 @@
     return { text: '', className: '' };
   }
 
+  function buildPathAlertPanelRenderOptions(options = {}) {
+    const alerts = Array.isArray(options.alerts) ? options.alerts : [];
+    const settings = options.settings && typeof options.settings === 'object' ? options.settings : {};
+    const dismissedCount = Number.isFinite(Number(options.dismissedCount)) ? Number(options.dismissedCount) : 0;
+    const forceImmediateAlerts = options.forceImmediateAlerts === true;
+    const getRuntime = typeof options.getRuntime === 'function' ? options.getRuntime : () => null;
+    const resolveStatusInfo = typeof options.getStatusInfo === 'function' ? options.getStatusInfo : getPathAlertStatusInfo;
+    const buildTitle = typeof options.buildTitle === 'function' ? options.buildTitle : () => '';
+    const renderSummaryLinesHtml = typeof options.renderSummaryLinesHtml === 'function' ? options.renderSummaryLinesHtml : () => '';
+    const buildMetaText = typeof options.buildMetaText === 'function' ? options.buildMetaText : () => '';
+    const buildEditHref = typeof options.buildEditHref === 'function' ? options.buildEditHref : () => '';
+    const formatEvaluationText = typeof options.formatEvaluationText === 'function' ? options.formatEvaluationText : () => '--';
+    const formatTime = typeof options.formatTime === 'function' ? options.formatTime : (value) => new Date(value).toLocaleTimeString();
+    const baseOptions = {
+      settings,
+      dismissedCount,
+      forceImmediateAlerts
+    };
+
+    if (!alerts.length) {
+      return {
+        ...baseOptions,
+        emptyText: options.emptyText || '暂无路径报警'
+      };
+    }
+
+    const alertItems = alerts
+      .map((alert) => {
+        const runtime = getRuntime(alert) || null;
+        const evaluation = runtime && runtime.evaluation ? runtime.evaluation : null;
+        const statusInfo = resolveStatusInfo(alert, runtime);
+        return {
+          alert,
+          runtime,
+          evaluation,
+          statusInfo
+        };
+      })
+      .filter(({ statusInfo }) => Boolean(
+        statusInfo
+        && statusInfo.text
+        && statusInfo.className !== 'path-alert-status-unavailable'
+      ));
+
+    if (!alertItems.length) {
+      return {
+        ...baseOptions,
+        emptyText: options.noActionableText || '暂无需要关注的路径报警'
+      };
+    }
+
+    return {
+      ...baseOptions,
+      items: alertItems.map(({ alert, runtime, evaluation, statusInfo }) => ({
+        alertId: alert && alert.id,
+        title: buildTitle(alert),
+        routeHtml: renderSummaryLinesHtml(alert),
+        metaText: buildMetaText(alert),
+        editHref: buildEditHref(alert),
+        statusText: statusInfo.text,
+        statusClassName: statusInfo.className,
+        evaluationText: formatEvaluationText(evaluation),
+        lastTriggeredText: runtime && runtime.lastTriggeredAt ? formatTime(runtime.lastTriggeredAt) : '--'
+      }))
+    };
+  }
+
   function getTargetLegCount(target) {
     return Array.isArray(target && target.legs) ? target.legs.length : 0;
   }
@@ -834,6 +901,7 @@
     buildPathAlertQuoteLabel,
     buildPathAlertQuoteDisplayLabel,
     buildPathAlertQuotePairText,
+    buildPathAlertPanelRenderOptions,
     buildPathAlertPageSummaryLines,
     buildPathAlertSectionConfigs,
     buildPathAlertMetaText,

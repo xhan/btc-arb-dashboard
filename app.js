@@ -3652,71 +3652,25 @@
         const alerts = Array.isArray(pathAlertConfig.alerts) ? pathAlertConfig.alerts : [];
         const settings = pathAlertConfig.settings || {};
         const dismissedCount = Array.isArray(pathAlertConfig.dismissedTargets) ? pathAlertConfig.dismissedTargets.length : 0;
-        if (!alerts.length) {
-            pathAlertPanelHtmlRenderer.render(pathAlertContent, renderPathAlertPanelHtml({
-                settings,
-                dismissedCount,
-                forceImmediateAlerts,
-                emptyText: '暂无路径报警'
-            }));
-            return;
-        }
 
-        const alertItems = alerts
-            .map((alert) => {
-                const runtime = pathAlertRuntimeState.get(alert.id) || null;
-                const evaluation = runtime && runtime.evaluation ? runtime.evaluation : null;
-                const statusInfo = getPathAlertStatusInfo(alert, runtime);
-                return {
-                    alert,
-                    runtime,
-                    evaluation,
-                    statusInfo
-                };
-            })
-            .filter(({ statusInfo }) => Boolean(
-                statusInfo
-                && statusInfo.text
-                && statusInfo.className !== 'path-alert-status-unavailable'
-            ));
-
-        if (!alertItems.length) {
-            pathAlertPanelHtmlRenderer.render(pathAlertContent, renderPathAlertPanelHtml({
-                settings,
-                dismissedCount,
-                forceImmediateAlerts,
-                emptyText: '暂无需要关注的路径报警'
-            }));
-            return;
-        }
-
-        const items = alertItems.map(({ alert, runtime, evaluation, statusInfo }) => {
-            const lastTriggeredText = runtime && runtime.lastTriggeredAt
-                ? new Date(runtime.lastTriggeredAt).toLocaleTimeString()
-                : '--';
-            const editHref = buildPathAlertsManagementHref({
-                mode: 'edit',
-                alertId: alert.id
-            });
-            return {
-                alertId: alert.id,
-                title: buildPathAlertDisplayTitle(alert),
-                routeHtml: renderPathAlertSummaryLinesHtml(alert),
-                metaText: buildPathAlertMetaText(alert),
-                editHref,
-                statusText: statusInfo.text,
-                statusClassName: statusInfo.className,
-                evaluationText: formatPathAlertEvaluationText(evaluation),
-                lastTriggeredText
-            };
-        });
-
-        pathAlertPanelHtmlRenderer.render(pathAlertContent, renderPathAlertPanelHtml({
+        const renderOptions = getPathAlertPageUtils().buildPathAlertPanelRenderOptions({
+            alerts,
             settings,
             dismissedCount,
             forceImmediateAlerts,
-            items
-        }));
+            getRuntime: (alert) => pathAlertRuntimeState.get(alert.id) || null,
+            getStatusInfo: getPathAlertStatusInfo,
+            buildTitle: buildPathAlertDisplayTitle,
+            renderSummaryLinesHtml: renderPathAlertSummaryLinesHtml,
+            buildMetaText: buildPathAlertMetaText,
+            buildEditHref: (alert) => buildPathAlertsManagementHref({
+                mode: 'edit',
+                alertId: alert.id
+            }),
+            formatEvaluationText: formatPathAlertEvaluationText,
+            formatTime: (value) => new Date(value).toLocaleTimeString()
+        });
+        pathAlertPanelHtmlRenderer.render(pathAlertContent, renderPathAlertPanelHtml(renderOptions));
     }
 
     function togglePathAlertPanel() {
