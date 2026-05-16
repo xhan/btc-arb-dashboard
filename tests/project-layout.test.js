@@ -5,6 +5,20 @@ const path = require('path');
 const projectRoot = path.join(__dirname, '..');
 const serverJs = fs.readFileSync(path.join(projectRoot, 'server.js'), 'utf8');
 const serverAppJs = fs.readFileSync(path.join(projectRoot, 'src', 'server', 'server-app.js'), 'utf8');
+const rootAllowedFiles = new Set([
+  '.gitignore',
+  'LICENSE',
+  'README.md',
+  'alert.json',
+  'config.json',
+  'package-lock.json',
+  'package.json',
+  'server.js'
+]);
+const unexpectedRootFiles = fs.readdirSync(projectRoot, { withFileTypes: true })
+  .filter((entry) => entry.isFile())
+  .map((entry) => entry.name)
+  .filter((name) => !rootAllowedFiles.has(name) && !name.startsWith('.env'));
 
 assert.ok(fs.existsSync(path.join(projectRoot, 'src', 'market-clients', 'index.js')));
 assert.ok(fs.existsSync(path.join(projectRoot, 'src', 'server', 'server-app.js')));
@@ -18,6 +32,7 @@ assert.ok(!fs.existsSync(path.join(projectRoot, 'config_more.json')));
 assert.ok(!fs.existsSync(path.join(projectRoot, 'request_channels.json')));
 assert.ok(!fs.existsSync(path.join(projectRoot, '使用说明.txt')));
 assert.ok(!fs.existsSync(path.join(projectRoot, '补充说明.md')));
+assert.deepStrictEqual(unexpectedRootFiles, []);
 assert.ok(serverJs.includes("require('./src/server/server-app')"));
 assert.ok(serverJs.split('\n').length <= 12);
 assert.ok(!serverJs.includes("require('./src/market-clients')"));
