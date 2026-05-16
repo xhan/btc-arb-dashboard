@@ -213,6 +213,9 @@
     const addQuoteSaveBtn = document.getElementById('add-quote-save');
     let currentCategoryIdToAdd = null;
     const confirmModal = document.getElementById('confirm-modal');
+    const confirmMessageEl = document.getElementById('confirm-message');
+    const confirmOkBtn = document.getElementById('confirm-ok');
+    const confirmCancelBtn = document.getElementById('confirm-cancel');
     const addCategoryModal = document.getElementById('add-category-modal');
     const addCategoryNameInput = document.getElementById('add-category-name');
     const globalTooltip = document.getElementById('global-tooltip');
@@ -4604,7 +4607,7 @@
     dashboardEl.addEventListener('input', handleDashboardInput);
 
     function showConfirmation(message, callback) {
-        document.getElementById('confirm-message').textContent = message;
+        if (confirmMessageEl) confirmMessageEl.textContent = message;
         onConfirmAction = callback;
         confirmModal.classList.add('visible');
     }
@@ -4979,9 +4982,22 @@
         }
     });
 
-    document.getElementById('confirm-ok').addEventListener('click', () => { if (typeof onConfirmAction === 'function') { onConfirmAction(); } closeConfirmModal(); });
-    document.getElementById('confirm-cancel').addEventListener('click', closeConfirmModal);
-    confirmModal.addEventListener('click', (e) => { if (e.target === confirmModal) closeConfirmModal(); });
+    function handleConfirmModalClick(event) {
+        const action = getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal });
+        if (action.type !== 'none' && typeof event.stopPropagation === 'function') {
+            event.stopPropagation();
+        }
+        if (action.type === 'confirm' && typeof onConfirmAction === 'function') {
+            onConfirmAction();
+        }
+        if (action.type === 'confirm' || action.type === 'close') {
+            closeConfirmModal();
+        }
+    }
+
+    if (confirmOkBtn) confirmOkBtn.addEventListener('click', handleConfirmModalClick);
+    if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', handleConfirmModalClick);
+    confirmModal.addEventListener('click', handleConfirmModalClick);
 
     if (quoteSourceSelect) {
         quoteSourceSelect.addEventListener('change', () => {

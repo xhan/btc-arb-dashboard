@@ -533,6 +533,15 @@
     return { type: 'none' };
   }
 
+  function resolveConfirmModalClickAction(event, options = {}) {
+    const target = event && event.target;
+    if (!target) return { type: 'none' };
+    if (target.id === 'confirm-ok') return { type: 'confirm' };
+    if (target.id === 'confirm-cancel') return { type: 'close' };
+    const modal = options.modal || null;
+    return modal && target === modal ? { type: 'close' } : { type: 'none' };
+  }
+
   return {
     buildAddCategoryDraft,
     buildAddQuoteDraft,
@@ -546,6 +555,7 @@
     readSettingsIntervalFormValues,
     resolveAddCategoryModalClickAction,
     resolveAddQuoteModalClickAction,
+    resolveConfirmModalClickAction,
     resolveDashboardAmountInputAction,
     resolveDashboardButtonClickAction,
     resolveQuoteSettingsModalClickAction,

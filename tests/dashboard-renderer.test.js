@@ -13,6 +13,7 @@ const {
   readSettingsIntervalFormValues,
   resolveAddCategoryModalClickAction,
   resolveAddQuoteModalClickAction,
+  resolveConfirmModalClickAction,
   resolveDashboardAmountInputAction,
   resolveDashboardButtonClickAction,
   resolveQuoteSettingsModalClickAction,
@@ -299,6 +300,24 @@ const quoteSettingsOverlay = { id: 'alert-modal', closest: () => null };
 assert.deepStrictEqual(
   resolveQuoteSettingsModalClickAction({ target: quoteSettingsOverlay }, { modal: quoteSettingsOverlay }),
   { type: 'close' }
+);
+
+assert.deepStrictEqual(
+  resolveConfirmModalClickAction({ target: { id: 'confirm-ok' } }),
+  { type: 'confirm' }
+);
+assert.deepStrictEqual(
+  resolveConfirmModalClickAction({ target: { id: 'confirm-cancel' } }),
+  { type: 'close' }
+);
+const confirmOverlay = { id: 'confirm-modal' };
+assert.deepStrictEqual(
+  resolveConfirmModalClickAction({ target: confirmOverlay }, { modal: confirmOverlay }),
+  { type: 'close' }
+);
+assert.deepStrictEqual(
+  resolveConfirmModalClickAction({ target: { id: 'other' } }, { modal: confirmOverlay }),
+  { type: 'none' }
 );
 
 assert.deepStrictEqual(

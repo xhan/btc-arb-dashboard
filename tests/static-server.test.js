@@ -346,6 +346,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function buildAddCategoryDraft(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveAddCategoryModalClickAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveQuoteSettingsModalClickAction(event, options = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function resolveConfirmModalClickAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsUpdatePlan(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function readQuoteSettingsFormValues(options = {})'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget })'));
@@ -363,6 +364,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddCategoryDraft({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveAddCategoryModalClickAction(e, { modal: addCategoryModal })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: alertModal })'));
+    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal })'));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('input', handleDashboardInput)"));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('click', handleDashboardClick)"));
     assert.ok(!appJsResponse.body.includes("const target = e.target.closest('button')"));
@@ -379,6 +381,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const newCategory = { name: categoryName, id: Date.now(), quotes: [] };'));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-cancel'"));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-save'"));
+    assert.ok(!appJsResponse.body.includes('if (e.target === confirmModal) closeConfirmModal();'));
     assert.ok(!appJsResponse.body.includes("const kyberOnlyDirectPools = !isCrossChainQuote(quote) && kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;"));
     assert.ok(!appJsResponse.body.includes("const showInverse = isCrossChainQuote(quote) ? false : document.getElementById('show-inverse-quote').checked;"));
     assert.ok(!appJsResponse.body.includes("sourceValue: quoteSourceSelect ? quoteSourceSelect.value : quote.preferredSource"));
