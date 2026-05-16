@@ -75,6 +75,53 @@
     };
   }
 
+  function buildDefaultArbDetailState() {
+    return {
+      visible: false,
+      opportunityId: null,
+      selectedOpportunity: null,
+      cards: [],
+      pausedDashboard: false,
+      refreshToken: 0,
+      isRefreshing: false,
+      editingInputIndex: null,
+      chartPreviewSignature: ''
+    };
+  }
+
+  function buildOpenArbDetailState(previousState, options = {}) {
+    return {
+      ...buildDefaultArbDetailState(),
+      ...(previousState && typeof previousState === 'object' ? previousState : {}),
+      visible: true,
+      opportunityId: options.opportunityId,
+      selectedOpportunity: cloneArbDetailOpportunity(options.opportunity),
+      cards: buildArbDetailCards(options.baseAmount),
+      refreshToken: Number(previousState && previousState.refreshToken) + 1 || 1,
+      isRefreshing: false,
+      editingInputIndex: null,
+      chartPreviewSignature: ''
+    };
+  }
+
+  function buildClosedArbDetailState(previousState) {
+    const baseState = {
+      ...buildDefaultArbDetailState(),
+      ...(previousState && typeof previousState === 'object' ? previousState : {})
+    };
+    return {
+      ...baseState,
+      visible: false,
+      opportunityId: null,
+      selectedOpportunity: null,
+      cards: [],
+      refreshToken: Number(baseState.refreshToken) + 1 || 1,
+      isRefreshing: false,
+      editingInputIndex: null,
+      chartPreviewSignature: ''
+    };
+  }
+
   function buildArbDetailRateText(rawPrice, fromSymbol, toSymbol, precision = 6) {
     if (rawPrice === null || rawPrice === undefined || rawPrice === '') return '--';
     const numericRate = Number(rawPrice);
@@ -623,6 +670,9 @@
   return {
     buildDetailInputAmounts,
     buildArbDetailCards,
+    buildDefaultArbDetailState,
+    buildOpenArbDetailState,
+    buildClosedArbDetailState,
     cloneArbDetailOpportunity,
     buildArbDetailRateText,
     buildArbDetailRateDeltaText,

@@ -3,6 +3,9 @@ const assert = require('assert');
 const {
   buildDetailInputAmounts,
   buildArbDetailCards,
+  buildDefaultArbDetailState,
+  buildOpenArbDetailState,
+  buildClosedArbDetailState,
   cloneArbDetailOpportunity,
   summarizeDetailResult,
   getQuoteRunState,
@@ -91,6 +94,75 @@ assert.deepStrictEqual(clonedDetailOpportunity, detailOpportunitySource);
 assert.notStrictEqual(clonedDetailOpportunity, detailOpportunitySource);
 assert.notStrictEqual(clonedDetailOpportunity.cycle, detailOpportunitySource.cycle);
 assert.notStrictEqual(clonedDetailOpportunity.cycle.legs[0], detailOpportunitySource.cycle.legs[0]);
+
+assert.deepStrictEqual(
+  buildDefaultArbDetailState(),
+  {
+    visible: false,
+    opportunityId: null,
+    selectedOpportunity: null,
+    cards: [],
+    pausedDashboard: false,
+    refreshToken: 0,
+    isRefreshing: false,
+    editingInputIndex: null,
+    chartPreviewSignature: ''
+  }
+);
+
+assert.deepStrictEqual(
+  buildOpenArbDetailState(
+    {
+      ...buildDefaultArbDetailState(),
+      refreshToken: 3,
+      pausedDashboard: true,
+      editingInputIndex: 1,
+      chartPreviewSignature: 'old'
+    },
+    {
+      opportunityId: 'op-1',
+      opportunity: detailOpportunitySource,
+      baseAmount: 2
+    }
+  ),
+  {
+    visible: true,
+    opportunityId: 'op-1',
+    selectedOpportunity: detailOpportunitySource,
+    cards: buildArbDetailCards(2),
+    pausedDashboard: true,
+    refreshToken: 4,
+    isRefreshing: false,
+    editingInputIndex: null,
+    chartPreviewSignature: ''
+  }
+);
+
+assert.deepStrictEqual(
+  buildClosedArbDetailState({
+    ...buildDefaultArbDetailState(),
+    visible: true,
+    opportunityId: 'op-1',
+    selectedOpportunity: detailOpportunitySource,
+    cards: buildArbDetailCards(2),
+    pausedDashboard: true,
+    refreshToken: 7,
+    isRefreshing: true,
+    editingInputIndex: 0,
+    chartPreviewSignature: 'charts'
+  }),
+  {
+    visible: false,
+    opportunityId: null,
+    selectedOpportunity: null,
+    cards: [],
+    pausedDashboard: true,
+    refreshToken: 8,
+    isRefreshing: false,
+    editingInputIndex: null,
+    chartPreviewSignature: ''
+  }
+);
 
 assert.strictEqual(
   buildArbDetailRateText(0.9981234, 'cbBTC', 'WBTC'),

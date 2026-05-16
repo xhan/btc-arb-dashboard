@@ -89,17 +89,7 @@
     let arbPathTopologyCacheKey = '';
     let arbPathTopologyCache = null;
     let arbLastPointerOpenedOpportunityId = null;
-    let arbDetailState = {
-        visible: false,
-        opportunityId: null,
-        selectedOpportunity: null,
-        cards: [],
-        pausedDashboard: false,
-        refreshToken: 0,
-        isRefreshing: false,
-        editingInputIndex: null,
-        chartPreviewSignature: ''
-    };
+    let arbDetailState = getArbDetailUtils().buildDefaultArbDetailState();
     let arbDetailFetchController = null;
     let quoteSourceLastRequestAtByIntervalKey = new Map();
     let arbDetailChartPreviewCharts = [];
@@ -2857,14 +2847,7 @@
             arbDetailFetchController.abort();
             arbDetailFetchController = null;
         }
-        arbDetailState.visible = false;
-        arbDetailState.opportunityId = null;
-        arbDetailState.selectedOpportunity = null;
-        arbDetailState.cards = [];
-        arbDetailState.refreshToken += 1;
-        arbDetailState.isRefreshing = false;
-        arbDetailState.editingInputIndex = null;
-        arbDetailState.chartPreviewSignature = '';
+        arbDetailState = getArbDetailUtils().buildClosedArbDetailState(arbDetailState);
         arbDetailChartPreviewRunId += 1;
         destroyArbDetailChartPreview();
         if (arbDetailChartAutoRefreshTimer) {
@@ -2893,14 +2876,11 @@
         }
 
         const baseAmount = getArbOpportunityBaseAmount(current.cycle);
-        arbDetailState.visible = true;
-        arbDetailState.opportunityId = opportunityId;
-        arbDetailState.selectedOpportunity = getArbDetailUtils().cloneArbDetailOpportunity(current);
-        arbDetailState.cards = getArbDetailUtils().buildArbDetailCards(baseAmount);
-        arbDetailState.refreshToken += 1;
-        arbDetailState.isRefreshing = false;
-        arbDetailState.editingInputIndex = null;
-        arbDetailState.chartPreviewSignature = '';
+        arbDetailState = getArbDetailUtils().buildOpenArbDetailState(arbDetailState, {
+            opportunityId,
+            opportunity: current,
+            baseAmount
+        });
         if (arbDetailChartAutoRefreshToggle) {
             arbDetailChartAutoRefreshToggle.checked = true;
         }
