@@ -1898,23 +1898,22 @@
     function updatePauseButtonState(quote) {
         const pauseBtn = document.querySelector(`[data-toggle-pause-id="${quote.id}"]`);
         if (!pauseBtn) return;
-        const paused = isQuotePaused(quote);
-        pauseBtn.title = paused ? '恢复' : '暂停';
-        pauseBtn.setAttribute('aria-label', paused ? '恢复' : '暂停');
-        pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
-        pauseBtn.innerHTML = paused ? '▶️' : '⏸️';
+        const state = getQuotePauseUtils().buildQuotePauseButtonState(quote);
+        pauseBtn.title = state.title;
+        pauseBtn.setAttribute('aria-label', state.ariaLabel);
+        pauseBtn.setAttribute('aria-pressed', state.ariaPressed);
+        pauseBtn.innerHTML = state.icon;
     }
 
     function updateCategoryPauseButtonState(categoryId) {
         const pauseBtn = document.querySelector(`[data-toggle-category-pause-id="${categoryId}"]`);
         if (!pauseBtn) return;
         const category = dashboardState.find((item) => item.id == categoryId);
-        const action = getCategoryPauseAction(category && category.quotes ? category.quotes : []);
-        const allPaused = action === 'resume';
-        pauseBtn.title = allPaused ? '恢复分区' : '暂停分区';
-        pauseBtn.setAttribute('aria-label', allPaused ? '恢复分区' : '暂停分区');
-        pauseBtn.setAttribute('aria-pressed', allPaused ? 'true' : 'false');
-        pauseBtn.innerHTML = allPaused ? '▶️' : '⏸️';
+        const state = getQuotePauseUtils().buildCategoryPauseButtonState(category && category.quotes ? category.quotes : []);
+        pauseBtn.title = state.title;
+        pauseBtn.setAttribute('aria-label', state.ariaLabel);
+        pauseBtn.setAttribute('aria-pressed', state.ariaPressed);
+        pauseBtn.innerHTML = state.icon;
     }
 
     function clearQuoteTrendArrow(quoteId) {

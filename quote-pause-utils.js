@@ -42,10 +42,34 @@
     };
   }
 
+  function buildQuotePauseButtonState(quote) {
+    const paused = isQuotePaused(quote);
+    return {
+      title: paused ? '恢复' : '暂停',
+      ariaLabel: paused ? '恢复' : '暂停',
+      ariaPressed: paused ? 'true' : 'false',
+      icon: paused ? '▶️' : '⏸️'
+    };
+  }
+
+  function buildCategoryPauseButtonState(quotes) {
+    const action = getCategoryPauseAction(quotes);
+    const allPaused = action === 'resume';
+    return {
+      action,
+      title: allPaused ? '恢复分区' : '暂停分区',
+      ariaLabel: allPaused ? '恢复分区' : '暂停分区',
+      ariaPressed: allPaused ? 'true' : 'false',
+      icon: allPaused ? '▶️' : '⏸️'
+    };
+  }
+
   return {
     isQuotePaused,
     getActiveQuotes,
     getCategoryPauseAction,
-    buildPausedQuoteState
+    buildPausedQuoteState,
+    buildQuotePauseButtonState,
+    buildCategoryPauseButtonState
   };
 });

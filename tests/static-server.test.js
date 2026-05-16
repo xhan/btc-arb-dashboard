@@ -259,6 +259,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
     const quoteRequestUtilsResponse = await request('/quote-request-utils.js');
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
+    const quotePauseUtilsResponse = await request('/quote-pause-utils.js');
+    assert.strictEqual(quotePauseUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
     const chainDefaultsResponse = await request('/chain-defaults.js');
@@ -346,6 +348,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getQuotePauseUtils()'));
     assert.ok(appJsResponse.body.includes('QuotePauseUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildPausedQuoteState(previousState)'));
+    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildQuotePauseButtonState(quote)'));
+    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildCategoryPauseButtonState('));
+    assert.ok(quotePauseUtilsResponse.body.includes('function buildQuotePauseButtonState(quote)'));
+    assert.ok(quotePauseUtilsResponse.body.includes('function buildCategoryPauseButtonState(quotes)'));
+    assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(!appJsResponse.body.includes("channels: [{ id: 'default', name: '默认通道'"));
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
@@ -641,8 +648,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('clientCapturedAt: new Date().toISOString(),\n                quotes: []'));
     assert.ok(appJsResponse.body.includes('data-toggle-pause-id'));
     assert.ok(appJsResponse.body.includes('data-toggle-category-pause-id'));
-    assert.ok(appJsResponse.body.includes('暂停分区'));
-    assert.ok(appJsResponse.body.includes('恢复分区'));
+    assert.ok(quotePauseUtilsResponse.body.includes('暂停分区'));
+    assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(appJsResponse.body.includes('已暂停'));
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
     assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));

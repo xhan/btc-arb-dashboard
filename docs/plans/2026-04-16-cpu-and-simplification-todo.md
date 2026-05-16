@@ -69,6 +69,7 @@
   - `setQuoteMarketState()` 会净化行情状态，避免 UI 字段重新混入市场状态 Map
   - `quoteUiState` 的默认值、key 规范化、merge、timer 清理已下沉到 `dashboard-runtime-utils.js`
   - `quote-pause-utils.buildPausedQuoteState()` 已停止输出 UI-only 字段
+  - quote 暂停按钮和分区暂停按钮的展示状态模型已下沉到 `quote-pause-utils.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效

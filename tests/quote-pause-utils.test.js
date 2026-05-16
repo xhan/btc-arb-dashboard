@@ -115,6 +115,54 @@ assert.deepStrictEqual(
   }
 );
 
+assert.deepStrictEqual(
+  quotePauseUtils.buildQuotePauseButtonState({ paused: true }),
+  {
+    title: '恢复',
+    ariaLabel: '恢复',
+    ariaPressed: 'true',
+    icon: '▶️'
+  }
+);
+
+assert.deepStrictEqual(
+  quotePauseUtils.buildQuotePauseButtonState({ paused: false }),
+  {
+    title: '暂停',
+    ariaLabel: '暂停',
+    ariaPressed: 'false',
+    icon: '⏸️'
+  }
+);
+
+assert.deepStrictEqual(
+  quotePauseUtils.buildCategoryPauseButtonState([
+    { id: 1, paused: true },
+    { id: 2, paused: true }
+  ]),
+  {
+    action: 'resume',
+    title: '恢复分区',
+    ariaLabel: '恢复分区',
+    ariaPressed: 'true',
+    icon: '▶️'
+  }
+);
+
+assert.deepStrictEqual(
+  quotePauseUtils.buildCategoryPauseButtonState([
+    { id: 1, paused: true },
+    { id: 2, paused: false }
+  ]),
+  {
+    action: 'pause',
+    title: '暂停分区',
+    ariaLabel: '暂停分区',
+    ariaPressed: 'false',
+    icon: '⏸️'
+  }
+);
+
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'quote-pause-utils.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
