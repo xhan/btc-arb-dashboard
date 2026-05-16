@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const {
   buildRetainedArbOpportunityStore,
+  createArbOpportunityHighlightRuntime,
   getNextArbOpportunityHighlightExpiry,
   isArbOpportunityHighlighted,
   markArbOpportunityHighlights,
@@ -73,3 +74,40 @@ assert.strictEqual(
   markArbOpportunityHighlights(highlights, ['active'], { nowMs: 1500, durationMs: 1000 }).changed,
   false
 );
+
+let nowMs = 1000;
+let latestTimer = null;
+let clearedTimerCount = 0;
+let expiredCallbackCount = 0;
+const highlightRuntime = createArbOpportunityHighlightRuntime({
+  durationMs: 8000,
+  now: () => nowMs,
+  setTimer(callback, delayMs) {
+    latestTimer = { callback, delayMs };
+    return latestTimer;
+  },
+  clearTimer(timer) {
+    if (timer) {
+      clearedTimerCount += 1;
+    }
+  },
+  onExpired() {
+    expiredCallbackCount += 1;
+  }
+});
+
+assert.strictEqual(highlightRuntime.isHighlighted('target-a'), false, 'runtime should start without highlights');
+assert.strictEqual(highlightRuntime.mark(['target-a']), true, 'runtime should mark new highlight ids');
+assert.strictEqual(highlightRuntime.isHighlighted('target-a', 1001), true);
+assert.strictEqual(latestTimer.delayMs, 8010, 'runtime should schedule cleanup after the next expiry');
+assert.strictEqual(highlightRuntime.mark(['target-a'], 1500), true, 'runtime should extend existing highlight expiry');
+assert.strictEqual(clearedTimerCount, 1, 'runtime should clear the previous cleanup timer when rescheduling');
+assert.strictEqual(latestTimer.delayMs, 8010);
+nowMs = 9511;
+latestTimer.callback();
+assert.strictEqual(highlightRuntime.isHighlighted('target-a', nowMs), false, 'expired highlight should be pruned');
+assert.strictEqual(expiredCallbackCount, 1, 'runtime should notify when cleanup removes visible highlights');
+assert.strictEqual(highlightRuntime.getHighlightedUntilById().size, 0);
+highlightRuntime.mark(['target-b'], 10000);
+highlightRuntime.clear();
+assert.strictEqual(highlightRuntime.getHighlightedUntilById().size, 0, 'clear should remove all highlight state');

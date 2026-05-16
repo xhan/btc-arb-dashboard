@@ -87,8 +87,90 @@
     };
   }
 
+  function createArbOpportunityHighlightRuntime(options = {}) {
+    const highlightedUntilById = new Map();
+    const durationMs = Number.isFinite(Number(options.durationMs)) && Number(options.durationMs) > 0
+      ? Number(options.durationMs)
+      : 0;
+    const nowProvider = typeof options.now === 'function' ? options.now : Date.now;
+    const setTimer = typeof options.setTimer === 'function'
+      ? options.setTimer
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimer = typeof options.clearTimer === 'function'
+      ? options.clearTimer
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const onExpired = typeof options.onExpired === 'function' ? options.onExpired : null;
+    let cleanupTimer = null;
+
+    function getNowMs() {
+      const nowMs = Number(nowProvider());
+      return Number.isFinite(nowMs) ? nowMs : Date.now();
+    }
+
+    function clearCleanupTimer() {
+      if (cleanupTimer !== null && clearTimer) {
+        clearTimer(cleanupTimer);
+      }
+      cleanupTimer = null;
+    }
+
+    function prune(nowMs = getNowMs()) {
+      return pruneExpiredArbOpportunityHighlights(highlightedUntilById, nowMs);
+    }
+
+    function scheduleCleanup(nowMs = getNowMs()) {
+      clearCleanupTimer();
+      prune(nowMs);
+      if (!highlightedUntilById.size || !setTimer) return;
+
+      const nextExpiresAt = getNextArbOpportunityHighlightExpiry(highlightedUntilById);
+      if (!Number.isFinite(Number(nextExpiresAt))) return;
+
+      const delayMs = Math.max(0, nextExpiresAt - nowMs);
+      cleanupTimer = setTimer(() => {
+        cleanupTimer = null;
+        const previousSize = highlightedUntilById.size;
+        prune(getNowMs());
+        if (highlightedUntilById.size !== previousSize && onExpired) {
+          onExpired();
+        }
+        scheduleCleanup(getNowMs());
+      }, delayMs + 10);
+    }
+
+    function isHighlighted(opportunityId, nowMs = getNowMs()) {
+      return isArbOpportunityHighlighted(highlightedUntilById, opportunityId, nowMs);
+    }
+
+    function mark(opportunityIds, nowMs = getNowMs()) {
+      const { changed } = markArbOpportunityHighlights(highlightedUntilById, opportunityIds, {
+        nowMs,
+        durationMs
+      });
+      if (changed) {
+        scheduleCleanup(nowMs);
+      }
+      return changed;
+    }
+
+    function clear() {
+      clearCleanupTimer();
+      highlightedUntilById.clear();
+    }
+
+    return {
+      clear,
+      getHighlightedUntilById: () => highlightedUntilById,
+      isHighlighted,
+      mark,
+      prune,
+      scheduleCleanup
+    };
+  }
+
   return {
     buildRetainedArbOpportunityStore,
+    createArbOpportunityHighlightRuntime,
     getNextArbOpportunityHighlightExpiry,
     isArbOpportunityHighlighted,
     markArbOpportunityHighlights,

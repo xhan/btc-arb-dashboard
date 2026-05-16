@@ -34,10 +34,13 @@
     let pathAlertExternalReloadTimer = null;
     let forceImmediateAlerts = false;
     let alertLogActiveTab = 'log';
-    const ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS = 8000;
-    let arbHighlightedOpportunityUntilById = new Map();
     let arbOpportunityIdsByTargetKey = new Map();
-    let arbOpportunityHighlightCleanupTimer = null;
+    const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
+        durationMs: 8000,
+        setTimer: setTimeout,
+        clearTimer: clearTimeout,
+        onExpired: () => updateArbPanel()
+    });
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
@@ -850,35 +853,8 @@
         return getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, quoteId);
     }
 
-    function pruneArbOpportunityHighlightsInPlace(nowMs = Date.now()) {
-        return getArbRuntimeMemoryUtils().pruneExpiredArbOpportunityHighlights(arbHighlightedOpportunityUntilById, nowMs);
-    }
-
-    function scheduleArbOpportunityHighlightCleanup(nowMs = Date.now()) {
-        if (arbOpportunityHighlightCleanupTimer) {
-            clearTimeout(arbOpportunityHighlightCleanupTimer);
-            arbOpportunityHighlightCleanupTimer = null;
-        }
-        pruneArbOpportunityHighlightsInPlace(nowMs);
-        if (!arbHighlightedOpportunityUntilById.size) return;
-
-        const nextExpiresAt = getArbRuntimeMemoryUtils().getNextArbOpportunityHighlightExpiry(arbHighlightedOpportunityUntilById);
-        if (!Number.isFinite(Number(nextExpiresAt))) return;
-
-        const delayMs = Math.max(0, nextExpiresAt - nowMs);
-        arbOpportunityHighlightCleanupTimer = setTimeout(() => {
-            arbOpportunityHighlightCleanupTimer = null;
-            const previousSize = arbHighlightedOpportunityUntilById.size;
-            pruneArbOpportunityHighlightsInPlace(Date.now());
-            if (arbHighlightedOpportunityUntilById.size !== previousSize) {
-                updateArbPanel();
-            }
-            scheduleArbOpportunityHighlightCleanup(Date.now());
-        }, delayMs + 10);
-    }
-
     function isArbOpportunityHighlighted(opportunityId, nowMs = Date.now()) {
-        return getArbRuntimeMemoryUtils().isArbOpportunityHighlighted(arbHighlightedOpportunityUntilById, opportunityId, nowMs);
+        return arbOpportunityHighlightRuntime.isHighlighted(opportunityId, nowMs);
     }
 
     function buildArbOpportunityHighlightTargetKeyFromCycle(cycle) {
@@ -905,18 +881,7 @@
         const opportunityIds = arbOpportunityIdsByTargetKey.get(targetKey);
         if (!Array.isArray(opportunityIds) || !opportunityIds.length) return false;
 
-        const { changed } = getArbRuntimeMemoryUtils().markArbOpportunityHighlights(
-            arbHighlightedOpportunityUntilById,
-            opportunityIds,
-            {
-                nowMs,
-                durationMs: ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS
-            }
-        );
-        if (changed) {
-            scheduleArbOpportunityHighlightCleanup(nowMs);
-        }
-        return changed;
+        return arbOpportunityHighlightRuntime.mark(opportunityIds, nowMs);
     }
 
     function appendQuoteAlertLogEntry(entry, nowMs = Date.now()) {

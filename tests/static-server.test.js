@@ -711,10 +711,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] muted trigger skipped'"));
-    assert.ok(appJsResponse.body.includes('const ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS = 8000;'));
-    assert.ok(appJsResponse.body.includes('let arbHighlightedOpportunityUntilById = new Map();'));
+    assert.ok(appJsResponse.body.includes('const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({'));
+    assert.ok(appJsResponse.body.includes('durationMs: 8000'));
+    assert.ok(appJsResponse.body.includes('onExpired: () => updateArbPanel()'));
     assert.ok(appJsResponse.body.includes('markTriggeredArbOpportunities'));
-    assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().markArbOpportunityHighlights('));
+    assert.ok(appJsResponse.body.includes('return arbOpportunityHighlightRuntime.mark(opportunityIds, nowMs);'));
+    assert.ok(!appJsResponse.body.includes('let arbHighlightedOpportunityUntilById = new Map();'));
+    assert.ok(!appJsResponse.body.includes('let arbOpportunityHighlightCleanupTimer = null;'));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function createArbOpportunityHighlightRuntime(options = {})'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function pruneExpiredArbOpportunityHighlights(highlightedUntilById, nowMs = Date.now())'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function markArbOpportunityHighlights(highlightedUntilById, opportunityIds, options = {})'));
     assert.ok(appJsResponse.body.includes('let arbGlobalTwoLegOnly = false;'));
