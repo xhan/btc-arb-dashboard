@@ -863,10 +863,14 @@
     }
 
     function bindFloatingPanelFocus(panel, header) {
-        if (!panel || !header) return;
-        header.addEventListener('mousedown', () => bringFloatingPanelToFront(panel));
-        header.addEventListener('click', () => bringFloatingPanelToFront(panel));
-        panel.addEventListener('mousedown', () => bringFloatingPanelToFront(panel));
+        getDomRenderUtils().bindFloatingPanelFocus(panel, header, { bringToFront: bringFloatingPanelToFront });
+    }
+
+    function bindDraggableFloatingPanel(element, handle) {
+        getDomRenderUtils().bindDraggableElement(element, handle, {
+            documentImpl: document,
+            onDragStart: bringFloatingPanelToFront
+        });
     }
 
     function getAlertLogEntryContainers() {
@@ -2226,7 +2230,7 @@
         }
         if (refs.header) {
             refs.header.addEventListener('click', handleDataTerminalHeaderClick);
-            makeDraggable(panel, refs.header);
+            bindDraggableFloatingPanel(panel, refs.header);
             bindFloatingPanelFocus(panel, refs.header);
         }
 
@@ -5139,14 +5143,6 @@
         }
     });
 
-    function makeDraggable(element, handle) {
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        handle.onmousedown = dragMouseDown;
-        function dragMouseDown(e) { e.preventDefault(); bringFloatingPanelToFront(element); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = closeDragElement; document.onmousemove = elementDrag; }
-        function elementDrag(e) { e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; element.style.top = (element.offsetTop - pos2) + "px"; element.style.left = (element.offsetLeft - pos1) + "px"; }
-        function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
-    }
-    
     async function requestBackendConfigRefresh() {
         try {
             const response = await fetch(`${BACKEND_URL}/api/request-update-config`, {
@@ -5222,11 +5218,11 @@
             restartPathAlertScheduler();
             
             if (alertLogWindow && alertLogHeader) {
-                makeDraggable(alertLogWindow, alertLogHeader);
+                bindDraggableFloatingPanel(alertLogWindow, alertLogHeader);
                 bindFloatingPanelFocus(alertLogWindow, alertLogHeader);
             }
             if (pathAlertWindow && pathAlertHeader) {
-                makeDraggable(pathAlertWindow, pathAlertHeader);
+                bindDraggableFloatingPanel(pathAlertWindow, pathAlertHeader);
                 bindFloatingPanelFocus(pathAlertWindow, pathAlertHeader);
             }
             if (arbPathWindow && arbPathHeader) {

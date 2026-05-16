@@ -317,6 +317,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(pathAlertNotificationUtilsResponse.statusCode, 200);
     const alertDebugUtilsResponse = await request('/alert-debug-utils.js');
     assert.strictEqual(alertDebugUtilsResponse.statusCode, 200);
+    const domRenderUtilsResponse = await request('/dom-render-utils.js');
+    assert.strictEqual(domRenderUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-dex-link-copy]')"));
@@ -400,6 +402,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedSymbolsInput', event)"));
     assert.ok(appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
     assert.ok(appJsResponse.body.includes("closestEventTarget(event, 'button, input, textarea, select, [contenteditable=\"true\"]')"));
+    assert.ok(appJsResponse.body.includes('function bindDraggableFloatingPanel(element, handle)'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindDraggableElement(element, handle, {'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelFocus(panel, header, { bringToFront: bringFloatingPanelToFront })'));
+    assert.ok(domRenderUtilsResponse.body.includes('function bindDraggableElement(element, handle, options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function bindFloatingPanelFocus(panel, header, options = {})'));
+    assert.ok(!appJsResponse.body.includes('function makeDraggable(element, handle)'));
     assert.ok(!appJsResponse.body.includes('makeDraggable(arbPathWindow, arbPathHeader)'));
     assert.ok(!appJsResponse.body.includes('if (!arbGlobalFilterBar) return;'));
     assert.ok(!appJsResponse.body.includes('function getEventTargetTextValue(event)'));

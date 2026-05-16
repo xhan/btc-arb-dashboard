@@ -46,6 +46,57 @@
       : null;
   }
 
+  function bindFloatingPanelFocus(panel, header, options = {}) {
+    const bringToFront = typeof options.bringToFront === 'function'
+      ? options.bringToFront
+      : () => {};
+    if (header && typeof header.addEventListener === 'function') {
+      header.addEventListener('mousedown', () => bringToFront(panel));
+      header.addEventListener('click', () => bringToFront(panel));
+    }
+    if (panel && typeof panel.addEventListener === 'function') {
+      panel.addEventListener('mousedown', () => bringToFront(panel));
+    }
+  }
+
+  function bindDraggableElement(element, handle, options = {}) {
+    if (!element || !handle) return false;
+    const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
+    if (!documentImpl) return false;
+    const onDragStart = typeof options.onDragStart === 'function'
+      ? options.onDragStart
+      : () => {};
+    let previousX = 0;
+    let previousY = 0;
+
+    function stopDrag() {
+      documentImpl.onmouseup = null;
+      documentImpl.onmousemove = null;
+    }
+
+    function dragElement(event) {
+      if (event && typeof event.preventDefault === 'function') event.preventDefault();
+      const currentX = Number(event && event.clientX);
+      const currentY = Number(event && event.clientY);
+      const deltaX = previousX - (Number.isFinite(currentX) ? currentX : previousX);
+      const deltaY = previousY - (Number.isFinite(currentY) ? currentY : previousY);
+      previousX -= deltaX;
+      previousY -= deltaY;
+      element.style.top = `${element.offsetTop - deltaY}px`;
+      element.style.left = `${element.offsetLeft - deltaX}px`;
+    }
+
+    handle.onmousedown = (event) => {
+      if (event && typeof event.preventDefault === 'function') event.preventDefault();
+      onDragStart(element);
+      previousX = Number(event && event.clientX) || 0;
+      previousY = Number(event && event.clientY) || 0;
+      documentImpl.onmouseup = stopDrag;
+      documentImpl.onmousemove = dragElement;
+    };
+    return true;
+  }
+
   function createStableHtmlRenderer(options = {}) {
     const setHtml = typeof options.setHtml === 'function'
       ? options.setHtml
@@ -79,6 +130,8 @@
   }
 
   return {
+    bindDraggableElement,
+    bindFloatingPanelFocus,
     closestEventTarget,
     createElementFromHtml,
     createStableHtmlRenderer,
