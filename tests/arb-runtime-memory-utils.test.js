@@ -158,9 +158,12 @@ const panelUpdateRuntime = createArbPanelUpdateRuntime({
 
 assert.strictEqual(panelUpdateRuntime.schedule(), false);
 assert.strictEqual(panelDirtyCount, 1, 'hidden panel should be marked dirty instead of scheduling');
+assert.strictEqual(panelUpdateRuntime.isDirty(), true, 'hidden panel update should set dirty state inside runtime');
 assert.strictEqual(panelTimers.length, 0);
 
 panelVisible = true;
+assert.strictEqual(panelUpdateRuntime.clearDirty(), true);
+assert.strictEqual(panelUpdateRuntime.isDirty(), false);
 assert.strictEqual(panelUpdateRuntime.schedule(), true);
 assert.strictEqual(panelUpdateRuntime.hasTimer(), true);
 assert.deepStrictEqual(panelTimers.map((entry) => entry.delayMs), [1000]);
@@ -173,3 +176,7 @@ panelUpdateRuntime.schedule();
 assert.strictEqual(panelUpdateRuntime.clear(), true);
 assert.deepStrictEqual(panelClearedTimers, ['panel-2']);
 assert.strictEqual(panelUpdateRuntime.hasTimer(), false);
+assert.strictEqual(panelUpdateRuntime.markDirty(), true);
+assert.strictEqual(panelUpdateRuntime.isDirty(), true);
+assert.strictEqual(panelUpdateRuntime.clearDirty(), true);
+assert.strictEqual(panelUpdateRuntime.clearDirty(), false);

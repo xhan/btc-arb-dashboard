@@ -67,16 +67,12 @@
     let arbGlobalExcludedChainsInput = '';
     let arbGlobalIncludedSymbolsInput = '';
     let arbGlobalTwoLegOnly = false;
-    let arbPanelDirty = false;
     const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     const arbPanelUpdateRuntime = getArbRuntimeMemoryUtils().createArbPanelUpdateRuntime({
         setTimer: setTimeout,
         clearTimer: clearTimeout,
         delayMs: ARB_PANEL_UPDATE_DELAY_MS,
         isVisible: isArbPanelVisible,
-        markDirty: () => {
-            arbPanelDirty = true;
-        },
         update: updateArbPanel
     });
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
@@ -3561,10 +3557,10 @@
     function updateArbPanel(options = {}) {
         if (!arbPathContent) return;
         if (!options.force && !isArbPanelVisible()) {
-            arbPanelDirty = true;
+            arbPanelUpdateRuntime.markDirty();
             return;
         }
-        arbPanelDirty = false;
+        arbPanelUpdateRuntime.clearDirty();
 
         const panelData = buildArbPanelData();
         if (panelData.error) {
@@ -3918,7 +3914,7 @@
         arbPathWindow.style.display = isHidden ? 'flex' : 'none';
         if (isHidden) {
             bringFloatingPanelToFront(arbPathWindow);
-            if (arbPanelDirty) {
+            if (arbPanelUpdateRuntime.isDirty()) {
                 updateArbPanel({ force: true });
             }
         }

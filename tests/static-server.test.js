@@ -756,8 +756,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('updates.kyberOnlyDirectPools = true;'));
     assert.ok(appJsResponse.body.includes('const arbPanelUpdateRuntime = getArbRuntimeMemoryUtils().createArbPanelUpdateRuntime({'));
     assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.schedule();'));
+    assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.markDirty();'));
+    assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.clearDirty();'));
+    assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.isDirty()'));
     assert.ok(!appJsResponse.body.includes('let arbUpdateTimer = null;'));
+    assert.ok(!appJsResponse.body.includes('let arbPanelDirty = false;'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function createArbPanelUpdateRuntime(options = {})'));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function markDirty()'));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function clearDirty()'));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('isDirty: () => dirty'));
     const scheduleArbUpdateMatch = appJsResponse.body.match(/function scheduleArbUpdate\(\) \{([\s\S]*?)function invalidateArbRuleSnapshotCache/);
     assert.ok(scheduleArbUpdateMatch);
     assert.ok(scheduleArbUpdateMatch[1].includes('arbPanelUpdateRuntime.schedule();'));

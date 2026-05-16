@@ -181,13 +181,29 @@
     const isVisible = typeof options.isVisible === 'function'
       ? options.isVisible
       : () => false;
-    const markDirty = typeof options.markDirty === 'function'
+    const onDirty = typeof options.markDirty === 'function'
       ? options.markDirty
       : () => {};
     const update = typeof options.update === 'function'
       ? options.update
       : () => {};
     let timer = null;
+    let dirty = false;
+
+    function markDirty() {
+      const wasDirty = dirty;
+      dirty = true;
+      if (!wasDirty) {
+        onDirty();
+      }
+      return !wasDirty;
+    }
+
+    function clearDirty() {
+      const wasDirty = dirty;
+      dirty = false;
+      return wasDirty;
+    }
 
     function clear() {
       if (timer === null) return false;
@@ -217,7 +233,10 @@
 
     return {
       clear,
+      clearDirty,
       hasTimer: () => timer !== null,
+      isDirty: () => dirty,
+      markDirty,
       schedule
     };
   }
