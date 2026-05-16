@@ -459,6 +459,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertTriggeredEntry(options = {})'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertPageSummaryLines(alert, {'));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertLegDisplayLine(leg, {'));
     assert.ok(appJsResponse.body.includes('buildQuoteAlertRuleLine: (target) => getPathAlertNotificationUtils().buildQuoteAlertSummaryRuleLine(target)'));
     assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
     assert.ok(!pathAlertNotificationUtilsResponse.body.includes('buildLegacyQuoteAlertRemotePayload'));
@@ -673,6 +674,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertItemHtml(item = {})'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertSummaryLinesHtml(lines)'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function buildPathAlertMetaText(alert, options = {})'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function buildPathAlertLegDisplayLine(leg, options = {})'));
     assert.ok(appJsResponse.body.includes('function getPathAlertPageUtils()'));
     assert.ok(appJsResponse.body.includes('PathAlertPageUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertQuoteLabel({'));

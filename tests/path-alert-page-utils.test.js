@@ -12,6 +12,7 @@ const {
   buildPathAlertQuoteDisplayLabel,
   buildPathAlertQuoteLabel,
   buildPathAlertPageSummaryLines,
+  buildPathAlertLegDisplayLine,
   buildPathAlertQuotePairText,
   buildPathAlertPanelRenderOptions,
   buildPathAlertSectionConfigs,
@@ -116,6 +117,20 @@ assert.deepStrictEqual(
     formatLeg: (leg) => `${leg.chain}:${leg.fromSymbol}->${leg.toSymbol}`
   }),
   ['ethereum:WETH->USDC']
+);
+assert.strictEqual(
+  buildPathAlertLegDisplayLine(
+    { chain: 'Bybit', fromSymbol: 'WBTC', toSymbol: 'BTC', pricingMode: 'cex-bid1' },
+    { buildQuoteLabel: (chain, fromSymbol, toSymbol, suffix) => `(${chain}) ${fromSymbol}->${toSymbol}${suffix}` }
+  ),
+  '(Bybit) WBTC->BTC [bid1]'
+);
+assert.strictEqual(
+  buildPathAlertLegDisplayLine(
+    { chain: 'Bybit', fromSymbol: 'BTC', toSymbol: 'WBTC', pricingMode: 'cex-ask1-inverse' },
+    { buildQuoteLabel: (chain, fromSymbol, toSymbol, suffix) => `(${chain}) ${fromSymbol}->${toSymbol}${suffix}` }
+  ),
+  '(Bybit) BTC->WBTC [ask1]'
 );
 assert.deepStrictEqual(
   buildDismissedPathAlertPageSummaryLines({

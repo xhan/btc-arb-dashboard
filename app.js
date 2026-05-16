@@ -3235,13 +3235,9 @@
     }
 
     function buildPathAlertLegDisplayLine(leg) {
-        if (!leg) return '--';
-        const suffix = leg.pricingMode === 'cex-bid1'
-            ? ' [bid1]'
-            : leg.pricingMode === 'cex-ask1-inverse'
-                ? ' [ask1]'
-                : '';
-        return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol, suffix);
+        return getPathAlertPageUtils().buildPathAlertLegDisplayLine(leg, {
+            buildQuoteLabel: buildLiveQuoteLabel
+        });
     }
 
     function buildMutedPathTargetFromCycleLegs(legs) {

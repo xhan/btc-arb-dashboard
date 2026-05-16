@@ -212,6 +212,22 @@
     return (alert.target.legs || []).map(formatLeg);
   }
 
+  function buildPathAlertLegDisplayLine(leg, options = {}) {
+    if (!leg) return '--';
+    const suffixByMode = {
+      'cex-bid1': ' [bid1]',
+      'cex-ask1-inverse': ' [ask1]'
+    };
+    const suffix = suffixByMode[leg.pricingMode] || '';
+    return buildPathAlertQuotePairLabel(
+      leg.chain,
+      leg.fromSymbol,
+      leg.toSymbol,
+      suffix,
+      options
+    );
+  }
+
   function buildDismissedPathAlertPageSummaryLines(entry, options = {}) {
     const lines = Array.isArray(entry && entry.summaryLinesSnapshot)
       ? entry.summaryLinesSnapshot.filter(Boolean)
@@ -905,6 +921,7 @@
     buildPathAlertQuotePairText,
     buildPathAlertPanelRenderOptions,
     buildPathAlertPageSummaryLines,
+    buildPathAlertLegDisplayLine,
     buildPathAlertSectionConfigs,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
