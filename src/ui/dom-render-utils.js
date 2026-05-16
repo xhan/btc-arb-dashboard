@@ -197,6 +197,22 @@
     return true;
   }
 
+  function applyQuoteMainResultDomState(refs = {}, options = {}) {
+    if (!refs.quoteTextEl || !refs.quoteTextWrapperEl) return false;
+    refs.quoteTextEl.textContent = options.text || '';
+    removeClasses(refs.quoteTextWrapperEl, ['loading-text']);
+    return true;
+  }
+
+  function applyQuoteMainErrorDomState(refs = {}, options = {}) {
+    if (!refs.quoteTextEl || !refs.quoteTextWrapperEl || !refs.quoteDataEl) return false;
+    refs.quoteTextEl.textContent = `❌ ${options.message || ''}`;
+    removeClasses(refs.quoteTextWrapperEl, ['loading-text']);
+    addClass(refs.quoteDataEl, 'error');
+    refs.quoteDataEl.title = options.title || '';
+    return true;
+  }
+
   function bindDraggableElement(element, handle, options = {}) {
     if (!element || !handle) return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -270,12 +286,15 @@
   return {
     applyActiveQuoteDomState,
     applyPausedQuoteDomState,
+    applyQuoteMainErrorDomState,
+    applyQuoteMainResultDomState,
     applyQuoteSwitchingDomState,
     applyTooltipState,
     applyTrendArrowState,
     applyQuoteAlertHighlightUi,
     bindDraggableElement,
     bindFloatingPanelFocus,
+    clearQuoteDataError,
     clearQuoteHighlightUi,
     closestEventTarget,
     createElementFromHtml,

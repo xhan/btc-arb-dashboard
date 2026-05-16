@@ -6,9 +6,12 @@ const {
   applyQuoteAlertHighlightUi,
   applyActiveQuoteDomState,
   applyPausedQuoteDomState,
+  applyQuoteMainErrorDomState,
+  applyQuoteMainResultDomState,
   applyQuoteSwitchingDomState,
   bindDraggableElement,
   bindFloatingPanelFocus,
+  clearQuoteDataError,
   closestEventTarget,
   createElementFromHtml,
   createStableHtmlRenderer,
@@ -212,6 +215,18 @@ assert.strictEqual(activeQuoteRefs.quoteTextWrapperEl.classList.contains('loadin
 assert.strictEqual(activeQuoteRefs.quoteTextEl.textContent, '刷新中...');
 assert.strictEqual(applyActiveQuoteDomState({}, {}), false);
 
+const quoteDataErrorEl = {
+  classList: createClassList(['error']),
+  removedAttributes: [],
+  removeAttribute(name) {
+    this.removedAttributes.push(name);
+  }
+};
+assert.strictEqual(clearQuoteDataError(quoteDataErrorEl), true);
+assert.strictEqual(quoteDataErrorEl.classList.contains('error'), false);
+assert.deepStrictEqual(quoteDataErrorEl.removedAttributes, ['title']);
+assert.strictEqual(clearQuoteDataError(null), false);
+
 const switchingQuoteRefs = {
   quoteTextEl: { textContent: '' },
   quoteTextWrapperEl: { classList: createClassList([]) },
@@ -222,6 +237,33 @@ assert.strictEqual(switchingQuoteRefs.quoteTextEl.textContent, '切换中...');
 assert.strictEqual(switchingQuoteRefs.quoteTextWrapperEl.classList.contains('loading-text'), true);
 assert.strictEqual(switchingQuoteRefs.inverseEl.textContent, '刷新中...');
 assert.strictEqual(applyQuoteSwitchingDomState({}), false);
+
+const mainResultRefs = {
+  quoteTextEl: { textContent: 'old quote' },
+  quoteTextWrapperEl: { classList: createClassList(['loading-text']) }
+};
+assert.strictEqual(applyQuoteMainResultDomState(mainResultRefs, { text: '1 ETH ≈ 3000 USDC' }), true);
+assert.strictEqual(mainResultRefs.quoteTextEl.textContent, '1 ETH ≈ 3000 USDC');
+assert.strictEqual(mainResultRefs.quoteTextWrapperEl.classList.contains('loading-text'), false);
+assert.strictEqual(applyQuoteMainResultDomState({}, { text: 'x' }), false);
+
+const mainErrorRefs = {
+  quoteTextEl: { textContent: 'old quote' },
+  quoteTextWrapperEl: { classList: createClassList(['loading-text']) },
+  quoteDataEl: {
+    classList: createClassList([]),
+    title: ''
+  }
+};
+assert.strictEqual(applyQuoteMainErrorDomState(mainErrorRefs, {
+  message: '网络失败',
+  title: 'RPC timeout'
+}), true);
+assert.strictEqual(mainErrorRefs.quoteTextEl.textContent, '❌ 网络失败');
+assert.strictEqual(mainErrorRefs.quoteTextWrapperEl.classList.contains('loading-text'), false);
+assert.strictEqual(mainErrorRefs.quoteDataEl.classList.contains('error'), true);
+assert.strictEqual(mainErrorRefs.quoteDataEl.title, 'RPC timeout');
+assert.strictEqual(applyQuoteMainErrorDomState({}, { message: 'x' }), false);
 
 const htmlElement = { tagName: 'ARTICLE' };
 const documentImpl = {

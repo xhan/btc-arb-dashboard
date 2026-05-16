@@ -383,6 +383,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function applyPausedQuoteDomState(refs = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyActiveQuoteDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteSwitchingDomState(refs = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function clearQuoteDataError(quoteDataEl)'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainResultDomState(refs = {}, options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainErrorDomState(refs = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().hideTooltip(globalTooltip)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTrendArrowState(arrowEl, trendState)'));
@@ -394,6 +397,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyPausedQuoteDomState(getQuoteDomRefs(quote.id))'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyActiveQuoteDomState(getQuoteDomRefs(quote.id), options)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteSwitchingDomState({'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteDataError(quoteDataEl)'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteMainResultDomState({'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteMainErrorDomState({'));
     assert.ok(!appJsResponse.body.includes('globalTooltip.innerHTML = htmlContent'));
     assert.ok(!appJsResponse.body.includes("globalTooltip.classList.add('visible')"));
     assert.ok(!appJsResponse.body.includes('globalTooltip.style.top'));
@@ -408,6 +414,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("quoteTextEl.textContent = '已暂停'"));
     assert.ok(!appJsResponse.body.includes("quoteTextEl.textContent = '切换中...'"));
     assert.ok(!appJsResponse.body.includes("inverseEl.textContent = '刷新中...'"));
+    assert.ok(!appJsResponse.body.includes('quoteTextEl.textContent = getQuoteDisplayText(quote, newState)'));
+    assert.ok(!appJsResponse.body.includes("quoteDataEl.classList.remove('error')"));
+    assert.ok(!appJsResponse.body.includes("quoteDataEl.classList.add('error')"));
+    assert.ok(!appJsResponse.body.includes('quoteDataEl.title = errorTitle'));
     assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
     assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
     assert.ok(dashboardRendererResponse.body.includes('class="icon-btn add-quote-btn"'));

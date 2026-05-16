@@ -3715,7 +3715,7 @@
         const signal = controller ? controller.signal : null;
 
         if (!isInverseFetch) {
-            quoteDataEl.classList.remove('error');
+            getDomRenderUtils().clearQuoteDataError(quoteDataEl);
         }
 
         try {
@@ -3760,9 +3760,14 @@
                     { successSource }
                 );
 
-                quoteTextEl.textContent = getQuoteDisplayText(quote, newState);
+                const quoteDisplayText = getQuoteDisplayText(quote, newState);
+                getDomRenderUtils().applyQuoteMainResultDomState({
+                    quoteTextEl,
+                    quoteTextWrapperEl
+                }, {
+                    text: quoteDisplayText
+                });
                 updateQuotePairLabel(quote, newState);
-                quoteTextWrapperEl.classList.remove('loading-text');
 
                 if (shouldQueueInverseFetch(quote)) {
                     if (!inverseEl) {
@@ -3809,11 +3814,14 @@
                 }
             } else {
                 const displayMsg = quoteRequestUtils.formatQuoteErrorMessage(error);
-
-                quoteTextEl.textContent = `❌ ${displayMsg}`;
-                quoteTextWrapperEl.classList.remove('loading-text');
-                quoteDataEl.classList.add('error');
-                quoteDataEl.title = errorTitle;
+                getDomRenderUtils().applyQuoteMainErrorDomState({
+                    quoteDataEl,
+                    quoteTextEl,
+                    quoteTextWrapperEl
+                }, {
+                    message: displayMsg,
+                    title: errorTitle
+                });
             }
         } finally {
             activeFetchControllerRuntime.deleteIfCurrent(quote.id, controller);
