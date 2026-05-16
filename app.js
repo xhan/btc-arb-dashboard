@@ -3439,10 +3439,6 @@
         alertDebugController.record(kind, id, snapshot);
     }
 
-    function inferRuntimeDebugReason(previous, next) {
-        return getAlertDebugUtils().inferRuntimeDebugReason(previous, next);
-    }
-
     function buildRuntimeDebugSnapshot(previous, next, evaluation) {
         return getAlertDebugUtils().buildRuntimeDebugSnapshot(previous, next, evaluation);
     }
