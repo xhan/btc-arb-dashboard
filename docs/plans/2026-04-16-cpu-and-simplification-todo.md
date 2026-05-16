@@ -168,6 +168,7 @@
   - `app.js` 的 quote hover tooltip CEX/source/preference 展示模型已下沉到 `quote-display-utils.js`
   - `app.js` 的 quote request channel tag 插入/更新/删除计划已下沉到 `quote-display-utils.js`
   - `app.js` 的 quote trend arrow 涨跌/隐藏展示模型已下沉到 `quote-display-utils.js`
+  - `app.js` 的 dashboard quote 查找和 quote alert 列表读取单用途包装已移除，调用点直接委托 runtime/path alert utils
   - `app.js` 的 CEX book format/summary 顶层过渡包装已移除，注入点直接委托 `quote-display-utils.js`
   - `app.js` 的 dex link label/button 顶层过渡包装已移除，调用点直接委托 `dex-link-utils.js`
   - `app.js` 的 request channel tag、quote pair label 和 arb detail source HTML 单用途包装已移除，调用点直接委托对应 utils
