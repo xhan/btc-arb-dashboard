@@ -425,6 +425,32 @@
     });
   }
 
+  function createGlobalArbFilterStateRuntime(initialState = {}) {
+    let currentState = buildGlobalArbFilterState(initialState);
+
+    function get() {
+      return buildGlobalArbFilterState(currentState);
+    }
+
+    function applyResult(result) {
+      currentState = buildGlobalArbFilterState(result.state);
+      return {
+        changed: result.changed === true,
+        state: get()
+      };
+    }
+
+    return {
+      get,
+      update(patch = {}) {
+        return applyResult(updateGlobalArbFilterState(currentState, patch));
+      },
+      clear() {
+        return applyResult(clearGlobalArbFilterState(currentState));
+      }
+    };
+  }
+
   function cycleContainsAnySymbols(cycle, symbols) {
     if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(symbols) || !symbols.length) return false;
     const symbolSet = new Set(symbols);
@@ -652,6 +678,7 @@
     applyGlobalArbFilterWritePlan,
     updateGlobalArbFilterState,
     clearGlobalArbFilterState,
+    createGlobalArbFilterStateRuntime,
     registerArbOpportunityHighlightTarget,
     selectFirstUnmutedDisplayedCycle
   };

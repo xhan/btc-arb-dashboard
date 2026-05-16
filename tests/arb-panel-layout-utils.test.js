@@ -12,6 +12,7 @@ const {
   buildGlobalArbFilterWritePlan,
   updateGlobalArbFilterState,
   clearGlobalArbFilterState,
+  createGlobalArbFilterStateRuntime,
   buildArbPathLegLine,
   buildArbPathLegLines,
   buildArbPanelColumns,
@@ -572,6 +573,42 @@ assert.strictEqual(
   }).changed,
   false
 );
+
+{
+  const runtime = createGlobalArbFilterStateRuntime({
+    excludedSymbolsInput: 'cbBTC',
+    excludedChainsInput: 'base',
+    includedSymbolsInput: '',
+    twoLegOnly: false
+  });
+  assert.deepStrictEqual(runtime.get(), {
+    excludedSymbolsInput: 'cbBTC',
+    excludedChainsInput: 'base',
+    includedSymbolsInput: '',
+    twoLegOnly: false
+  });
+
+  const updateResult = runtime.update({ includedSymbolsInput: 'WBTC', twoLegOnly: true });
+  assert.strictEqual(updateResult.changed, true);
+  assert.deepStrictEqual(runtime.get(), {
+    excludedSymbolsInput: 'cbBTC',
+    excludedChainsInput: 'base',
+    includedSymbolsInput: 'WBTC',
+    twoLegOnly: true
+  });
+
+  updateResult.state.excludedSymbolsInput = 'mutated';
+  assert.strictEqual(runtime.get().excludedSymbolsInput, 'cbBTC');
+  assert.strictEqual(runtime.update({ includedSymbolsInput: 'WBTC', twoLegOnly: true }).changed, false);
+  assert.strictEqual(runtime.clear().changed, true);
+  assert.deepStrictEqual(runtime.get(), {
+    excludedSymbolsInput: '',
+    excludedChainsInput: '',
+    includedSymbolsInput: '',
+    twoLegOnly: false
+  });
+  assert.strictEqual(runtime.clear().changed, false);
+}
 
 const globalFilterCycles = [
   {

@@ -59,10 +59,7 @@
     const MUTED_STATE_VISIBLE_REFRESH_MS = 1000;
     const MUTED_STATE_HIDDEN_MAX_REFRESH_MS = 60 * 1000;
     let arbExpandedSections = new Set();
-    let arbGlobalExcludedSymbolsInput = '';
-    let arbGlobalExcludedChainsInput = '';
-    let arbGlobalIncludedSymbolsInput = '';
-    let arbGlobalTwoLegOnly = false;
+    const arbGlobalFilterStateRuntime = getArbPanelLayoutUtils().createGlobalArbFilterStateRuntime();
     const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     const arbPanelUpdateRuntime = getArbRuntimeMemoryUtils().createArbPanelUpdateRuntime({
         setTimer: setTimeout,
@@ -2295,34 +2292,19 @@
     }
 
     function getArbGlobalFilterState() {
-        return getArbPanelLayoutUtils().buildGlobalArbFilterState({
-            excludedSymbolsInput: arbGlobalExcludedSymbolsInput,
-            excludedChainsInput: arbGlobalExcludedChainsInput,
-            includedSymbolsInput: arbGlobalIncludedSymbolsInput,
-            twoLegOnly: arbGlobalTwoLegOnly
-        });
-    }
-
-    function applyArbGlobalFilterState(state) {
-        const nextState = getArbPanelLayoutUtils().buildGlobalArbFilterState(state);
-        arbGlobalExcludedSymbolsInput = nextState.excludedSymbolsInput;
-        arbGlobalExcludedChainsInput = nextState.excludedChainsInput;
-        arbGlobalIncludedSymbolsInput = nextState.includedSymbolsInput;
-        arbGlobalTwoLegOnly = nextState.twoLegOnly;
+        return arbGlobalFilterStateRuntime.get();
     }
 
     function updateArbGlobalFilterState(patch) {
-        const result = getArbPanelLayoutUtils().updateGlobalArbFilterState(getArbGlobalFilterState(), patch);
+        const result = arbGlobalFilterStateRuntime.update(patch);
         if (!result.changed) return false;
-        applyArbGlobalFilterState(result.state);
         updateArbPanel();
         return true;
     }
 
     function handleArbGlobalFilterClear() {
-        const result = getArbPanelLayoutUtils().clearGlobalArbFilterState(getArbGlobalFilterState());
+        const result = arbGlobalFilterStateRuntime.clear();
         if (!result.changed) return;
-        applyArbGlobalFilterState(result.state);
         updateArbPanel();
         if (arbGlobalFilterInput) {
             arbGlobalFilterInput.focus();

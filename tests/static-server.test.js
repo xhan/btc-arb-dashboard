@@ -1243,7 +1243,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function createArbOpportunityHighlightRuntime(options = {})'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function pruneExpiredArbOpportunityHighlights(highlightedUntilById, nowMs = Date.now())'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function markArbOpportunityHighlights(highlightedUntilById, opportunityIds, options = {})'));
-    assert.ok(appJsResponse.body.includes('let arbGlobalTwoLegOnly = false;'));
+    assert.ok(appJsResponse.body.includes('const arbGlobalFilterStateRuntime = getArbPanelLayoutUtils().createGlobalArbFilterStateRuntime();'));
+    assert.ok(!appJsResponse.body.includes('let arbGlobalTwoLegOnly = false;'));
     assert.ok(alertLogUiResponse.body.includes('data-quote-alert-dex-link'));
     assert.ok(alertLogUiResponse.body.includes('data-quote-alert-dex-link-copy="1"'));
     assert.ok(alertLogUiResponse.body.includes('data-quote-alert-log-mute'));
@@ -1595,9 +1596,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let lbtcSection = null'));
     assert.ok(!appJsResponse.body.includes('const wbtcSection = categorySections.find'));
     assert.ok(appJsResponse.body.includes('function updateArbGlobalFilterState(patch)'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function createGlobalArbFilterStateRuntime(initialState = {})'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildGlobalArbFilterWritePlan(getArbGlobalFilterState())'));
-    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().updateGlobalArbFilterState(getArbGlobalFilterState(), patch)'));
-    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().clearGlobalArbFilterState(getArbGlobalFilterState())'));
+    assert.ok(appJsResponse.body.includes('const result = arbGlobalFilterStateRuntime.update(patch);'));
+    assert.ok(appJsResponse.body.includes('const result = arbGlobalFilterStateRuntime.clear();'));
+    assert.ok(!appJsResponse.body.includes('getArbPanelLayoutUtils().updateGlobalArbFilterState(getArbGlobalFilterState(), patch)'));
+    assert.ok(!appJsResponse.body.includes('getArbPanelLayoutUtils().clearGlobalArbFilterState(getArbGlobalFilterState())'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbPathLegLine(leg, buildArbPathLegLineOptions())'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbPathLegLines(visibleLegs, buildArbPathLegLineOptions())'));
     assert.ok(!appJsResponse.body.includes('arbGlobalFilterClearBtn.disabled = !arbGlobalExcludedSymbolsInput.trim()'));

@@ -245,6 +245,7 @@
   - `src/app/dashboard-app.js` 的套利全局过滤栏 Enter blur 和 header blur 交互已下沉到 `src/arb/arb-panel-layout-utils.js`
   - `src/app/dashboard-app.js` 的套利全局过滤栏输入到过滤条件的解析已下沉到 `src/arb/arb-panel-layout-utils.js`
   - `src/app/dashboard-app.js` 的套利全局过滤栏 DOM write plan 应用已下沉到 `src/arb/arb-panel-layout-utils.js`
+  - `src/app/dashboard-app.js` 的套利全局过滤栏状态所有权已下沉到 `src/arb/arb-panel-layout-utils.js` 的 `createGlobalArbFilterStateRuntime()`
   - `src/app/dashboard-app.js` 的 fixed 规则展示阈值和可选 charts renderer 单用途包装已移除，调用点直接委托已有 utils / window 模块
   - `src/app/dashboard-app.js` 的套利面板 section key/footer、链过滤 token 和详情 leg lines 单用途包装已移除，调用点直接委托已有 layout/chain utils
   - `src/app/dashboard-app.js` 的路径腿 live quote label 格式化已委托给 `src/path-alerts/path-alert-page-utils.js`
