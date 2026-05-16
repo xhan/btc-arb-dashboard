@@ -2302,11 +2302,10 @@
         }
 
         getArbDetailUtils().applyArbDetailProfitPreviewReady(cardEl, previewState.seriesCount);
-        const canvasEl = cardEl.querySelector('.arb-detail-profit-canvas');
-        const metaEl = cardEl ? cardEl.querySelector('.arb-detail-profit-meta') : null;
-        if (!canvasEl) return;
+        const profitRefs = getArbDetailUtils().getArbDetailProfitPreviewElements(cardEl);
+        if (!profitRefs.canvasEl) return;
 
-        const chartInstance = renderer.mountProfitHistoryChart(canvasEl, {
+        const chartInstance = renderer.mountProfitHistoryChart(profitRefs.canvasEl, {
             mini: true,
             height: 104,
             showRightPriceScale: true
@@ -2314,7 +2313,7 @@
         chartInstance.update(previewState.points);
         arbDetailChartPreviewCharts.push(chartInstance);
 
-        getArbDetailUtils().applyArbDetailProfitPreviewMeta(metaEl, previewState.metaText);
+        getArbDetailUtils().applyArbDetailProfitPreviewMeta(profitRefs.metaEl, previewState.metaText);
     }
 
     async function syncArbDetailChartPreview(current, options = {}) {
@@ -2358,11 +2357,8 @@
 
         const loadedSeries = new Array(pairs.length).fill(null);
         await Promise.all(pairs.map(async (pair, index) => {
-            const cardEl = arbDetailChartPreview.querySelector(`[data-arb-detail-chart-index="${index}"]`);
-            if (!cardEl) return;
-
-            const metaEl = cardEl.querySelector('.arb-detail-chart-card-meta');
-            const canvasEl = cardEl.querySelector('.arb-detail-chart-canvas');
+            const chartRefs = getArbDetailUtils().getArbDetailChartCardElements(arbDetailChartPreview, index);
+            if (!chartRefs.cardEl) return;
 
             try {
                 const params = new URLSearchParams({
@@ -2381,7 +2377,7 @@
                     return;
                 }
 
-                const chartInstance = renderer.mountPriceHistoryChart(canvasEl, {
+                const chartInstance = renderer.mountPriceHistoryChart(chartRefs.canvasEl, {
                     mini: true,
                     height: 104,
                     showRightPriceScale: true,
@@ -2391,10 +2387,10 @@
                 loadedSeries[index] = Array.isArray(series.points) ? series.points : [];
                 arbDetailChartPreviewCharts.push(chartInstance);
 
-                getArbDetailUtils().applyArbDetailChartLoadedMeta(metaEl, series.source);
+                getArbDetailUtils().applyArbDetailChartLoadedMeta(chartRefs.metaEl, series.source);
             } catch (error) {
                 if (arbDetailChartPreviewRunId !== runId) return;
-                getArbDetailUtils().applyArbDetailChartCardError(canvasEl, metaEl, error.message || '图表加载失败');
+                getArbDetailUtils().applyArbDetailChartCardError(chartRefs.canvasEl, chartRefs.metaEl, error.message || '图表加载失败');
             }
         }));
 

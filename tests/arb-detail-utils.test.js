@@ -55,12 +55,14 @@ const {
   buildArbDetailProfitPreviewMessageHtml,
   buildArbDetailProfitPreviewReadyHtml,
   getArbDetailProfitCardElement,
+  getArbDetailProfitPreviewElements,
   applyArbDetailProfitPreviewMessage,
   applyArbDetailProfitPreviewReady,
   applyArbDetailProfitPreviewMeta,
   buildArbDetailProfitPreviewState,
   buildArbDetailChartPreviewStripHtml,
   applyArbDetailChartPreviewStrip,
+  getArbDetailChartCardElements,
   buildArbDetailChartLoadedMetaText,
   applyArbDetailChartLoadedMeta,
   applyArbDetailChartCardError
@@ -596,6 +598,23 @@ assert.strictEqual(getArbDetailProfitCardElement({
   }
 }), queryProfitCard);
 assert.strictEqual(getArbDetailProfitCardElement(null), null);
+const profitCanvasEl = {};
+const profitMetaEl = {};
+assert.deepStrictEqual(getArbDetailProfitPreviewElements({
+  querySelector(selector) {
+    return {
+      '.arb-detail-profit-canvas': profitCanvasEl,
+      '.arb-detail-profit-meta': profitMetaEl
+    }[selector] || null;
+  }
+}), {
+  canvasEl: profitCanvasEl,
+  metaEl: profitMetaEl
+});
+assert.deepStrictEqual(getArbDetailProfitPreviewElements(null), {
+  canvasEl: null,
+  metaEl: null
+});
 
 assert.deepStrictEqual(
   buildArbDetailProfitPreviewState([[], [{ time: 1, value: 1 }]], {
@@ -663,6 +682,32 @@ assert.strictEqual(applyArbDetailChartPreviewStrip(chartPreviewEl, [{ quoteId: 1
 }), true);
 assert.strictEqual(chartPreviewEl.innerHTML, stripHtml);
 assert.strictEqual(applyArbDetailChartPreviewStrip(null, []), false);
+
+const chartCanvasEl = {};
+const chartMetaEl = {};
+const chartCardEl = {
+  querySelector(selector) {
+    return {
+      '.arb-detail-chart-canvas': chartCanvasEl,
+      '.arb-detail-chart-card-meta': chartMetaEl
+    }[selector] || null;
+  }
+};
+assert.deepStrictEqual(getArbDetailChartCardElements({
+  querySelector(selector) {
+    assert.strictEqual(selector, '[data-arb-detail-chart-index="2"]');
+    return chartCardEl;
+  }
+}, 2), {
+  cardEl: chartCardEl,
+  canvasEl: chartCanvasEl,
+  metaEl: chartMetaEl
+});
+assert.deepStrictEqual(getArbDetailChartCardElements(null, 0), {
+  cardEl: null,
+  canvasEl: null,
+  metaEl: null
+});
 
 assert.strictEqual(buildArbDetailChartLoadedMetaText('快照源'), '快照源 · 最近 1 小时');
 assert.strictEqual(buildArbDetailChartLoadedMetaText(''), '历史快照 · 最近 1 小时');

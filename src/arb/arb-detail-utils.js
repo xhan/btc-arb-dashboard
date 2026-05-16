@@ -891,6 +891,19 @@
     return chartPreviewEl.querySelector('[data-arb-detail-profit-card]');
   }
 
+  function getArbDetailProfitPreviewElements(cardEl) {
+    if (!cardEl || typeof cardEl.querySelector !== 'function') {
+      return {
+        canvasEl: null,
+        metaEl: null
+      };
+    }
+    return {
+      canvasEl: cardEl.querySelector('.arb-detail-profit-canvas'),
+      metaEl: cardEl.querySelector('.arb-detail-profit-meta')
+    };
+  }
+
   function applyArbDetailProfitPreviewMessage(cardEl, message) {
     return setElementHtml(cardEl, buildArbDetailProfitPreviewMessageHtml(message));
   }
@@ -969,6 +982,29 @@
 
   function applyArbDetailChartPreviewStrip(containerEl, pairs = [], options = {}) {
     return setElementHtml(containerEl, buildArbDetailChartPreviewStripHtml(pairs, options));
+  }
+
+  function getArbDetailChartCardElements(chartPreviewEl, index) {
+    if (!chartPreviewEl || typeof chartPreviewEl.querySelector !== 'function') {
+      return {
+        cardEl: null,
+        canvasEl: null,
+        metaEl: null
+      };
+    }
+    const cardEl = chartPreviewEl.querySelector(`[data-arb-detail-chart-index="${index}"]`);
+    if (!cardEl || typeof cardEl.querySelector !== 'function') {
+      return {
+        cardEl: cardEl || null,
+        canvasEl: null,
+        metaEl: null
+      };
+    }
+    return {
+      cardEl,
+      canvasEl: cardEl.querySelector('.arb-detail-chart-canvas'),
+      metaEl: cardEl.querySelector('.arb-detail-chart-card-meta')
+    };
   }
 
   function buildArbDetailChartLoadedMetaText(source) {
@@ -1088,12 +1124,14 @@
     buildArbDetailProfitPreviewMessageHtml,
     buildArbDetailProfitPreviewReadyHtml,
     getArbDetailProfitCardElement,
+    getArbDetailProfitPreviewElements,
     applyArbDetailProfitPreviewMessage,
     applyArbDetailProfitPreviewReady,
     applyArbDetailProfitPreviewMeta,
     buildArbDetailProfitPreviewState,
     buildArbDetailChartPreviewStripHtml,
     applyArbDetailChartPreviewStrip,
+    getArbDetailChartCardElements,
     buildArbDetailChartLoadedMetaText,
     applyArbDetailChartLoadedMeta,
     applyArbDetailChartCardError,
