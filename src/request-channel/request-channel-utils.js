@@ -230,6 +230,95 @@
     return true;
   }
 
+  function buildRequestChannelTagId(quote) {
+    if (!quote || quote.id == null || quote.id === '') return '';
+    return `quote-channel-tag-${quote.id}`;
+  }
+
+  function buildRequestChannelTagHtml(quote, channel) {
+    const tagId = buildRequestChannelTagId(quote);
+    if (!tagId || !channel) return '';
+    return `<span class="quote-channel-tag" id="${escapeHtml(tagId)}">${escapeHtml(channel.name)}</span>`;
+  }
+
+  function buildRequestChannelTagPatch(quote, channel, options = {}) {
+    if (!quote) return null;
+    const hasExistingTag = options.hasExistingTag === true;
+    if (!channel) {
+      return hasExistingTag ? { action: 'remove' } : null;
+    }
+    if (hasExistingTag) {
+      return {
+        action: 'update',
+        text: String(channel.name == null ? '' : channel.name)
+      };
+    }
+    const html = buildRequestChannelTagHtml(quote, channel);
+    if (!html) return null;
+    return {
+      action: 'insert',
+      html
+    };
+  }
+
+  function escapeCssIdentifier(value, options = {}) {
+    if (typeof options.escapeCssIdentifier === 'function') {
+      return options.escapeCssIdentifier(value);
+    }
+    if (typeof CSS !== 'undefined' && CSS && typeof CSS.escape === 'function') {
+      return CSS.escape(value);
+    }
+    return String(value == null ? '' : value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+  }
+
+  function getRequestChannelTagElement(itemEl, quote, options = {}) {
+    const tagId = buildRequestChannelTagId(quote);
+    if (!tagId || !itemEl || typeof itemEl.querySelector !== 'function') return null;
+    return itemEl.querySelector(`#${escapeCssIdentifier(tagId, options)}`);
+  }
+
+  function applyRequestChannelTagForQuote(quote, requestChannels, options = {}) {
+    if (!quote) return false;
+    const getElementById = typeof options.getElementById === 'function'
+      ? options.getElementById
+      : (id) => (typeof document !== 'undefined' ? document.getElementById(id) : null);
+    const itemEl = getElementById(`quote-item-${quote.id}`);
+    if (!itemEl || typeof itemEl.querySelector !== 'function') return false;
+
+    const labelRow = itemEl.querySelector('.quote-label-row');
+    if (!labelRow || typeof labelRow.querySelector !== 'function') return false;
+
+    const existingTag = getRequestChannelTagElement(itemEl, quote, options);
+    const channel = getRequestChannelDisplayForQuote(quote, requestChannels);
+    const patch = buildRequestChannelTagPatch(quote, channel, {
+      hasExistingTag: Boolean(existingTag)
+    });
+    if (!patch) return false;
+
+    if (patch.action === 'remove') {
+      if (existingTag && typeof existingTag.remove === 'function') {
+        existingTag.remove();
+      }
+      return true;
+    }
+
+    if (patch.action === 'update') {
+      if (existingTag) existingTag.textContent = patch.text;
+      return true;
+    }
+
+    const labelEl = labelRow.querySelector('.quote-label');
+    if (!labelEl || typeof labelEl.insertAdjacentHTML !== 'function') return false;
+    labelEl.insertAdjacentHTML('afterend', patch.html);
+    return true;
+  }
+
+  function applyRequestChannelTagsVisibility(bodyEl, visible) {
+    if (!bodyEl || !bodyEl.classList || typeof bodyEl.classList.toggle !== 'function') return false;
+    bodyEl.classList.toggle('show-request-channel-tags', visible === true);
+    return true;
+  }
+
   function parseMultiChannelEnabledStorageValue(value, fallback = true) {
     if (value == null) return fallback !== false;
     return value !== 'false';
@@ -351,8 +440,12 @@
     DEFAULT_REQUEST_CHANNEL_NAME,
     MULTI_CHANNEL_ENABLED_STORAGE_KEY,
     applyMultiChannelToggleButtonState,
+    applyRequestChannelTagForQuote,
+    applyRequestChannelTagsVisibility,
     buildQueueKey,
     buildMultiChannelToggleState,
+    buildRequestChannelTagHtml,
+    buildRequestChannelTagPatch,
     buildRequestChannelOptionsHtml,
     formatMultiChannelEnabledStorageValue,
     getBrowserLocalStorage,

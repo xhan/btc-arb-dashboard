@@ -661,6 +661,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('QueueStatsUtils is not loaded'));
     assert.ok(requestChannelUtilsResponse.body.includes('function buildMultiChannelToggleState(enabled)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function applyMultiChannelToggleButtonState(buttonEl, enabled)'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function buildRequestChannelTagHtml(quote, channel)'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function buildRequestChannelTagPatch(quote, channel, options = {})'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function applyRequestChannelTagForQuote(quote, requestChannels, options = {})'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function applyRequestChannelTagsVisibility(bodyEl, visible)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function parseMultiChannelEnabledStorageValue(value, fallback = true)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function formatMultiChannelEnabledStorageValue(enabled)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function loadMultiChannelEnabledFromStorage(storage, options = {})'));
@@ -717,8 +721,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildInverseQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayToggleState(mode)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function getNextQuoteDisplayMode(mode)'));
-    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagHtml(quote, channel)'));
-    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagPatch(quote, channel, options = {})'));
+    assert.ok(!quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagHtml(quote, channel)'));
+    assert.ok(!quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagPatch(quote, channel, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteHoverTooltipState(quote, state, options = {})'));
@@ -750,8 +754,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function buildQuotePairLabelHtml(quote, state)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, monitorState)'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, requestChannel)'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch(quote, channel, {'));
+    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildRequestChannelTagHtml(quote, requestChannel)'));
+    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagForQuote(quote, requestChannelOptions, {'));
+    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body, showRequestChannelTags)'));
+    assert.ok(!appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml'));
+    assert.ok(!appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch'));
+    assert.ok(!appJsResponse.body.includes("itemEl.querySelector(`#quote-channel-tag-${quote.id}`)"));
+    assert.ok(!appJsResponse.body.includes("document.body.classList.toggle('show-request-channel-tags'"));
     assert.ok(appJsResponse.body.includes('const quoteHoverRuntime = getQuoteDisplayUtils().createQuoteHoverRuntime({'));
     assert.ok(appJsResponse.body.includes('quoteHoverRuntime.schedule(quoteId, () => {'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteHoverTooltipState(quote, state, { isEvmChain })'));

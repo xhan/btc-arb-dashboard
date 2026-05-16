@@ -634,37 +634,13 @@
     }
 
     function updateRequestChannelTagForQuote(quote) {
-        if (!quote) return;
-        const itemEl = document.getElementById(`quote-item-${quote.id}`);
-        if (!itemEl) return;
-
-        const labelRow = itemEl.querySelector('.quote-label-row');
-        if (!labelRow) return;
-
-        const existingTag = itemEl.querySelector(`#quote-channel-tag-${quote.id}`);
-        const channel = getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
-        const patch = getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch(quote, channel, {
-            hasExistingTag: Boolean(existingTag)
+        getRequestChannelUtils().applyRequestChannelTagForQuote(quote, requestChannelOptions, {
+            getElementById: (id) => document.getElementById(id)
         });
-        if (!patch) return;
-
-        if (patch.action === 'remove') {
-            if (existingTag) existingTag.remove();
-            return;
-        }
-
-        if (patch.action === 'update') {
-            if (existingTag) existingTag.textContent = patch.text;
-            return;
-        }
-
-        const labelEl = labelRow.querySelector('.quote-label');
-        if (!labelEl) return;
-        labelEl.insertAdjacentHTML('afterend', patch.html);
     }
 
     function syncRequestChannelTagVisibility() {
-        document.body.classList.toggle('show-request-channel-tags', showRequestChannelTags);
+        getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body, showRequestChannelTags);
     }
 
     function toggleRequestChannelTags() {
@@ -3949,7 +3925,7 @@
         const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
         const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, monitorState)}</span>`;
         const requestChannel = getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
-        const requestChannelTagHtml = getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml(quote, requestChannel);
+        const requestChannelTagHtml = getRequestChannelUtils().buildRequestChannelTagHtml(quote, requestChannel);
         const renderer = getDashboardRenderer();
         
         itemEl.innerHTML = renderer.renderQuoteItemShell({

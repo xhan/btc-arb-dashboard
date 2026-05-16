@@ -4,8 +4,12 @@ const {
   DEFAULT_REQUEST_CHANNEL_ID,
   DEFAULT_INTERVALS,
   applyMultiChannelToggleButtonState,
+  applyRequestChannelTagForQuote,
+  applyRequestChannelTagsVisibility,
   buildMultiChannelToggleState,
   buildQueueKey,
+  buildRequestChannelTagHtml,
+  buildRequestChannelTagPatch,
   buildRequestChannelOptionsHtml,
   formatMultiChannelEnabledStorageValue,
   getBrowserLocalStorage,
@@ -116,6 +120,122 @@ assert.strictEqual(applyMultiChannelToggleButtonState(multiChannelToggleEl, fals
 assert.strictEqual(multiChannelToggleEl.textContent, '多渠道: 关');
 assert.strictEqual(multiChannelToggleClasses.has('active'), false);
 assert.strictEqual(applyMultiChannelToggleButtonState(null, true), false);
+
+assert.strictEqual(
+  buildRequestChannelTagHtml({ id: 'quote-1' }, { name: '主通道 <A>' }),
+  '<span class="quote-channel-tag" id="quote-channel-tag-quote-1">主通道 &lt;A&gt;</span>'
+);
+assert.strictEqual(buildRequestChannelTagHtml({ id: 'quote-1' }, null), '');
+assert.deepStrictEqual(
+  buildRequestChannelTagPatch({ id: 'quote-1' }, { name: '主通道 <A>' }, { hasExistingTag: false }),
+  {
+    action: 'insert',
+    html: '<span class="quote-channel-tag" id="quote-channel-tag-quote-1">主通道 &lt;A&gt;</span>'
+  }
+);
+assert.deepStrictEqual(
+  buildRequestChannelTagPatch({ id: 'quote-1' }, { name: '备用通道' }, { hasExistingTag: true }),
+  {
+    action: 'update',
+    text: '备用通道'
+  }
+);
+assert.deepStrictEqual(
+  buildRequestChannelTagPatch({ id: 'quote-1' }, null, { hasExistingTag: true }),
+  { action: 'remove' }
+);
+assert.strictEqual(
+  buildRequestChannelTagPatch({ id: 'quote-1' }, null, { hasExistingTag: false }),
+  null
+);
+assert.strictEqual(
+  buildRequestChannelTagPatch({}, { name: '主通道' }, { hasExistingTag: false }),
+  null
+);
+
+function createRequestChannelTagFixture(existingTag = null) {
+  const calls = [];
+  const labelEl = {
+    insertAdjacentHTML(position, html) {
+      calls.push(['insertAdjacentHTML', position, html]);
+    }
+  };
+  const labelRow = {
+    querySelector(selector) {
+      if (selector === '.quote-label') return labelEl;
+      return null;
+    }
+  };
+  const itemEl = {
+    querySelector(selector) {
+      if (selector === '.quote-label-row') return labelRow;
+      if (selector === '#quote-channel-tag-quote-1') return existingTag;
+      return null;
+    }
+  };
+  return { calls, existingTag, itemEl };
+}
+
+const insertedTagFixture = createRequestChannelTagFixture();
+assert.strictEqual(
+  applyRequestChannelTagForQuote(
+    { id: 'quote-1', chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' },
+    channels,
+    { getElementById: () => insertedTagFixture.itemEl }
+  ),
+  true
+);
+assert.deepStrictEqual(insertedTagFixture.calls, [
+  ['insertAdjacentHTML', 'afterend', '<span class="quote-channel-tag" id="quote-channel-tag-quote-1">HK-1</span>']
+]);
+
+const updatedExistingTag = { textContent: 'old' };
+const updatedTagFixture = createRequestChannelTagFixture(updatedExistingTag);
+assert.strictEqual(
+  applyRequestChannelTagForQuote(
+    { id: 'quote-1', chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' },
+    channels,
+    { getElementById: () => updatedTagFixture.itemEl }
+  ),
+  true
+);
+assert.strictEqual(updatedExistingTag.textContent, 'HK-1');
+
+const removedExistingTag = {
+  removed: false,
+  remove() {
+    this.removed = true;
+  }
+};
+const removedTagFixture = createRequestChannelTagFixture(removedExistingTag);
+assert.strictEqual(
+  applyRequestChannelTagForQuote(
+    { id: 'quote-1', chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'default' },
+    channels,
+    { getElementById: () => removedTagFixture.itemEl }
+  ),
+  true
+);
+assert.strictEqual(removedExistingTag.removed, true);
+assert.strictEqual(
+  applyRequestChannelTagForQuote({ id: 'quote-1' }, channels, { getElementById: () => null }),
+  false
+);
+
+const requestChannelVisibilityClasses = new Set();
+const requestChannelVisibilityBody = {
+  classList: {
+    toggle(className, enabled) {
+      if (enabled) requestChannelVisibilityClasses.add(className);
+      else requestChannelVisibilityClasses.delete(className);
+    }
+  }
+};
+assert.strictEqual(applyRequestChannelTagsVisibility(requestChannelVisibilityBody, true), true);
+assert.strictEqual(requestChannelVisibilityClasses.has('show-request-channel-tags'), true);
+assert.strictEqual(applyRequestChannelTagsVisibility(requestChannelVisibilityBody, false), true);
+assert.strictEqual(requestChannelVisibilityClasses.has('show-request-channel-tags'), false);
+assert.strictEqual(applyRequestChannelTagsVisibility(null, true), false);
 
 const browserStorage = {};
 assert.strictEqual(getBrowserLocalStorage({ window: { localStorage: browserStorage } }), browserStorage);

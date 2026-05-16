@@ -247,29 +247,6 @@
     return `${String(fromToken || '').slice(0, 4)}.../${String(toToken || '').slice(0, 4)}...`;
   }
 
-  function buildQuoteRequestChannelTagHtml(quote, channel) {
-    if (!quote || !channel) return '';
-    return `<span class="quote-channel-tag" id="quote-channel-tag-${escapeHtml(quote.id)}">${escapeHtml(channel.name)}</span>`;
-  }
-
-  function buildQuoteRequestChannelTagPatch(quote, channel, options = {}) {
-    if (!quote) return null;
-    const hasExistingTag = options.hasExistingTag === true;
-    if (!channel) {
-      return hasExistingTag ? { action: 'remove' } : null;
-    }
-    if (hasExistingTag) {
-      return {
-        action: 'update',
-        text: String(channel.name == null ? '' : channel.name)
-      };
-    }
-    return {
-      action: 'insert',
-      html: buildQuoteRequestChannelTagHtml(quote, channel)
-    };
-  }
-
   function buildQuoteHoverTooltipState(quote, state, options = {}) {
     if (!quote) return null;
     if (isCexOrderbookChain(quote.chain)) {
@@ -400,8 +377,6 @@
     buildQuoteDisplayTextForState,
     buildQuoteDisplayToggleState,
     buildQuoteHoverTooltipState,
-    buildQuoteRequestChannelTagHtml,
-    buildQuoteRequestChannelTagPatch,
     buildQuoteTrendArrowState,
     extractPriceFromText,
     formatCexBookValue,

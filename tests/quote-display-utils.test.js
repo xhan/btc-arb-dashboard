@@ -9,8 +9,6 @@ const {
   buildQuoteDisplayTextForState,
   buildQuoteDisplayToggleState,
   buildQuoteHoverTooltipState,
-  buildQuoteRequestChannelTagHtml,
-  buildQuoteRequestChannelTagPatch,
   buildQuoteTrendArrowState,
   createQuoteHoverRuntime,
   extractPriceFromText,
@@ -189,41 +187,6 @@ assert.strictEqual(
     { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }
   ),
   'cb&lt;BTC&gt;/WBTC'
-);
-
-assert.strictEqual(
-  buildQuoteRequestChannelTagHtml({ id: 'quote-1' }, { name: '主通道 <A>' }),
-  '<span class="quote-channel-tag" id="quote-channel-tag-quote-1">主通道 &lt;A&gt;</span>'
-);
-
-assert.strictEqual(
-  buildQuoteRequestChannelTagHtml({ id: 'quote-1' }, null),
-  ''
-);
-
-assert.deepStrictEqual(
-  buildQuoteRequestChannelTagPatch({ id: 'quote-1' }, { name: '主通道 <A>' }, { hasExistingTag: false }),
-  {
-    action: 'insert',
-    html: '<span class="quote-channel-tag" id="quote-channel-tag-quote-1">主通道 &lt;A&gt;</span>'
-  }
-);
-
-assert.deepStrictEqual(
-  buildQuoteRequestChannelTagPatch({ id: 'quote-1' }, { name: '备用通道' }, { hasExistingTag: true }),
-  {
-    action: 'update',
-    text: '备用通道'
-  }
-);
-
-assert.deepStrictEqual(
-  buildQuoteRequestChannelTagPatch({ id: 'quote-1' }, null, { hasExistingTag: true }),
-  { action: 'remove' }
-);
-assert.strictEqual(
-  buildQuoteRequestChannelTagPatch({ id: 'quote-1' }, null, { hasExistingTag: false }),
-  null
 );
 
 assert.deepStrictEqual(
