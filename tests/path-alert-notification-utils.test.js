@@ -19,6 +19,7 @@ const {
   buildQuoteAlertSummaryRuleLine,
   buildQuoteAlertActionLink,
   buildQuoteAlertTriggeredEntry,
+  buildQuoteAlertTriggeredEntryForQuote,
   buildQuoteAlertRemotePayload,
   getQuoteAlertDirection
 } = require('../path-alert-notification-utils');
@@ -447,6 +448,38 @@ assert.deepStrictEqual(
     message: '路径命中'
   }).mutedTargetCandidate,
   null
+);
+assert.deepStrictEqual(
+  buildQuoteAlertTriggeredEntryForQuote({
+    alert: {
+      id: 'quote-inverse',
+      target: { type: 'quote', quoteId: 102, direction: 'inverse', ruleKind: 'targetBelow', value: 0.99 }
+    },
+    quote: { id: 102, chain: 'ethereum' },
+    state: { fromSymbol: 'WBTC', toSymbol: 'cbBTC' },
+    displayName: 'Ethereum',
+    message: '汇率已达到或低于目标 0.99',
+    currentValueText: '当前汇率 0.98',
+    dexLink: { label: 'swap', url: 'https://example.test/swap' },
+    buildQuoteAlertDisplayLabel: (quote, state, direction) => `${quote.chain}:${direction}:${state.toSymbol}/${state.fromSymbol}`
+  }),
+  {
+    alert: {
+      id: 'quote-inverse',
+      target: { type: 'quote', quoteId: 102, direction: 'inverse', ruleKind: 'targetBelow', value: 0.99 }
+    },
+    quote: { id: 102, chain: 'ethereum' },
+    displayName: 'Ethereum',
+    label: 'ethereum:inverse:cbBTC/WBTC',
+    message: '汇率已达到或低于目标 0.99',
+    currentValueText: '当前汇率 0.98',
+    actionLink: { label: 'swap', url: 'https://example.test/swap' },
+    summaryLines: ['Ethereum ethereum:inverse:cbBTC/WBTC', '汇率已达到或低于目标 0.99'],
+    mutedTargetCandidate: {
+      id: 'quote-inverse',
+      target: { type: 'quote', quoteId: 102, direction: 'inverse', ruleKind: 'targetBelow', value: 0.99 }
+    }
+  }
 );
 
 assert.deepStrictEqual(

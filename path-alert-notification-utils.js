@@ -366,6 +366,27 @@
     };
   }
 
+  function buildQuoteAlertTriggeredEntryForQuote(options = {}) {
+    const alert = options.alert || null;
+    const quote = options.quote || null;
+    const state = options.state || {};
+    const buildQuoteAlertDisplayLabel = typeof options.buildQuoteAlertDisplayLabel === 'function'
+      ? options.buildQuoteAlertDisplayLabel
+      : () => '--';
+    const direction = getQuoteAlertDirection(alert && alert.target);
+    const label = buildQuoteAlertDisplayLabel(quote, state, direction);
+    const actionLink = options.actionLink || buildQuoteAlertActionLink(options.dexLink);
+    return buildQuoteAlertTriggeredEntry({
+      alert,
+      quote,
+      displayName: options.displayName,
+      label,
+      message: options.message,
+      currentValueText: options.currentValueText,
+      actionLink
+    });
+  }
+
   function buildQuoteAlertActionLink(dexLink) {
     if (!dexLink || !dexLink.url) return null;
     return {
@@ -430,6 +451,7 @@
     buildQuoteAlertThresholdLine,
     buildQuoteAlertActionLink,
     buildQuoteAlertTriggeredEntry,
+    buildQuoteAlertTriggeredEntryForQuote,
     buildQuoteAlertRemotePayload,
     getQuoteAlertDirection
   };

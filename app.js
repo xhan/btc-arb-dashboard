@@ -868,18 +868,15 @@
     }
 
     function buildQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
-        const displayName = getQuoteChainDisplayName(quote);
-        const direction = getQuoteAlertDirection(alert && alert.target);
-        const label = buildQuoteAlertDisplayLabel(quote, quoteMarketState.get(quote.id) || {}, direction);
-        const actionLink = buildQuoteAlertActionLink(quote);
-        return getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntry({
+        return getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntryForQuote({
             alert,
             quote,
-            displayName,
-            label,
+            state: quote && quote.id != null ? quoteMarketState.get(quote.id) || {} : {},
+            displayName: getQuoteChainDisplayName(quote),
             message,
             currentValueText: options.currentValueText || '',
-            actionLink
+            dexLink: buildQuoteAlertDexLink(quote),
+            buildQuoteAlertDisplayLabel
         });
     }
 
@@ -3177,7 +3174,7 @@
         const monitorState = quote ? quoteMarketState.get(Number(quote.id)) : null;
         return getPathAlertPageUtils().buildQuoteAlertSummaryLabel(target, quote, monitorState || {}, {
             buildQuoteAlertDisplayLabel,
-            getQuoteAlertDirection
+            getQuoteAlertDirection: (item) => getPathAlertNotificationUtils().getQuoteAlertDirection(item)
         });
     }
 
@@ -4343,10 +4340,6 @@
         if (!arbPathWindow) return;
         const maxHeight = Math.max(200, window.innerHeight);
         arbPathWindow.style.height = `${maxHeight}px`;
-    }
-
-    function getQuoteAlertDirection(target) {
-        return getPathAlertNotificationUtils().getQuoteAlertDirection(target);
     }
 
     function buildQuoteAlertDisplayLabel(quote, monitorState = quoteMarketState.get(quote.id) || {}, direction = 'forward') {
