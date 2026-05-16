@@ -153,6 +153,7 @@
     - 已启动第十步：data terminal 工具迁入 `src/data-terminal/`，后续数据终端模块按这个目录维护
     - 已启动第十一步：copy、dex link、dom render 和 theme 等浏览器 UI 支撑工具迁入 `src/ui/`，后续 UI shared 模块按这个目录维护
     - 已启动第十二步：chain defaults、UTC+8 时间工具和 trading pair parser 迁入 `src/shared/`，后续跨前后端共享工具按这个目录维护
+    - 已启动第十三步：fetch-once 与 Cetus aggregator 配置迁入 `src/server/`，根目录保留 `app.js` / `server.js` 作为前后端入口
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
