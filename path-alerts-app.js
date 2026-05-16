@@ -47,10 +47,6 @@
     }
   }
 
-  function escapeHtml(value) {
-    return window.PathAlertPageUtils.escapeHtml(value);
-  }
-
   function formatChainLabel(chain) {
     return window.ChainDefaults && typeof window.ChainDefaults.getChainDisplayName === 'function'
       ? window.ChainDefaults.getChainDisplayName(chain)
@@ -657,104 +653,23 @@
     const duplicateAlert = findDuplicateAlertForDraft(draft);
     const dismissedTarget = findDismissedTargetForDraft(draft);
     const targetSummaryLines = buildEditorTargetSummaryLines(draft);
-    const errorHtml = pageState.errorMessage
-      ? `<div id="editor-error-slot" class="status-message error">${escapeHtml(pageState.errorMessage)}</div>`
-      : '<div id="editor-error-slot" class="status-message"></div>';
-    const duplicateHtml = duplicateAlert
-      ? `
-        <div class="status-message error editor-duplicate-warning">
-          <span>与已有报警重复：${escapeHtml(duplicateAlert.name || duplicateAlert.id || '未命名路径')}</span>
-          <a class="inline-link-btn" href="${escapeHtml(getEditAlertHref(duplicateAlert.id))}">编辑已有报警</a>
-        </div>
-      `
-      : '';
-    const dismissedHtml = dismissedTarget
-      ? `
-        <div class="status-message error editor-duplicate-warning">
-          <span>该路径已被标记为不需要，请先恢复后再添加。</span>
-          <a class="inline-link-btn" href="#dismissed-section">查看已忽略规则</a>
-        </div>
-      `
-      : '';
-    const saveDisabledAttr = duplicateAlert || dismissedTarget ? 'disabled' : '';
-
-    editorEl.innerHTML = `
-      ${errorHtml}
-      ${duplicateHtml}
-      ${dismissedHtml}
-      <div class="form-group">
-        <label for="editor-name">备注（可选）</label>
-        <input id="editor-name" type="text" value="${escapeHtml(draft.name)}" placeholder="例如：只关注 ETH / ARB 这条">
-      </div>
-
-      <div class="type-tabs">
-        <button type="button" class="type-tab${draft.sourceType === 'path' ? ' active' : ''}" data-editor-type="path">手工路径</button>
-        <button type="button" class="type-tab${draft.sourceType === 'quote' ? ' active' : ''}" data-editor-type="quote">交易对报警</button>
-        <button type="button" class="type-tab${draft.sourceType === 'fixed' ? ' active' : ''}" data-editor-type="fixed">固定规则</button>
-        <button type="button" class="type-tab${draft.sourceType === 'special' ? ' active' : ''}" data-editor-type="special">特殊规则</button>
-      </div>
-
-      <div class="editor-grid">
-        <div class="editor-pane">
-          ${draft.sourceType === 'path'
-            ? renderCandidateSearchArea(draft)
-            : draft.sourceType === 'quote'
-              ? renderQuoteTargetEditor(draft)
-              : renderRuleChoices(draft.sourceType, draft.selectedRuleId)}
-        </div>
-        <div class="editor-pane">
-          <div class="editor-pane-title">${draft.sourceType === 'path' ? '已选路径' : '已选目标'}</div>
-          ${renderSelectedLegs(draft)}
-          <div class="summary-box">${window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(targetSummaryLines, 'summary-line')}</div>
-        </div>
-        <div class="editor-pane editor-settings-pane">
-          <div class="editor-pane-title">报警条件</div>
-          ${draft.sourceType === 'quote' || draft.sourceType === 'special' ? '' : `
-            <div class="form-group">
-              <label for="editor-threshold">收益阈值 (bp)</label>
-              <input id="editor-threshold" type="number" step="0.1" value="${draft.thresholdBp === '' ? '' : escapeHtml(String(draft.thresholdBp))}">
-            </div>
-          `}
-          ${draft.sourceType !== 'special' ? '' : `
-            <div class="form-group">
-              <label for="editor-special-min-profit">净收益阈值</label>
-              <input id="editor-special-min-profit" type="number" min="0" step="0.0001" value="${escapeHtml(String(resolveSpecialRuleAlertConfig(draft.specialRuleConfig).minNetProfit ?? 0))}">
-            </div>
-            <div class="form-group">
-              <label for="editor-special-min-profit-bp">净收益率阈值 (bp)</label>
-              <input id="editor-special-min-profit-bp" type="number" min="0" step="0.1" value="${escapeHtml(String(resolveSpecialRuleAlertConfig(draft.specialRuleConfig).minNetProfitBp ?? 0))}">
-            </div>
-          `}
-          <div class="form-group">
-            <label for="editor-trigger">触发方式</label>
-            <select id="editor-trigger">
-              <option value="immediate" ${draft.triggerMode === 'immediate' ? 'selected' : ''}>立即提醒</option>
-              <option value="delayed" ${draft.triggerMode === 'delayed' ? 'selected' : ''}>延迟确认</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="editor-confirm-delay">延迟确认 (秒)</label>
-            <input id="editor-confirm-delay" type="number" min="0" value="${escapeHtml(String(draft.confirmDelaySec || 0))}" ${draft.triggerMode === 'delayed' ? '' : 'disabled'}>
-          </div>
-          <div class="form-group">
-            <label for="editor-cooldown">冷却时间 (秒)</label>
-            <input id="editor-cooldown" type="number" min="1" value="${escapeHtml(String(draft.cooldownSec || alertConfig.settings?.defaultCooldownSec || 180))}">
-          </div>
-          <label class="editor-checkbox-row" for="editor-enabled">
-            <input id="editor-enabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}>
-            <span>启用这条报警</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="editor-actions">
-        <div class="inline-hint">保存后，主看板会自动同步。</div>
-        <div class="editor-actions-right">
-          <button type="button" id="editor-cancel-btn">取消</button>
-          <button type="button" class="primary" id="editor-save-btn" ${saveDisabledAttr}>保存</button>
-        </div>
-      </div>
-    `;
+    const targetPaneHtml = draft.sourceType === 'path'
+      ? renderCandidateSearchArea(draft)
+      : draft.sourceType === 'quote'
+        ? renderQuoteTargetEditor(draft)
+        : renderRuleChoices(draft.sourceType, draft.selectedRuleId);
+    editorEl.innerHTML = window.PathAlertEditorUtils.renderPathAlertEditorHtml({
+      draft,
+      errorMessage: pageState.errorMessage,
+      duplicateAlert,
+      duplicateEditHref: duplicateAlert ? getEditAlertHref(duplicateAlert.id) : '',
+      dismissedTarget,
+      targetPaneHtml,
+      selectedTargetHtml: renderSelectedLegs(draft),
+      summaryHtml: window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(targetSummaryLines, 'summary-line'),
+      specialRuleConfig: resolveSpecialRuleAlertConfig(draft.specialRuleConfig),
+      defaultCooldownSec: alertConfig.settings?.defaultCooldownSec || 180
+    });
     syncEditorConfirmDelayState();
     renderCandidateSuggestions();
   }

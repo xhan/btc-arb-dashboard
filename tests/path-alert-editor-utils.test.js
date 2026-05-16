@@ -10,6 +10,7 @@ const {
   createPathAlertEditorDraft,
   renderPathAlertEditorCandidateSearchHtml,
   renderPathAlertEditorCandidateSuggestionsHtml,
+  renderPathAlertEditorHtml,
   renderPathAlertEditorQuoteTargetHtml,
   renderPathAlertEditorRuleChoicesHtml,
   renderPathAlertEditorSelectedLegsHtml,
@@ -293,6 +294,34 @@ const selectedLegsHtml = renderPathAlertEditorSelectedLegsHtml(
 );
 assert.ok(selectedLegsHtml.includes('ethereum:WETH-&gt;USDC'));
 assert.ok(selectedLegsHtml.includes('data-editor-remove-leg="0"'));
+const editorHtml = renderPathAlertEditorHtml({
+  draft: {
+    name: 'Draft <name>',
+    sourceType: 'special',
+    triggerMode: 'immediate',
+    confirmDelaySec: 0,
+    cooldownSec: '',
+    enabled: false
+  },
+  errorMessage: '错误 <x>',
+  duplicateAlert: { id: 'existing-alert', name: '已有 <报警>' },
+  duplicateEditHref: '/path-alerts?mode=edit&alertId=existing-alert',
+  dismissedTarget: { id: 'dismissed' },
+  targetPaneHtml: '<div class="rule-list"></div>',
+  selectedTargetHtml: '<div class="rule-item active">目标</div>',
+  summaryHtml: '<div class="summary-line">摘要</div>',
+  specialRuleConfig: { minNetProfit: 2, minNetProfitBp: 5 },
+  defaultCooldownSec: 240
+});
+assert.ok(editorHtml.includes('错误 &lt;x&gt;'));
+assert.ok(editorHtml.includes('已有 &lt;报警&gt;'));
+assert.ok(editorHtml.includes('value="Draft &lt;name&gt;"'));
+assert.ok(editorHtml.includes('data-editor-type="special">特殊规则'));
+assert.ok(editorHtml.includes('id="editor-special-min-profit"'));
+assert.ok(editorHtml.includes('value="2"'));
+assert.ok(editorHtml.includes('id="editor-confirm-delay" type="number" min="0" value="0" disabled'));
+assert.ok(editorHtml.includes('id="editor-cooldown" type="number" min="1" value="240"'));
+assert.ok(editorHtml.includes('id="editor-save-btn" disabled'));
 assert.strictEqual(
   validatePathAlertEditorDraft({
     sourceType: 'quote',
