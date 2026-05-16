@@ -3212,13 +3212,6 @@
         return getSpecialRuleAlertConfigUtils().normalizeSpecialRuleAlertConfig(alert && alert.specialRuleConfig);
     }
 
-    function splitAlertMessageLines(message) {
-        return String(message || '')
-            .split('\n')
-            .map((line) => String(line || '').trim())
-            .filter(Boolean);
-    }
-
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
         if (target.ruleKind === 'fixed') {
             const rule = getFixedRuleById(target.ruleId);
@@ -3402,21 +3395,6 @@
         return null;
     }
 
-    function buildPathAlertCycleSummaryEntries(alert, evaluation) {
-        if (evaluation && typeof evaluation.displayMessage === 'string' && evaluation.displayMessage.trim()) {
-            return splitAlertMessageLines(evaluation.displayMessage).map((line) => ({ line, key: '' }));
-        }
-        if (evaluation && evaluation.cycle && Array.isArray(evaluation.cycle.legs)) {
-            const cycleLegs = evaluation.cycle.legs.filter((leg) => !isRuleLeg(leg));
-            const entries = cycleLegs.map((leg) => ({
-                line: formatArbPathLegLine(leg),
-                key: buildPathAlertLegKey(leg)
-            }));
-            if (entries.length) return entries;
-        }
-        return buildPathAlertSummaryLines(alert).map((line) => ({ line, key: '' }));
-    }
-
     function buildPathAlertChangedLegLines(changedLegs, maxCount = 3) {
         return getPathAlertNotificationUtils().buildPathAlertChangedLegLines(changedLegs, {
             maxCount,
@@ -3531,21 +3509,18 @@
     }
 
     function buildTriggeredPathAlertEntry(alert, evaluation, changedLegs) {
-        const summaryEntries = buildPathAlertCycleSummaryEntries(alert, evaluation);
-        return {
-            alert: {
-                ...alert,
-                name: buildPathAlertDisplayTitle(alert)
-            },
+        return getPathAlertNotificationUtils().buildTriggeredPathAlertEntry({
+            alert,
             evaluation,
-            summaryLines: summaryEntries.map((item) => item.line),
-            summaryLegKeys: summaryEntries.map((item) => item.key),
-            customAlertMessage: String(evaluation && evaluation.alertMessage || '').trim(),
-            changedLegLines: buildPathAlertChangedLegLines(changedLegs, 3),
-            changedLegs: Array.isArray(changedLegs) ? changedLegs.slice(0, 3) : [],
-            realLegCount: getPathAlertRealLegCount(alert, evaluation),
-            mutedTargetCandidate: buildMutedPathTargetCandidate(alert, evaluation)
-        };
+            changedLegs,
+            buildDisplayTitle: buildPathAlertDisplayTitle,
+            buildFallbackSummaryLines: buildPathAlertSummaryLines,
+            buildMutedTargetCandidate: buildMutedPathTargetCandidate,
+            formatCycleLeg: formatArbPathLegLine,
+            formatChangedLeg: buildPathAlertLegDisplayLine,
+            getRealLegCount: getPathAlertRealLegCount,
+            isRuleLeg
+        });
     }
 
     function sortTriggeredPathAlertEntries(entries) {

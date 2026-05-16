@@ -48,6 +48,69 @@
       });
   }
 
+  function splitAlertMessageLines(message) {
+    return String(message || '')
+      .split('\n')
+      .map((line) => String(line || '').trim())
+      .filter(Boolean);
+  }
+
+  function buildPathAlertCycleSummaryEntries(alert, evaluation, options = {}) {
+    if (evaluation && typeof evaluation.displayMessage === 'string' && evaluation.displayMessage.trim()) {
+      return splitAlertMessageLines(evaluation.displayMessage).map((line) => ({ line, key: '' }));
+    }
+    if (evaluation && evaluation.cycle && Array.isArray(evaluation.cycle.legs)) {
+      const isRuleLeg = typeof options.isRuleLeg === 'function' ? options.isRuleLeg : () => false;
+      const formatCycleLeg = typeof options.formatCycleLeg === 'function' ? options.formatCycleLeg : () => '--';
+      const entries = evaluation.cycle.legs
+        .filter((leg) => !isRuleLeg(leg))
+        .map((leg) => ({
+          line: formatCycleLeg(leg),
+          key: buildPathAlertLegKey(leg)
+        }));
+      if (entries.length) return entries;
+    }
+    const fallbackLines = typeof options.buildFallbackSummaryLines === 'function'
+      ? options.buildFallbackSummaryLines(alert)
+      : [];
+    return (Array.isArray(fallbackLines) ? fallbackLines : []).map((line) => ({ line, key: '' }));
+  }
+
+  function buildTriggeredPathAlertEntry(options = {}) {
+    const alert = options.alert || null;
+    const evaluation = options.evaluation || null;
+    const changedLegs = Array.isArray(options.changedLegs) ? options.changedLegs : [];
+    const summaryEntries = buildPathAlertCycleSummaryEntries(alert, evaluation, options);
+    const displayTitle = typeof options.buildDisplayTitle === 'function'
+      ? options.buildDisplayTitle(alert)
+      : '';
+    const changedLegLines = buildPathAlertChangedLegLines(changedLegs, {
+      maxCount: 3,
+      formatLeg: options.formatChangedLeg
+    });
+    const realLegCount = typeof options.getRealLegCount === 'function'
+      ? options.getRealLegCount(alert, evaluation)
+      : 0;
+    const mutedTargetCandidate = typeof options.buildMutedTargetCandidate === 'function'
+      ? options.buildMutedTargetCandidate(alert, evaluation)
+      : null;
+
+    return {
+      alert: {
+        ...(alert && typeof alert === 'object' ? alert : {}),
+        name: displayTitle
+      },
+      evaluation,
+      summaryLines: summaryEntries.map((item) => item.line),
+      summaryLegKeys: summaryEntries.map((item) => item.key),
+      customAlertMessage: String(evaluation && evaluation.alertMessage || '').trim(),
+      changedLegLines,
+      changedLegs: changedLegs.slice(0, 3),
+      realLegCount,
+      mutedTargetCandidate
+    };
+  }
+
   function markSummaryLines(entry, summaryLines) {
     const changedLegs = Array.isArray(entry && entry.changedLegs) ? entry.changedLegs : [];
     if (!changedLegs.length) return summaryLines;
@@ -282,6 +345,7 @@
     formatPathAlertEvaluationText,
     buildPathAlertChangedLegLines,
     buildPathAlertLegKey,
+    buildTriggeredPathAlertEntry,
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,
     buildPathAlertAggregatedLog,

@@ -7,6 +7,7 @@ const {
   buildPathAlertAggregatedLog,
   buildPathAlertChangedLegLines,
   buildPathAlertLegKey,
+  buildTriggeredPathAlertEntry,
   buildQuoteAlertDirectionLabel,
   buildQuoteAlertCurrentValueText,
   buildQuoteAlertRuleLine,
@@ -43,6 +44,94 @@ assert.deepStrictEqual(
     'arbitrum:cbBTC->WBTC @1.002688 +1.50bp',
     'ethereum:WBTC->cbBTC -0.32bp'
   ]
+);
+const triggeredPathEntry = buildTriggeredPathAlertEntry({
+  alert: {
+    id: 'path-1',
+    name: '',
+    target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:wbtc' }
+  },
+  evaluation: {
+    profitBp: 3.21,
+    cycle: {
+      legs: [
+        { quoteId: 101, chain: 'arbitrum', from: 'cbBTC', to: 'WBTC', rate: 1.002688 },
+        { rule: true, chain: '规则', from: 'WBTC', to: 'cbBTC', rate: 1 },
+        { quoteId: 102, inverse: true, pricingMode: 'cex-bid1', chain: 'ethereum', from: 'WBTC', to: 'cbBTC', rate: 0.997524 }
+      ]
+    },
+    alertMessage: '使用自定义报警文案'
+  },
+  changedLegs: [
+    { quoteId: 101, direction: 'forward', pricingMode: 'raw', rate: 1.002688, deltaBp: 1.5 },
+    { quoteId: 102, inverse: true, pricingMode: 'cex-bid1', rate: 0.997524, deltaBp: -0.4 },
+    { quoteId: 103, direction: 'forward', rate: 1.1, deltaBp: 0.2 },
+    { quoteId: 104, direction: 'forward', rate: 1.2, deltaBp: 0.3 }
+  ],
+  buildDisplayTitle: () => '固定 WBTC 路径',
+  buildFallbackSummaryLines: () => ['fallback line'],
+  buildMutedTargetCandidate: () => ({ target: { type: 'path', legs: [] } }),
+  formatCycleLeg: (leg) => `${leg.chain}:${leg.from}->${leg.to}`,
+  formatChangedLeg: (leg) => `${leg.quoteId}:${leg.deltaBp}`,
+  getRealLegCount: () => 2,
+  isRuleLeg: (leg) => Boolean(leg && leg.rule)
+});
+assert.deepStrictEqual(triggeredPathEntry, {
+  alert: {
+    id: 'path-1',
+    name: '固定 WBTC 路径',
+    target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:wbtc' }
+  },
+  evaluation: {
+    profitBp: 3.21,
+    cycle: {
+      legs: [
+        { quoteId: 101, chain: 'arbitrum', from: 'cbBTC', to: 'WBTC', rate: 1.002688 },
+        { rule: true, chain: '规则', from: 'WBTC', to: 'cbBTC', rate: 1 },
+        { quoteId: 102, inverse: true, pricingMode: 'cex-bid1', chain: 'ethereum', from: 'WBTC', to: 'cbBTC', rate: 0.997524 }
+      ]
+    },
+    alertMessage: '使用自定义报警文案'
+  },
+  summaryLines: [
+    'arbitrum:cbBTC->WBTC',
+    'ethereum:WBTC->cbBTC'
+  ],
+  summaryLegKeys: [
+    '101|forward|raw',
+    '102|inverse|cex-bid1'
+  ],
+  customAlertMessage: '使用自定义报警文案',
+  changedLegLines: [
+    '101:1.5 @1.002688 +1.50bp',
+    '102:-0.4 @0.997524 -0.40bp',
+    '103:0.2 @1.100000 +0.20bp'
+  ],
+  changedLegs: [
+    { quoteId: 101, direction: 'forward', pricingMode: 'raw', rate: 1.002688, deltaBp: 1.5 },
+    { quoteId: 102, inverse: true, pricingMode: 'cex-bid1', rate: 0.997524, deltaBp: -0.4 },
+    { quoteId: 103, direction: 'forward', rate: 1.1, deltaBp: 0.2 }
+  ],
+  realLegCount: 2,
+  mutedTargetCandidate: { target: { type: 'path', legs: [] } }
+});
+assert.deepStrictEqual(
+  buildTriggeredPathAlertEntry({
+    alert: { id: 'display-message', target: { type: 'rule', ruleKind: 'special' } },
+    evaluation: { displayMessage: ' line A\n\nline B ' },
+    buildDisplayTitle: () => '',
+    buildFallbackSummaryLines: () => ['fallback line']
+  }).summaryLines,
+  ['line A', 'line B']
+);
+assert.deepStrictEqual(
+  buildTriggeredPathAlertEntry({
+    alert: { id: 'fallback', target: { type: 'path', legs: [] } },
+    evaluation: {},
+    buildDisplayTitle: () => '',
+    buildFallbackSummaryLines: () => ['fallback line']
+  }).summaryLines,
+  ['fallback line']
 );
 
 const singleEntry = {
