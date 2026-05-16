@@ -66,7 +66,10 @@ const {
   getArbDetailChartCardElements,
   buildArbDetailChartLoadedMetaText,
   applyArbDetailChartLoadedMeta,
-  applyArbDetailChartCardError
+  applyArbDetailChartCardError,
+  buildArbDetailChartLinkState,
+  applyArbDetailChartLinkState,
+  hasArbDetailChartPreviewContent
 } = require('../src/arb/arb-detail-utils');
 
 function resolveGridActionFor(resolver, matches, event = { type: 'click' }) {
@@ -726,6 +729,32 @@ assert.deepStrictEqual(applyArbDetailChartCardError(null, null, ''), {
   canvasReplaced: false,
   metaUpdated: false
 });
+
+assert.deepStrictEqual(buildArbDetailChartLinkState('/charts?x=1'), {
+  href: '/charts?x=1',
+  ariaDisabled: 'false'
+});
+assert.deepStrictEqual(buildArbDetailChartLinkState(''), {
+  href: '/charts',
+  ariaDisabled: 'true'
+});
+const chartLinkEl = {
+  href: '',
+  attrs: {},
+  setAttribute(name, value) {
+    this.attrs[name] = value;
+  }
+};
+assert.deepStrictEqual(applyArbDetailChartLinkState(chartLinkEl, '/charts?pair=1'), {
+  href: '/charts?pair=1',
+  ariaDisabled: 'false'
+});
+assert.strictEqual(chartLinkEl.href, '/charts?pair=1');
+assert.strictEqual(chartLinkEl.attrs['aria-disabled'], 'false');
+assert.strictEqual(applyArbDetailChartLinkState(null, '/charts'), null);
+assert.strictEqual(hasArbDetailChartPreviewContent({ childElementCount: 1 }), true);
+assert.strictEqual(hasArbDetailChartPreviewContent({ childElementCount: 0 }), false);
+assert.strictEqual(hasArbDetailChartPreviewContent(null), false);
 
 assert.deepStrictEqual(
   summarizeDetailResult(0.2, 0.201),

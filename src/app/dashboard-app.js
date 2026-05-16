@@ -2250,10 +2250,7 @@
     }
 
     function setArbDetailChartLinkState(chartHref) {
-        if (!arbDetailChartLink) return;
-        const href = chartHref ? String(chartHref) : '/charts';
-        arbDetailChartLink.href = href;
-        arbDetailChartLink.setAttribute('aria-disabled', chartHref ? 'false' : 'true');
+        getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, chartHref);
     }
 
     function destroyArbDetailChartPreview() {
@@ -2335,7 +2332,7 @@
             return;
         }
 
-        if (!forceReload && arbDetailState.chartPreviewSignature === signature && arbDetailChartPreview.childElementCount > 0) {
+        if (!forceReload && arbDetailState.chartPreviewSignature === signature && getArbDetailUtils().hasArbDetailChartPreviewContent(arbDetailChartPreview)) {
             return;
         }
 

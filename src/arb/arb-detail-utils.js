@@ -1034,6 +1034,28 @@
     };
   }
 
+  function buildArbDetailChartLinkState(chartHref) {
+    const hasChartHref = Boolean(chartHref);
+    return {
+      href: hasChartHref ? String(chartHref) : '/charts',
+      ariaDisabled: hasChartHref ? 'false' : 'true'
+    };
+  }
+
+  function applyArbDetailChartLinkState(linkEl, chartHref) {
+    if (!linkEl) return null;
+    const state = buildArbDetailChartLinkState(chartHref);
+    linkEl.href = state.href;
+    if (typeof linkEl.setAttribute === 'function') {
+      linkEl.setAttribute('aria-disabled', state.ariaDisabled);
+    }
+    return state;
+  }
+
+  function hasArbDetailChartPreviewContent(containerEl) {
+    return Boolean(containerEl && Number(containerEl.childElementCount) > 0);
+  }
+
   function buildArbOpportunityStableId(section, label, cycle) {
     const safeSection = String(section || '');
     const safeLabel = String(label || '');
@@ -1148,6 +1170,9 @@
     buildArbDetailChartLoadedMetaText,
     applyArbDetailChartLoadedMeta,
     applyArbDetailChartCardError,
+    buildArbDetailChartLinkState,
+    applyArbDetailChartLinkState,
+    hasArbDetailChartPreviewContent,
     buildUniqueArbOpportunityId,
     shouldApplyArbDetailRequestVersion,
     applyArbDetailCardError

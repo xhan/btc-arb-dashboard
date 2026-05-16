@@ -1675,6 +1675,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().clearArbDetailPreviewContainers({'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview, message);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, chartHref);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().hasArbDetailChartPreviewContent(arbDetailChartPreview)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewMessage(cardEl, message);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewReady(cardEl, previewState.seriesCount);'));
@@ -1690,6 +1692,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("querySelector('.arb-detail-profit-canvas')"));
     assert.ok(!appJsResponse.body.includes("querySelector('.arb-detail-chart-canvas')"));
     assert.ok(!appJsResponse.body.includes('data-arb-detail-chart-index="${index}"'));
+    assert.ok(!appJsResponse.body.includes('arbDetailChartLink.href ='));
+    assert.ok(!appJsResponse.body.includes("arbDetailChartLink.setAttribute('aria-disabled'"));
+    assert.ok(!appJsResponse.body.includes('arbDetailChartPreview.childElementCount'));
     assert.ok(!appJsResponse.body.includes("arbDetailChartPreview.querySelector('[data-arb-detail-profit-card]')"));
     assert.ok(!appJsResponse.body.includes('cardEl.innerHTML = getArbDetailUtils().buildArbDetailProfitPreview'));
     assert.ok(arbDetailUtilsResponse.body.includes('function clearArbDetailPreviewContainers(refs = {})'));
@@ -1697,6 +1702,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailChartPreviewStrip(containerEl, pairs = [], options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('function getArbDetailProfitPreviewElements(cardEl)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function getArbDetailChartCardElements(chartPreviewEl, index)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailChartLinkState(linkEl, chartHref)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function hasArbDetailChartPreviewContent(containerEl)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailShellHtml(arbDetailGrid, arbDetailState.cards)'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailTokenHtml'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailPairHtml'));
