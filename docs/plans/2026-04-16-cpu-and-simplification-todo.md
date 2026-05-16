@@ -130,11 +130,13 @@
   - `app.js` 仍是超大文件，包含报价轮询、套利、详情、报警、日志、数据终端、保存、主题等多职责
 - 建议拆分：
   - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `quote-queue-runtime-utils.js`，`app.js` 只保留业务依赖注入和入口包装
-  - `arb-panel`：snapshot / topology 缓存所有权已下沉到 `arb-path-template-cache-utils.js`，`app.js` 只保留缓存 key 构建和面板数据装配
-  - `arb-detail`：已先抽出刷新调度器 `arb-detail-refresh-utils.js`，source budget Map 所有权已下沉到 `arb-detail-utils.js`
+  - `quote-ui-runtime`：hover 延迟显示和 trend timer 已分别下沉到 `quote-display-utils.js` / `quote-state-runtime-utils.js`
+  - `arb-panel`：snapshot / topology 缓存和面板刷新 debounce 所有权已下沉到 `arb-path-template-cache-utils.js` / `arb-runtime-memory-utils.js`，`app.js` 只保留缓存 key 构建和面板数据装配
+  - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `arb-detail-refresh-utils.js`，source budget Map 所有权已下沉到 `arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`
-  - `data-terminal`
-  - `dashboard-persistence`：配置保存 debounce timer 已下沉到 `dashboard-runtime-utils.js`
+  - `data-terminal`：records/candidates cache 和刷新 timer 已下沉到 `data-terminal-utils.js`
+  - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce 已下沉到 `dashboard-runtime-utils.js`
+  - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。

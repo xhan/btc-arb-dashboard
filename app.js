@@ -5221,11 +5221,6 @@
                 addToQueue(quote);
             });
 
-            // 启动 burst 会与 scheduler 并行，容易放大瞬时请求量（尤其是 Kyber）。
-            // allQuotes.forEach((quote, i) => {
-            //     setTimeout(() => fetchSingleQuote(quote), i * 100);
-            // });
-
             updateQuoteRunStateTag();
             updateSchedulers();
             startPriceSnapshotTimer();
