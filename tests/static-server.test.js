@@ -1590,7 +1590,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('typeof window.AlertDebugUtils'));
     assert.ok(!appJsResponse.body.includes('!alertDebugController || typeof alertDebugController.enable'));
     assert.ok(appJsResponse.body.includes("windowSec: '3600'"));
-    assert.ok(appJsResponse.body.includes('最近 1 小时'));
+    assert.ok(!appJsResponse.body.includes('最近 1 小时'));
+    assert.ok(arbDetailUtilsResponse.body.includes('最近 1 小时'));
     assert.ok(response.body.includes('id="alert-log-log-tab"'));
     assert.ok(response.body.includes('id="alert-log-muted-log-tab"'));
     assert.ok(response.body.includes('id="alert-log-muted-tab"'));
@@ -1674,8 +1675,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewMessage(cardEl, message);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewReady(cardEl, previewState.seriesCount);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewMeta(metaEl, previewState.metaText);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartLoadedMeta(metaEl, series.source);'));
+    assert.ok(appJsResponse.body.includes("getArbDetailUtils().applyArbDetailChartCardError(canvasEl, metaEl, error.message || '图表加载失败');"));
     assert.ok(!appJsResponse.body.includes('arbDetailChartPreview.innerHTML'));
     assert.ok(!appJsResponse.body.includes('arbDetailProfitPreview.innerHTML'));
+    assert.ok(!appJsResponse.body.includes('metaEl.textContent'));
+    assert.ok(!appJsResponse.body.includes('canvasEl.outerHTML'));
     assert.ok(!appJsResponse.body.includes("arbDetailChartPreview.querySelector('[data-arb-detail-profit-card]')"));
     assert.ok(!appJsResponse.body.includes('cardEl.innerHTML = getArbDetailUtils().buildArbDetailProfitPreview'));
     assert.ok(arbDetailUtilsResponse.body.includes('function clearArbDetailPreviewContainers(refs = {})'));

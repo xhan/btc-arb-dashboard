@@ -778,6 +778,18 @@
     return true;
   }
 
+  function setElementText(element, text) {
+    if (!element) return false;
+    element.textContent = String(text == null ? '' : text);
+    return true;
+  }
+
+  function replaceElementHtml(element, html) {
+    if (!element) return false;
+    element.outerHTML = html;
+    return true;
+  }
+
   function applyArbDetailShellHtml(gridEl, cards = []) {
     return setElementHtml(gridEl, buildArbDetailShellHtml(cards));
   }
@@ -887,6 +899,10 @@
     return setElementHtml(cardEl, buildArbDetailProfitPreviewReadyHtml(seriesCount));
   }
 
+  function applyArbDetailProfitPreviewMeta(metaEl, metaText) {
+    return setElementText(metaEl, metaText);
+  }
+
   function buildArbDetailProfitPreviewState(seriesList, options = {}) {
     const validSeries = (Array.isArray(seriesList) ? seriesList : [])
       .filter((series) => Array.isArray(series) && series.length);
@@ -953,6 +969,21 @@
 
   function applyArbDetailChartPreviewStrip(containerEl, pairs = [], options = {}) {
     return setElementHtml(containerEl, buildArbDetailChartPreviewStripHtml(pairs, options));
+  }
+
+  function buildArbDetailChartLoadedMetaText(source) {
+    return `${source || '历史快照'} · 最近 1 小时`;
+  }
+
+  function applyArbDetailChartLoadedMeta(metaEl, source) {
+    return setElementText(metaEl, buildArbDetailChartLoadedMetaText(source));
+  }
+
+  function applyArbDetailChartCardError(canvasEl, metaEl, message) {
+    return {
+      canvasReplaced: replaceElementHtml(canvasEl, buildArbDetailChartMessageHtml(message || '图表加载失败')),
+      metaUpdated: setElementText(metaEl, '加载失败')
+    };
   }
 
   function buildArbOpportunityStableId(section, label, cycle) {
@@ -1059,9 +1090,13 @@
     getArbDetailProfitCardElement,
     applyArbDetailProfitPreviewMessage,
     applyArbDetailProfitPreviewReady,
+    applyArbDetailProfitPreviewMeta,
     buildArbDetailProfitPreviewState,
     buildArbDetailChartPreviewStripHtml,
     applyArbDetailChartPreviewStrip,
+    buildArbDetailChartLoadedMetaText,
+    applyArbDetailChartLoadedMeta,
+    applyArbDetailChartCardError,
     buildUniqueArbOpportunityId,
     shouldApplyArbDetailRequestVersion,
     applyArbDetailCardError

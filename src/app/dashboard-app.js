@@ -2314,9 +2314,7 @@
         chartInstance.update(previewState.points);
         arbDetailChartPreviewCharts.push(chartInstance);
 
-        if (metaEl) {
-            metaEl.textContent = previewState.metaText;
-        }
+        getArbDetailUtils().applyArbDetailProfitPreviewMeta(metaEl, previewState.metaText);
     }
 
     async function syncArbDetailChartPreview(current, options = {}) {
@@ -2393,17 +2391,10 @@
                 loadedSeries[index] = Array.isArray(series.points) ? series.points : [];
                 arbDetailChartPreviewCharts.push(chartInstance);
 
-                if (metaEl) {
-                    metaEl.textContent = `${series.source || '历史快照'} · 最近 1 小时`;
-                }
+                getArbDetailUtils().applyArbDetailChartLoadedMeta(metaEl, series.source);
             } catch (error) {
                 if (arbDetailChartPreviewRunId !== runId) return;
-                if (canvasEl) {
-                    canvasEl.outerHTML = getArbDetailUtils().buildArbDetailChartMessageHtml(error.message || '图表加载失败');
-                }
-                if (metaEl) {
-                    metaEl.textContent = '加载失败';
-                }
+                getArbDetailUtils().applyArbDetailChartCardError(canvasEl, metaEl, error.message || '图表加载失败');
             }
         }));
 

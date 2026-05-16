@@ -57,9 +57,13 @@ const {
   getArbDetailProfitCardElement,
   applyArbDetailProfitPreviewMessage,
   applyArbDetailProfitPreviewReady,
+  applyArbDetailProfitPreviewMeta,
   buildArbDetailProfitPreviewState,
   buildArbDetailChartPreviewStripHtml,
-  applyArbDetailChartPreviewStrip
+  applyArbDetailChartPreviewStrip,
+  buildArbDetailChartLoadedMetaText,
+  applyArbDetailChartLoadedMeta,
+  applyArbDetailChartCardError
 } = require('../src/arb/arb-detail-utils');
 
 function resolveGridActionFor(resolver, matches, event = { type: 'click' }) {
@@ -580,6 +584,10 @@ assert.strictEqual(profitCardEl.innerHTML, profitMessageHtml);
 assert.strictEqual(applyArbDetailProfitPreviewReady(profitCardEl, 3), true);
 assert.strictEqual(profitCardEl.innerHTML, readyProfitHtml);
 assert.strictEqual(applyArbDetailProfitPreviewReady(null, 3), false);
+const previewMetaEl = { textContent: '' };
+assert.strictEqual(applyArbDetailProfitPreviewMeta(previewMetaEl, '收益 meta'), true);
+assert.strictEqual(previewMetaEl.textContent, '收益 meta');
+assert.strictEqual(applyArbDetailProfitPreviewMeta(null, '收益 meta'), false);
 const queryProfitCard = { dataset: { profit: 'card' } };
 assert.strictEqual(getArbDetailProfitCardElement({
   querySelector(selector) {
@@ -655,6 +663,23 @@ assert.strictEqual(applyArbDetailChartPreviewStrip(chartPreviewEl, [{ quoteId: 1
 }), true);
 assert.strictEqual(chartPreviewEl.innerHTML, stripHtml);
 assert.strictEqual(applyArbDetailChartPreviewStrip(null, []), false);
+
+assert.strictEqual(buildArbDetailChartLoadedMetaText('快照源'), '快照源 · 最近 1 小时');
+assert.strictEqual(buildArbDetailChartLoadedMetaText(''), '历史快照 · 最近 1 小时');
+assert.strictEqual(applyArbDetailChartLoadedMeta(previewMetaEl, '快照源'), true);
+assert.strictEqual(previewMetaEl.textContent, '快照源 · 最近 1 小时');
+const chartErrorCanvas = { outerHTML: '' };
+const chartErrorMeta = { textContent: '' };
+assert.deepStrictEqual(applyArbDetailChartCardError(chartErrorCanvas, chartErrorMeta, '坏 <图>'), {
+  canvasReplaced: true,
+  metaUpdated: true
+});
+assert.strictEqual(chartErrorCanvas.outerHTML, '<div class="arb-detail-chart-message">坏 &lt;图&gt;</div>');
+assert.strictEqual(chartErrorMeta.textContent, '加载失败');
+assert.deepStrictEqual(applyArbDetailChartCardError(null, null, ''), {
+  canvasReplaced: false,
+  metaUpdated: false
+});
 
 assert.deepStrictEqual(
   summarizeDetailResult(0.2, 0.201),
