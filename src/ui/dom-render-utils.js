@@ -132,6 +132,13 @@
     return true;
   }
 
+  function applyQuoteAlertHighlightUi(itemEl, uiUpdate = {}) {
+    if (!itemEl || !itemEl.classList || typeof itemEl.classList.toggle !== 'function') return false;
+    itemEl.classList.toggle('highlight', Boolean(uiUpdate.highlighted));
+    itemEl.classList.toggle('highlight-past', Boolean(uiUpdate.highlightPast));
+    return true;
+  }
+
   function bindDraggableElement(element, handle, options = {}) {
     if (!element || !handle) return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -205,6 +212,7 @@
   return {
     applyTooltipState,
     applyTrendArrowState,
+    applyQuoteAlertHighlightUi,
     bindDraggableElement,
     bindFloatingPanelFocus,
     clearQuoteHighlightUi,

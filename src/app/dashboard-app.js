@@ -4116,10 +4116,7 @@
         }
 
         const uiUpdate = getDashboardRuntimeUtils().buildQuoteAlertUiUpdate(uiState, hasTriggeredThisTick);
-        if (itemEl) {
-            itemEl.classList.toggle('highlight', uiUpdate.highlighted);
-            itemEl.classList.toggle('highlight-past', uiUpdate.highlightPast);
-        }
+        getDomRenderUtils().applyQuoteAlertHighlightUi(itemEl, uiUpdate);
 
         setQuoteUiState(quote.id, uiUpdate.nextState);
         syncQuoteAlertDismissButton(resultDiv, uiUpdate.nextState, quote.id);

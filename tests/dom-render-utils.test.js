@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   applyTooltipState,
   applyTrendArrowState,
+  applyQuoteAlertHighlightUi,
   bindDraggableElement,
   bindFloatingPanelFocus,
   closestEventTarget,
@@ -132,6 +133,35 @@ assert.strictEqual(quoteHighlightEl.classList.contains('highlight-past'), false)
 assert.strictEqual(quoteHighlightEl.classList.contains('quote-item-paused'), true);
 assert.strictEqual(dismissButtonRemoved, true);
 assert.strictEqual(clearQuoteHighlightUi(null), false);
+
+const quoteHighlightToggleEl = {
+  classList: {
+    values: new Set(),
+    toggle(className, enabled) {
+      if (enabled) {
+        this.values.add(className);
+      } else {
+        this.values.delete(className);
+      }
+    },
+    contains(className) {
+      return this.values.has(className);
+    }
+  }
+};
+assert.strictEqual(applyQuoteAlertHighlightUi(quoteHighlightToggleEl, {
+  highlighted: true,
+  highlightPast: false
+}), true);
+assert.strictEqual(quoteHighlightToggleEl.classList.contains('highlight'), true);
+assert.strictEqual(quoteHighlightToggleEl.classList.contains('highlight-past'), false);
+assert.strictEqual(applyQuoteAlertHighlightUi(quoteHighlightToggleEl, {
+  highlighted: false,
+  highlightPast: true
+}), true);
+assert.strictEqual(quoteHighlightToggleEl.classList.contains('highlight'), false);
+assert.strictEqual(quoteHighlightToggleEl.classList.contains('highlight-past'), true);
+assert.strictEqual(applyQuoteAlertHighlightUi(null, { highlighted: true }), false);
 
 const htmlElement = { tagName: 'ARTICLE' };
 const documentImpl = {
