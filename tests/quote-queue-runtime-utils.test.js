@@ -50,12 +50,17 @@ function createRuntimeHarness(overrides = {}) {
     getQueueIntervalMs: (type) => intervals[type] || 0,
     getManagedQueueKeys: () => new Set(Object.keys(intervals)),
     appendQuoteQueueTasks: (queue, quote) => {
-      const task = { quoteId: quote.id, mode: quote.mode || 'main' };
-      if (!queue.some((item) => item.quoteId === task.quoteId && item.mode === task.mode)) {
-        queue.push(task);
-        return 1;
+      const tasks = Array.isArray(quote.tasks) && quote.tasks.length
+        ? quote.tasks.map((mode) => ({ quoteId: quote.id, mode }))
+        : [{ quoteId: quote.id, mode: quote.mode || 'main' }];
+      let addedCount = 0;
+      for (const task of tasks) {
+        if (!queue.some((item) => item.quoteId === task.quoteId && item.mode === task.mode)) {
+          queue.push(task);
+          addedCount += 1;
+        }
       }
-      return 0;
+      return addedCount;
     },
     removeQuoteTasksFromQueues: (queues, quoteId) => {
       let removedCount = 0;
@@ -117,6 +122,22 @@ function createRuntimeHarness(overrides = {}) {
   assert.strictEqual(harness.intervalCalls[0].intervalMs, 25);
   harness.intervalCalls[0].handler();
   assert.deepStrictEqual(harness.fetched, [{ quoteId: 101, mode: 'main' }]);
+}
+
+{
+  const quote = { id: 151, queueKey: 'kyber', tasks: ['main', 'inverse'] };
+  const harness = createRuntimeHarness({
+    dashboardState: [{ id: 1, quotes: [quote] }]
+  });
+
+  assert.strictEqual(harness.runtime.addToQueue(quote), 2);
+  harness.runtime.processQueue('kyber');
+  harness.runtime.processQueue('kyber');
+
+  assert.deepStrictEqual(harness.fetched, [
+    { quoteId: 151, mode: 'main' },
+    { quoteId: 151, mode: 'inverse' }
+  ]);
 }
 
 {

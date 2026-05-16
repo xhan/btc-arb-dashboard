@@ -85,7 +85,7 @@
         queues[type] = [];
       }
       if (!Number.isInteger(indices[type])) {
-        indices[type] = 0;
+        indices[type] = -1;
       }
       if (!(type in timers)) {
         timers[type] = null;
