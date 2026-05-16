@@ -15,7 +15,7 @@
 
 报价 provider 位置：
 
-- [market-clients/providers/cetus.js](/Users/xhan/Desktop/market_diff/market-clients/providers/cetus.js)
+- [src/market-clients/providers/cetus.js](/Users/xhan/Desktop/market_diff/src/market-clients/providers/cetus.js)
 
 ## 当前默认行为
 

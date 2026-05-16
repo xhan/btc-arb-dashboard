@@ -23,8 +23,8 @@
 **Files:**
 - Create: `fetch-once.js`
 - Modify: `server.js`
-- Modify: `market-clients/index.js`
-- Modify: `market-clients/providers/*.js`
+- Modify: `src/market-clients/index.js`
+- Modify: `src/market-clients/providers/*.js`
 
 - [ ] 实现 `fetchOnce`
 - [ ] server 与 market-clients 全量改名

@@ -252,8 +252,8 @@ x-client-id: llamaswap
 
 下面的对比基于当前仓库实现：
 
-- [market-clients/providers/kyber.js](/Users/xhan/Desktop/market_diff/market-clients/providers/kyber.js)
-- [market-clients/providers/velora.js](/Users/xhan/Desktop/market_diff/market-clients/providers/velora.js)
+- [src/market-clients/providers/kyber.js](/Users/xhan/Desktop/market_diff/src/market-clients/providers/kyber.js)
+- [src/market-clients/providers/velora.js](/Users/xhan/Desktop/market_diff/src/market-clients/providers/velora.js)
 - [scripts/velora-market-api.js](/Users/xhan/Desktop/market_diff/scripts/velora-market-api.js)
 
 ### Kyber：接口同一套，但参数和 header 更简

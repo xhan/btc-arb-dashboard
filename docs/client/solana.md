@@ -5,7 +5,7 @@
 ### Jupiter 报价
 
 - 当前报价源是 `Jupiter`
-- 代码位置：[market-clients/providers/jupiter.js](/Users/xhan/Desktop/market_diff/market-clients/providers/jupiter.js)
+- 代码位置：[src/market-clients/providers/jupiter.js](/Users/xhan/Desktop/market_diff/src/market-clients/providers/jupiter.js)
 - 当前使用的报价接口：
 
 ```text
@@ -27,7 +27,7 @@ GET https://api.jup.ag/swap/v1/quote
 ### Helius 元数据
 
 - Solana token metadata 走 `Helius RPC`
-- 代码位置：[market-clients/index.js:131](/Users/xhan/Desktop/market_diff/market-clients/index.js#L131)
+- 代码位置：[src/market-clients/index.js:131](/Users/xhan/Desktop/market_diff/src/market-clients/index.js#L131)
 - RPC 配置位置：[server.js:470](/Users/xhan/Desktop/market_diff/server.js#L470)
 - 当前调用方法：
 
