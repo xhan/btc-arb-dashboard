@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const quotePauseUtils = require('../quote-pause-utils');
+const quotePauseUtils = require('../src/quote/quote-pause-utils');
 
 assert.strictEqual(quotePauseUtils.isQuotePaused({ paused: true }), true);
 assert.strictEqual(quotePauseUtils.isQuotePaused({ paused: false }), false);
@@ -163,7 +163,7 @@ assert.deepStrictEqual(
   }
 );
 
-const browserCode = fs.readFileSync(path.join(__dirname, '..', 'quote-pause-utils.js'), 'utf8');
+const browserCode = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-pause-utils.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
 assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));

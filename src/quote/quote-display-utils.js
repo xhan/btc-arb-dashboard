@@ -1,9 +1,9 @@
 (function (root, factory) {
   const chainDefaults = typeof module !== 'undefined' && module.exports
-    ? require('./chain-defaults')
+    ? require('../../chain-defaults')
     : root.ChainDefaults;
   const tradingPairUtils = typeof module !== 'undefined' && module.exports
-    ? require('./shared/trading-pair-utils')
+    ? require('../../shared/trading-pair-utils')
     : root.TradingPairUtils;
   const api = factory(chainDefaults, tradingPairUtils);
   if (typeof module !== 'undefined' && module.exports) {

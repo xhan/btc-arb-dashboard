@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   createActiveFetchControllerRuntime,
   createQuoteQueueRuntime
-} = require('../quote-queue-runtime-utils');
+} = require('../src/quote/quote-queue-runtime-utils');
 
 class FakeAbortController {
   constructor() {

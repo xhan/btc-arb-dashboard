@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
-const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'quote-queue-runtime-utils.js'), 'utf8');
+const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-queue-runtime-utils.js'), 'utf8');
 
 assert.ok(
   appJs.includes('const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({'),

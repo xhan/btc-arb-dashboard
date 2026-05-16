@@ -19,7 +19,7 @@ const {
   resolveQuoteRequestConfig,
   shouldDelayQuoteSource,
   shouldSkipQuoteSource
-} = require('../quote-request-utils');
+} = require('../src/quote/quote-request-utils');
 
 assert.strictEqual(resolveMarketQuoteRequestConfig('Velora'), MARKET_QUOTE_REQUESTS.Velora);
 assert.strictEqual(resolveMarketQuoteRequestConfig('Unknown'), null);

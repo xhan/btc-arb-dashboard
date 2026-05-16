@@ -16,7 +16,7 @@ const {
   extractPriceFromText,
   formatCexBookValue,
   getNextQuoteDisplayMode
-} = require('../quote-display-utils');
+} = require('../src/quote/quote-display-utils');
 
 assert.deepStrictEqual(
   buildQuoteDisplayToggleState('rate'),

@@ -1,7 +1,7 @@
 const assert = require('assert');
 
 const dashboardRuntimeUtils = require('../dashboard-runtime-utils');
-const { createQuoteStateRuntime } = require('../quote-state-runtime-utils');
+const { createQuoteStateRuntime } = require('../src/quote/quote-state-runtime-utils');
 
 const runtime = createQuoteStateRuntime({ dashboardRuntimeUtils });
 

@@ -86,9 +86,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="shared/trading-pair-utils.js"'));
-    assert.ok(response.body.includes('src="quote-pause-utils.js"'));
-    assert.ok(response.body.includes('src="quote-request-utils.js"'));
-    assert.ok(response.body.includes('src="quote-display-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-pause-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="chain-defaults.js"'));
@@ -97,17 +97,17 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-runtime-utils.js"'));
     assert.ok(response.body.includes('src="muted-path-runtime-utils.js"'));
-    assert.ok(response.body.includes('src="quote-state-runtime-utils.js"'));
-    assert.ok(response.body.includes('src="quote-queue-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
-      response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
+      response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="quote-pause-utils.js"') < response.body.indexOf('src="price-snapshot-payload-utils.js"')
+      response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="price-snapshot-payload-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="quote-request-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/quote/quote-request-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="shared/trading-pair-utils.js"') < response.body.indexOf('src="app.js"')
@@ -119,7 +119,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="quote-display-utils.js"')
+      response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="src/quote/quote-display-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="chain-defaults.js"') < response.body.indexOf('src="data-terminal-utils.js"')
@@ -128,16 +128,16 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="quote-state-runtime-utils.js"')
+      response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="quote-state-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="queue-stats-utils.js"') < response.body.indexOf('src="quote-queue-runtime-utils.js"')
+      response.body.indexOf('src="queue-stats-utils.js"') < response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="quote-queue-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="dashboard-renderer.js"') < response.body.indexOf('src="app.js"')
@@ -291,19 +291,19 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbDetailRefreshUtilsResponse.statusCode, 200);
     const dexLinkUtilsResponse = await request('/dex-link-utils.js');
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
-    const quoteRequestUtilsResponse = await request('/quote-request-utils.js');
+    const quoteRequestUtilsResponse = await request('/src/quote/quote-request-utils.js');
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
-    const quotePauseUtilsResponse = await request('/quote-pause-utils.js');
+    const quotePauseUtilsResponse = await request('/src/quote/quote-pause-utils.js');
     assert.strictEqual(quotePauseUtilsResponse.statusCode, 200);
     const priceSnapshotPayloadUtilsResponse = await request('/price-snapshot-payload-utils.js');
     assert.strictEqual(priceSnapshotPayloadUtilsResponse.statusCode, 200);
-    const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
+    const quoteDisplayUtilsResponse = await request('/src/quote/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
     const requestChannelUtilsResponse = await request('/request-channel-utils.js');
     assert.strictEqual(requestChannelUtilsResponse.statusCode, 200);
     const queueStatsUtilsResponse = await request('/queue-stats-utils.js');
     assert.strictEqual(queueStatsUtilsResponse.statusCode, 200);
-    const quoteQueueRuntimeUtilsResponse = await request('/quote-queue-runtime-utils.js');
+    const quoteQueueRuntimeUtilsResponse = await request('/src/quote/quote-queue-runtime-utils.js');
     assert.strictEqual(quoteQueueRuntimeUtilsResponse.statusCode, 200);
     const chainDefaultsResponse = await request('/chain-defaults.js');
     assert.strictEqual(chainDefaultsResponse.statusCode, 200);
@@ -321,7 +321,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(pathAlertEditorUtilsResponse.statusCode, 200);
     const dashboardRuntimeUtilsResponse = await request('/dashboard-runtime-utils.js');
     assert.strictEqual(dashboardRuntimeUtilsResponse.statusCode, 200);
-    const quoteStateRuntimeUtilsResponse = await request('/quote-state-runtime-utils.js');
+    const quoteStateRuntimeUtilsResponse = await request('/src/quote/quote-state-runtime-utils.js');
     assert.strictEqual(quoteStateRuntimeUtilsResponse.statusCode, 200);
     const pathAlertNotificationUtilsResponse = await request('/path-alert-notification-utils.js');
     assert.strictEqual(pathAlertNotificationUtilsResponse.statusCode, 200);
@@ -1466,11 +1466,11 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(queueStatsResponse.statusCode, 200);
     assert.ok(queueStatsResponse.body.includes('队列统计'));
     assert.ok(queueStatsResponse.body.includes('请求发起间隔'));
-    assert.ok(queueStatsResponse.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(queueStatsResponse.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(queueStatsResponse.body.includes('src="chain-defaults.js"'));
     assert.ok(queueStatsResponse.body.includes('src="request-channel-utils.js"'));
     assert.ok(
-      queueStatsResponse.body.indexOf('src="quote-pause-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')
+      queueStatsResponse.body.indexOf('src="src/quote/quote-pause-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')
     );
     assert.ok(
       queueStatsResponse.body.indexOf('src="chain-defaults.js"') < queueStatsResponse.body.indexOf('src="request-channel-utils.js"')
@@ -1502,7 +1502,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-search-input"'));
     assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-dismissed-search-input"'));
     assert.ok(pathAlertsResponse.body.includes('src="shared/trading-pair-utils.js"'));
-    assert.ok(pathAlertsResponse.body.includes('src="quote-pause-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(!pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="chain-defaults.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="path-alert-candidate-utils.js"'));
