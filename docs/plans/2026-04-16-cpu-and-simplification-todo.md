@@ -7,9 +7,10 @@
 ### 1. 后端请求配置缓存
 - 目标：去掉高频报价接口里的重复读文件、JSON 解析和 request-channel 归一化。
 - 现状：
-  - 已新增 `runtimeConfigCache`，`buildQuoteRequestInput()` 通过缓存读取 request-channel 配置
+  - 运行时配置默认值、容错读取和缓存刷新已下沉到 `src/server/runtime-config-utils.js`
+  - `server.js` 通过 `createRuntimeConfigStore()` 持有缓存，`buildQuoteRequestInput()` 通过缓存读取 request-channel 配置
   - `config.json`、`config_more.json`、`request_channels.json` 只在启动、`/api/request-update-config`、`/api/save-config` 后重读并归一化
-  - `tests/request-channels-api.test.js` 已覆盖 `/api/save-config` 后缓存刷新
+  - `tests/runtime-config-utils.test.js` 覆盖默认值、归一化、缺失/坏 JSON fallback 和 Cetus 启动配置；`tests/request-channels-api.test.js` 覆盖 `/api/save-config` 后缓存刷新
 - 预期收益：
   - 已降低高频报价接口的 Node CPU 和磁盘 IO
   - 已降低 request-channel 归一化带来的尾延迟
@@ -155,6 +156,7 @@
     - 已启动第十二步：chain defaults、UTC+8 时间工具和 trading pair parser 迁入 `src/shared/`，后续跨前后端共享工具按这个目录维护
     - 已启动第十三步：fetch-once 与 Cetus aggregator 配置迁入 `src/server/`，根目录保留 `server.js` 作为服务端入口
     - 已启动第十四步：主看板前端入口迁入 `src/app/dashboard-app.js`，页面 HTML 与音频资产迁入 `public/`，`server.js` 只显式暴露 `public/` 和 `/src`，避免把根目录配置文件作为静态资源暴露
+    - 已启动第十五步：运行时配置默认值、`config_more` 归一化、request-channel 缓存刷新和 Cetus 启动配置读取迁入 `src/server/runtime-config-utils.js`，`server.js` 只保留路径注入和 API 触发刷新
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
