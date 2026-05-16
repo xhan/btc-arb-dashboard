@@ -2210,15 +2210,10 @@
 
     function renderArbDetailCardContents() {
         const { bestProfitIndices, bestProfitRateIndices } = getArbDetailUtils().findBestSummaryIndices(arbDetailState.cards);
-
-        arbDetailState.cards.forEach((card, index) => {
-            const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
-            const rowsEl = document.getElementById(ids.rowsId);
-            const summaryEl = document.getElementById(ids.summaryId);
-            if (!rowsEl || !summaryEl) return;
-
-            rowsEl.innerHTML = buildArbDetailRowsHtml(card, index);
-            summaryEl.innerHTML = buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices);
+        getArbDetailUtils().applyArbDetailCardContents(arbDetailState.cards, {
+            getElementById: (id) => document.getElementById(id),
+            buildRowsHtml: (card, index) => buildArbDetailRowsHtml(card, index),
+            buildSummaryHtml: (card, index) => buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices)
         });
     }
 

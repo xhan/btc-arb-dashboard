@@ -41,6 +41,7 @@ const {
   buildArbDetailSourceHtml,
   buildArbDetailRowsHtml,
   buildArbDetailSummaryHtml,
+  applyArbDetailCardContents,
   formatDetailProfitRate,
   buildArbDetailShellHtml,
   applyArbDetailShellHtml,
@@ -462,6 +463,23 @@ assert.ok(buildArbDetailSummaryHtml(
 assert.strictEqual(formatDetailProfitRate(0.0123), '+123.00‱');
 assert.strictEqual(formatDetailProfitRate('bad'), '--');
 assert.strictEqual(buildArbDetailSummaryHtml({ summary: null }, {}), '<span class="arb-detail-metric">收益 --</span>');
+
+const contentElements = {
+  'arb-detail-rows-0': { innerHTML: '' },
+  'arb-detail-summary-0': { innerHTML: '' },
+  'arb-detail-rows-1': { innerHTML: '' }
+};
+assert.deepStrictEqual(applyArbDetailCardContents([{ inputAmount: 1 }, { inputAmount: 2 }], {
+  getElementById: (id) => contentElements[id] || null,
+  buildRowsHtml: (card, index) => `rows:${index}:${card.inputAmount}`,
+  buildSummaryHtml: (card, index) => `summary:${index}:${card.inputAmount}`
+}), {
+  renderedCount: 1,
+  skippedCount: 1
+});
+assert.strictEqual(contentElements['arb-detail-rows-0'].innerHTML, 'rows:0:1');
+assert.strictEqual(contentElements['arb-detail-summary-0'].innerHTML, 'summary:0:1');
+assert.strictEqual(contentElements['arb-detail-rows-1'].innerHTML, '');
 
 const detailShellHtml = buildArbDetailShellHtml([
   { inputAmount: '1.25 <bad>' },

@@ -1655,6 +1655,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShell(arbDetailState.cards, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildNudgedArbDetailInputAmount(card.inputAmount, delta)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, rawValue)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailCardContents(arbDetailState.cards, {'));
+    assert.ok(appJsResponse.body.includes('getElementById: (id) => document.getElementById(id)'));
+    assert.ok(appJsResponse.body.includes('buildRowsHtml: (card, index) => buildArbDetailRowsHtml(card, index)'));
+    assert.ok(!appJsResponse.body.includes('rowsEl.innerHTML'));
+    assert.ok(!appJsResponse.body.includes('summaryEl.innerHTML'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailCardContents(cards = [], options = {})'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailProfitPreviewState(seriesList, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartPreviewStrip(arbDetailChartPreview, pairs, {'));
     assert.ok(appJsResponse.body.includes('buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)'));

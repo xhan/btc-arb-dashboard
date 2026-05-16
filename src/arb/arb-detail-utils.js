@@ -678,6 +678,37 @@
     return '<span class="arb-detail-metric">收益 --</span>';
   }
 
+  function applyArbDetailCardContents(cards = [], options = {}) {
+    const getElementById = typeof options.getElementById === 'function'
+      ? options.getElementById
+      : () => null;
+    const buildRowsHtml = typeof options.buildRowsHtml === 'function'
+      ? options.buildRowsHtml
+      : (card, index) => buildArbDetailRowsHtml(card, { cardIndex: index });
+    const buildSummaryHtml = typeof options.buildSummaryHtml === 'function'
+      ? options.buildSummaryHtml
+      : (card, index) => buildArbDetailSummaryHtml(card, { index });
+    const result = {
+      renderedCount: 0,
+      skippedCount: 0
+    };
+
+    (Array.isArray(cards) ? cards : []).forEach((card, index) => {
+      const ids = getArbDetailCardDomIds(index);
+      const rowsEl = getElementById(ids.rowsId);
+      const summaryEl = getElementById(ids.summaryId);
+      if (!rowsEl || !summaryEl) {
+        result.skippedCount += 1;
+        return;
+      }
+      setElementHtml(rowsEl, buildRowsHtml(card, index));
+      setElementHtml(summaryEl, buildSummaryHtml(card, index));
+      result.renderedCount += 1;
+    });
+
+    return result;
+  }
+
   function buildArbDetailShellHtml(cards = []) {
     return (Array.isArray(cards) ? cards : []).map((card, index) => {
       const ids = getArbDetailCardDomIds(index);
@@ -979,6 +1010,7 @@
     buildArbDetailSourceHtml,
     buildArbDetailRowsHtml,
     buildArbDetailSummaryHtml,
+    applyArbDetailCardContents,
     buildArbDetailShellHtml,
     applyArbDetailShellHtml,
     buildArbDetailErrorHtml,
