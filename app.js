@@ -446,10 +446,6 @@
         return getChainDefaults().isCrossChainQuote(quote);
     }
 
-    function getSingleChainDisplayName(chain) {
-        return getChainDefaults().getChainDisplayName(chain);
-    }
-
     function getQuoteChainDisplayName(quote) {
         return getChainDefaults().buildQuoteChainDisplayName(quote);
     }
@@ -517,10 +513,6 @@
 
     function getCategoryPauseAction(quotes) {
         return getQuotePauseUtils().getCategoryPauseAction(quotes);
-    }
-
-    function buildPausedMonitorState(previousState) {
-        return getQuotePauseUtils().buildPausedQuoteState(previousState);
     }
 
     function getRequestChannelUtils() {
@@ -4642,7 +4634,7 @@
             const previousState = getQuoteMarketState(quoteId) || {};
             removeFromQueue(quoteId);
             abortQuoteFetch(quoteId);
-            setQuoteMarketState(quoteId, buildPausedMonitorState(previousState));
+            setQuoteMarketState(quoteId, getQuotePauseUtils().buildPausedQuoteState(previousState));
             resetQuoteUiRuntimeState(quoteId);
             applyPausedQuoteUiState(quote, getQuoteMarketState(quoteId) || {});
             updateSchedulers();
@@ -4795,7 +4787,7 @@
             isCrossChainQuote,
             isEvmChain,
             getQuoteChainDisplayName,
-            getSingleChainDisplayName
+            getSingleChainDisplayName: formatChainLabel
         });
         const writePlan = getDashboardRenderer().buildQuoteSettingsModalWritePlan(modalState);
         applyQuoteSettingsModalWritePlan(writePlan);

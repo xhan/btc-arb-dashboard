@@ -461,8 +461,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(chainDefaultsResponse.body.includes('function normalizeChainFilterToken(chainToken)'));
     assert.ok(!appJsResponse.body.includes('const CHAIN_DISPLAY_NAMES = {'));
     assert.ok(!appJsResponse.body.includes('const CHAIN_FILTER_ALIASES = {'));
+    assert.ok(!appJsResponse.body.includes('function getSingleChainDisplayName(chain)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().getChainDisplayName(chain)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteChainDisplayName(quote)'));
+    assert.ok(appJsResponse.body.includes('getSingleChainDisplayName: formatChainLabel'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().normalizeChainFilterToken(chainToken)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteStrategy(quote)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().isCrossChainQuote(quote)'));
@@ -495,6 +497,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getQuotePauseUtils()'));
     assert.ok(appJsResponse.body.includes('QuotePauseUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildPausedQuoteState(previousState)'));
+    assert.ok(!appJsResponse.body.includes('function buildPausedMonitorState(previousState)'));
     assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildQuotePauseButtonState(quote)'));
     assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildCategoryPauseButtonState('));
     assert.ok(quotePauseUtilsResponse.body.includes('function buildQuotePauseButtonState(quote)'));
