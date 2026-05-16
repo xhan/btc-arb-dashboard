@@ -168,6 +168,7 @@
   - `app.js` 的 quote request channel tag 插入/更新/删除计划已下沉到 `quote-display-utils.js`
   - `app.js` 的 quote trend arrow 涨跌/隐藏展示模型已下沉到 `quote-display-utils.js`
   - `app.js` 的 CEX book format/summary 顶层过渡包装已移除，注入点直接委托 `quote-display-utils.js`
+  - `app.js` 的 dex link label/button 顶层过渡包装已移除，调用点直接委托 `dex-link-utils.js`
   - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `data-terminal-utils.js`
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `arb-runtime-memory-utils.js`
