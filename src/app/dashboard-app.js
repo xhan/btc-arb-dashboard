@@ -1844,16 +1844,6 @@
         });
     }
 
-    function shouldRebuildArbDetailShell() {
-        return getArbDetailUtils().shouldRebuildArbDetailShellDom(arbDetailState.cards, {
-            gridEl: arbDetailGrid,
-            getElementById: (id) => document.getElementById(id)
-        });
-    }
-
-    function renderArbDetailShell() {
-        getArbDetailUtils().applyArbDetailShellHtml(arbDetailGrid, arbDetailState.cards);
-    }
     function syncArbDetailInputValues() {
         getArbDetailUtils().syncArbDetailInputValues(arbDetailState.cards, {
             editingInputIndex: arbDetailState.editingInputIndex,
@@ -2085,8 +2075,11 @@
             getArbDetailUtils().buildArbDetailSubtitleText(current, legLines)
         );
         void syncArbDetailChartPreview(current);
-        if (forceShellRebuild || shouldRebuildArbDetailShell()) {
-            renderArbDetailShell();
+        if (forceShellRebuild || getArbDetailUtils().shouldRebuildArbDetailShellDom(arbDetailState.cards, {
+            gridEl: arbDetailGrid,
+            getElementById: (id) => document.getElementById(id)
+        })) {
+            getArbDetailUtils().applyArbDetailShellHtml(arbDetailGrid, arbDetailState.cards);
         }
         syncArbDetailInputValues();
         renderArbDetailCardContents();

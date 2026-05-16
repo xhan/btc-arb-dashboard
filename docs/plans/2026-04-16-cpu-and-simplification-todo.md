@@ -268,6 +268,7 @@
   - `src/app/dashboard-app.js` 的套利详情 subtitle 文案/DOM 写入、shell/error HTML 写入和 modal visible class 切换已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 quote 使用判断、base amount 解析和 rule id 查找单用途包装已移除，调用点直接委托 detail utils / rule definitions
   - `src/app/dashboard-app.js` 的套利详情 shell rebuild DOM 计数和元素存在性检查已下沉到 `src/arb/arb-detail-utils.js`
+  - `src/app/dashboard-app.js` 的套利详情 shell rebuild/render 单用途包装已移除，modal 渲染流程直接委托 detail utils
   - `src/app/dashboard-app.js` 的套利详情 input value 同步策略与写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 card rows/summary DOM 查找与写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 chart/profit preview 清空、消息、strip、链接状态、已有内容检查、收益卡片 HTML、canvas/meta 查询、meta 文案和图表错误 DOM 写入已下沉到 `src/arb/arb-detail-utils.js`

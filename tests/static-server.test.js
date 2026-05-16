@@ -1808,6 +1808,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function buildPathAlertEvaluationContext('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShellDom(arbDetailState.cards, {'));
     assert.ok(appJsResponse.body.includes('gridEl: arbDetailGrid'));
+    assert.ok(!appJsResponse.body.includes('function shouldRebuildArbDetailShell('));
+    assert.ok(!appJsResponse.body.includes('function renderArbDetailShell('));
     assert.ok(!appJsResponse.body.includes("arbDetailGrid.querySelectorAll('[data-arb-detail-card-index]')"));
     assert.ok(arbDetailUtilsResponse.body.includes('function shouldRebuildArbDetailShellDom(cards, options = {})'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().syncArbDetailInputValues(arbDetailState.cards, {'));
