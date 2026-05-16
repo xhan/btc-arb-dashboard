@@ -843,6 +843,14 @@
     };
   }
 
+  function advanceQuoteAlertRuntime(alert, runtimeState, evaluation, options = {}) {
+    const runtimeAlert = buildEffectiveRuntimeAlert(alert, { forceImmediate: options.forceImmediate });
+    const next = advancePathAlertRuntime(runtimeAlert, runtimeState, evaluation, options.nowMs);
+    next.evaluation = evaluation;
+    next.isSoundActive = false;
+    return next;
+  }
+
   function resolvePathAlertSnapshotState(alert, previousRuntime, nextRuntime, evaluation, allLegSnapshots) {
     const currentSnapshots = Array.isArray(evaluation && evaluation.legSnapshots)
       ? evaluation.legSnapshots.map((leg) => ({ ...leg }))
@@ -913,6 +921,7 @@
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
     DEFAULT_PATH_ALERT_SETTINGS,
     advancePathAlertRuntime,
+    advanceQuoteAlertRuntime,
     buildEffectiveRuntimeAlert,
     buildAllLegSnapshots,
     buildChangedLegs,

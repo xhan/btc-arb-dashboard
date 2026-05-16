@@ -11,6 +11,7 @@ const {
   normalizeDismissedTarget,
   evaluatePathAlert,
   advancePathAlertRuntime,
+  advanceQuoteAlertRuntime,
   isPathAlertConfirmDelayDisabled,
   buildPathAlertWebhookUrl,
   buildPathAlertSummaryLines,
@@ -1195,6 +1196,25 @@ let quoteRuntime = advancePathAlertRuntime(quoteRuntimeAlert, null, {
 assert.strictEqual(quoteRuntime.shouldTrigger, true);
 assert.strictEqual(quoteRuntime.status, 'cooldown');
 assert.strictEqual(quoteRuntime.cooldownUntil, 320_000);
+const advancedQuoteRuntime = advanceQuoteAlertRuntime(quoteRuntimeAlert, null, {
+  available: true,
+  targetType: 'quote',
+  meetsTriggerCondition: true,
+  currentValue: 0.100115
+}, {
+  forceImmediate: true,
+  nowMs: 21_000
+});
+assert.strictEqual(advancedQuoteRuntime.shouldTrigger, true);
+assert.strictEqual(advancedQuoteRuntime.status, 'cooldown');
+assert.strictEqual(advancedQuoteRuntime.cooldownUntil, 321_000);
+assert.strictEqual(advancedQuoteRuntime.isSoundActive, false);
+assert.deepStrictEqual(advancedQuoteRuntime.evaluation, {
+  available: true,
+  targetType: 'quote',
+  meetsTriggerCondition: true,
+  currentValue: 0.100115
+});
 
 assert.strictEqual(isPathAlertConfirmDelayDisabled('immediate'), true);
 assert.strictEqual(isPathAlertConfirmDelayDisabled('delayed'), false);

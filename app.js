@@ -4430,12 +4430,12 @@
 
         for (const alert of quoteAlerts) {
             const pathAlertUtils = getPathAlertUtils();
-            const runtimeAlert = pathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
             const previous = pathAlertRuntimeState.get(alert.id) || null;
             const evaluation = pathAlertUtils.evaluatePathAlert(alert, { quoteStateById: quoteMarketState });
-            const next = pathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, Date.now());
-            next.evaluation = evaluation;
-            next.isSoundActive = false;
+            const next = pathAlertUtils.advanceQuoteAlertRuntime(alert, previous, evaluation, {
+                forceImmediate: forceImmediateAlerts,
+                nowMs: Date.now()
+            });
             pathAlertRuntimeState.set(alert.id, next);
             recordAlertDebug(
                 'quote',

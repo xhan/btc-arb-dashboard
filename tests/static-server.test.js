@@ -703,6 +703,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertPageUtilsResponse.body.includes('全部立即'));
     assert.ok(appJsResponse.body.includes('let forceImmediateAlerts = false;'));
     assert.ok(appJsResponse.body.includes('buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts })'));
+    assert.ok(appJsResponse.body.includes('pathAlertUtils.advanceQuoteAlertRuntime(alert, previous, evaluation, {'));
+    assert.ok(pathAlertUtilsResponse.body.includes('function advanceQuoteAlertRuntime(alert, runtimeState, evaluation, options = {})'));
     assert.ok(appJsResponse.body.includes("closestEventTarget(event, '[data-path-alert-force-immediate]')"));
     assert.ok(response.body.includes('.alert-log-entry-collapsed'));
     assert.ok(!appJsResponse.body.includes('path-alert-import-btn'));
