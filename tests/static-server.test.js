@@ -748,11 +748,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function createQuoteHoverRuntime(options = {})'));
     assert.ok(!appJsResponse.body.includes('return `${symbol}: 等待盘口...`;'));
     assert.ok(themeUtilsResponse.body.includes('function buildThemeWritePlan(theme)'));
+    assert.ok(themeUtilsResponse.body.includes('function applyThemeWritePlan(plan, refs = {})'));
     assert.ok(themeUtilsResponse.body.includes('function getNextTheme(currentTheme)'));
     assert.ok(appJsResponse.body.includes('function getThemeUtils()'));
     assert.ok(appJsResponse.body.includes('ThemeUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('const plan = getThemeUtils().buildThemeWritePlan(theme);'));
-    assert.ok(appJsResponse.body.includes('return getThemeUtils().getNextTheme(currentTheme);'));
+    assert.ok(appJsResponse.body.includes('getThemeUtils().applyThemeWritePlan(plan, {'));
+    assert.ok(!appJsResponse.body.includes('document.body.classList.remove(...plan.body.removeClasses);'));
+    assert.ok(appJsResponse.body.includes('applyTheme(getThemeUtils().getNextTheme(document.body.dataset.theme));'));
+    assert.ok(!appJsResponse.body.includes('function getNextTheme(currentTheme)'));
     assert.ok(!appJsResponse.body.includes('const THEME_ORDER ='));
     assert.ok(!appJsResponse.body.includes('const THEME_META ='));
     assert.ok(keyboardShortcutUtilsResponse.body.includes('function resolveGlobalShortcutAction(event, state = {})'));

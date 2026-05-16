@@ -49,7 +49,37 @@
     };
   }
 
+  function applyThemeWritePlan(plan, refs = {}) {
+    if (!plan || typeof plan !== 'object') return false;
+    const body = refs.body || null;
+    const button = refs.button || null;
+    const storage = refs.storage || null;
+
+    if (body && body.classList && plan.body) {
+      body.classList.remove(...(plan.body.removeClasses || []));
+      (plan.body.addClasses || []).forEach((className) => {
+        body.classList.add(className);
+      });
+      if (body.dataset && plan.body.dataset) {
+        body.dataset.theme = plan.body.dataset.theme;
+      }
+    }
+
+    if (button && plan.button) {
+      button.innerHTML = plan.button.html;
+      button.title = plan.button.title;
+      button.setAttribute('aria-label', plan.button.ariaLabel);
+    }
+
+    if (storage && plan.storage && typeof storage.setItem === 'function') {
+      storage.setItem(plan.storage.key, plan.storage.value);
+    }
+
+    return true;
+  }
+
   return {
+    applyThemeWritePlan,
     buildThemeWritePlan,
     getNextTheme,
     normalizeTheme

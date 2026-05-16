@@ -4308,30 +4308,17 @@
 
     function applyTheme(theme) {
         const plan = getThemeUtils().buildThemeWritePlan(theme);
-        document.body.classList.remove(...plan.body.removeClasses);
-        (plan.body.addClasses || []).forEach((className) => {
-            document.body.classList.add(className);
+        getThemeUtils().applyThemeWritePlan(plan, {
+            body: document.body,
+            button: themeToggleBtn,
+            storage: getDashboardLocalStorage()
         });
-        document.body.dataset.theme = plan.body.dataset.theme;
-        if (themeToggleBtn) {
-            themeToggleBtn.innerHTML = plan.button.html;
-            themeToggleBtn.title = plan.button.title;
-            themeToggleBtn.setAttribute('aria-label', plan.button.ariaLabel);
-        }
-        const storage = getDashboardLocalStorage();
-        if (storage) {
-            storage.setItem(plan.storage.key, plan.storage.value);
-        }
-    }
-
-    function getNextTheme(currentTheme) {
-        return getThemeUtils().getNextTheme(currentTheme);
     }
 
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
     
     themeToggleBtn.addEventListener('click', () => {
-        applyTheme(getNextTheme(document.body.dataset.theme));
+        applyTheme(getThemeUtils().getNextTheme(document.body.dataset.theme));
     });
 
     function openAddCategoryModal() {

@@ -79,7 +79,7 @@
   - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `src/quote/quote-state-runtime-utils.js`，`src/app/dashboard-app.js` 只通过 runtime wrapper 读写
   - 金额输入 debounce timer Map 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，暂停 quote 时通过统一 runtime 清理待执行输入更新
   - 看板通用 localStorage 访问容错已下沉到 `src/dashboard/dashboard-runtime-utils.js`，避免主入口为主题、muted-path 等非 request-channel 状态继续耦合 request-channel 工具
-  - 主题切换的合法值、next-state 和 DOM/storage 写入计划已下沉到 `src/ui/theme-utils.js`
+  - 主题切换的合法值、next-state、DOM/storage 写入计划和计划执行已下沉到 `src/ui/theme-utils.js`
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效
   - 继续降低前端重复计算
@@ -242,7 +242,7 @@
   - `src/app/dashboard-app.js` 的浮窗拖拽实现和浮窗 focus 事件绑定已下沉到 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的浮窗 z-index 计数和默认 z-index 写入已下沉到 `src/ui/dom-render-utils.js` 的 `createFloatingPanelZIndexRuntime()`
   - `src/app/dashboard-app.js` 的 alert log active tab 状态已下沉到 `src/alerts/alert-log-ui-utils.js` 的 `createAlertLogTabRuntime()`
-  - `src/app/dashboard-app.js` 的主题 metadata、循环顺序和主题写入计划已下沉到 `src/ui/theme-utils.js`
+  - `src/app/dashboard-app.js` 的主题 metadata、循环顺序、主题写入计划和计划执行已下沉到 `src/ui/theme-utils.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
   - 继续统一剩余兼容边界命名
