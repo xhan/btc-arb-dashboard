@@ -577,7 +577,6 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildFixedArbSections(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbSection(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildSpecialArbSections(options = {})'));
-    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchDisplayEntry(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchSection(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterState(state = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterControlState(state = {})'));
@@ -585,6 +584,19 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbPathLegLines(legs, options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function updateGlobalArbFilterState(currentState, patch = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function clearGlobalArbFilterState(currentState)'));
+    assert.ok(!arbPanelLayoutUtilsResponse.body.includes('function splitSectionsIntoColumns('));
+    const arbPanelLayoutExportBlock = arbPanelLayoutUtilsResponse.body.match(/return \{\n    buildArbPanelColumns,[\s\S]*?\n  \};/);
+    assert.ok(arbPanelLayoutExportBlock);
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('splitSectionsBySectionCount'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('DEFAULT_DISPLAY_MIN_PROFIT_BP'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('selectCyclesAboveDisplayThreshold'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('selectPositiveCyclesOrBest'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('buildQuotePriceWatchDisplayEntry'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('getCycleDisplayState'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('mapEntriesForDisplayCycles'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('cycleContainsAnySymbols'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('cycleContainsAnyChains'));
+    assert.ok(!arbPanelLayoutExportBlock[0].includes('filterGlobalArbCycles'));
     assert.ok(appJsResponse.body.includes('function getArbPanelLayoutUtils()'));
     assert.ok(appJsResponse.body.includes('ArbPanelLayoutUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getPathAlertRuleDefinitionsUtils()'));
