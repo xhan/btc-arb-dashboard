@@ -3,8 +3,10 @@ const assert = require('assert');
 const {
   applyThemeWritePlan,
   buildThemeWritePlan,
+  createThemeRuntime,
   getNextTheme,
-  normalizeTheme
+  normalizeTheme,
+  readThemeFromStorage
 } = require('../src/ui/theme-utils');
 
 assert.strictEqual(normalizeTheme('light'), 'light');
@@ -83,3 +85,64 @@ assert.strictEqual(themeButton.title, '切换主题（当前：暖色）');
 assert.strictEqual(themeButton.attributes['aria-label'], '切换主题（当前：暖色）');
 assert.deepStrictEqual(themeStorageWrites, [['theme', 'warm']]);
 assert.strictEqual(applyThemeWritePlan(null, { body: bodyEl }), false);
+
+const themeReadStorage = {
+  getItem(key) {
+    assert.strictEqual(key, 'theme');
+    return 'dark';
+  }
+};
+assert.strictEqual(readThemeFromStorage(themeReadStorage), 'dark');
+assert.strictEqual(readThemeFromStorage(null), null);
+let themeReadError = null;
+assert.strictEqual(readThemeFromStorage({
+  getItem() {
+    throw new Error('blocked');
+  }
+}, {
+  onError(error) {
+    themeReadError = error;
+  }
+}), null);
+assert.strictEqual(themeReadError.message, 'blocked');
+
+const runtimeBodyClasses = new Set();
+const runtimeBody = {
+  dataset: {},
+  classList: {
+    add(className) {
+      runtimeBodyClasses.add(className);
+    },
+    remove(...classNames) {
+      classNames.forEach((className) => runtimeBodyClasses.delete(className));
+    }
+  }
+};
+const runtimeButton = {
+  innerHTML: '',
+  title: '',
+  attributes: {},
+  setAttribute(name, value) {
+    this.attributes[name] = value;
+  }
+};
+const runtimeStorageWrites = [];
+const themeRuntime = createThemeRuntime({
+  body: runtimeBody,
+  button: runtimeButton,
+  storage: {
+    getItem() {
+      return 'warm';
+    },
+    setItem(key, value) {
+      runtimeStorageWrites.push([key, value]);
+    }
+  }
+});
+assert.strictEqual(themeRuntime.load(), true);
+assert.strictEqual(runtimeBody.dataset.theme, 'warm');
+assert.strictEqual(runtimeButton.innerHTML, '🌤️');
+assert.strictEqual(themeRuntime.toggle(), true);
+assert.strictEqual(runtimeBody.dataset.theme, 'dark');
+assert.strictEqual(runtimeButton.innerHTML, '🌙');
+assert.deepStrictEqual(runtimeStorageWrites, [['theme', 'warm'], ['theme', 'dark']]);

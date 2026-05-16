@@ -156,6 +156,12 @@
     const alertLogSettingsContent = document.getElementById('alert-log-settings-content');
     const pathAlertSound = document.getElementById('path-alert-sound');
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const themeRuntime = getThemeUtils().createThemeRuntime({
+        body: document.body,
+        button: themeToggleBtn,
+        getStorage: getDashboardLocalStorage,
+        onLoadError: (error) => console.warn('读取主题本地缓存失败:', error)
+    });
     const audioNoticeEl = document.getElementById('audio-notice');
     const alertAudioRuntime = getAudioUtils().createAudioUnlockRuntime({
         audioElements: [pathAlertSound],
@@ -4043,20 +4049,9 @@
         priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void savePriceSnapshot(); });
     }
 
-    function applyTheme(theme) {
-        const plan = getThemeUtils().buildThemeWritePlan(theme);
-        getThemeUtils().applyThemeWritePlan(plan, {
-            body: document.body,
-            button: themeToggleBtn,
-            storage: getDashboardLocalStorage()
-        });
-    }
-
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
     
-    themeToggleBtn.addEventListener('click', () => {
-        applyTheme(getThemeUtils().getNextTheme(document.body.dataset.theme));
-    });
+    themeToggleBtn.addEventListener('click', () => { themeRuntime.toggle(); });
 
     function openAddCategoryModal() {
         getDashboardModalUtils().openAddCategoryModal(addCategoryModalRefs);
@@ -4507,8 +4502,7 @@
         await requestBackendConfigRefresh();
         await loadPriceSnapshotConfig();
         await loadArbSettings();
-        const storage = getDashboardLocalStorage();
-        applyTheme(storage ? storage.getItem('theme') : null);
+        themeRuntime.load();
         mutedPathRuntime.setTargets(loadMutedPathTargetsFromStorage());
         mutedPathRuntime.setLegs(loadMutedPathLegsFromStorage());
         

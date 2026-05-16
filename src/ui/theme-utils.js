@@ -78,10 +78,62 @@
     return true;
   }
 
+  function readThemeFromStorage(storage, options = {}) {
+    if (!storage || typeof storage.getItem !== 'function') return null;
+    try {
+      return storage.getItem(options.storageKey || 'theme');
+    } catch (error) {
+      if (typeof options.onError === 'function') {
+        options.onError(error);
+      }
+      return null;
+    }
+  }
+
+  function createThemeRuntime(options = {}) {
+    const getBody = typeof options.getBody === 'function'
+      ? options.getBody
+      : () => options.body || null;
+    const getButton = typeof options.getButton === 'function'
+      ? options.getButton
+      : () => options.button || null;
+    const getStorage = typeof options.getStorage === 'function'
+      ? options.getStorage
+      : () => options.storage || null;
+
+    function apply(theme) {
+      return applyThemeWritePlan(buildThemeWritePlan(theme), {
+        body: getBody(),
+        button: getButton(),
+        storage: getStorage()
+      });
+    }
+
+    function load() {
+      return apply(readThemeFromStorage(getStorage(), {
+        onError: options.onLoadError
+      }));
+    }
+
+    function toggle() {
+      const body = getBody();
+      const currentTheme = body && body.dataset ? body.dataset.theme : '';
+      return apply(getNextTheme(currentTheme));
+    }
+
+    return {
+      apply,
+      load,
+      toggle
+    };
+  }
+
   return {
     applyThemeWritePlan,
     buildThemeWritePlan,
+    createThemeRuntime,
     getNextTheme,
-    normalizeTheme
+    normalizeTheme,
+    readThemeFromStorage
   };
 });
