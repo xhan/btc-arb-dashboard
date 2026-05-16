@@ -8,6 +8,7 @@ const chainDefaultsCode = fs.readFileSync(path.join(__dirname, '..', 'chain-defa
 const tradingPairUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'shared', 'trading-pair-utils.js'), 'utf8');
 const notificationUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-notification-utils.js'), 'utf8');
 const pageUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-page-utils.js'), 'utf8');
+const editorUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-editor-utils.js'), 'utf8');
 const appCode = fs.readFileSync(path.join(__dirname, '..', 'path-alerts-app.js'), 'utf8');
 
 function createElement() {
@@ -84,6 +85,8 @@ vm.runInContext(tradingPairUtilsCode, sandbox);
 vm.runInContext(notificationUtilsCode, sandbox);
 vm.runInContext(pageUtilsCode, sandbox);
 sandbox.window.PathAlertPageUtils = sandbox.PathAlertPageUtils;
+vm.runInContext(editorUtilsCode, sandbox);
+sandbox.window.PathAlertEditorUtils = sandbox.PathAlertEditorUtils;
 vm.runInContext(appCode, sandbox);
 
 const candidates = sandbox.window.PathAlertsAppTestHooks.buildFallbackQuoteCandidatesFromDashboard([

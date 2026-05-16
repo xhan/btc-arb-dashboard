@@ -136,13 +136,10 @@
   - `path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
   - `path-alerts-app.js` 的卡片标题、meta、section 配置和路线行渲染已下沉到 `path-alert-page-utils.js`
   - `path-alerts-app.js` 的 dashboard quote 到候选报价转换已下沉到 `path-alert-candidate-utils.js`
-  - `path-alerts-app.js` 的编辑器草稿创建、克隆和 prefill/alert 还原已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的编辑器草稿到 alert target 转换已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的编辑器草稿校验和 alert 构造规则已下沉到 `path-alert-page-utils.js`
+  - `path-alerts-app.js` 的编辑器草稿创建、克隆、prefill/alert 还原、target 转换、校验和 alert 构造规则已拆到 `path-alert-editor-utils.js`
   - `path-alerts-app.js` 的交易对报警展示 label、pair text 和默认名称规则已下沉到 `path-alert-page-utils.js`
   - `path-alerts-app.js` 的报警/已忽略项摘要行生成规则已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的编辑器已选目标摘要行生成规则已下沉到 `path-alert-page-utils.js`
-  - `path-alerts-app.js` 的编辑器规则选择、候选搜索、交易对目标和已选 legs 渲染片段已下沉到 `path-alert-page-utils.js`
+  - `path-alerts-app.js` 的编辑器已选目标摘要行、规则选择、候选搜索、交易对目标和已选 legs 渲染片段已拆到 `path-alert-editor-utils.js`
   - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
 - 建议改法：
   - 先删死代码和无生产调用 API

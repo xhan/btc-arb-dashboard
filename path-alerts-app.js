@@ -133,19 +133,19 @@
   }
 
   function createEmptyDraft() {
-    return window.PathAlertPageUtils.createPathAlertEditorDraft(getEditorDraftOptions());
+    return window.PathAlertEditorUtils.createPathAlertEditorDraft(getEditorDraftOptions());
   }
 
   function cloneDraft(draft) {
-    return window.PathAlertPageUtils.clonePathAlertEditorDraft(draft, getEditorDraftOptions());
+    return window.PathAlertEditorUtils.clonePathAlertEditorDraft(draft, getEditorDraftOptions());
   }
 
   function buildDraftFromAlert(alert) {
-    return window.PathAlertPageUtils.buildPathAlertEditorDraftFromAlert(alert, getEditorDraftOptions());
+    return window.PathAlertEditorUtils.buildPathAlertEditorDraftFromAlert(alert, getEditorDraftOptions());
   }
 
   function buildDraftFromPrefill(prefill) {
-    return window.PathAlertPageUtils.buildPathAlertEditorDraftFromPrefill(prefill, getEditorDraftOptions());
+    return window.PathAlertEditorUtils.buildPathAlertEditorDraftFromPrefill(prefill, getEditorDraftOptions());
   }
 
   function buildDismissedIdentityKey(entry) {
@@ -232,7 +232,7 @@
   }
 
   function buildEditorTargetSummaryLines(draft) {
-    return window.PathAlertPageUtils.buildPathAlertEditorTargetSummaryLines(draft, {
+    return window.PathAlertEditorUtils.buildPathAlertEditorTargetSummaryLines(draft, {
       formatLeg(leg) {
         return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
       },
@@ -423,7 +423,7 @@
   }
 
   function collectEditorTarget(draft = pageState.draft) {
-    return window.PathAlertPageUtils.buildPathAlertEditorTarget(draft);
+    return window.PathAlertEditorUtils.buildPathAlertEditorTarget(draft);
   }
 
   function getEditAlertHref(alertId) {
@@ -472,7 +472,7 @@
   }
 
   function validateDraft(draft) {
-    return window.PathAlertPageUtils.validatePathAlertEditorDraft(draft, {
+    return window.PathAlertEditorUtils.validatePathAlertEditorDraft(draft, {
       quoteExists(quoteId) {
         return quoteById.has(Number(quoteId));
       },
@@ -484,7 +484,7 @@
   }
 
   function buildAlertFromDraft() {
-    return window.PathAlertPageUtils.buildPathAlertFromEditorDraft(pageState.draft, {
+    return window.PathAlertEditorUtils.buildPathAlertFromEditorDraft(pageState.draft, {
       defaultCooldownSec: alertConfig.settings?.defaultCooldownSec || 180,
       buildAlertId,
       buildDefaultAlertName,
@@ -669,14 +669,14 @@
   }
 
   function renderRuleChoices(sourceType, selectedRuleId) {
-    return window.PathAlertPageUtils.renderPathAlertEditorRuleChoicesHtml(
+    return window.PathAlertEditorUtils.renderPathAlertEditorRuleChoicesHtml(
       getRuleDefinitions(sourceType),
       selectedRuleId
     );
   }
 
   function renderCandidateSearchArea(draft) {
-    return window.PathAlertPageUtils.renderPathAlertEditorCandidateSearchHtml(draft, {
+    return window.PathAlertEditorUtils.renderPathAlertEditorCandidateSearchHtml(draft, {
       hasQuoteCandidates: quoteCandidates.length > 0
     });
   }
@@ -688,13 +688,13 @@
         : buildQuoteLabel(quote.chain, shortToken(quote.fromToken), shortToken(quote.toToken));
       return { id: quote.id, label };
     });
-    return window.PathAlertPageUtils.renderPathAlertEditorQuoteTargetHtml(draft, quoteOptions, {
+    return window.PathAlertEditorUtils.renderPathAlertEditorQuoteTargetHtml(draft, quoteOptions, {
       quoteSelectDisabled: Boolean(pageState.filterQuoteId)
     });
   }
 
   function renderSelectedLegs(draft) {
-    return window.PathAlertPageUtils.renderPathAlertEditorSelectedLegsHtml(draft, {
+    return window.PathAlertEditorUtils.renderPathAlertEditorSelectedLegsHtml(draft, {
       formatLeg(leg) {
         return buildQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
       },
