@@ -180,6 +180,18 @@
     return true;
   }
 
+  function getQuoteDomRefs(documentImpl, quoteId) {
+    const getElementById = documentImpl && typeof documentImpl.getElementById === 'function'
+      ? documentImpl.getElementById.bind(documentImpl)
+      : () => null;
+    return {
+      itemEl: getElementById(`quote-item-${quoteId}`),
+      quoteDataEl: getElementById(`quote-data-${quoteId}`),
+      quoteTextWrapperEl: getElementById(`quote-text-wrapper-${quoteId}`),
+      quoteTextEl: getElementById(`quote-text-${quoteId}`)
+    };
+  }
+
   function applyPausedQuoteDomState(refs = {}) {
     let changed = false;
     if (refs.itemEl) {
@@ -395,6 +407,7 @@
     createFloatingPanelZIndexRuntime,
     createStableHtmlRenderer,
     escapeCssAttributeValue,
+    getQuoteDomRefs,
     hideTooltip,
     removeQuoteInverseElement,
     resetTrendArrow,

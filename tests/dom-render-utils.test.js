@@ -21,6 +21,7 @@ const {
   createFloatingPanelZIndexRuntime,
   createStableHtmlRenderer,
   escapeCssAttributeValue,
+  getQuoteDomRefs,
   showTooltip,
   hideTooltip,
   clearQuoteHighlightUi,
@@ -69,6 +70,32 @@ assert.strictEqual(renderer.render(target, '<div>B</div>'), true);
 assert.deepStrictEqual(writes, ['<div>A</div>', '<div>B</div>', '<div>B</div>']);
 
 assert.strictEqual(renderer.render(null, '<div>C</div>'), false);
+
+const quoteDomLookups = [];
+const quoteDomRefs = getQuoteDomRefs({
+  getElementById(id) {
+    quoteDomLookups.push(id);
+    return { id };
+  }
+}, 42);
+assert.deepStrictEqual(quoteDomLookups, [
+  'quote-item-42',
+  'quote-data-42',
+  'quote-text-wrapper-42',
+  'quote-text-42'
+]);
+assert.deepStrictEqual(quoteDomRefs, {
+  itemEl: { id: 'quote-item-42' },
+  quoteDataEl: { id: 'quote-data-42' },
+  quoteTextWrapperEl: { id: 'quote-text-wrapper-42' },
+  quoteTextEl: { id: 'quote-text-42' }
+});
+assert.deepStrictEqual(getQuoteDomRefs(null, 42), {
+  itemEl: null,
+  quoteDataEl: null,
+  quoteTextWrapperEl: null,
+  quoteTextEl: null
+});
 
 const tooltipEl = {
   innerHTML: '',

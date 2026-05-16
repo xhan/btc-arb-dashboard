@@ -1713,12 +1713,7 @@
     }
 
     function getQuoteDomRefs(quoteId) {
-        return {
-            itemEl: document.getElementById(`quote-item-${quoteId}`),
-            quoteDataEl: document.getElementById(`quote-data-${quoteId}`),
-            quoteTextWrapperEl: document.getElementById(`quote-text-wrapper-${quoteId}`),
-            quoteTextEl: document.getElementById(`quote-text-${quoteId}`)
-        };
+        return getDomRenderUtils().getQuoteDomRefs(document, quoteId);
     }
 
     function applyPausedQuoteUiState(quote, state) {
@@ -2254,13 +2249,6 @@
             cardIndex,
             buildSourceHtml: (row, options) => getArbDetailUtils().buildArbDetailSourceHtml(row, options)
         });
-    }
-
-    function promptMutedPathLegDurationHours() {
-        const input = window.prompt('输入屏蔽时长（小时，正整数）', '2');
-        if (input === null) return null;
-        const value = Number.parseInt(String(input).trim(), 10);
-        return Number.isFinite(value) && value > 0 ? value : null;
     }
 
     function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
@@ -4893,7 +4881,7 @@
                             ? arbDetailState.cards[action.cardIndex].rows[action.rowIndex]
                             : null;
                         if (!row) return;
-                        const durationHours = promptMutedPathLegDurationHours();
+                        const durationHours = getMutedPathLegUtils().promptMutedPathLegDurationHours(window.prompt.bind(window));
                         if (!durationHours) return;
                         muteArbDetailLeg(row, durationHours, Date.now());
                         return;

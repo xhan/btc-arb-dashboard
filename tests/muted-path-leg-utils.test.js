@@ -2,6 +2,8 @@ const assert = require('assert');
 
 const {
   normalizeMutedPathLeg,
+  parseMutedPathLegDurationHours,
+  promptMutedPathLegDurationHours,
   createMutedPathLegEntry,
   extendMutedPathLegEntry,
   pruneExpiredMutedPathLegs,
@@ -11,6 +13,22 @@ const {
   trimMutedPathLegsForStorage,
   filterMutedPathLegs
 } = require('../src/path-alerts/muted-path-leg-utils');
+
+assert.strictEqual(parseMutedPathLegDurationHours('2'), 2);
+assert.strictEqual(parseMutedPathLegDurationHours(' 8 '), 8);
+assert.strictEqual(parseMutedPathLegDurationHours('0'), null);
+assert.strictEqual(parseMutedPathLegDurationHours('abc'), null);
+assert.strictEqual(parseMutedPathLegDurationHours(null), null);
+let promptArgs = null;
+assert.strictEqual(
+  promptMutedPathLegDurationHours((message, defaultValue) => {
+    promptArgs = [message, defaultValue];
+    return '3';
+  }),
+  3
+);
+assert.deepStrictEqual(promptArgs, ['输入屏蔽时长（小时，正整数）', '2']);
+assert.strictEqual(promptMutedPathLegDurationHours(() => null), null);
 
 const mutedLeg = createMutedPathLegEntry(
   {

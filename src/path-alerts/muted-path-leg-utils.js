@@ -13,6 +13,20 @@
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
   }
 
+  function parseMutedPathLegDurationHours(value) {
+    if (value == null) return null;
+    const parsed = Number.parseInt(String(value).trim(), 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  function promptMutedPathLegDurationHours(promptImpl) {
+    const readPrompt = typeof promptImpl === 'function'
+      ? promptImpl
+      : (typeof window !== 'undefined' && typeof window.prompt === 'function' ? window.prompt.bind(window) : null);
+    if (!readPrompt) return null;
+    return parseMutedPathLegDurationHours(readPrompt('输入屏蔽时长（小时，正整数）', '2'));
+  }
+
   function normalizeDirection(value) {
     return value === 'inverse' ? 'inverse' : 'forward';
   }
@@ -163,6 +177,8 @@
   return {
     DEFAULT_MUTED_PATH_LEG_DURATION_MS,
     normalizeMutedPathLeg,
+    parseMutedPathLegDurationHours,
+    promptMutedPathLegDurationHours,
     buildMutedPathLegKey,
     createMutedPathLegEntry,
     extendMutedPathLegEntry,

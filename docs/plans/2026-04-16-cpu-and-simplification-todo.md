@@ -136,7 +136,7 @@
 - 建议拆分：
   - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `src/quote/quote-queue-runtime-utils.js`，`src/app/dashboard-app.js` 只保留业务依赖注入和入口包装
   - `quote-request`：source 支持链判断已下沉到 `src/quote/quote-request-utils.js`，`src/app/dashboard-app.js` 不再维护 Kyber/0x 支持链常量
-  - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `src/quote/quote-display-utils.js` / `src/quote/quote-state-runtime-utils.js`，display-mode text rerender、paused/active/switching quote DOM state、主报价 result/error DOM state、反向报价 queued/result/error/remove DOM state、tooltip 定位/显示/隐藏编排、trend arrow DOM patch/reset 和 quote alert highlight 应用/清理已下沉到 `src/ui/dom-render-utils.js`
+  - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `src/quote/quote-display-utils.js` / `src/quote/quote-state-runtime-utils.js`，display-mode text rerender、paused/active/switching quote DOM state、主报价 result/error DOM state、反向报价 queued/result/error/remove DOM state、quote DOM refs 装配、tooltip 定位/显示/隐藏编排、trend arrow DOM patch/reset 和 quote alert highlight 应用/清理已下沉到 `src/ui/dom-render-utils.js`
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 与 dirty 状态所有权、全局过滤栏读写计划和面板内容事件动作解析已下沉到 `src/arb/arb-path-template-cache-utils.js` / `src/arb/arb-runtime-memory-utils.js` / `src/arb/arb-panel-layout-utils.js` / `src/arb/arb-panel-renderer.js`，`src/app/dashboard-app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
@@ -188,6 +188,7 @@
   - 未使用的 generic alert log 渲染路径已移除
   - alert log 的 restored muted selector、恢复卡片删除、click action 解析和 active tab runtime 已下沉到 `src/alerts/alert-log-ui-utils.js`
   - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `src/path-alerts/path-alert-utils.js`
+  - 套利详情 muted leg 的屏蔽时长 prompt 文案和正整数解析已下沉到 `src/path-alerts/muted-path-leg-utils.js`
   - `src/app/dashboard-app.js` 中未调用的 muted path timer 包装函数已移除，保留唯一入口 `syncMutedPathLogTimer()`
   - `src/path-alerts/path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
   - `src/path-alerts/path-alerts-app.js` 的卡片标题、meta、section 配置和路线行渲染已下沉到 `src/path-alerts/path-alert-page-utils.js`

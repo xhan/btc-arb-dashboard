@@ -392,6 +392,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function applyActiveQuoteDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteSwitchingDomState(refs = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteDisplayTextDomState(refs = {}, options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function getQuoteDomRefs(documentImpl, quoteId)'));
     assert.ok(domRenderUtilsResponse.body.includes('function clearQuoteDataError(quoteDataEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteInverseQueuedDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteInverseResultDomState(refs = {}, options = {})'));
@@ -408,6 +409,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(itemEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteAlertHighlightUi(itemEl, uiUpdate)'));
+    assert.ok(appJsResponse.body.includes('return getDomRenderUtils().getQuoteDomRefs(document, quoteId);'));
+    assert.ok(!appJsResponse.body.includes('itemEl: document.getElementById(`quote-item-${quoteId}`)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyPausedQuoteDomState(getQuoteDomRefs(quote.id))'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyActiveQuoteDomState(getQuoteDomRefs(quote.id), options)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteSwitchingDomState({'));
@@ -1227,7 +1230,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertLogUiResponse.body.includes('延长 2 小时'));
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-leg-mute'));
     assert.ok(appJsResponse.body.includes('renderMutedAlertStatePanel'));
-    assert.ok(appJsResponse.body.includes('输入屏蔽时长（小时，正整数）'));
+    assert.ok(mutedPathLegUtilsResponse.body.includes('function promptMutedPathLegDurationHours(promptImpl)'));
+    assert.ok(!appJsResponse.body.includes('输入屏蔽时长（小时，正整数）'));
     assert.ok(!appJsResponse.body.includes('屏蔽 8 小时'));
     assert.ok(pathAlertUtilsResponse.body.includes('沉默中'));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("a: 'toggle-path-alert'"));
