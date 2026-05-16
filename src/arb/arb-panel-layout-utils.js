@@ -232,6 +232,25 @@
     return Array.from(new Set(tokens));
   }
 
+  function buildGlobalArbFilterCriteria(state = {}, options = {}) {
+    const filterState = buildGlobalArbFilterState(state);
+    const normalizeChainFilterToken = typeof options.normalizeChainFilterToken === 'function'
+      ? options.normalizeChainFilterToken
+      : (token) => String(token || '').trim();
+    const excludedChains = Array.from(new Set(
+      parseFilterInput(filterState.excludedChainsInput)
+        .map((chainToken) => normalizeChainFilterToken(chainToken))
+        .filter(Boolean)
+    ));
+
+    return {
+      excludedSymbols: parseFilterInput(filterState.excludedSymbolsInput),
+      excludedChains,
+      includedSymbols: parseFilterInput(filterState.includedSymbolsInput),
+      twoLegOnly: filterState.twoLegOnly
+    };
+  }
+
   function normalizeTextInput(value) {
     return typeof value === 'string' ? value : '';
   }
@@ -598,6 +617,7 @@
     buildGlobalArbFilterState,
     buildGlobalArbFilterControlState,
     buildGlobalArbFilterEventPatch,
+    buildGlobalArbFilterCriteria,
     blurGlobalArbFilterInputs,
     bindGlobalArbFilterEvents,
     buildGlobalArbFilterWritePlan,

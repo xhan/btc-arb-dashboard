@@ -1622,7 +1622,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('buildQuoteAlertWatchEntries'));
     assert.ok(appJsResponse.body.includes('const columns = getArbPanelLayoutUtils().buildArbPanelColumns({'));
     assert.ok(!appJsResponse.body.includes('const columns = ['));
-    assert.ok(appJsResponse.body.includes('const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);'));
+    assert.ok(appJsResponse.body.includes('const filterCriteria = layoutUtils.buildGlobalArbFilterCriteria(getArbGlobalFilterState(), {'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterCriteria(state = {}, options = {})'));
+    assert.ok(!appJsResponse.body.includes('const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);'));
     assert.ok(!appJsResponse.body.includes('const filterState = layoutUtils.filterGlobalArbCycles(globalCycles, {'));
     assert.ok(!appJsResponse.body.includes('function parseArbFilterInput'));
     assert.ok(!appJsResponse.body.includes('function cycleContainsAnySymbols'));

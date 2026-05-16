@@ -2856,21 +2856,14 @@
             .filter(Boolean)
             .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)));
         const layoutUtils = getArbPanelLayoutUtils();
-        const excludedSymbols = layoutUtils.parseFilterInput(arbGlobalExcludedSymbolsInput);
-        const excludedChains = Array.from(new Set(
-            layoutUtils.parseFilterInput(arbGlobalExcludedChainsInput)
-                .map((chainToken) => getChainDefaults().normalizeChainFilterToken(chainToken))
-                .filter(Boolean)
-        ));
-        const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);
+        const filterCriteria = layoutUtils.buildGlobalArbFilterCriteria(getArbGlobalFilterState(), {
+            normalizeChainFilterToken: (chainToken) => getChainDefaults().normalizeChainFilterToken(chainToken)
+        });
         updateGlobalArbFilterBar();
         return layoutUtils.buildGlobalArbSection({
             sectionKey: globalSectionKey,
             cycles: globalCycles,
-            includedSymbols,
-            excludedSymbols,
-            excludedChains,
-            twoLegOnly: arbGlobalTwoLegOnly,
+            ...filterCriteria,
             expanded: arbExpandedSections.has(globalSectionKey),
             isRuleLeg,
             buildEntry: (cycle, index) => createArbOpportunityEntry(

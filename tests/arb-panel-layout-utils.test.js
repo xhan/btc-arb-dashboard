@@ -6,6 +6,7 @@ const {
   buildGlobalArbFilterState,
   buildGlobalArbFilterControlState,
   buildGlobalArbFilterEventPatch,
+  buildGlobalArbFilterCriteria,
   bindGlobalArbFilterEvents,
   buildGlobalArbFilterWritePlan,
   updateGlobalArbFilterState,
@@ -287,6 +288,23 @@ assert.deepStrictEqual(lowProfitDisplayState.displayCycles, []);
 assert.strictEqual(lowProfitDisplayState.positiveCount, 0);
 
 assert.deepStrictEqual(parseFilterInput('  cbBTC  WBTC cbBTC  USDe '), ['cbBTC', 'WBTC', 'USDe']);
+
+assert.deepStrictEqual(
+  buildGlobalArbFilterCriteria({
+    excludedSymbolsInput: ' cbBTC WBTC cbBTC ',
+    excludedChainsInput: ' base eth unknown base ',
+    includedSymbolsInput: ' LBTC ',
+    twoLegOnly: true
+  }, {
+    normalizeChainFilterToken: (token) => ({ base: 'base', eth: 'ethereum' }[token] || '')
+  }),
+  {
+    excludedSymbols: ['cbBTC', 'WBTC'],
+    excludedChains: ['base', 'ethereum'],
+    includedSymbols: ['LBTC'],
+    twoLegOnly: true
+  }
+);
 
 assert.deepStrictEqual(
   buildGlobalArbFilterState({
