@@ -254,6 +254,7 @@
   - `src/app/dashboard-app.js` 的报价设置表单读取已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只提供 DOM read adapter
   - `src/app/dashboard-app.js` 的报价设置 / 新增分区 / 新增报价表单读取单用途包装已移除，调用点直接委托 modal utils
   - `src/app/dashboard-app.js` 的确认弹窗 click 动作解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `src/app/dashboard-app.js` 的确认弹窗关闭和 quote highlight dismiss 单用途包装已移除，事件分支直接调用 runtime / DOM utils
   - `src/app/dashboard-app.js` 的 add quote 目标分区和 quote settings 当前报价选择状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createModalSelectionRuntime()`
   - `src/app/dashboard-app.js` 的确认弹窗动作回调状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createConfirmActionRuntime()`
   - `src/app/dashboard-app.js` 的报价设置 modal viewState 写入规则已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只执行 DOM write plan

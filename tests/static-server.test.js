@@ -579,6 +579,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let currentCategoryIdToAdd = null;'));
     assert.ok(!appJsResponse.body.includes('let onConfirmAction = null;'));
     assert.ok(!appJsResponse.body.includes("typeof onConfirmAction === 'function'"));
+    assert.ok(!appJsResponse.body.includes('function closeConfirmModal('));
+    assert.ok(!appJsResponse.body.includes('function dismissQuoteHighlight('));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-cancel'"));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-save'"));
     assert.ok(!appJsResponse.body.includes('if (e.target === confirmModal) closeConfirmModal();'));

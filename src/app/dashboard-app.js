@@ -3898,10 +3898,6 @@
         confirmActionRuntime.show(confirmModalRefs, message, callback);
     }
 
-    function closeConfirmModal() {
-        confirmActionRuntime.close(confirmModalRefs);
-    }
-
     function deleteQuoteFromCategory(categoryId, quoteId) {
         const category = dashboardState.find(c => c.id == categoryId);
         const quoteIndex = category ? category.quotes.findIndex(q => q.id == quoteId) : -1;
@@ -4034,14 +4030,6 @@
         return true;
     }
 
-    function dismissQuoteHighlight(quoteId) {
-        setQuoteUiState(quoteId, {
-            hasUnreadAlert: false
-        });
-        const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
-        getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl);
-    }
-
     function openQuoteSettingsModal(categoryId, quoteId) {
         const category = dashboardState.find(c => c.id == categoryId);
         if (!category) return false;
@@ -4095,7 +4083,11 @@
     function handleDashboardClick(event) {
         const action = getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget });
         if (action.type === 'dismiss-highlight') {
-            dismissQuoteHighlight(action.quoteId);
+            setQuoteUiState(action.quoteId, {
+                hasUnreadAlert: false
+            });
+            const quoteItemEl = document.getElementById(`quote-item-${action.quoteId}`);
+            getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl);
             return;
         }
         if (action.type === 'toggle-category-pause') {
@@ -4195,7 +4187,7 @@
             confirmActionRuntime.confirm();
         }
         if (action.type === 'confirm' || action.type === 'close') {
-            closeConfirmModal();
+            confirmActionRuntime.close(confirmModalRefs);
         }
     }
 
