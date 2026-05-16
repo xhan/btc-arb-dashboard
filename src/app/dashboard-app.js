@@ -3869,9 +3869,6 @@
         const displayName = getQuoteChainDisplayName(quote);
         const monitorState = getQuoteMarketState(quote.id) || {};
         const lastResultText = getQuoteDisplayText(quote, monitorState);
-        const itemEl = document.createElement('li');
-        itemEl.id = `quote-item-${quote.id}`;
-        itemEl.className = isQuotePaused(quote) ? 'quote-item quote-item-paused' : 'quote-item';
         const initialAmount = quote.amount || 1;
         const amountInputHTML = !isCexOrderbookChain(quote.chain) ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
         const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
@@ -3879,8 +3876,8 @@
         const requestChannel = getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
         const requestChannelTagHtml = getRequestChannelUtils().buildRequestChannelTagHtml(quote, requestChannel);
         const renderer = getDashboardRenderer();
-        
-        itemEl.innerHTML = renderer.renderQuoteItemShell({
+
+        const itemEl = renderer.createQuoteItemShellElement({
             quoteId: quote.id,
             categoryId,
             displayName,
@@ -3890,7 +3887,8 @@
             quoteTextClassName,
             lastResultText,
             paused: isQuotePaused(quote)
-        });
+        }, { documentImpl: document });
+        if (!itemEl) return null;
         
         addDnDHandlers(itemEl, categoryId);
 
@@ -3952,7 +3950,8 @@
         const quoteListEl = moduleEl.querySelector('.quote-list');
         if (category.quotes) {
             category.quotes.forEach(quote => {
-                quoteListEl.appendChild(createQuoteItem(quote, category.id));
+                const quoteItemEl = createQuoteItem(quote, category.id);
+                if (quoteItemEl) quoteListEl.appendChild(quoteItemEl);
             });
         }
         return moduleEl;

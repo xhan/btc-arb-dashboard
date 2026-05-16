@@ -18,6 +18,7 @@ const {
   resolveDashboardAmountInputAction,
   resolveDashboardButtonClickAction,
   resolveQuoteSettingsModalClickAction,
+  createQuoteItemShellElement,
   renderCategoryModuleShell,
   renderQuoteItemShell
 } = require('../src/dashboard/dashboard-renderer');
@@ -624,6 +625,31 @@ assert.ok(quoteItemHtml.includes('class="quote-text cex-orderbook-summary"'));
 assert.ok(quoteItemHtml.includes('1 &lt; 2'));
 assert.ok(quoteItemHtml.includes('title="恢复"'));
 assert.ok(quoteItemHtml.includes('aria-pressed="true"'));
+
+let createdQuoteItemTag = '';
+const createdQuoteItemEl = createQuoteItemShellElement({
+  quoteId: 'quote-1',
+  categoryId: 'cat-1',
+  displayName: 'ETH <Main>',
+  requestChannelTagHtml: '<span class="quote-channel-tag">主通道</span>',
+  pairLabelHtml: '<span class="quote-pair-label">ETH/USDC</span>',
+  amountInputHtml: '<input class="amount-input">',
+  quoteTextClassName: 'quote-text cex-orderbook-summary',
+  lastResultText: '1 < 2',
+  paused: true
+}, {
+  documentImpl: {
+    createElement(tagName) {
+      createdQuoteItemTag = tagName;
+      return { id: '', className: '', innerHTML: '' };
+    }
+  }
+});
+assert.strictEqual(createdQuoteItemTag, 'li');
+assert.strictEqual(createdQuoteItemEl.id, 'quote-item-quote-1');
+assert.strictEqual(createdQuoteItemEl.className, 'quote-item quote-item-paused');
+assert.strictEqual(createdQuoteItemEl.innerHTML, quoteItemHtml);
+assert.strictEqual(createQuoteItemShellElement({}, { documentImpl: {} }), null);
 
 const categoryHtml = renderCategoryModuleShell({
   categoryId: 'cat-1',

@@ -84,6 +84,16 @@
             </div>`;
   }
 
+  function createQuoteItemShellElement(config = {}, options = {}) {
+    const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
+    if (!documentImpl || typeof documentImpl.createElement !== 'function') return null;
+    const itemEl = documentImpl.createElement('li');
+    itemEl.id = `quote-item-${config.quoteId}`;
+    itemEl.className = config.paused === true ? 'quote-item quote-item-paused' : 'quote-item';
+    itemEl.innerHTML = renderQuoteItemShell(config);
+    return itemEl;
+  }
+
   function renderCategoryModuleShell(config = {}) {
     const categoryId = escapeAttr(config.categoryId);
     const categoryPauseAction = config.categoryPauseAction === 'resume' ? 'resume' : 'pause';
@@ -602,6 +612,7 @@
     resolveDashboardAmountInputAction,
     resolveDashboardButtonClickAction,
     resolveQuoteSettingsModalClickAction,
+    createQuoteItemShellElement,
     renderCategoryModuleShell,
     renderQuoteItemShell
   };

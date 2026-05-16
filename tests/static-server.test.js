@@ -811,10 +811,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getKeyboardShortcutUtils().resolveGlobalShortcutAction(event, {'));
     assert.ok(!appJsResponse.body.includes('function isTypingTarget(target)'));
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function createQuoteItemShellElement(config = {}, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function renderCategoryModuleShell(config = {})'));
     assert.ok(appJsResponse.body.includes('function getDashboardRenderer()'));
     assert.ok(appJsResponse.body.includes('DashboardRenderer is not loaded'));
-    assert.ok(appJsResponse.body.includes('renderer.renderQuoteItemShell({'));
+    assert.ok(appJsResponse.body.includes('renderer.createQuoteItemShellElement({'));
+    assert.ok(!appJsResponse.body.includes("const itemEl = document.createElement('li');"));
+    assert.ok(!appJsResponse.body.includes('itemEl.innerHTML = renderer.renderQuoteItemShell({'));
     assert.ok(appJsResponse.body.includes('renderer.renderCategoryModuleShell({'));
     assert.ok(!appJsResponse.body.includes('function getCexPairLabel(quote, state)'));
     assert.ok(!appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
@@ -1417,7 +1420,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let priceSnapshotTimer = null;'));
     assert.ok(priceSnapshotPayloadUtilsResponse.body.includes('function createPriceSnapshotTimerRuntime(options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('已暂停'));
-    assert.ok(appJsResponse.body.includes('quote-item-paused'));
+    assert.ok(dashboardRendererResponse.body.includes('quote-item-paused'));
     assert.ok(arbDetailUtilsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRow(match.quote, data, {'));
