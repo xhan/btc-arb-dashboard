@@ -862,11 +862,6 @@
         });
     }
 
-    function buildQuoteAlertActionLink(quote) {
-        const dexLink = buildQuoteAlertDexLink(quote);
-        return getPathAlertNotificationUtils().buildQuoteAlertActionLink(dexLink);
-    }
-
     function buildQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
         return getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntryForQuote({
             alert,
@@ -959,14 +954,12 @@
             alertLogWindow.style.display = 'flex';
             bringFloatingPanelToFront(alertLogWindow);
         }
-        const quote = entry && entry.quote ? entry.quote : null;
         const mutedEntry = entry && entry.mutedTargetCandidate
             ? getMutedPathTargetEntry(entry.mutedTargetCandidate, nowMs)
             : null;
         const card = getDomRenderUtils().createElementFromHtml(
             getAlertLogUiUtils().buildQuoteAlertLogHtml(entry, {
                 nowMs,
-                actionLink: entry && entry.actionLink ? entry.actionLink : buildQuoteAlertActionLink(quote),
                 mutedEntry,
                 targetKey: entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '',
                 statusText: mutedEntry ? getPathAlertUtils().buildMutedPathStatusText(mutedEntry, nowMs) : '已触发'

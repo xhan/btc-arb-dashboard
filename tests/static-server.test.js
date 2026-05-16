@@ -467,7 +467,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function formatPathAlertEvaluationText(evaluation)'));
     assert.ok(appJsResponse.body.includes('buildQuoteAlertThresholdLine: (target) => getPathAlertNotificationUtils().buildQuoteAlertThresholdLine(target)'));
     assert.ok(appJsResponse.body.includes('profitText: getPathAlertNotificationUtils().formatPathAlertEvaluationText(entry && entry.evaluation)'));
-    assert.ok(appJsResponse.body.includes('return getPathAlertNotificationUtils().buildQuoteAlertActionLink(dexLink);'));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteAlertActionLink(quote)'));
+    assert.ok(!appJsResponse.body.includes('buildQuoteAlertActionLink(quote)'));
+    assert.ok(!appJsResponse.body.includes('actionLink: entry && entry.actionLink ? entry.actionLink : buildQuoteAlertActionLink(quote)'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntryForQuote({'));
     assert.ok(!appJsResponse.body.includes('汇率已达到或超过目标'));
     assert.ok(!appJsResponse.body.includes("telegramHtmlBody: ''"));
@@ -605,7 +607,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertLogUiResponse.body.includes('data-quote-alert-dex-link-copy="1"'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-log-mute'));
     assert.ok(!appJsResponse.body.includes('buildLegacyQuoteAlertLogHtml'));
-    assert.ok(appJsResponse.body.includes('buildQuoteAlertActionLink'));
+    assert.ok(!appJsResponse.body.includes('buildQuoteAlertActionLink'));
     assert.ok(appJsResponse.body.includes('appendMutedAlertLogCard'));
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));
