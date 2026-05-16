@@ -10,6 +10,7 @@ const {
   buildQuoteAlertRuleLine,
   buildQuoteAlertMessage,
   buildQuoteAlertThresholdLine,
+  buildQuoteAlertActionLink,
   buildQuoteAlertTriggeredEntry,
   buildQuoteAlertRemotePayload,
   getQuoteAlertDirection
@@ -181,6 +182,17 @@ assert.strictEqual(
   ),
   '基准汇率 1.0001 -> 0.9997'
 );
+
+assert.deepStrictEqual(
+  buildQuoteAlertActionLink({ label: 'swap.defillama', url: 'https://example.test/swap' }),
+  { label: 'swap.defillama', url: 'https://example.test/swap' }
+);
+assert.deepStrictEqual(
+  buildQuoteAlertActionLink({ url: 'https://example.test/swap' }),
+  { label: '交易链接', url: 'https://example.test/swap' }
+);
+assert.strictEqual(buildQuoteAlertActionLink({ label: 'swap.defillama' }), null);
+assert.strictEqual(buildQuoteAlertActionLink(null), null);
 
 const quoteAlertEntry = buildQuoteAlertTriggeredEntry({
   alert: {

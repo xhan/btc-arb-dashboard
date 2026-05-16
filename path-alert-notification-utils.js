@@ -212,6 +212,14 @@
     };
   }
 
+  function buildQuoteAlertActionLink(dexLink) {
+    if (!dexLink || !dexLink.url) return null;
+    return {
+      label: dexLink.label || '交易链接',
+      url: dexLink.url
+    };
+  }
+
   function buildQuoteAlertRemotePayload(options = {}) {
     const chainName = String(options.chainName || '').trim() || '未知链';
     const label = String(options.label || '').trim();
@@ -259,6 +267,7 @@
     buildQuoteAlertRuleLine,
     buildQuoteAlertMessage,
     buildQuoteAlertThresholdLine,
+    buildQuoteAlertActionLink,
     buildQuoteAlertTriggeredEntry,
     buildQuoteAlertRemotePayload,
     getQuoteAlertDirection

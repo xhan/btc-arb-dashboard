@@ -878,11 +878,7 @@
 
     function buildQuoteAlertActionLink(quote) {
         const dexLink = buildQuoteAlertDexLink(quote);
-        if (!dexLink || !dexLink.url) return null;
-        return {
-            label: dexLink.label || '交易链接',
-            url: dexLink.url
-        };
+        return getPathAlertNotificationUtils().buildQuoteAlertActionLink(dexLink);
     }
 
     function buildQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
