@@ -1758,10 +1758,7 @@
 
     function clearQuoteAlertUi(quoteId) {
         const itemEl = document.getElementById(`quote-item-${quoteId}`);
-        if (!itemEl) return;
-        itemEl.classList.remove('highlight', 'highlight-past');
-        const dismissBtn = itemEl.querySelector('.dismiss-highlight-btn');
-        if (dismissBtn) dismissBtn.remove();
+        getDomRenderUtils().clearQuoteHighlightUi(itemEl);
     }
 
     function removeInverseQuoteElement(quoteId) {
@@ -4599,12 +4596,7 @@
             getDomRenderUtils().resetTrendArrow(arrowEl);
 
             const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
-            if (quoteItemEl) {
-                quoteItemEl.classList.remove('highlight');
-                quoteItemEl.classList.remove('highlight-past');
-                const dismissBtn = quoteItemEl.querySelector('.dismiss-highlight-btn');
-                if (dismissBtn) dismissBtn.remove();
-            }
+            getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl);
             setQuoteMarketState(quoteId, nextState);
         }
         resetQuoteUiRuntimeState(quoteId);
@@ -4626,18 +4618,12 @@
         return true;
     }
 
-    function dismissQuoteHighlight(quoteId, button) {
+    function dismissQuoteHighlight(quoteId) {
         setQuoteUiState(quoteId, {
             hasUnreadAlert: false
         });
         const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
-        if (quoteItemEl) {
-            quoteItemEl.classList.remove('highlight');
-            quoteItemEl.classList.remove('highlight-past');
-        }
-        if (button && typeof button.remove === 'function') {
-            button.remove();
-        }
+        getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl);
     }
 
     function applyQuoteSettingsModalWritePlan(plan) {
@@ -4705,7 +4691,7 @@
     function handleDashboardClick(event) {
         const action = getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget });
         if (action.type === 'dismiss-highlight') {
-            dismissQuoteHighlight(action.quoteId, action.button);
+            dismissQuoteHighlight(action.quoteId);
             return;
         }
         if (action.type === 'toggle-category-pause') {

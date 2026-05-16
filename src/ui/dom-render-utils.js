@@ -120,6 +120,18 @@
     return true;
   }
 
+  function clearQuoteHighlightUi(itemEl) {
+    if (!itemEl) return false;
+    removeClasses(itemEl, ['highlight', 'highlight-past']);
+    const dismissButton = typeof itemEl.querySelector === 'function'
+      ? itemEl.querySelector('.dismiss-highlight-btn')
+      : null;
+    if (dismissButton && typeof dismissButton.remove === 'function') {
+      dismissButton.remove();
+    }
+    return true;
+  }
+
   function bindDraggableElement(element, handle, options = {}) {
     if (!element || !handle) return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -195,6 +207,7 @@
     applyTrendArrowState,
     bindDraggableElement,
     bindFloatingPanelFocus,
+    clearQuoteHighlightUi,
     closestEventTarget,
     createElementFromHtml,
     createStableHtmlRenderer,

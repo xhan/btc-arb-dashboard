@@ -10,6 +10,7 @@ const {
   createStableHtmlRenderer,
   escapeCssAttributeValue,
   hideTooltip,
+  clearQuoteHighlightUi,
   resetTrendArrow,
   resolveEventTargetElement
 } = require('../src/ui/dom-render-utils');
@@ -112,6 +113,25 @@ assert.strictEqual(resetTrendArrow(trendArrowEl), true);
 assert.strictEqual(trendArrowEl.className, 'trend-arrow');
 assert.strictEqual(trendArrowEl.innerHTML, '');
 assert.strictEqual(resetTrendArrow(null), false);
+
+let dismissButtonRemoved = false;
+const quoteHighlightEl = {
+  classList: createClassList(['highlight', 'highlight-past', 'quote-item-paused']),
+  querySelector(selector) {
+    assert.strictEqual(selector, '.dismiss-highlight-btn');
+    return {
+      remove() {
+        dismissButtonRemoved = true;
+      }
+    };
+  }
+};
+assert.strictEqual(clearQuoteHighlightUi(quoteHighlightEl), true);
+assert.strictEqual(quoteHighlightEl.classList.contains('highlight'), false);
+assert.strictEqual(quoteHighlightEl.classList.contains('highlight-past'), false);
+assert.strictEqual(quoteHighlightEl.classList.contains('quote-item-paused'), true);
+assert.strictEqual(dismissButtonRemoved, true);
+assert.strictEqual(clearQuoteHighlightUi(null), false);
 
 const htmlElement = { tagName: 'ARTICLE' };
 const documentImpl = {
