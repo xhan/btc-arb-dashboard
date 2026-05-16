@@ -12,6 +12,7 @@ const {
   clearQuoteTrendTimer,
   deleteQuoteUiRuntimeState,
   findDashboardQuoteById,
+  findDashboardQuoteMatchById,
   getActivePathAlertEvaluationAlerts,
   getQuoteUiState,
   hasQuoteMarketStateChanged,
@@ -109,6 +110,22 @@ assert.deepStrictEqual(
   { id: '103', symbol: 'SOLUSDT' }
 );
 assert.strictEqual(findDashboardQuoteById(dashboardQuoteLookupState, 999), null);
+assert.deepStrictEqual(
+  findDashboardQuoteMatchById(dashboardQuoteLookupState, '102'),
+  {
+    quote: { id: 102, symbol: 'ETHUSDT' },
+    category: dashboardQuoteLookupState[0]
+  }
+);
+assert.deepStrictEqual(
+  findDashboardQuoteMatchById(dashboardQuoteLookupState, 103),
+  {
+    quote: { id: '103', symbol: 'SOLUSDT' },
+    category: dashboardQuoteLookupState[1]
+  }
+);
+assert.strictEqual(findDashboardQuoteMatchById(dashboardQuoteLookupState, 'bad'), null);
+assert.strictEqual(findDashboardQuoteMatchById(dashboardQuoteLookupState, 999), null);
 
 assert.strictEqual(resolveMutedStateRefreshDelay({ nowMs: 1000 }), null);
 assert.strictEqual(

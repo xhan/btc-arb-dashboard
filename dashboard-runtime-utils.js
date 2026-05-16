@@ -209,16 +209,21 @@
     return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;
   }
 
-  function findDashboardQuoteById(dashboardState, quoteId) {
+  function findDashboardQuoteMatchById(dashboardState, quoteId) {
     const numericQuoteId = Number(quoteId);
     if (!Number.isFinite(numericQuoteId)) return null;
     const categories = Array.isArray(dashboardState) ? dashboardState : [];
     for (const category of categories) {
       const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
       const quote = quotes.find((item) => Number(item && item.id) === numericQuoteId);
-      if (quote) return quote;
+      if (quote) return { quote, category };
     }
     return null;
+  }
+
+  function findDashboardQuoteById(dashboardState, quoteId) {
+    const match = findDashboardQuoteMatchById(dashboardState, quoteId);
+    return match ? match.quote : null;
   }
 
   function buildArbRuleSnapshotCacheKey(dashboardState, quoteMarketStateRevision) {
@@ -337,6 +342,7 @@
     clearQuoteTrendTimer,
     deleteQuoteUiRuntimeState,
     findDashboardQuoteById,
+    findDashboardQuoteMatchById,
     getActivePathAlertEvaluationAlerts,
     getQuoteUiState,
     hasQuoteMarketStateChanged,

@@ -1976,11 +1976,7 @@
     }
 
     function findQuoteById(quoteId) {
-        for (const category of dashboardState) {
-            const quote = (category.quotes || []).find(item => item.id === quoteId);
-            if (quote) return { quote, category };
-        }
-        return null;
+        return getDashboardRuntimeUtils().findDashboardQuoteMatchById(dashboardState, quoteId);
     }
 
     function getArbOpportunityBaseAmount(cycle) {
