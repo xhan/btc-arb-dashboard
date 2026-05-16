@@ -1644,23 +1644,16 @@
 
     function updatePauseButtonState(quote) {
         const pauseBtn = document.querySelector(`[data-toggle-pause-id="${quote.id}"]`);
-        if (!pauseBtn) return;
-        const state = getQuotePauseUtils().buildQuotePauseButtonState(quote);
-        pauseBtn.title = state.title;
-        pauseBtn.setAttribute('aria-label', state.ariaLabel);
-        pauseBtn.setAttribute('aria-pressed', state.ariaPressed);
-        pauseBtn.innerHTML = state.icon;
+        getQuotePauseUtils().applyQuotePauseButtonState(pauseBtn, quote);
     }
 
     function updateCategoryPauseButtonState(categoryId) {
         const pauseBtn = document.querySelector(`[data-toggle-category-pause-id="${categoryId}"]`);
-        if (!pauseBtn) return;
         const category = dashboardState.find((item) => item.id == categoryId);
-        const state = getQuotePauseUtils().buildCategoryPauseButtonState(category && category.quotes ? category.quotes : []);
-        pauseBtn.title = state.title;
-        pauseBtn.setAttribute('aria-label', state.ariaLabel);
-        pauseBtn.setAttribute('aria-pressed', state.ariaPressed);
-        pauseBtn.innerHTML = state.icon;
+        getQuotePauseUtils().applyCategoryPauseButtonState(
+            pauseBtn,
+            category && category.quotes ? category.quotes : []
+        );
     }
 
     function clearQuoteTrendArrow(quoteId) {

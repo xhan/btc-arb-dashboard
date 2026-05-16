@@ -64,10 +64,31 @@
     };
   }
 
+  function applyPauseButtonDomState(buttonEl, state) {
+    if (!buttonEl || !state) return false;
+    buttonEl.title = state.title;
+    if (typeof buttonEl.setAttribute === 'function') {
+      buttonEl.setAttribute('aria-label', state.ariaLabel);
+      buttonEl.setAttribute('aria-pressed', state.ariaPressed);
+    }
+    buttonEl.innerHTML = state.icon;
+    return true;
+  }
+
+  function applyQuotePauseButtonState(buttonEl, quote) {
+    return applyPauseButtonDomState(buttonEl, buildQuotePauseButtonState(quote));
+  }
+
+  function applyCategoryPauseButtonState(buttonEl, quotes) {
+    return applyPauseButtonDomState(buttonEl, buildCategoryPauseButtonState(quotes));
+  }
+
   return {
     isQuotePaused,
     getActiveQuotes,
     getCategoryPauseAction,
+    applyCategoryPauseButtonState,
+    applyQuotePauseButtonState,
     buildPausedQuoteState,
     buildQuotePauseButtonState,
     buildCategoryPauseButtonState

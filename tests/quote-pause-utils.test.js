@@ -163,6 +163,38 @@ assert.deepStrictEqual(
   }
 );
 
+function createPauseButtonFixture() {
+  return {
+    title: '',
+    innerHTML: '',
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+  };
+}
+
+const quotePauseButton = createPauseButtonFixture();
+assert.strictEqual(quotePauseUtils.applyQuotePauseButtonState(quotePauseButton, { paused: true }), true);
+assert.strictEqual(quotePauseButton.title, '恢复');
+assert.strictEqual(quotePauseButton.attributes['aria-label'], '恢复');
+assert.strictEqual(quotePauseButton.attributes['aria-pressed'], 'true');
+assert.strictEqual(quotePauseButton.innerHTML, '▶️');
+
+const categoryPauseButton = createPauseButtonFixture();
+assert.strictEqual(
+  quotePauseUtils.applyCategoryPauseButtonState(categoryPauseButton, [
+    { paused: false },
+    { paused: true }
+  ]),
+  true
+);
+assert.strictEqual(categoryPauseButton.title, '暂停分区');
+assert.strictEqual(categoryPauseButton.attributes['aria-label'], '暂停分区');
+assert.strictEqual(categoryPauseButton.attributes['aria-pressed'], 'false');
+assert.strictEqual(categoryPauseButton.innerHTML, '⏸️');
+assert.strictEqual(quotePauseUtils.applyQuotePauseButtonState(null, { paused: true }), false);
+
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-pause-utils.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);

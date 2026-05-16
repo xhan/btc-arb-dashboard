@@ -702,8 +702,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('QuotePauseUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildPausedQuoteState(previousState)'));
     assert.ok(!appJsResponse.body.includes('function buildPausedMonitorState(previousState)'));
-    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildQuotePauseButtonState(quote)'));
-    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildCategoryPauseButtonState('));
+    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().applyQuotePauseButtonState(pauseBtn, quote)'));
+    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().applyCategoryPauseButtonState('));
+    assert.ok(!appJsResponse.body.includes('pauseBtn.innerHTML = state.icon'));
+    assert.ok(!appJsResponse.body.includes("pauseBtn.setAttribute('aria-label'"));
+    assert.ok(!appJsResponse.body.includes("pauseBtn.setAttribute('aria-pressed'"));
+    assert.ok(quotePauseUtilsResponse.body.includes('function applyQuotePauseButtonState(buttonEl, quote)'));
+    assert.ok(quotePauseUtilsResponse.body.includes('function applyCategoryPauseButtonState(buttonEl, quotes)'));
     assert.ok(quotePauseUtilsResponse.body.includes('function buildQuotePauseButtonState(quote)'));
     assert.ok(quotePauseUtilsResponse.body.includes('function buildCategoryPauseButtonState(quotes)'));
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
