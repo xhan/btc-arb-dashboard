@@ -3459,10 +3459,10 @@
     }
 
     function sortTriggeredPathAlertEntries(entries) {
-        return getPathAlertUtils().sortTriggeredPathAlerts(entries).map((entry) => ({
-            ...entry,
-            realLegCount: entry.realLegCount ?? getPathAlertRealLegCount(entry.alert, entry.evaluation)
-        }));
+        return getPathAlertNotificationUtils().sortTriggeredPathAlertEntries(entries, {
+            sortEntries: getPathAlertUtils().sortTriggeredPathAlerts,
+            getRealLegCount: getPathAlertRealLegCount
+        });
     }
 
     function evaluatePathAlertsOnce() {

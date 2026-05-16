@@ -10,6 +10,7 @@ const {
   buildMutedPathTargetCandidate,
   buildMutedPathTargetFromCycleLegs,
   buildTriggeredPathAlertEntry,
+  sortTriggeredPathAlertEntries,
   buildQuoteAlertDirectionLabel,
   buildQuoteAlertCurrentValueText,
   buildQuoteAlertRuleLine,
@@ -203,6 +204,19 @@ assert.deepStrictEqual(
     buildFallbackSummaryLines: () => ['fallback line']
   }).summaryLines,
   ['fallback line']
+);
+assert.deepStrictEqual(
+  sortTriggeredPathAlertEntries([
+    { alert: { id: 'a' }, evaluation: { profitBp: 1 }, realLegCount: 5 },
+    { alert: { id: 'b' }, evaluation: { profitBp: 2 } }
+  ], {
+    sortEntries: (entries) => entries.slice().reverse(),
+    getRealLegCount: (alert, evaluation) => Number(evaluation && evaluation.profitBp) + 10
+  }),
+  [
+    { alert: { id: 'b' }, evaluation: { profitBp: 2 }, realLegCount: 12 },
+    { alert: { id: 'a' }, evaluation: { profitBp: 1 }, realLegCount: 5 }
+  ]
 );
 
 const singleEntry = {

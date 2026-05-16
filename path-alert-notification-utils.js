@@ -150,6 +150,20 @@
     };
   }
 
+  function sortTriggeredPathAlertEntries(entries, options = {}) {
+    const sourceEntries = Array.isArray(entries) ? entries : [];
+    const sortEntries = typeof options.sortEntries === 'function'
+      ? options.sortEntries
+      : (items) => items.slice();
+    const getRealLegCount = typeof options.getRealLegCount === 'function'
+      ? options.getRealLegCount
+      : () => 0;
+    return sortEntries(sourceEntries).map((entry) => ({
+      ...entry,
+      realLegCount: entry.realLegCount ?? getRealLegCount(entry.alert, entry.evaluation)
+    }));
+  }
+
   function markSummaryLines(entry, summaryLines) {
     const changedLegs = Array.isArray(entry && entry.changedLegs) ? entry.changedLegs : [];
     if (!changedLegs.length) return summaryLines;
@@ -387,6 +401,7 @@
     buildMutedPathTargetCandidate,
     buildMutedPathTargetFromCycleLegs,
     buildTriggeredPathAlertEntry,
+    sortTriggeredPathAlertEntries,
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,
     buildPathAlertAggregatedLog,
