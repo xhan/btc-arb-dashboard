@@ -5,6 +5,7 @@ const {
   buildAlertLogEntryDisplayState,
   buildAlertLogAppendPlan,
   resolveAlertLogCardPlacement,
+  buildAlertLogMutedStatusState,
   buildMutedStateItemHtml,
   buildMutedStateSectionHtml,
   buildMutedAlertStatePanelHtml,
@@ -62,6 +63,26 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   resolveAlertLogCardPlacement({ mutedEntry: null }, { targetKey: 'target-1' }),
   { destination: 'active', removeRestoredTargetKey: 'target-1' }
+);
+
+assert.deepStrictEqual(
+  buildAlertLogMutedStatusState({ expiresAt: 123 }, { statusText: '沉默中 · 59:59' }),
+  {
+    statusText: '沉默中 · 59:59',
+    statusClassName: 'path-alert-log-tag path-alert-log-tag-muted',
+    buttonText: '延长 2 小时',
+    buttonDisabled: false
+  }
+);
+
+assert.deepStrictEqual(
+  buildAlertLogMutedStatusState(null),
+  {
+    statusText: '已触发',
+    statusClassName: 'path-alert-log-tag',
+    buttonText: '忽略 1 小时',
+    buttonDisabled: false
+  }
 );
 
 const itemHtml = buildMutedStateItemHtml({

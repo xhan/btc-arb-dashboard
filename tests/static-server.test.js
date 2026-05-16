@@ -673,8 +673,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("const quoteDexLinkEl = closestEventTarget(event, '[data-quote-alert-dex-link-copy]');"));
     assert.ok(appJsResponse.body.includes('event.preventDefault();'));
     assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(quoteDexLinkEl);'));
-    assert.ok(appJsResponse.body.includes('忽略 1 小时'));
-    assert.ok(appJsResponse.body.includes('延长 2 小时'));
+    assert.ok(alertLogUiResponse.body.includes('忽略 1 小时'));
+    assert.ok(alertLogUiResponse.body.includes('延长 2 小时'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-leg-mute'));
     assert.ok(appJsResponse.body.includes('renderMutedAlertStatePanel'));
     assert.ok(appJsResponse.body.includes('输入屏蔽时长（小时，正整数）'));

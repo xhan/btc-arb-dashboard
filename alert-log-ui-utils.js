@@ -54,6 +54,23 @@
     };
   }
 
+  function buildAlertLogMutedStatusState(mutedEntry, options = {}) {
+    if (mutedEntry) {
+      return {
+        statusText: String(options.statusText || ''),
+        statusClassName: 'path-alert-log-tag path-alert-log-tag-muted',
+        buttonText: '延长 2 小时',
+        buttonDisabled: false
+      };
+    }
+    return {
+      statusText: '已触发',
+      statusClassName: 'path-alert-log-tag',
+      buttonText: '忽略 1 小时',
+      buttonDisabled: false
+    };
+  }
+
   function buildMutedStateItemHtml(config = {}) {
     const linesHtml = (Array.isArray(config.lines) ? config.lines : [])
       .filter(Boolean)
@@ -298,6 +315,7 @@
     buildAlertLogAppendPlan,
     buildAlertLogEntryDisplayState,
     resolveAlertLogCardPlacement,
+    buildAlertLogMutedStatusState,
     buildMutedStateItemHtml,
     buildMutedStateSectionHtml,
     buildMutedAlertStatePanelHtml,

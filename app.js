@@ -1229,24 +1229,16 @@
                 );
                 const statusEl = card.querySelector('[data-path-alert-muted-status]');
                 const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]');
-                if (resolvedEntry) {
-                    if (statusEl) {
-                        statusEl.textContent = getPathAlertUtils().buildMutedPathStatusText(resolvedEntry, nowMs);
-                        statusEl.className = 'path-alert-log-tag path-alert-log-tag-muted';
-                    }
-                    if (buttonEl) {
-                        buttonEl.textContent = '延长 2 小时';
-                        buttonEl.disabled = false;
-                    }
-                } else {
-                    if (statusEl) {
-                        statusEl.textContent = '已触发';
-                        statusEl.className = 'path-alert-log-tag';
-                    }
-                    if (buttonEl) {
-                        buttonEl.textContent = '忽略 1 小时';
-                        buttonEl.disabled = false;
-                    }
+                const statusState = getAlertLogUiUtils().buildAlertLogMutedStatusState(resolvedEntry, {
+                    statusText: resolvedEntry ? getPathAlertUtils().buildMutedPathStatusText(resolvedEntry, nowMs) : ''
+                });
+                if (statusEl) {
+                    statusEl.textContent = statusState.statusText;
+                    statusEl.className = statusState.statusClassName;
+                }
+                if (buttonEl) {
+                    buttonEl.textContent = statusState.buttonText;
+                    buttonEl.disabled = statusState.buttonDisabled;
                 }
             });
         });
