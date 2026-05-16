@@ -702,6 +702,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRowsHtml(card, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailSummaryHtml(card, {'));
     assert.ok(appJsResponse.body.includes('arbDetailGrid.innerHTML = getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().cloneArbDetailOpportunity(current)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailCards(baseAmount)'));
     assert.ok(!appJsResponse.body.includes('详情渲染模块未加载'));
     assert.ok(!appJsResponse.body.includes('typeof utils.buildArbDetail'));
     assert.ok(!appJsResponse.body.includes('buildDetailInputAmounts(baseAmount) {'));
@@ -813,6 +815,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('mini: true'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailPairHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRowsHtml'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailCards(baseAmount)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function cloneArbDetailOpportunity(opportunity)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRow(quote, quoteData, options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailRateDeltas(rows, baseRows)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRateDeltaText(baseRate, nextRate, decimals = 1)'));

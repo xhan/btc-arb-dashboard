@@ -2893,22 +2893,10 @@
         }
 
         const baseAmount = getArbOpportunityBaseAmount(current.cycle);
-        const defaultAmounts = getArbDetailUtils().buildDetailInputAmounts(baseAmount);
         arbDetailState.visible = true;
         arbDetailState.opportunityId = opportunityId;
-        arbDetailState.selectedOpportunity = {
-            ...current,
-            cycle: current.cycle
-                ? { ...current.cycle, legs: Array.isArray(current.cycle.legs) ? current.cycle.legs.map(leg => ({ ...leg })) : [] }
-                : null
-        };
-        arbDetailState.cards = defaultAmounts.map((amount) => ({
-            inputAmount: amount,
-            rows: [],
-            summary: null,
-            error: '',
-            requestVersion: 0
-        }));
+        arbDetailState.selectedOpportunity = getArbDetailUtils().cloneArbDetailOpportunity(current);
+        arbDetailState.cards = getArbDetailUtils().buildArbDetailCards(baseAmount);
         arbDetailState.refreshToken += 1;
         arbDetailState.isRefreshing = false;
         arbDetailState.editingInputIndex = null;

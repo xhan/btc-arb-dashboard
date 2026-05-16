@@ -52,6 +52,29 @@
     ];
   }
 
+  function buildArbDetailCards(baseAmount) {
+    return buildDetailInputAmounts(baseAmount).map((amount) => ({
+      inputAmount: amount,
+      rows: [],
+      summary: null,
+      error: '',
+      requestVersion: 0
+    }));
+  }
+
+  function cloneArbDetailOpportunity(opportunity) {
+    if (!opportunity || !opportunity.cycle) return null;
+    return {
+      ...opportunity,
+      cycle: {
+        ...opportunity.cycle,
+        legs: Array.isArray(opportunity.cycle.legs)
+          ? opportunity.cycle.legs.map((leg) => ({ ...leg }))
+          : []
+      }
+    };
+  }
+
   function buildArbDetailRateText(rawPrice, fromSymbol, toSymbol, precision = 6) {
     if (rawPrice === null || rawPrice === undefined || rawPrice === '') return '--';
     const numericRate = Number(rawPrice);
@@ -599,6 +622,8 @@
 
   return {
     buildDetailInputAmounts,
+    buildArbDetailCards,
+    cloneArbDetailOpportunity,
     buildArbDetailRateText,
     buildArbDetailRateDeltaText,
     getArbDetailRateDeltaTone,

@@ -2,6 +2,8 @@ const assert = require('assert');
 
 const {
   buildDetailInputAmounts,
+  buildArbDetailCards,
+  cloneArbDetailOpportunity,
   summarizeDetailResult,
   getQuoteRunState,
   buildArbDetailChartPairs,
@@ -62,6 +64,33 @@ assert.deepStrictEqual(
   buildDetailInputAmounts(3),
   [3, 1.5, 4.5, 9]
 );
+
+assert.deepStrictEqual(
+  buildArbDetailCards(2),
+  [
+    { inputAmount: 2, rows: [], summary: null, error: '', requestVersion: 0 },
+    { inputAmount: 1, rows: [], summary: null, error: '', requestVersion: 0 },
+    { inputAmount: 3, rows: [], summary: null, error: '', requestVersion: 0 },
+    { inputAmount: 6, rows: [], summary: null, error: '', requestVersion: 0 }
+  ]
+);
+
+const detailOpportunitySource = {
+  id: 'op-1',
+  label: '机会 1',
+  cycle: {
+    profitRate: 0.01,
+    legs: [
+      { quoteId: 1, chain: 'ethereum' },
+      { quoteId: 2, chain: 'arbitrum' }
+    ]
+  }
+};
+const clonedDetailOpportunity = cloneArbDetailOpportunity(detailOpportunitySource);
+assert.deepStrictEqual(clonedDetailOpportunity, detailOpportunitySource);
+assert.notStrictEqual(clonedDetailOpportunity, detailOpportunitySource);
+assert.notStrictEqual(clonedDetailOpportunity.cycle, detailOpportunitySource.cycle);
+assert.notStrictEqual(clonedDetailOpportunity.cycle.legs[0], detailOpportunitySource.cycle.legs[0]);
 
 assert.strictEqual(
   buildArbDetailRateText(0.9981234, 'cbBTC', 'WBTC'),
