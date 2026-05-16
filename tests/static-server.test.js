@@ -551,6 +551,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().clearQuoteTrendTimer(quoteUiState, quoteId, clearTimeout)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().resetQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeout)'));
     assert.ok(!appJsResponse.body.includes('function buildDefaultQuoteUiState()'));
+    const dashboardRuntimeExportBlock = dashboardRuntimeUtilsResponse.body.match(/return \{\n    buildArbRuleSnapshotCacheKey,[\s\S]*?\n  \};/);
+    assert.ok(dashboardRuntimeExportBlock);
+    assert.ok(!dashboardRuntimeExportBlock[0].includes('buildQuoteMarketStateSignature'));
+    assert.ok(!dashboardRuntimeExportBlock[0].includes('mergeQuoteUiState'));
+    assert.ok(!dashboardRuntimeExportBlock[0].includes('normalizeQuoteStateKey'));
     const defaultQuoteUiStateMatch = dashboardRuntimeUtilsResponse.body.match(/function buildDefaultQuoteUiState\(\) \{([\s\S]*?)function normalizeQuoteStateKey/);
     assert.ok(defaultQuoteUiStateMatch);
     assert.ok(defaultQuoteUiStateMatch[1].includes('hasUnreadAlert: false'));

@@ -7,7 +7,6 @@ const {
   buildQuoteMetaById,
   buildQuoteAlertUiUpdate,
   buildQuoteResultMarketState,
-  buildQuoteMarketStateSignature,
   buildQuotesByCategoryName,
   buildSwappedQuoteMarketState,
   clearQuoteTrendTimer,
@@ -18,8 +17,6 @@ const {
   getQuoteUiState,
   hasActivePathAlertSound,
   hasQuoteMarketStateChanged,
-  mergeQuoteUiState,
-  normalizeQuoteStateKey,
   resetQuoteUiRuntimeState,
   sanitizeQuoteMarketState,
   setQuoteUiState,
@@ -296,10 +293,6 @@ const sameMarketStateWithUiChanges = {
   trendTimer: 456
 };
 
-assert.strictEqual(
-  buildQuoteMarketStateSignature(marketState),
-  buildQuoteMarketStateSignature(sameMarketStateWithUiChanges)
-);
 assert.strictEqual(hasQuoteMarketStateChanged(marketState, sameMarketStateWithUiChanges), false);
 assert.strictEqual(
   hasQuoteMarketStateChanged(marketState, { ...marketState, lastRawPrice: 1.002 }),
@@ -327,12 +320,6 @@ assert.deepStrictEqual(buildDefaultQuoteUiState(), {
   hasUnreadAlert: false,
   trendTimer: null
 });
-assert.strictEqual(normalizeQuoteStateKey('101'), 101);
-assert.strictEqual(normalizeQuoteStateKey('quote-x'), 'quote-x');
-assert.deepStrictEqual(
-  mergeQuoteUiState({ hasUnreadAlert: true, trendTimer: 123 }, { hasUnreadAlert: false }),
-  { hasUnreadAlert: false, trendTimer: 123 }
-);
 assert.deepStrictEqual(
   buildQuoteAlertUiUpdate({ hasUnreadAlert: false, trendTimer: 'timer-1' }, true),
   {
@@ -375,6 +362,14 @@ assert.deepStrictEqual(
 );
 assert.deepStrictEqual(getQuoteUiState(quoteUiState, 101), {
   hasUnreadAlert: true,
+  trendTimer: null
+});
+assert.deepStrictEqual(
+  setQuoteUiState(quoteUiState, 101, { hasUnreadAlert: false }),
+  { hasUnreadAlert: false, trendTimer: null }
+);
+assert.deepStrictEqual(getQuoteUiState(quoteUiState, '101'), {
+  hasUnreadAlert: false,
   trendTimer: null
 });
 
