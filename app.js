@@ -912,15 +912,7 @@
     }
 
     function pruneArbOpportunityHighlightsInPlace(nowMs = Date.now()) {
-        if (!(arbHighlightedOpportunityUntilById instanceof Map) || !arbHighlightedOpportunityUntilById.size) {
-            return arbHighlightedOpportunityUntilById;
-        }
-        for (const [opportunityId, expiresAt] of arbHighlightedOpportunityUntilById.entries()) {
-            if (!Number.isFinite(expiresAt) || expiresAt <= nowMs) {
-                arbHighlightedOpportunityUntilById.delete(opportunityId);
-            }
-        }
-        return arbHighlightedOpportunityUntilById;
+        return getArbRuntimeMemoryUtils().pruneExpiredArbOpportunityHighlights(arbHighlightedOpportunityUntilById, nowMs);
     }
 
     function scheduleArbOpportunityHighlightCleanup(nowMs = Date.now()) {
@@ -931,13 +923,8 @@
         pruneArbOpportunityHighlightsInPlace(nowMs);
         if (!arbHighlightedOpportunityUntilById.size) return;
 
-        let nextExpiresAt = Number.POSITIVE_INFINITY;
-        for (const expiresAt of arbHighlightedOpportunityUntilById.values()) {
-            if (Number.isFinite(expiresAt) && expiresAt < nextExpiresAt) {
-                nextExpiresAt = expiresAt;
-            }
-        }
-        if (!Number.isFinite(nextExpiresAt)) return;
+        const nextExpiresAt = getArbRuntimeMemoryUtils().getNextArbOpportunityHighlightExpiry(arbHighlightedOpportunityUntilById);
+        if (!Number.isFinite(Number(nextExpiresAt))) return;
 
         const delayMs = Math.max(0, nextExpiresAt - nowMs);
         arbOpportunityHighlightCleanupTimer = setTimeout(() => {
@@ -952,10 +939,7 @@
     }
 
     function isArbOpportunityHighlighted(opportunityId, nowMs = Date.now()) {
-        if (!opportunityId) return false;
-        pruneArbOpportunityHighlightsInPlace(nowMs);
-        const expiresAt = arbHighlightedOpportunityUntilById.get(String(opportunityId));
-        return Number.isFinite(expiresAt) && expiresAt > nowMs;
+        return getArbRuntimeMemoryUtils().isArbOpportunityHighlighted(arbHighlightedOpportunityUntilById, opportunityId, nowMs);
     }
 
     function buildArbOpportunityHighlightTargetKeyFromCycle(cycle) {
@@ -982,16 +966,14 @@
         const opportunityIds = arbOpportunityIdsByTargetKey.get(targetKey);
         if (!Array.isArray(opportunityIds) || !opportunityIds.length) return false;
 
-        let changed = false;
-        const nextExpiresAt = nowMs + ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS;
-        for (const opportunityId of opportunityIds) {
-            const normalizedId = String(opportunityId || '').trim();
-            if (!normalizedId) continue;
-            const previousExpiresAt = arbHighlightedOpportunityUntilById.get(normalizedId) || 0;
-            if (previousExpiresAt >= nextExpiresAt) continue;
-            arbHighlightedOpportunityUntilById.set(normalizedId, nextExpiresAt);
-            changed = true;
-        }
+        const { changed } = getArbRuntimeMemoryUtils().markArbOpportunityHighlights(
+            arbHighlightedOpportunityUntilById,
+            opportunityIds,
+            {
+                nowMs,
+                durationMs: ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS
+            }
+        );
         if (changed) {
             scheduleArbOpportunityHighlightCleanup(nowMs);
         }

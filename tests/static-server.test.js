@@ -247,6 +247,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
     const arbPanelLayoutUtilsResponse = await request('/arb-panel-layout-utils.js');
     assert.strictEqual(arbPanelLayoutUtilsResponse.statusCode, 200);
+    const arbRuntimeMemoryUtilsResponse = await request('/arb-runtime-memory-utils.js');
+    assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
     const arbEquivalenceUtilsResponse = await request('/arb-equivalence-utils.js');
     assert.strictEqual(arbEquivalenceUtilsResponse.statusCode, 200);
     const dataTerminalUtilsResponse = await request('/data-terminal-utils.js');
@@ -529,6 +531,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const ARB_OPPORTUNITY_HIGHLIGHT_DURATION_MS = 8000;'));
     assert.ok(appJsResponse.body.includes('let arbHighlightedOpportunityUntilById = new Map();'));
     assert.ok(appJsResponse.body.includes('markTriggeredArbOpportunities'));
+    assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().markArbOpportunityHighlights('));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function pruneExpiredArbOpportunityHighlights(highlightedUntilById, nowMs = Date.now())'));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function markArbOpportunityHighlights(highlightedUntilById, opportunityIds, options = {})'));
     assert.ok(appJsResponse.body.includes('let arbGlobalTwoLegOnly = false;'));
     assert.ok(appJsResponse.body.includes('data-quote-alert-dex-link'));
     assert.ok(alertLogUiResponse.body.includes('data-quote-alert-dex-link-copy="1"'));
