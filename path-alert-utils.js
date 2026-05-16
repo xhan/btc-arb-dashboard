@@ -46,10 +46,6 @@
     return Number((parsed * 10000).toFixed(10));
   }
 
-  function cloneDefaultSettings() {
-    return { ...DEFAULT_PATH_ALERT_SETTINGS };
-  }
-
   function getSpecialRuleAlertConfigUtils() {
     if (
       specialRuleAlertConfigUtils
@@ -224,10 +220,6 @@
       alerts,
       dismissedTargets
     };
-  }
-
-  function isPathAlertConfirmDelayDisabled(triggerMode) {
-    return triggerMode !== 'delayed';
   }
 
   function buildPathAlertWebhookUrl(template, title, body) {
@@ -973,15 +965,12 @@
     DEFAULT_TELEGRAM_BOT_API_BASE_URL,
     PATH_ALERT_MUTE_DURATION_MS,
     PATH_ALERT_MUTE_EXTEND_DURATION_MS,
-    DEFAULT_PATH_ALERT_WEBHOOK_URL,
     DEFAULT_PATH_ALERT_THRESHOLD_BP,
-    DEFAULT_PATH_ALERT_SETTINGS,
     advancePathAlertRuntime,
     advanceQuoteAlertRuntime,
     buildEffectiveRuntimeAlert,
     shouldActivatePathAlertSound,
     buildAllLegSnapshots,
-    buildChangedLegs,
     buildTriggeredPathAlertChangedLegs,
     buildMutedPathLogTitleSnapshot,
     buildMutedPathLegStatusText,
@@ -1000,11 +989,8 @@
     findMutedPathAlert,
     findMutedPathTargetByKey,
     findDuplicatePathAlert,
-    formatMutedCountdown,
     getQuoteAlertsForQuoteId,
-    isPathAlertConfirmDelayDisabled,
     normalizeAlertConfig,
-    normalizeDismissedTarget,
     normalizeMutedPathTarget,
     normalizePathAlert,
     pruneExpiredMutedPathTargets,

@@ -4,16 +4,13 @@ const path = require('path');
 const vm = require('vm');
 
 const {
-  DEFAULT_PATH_ALERT_SETTINGS,
   DEFAULT_PATH_ALERT_THRESHOLD_BP,
   normalizeAlertConfig,
   normalizePathAlert,
-  normalizeDismissedTarget,
   evaluatePathAlert,
   advancePathAlertRuntime,
   advanceQuoteAlertRuntime,
   shouldActivatePathAlertSound,
-  isPathAlertConfirmDelayDisabled,
   buildPathAlertWebhookUrl,
   buildPathAlertSummaryLines,
   buildPathAlertTargetDuplicateKey,
@@ -25,7 +22,6 @@ const {
   buildAllLegSnapshots,
   buildTriggeredPathAlertChangedLegs,
   resolvePathAlertSnapshotState,
-  buildChangedLegs,
   buildMutedPathLogTitleSnapshot,
   buildMutedPathLegStatusText,
   buildMutedPathStatusText,
@@ -40,23 +36,23 @@ const {
   extendMutedPathTargetEntry,
   findMutedPathAlert,
   pruneExpiredMutedPathTargets,
-  formatMutedCountdown,
   buildEffectiveRuntimeAlert
 } = require('../path-alert-utils');
 
 const emptyConfig = normalizeAlertConfig();
+const defaultPathAlertSettings = emptyConfig.settings;
 assert.strictEqual(emptyConfig.version, 1);
-assert.deepStrictEqual(emptyConfig.settings, DEFAULT_PATH_ALERT_SETTINGS);
+assert.deepStrictEqual(emptyConfig.settings, defaultPathAlertSettings);
 assert.deepStrictEqual(emptyConfig.alerts, []);
-assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.localSoundEnabled, true);
-assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.webhookEnabled, false);
+assert.strictEqual(defaultPathAlertSettings.localSoundEnabled, true);
+assert.strictEqual(defaultPathAlertSettings.webhookEnabled, false);
 assert.strictEqual(DEFAULT_PATH_ALERT_THRESHOLD_BP, 1.1);
-assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.defaultCooldownSec, 180);
-assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.changedLegMinBp, 0.1);
-assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.dayAppEnabled, false);
-assert.strictEqual(DEFAULT_PATH_ALERT_SETTINGS.telegramEnabled, true);
+assert.strictEqual(defaultPathAlertSettings.defaultCooldownSec, 180);
+assert.strictEqual(defaultPathAlertSettings.changedLegMinBp, 0.1);
+assert.strictEqual(defaultPathAlertSettings.dayAppEnabled, false);
+assert.strictEqual(defaultPathAlertSettings.telegramEnabled, true);
 assert.strictEqual(
-  DEFAULT_PATH_ALERT_SETTINGS.webhookUrl,
+  defaultPathAlertSettings.webhookUrl,
   'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder'
 );
 
@@ -279,7 +275,6 @@ assert.ok(findMutedPathAlert([mutedPathEntry], {
 }, 2000));
 assert.strictEqual(findMutedPathAlert([mutedPathEntry], mutedPathEntry, 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), null);
 assert.deepStrictEqual(pruneExpiredMutedPathTargets([mutedPathEntry], 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), []);
-assert.strictEqual(formatMutedCountdown(59 * 60 * 1000 + 9000), '59:09');
 assert.strictEqual(buildMutedPathStatusText({ expiresAt: 1000 + 59 * 1000 }, 1000), '沉默中 · 00:59');
 assert.strictEqual(buildMutedPathLegStatusText({ expiresAt: 1000 + 2 * 60 * 1000 }, 1000), '屏蔽中 · 02:00');
 assert.strictEqual(buildMutedPathStatusText(null, 1000), '');
@@ -409,7 +404,7 @@ const forwardQuoteAlert = normalizePathAlert({
     ruleKind: 'targetAbove',
     value: 1.001
   }
-}, DEFAULT_PATH_ALERT_SETTINGS);
+}, defaultPathAlertSettings);
 const forwardQuoteEval = evaluatePathAlert(forwardQuoteAlert, { quoteStateById });
 assert.strictEqual(forwardQuoteEval.available, true);
 assert.strictEqual(forwardQuoteEval.currentValue, 1.00115);
@@ -428,7 +423,7 @@ const inverseQuoteAlert = normalizePathAlert({
     ruleKind: 'targetBelow',
     value: 0.999
   }
-}, DEFAULT_PATH_ALERT_SETTINGS);
+}, defaultPathAlertSettings);
 const inverseQuoteEval = evaluatePathAlert(inverseQuoteAlert, { quoteStateById });
 assert.strictEqual(inverseQuoteEval.available, true);
 assert.strictEqual(inverseQuoteEval.currentValue, 0.998851320788);
@@ -524,11 +519,7 @@ const immediateSnapshotState = resolvePathAlertSnapshotState(
   switchedRuleEvaluation,
   currentAllLegSnapshots
 );
-const immediateChangedLegs = buildChangedLegs(
-  immediateSnapshotState.currentSnapshots,
-  immediateSnapshotState.baselineSnapshots,
-  1
-);
+const immediateChangedLegs = buildTriggeredPathAlertChangedLegs(immediateSnapshotState, { changedLegMinBp: 1 });
 assert.strictEqual(immediateChangedLegs.length, 1);
 assert.strictEqual(immediateChangedLegs[0].quoteId, 23);
 
@@ -607,7 +598,7 @@ const duplicateAlerts = [
         }
       ]
     }
-  }, DEFAULT_PATH_ALERT_SETTINGS),
+  }, defaultPathAlertSettings),
   normalizePathAlert({
     id: 'rule-1',
     name: '规则一',
@@ -621,7 +612,7 @@ const duplicateAlerts = [
       ruleKind: 'fixed',
       ruleId: 'fixed:gho-usdc'
     }
-  }, DEFAULT_PATH_ALERT_SETTINGS)
+  }, defaultPathAlertSettings)
 ];
 
 assert.strictEqual(
@@ -787,7 +778,7 @@ assert.strictEqual(
 );
 
 const dismissedTargets = [
-  normalizeDismissedTarget({
+  createDismissedTargetEntry({
     target: {
       type: 'path',
       legs: [
@@ -808,10 +799,8 @@ const dismissedTargets = [
           toSymbol: 'A'
         }
       ]
-    },
-    summaryLinesSnapshot: ['(ETH) A -> B', '(ARB) B -> A'],
-    dismissedAt: 456
-  })
+    }
+  }, ['(ETH) A -> B', '(ARB) B -> A'], 456)
 ];
 
 assert.strictEqual(
@@ -911,54 +900,57 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
-  buildChangedLegs([
-    {
-      quoteId: 11,
-      direction: 'forward',
-      pricingMode: 'raw',
-      chain: 'arbitrum',
-      fromSymbol: 'cbBTC',
-      toSymbol: 'WBTC',
-      rate: 1.0013
-    },
-    {
-      quoteId: 11,
-      direction: 'forward',
-      pricingMode: 'cex-bid1',
-      chain: 'Bybit',
-      fromSymbol: 'WBTC',
-      toSymbol: 'BTC',
-      rate: 0.9997
-    },
-    {
-      quoteId: 12,
-      direction: 'inverse',
-      pricingMode: 'raw',
-      chain: 'ethereum',
-      fromSymbol: 'BTC',
-      toSymbol: 'cbBTC',
-      rate: 1.0001
-    }
-  ], [
-    {
-      quoteId: 11,
-      direction: 'forward',
-      pricingMode: 'raw',
-      rate: 1.0010
-    },
-    {
-      quoteId: 11,
-      direction: 'forward',
-      pricingMode: 'cex-bid1',
-      rate: 0.99968
-    },
-    {
-      quoteId: 12,
-      direction: 'inverse',
-      pricingMode: 'raw',
-      rate: 1.0004
-    }
-  ], 1).map((item) => ({
+  buildTriggeredPathAlertChangedLegs({
+    currentSnapshots: [
+      {
+        quoteId: 11,
+        direction: 'forward',
+        pricingMode: 'raw',
+        chain: 'arbitrum',
+        fromSymbol: 'cbBTC',
+        toSymbol: 'WBTC',
+        rate: 1.0013
+      },
+      {
+        quoteId: 11,
+        direction: 'forward',
+        pricingMode: 'cex-bid1',
+        chain: 'Bybit',
+        fromSymbol: 'WBTC',
+        toSymbol: 'BTC',
+        rate: 0.9997
+      },
+      {
+        quoteId: 12,
+        direction: 'inverse',
+        pricingMode: 'raw',
+        chain: 'ethereum',
+        fromSymbol: 'BTC',
+        toSymbol: 'cbBTC',
+        rate: 1.0001
+      }
+    ],
+    baselineSnapshots: [
+      {
+        quoteId: 11,
+        direction: 'forward',
+        pricingMode: 'raw',
+        rate: 1.0010
+      },
+      {
+        quoteId: 11,
+        direction: 'forward',
+        pricingMode: 'cex-bid1',
+        rate: 0.99968
+      },
+      {
+        quoteId: 12,
+        direction: 'inverse',
+        pricingMode: 'raw',
+        rate: 1.0004
+      }
+    ]
+  }, { changedLegMinBp: 1 }).map((item) => ({
     chain: item.chain,
     fromSymbol: item.fromSymbol,
     toSymbol: item.toSymbol,
@@ -1271,8 +1263,6 @@ assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: true }, { muted
 assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: true }, { settings: { localSoundEnabled: false } }), false);
 assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: false }, { settings: { localSoundEnabled: true } }), false);
 
-assert.strictEqual(isPathAlertConfirmDelayDisabled('immediate'), true);
-assert.strictEqual(isPathAlertConfirmDelayDisabled('delayed'), false);
 assert.strictEqual(
   buildPathAlertWebhookUrl(
     'https://api.day.app/key/[title]/[body]?sound=ladder',

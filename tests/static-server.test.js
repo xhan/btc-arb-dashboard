@@ -656,6 +656,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathTargetKey(alertOrTarget)'));
     assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathLogTitleSnapshot(entry)'));
     assert.ok(pathAlertUtilsResponse.body.includes('function getQuoteAlertsForQuoteId(alertConfig, quoteId)'));
+    const pathAlertUtilsExportBlock = pathAlertUtilsResponse.body.match(/return \{\n    DEFAULT_TELEGRAM_BOT_API_BASE_URL,[\s\S]*?\n  \};/);
+    assert.ok(pathAlertUtilsExportBlock);
+    assert.ok(!pathAlertUtilsExportBlock[0].includes('DEFAULT_PATH_ALERT_WEBHOOK_URL'));
+    assert.ok(!pathAlertUtilsExportBlock[0].includes('DEFAULT_PATH_ALERT_SETTINGS'));
+    assert.ok(!pathAlertUtilsExportBlock[0].includes('buildChangedLegs'));
+    assert.ok(!pathAlertUtilsExportBlock[0].includes('formatMutedCountdown'));
+    assert.ok(!pathAlertUtilsExportBlock[0].includes('isPathAlertConfirmDelayDisabled'));
+    assert.ok(!pathAlertUtilsExportBlock[0].includes('normalizeDismissedTarget'));
     const pathAlertUtilsWindowRefs = appJsResponse.body.match(/window\.PathAlertUtils/g) || [];
     assert.strictEqual(pathAlertUtilsWindowRefs.length, 2);
     assert.ok(!appJsResponse.body.includes('typeof window.PathAlertUtils'));
