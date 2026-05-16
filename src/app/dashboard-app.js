@@ -1103,11 +1103,6 @@
         arbPanelCache.clearRuleSnapshot();
     }
 
-    function invalidateArbCaches() {
-        invalidateArbRuleSnapshotCache();
-        arbPanelCache.clearTopology();
-    }
-
     function getQuoteMarketState(quoteId, fallback = null) {
         return quoteStateRuntime.getMarketState(quoteId, fallback);
     }
@@ -3528,7 +3523,8 @@
             normalizePriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority,
             defaultPriority: DEFAULT_ARB_CYCLE_START_PRIORITY
         });
-        invalidateArbCaches();
+        invalidateArbRuleSnapshotCache();
+        arbPanelCache.clearTopology();
     }
 
     async function loadRequestChannels() {
