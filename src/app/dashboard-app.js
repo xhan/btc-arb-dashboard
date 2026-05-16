@@ -1239,37 +1239,19 @@
     }
 
     function renderAlertLogTabState() {
-        const tabState = alertLogTabRuntime.getState();
-        if (alertLogLogTab) {
-            alertLogLogTab.classList.toggle('active', tabState.showLogTab);
-        }
-        if (alertLogMutedLogTab) {
-            alertLogMutedLogTab.classList.toggle('active', tabState.showMutedLogTab);
-        }
-        if (alertLogMutedTab) {
-            alertLogMutedTab.classList.toggle('active', tabState.showMutedStateTab);
-        }
-        if (alertLogSettingsTab) {
-            alertLogSettingsTab.classList.toggle('active', tabState.showSettingsTab);
-        }
-        if (alertLogContent) {
-            alertLogContent.hidden = !tabState.showLogTab;
-        }
-        if (alertLogMutedLogContent) {
-            alertLogMutedLogContent.hidden = !tabState.showMutedLogTab;
-        }
-        if (alertLogMutedContent) {
-            alertLogMutedContent.hidden = !tabState.showMutedStateTab;
-            if (tabState.showMutedStateTab) {
-                renderMutedAlertStatePanel(Date.now());
-            }
-        }
-        if (alertLogSettingsContent) {
-            alertLogSettingsContent.hidden = !tabState.showSettingsTab;
-            if (tabState.showSettingsTab) {
-                renderAlertSettingsPanel();
-            }
-        }
+        getAlertLogUiUtils().applyAlertLogTabDomState({
+            logTab: alertLogLogTab,
+            mutedLogTab: alertLogMutedLogTab,
+            mutedTab: alertLogMutedTab,
+            settingsTab: alertLogSettingsTab,
+            logContent: alertLogContent,
+            mutedLogContent: alertLogMutedLogContent,
+            mutedContent: alertLogMutedContent,
+            settingsContent: alertLogSettingsContent
+        }, alertLogTabRuntime.getState(), {
+            renderMutedAlertStatePanel: () => renderMutedAlertStatePanel(Date.now()),
+            renderAlertSettingsPanel
+        });
     }
 
     function refreshMutedPathRuntime(nowMs = Date.now()) {

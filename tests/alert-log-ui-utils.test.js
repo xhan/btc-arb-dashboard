@@ -4,6 +4,7 @@ const {
   buildAlertLogAppendPlan,
   buildAlertSettingsPanelHtml,
   buildAlertLogTabState,
+  applyAlertLogTabDomState,
   createAlertLogTabRuntime,
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
@@ -56,6 +57,74 @@ assert.strictEqual(alertLogTabRuntime.set('settings'), 'settings');
 assert.strictEqual(alertLogTabRuntime.isActive('settings'), true);
 assert.strictEqual(alertLogTabRuntime.set('bad-tab'), 'log');
 assert.strictEqual(alertLogTabRuntime.isActive('muted'), false);
+
+function createToggleElement() {
+  return {
+    active: false,
+    hidden: false,
+    classList: {
+      toggle(name, value) {
+        assert.strictEqual(name, 'active');
+        this.owner.active = Boolean(value);
+      }
+    }
+  };
+}
+
+function bindToggleElement(element) {
+  element.classList.owner = element;
+  return element;
+}
+
+const alertLogDomCalls = [];
+const alertLogDomRefs = {
+  logTab: bindToggleElement(createToggleElement()),
+  mutedLogTab: bindToggleElement(createToggleElement()),
+  mutedTab: bindToggleElement(createToggleElement()),
+  settingsTab: bindToggleElement(createToggleElement()),
+  logContent: { hidden: false },
+  mutedLogContent: { hidden: false },
+  mutedContent: { hidden: false },
+  settingsContent: { hidden: false }
+};
+
+applyAlertLogTabDomState(alertLogDomRefs, buildAlertLogTabState('settings'), {
+  renderMutedAlertStatePanel: () => alertLogDomCalls.push('muted'),
+  renderAlertSettingsPanel: () => alertLogDomCalls.push('settings')
+});
+
+assert.deepStrictEqual(
+  {
+    logTab: alertLogDomRefs.logTab.active,
+    mutedLogTab: alertLogDomRefs.mutedLogTab.active,
+    mutedTab: alertLogDomRefs.mutedTab.active,
+    settingsTab: alertLogDomRefs.settingsTab.active,
+    logHidden: alertLogDomRefs.logContent.hidden,
+    mutedLogHidden: alertLogDomRefs.mutedLogContent.hidden,
+    mutedHidden: alertLogDomRefs.mutedContent.hidden,
+    settingsHidden: alertLogDomRefs.settingsContent.hidden
+  },
+  {
+    logTab: false,
+    mutedLogTab: false,
+    mutedTab: false,
+    settingsTab: true,
+    logHidden: true,
+    mutedLogHidden: true,
+    mutedHidden: true,
+    settingsHidden: false
+  }
+);
+assert.deepStrictEqual(alertLogDomCalls, ['settings']);
+
+applyAlertLogTabDomState(alertLogDomRefs, buildAlertLogTabState('muted'), {
+  renderMutedAlertStatePanel: () => alertLogDomCalls.push('muted'),
+  renderAlertSettingsPanel: () => alertLogDomCalls.push('settings')
+});
+
+assert.strictEqual(alertLogDomRefs.mutedTab.active, true);
+assert.strictEqual(alertLogDomRefs.mutedContent.hidden, false);
+assert.deepStrictEqual(alertLogDomCalls, ['settings', 'muted']);
 
 const alertSettingsPanelHtml = buildAlertSettingsPanelHtml({
   settings: {

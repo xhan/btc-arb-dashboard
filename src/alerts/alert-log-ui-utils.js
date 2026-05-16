@@ -59,6 +59,42 @@
     };
   }
 
+  function setActiveClass(element, active) {
+    if (!element || !element.classList || typeof element.classList.toggle !== 'function') return false;
+    element.classList.toggle('active', Boolean(active));
+    return true;
+  }
+
+  function setHiddenState(element, hidden) {
+    if (!element) return false;
+    element.hidden = Boolean(hidden);
+    return true;
+  }
+
+  function applyAlertLogTabDomState(refs = {}, tabState = buildAlertLogTabState(), callbacks = {}) {
+    const state = tabState && typeof tabState === 'object' ? tabState : buildAlertLogTabState();
+
+    setActiveClass(refs.logTab, state.showLogTab);
+    setActiveClass(refs.mutedLogTab, state.showMutedLogTab);
+    setActiveClass(refs.mutedTab, state.showMutedStateTab);
+    setActiveClass(refs.settingsTab, state.showSettingsTab);
+
+    setHiddenState(refs.logContent, !state.showLogTab);
+    setHiddenState(refs.mutedLogContent, !state.showMutedLogTab);
+    if (setHiddenState(refs.mutedContent, !state.showMutedStateTab) && state.showMutedStateTab) {
+      if (typeof callbacks.renderMutedAlertStatePanel === 'function') {
+        callbacks.renderMutedAlertStatePanel();
+      }
+    }
+    if (setHiddenState(refs.settingsContent, !state.showSettingsTab) && state.showSettingsTab) {
+      if (typeof callbacks.renderAlertSettingsPanel === 'function') {
+        callbacks.renderAlertSettingsPanel();
+      }
+    }
+
+    return state;
+  }
+
   function buildAlertLogAppendPlan(entries) {
     const list = Array.isArray(entries) ? entries.slice() : [];
     return {
@@ -546,6 +582,7 @@
     buildAlertLogAppendPlan,
     buildAlertSettingsPanelHtml,
     buildAlertLogTabState,
+    applyAlertLogTabDomState,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
     buildMutedTargetLogCardSelector,
