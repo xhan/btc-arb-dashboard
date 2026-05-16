@@ -2582,11 +2582,6 @@
         });
     }
 
-    function openPathAlertsManagementPage(options = {}) {
-        const href = getPathAlertPageUtils().buildPathAlertsPageHref(options);
-        window.open(href, '_blank', 'noopener');
-    }
-
     function applyFloatingPanelDisplay(panel, action, options = {}) {
         const result = getDomRenderUtils().applyFloatingPanelDisplayState(panel, action, {
             getComputedStyle: (element) => window.getComputedStyle(element),
@@ -3838,9 +3833,10 @@
                 deleteQuoteFromCategory(categoryId, quote.id);
             });
         } else if (action.type === 'manage-alerts') {
-            openPathAlertsManagementPage({
+            const href = getPathAlertPageUtils().buildPathAlertsPageHref({
                 filterQuoteId: editingQuote.quote.id
             });
+            window.open(href, '_blank', 'noopener');
         } else if (action.type === 'save') {
             const { quote } = editingQuote;
             const values = getDashboardModalUtils().readQuoteSettingsFormValues(quoteSettingsModalElements);

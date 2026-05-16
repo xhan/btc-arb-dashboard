@@ -1475,7 +1475,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('if (!isPathAlertPanelVisible()) return;'));
     assert.ok(!appJsResponse.body.includes("pathAlertWindow.style.display = isVisible ? 'flex' : 'none';"));
     assert.ok(!appJsResponse.body.includes('renderPathAlertPanel();'));
-    assert.ok(appJsResponse.body.includes('openPathAlertsManagementPage({'));
+    assert.ok(!appJsResponse.body.includes('function openPathAlertsManagementPage('));
+    assert.ok(appJsResponse.body.includes('const href = getPathAlertPageUtils().buildPathAlertsPageHref({\n                filterQuoteId: editingQuote.quote.id\n            });'));
+    assert.ok(appJsResponse.body.includes("window.open(href, '_blank', 'noopener');"));
     assert.ok(!pathAlertPageUtilsResponse.body.includes('function renderPathAlertPanelHtml(options = {})'));
     assert.ok(!pathAlertPageUtilsResponse.body.includes('function renderPathAlertItemHtml(item = {})'));
     assert.ok(!pathAlertPageUtilsResponse.body.includes('function renderPathAlertSummaryLinesHtml(lines)'));
