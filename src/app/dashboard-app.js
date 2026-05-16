@@ -2895,16 +2895,6 @@
         pathAlertConfig = await pathAlertConfigClient.loadStrict();
     }
 
-    function openAlertLogTab(tab) {
-        if (!alertLogWindow) return;
-        alertLogTabRuntime.set(tab);
-        applyAlertLogPanelDisplay('open');
-    }
-
-    function openAlertLogSettingsTab() {
-        openAlertLogTab('settings');
-    }
-
     function toggleAlertLogPanel() {
         applyAlertLogPanelDisplay('toggle');
     }
@@ -3498,7 +3488,10 @@
                 toggleQuoteDisplayMode();
                 break;
             case 'open-alert-log-settings':
-                openAlertLogSettingsTab();
+                if (alertLogWindow) {
+                    alertLogTabRuntime.set('settings');
+                    applyAlertLogPanelDisplay('open');
+                }
                 break;
             case 'toggle-alert-log':
                 toggleAlertLogPanel();

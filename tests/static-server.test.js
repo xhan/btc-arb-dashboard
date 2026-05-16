@@ -1374,7 +1374,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(keyboardShortcutUtilsResponse.body.includes("p: 'toggle-quote-display'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("s: 'toggle-data-terminal'"));
     assert.ok(appJsResponse.body.includes("case 'open-alert-log-settings':"));
-    assert.ok(appJsResponse.body.includes('function openAlertLogSettingsTab()'));
+    assert.ok(appJsResponse.body.includes("alertLogTabRuntime.set('settings');"));
+    assert.ok(!appJsResponse.body.includes('function openAlertLogSettingsTab('));
+    assert.ok(!appJsResponse.body.includes('function openAlertLogTab('));
     assert.ok(!appJsResponse.body.includes('alertSettingsBtn'));
     assert.ok(!appJsResponse.body.includes("togglePathAlertBtn.addEventListener('click'"));
     assert.ok(!keyboardShortcutUtilsResponse.body.includes("d: '"));
