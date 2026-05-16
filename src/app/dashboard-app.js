@@ -1845,27 +1845,6 @@
         return dataTerminalCache.getCandidates(cacheKey, () => utils.buildDataTerminalCandidates(buildDataTerminalRecords()));
     }
 
-    function applyDataTerminalControlPatch(patch) {
-        if (Object.prototype.hasOwnProperty.call(patch, 'query')) {
-            dataTerminalState.query = patch.query;
-        }
-        if (Object.prototype.hasOwnProperty.call(patch, 'allowAliases')) {
-            dataTerminalState.allowAliases = patch.allowAliases;
-        }
-        if (Object.prototype.hasOwnProperty.call(patch, 'showDiff')) {
-            dataTerminalState.showDiff = patch.showDiff;
-        }
-    }
-
-    function applyDataTerminalSelectionPatch(patch) {
-        if (Object.prototype.hasOwnProperty.call(patch, 'selectedLeftKey')) {
-            dataTerminalState.selectedLeftKey = patch.selectedLeftKey;
-        }
-        if (Object.prototype.hasOwnProperty.call(patch, 'selectedRightKey')) {
-            dataTerminalState.selectedRightKey = patch.selectedRightKey;
-        }
-    }
-
     function renderDataTerminalPanel() {
         if (!dataTerminalState.visible || !dataTerminalState.domRefs) return;
         const refs = dataTerminalState.domRefs;
@@ -1946,7 +1925,10 @@
             return;
         }
 
-        applyDataTerminalSelectionPatch(getDataTerminalUtils().buildDataTerminalSelectionPatch(dataTerminalState, action));
+        getDataTerminalUtils().applyDataTerminalStatePatch(
+            dataTerminalState,
+            getDataTerminalUtils().buildDataTerminalSelectionPatch(dataTerminalState, action)
+        );
         renderDataTerminalPanel();
     }
 
@@ -1993,7 +1975,7 @@
 
         if (refs.searchInput) {
             refs.searchInput.addEventListener('input', (event) => {
-                applyDataTerminalControlPatch(utils.buildDataTerminalControlEventPatch('query', event));
+                utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('query', event));
                 renderDataTerminalPanel();
             });
             refs.searchInput.addEventListener('keydown', (event) => {
@@ -2004,13 +1986,13 @@
         }
         if (refs.aliasToggle) {
             refs.aliasToggle.addEventListener('change', (event) => {
-                applyDataTerminalControlPatch(utils.buildDataTerminalControlEventPatch('allowAliases', event));
+                utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('allowAliases', event));
                 renderDataTerminalPanel();
             });
         }
         if (refs.diffToggle) {
             refs.diffToggle.addEventListener('change', (event) => {
-                applyDataTerminalControlPatch(utils.buildDataTerminalControlEventPatch('showDiff', event));
+                utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('showDiff', event));
                 renderDataTerminalPanel();
             });
         }

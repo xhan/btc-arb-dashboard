@@ -8,6 +8,7 @@ const {
   buildDataTerminalControlEventPatch,
   buildDataTerminalControlWritePlan,
   applyDataTerminalControlWritePlan,
+  applyDataTerminalStatePatch,
   buildDataTerminalPanelHtml,
   applyDataTerminalDefaultSize,
   applyDataTerminalWindowPosition,
@@ -77,6 +78,29 @@ assert.deepStrictEqual(
   { showDiff: true }
 );
 assert.deepStrictEqual(buildDataTerminalControlEventPatch('unknown', { target: { value: 'x' } }), {});
+const dataTerminalPatchState = {
+  query: '',
+  allowAliases: true,
+  showDiff: false,
+  selectedLeftKey: 'old-left',
+  selectedRightKey: 'old-right'
+};
+assert.strictEqual(
+  applyDataTerminalStatePatch(dataTerminalPatchState, {
+    query: 'ETH USDC',
+    showDiff: true,
+    selectedRightKey: 'new-right'
+  }),
+  true
+);
+assert.deepStrictEqual(dataTerminalPatchState, {
+  query: 'ETH USDC',
+  allowAliases: true,
+  showDiff: true,
+  selectedLeftKey: 'old-left',
+  selectedRightKey: 'new-right'
+});
+assert.strictEqual(applyDataTerminalStatePatch(dataTerminalPatchState, {}), false);
 
 const dataTerminalPanel = { style: {} };
 assert.strictEqual(applyDataTerminalWindowPosition(dataTerminalPanel), true);

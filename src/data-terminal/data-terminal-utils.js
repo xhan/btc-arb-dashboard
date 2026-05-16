@@ -465,6 +465,17 @@
     return {};
   }
 
+  function applyDataTerminalStatePatch(state = {}, patch = {}) {
+    const keys = ['query', 'allowAliases', 'showDiff', 'selectedLeftKey', 'selectedRightKey'];
+    let changed = false;
+    keys.forEach((key) => {
+      if (!Object.prototype.hasOwnProperty.call(patch, key)) return;
+      state[key] = patch[key];
+      changed = true;
+    });
+    return changed;
+  }
+
   function readElementDisplay(element, getComputedStyle) {
     if (typeof getComputedStyle === 'function') {
       const computedStyle = getComputedStyle(element);
@@ -674,6 +685,7 @@
     buildDataTerminalControlEventPatch,
     buildDataTerminalControlWritePlan,
     applyDataTerminalControlWritePlan,
+    applyDataTerminalStatePatch,
     buildDataTerminalPanelHtml,
     buildDataTerminalRecords,
     buildDataTerminalShellHtml,

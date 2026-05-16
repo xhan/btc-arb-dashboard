@@ -1505,6 +1505,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlWritePlan(state = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalControlWritePlan(plan = {}, refs = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlEventPatch(field, event)'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalStatePatch(state = {}, patch = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalDefaultSize(panel, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalWindowPosition(panel, options = {})'));
@@ -1519,9 +1520,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs)'));
     assert.ok(!appJsResponse.body.includes('function getDataTerminalControlElements(refs)'));
     assert.ok(!appJsResponse.body.includes('function applyDataTerminalControlWritePlan(plan, refs)'));
-    assert.ok(appJsResponse.body.includes("utils.buildDataTerminalControlEventPatch('query', event)"));
-    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().buildDataTerminalSelectionPatch(dataTerminalState, action)'));
+    assert.ok(appJsResponse.body.includes("utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('query', event))"));
+    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().applyDataTerminalStatePatch('));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget })'));
+    assert.ok(!appJsResponse.body.includes('function applyDataTerminalControlPatch(patch)'));
+    assert.ok(!appJsResponse.body.includes('function applyDataTerminalSelectionPatch(patch)'));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalHeaderClickAction(event, { closestEventTarget })'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalRowHtml'));
