@@ -353,7 +353,7 @@ git commit -m "feat: unify legacy quote alert config and management"
 ### Task 10: Refresh docs and config examples only if implementation diverged
 
 **Files:**
-- Modify: `补充说明.md`
+- Modify: `docs/user/补充说明.md`
 - Modify: `docs/路径报警.md`
 - Modify: `config_more.json.example`
 
@@ -372,6 +372,6 @@ Expected: PASS
 - [ ] **Step 3: Final commit**
 
 ```bash
-git add 补充说明.md docs/路径报警.md config_more.json.example
+git add docs/user/补充说明.md docs/路径报警.md config_more.json.example
 git commit -m "docs: document unified legacy quote alerts"
 ```
