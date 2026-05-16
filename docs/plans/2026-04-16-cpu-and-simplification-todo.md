@@ -240,6 +240,7 @@
   - `src/app/dashboard-app.js` 的套利面板 section key/footer、链过滤 token 和详情 leg lines 单用途包装已移除，调用点直接委托已有 layout/chain utils
   - `src/app/dashboard-app.js` 的路径腿 live quote label 格式化已委托给 `src/path-alerts/path-alert-page-utils.js`
   - `src/app/dashboard-app.js` 的 path alert 配置加载降级/严格加载语义已下沉到 `src/path-alerts/path-alert-utils.js` 的 `createPathAlertConfigClient()`
+  - `src/app/dashboard-app.js` 的 path alert rule definitions、special rule config 和 evaluation context 单用途包装已移除，调用点直接委托对应 utils
   - `src/app/dashboard-app.js` 中只定义未调用的 `resolveEventTargetElement()` 包装函数已移除，事件解析继续统一走各模块 action resolver
   - `src/app/dashboard-app.js` 的 quote alert 触发消息和当前值文案包装已移除，触发条目构造统一由 `src/path-alerts/path-alert-notification-utils.js` 根据 evaluation 生成
   - `src/app/dashboard-app.js` 的 dashboard 金额输入、暂停、设置、删除、添加和交换按钮动作解析已下沉到 `src/dashboard/dashboard-renderer.js`

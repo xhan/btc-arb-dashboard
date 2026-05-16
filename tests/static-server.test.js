@@ -934,7 +934,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('PathAlertNotificationUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getSpecialRuleAlertConfigUtils()'));
     assert.ok(appJsResponse.body.includes('SpecialRuleAlertConfigUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('return getSpecialRuleAlertConfigUtils().normalizeSpecialRuleAlertConfig(alert && alert.specialRuleConfig);'));
+    assert.ok(/const specialRuleConfig = getSpecialRuleAlertConfigUtils\(\)\.normalizeSpecialRuleAlertConfig\(\s*alert && alert\.specialRuleConfig\s*\);/.test(appJsResponse.body));
     assert.ok(appJsResponse.body.includes('const triggerEvaluation = getSpecialRuleAlertConfigUtils().evaluateSpecialRuleTrigger(best.stats, specialRuleConfig);'));
     assert.ok(!appJsResponse.body.includes('window.SpecialRuleAlertConfigUtils &&'));
     assert.ok(!appJsResponse.body.includes('typeof window.SpecialRuleAlertConfigUtils'));
@@ -1779,6 +1779,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getArbOpportunityBaseAmount('));
     assert.ok(!appJsResponse.body.includes('function getFixedRuleById('));
     assert.ok(!appJsResponse.body.includes('function getSpecialRuleById('));
+    assert.ok(!appJsResponse.body.includes('function getPathAlertRuleDefinitions('));
+    assert.ok(!appJsResponse.body.includes('function resolveSpecialRuleAlertConfig('));
+    assert.ok(!appJsResponse.body.includes('function buildPathAlertEvaluationContext('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShellDom(arbDetailState.cards, {'));
     assert.ok(appJsResponse.body.includes('gridEl: arbDetailGrid'));
     assert.ok(!appJsResponse.body.includes("arbDetailGrid.querySelectorAll('[data-arb-detail-card-index]')"));

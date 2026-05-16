@@ -2536,14 +2536,6 @@
         blurArbGlobalFilterInputs();
     }
 
-    function getPathAlertRuleDefinitions(sourceType) {
-        return getPathAlertRuleDefinitionsUtils().getRuleDefinitions(sourceType);
-    }
-
-    function resolveSpecialRuleAlertConfig(alert) {
-        return getSpecialRuleAlertConfigUtils().normalizeSpecialRuleAlertConfig(alert && alert.specialRuleConfig);
-    }
-
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
         if (target.ruleKind === 'fixed') {
             const rule = FIXED_PATH_RULES.find((item) => item.id === target.ruleId) || null;
@@ -2574,7 +2566,9 @@
         if (!best || !best.cycle) {
             return { available: false };
         }
-        const specialRuleConfig = resolveSpecialRuleAlertConfig(alert);
+        const specialRuleConfig = getSpecialRuleAlertConfigUtils().normalizeSpecialRuleAlertConfig(
+            alert && alert.specialRuleConfig
+        );
         const triggerEvaluation = getSpecialRuleAlertConfigUtils().evaluateSpecialRuleTrigger(best.stats, specialRuleConfig);
         const meetsTriggerCondition = triggerEvaluation.meetsTriggerCondition === true;
         return {
@@ -2621,7 +2615,7 @@
                 });
             },
             findRule(ruleKind, ruleId) {
-                const sourceList = getPathAlertRuleDefinitions(ruleKind);
+                const sourceList = getPathAlertRuleDefinitionsUtils().getRuleDefinitions(ruleKind);
                 return sourceList.find((item) => item.id === ruleId) || null;
             }
         });
@@ -2657,15 +2651,6 @@
 
     function getPathAlertRealLegCount(alert, evaluation) {
         return getPathAlertUtils().countPathAlertRealLegs(alert, evaluation);
-    }
-
-    function buildPathAlertEvaluationContext(sharedRuleSnapshot) {
-        return {
-            quoteStateById: getQuoteMarketStateMap(),
-            resolveRuleEvaluation(target, alert) {
-                return buildRuleAlertEvaluation(target, alert, sharedRuleSnapshot);
-            }
-        };
     }
 
     async function sendPathAlertWebhookPayload(payload, errorMessage) {
@@ -2730,7 +2715,12 @@
         }
         pruneMutedPathTargetsInPlace(Date.now());
         const sharedRuleSnapshot = getSharedArbRuleSnapshot();
-        const context = buildPathAlertEvaluationContext(sharedRuleSnapshot);
+        const context = {
+            quoteStateById: getQuoteMarketStateMap(),
+            resolveRuleEvaluation(target, alert) {
+                return buildRuleAlertEvaluation(target, alert, sharedRuleSnapshot);
+            }
+        };
         const pathAlertUtils = getPathAlertUtils();
         const allLegSnapshots = pathAlertUtils.buildAllLegSnapshots(sharedRuleSnapshot.allQuotes || [], getQuoteMarketStateMap());
         const nowMs = Date.now();
