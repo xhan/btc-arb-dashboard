@@ -97,6 +97,79 @@
     });
   }
 
+  function createSettingsModalRuntime(options = {}) {
+    const refs = options.intervalInputRefs || {};
+    const getIntervals = typeof options.getIntervals === 'function' ? options.getIntervals : () => ({});
+    const setIntervals = typeof options.setIntervals === 'function' ? options.setIntervals : () => {};
+    const buildSettingsIntervalWritePlan = typeof options.buildSettingsIntervalWritePlan === 'function'
+      ? options.buildSettingsIntervalWritePlan
+      : () => [];
+    const readSettingsFormValues = typeof options.readSettingsIntervalFormValues === 'function'
+      ? options.readSettingsIntervalFormValues
+      : () => ({});
+    const buildSettingsIntervalsFromFormValues = typeof options.buildSettingsIntervalsFromFormValues === 'function'
+      ? options.buildSettingsIntervalsFromFormValues
+      : () => ({});
+    const onSave = typeof options.onSave === 'function' ? options.onSave : () => {};
+    const showSaveFeedback = typeof options.showSaveFeedback === 'function' ? options.showSaveFeedback : () => {};
+
+    function sync() {
+      const writePlan = buildSettingsIntervalWritePlan(getIntervals());
+      applySettingsIntervalWritePlan(refs, writePlan);
+      return writePlan;
+    }
+
+    function read() {
+      return readSettingsIntervalFormValues(refs, {
+        readSettingsIntervalFormValues: readSettingsFormValues
+      });
+    }
+
+    function open() {
+      sync();
+      showModal(options.modal);
+    }
+
+    function close() {
+      hideModal(options.modal);
+    }
+
+    function save() {
+      const nextIntervals = buildSettingsIntervalsFromFormValues(read(), options.defaultIntervals || {});
+      setIntervals(nextIntervals);
+      onSave(nextIntervals);
+      close();
+      showSaveFeedback(nextIntervals);
+      return nextIntervals;
+    }
+
+    function bind() {
+      const bindings = {};
+      if (options.openButton && typeof options.openButton.addEventListener === 'function') {
+        options.openButton.addEventListener('click', open);
+        bindings.openButton = true;
+      }
+      if (options.cancelButton && typeof options.cancelButton.addEventListener === 'function') {
+        options.cancelButton.addEventListener('click', close);
+        bindings.cancelButton = true;
+      }
+      if (options.saveButton && typeof options.saveButton.addEventListener === 'function') {
+        options.saveButton.addEventListener('click', save);
+        bindings.saveButton = true;
+      }
+      return bindings;
+    }
+
+    return {
+      bind,
+      close,
+      open,
+      read,
+      save,
+      sync
+    };
+  }
+
   function readQuoteSettingsFormValues(refs = {}) {
     return {
       sourceValue: readElementValue(refs['quote-source-pref']),
@@ -243,6 +316,7 @@
     closeConfirmModal,
     createConfirmActionRuntime,
     createModalSelectionRuntime,
+    createSettingsModalRuntime,
     openAddCategoryModal,
     readAddQuoteFormValues,
     readAddCategoryFormValues,

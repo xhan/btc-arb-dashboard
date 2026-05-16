@@ -143,7 +143,7 @@
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、DOM refs 装配、浮窗定位/默认尺寸、控件状态读写计划、控件事件绑定、selection 更新计划、内容和 header 点击动作解析已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、报价卡片和分区模块 shell 创建、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `dashboard-api-client`：后端配置刷新、看板配置加载、请求通道加载、price snapshot 配置/保存和配置保存请求已下沉到 `src/dashboard/dashboard-api-utils.js`，`src/app/dashboard-app.js` 只负责状态赋值、UI feedback 和后续调度
-  - `dashboard-modal-dom`：add quote、add category、confirm 弹窗的 DOM 读写与显示/关闭适配、modal 当前选择状态和 confirm 动作回调 runtime 已下沉到 `src/dashboard/dashboard-modal-utils.js`，quote settings 弹窗和全局 settings interval 的 DOM 读写适配也已下沉，dashboard modal 的通用 show/hide 也统一走该边界，主入口只保留新增/更新 quote、保存设置和确认动作后的 dashboard 状态更新与刷新调度
+  - `dashboard-modal-dom`：add quote、add category、confirm 弹窗的 DOM 读写与显示/关闭适配、modal 当前选择状态、confirm 动作回调 runtime 和全局设置弹窗事件 runtime 已下沉到 `src/dashboard/dashboard-modal-utils.js`，quote settings 弹窗和全局 settings interval 的 DOM 读写适配也已下沉，dashboard modal 的通用 show/hide 也统一走该边界，主入口只保留新增/更新 quote、保存设置和确认动作后的 dashboard 状态更新与刷新调度
   - `snapshot/copy-ui`：价格快照 timer 和保存流程 runtime 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer、价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
   - `audio-ui`：报警音频解锁 runtime、循环播放同步和一次性播放已下沉到 `src/ui/audio-utils.js`，`src/app/dashboard-app.js` 只保留业务触发条件和日志语义
   - `floating-panel-ui`：浮窗拖拽、显示切换、视口高度写入、置顶绑定、z-index runtime 和浮窗 chrome 绑定已下沉到 `src/ui/dom-render-utils.js`，全局快捷键解析和输入目标判断已下沉到 `src/ui/keyboard-shortcut-utils.js`，`src/app/dashboard-app.js` 只保留快捷键动作分发和面板打开后的业务刷新
@@ -250,6 +250,7 @@
   - `src/app/dashboard-app.js` 的确认弹窗动作回调状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createConfirmActionRuntime()`
   - `src/app/dashboard-app.js` 的报价设置 modal viewState 写入规则已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只执行 DOM write plan
   - `src/app/dashboard-app.js` 的报价设置 Kyber direct pools 控件显示写入、请求渠道选择器 DOM 写入和 modal write plan 单行包装已收敛到 `src/dashboard/dashboard-modal-utils.js`
+  - `src/app/dashboard-app.js` 的全局设置弹窗打开/取消/保存事件绑定和 interval 读写编排已下沉到 `src/dashboard/dashboard-modal-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 subtitle 文案/DOM 写入、shell/error HTML 写入和 modal visible class 切换已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 shell rebuild DOM 计数和元素存在性检查已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 input value 同步策略与写入已下沉到 `src/arb/arb-detail-utils.js`

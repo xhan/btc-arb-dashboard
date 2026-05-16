@@ -200,6 +200,7 @@
 
     const settingsBtn = document.getElementById('global-settings-btn');
     const settingsSaveBtn = document.getElementById('settings-save');
+    const settingsCancelBtn = document.getElementById('settings-cancel');
     const settingsModal = document.getElementById('settings-modal');
     const settingsIntervalInputRefs = {
         'setting-kyber-interval': document.getElementById('setting-kyber-interval'),
@@ -216,6 +217,34 @@
         setTimeout,
         clearTimeout,
         durationMs: 1500
+    });
+    const settingsModalRuntime = getDashboardModalUtils().createSettingsModalRuntime({
+        openButton: settingsBtn,
+        cancelButton: settingsCancelBtn,
+        saveButton: settingsSaveBtn,
+        modal: settingsModal,
+        intervalInputRefs: settingsIntervalInputRefs,
+        defaultIntervals: DEFAULT_INTERVALS,
+        getIntervals: () => apiIntervals,
+        setIntervals: (nextIntervals) => { apiIntervals = nextIntervals; },
+        buildSettingsIntervalWritePlan: getDashboardRenderer().buildSettingsIntervalWritePlan,
+        readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues,
+        buildSettingsIntervalsFromFormValues: getDashboardRenderer().buildSettingsIntervalsFromFormValues,
+        onSave: () => {
+            refreshRequestChannelOptions();
+            updateSchedulers();
+            saveData();
+        },
+        showSaveFeedback: () => {
+            settingsSaveFeedbackRuntime.show({
+                button: settingsSaveBtn,
+                text: '已保存!',
+                resetState: {
+                    button: settingsSaveBtn,
+                    text: '保存'
+                }
+            });
+        }
     });
     const manualSaveFeedbackRuntime = getDashboardRuntimeUtils().createSaveButtonFeedbackRuntime({
         button: manualSaveBtn,
@@ -735,47 +764,7 @@
         quoteQueueRuntime.updateSchedulers();
     }
 
-    function syncSettingsIntervalInputs() {
-        const writePlan = getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals);
-        getDashboardModalUtils().applySettingsIntervalWritePlan(settingsIntervalInputRefs, writePlan);
-    }
-
-    function readSettingsIntervalInputs() {
-        return getDashboardModalUtils().readSettingsIntervalFormValues(settingsIntervalInputRefs, {
-            readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues
-        });
-    }
-
-    settingsBtn.addEventListener('click', () => {
-        syncSettingsIntervalInputs();
-        getDashboardModalUtils().showModal(settingsModal);
-    });
-
-    document.getElementById('settings-cancel').addEventListener('click', () => {
-        getDashboardModalUtils().hideModal(settingsModal);
-    });
-
-    settingsSaveBtn.addEventListener('click', () => {
-        const newIntervals = getDashboardRenderer().buildSettingsIntervalsFromFormValues(
-            readSettingsIntervalInputs(),
-            DEFAULT_INTERVALS
-        );
-        
-        apiIntervals = newIntervals;
-        refreshRequestChannelOptions();
-        updateSchedulers();
-        saveData(); 
-        getDashboardModalUtils().hideModal(settingsModal);
-
-        settingsSaveFeedbackRuntime.show({
-            button: settingsSaveBtn,
-            text: '已保存!',
-            resetState: {
-                button: settingsSaveBtn,
-                text: '保存'
-            }
-        });
-    });
+    settingsModalRuntime.bind();
     
     function updateAlertSoundState() {
         if (!alertAudioRuntime.isUnlocked()) return;

@@ -10,6 +10,7 @@ const {
   closeConfirmModal,
   createConfirmActionRuntime,
   createModalSelectionRuntime,
+  createSettingsModalRuntime,
   hideModal,
   openAddCategoryModal,
   readAddQuoteFormValues,
@@ -34,6 +35,16 @@ function createClassList(initialValues = ['visible']) {
     },
     contains(value) {
       return values.has(value);
+    }
+  };
+}
+
+function createEventTarget() {
+  const listeners = {};
+  return {
+    listeners,
+    addEventListener(type, listener) {
+      listeners[type] = listener;
     }
   };
 }
@@ -234,6 +245,92 @@ assert.deepStrictEqual(readSettingsIntervalFormValues(settingsIntervalRefs, {
   zerox: 111,
   missing: ''
 });
+
+const settingsRuntimeModal = { classList: createClassList([]) };
+const settingsRuntimeRefs = {
+  'setting-kyber-interval': { value: 'stale' },
+  'setting-solana-interval': { value: 'stale' }
+};
+const settingsRuntimeOpenButton = createEventTarget();
+const settingsRuntimeCancelButton = createEventTarget();
+const settingsRuntimeSaveButton = createEventTarget();
+const settingsRuntimeCalls = [];
+let settingsRuntimeIntervals = {
+  kyber: 170,
+  solana: 1300
+};
+const settingsModalRuntime = createSettingsModalRuntime({
+  openButton: settingsRuntimeOpenButton,
+  cancelButton: settingsRuntimeCancelButton,
+  saveButton: settingsRuntimeSaveButton,
+  modal: settingsRuntimeModal,
+  intervalInputRefs: settingsRuntimeRefs,
+  defaultIntervals: {
+    kyber: 200,
+    solana: 1400
+  },
+  getIntervals: () => settingsRuntimeIntervals,
+  setIntervals(nextIntervals) {
+    settingsRuntimeIntervals = nextIntervals;
+    settingsRuntimeCalls.push(['setIntervals', nextIntervals]);
+  },
+  buildSettingsIntervalWritePlan(intervals) {
+    settingsRuntimeCalls.push(['writePlan', intervals]);
+    return [
+      { id: 'setting-kyber-interval', value: String(intervals.kyber) },
+      { id: 'setting-solana-interval', value: String(intervals.solana) }
+    ];
+  },
+  readSettingsIntervalFormValues: ({ readValue }) => ({
+    kyber: Number(readValue('setting-kyber-interval')),
+    solana: Number(readValue('setting-solana-interval'))
+  }),
+  buildSettingsIntervalsFromFormValues(values, defaults) {
+    settingsRuntimeCalls.push(['buildIntervals', values, defaults]);
+    return {
+      kyber: Number.isFinite(values.kyber) ? values.kyber : defaults.kyber,
+      solana: Number.isFinite(values.solana) ? values.solana : defaults.solana
+    };
+  },
+  onSave(nextIntervals) {
+    settingsRuntimeCalls.push(['onSave', nextIntervals]);
+  },
+  showSaveFeedback(nextIntervals) {
+    settingsRuntimeCalls.push(['feedback', nextIntervals]);
+  }
+});
+assert.deepStrictEqual(settingsModalRuntime.bind(), {
+  openButton: true,
+  cancelButton: true,
+  saveButton: true
+});
+settingsRuntimeOpenButton.listeners.click();
+assert.strictEqual(settingsRuntimeRefs['setting-kyber-interval'].value, '170');
+assert.strictEqual(settingsRuntimeRefs['setting-solana-interval'].value, '1300');
+assert.strictEqual(settingsRuntimeModal.classList.contains('visible'), true);
+settingsRuntimeRefs['setting-kyber-interval'].value = '210';
+settingsRuntimeRefs['setting-solana-interval'].value = '1500';
+assert.deepStrictEqual(settingsRuntimeSaveButton.listeners.click(), {
+  kyber: 210,
+  solana: 1500
+});
+assert.deepStrictEqual(settingsRuntimeIntervals, {
+  kyber: 210,
+  solana: 1500
+});
+assert.strictEqual(settingsRuntimeModal.classList.contains('visible'), false);
+settingsRuntimeOpenButton.listeners.click();
+settingsRuntimeCancelButton.listeners.click();
+assert.strictEqual(settingsRuntimeModal.classList.contains('visible'), false);
+assert.deepStrictEqual(settingsRuntimeCalls.map((call) => call[0]), [
+  'writePlan',
+  'buildIntervals',
+  'setIntervals',
+  'onSave',
+  'feedback',
+  'writePlan'
+]);
+assert.deepStrictEqual(createSettingsModalRuntime().bind(), {});
 
 let addCategoryFocusCount = 0;
 const addCategoryRefs = {

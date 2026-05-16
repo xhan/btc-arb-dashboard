@@ -18,11 +18,11 @@ assert.strictEqual(
   'Velora 仍应映射到独立 source 队列'
 );
 assert.ok(
-  appJs.includes('getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals)'),
+  appJs.includes('buildSettingsIntervalWritePlan: getDashboardRenderer().buildSettingsIntervalWritePlan'),
   '设置弹窗应通过 dashboard renderer 回填间隔'
 );
 assert.ok(
-  appJs.includes('getDashboardRenderer().buildSettingsIntervalsFromFormValues('),
+  appJs.includes('buildSettingsIntervalsFromFormValues: getDashboardRenderer().buildSettingsIntervalsFromFormValues'),
   '保存设置时应通过 dashboard renderer 构造间隔配置'
 );
 assert.ok(
