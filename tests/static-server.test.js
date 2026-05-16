@@ -660,10 +660,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(requestChannelExportBlock);
     assert.ok(!requestChannelExportBlock[0].includes('getQueueSourceKeyForQuote'));
     assert.ok(!requestChannelExportBlock[0].includes('normalizeRequestChannelId'));
-    assert.ok(appJsResponse.body.includes('utils.loadMultiChannelEnabledFromStorage(utils.getBrowserLocalStorage({ window }'));
-    assert.ok(appJsResponse.body.includes('utils.persistMultiChannelEnabledToStorage(utils.getBrowserLocalStorage({ window }'));
+    assert.ok(appJsResponse.body.includes('utils.loadMultiChannelEnabledFromStorage(getDashboardLocalStorage(), {'));
+    assert.ok(appJsResponse.body.includes('utils.persistMultiChannelEnabledToStorage(getDashboardLocalStorage(), multiChannelEnabled, {'));
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().applyMultiChannelToggleButtonState(toggleMultiChannelBtn, multiChannelEnabled)'));
     assert.ok(!appJsResponse.body.includes('function getLocalStorageSafe()'));
+    assert.ok(!appJsResponse.body.includes('getLocalStorageSafe()'));
+    assert.ok(appJsResponse.body.includes('function getDashboardLocalStorage()'));
     assert.ok(!appJsResponse.body.includes('parseMultiChannelEnabledStorageValue(raw)'));
     assert.ok(!appJsResponse.body.includes('formatMultiChannelEnabledStorageValue(multiChannelEnabled)'));
     assert.ok(!appJsResponse.body.includes("raw !== 'false'"));
@@ -1181,8 +1183,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(mutedPathStorageUtilsResponse.body.includes('function loadMutedPathLegsFromStorage(storage, options = {})'));
     assert.ok(mutedPathStorageUtilsResponse.body.includes('function persistMutedPathTargetsToStorage(storage, entries, options = {})'));
     assert.ok(mutedPathStorageUtilsResponse.body.includes('function persistMutedPathLegsToStorage(storage, entries, options = {})'));
-    assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().loadMutedPathTargetsFromStorage(getLocalStorageSafe(), {'));
-    assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().loadMutedPathLegsFromStorage(getLocalStorageSafe(), {'));
+    assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().loadMutedPathTargetsFromStorage(getDashboardLocalStorage(), {'));
+    assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().loadMutedPathLegsFromStorage(getDashboardLocalStorage(), {'));
     assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().persistMutedPathTargetsToStorage('));
     assert.ok(appJsResponse.body.includes('getMutedPathStorageUtils().persistMutedPathLegsToStorage('));
     assert.ok(!appJsResponse.body.includes('MUTED_PATH_TARGETS_STORAGE_KEY'));

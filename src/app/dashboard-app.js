@@ -602,20 +602,22 @@
         requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
     }
 
+    function getDashboardLocalStorage() {
+        return getRequestChannelUtils().getBrowserLocalStorage({ window }, {
+            onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
+        });
+    }
+
     function loadMultiChannelEnabledFromStorage() {
         const utils = getRequestChannelUtils();
-        return utils.loadMultiChannelEnabledFromStorage(utils.getBrowserLocalStorage({ window }, {
-            onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
-        }), {
+        return utils.loadMultiChannelEnabledFromStorage(getDashboardLocalStorage(), {
             onError: (error) => console.warn('读取多渠道开关本地缓存失败:', error)
         });
     }
 
     function persistMultiChannelEnabled() {
         const utils = getRequestChannelUtils();
-        utils.persistMultiChannelEnabledToStorage(utils.getBrowserLocalStorage({ window }, {
-            onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
-        }), multiChannelEnabled, {
+        utils.persistMultiChannelEnabledToStorage(getDashboardLocalStorage(), multiChannelEnabled, {
             onError: (error) => console.warn('保存多渠道开关本地缓存失败:', error)
         });
     }
@@ -981,13 +983,13 @@
     }
 
     function loadMutedPathTargetsFromStorage() {
-        return getMutedPathStorageUtils().loadMutedPathTargetsFromStorage(getLocalStorageSafe(), {
+        return getMutedPathStorageUtils().loadMutedPathTargetsFromStorage(getDashboardLocalStorage(), {
             onError: (error) => console.warn('读取沉默报警本地缓存失败:', error)
         });
     }
 
     function loadMutedPathLegsFromStorage() {
-        return getMutedPathStorageUtils().loadMutedPathLegsFromStorage(getLocalStorageSafe(), {
+        return getMutedPathStorageUtils().loadMutedPathLegsFromStorage(getDashboardLocalStorage(), {
             mutedPathLegUtils: getMutedPathLegUtils(),
             onError: (error) => console.warn('读取屏蔽腿本地缓存失败:', error)
         });
@@ -1007,7 +1009,7 @@
 
     function persistMutedPathTargets() {
         const list = getMutedPathStorageUtils().persistMutedPathTargetsToStorage(
-            getLocalStorageSafe(),
+            getDashboardLocalStorage(),
             mutedPathRuntime.getTargets(),
             { onError: (error) => console.warn('保存沉默报警本地缓存失败:', error) }
         );
@@ -1018,7 +1020,7 @@
 
     function persistMutedPathLegs() {
         const list = getMutedPathStorageUtils().persistMutedPathLegsToStorage(
-            getLocalStorageSafe(),
+            getDashboardLocalStorage(),
             mutedPathRuntime.getLegs(),
             {
                 mutedPathLegUtils: getMutedPathLegUtils(),
@@ -3177,7 +3179,7 @@
 
     function emitPathAlertConfigSync(source) {
         try {
-            const storage = getLocalStorageSafe();
+            const storage = getDashboardLocalStorage();
             if (storage) {
                 const utils = getPathAlertUtils();
                 storage.setItem(
@@ -4316,7 +4318,7 @@
             themeToggleBtn.title = plan.button.title;
             themeToggleBtn.setAttribute('aria-label', plan.button.ariaLabel);
         }
-        const storage = getLocalStorageSafe();
+        const storage = getDashboardLocalStorage();
         if (storage) {
             storage.setItem(plan.storage.key, plan.storage.value);
         }
@@ -4785,7 +4787,7 @@
         await requestBackendConfigRefresh();
         await loadPriceSnapshotConfig();
         await loadArbSettings();
-        const storage = getLocalStorageSafe();
+        const storage = getDashboardLocalStorage();
         applyTheme(storage ? storage.getItem('theme') : null);
         mutedPathRuntime.setTargets(loadMutedPathTargetsFromStorage());
         mutedPathRuntime.setLegs(loadMutedPathLegsFromStorage());
