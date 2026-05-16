@@ -292,6 +292,34 @@
     };
   }
 
+  function applyGlobalArbFilterWritePlan(elements = {}, plan = {}) {
+    let writeCount = 0;
+
+    (plan.value || []).forEach((item) => {
+      const input = elements[item.id];
+      if (input && input.value !== item.value) {
+        input.value = item.value;
+        writeCount += 1;
+      }
+    });
+    (plan.checked || []).forEach((item) => {
+      const input = elements[item.id];
+      if (input && input.checked !== item.checked) {
+        input.checked = item.checked;
+        writeCount += 1;
+      }
+    });
+    (plan.disabled || []).forEach((item) => {
+      const input = elements[item.id];
+      if (input && input.disabled !== item.disabled) {
+        input.disabled = item.disabled;
+        writeCount += 1;
+      }
+    });
+
+    return writeCount;
+  }
+
   function readEventTargetTextValue(event) {
     return (event && event.target && typeof event.target.value === 'string')
       ? event.target.value
@@ -621,6 +649,7 @@
     blurGlobalArbFilterInputs,
     bindGlobalArbFilterEvents,
     buildGlobalArbFilterWritePlan,
+    applyGlobalArbFilterWritePlan,
     updateGlobalArbFilterState,
     clearGlobalArbFilterState,
     registerArbOpportunityHighlightTarget,

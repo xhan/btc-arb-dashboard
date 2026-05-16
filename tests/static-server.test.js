@@ -610,10 +610,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function handleArbPathHeaderClick('));
     assert.ok(!appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('input'"));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterWritePlan(state = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function applyGlobalArbFilterWritePlan(elements = {}, plan = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterEventPatch(field, event)'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function blurGlobalArbFilterInputs(refs = {}, activeElement = null)'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function bindGlobalArbFilterEvents(refs = {}, handlers = {})'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().applyGlobalArbFilterWritePlan('));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildGlobalArbFilterWritePlan(getArbGlobalFilterState())'));
+    assert.ok(!appJsResponse.body.includes('function applyArbGlobalFilterWritePlan(plan)'));
     assert.ok(!appJsResponse.body.includes("getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedSymbolsInput', event)"));
     assert.ok(!appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes("closestEventTarget(event, 'button, input, textarea, select, [contenteditable=\"true\"]')"));

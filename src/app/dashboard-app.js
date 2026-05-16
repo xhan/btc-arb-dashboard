@@ -1710,23 +1710,9 @@
         mountDataTerminalPanel();
     }
 
-    function applyArbGlobalFilterWritePlan(plan) {
-        (plan.value || []).forEach((item) => {
-            const input = arbGlobalFilterElements[item.id];
-            if (input && input.value !== item.value) input.value = item.value;
-        });
-        (plan.checked || []).forEach((item) => {
-            const input = arbGlobalFilterElements[item.id];
-            if (input && input.checked !== item.checked) input.checked = item.checked;
-        });
-        (plan.disabled || []).forEach((item) => {
-            const input = arbGlobalFilterElements[item.id];
-            if (input && input.disabled !== item.disabled) input.disabled = item.disabled;
-        });
-    }
-
     function updateGlobalArbFilterBar() {
-        applyArbGlobalFilterWritePlan(
+        getArbPanelLayoutUtils().applyGlobalArbFilterWritePlan(
+            arbGlobalFilterElements,
             getArbPanelLayoutUtils().buildGlobalArbFilterWritePlan(getArbGlobalFilterState())
         );
     }

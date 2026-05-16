@@ -8,6 +8,7 @@ const {
   buildGlobalArbFilterEventPatch,
   buildGlobalArbFilterCriteria,
   bindGlobalArbFilterEvents,
+  applyGlobalArbFilterWritePlan,
   buildGlobalArbFilterWritePlan,
   updateGlobalArbFilterState,
   clearGlobalArbFilterState,
@@ -378,6 +379,31 @@ assert.deepStrictEqual(
     ]
   }
 );
+
+{
+  const elements = {
+    'arb-global-filter-input': { value: '' },
+    'arb-global-chain-filter-input': { value: 'base' },
+    'arb-global-include-filter-input': { value: '' },
+    'arb-global-two-leg-only': { checked: false },
+    'arb-global-filter-clear-btn': { disabled: true }
+  };
+  const writePlan = buildGlobalArbFilterWritePlan({
+    excludedSymbolsInput: 'cbBTC',
+    excludedChainsInput: 'base',
+    includedSymbolsInput: 'WBTC',
+    twoLegOnly: true
+  });
+
+  assert.strictEqual(applyGlobalArbFilterWritePlan(elements, writePlan), 4);
+  assert.strictEqual(elements['arb-global-filter-input'].value, 'cbBTC');
+  assert.strictEqual(elements['arb-global-chain-filter-input'].value, 'base');
+  assert.strictEqual(elements['arb-global-include-filter-input'].value, 'WBTC');
+  assert.strictEqual(elements['arb-global-two-leg-only'].checked, true);
+  assert.strictEqual(elements['arb-global-filter-clear-btn'].disabled, false);
+  assert.strictEqual(applyGlobalArbFilterWritePlan(elements, writePlan), 0);
+}
+
 assert.deepStrictEqual(
   buildGlobalArbFilterEventPatch('excludedSymbolsInput', { target: { value: ' cbBTC ' } }),
   { excludedSymbolsInput: ' cbBTC ' }
