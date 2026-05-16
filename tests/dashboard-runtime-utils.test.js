@@ -10,8 +10,10 @@ const {
   buildQuotesByCategoryName,
   buildSwappedQuoteMarketState,
   clearQuoteTrendTimer,
+  createButtonFeedbackRuntime,
   createDashboardSaveRuntime,
   createInputDebounceRuntime,
+  createSaveButtonFeedbackRuntime,
   deleteQuoteUiRuntimeState,
   findDashboardQuoteById,
   findDashboardQuoteMatchById,
@@ -224,6 +226,120 @@ assert.strictEqual(dashboardSaveRuntime.getTimer(), null);
 dashboardSaveRuntime.schedule(() => {});
 assert.strictEqual(dashboardSaveRuntime.clear(), true);
 assert.strictEqual(dashboardSaveRuntime.clear(), false);
+
+let feedbackTimerId = 0;
+const feedbackTimers = [];
+const clearedFeedbackTimers = [];
+const feedbackButtonClasses = new Set();
+const feedbackButton = {
+  disabled: false,
+  textContent: '',
+  classList: {
+    add(className) {
+      feedbackButtonClasses.add(className);
+    },
+    remove(className) {
+      feedbackButtonClasses.delete(className);
+    }
+  }
+};
+const feedbackText = { textContent: '' };
+const buttonFeedbackRuntime = createButtonFeedbackRuntime({
+  durationMs: 1500,
+  setTimeout(callback, delayMs) {
+    const timer = { id: ++feedbackTimerId, callback, delayMs };
+    feedbackTimers.push(timer);
+    return timer;
+  },
+  clearTimeout(timer) {
+    clearedFeedbackTimers.push(timer.id);
+  }
+});
+assert.strictEqual(buttonFeedbackRuntime.show({
+  button: feedbackButton,
+  textEl: feedbackText,
+  removeClasses: ['saving', 'error'],
+  addClasses: 'success',
+  text: '已保存!',
+  disabled: true,
+  resetState: {
+    button: feedbackButton,
+    textEl: feedbackText,
+    removeClasses: 'success',
+    text: '保存配置',
+    disabled: false
+  }
+}), true);
+assert.strictEqual(feedbackButtonClasses.has('success'), true);
+assert.strictEqual(feedbackText.textContent, '已保存!');
+assert.strictEqual(feedbackButton.disabled, true);
+assert.strictEqual(feedbackTimers[0].delayMs, 1500);
+buttonFeedbackRuntime.show({
+  button: feedbackButton,
+  textEl: feedbackText,
+  addClasses: 'error',
+  text: '保存失败',
+  durationMs: 3000,
+  resetState: {
+    button: feedbackButton,
+    textEl: feedbackText,
+    removeClasses: 'error',
+    text: '保存配置'
+  }
+});
+assert.deepStrictEqual(clearedFeedbackTimers, [1]);
+assert.strictEqual(feedbackTimers[1].delayMs, 3000);
+feedbackTimers[1].callback();
+assert.strictEqual(feedbackButtonClasses.has('error'), false);
+assert.strictEqual(feedbackText.textContent, '保存配置');
+assert.strictEqual(buttonFeedbackRuntime.getTimer(), null);
+
+let saveFeedbackTimerId = 0;
+const saveFeedbackTimers = [];
+const saveFeedbackClearedTimers = [];
+const saveFeedbackClasses = new Set();
+const saveFeedbackButton = {
+  disabled: false,
+  classList: {
+    add(className) {
+      saveFeedbackClasses.add(className);
+    },
+    remove(className) {
+      saveFeedbackClasses.delete(className);
+    }
+  }
+};
+const saveFeedbackText = { textContent: '保存配置' };
+const saveButtonFeedbackRuntime = createSaveButtonFeedbackRuntime({
+  button: saveFeedbackButton,
+  textEl: saveFeedbackText,
+  setTimeout(callback, delayMs) {
+    const timer = { id: ++saveFeedbackTimerId, callback, delayMs };
+    saveFeedbackTimers.push(timer);
+    return timer;
+  },
+  clearTimeout(timer) {
+    saveFeedbackClearedTimers.push(timer.id);
+  }
+});
+assert.strictEqual(saveButtonFeedbackRuntime.showSaving({ manual: true }), true);
+assert.strictEqual(saveFeedbackClasses.has('saving'), true);
+assert.strictEqual(saveFeedbackText.textContent, '保存中...');
+assert.strictEqual(saveFeedbackButton.disabled, true);
+assert.strictEqual(saveButtonFeedbackRuntime.showSuccess(), true);
+assert.strictEqual(saveFeedbackClasses.has('saving'), false);
+assert.strictEqual(saveFeedbackClasses.has('success'), true);
+assert.strictEqual(saveFeedbackText.textContent, '已保存!');
+assert.strictEqual(saveFeedbackTimers[0].delayMs, 2000);
+saveButtonFeedbackRuntime.showError();
+assert.deepStrictEqual(saveFeedbackClearedTimers, [1]);
+assert.strictEqual(saveFeedbackClasses.has('success'), false);
+assert.strictEqual(saveFeedbackClasses.has('error'), true);
+assert.strictEqual(saveFeedbackTimers[1].delayMs, 3000);
+saveFeedbackTimers[1].callback();
+assert.strictEqual(saveFeedbackClasses.has('error'), false);
+assert.strictEqual(saveFeedbackText.textContent, '保存配置');
+assert.strictEqual(saveFeedbackButton.disabled, false);
 
 const dashboard = [
   {

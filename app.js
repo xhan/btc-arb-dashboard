@@ -177,7 +177,19 @@
     const quoteRunStateTag = document.getElementById('quote-run-state-tag');
 
     const settingsBtn = document.getElementById('global-settings-btn');
+    const settingsSaveBtn = document.getElementById('settings-save');
     const settingsModal = document.getElementById('settings-modal');
+    const settingsSaveFeedbackRuntime = getDashboardRuntimeUtils().createButtonFeedbackRuntime({
+        setTimeout,
+        clearTimeout,
+        durationMs: 1500
+    });
+    const manualSaveFeedbackRuntime = getDashboardRuntimeUtils().createSaveButtonFeedbackRuntime({
+        button: manualSaveBtn,
+        textEl: manualSaveText,
+        setTimeout,
+        clearTimeout
+    });
     
     const addQuoteModal = document.getElementById('add-quote-modal');
     const addQuoteChainSelect = document.getElementById('add-quote-chain');
@@ -764,7 +776,7 @@
         settingsModal.classList.remove('visible');
     });
 
-    document.getElementById('settings-save').addEventListener('click', () => {
+    settingsSaveBtn.addEventListener('click', () => {
         const newIntervals = {
             kyber: parseInt(document.getElementById('setting-kyber-interval').value) || DEFAULT_INTERVALS.kyber,
             zerox: parseInt(document.getElementById('setting-zerox-interval').value) || DEFAULT_INTERVALS.zerox,
@@ -782,11 +794,15 @@
         updateSchedulers();
         saveData(); 
         settingsModal.classList.remove('visible');
-        
-        const btn = document.getElementById('settings-save');
-        const originalText = btn.textContent;
-        btn.textContent = "已保存!";
-        setTimeout(() => btn.textContent = originalText, 1500);
+
+        settingsSaveFeedbackRuntime.show({
+            button: settingsSaveBtn,
+            text: '已保存!',
+            resetState: {
+                button: settingsSaveBtn,
+                text: '保存'
+            }
+        });
     });
     
     function syncLoopingAlertSound(audioEl, shouldPlay) {
@@ -4428,14 +4444,9 @@
     }
 
     async function performSave(isManual = false) {
+        manualSaveFeedbackRuntime.showSaving({ manual: isManual });
         if (isManual) {
-            manualSaveBtn.classList.add('saving');
-            manualSaveText.textContent = '保存中...';
-            manualSaveBtn.disabled = true;
             dashboardSaveRuntime.clear();
-        } else {
-            manualSaveBtn.classList.add('saving');
-            manualSaveText.textContent = '自动保存...';
         }
 
         try {
@@ -4450,26 +4461,11 @@
                 body: JSON.stringify(payload)
             });
             
-            manualSaveBtn.classList.remove('saving');
-            manualSaveBtn.classList.add('success');
-            manualSaveText.textContent = '已保存!';
-            
-            setTimeout(() => {
-                manualSaveBtn.classList.remove('success');
-                manualSaveText.textContent = '保存配置';
-                manualSaveBtn.disabled = false;
-            }, 2000);
+            manualSaveFeedbackRuntime.showSuccess();
 
         } catch (error) { 
             console.error('配置保存失败:', error);
-            manualSaveBtn.classList.remove('saving');
-            manualSaveBtn.classList.add('error');
-            manualSaveText.textContent = '保存失败';
-            setTimeout(() => {
-                manualSaveBtn.classList.remove('error');
-                manualSaveText.textContent = '保存配置';
-                manualSaveBtn.disabled = false;
-            }, 3000);
+            manualSaveFeedbackRuntime.showError();
         }
     }
 

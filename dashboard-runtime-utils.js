@@ -416,6 +416,141 @@
     };
   }
 
+  function createButtonFeedbackRuntime(options = {}) {
+    const setTimer = typeof options.setTimeout === 'function'
+      ? options.setTimeout
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimer = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const defaultDurationMs = Number.isFinite(Number(options.durationMs)) && Number(options.durationMs) >= 0
+      ? Number(options.durationMs)
+      : 0;
+    let timer = null;
+
+    function normalizeClassList(value) {
+      if (Array.isArray(value)) {
+        return value.map((item) => String(item || '').trim()).filter(Boolean);
+      }
+      const single = String(value || '').trim();
+      return single ? [single] : [];
+    }
+
+    function applyState(state = {}) {
+      const button = state.button || null;
+      const textEl = state.textEl || button;
+      if (!button && !textEl) return false;
+
+      if (button && button.classList) {
+        for (const className of normalizeClassList(state.removeClasses)) {
+          button.classList.remove(className);
+        }
+        for (const className of normalizeClassList(state.addClasses)) {
+          button.classList.add(className);
+        }
+      }
+      if (textEl && state.text !== undefined) {
+        textEl.textContent = String(state.text);
+      }
+      if (button && typeof state.disabled === 'boolean') {
+        button.disabled = state.disabled;
+      }
+      return true;
+    }
+
+    function clear() {
+      if (timer === null) return false;
+      if (clearTimer) {
+        clearTimer(timer);
+      }
+      timer = null;
+      return true;
+    }
+
+    function show(state = {}) {
+      clear();
+      const didApply = applyState(state);
+      const resetState = state.resetState;
+      if (!didApply || !resetState || !setTimer) return didApply;
+
+      const durationMs = Number.isFinite(Number(state.durationMs)) && Number(state.durationMs) >= 0
+        ? Number(state.durationMs)
+        : defaultDurationMs;
+      timer = setTimer(() => {
+        timer = null;
+        applyState(resetState);
+      }, durationMs);
+      return true;
+    }
+
+    return {
+      applyState,
+      clear,
+      getTimer: () => timer,
+      show
+    };
+  }
+
+  function createSaveButtonFeedbackRuntime(options = {}) {
+    const feedbackRuntime = createButtonFeedbackRuntime(options);
+    const button = options.button || null;
+    const textEl = options.textEl || button;
+
+    function withElements(state = {}) {
+      return {
+        button,
+        textEl,
+        ...state
+      };
+    }
+
+    function showSaving(config = {}) {
+      feedbackRuntime.clear();
+      return feedbackRuntime.applyState(withElements({
+        removeClasses: ['success', 'error'],
+        addClasses: 'saving',
+        text: config.manual === true ? '保存中...' : '自动保存...',
+        disabled: config.manual === true ? true : undefined
+      }));
+    }
+
+    function showSuccess() {
+      return feedbackRuntime.show(withElements({
+        removeClasses: ['saving', 'error'],
+        addClasses: 'success',
+        text: '已保存!',
+        durationMs: 2000,
+        resetState: withElements({
+          removeClasses: 'success',
+          text: '保存配置',
+          disabled: false
+        })
+      }));
+    }
+
+    function showError() {
+      return feedbackRuntime.show(withElements({
+        removeClasses: ['saving', 'success'],
+        addClasses: 'error',
+        text: '保存失败',
+        durationMs: 3000,
+        resetState: withElements({
+          removeClasses: 'error',
+          text: '保存配置',
+          disabled: false
+        })
+      }));
+    }
+
+    return {
+      clear: feedbackRuntime.clear,
+      getTimer: feedbackRuntime.getTimer,
+      showError,
+      showSaving,
+      showSuccess
+    };
+  }
+
   function buildDataTerminalRecordsCacheKey(dashboardState, quoteMarketStateRevision) {
     const revision = Number.isFinite(Number(quoteMarketStateRevision)) ? Number(quoteMarketStateRevision) : 0;
     const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
@@ -451,8 +586,10 @@
     buildQuotesByCategoryName,
     buildSwappedQuoteMarketState,
     clearQuoteTrendTimer,
+    createButtonFeedbackRuntime,
     createDashboardSaveRuntime,
     createInputDebounceRuntime,
+    createSaveButtonFeedbackRuntime,
     deleteQuoteUiRuntimeState,
     findDashboardQuoteById,
     findDashboardQuoteMatchById,
