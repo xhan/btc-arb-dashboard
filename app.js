@@ -2500,15 +2500,9 @@
 
     function shouldRebuildArbDetailShell() {
         if (!arbDetailGrid) return false;
-        if (arbDetailGrid.querySelectorAll('[data-arb-detail-card-index]').length !== arbDetailState.cards.length) {
-            return true;
-        }
-
-        return arbDetailState.cards.some((_, index) => {
-            const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
-            return !document.getElementById(ids.inputId)
-                || !document.getElementById(ids.rowsId)
-                || !document.getElementById(ids.summaryId);
+        return getArbDetailUtils().shouldRebuildArbDetailShell(arbDetailState.cards, {
+            getCardCount: () => arbDetailGrid.querySelectorAll('[data-arb-detail-card-index]').length,
+            hasElement: (id) => Boolean(document.getElementById(id))
         });
     }
 

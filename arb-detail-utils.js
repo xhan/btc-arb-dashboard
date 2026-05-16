@@ -298,6 +298,23 @@
     };
   }
 
+  function shouldRebuildArbDetailShell(cards, options = {}) {
+    const list = Array.isArray(cards) ? cards : [];
+    const getCardCount = typeof options.getCardCount === 'function'
+      ? options.getCardCount
+      : () => Number(options.cardCount);
+    const hasElement = typeof options.hasElement === 'function'
+      ? options.hasElement
+      : () => false;
+
+    if (getCardCount() !== list.length) return true;
+
+    return list.some((_, index) => {
+      const ids = getArbDetailCardDomIds(index);
+      return !hasElement(ids.inputId) || !hasElement(ids.rowsId) || !hasElement(ids.summaryId);
+    });
+  }
+
   function shouldSyncArbDetailInput(index, editingInputIndex) {
     return index !== editingInputIndex;
   }
@@ -768,6 +785,7 @@
     resolveArbOpportunityBaseAmount,
     findBestSummaryIndices,
     getArbDetailCardDomIds,
+    shouldRebuildArbDetailShell,
     shouldSyncArbDetailInput,
     buildNudgedArbDetailInputAmount,
     parseCommittedArbDetailInput,

@@ -15,6 +15,7 @@ const {
   resolveArbOpportunityBaseAmount,
   findBestSummaryIndices,
   getArbDetailCardDomIds,
+  shouldRebuildArbDetailShell,
   shouldSyncArbDetailInput,
   buildNudgedArbDetailInputAmount,
   parseCommittedArbDetailInput,
@@ -624,6 +625,30 @@ assert.strictEqual(
 assert.strictEqual(
   getArbDetailCardDomIds(2).summaryId,
   'arb-detail-summary-2'
+);
+
+assert.strictEqual(
+  shouldRebuildArbDetailShell([{}, {}], {
+    getCardCount: () => 1,
+    hasElement: () => true
+  }),
+  true
+);
+
+assert.strictEqual(
+  shouldRebuildArbDetailShell([{}], {
+    getCardCount: () => 1,
+    hasElement: (id) => id !== 'arb-detail-summary-0'
+  }),
+  true
+);
+
+assert.strictEqual(
+  shouldRebuildArbDetailShell([{}], {
+    getCardCount: () => 1,
+    hasElement: () => true
+  }),
+  false
 );
 
 assert.strictEqual(

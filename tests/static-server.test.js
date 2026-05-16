@@ -842,6 +842,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailChartPreviewSignature(pairs)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbOpportunityChartHref(entry, buildChartsPageHref)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg = () => false)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function shouldRebuildArbDetailShell(cards, options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildNudgedArbDetailInputAmount(currentAmount, delta)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailInputUpdate(cards, cardIndex, rawValue)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailChartPreviewStripHtml'));
@@ -851,6 +852,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbOpportunityChartHref('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShell(arbDetailState.cards, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildNudgedArbDetailInputAmount(card.inputAmount, delta)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, rawValue)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailProfitPreviewState(seriesList, {'));
