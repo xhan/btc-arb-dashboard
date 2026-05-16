@@ -146,6 +146,7 @@
   - 未被生产代码调用的 `quote-alert-config-utils.js` 旧迁移工具已移除
   - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 未使用的 generic alert log 渲染路径已移除
+  - alert log 的 restored muted selector、恢复卡片删除、click action 解析已下沉到 `alert-log-ui-utils.js`
   - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `path-alert-utils.js`
   - `app.js` 中未调用的 muted path timer 包装函数已移除，保留唯一入口 `syncMutedPathLogTimer()`
   - `path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
@@ -162,7 +163,7 @@
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的路径腿 live quote label 格式化已委托给 `path-alert-page-utils.js`
-  - 多处 `fallback / legacy / muted restored` 逻辑交错在 `app.js`
+  - `fallbackToDefault` 这类配置加载降级语义仍在 `app.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
   - 继续统一剩余兼容边界命名
