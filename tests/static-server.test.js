@@ -103,6 +103,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(response.body.includes('src="src/data-terminal/data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-api-utils.js"'));
+    assert.ok(response.body.includes('src="src/dashboard/dashboard-modal-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/muted-path-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
@@ -137,6 +138,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/dashboard/dashboard-api-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/dashboard/dashboard-modal-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"')
@@ -325,6 +329,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
     const dashboardApiUtilsResponse = await request('/src/dashboard/dashboard-api-utils.js');
     assert.strictEqual(dashboardApiUtilsResponse.statusCode, 200);
+    const dashboardModalUtilsResponse = await request('/src/dashboard/dashboard-modal-utils.js');
+    assert.strictEqual(dashboardModalUtilsResponse.statusCode, 200);
     const pathAlertUtilsResponse = await request('/src/path-alerts/path-alert-utils.js');
     assert.strictEqual(pathAlertUtilsResponse.statusCode, 200);
     const mutedPathStorageUtilsResponse = await request('/src/path-alerts/muted-path-storage-utils.js');
@@ -395,9 +401,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function applyQuoteSettingsModalWritePlan(plan)'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().readQuoteSettingsFormValues({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsUpdatePlan({'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddQuoteFormViewState({'));
+    assert.ok(appJsResponse.body.includes('buildAddQuoteFormViewState: getDashboardRenderer().buildAddQuoteFormViewState'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddQuoteDraft({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveAddQuoteModalClickAction(e, { modal: addQuoteModal })'));
+    assert.ok(appJsResponse.body.includes('function getDashboardModalUtils()'));
+    assert.ok(appJsResponse.body.includes('DashboardModalUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().syncAddQuoteFormControls(addQuoteModalRefs, {'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function readAddQuoteFormValues(refs = {})'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function syncAddQuoteFormControls(refs = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals)'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().readSettingsIntervalFormValues({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildSettingsIntervalsFromFormValues('));
@@ -416,6 +428,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function validateAddQuoteForm()'));
     assert.ok(!appJsResponse.body.includes('function updateAddQuoteTokenPlaceholders()'));
     assert.ok(!appJsResponse.body.includes('function syncAddQuoteCrossChainControls()'));
+    assert.ok(!appJsResponse.body.includes("addQuoteChainSelect.value = '';"));
+    assert.ok(!appJsResponse.body.includes('addQuoteFromInput.placeholder = viewState.fromPlaceholder'));
+    assert.ok(!appJsResponse.body.includes('addQuoteSaveBtn.disabled = viewState.saveDisabled'));
     assert.ok(!appJsResponse.body.includes("parseInt(document.getElementById('setting-kyber-interval').value)"));
     assert.ok(!appJsResponse.body.includes("document.getElementById('setting-kyber-interval').value = apiIntervals.kyber"));
     assert.ok(!appJsResponse.body.includes('const categoryName = addCategoryNameInput.value.trim();'));

@@ -216,6 +216,18 @@
     const addQuoteToInput = document.getElementById('add-quote-to');
     const addQuoteSymbolInput = document.getElementById('add-quote-symbol');
     const addQuoteSaveBtn = document.getElementById('add-quote-save');
+    const addQuoteModalRefs = {
+        modal: addQuoteModal,
+        chainSelect: addQuoteChainSelect,
+        toChainSelect: addQuoteToChainSelect,
+        fromInput: addQuoteFromInput,
+        toInput: addQuoteToInput,
+        symbolInput: addQuoteSymbolInput,
+        toChainGroup: addQuoteToChainGroup,
+        pairFields: addQuotePairFields,
+        symbolField: addQuoteSymbolField,
+        saveButton: addQuoteSaveBtn
+    };
     let currentCategoryIdToAdd = null;
     const confirmModal = document.getElementById('confirm-modal');
     const confirmMessageEl = document.getElementById('confirm-message');
@@ -378,6 +390,13 @@
             throw new Error('DashboardApiUtils is not loaded');
         }
         return window.DashboardApiUtils;
+    }
+
+    function getDashboardModalUtils() {
+        if (!window.DashboardModalUtils) {
+            throw new Error('DashboardModalUtils is not loaded');
+        }
+        return window.DashboardModalUtils;
     }
 
     function getAlertLogUiUtils() {
@@ -4863,44 +4882,22 @@
     });
 
     function resetAndCloseAddQuoteModal() {
-        addQuoteChainSelect.value = '';
-        if (addQuoteToChainSelect) addQuoteToChainSelect.value = '';
-        addQuoteFromInput.value = '';
-        addQuoteToInput.value = '';
-        addQuoteSymbolInput.value = '';
-        syncAddQuoteFormControls();
-        addQuoteModal.classList.remove('visible');
-        currentCategoryIdToAdd = null;
+        currentCategoryIdToAdd = getDashboardModalUtils().resetAddQuoteModal(addQuoteModalRefs, {
+            syncControls: syncAddQuoteFormControls
+        }).currentCategoryIdToAdd;
     }
 
     function getAddQuoteFormValues() {
-        return {
-            chain: addQuoteChainSelect.value,
-            toChain: addQuoteToChainSelect ? addQuoteToChainSelect.value : '',
-            fromToken: addQuoteFromInput.value,
-            toToken: addQuoteToInput.value,
-            symbol: addQuoteSymbolInput.value
-        };
+        return getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs);
     }
 
     function syncAddQuoteFormControls() {
-        const viewState = getDashboardRenderer().buildAddQuoteFormViewState({
-            ...getAddQuoteFormValues(),
+        getDashboardModalUtils().syncAddQuoteFormControls(addQuoteModalRefs, {
+            buildAddQuoteFormViewState: getDashboardRenderer().buildAddQuoteFormViewState,
             normalizeChainKey,
             isCexOrderbookChain,
             isEvmChain
         });
-        if (addQuoteToChainGroup) {
-            addQuoteToChainGroup.style.display = viewState.targetChainVisible ? 'block' : 'none';
-        }
-        if (addQuoteToChainSelect && addQuoteToChainSelect.value !== viewState.toChainValue) {
-            addQuoteToChainSelect.value = viewState.toChainValue;
-        }
-        addQuoteFromInput.placeholder = viewState.fromPlaceholder;
-        addQuoteToInput.placeholder = viewState.toPlaceholder;
-        addQuotePairFields.style.display = viewState.pairFieldsVisible ? 'block' : 'none';
-        addQuoteSymbolField.style.display = viewState.symbolFieldVisible ? 'block' : 'none';
-        addQuoteSaveBtn.disabled = viewState.saveDisabled;
     }
 
     addQuoteChainSelect.addEventListener('change', () => {
