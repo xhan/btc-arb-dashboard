@@ -101,7 +101,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
-      response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="queue-stats-utils.js"')
+      response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="src/queue-stats/queue-stats-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="price-snapshot-payload-utils.js"')
@@ -134,7 +134,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="queue-stats-utils.js"') < response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"')
+      response.body.indexOf('src="src/queue-stats/queue-stats-utils.js"') < response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"') < response.body.indexOf('src="app.js"')
@@ -301,7 +301,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
     const requestChannelUtilsResponse = await request('/src/request-channel/request-channel-utils.js');
     assert.strictEqual(requestChannelUtilsResponse.statusCode, 200);
-    const queueStatsUtilsResponse = await request('/queue-stats-utils.js');
+    const queueStatsUtilsResponse = await request('/src/queue-stats/queue-stats-utils.js');
     assert.strictEqual(queueStatsUtilsResponse.statusCode, 200);
     const quoteQueueRuntimeUtilsResponse = await request('/src/quote/quote-queue-runtime-utils.js');
     assert.strictEqual(quoteQueueRuntimeUtilsResponse.statusCode, 200);
@@ -1472,16 +1472,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(queueStatsResponse.body.includes('src="chain-defaults.js"'));
     assert.ok(queueStatsResponse.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(
-      queueStatsResponse.body.indexOf('src="src/quote/quote-pause-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')
+      queueStatsResponse.body.indexOf('src="src/quote/quote-pause-utils.js"') < queueStatsResponse.body.indexOf('src="src/queue-stats/queue-stats-utils.js"')
     );
     assert.ok(
       queueStatsResponse.body.indexOf('src="chain-defaults.js"') < queueStatsResponse.body.indexOf('src="src/request-channel/request-channel-utils.js"')
     );
     assert.ok(
-      queueStatsResponse.body.indexOf('src="src/request-channel/request-channel-utils.js"') < queueStatsResponse.body.indexOf('src="queue-stats-utils.js"')
+      queueStatsResponse.body.indexOf('src="src/request-channel/request-channel-utils.js"') < queueStatsResponse.body.indexOf('src="src/queue-stats/queue-stats-utils.js"')
     );
-    assert.ok(queueStatsResponse.body.includes('src="queue-stats-utils.js"'));
-    assert.ok(queueStatsResponse.body.includes('src="queue-stats-app.js"'));
+    assert.ok(queueStatsResponse.body.includes('src="src/queue-stats/queue-stats-utils.js"'));
+    assert.ok(queueStatsResponse.body.includes('src="src/queue-stats/queue-stats-app.js"'));
 
     assert.ok(response.body.includes('href="/queue-stats"'));
 

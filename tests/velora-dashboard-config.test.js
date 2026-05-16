@@ -8,7 +8,7 @@ const {
   buildSettingsIntervalWritePlan,
   buildSettingsIntervalsFromFormValues
 } = require('../src/dashboard/dashboard-renderer');
-const { DEFAULT_INTERVALS, getQueueTypeForQuote } = require('../queue-stats-utils');
+const { DEFAULT_INTERVALS, getQueueTypeForQuote } = require('../src/queue-stats/queue-stats-utils');
 
 assert.strictEqual(DEFAULT_INTERVALS.velora, 700, 'DEFAULT_INTERVALS 应包含 velora 默认 700ms');
 assert.ok(appJs.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'), '报价应通过共享请求通道工具决定队列');

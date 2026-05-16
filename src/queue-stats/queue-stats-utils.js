@@ -1,12 +1,12 @@
 (function (root, factory) {
   const quotePauseUtils = typeof module !== 'undefined' && module.exports
-    ? require('./src/quote/quote-pause-utils')
+    ? require('../quote/quote-pause-utils')
     : root.QuotePauseUtils;
   const requestChannelUtils = typeof module !== 'undefined' && module.exports
-    ? require('./src/request-channel/request-channel-utils')
+    ? require('../request-channel/request-channel-utils')
     : root.RequestChannelUtils;
   const chainDefaults = typeof module !== 'undefined' && module.exports
-    ? require('./chain-defaults')
+    ? require('../../chain-defaults')
     : root.ChainDefaults;
   const api = factory(quotePauseUtils, requestChannelUtils, chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {

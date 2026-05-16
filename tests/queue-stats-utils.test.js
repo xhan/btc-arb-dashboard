@@ -9,7 +9,7 @@ const {
   formatDurationMs,
   getQueueTaskStatus,
   removeQuoteTasksFromQueues
-} = require('../queue-stats-utils');
+} = require('../src/queue-stats/queue-stats-utils');
 
 const summary = buildQueueSummary({
   dashboard: [
