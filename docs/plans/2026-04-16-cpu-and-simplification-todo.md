@@ -139,12 +139,13 @@
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `dashboard-api-client`：后端配置刷新、看板配置加载、请求通道加载、price snapshot 配置/保存和配置保存请求已下沉到 `src/dashboard/dashboard-api-utils.js`，`src/app/dashboard-app.js` 只负责状态赋值、UI feedback 和后续调度
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `src/ui/copy-utils.js`
   - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `src/ui/dom-render-utils.js`，全局快捷键解析和输入目标判断已下沉到 `src/ui/keyboard-shortcut-utils.js`，`src/app/dashboard-app.js` 只保留 z-index 状态所有权和快捷键动作分发
   - `file-layout`：在模块边界稳定后，把根目录里按职责增长的 utils/runtime/renderer/provider 文件迁入明确目录，例如 `src/quote/`、`src/arb/`、`src/path-alerts/`、`src/dashboard/`、`src/shared/`，并保留必要的兼容入口，避免一次性移动导致 review 噪声和路径风险
     - 已启动第一步：套利核心路径算法、套利详情工具、详情刷新 runtime、套利面板渲染器、套利面板 layout/runtime/cache 工具、规则快照、循环起点优先级、资产等价规则、fixed/special 套利工具、watchlist 配置及解析工具迁入 `src/arb/`，后续同类 arb 模块可按这个模式继续迁移
     - 已启动第二步：quote pause/request/display/state/queue runtime 迁入 `src/quote/`，后续同类 quote 模块可按这个模式继续迁移
-    - 已启动第三步：dashboard renderer/runtime 迁入 `src/dashboard/`，后续 dashboard 模块按这个目录继续收敛
+    - 已启动第三步：dashboard renderer/runtime/API client 迁入 `src/dashboard/`，后续 dashboard 模块按这个目录继续收敛
     - 已启动第四步：request channel 配置、前端工具和 HTTP proxy agent 工具迁入 `src/request-channel/`，后续请求通道边界按这个目录维护
     - 已启动第五步：path alert 主工具、通知、页面渲染、规则定义、候选构建、编辑器和独立页面入口迁入 `src/path-alerts/`，后续 path alert 模块按这个目录继续收敛
     - 已启动第六步：charts 页面入口、图表渲染器和图表工具迁入 `src/charts/`，后续历史图表模块按这个目录维护
