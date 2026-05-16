@@ -23,9 +23,6 @@ const {
 } = require('./src/request-channel/request-channel-http');
 const { createFetchOnce } = require('./src/server/fetch-once');
 const {
-    buildPathAlertWebhookUrl,
-    buildTelegramBotApiUrl,
-    DEFAULT_TELEGRAM_BOT_API_BASE_URL,
     normalizeAlertConfig
 } = require('./src/path-alerts/path-alert-utils');
 const { buildPathAlertCandidates } = require('./src/path-alerts/path-alert-candidate-utils');
@@ -33,6 +30,7 @@ const { splitCompactTradingPairSymbol } = require('./src/shared/trading-pair-uti
 const { createCetusAggregatorClient } = require('./src/server/cetus-aggregator-config');
 const { createRuntimeConfigStore, loadStartupCetusAggregatorConfig } = require('./src/server/runtime-config-utils');
 const { registerQuoteRoutes } = require('./src/server/quote-route-utils');
+const { sendPathAlertRemoteWebhooks } = require('./src/server/path-alert-webhook-utils');
 const { normalizeArbCycleStartPriority } = require('./src/arb/arb-cycle-priority-utils');
 const fs = require('fs').promises;
 const fsSync = require('fs');
@@ -359,59 +357,6 @@ async function buildQuoteRequestInput(body, sourceKey) {
     };
 }
 
-async function sendPathAlertDayAppWebhook(alertConfig, title, body) {
-    if (!alertConfig || !alertConfig.settings || alertConfig.settings.webhookEnabled !== true) {
-        return { sent: false, channel: 'dayapp', reason: 'disabled' };
-    }
-    if (alertConfig.settings.dayAppEnabled !== true) {
-        return { sent: false, channel: 'dayapp', reason: 'disabled' };
-    }
-    const webhookUrl = buildPathAlertWebhookUrl(alertConfig.settings.webhookUrl, title, body);
-    if (!webhookUrl) {
-        return { sent: false, channel: 'dayapp', reason: 'missing-config' };
-    }
-
-    const response = await fetch(webhookUrl, { method: 'GET' });
-    if (!response.ok) {
-        throw new Error(`Day.app 响应异常: ${response.status}`);
-    }
-    return { sent: true, channel: 'dayapp' };
-}
-
-async function sendPathAlertTelegramWebhook(configMore, title, body, telegramHtmlBody = '') {
-    if (!configMore || configMore.telegramEnabled === false) {
-        return { sent: false, channel: 'telegram', reason: 'disabled' };
-    }
-    const botToken = String(configMore && configMore.telegramBotToken || '').trim();
-    const chatId = String(configMore && configMore.telegramChatId || '').trim();
-    const apiBaseUrl = String(configMore && configMore.telegramBotApiBaseUrl || DEFAULT_TELEGRAM_BOT_API_BASE_URL).trim();
-    if (!botToken || !chatId) {
-        return { sent: false, channel: 'telegram', reason: 'missing-config' };
-    }
-
-    const url = buildTelegramBotApiUrl(botToken, 'sendMessage', process.env.TELEGRAM_BOT_API_BASE_URL || apiBaseUrl);
-    if (!url) {
-        return { sent: false, channel: 'telegram', reason: 'missing-config' };
-    }
-
-    const hasTelegramHtmlBody = String(telegramHtmlBody || '').trim().length > 0;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: `${title}\n\n${hasTelegramHtmlBody ? String(telegramHtmlBody || '').trim() : body}`,
-            ...(hasTelegramHtmlBody ? { parse_mode: 'HTML' } : {})
-        })
-    });
-    if (!response.ok) {
-        throw new Error(`Telegram 响应异常: ${response.status}`);
-    }
-    return { sent: true, channel: 'telegram' };
-}
-
 async function getAlertConfig() {
     try {
         const parsedData = await readJsonFile(ALERT_CONFIG_PATH);
@@ -567,29 +512,20 @@ app.get('/api/path-alert-quote-candidates', async (req, res) => {
 
 app.post('/api/send-path-alert-webhook', async (req, res) => {
     try {
-        const alertConfig = await getAlertConfig();
-        const configMore = await getConfigMore();
-        const title = String(req.body && req.body.title || '').trim();
-        const body = String(req.body && req.body.body || '').trim();
-        const telegramHtmlBody = String(req.body && req.body.telegramHtmlBody || '').trim();
-        if (!alertConfig.settings.webhookEnabled) {
-            return res.status(400).json({ error: '路径报警 webhook 未配置' });
-        }
-
-        const results = await Promise.all([
-            sendPathAlertDayAppWebhook(alertConfig, title, body),
-            sendPathAlertTelegramWebhook({
-                ...configMore,
-                telegramEnabled: alertConfig.settings.telegramEnabled !== false
-            }, title, body, telegramHtmlBody)
-        ]);
-        if (!results.some((item) => item.sent)) {
-            return res.status(400).json({ error: '路径报警远程推送未配置' });
-        }
-        res.json({
-            message: '路径报警 webhook 已发送',
-            channels: results.filter((item) => item.sent).map((item) => item.channel)
+        const result = await sendPathAlertRemoteWebhooks({
+            alertConfig: await getAlertConfig(),
+            configMore: await getConfigMore(),
+            title: req.body && req.body.title,
+            body: req.body && req.body.body,
+            telegramHtmlBody: req.body && req.body.telegramHtmlBody
+        }, {
+            fetchImpl: fetch,
+            telegramBotApiBaseUrlOverride: process.env.TELEGRAM_BOT_API_BASE_URL
         });
+        if (result.statusCode >= 400) {
+            return res.status(result.statusCode).json(result.payload);
+        }
+        res.json(result.payload);
     } catch (error) {
         console.error('Path Alert Webhook Error:', error);
         res.status(500).json({ error: error.message });
