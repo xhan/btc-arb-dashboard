@@ -3,7 +3,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const { DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP, FIXED_PATH_RULES, SPECIAL_ARB_RULES } = require('../path-alert-rule-definitions');
+const { DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP, FIXED_PATH_RULES, SPECIAL_ARB_RULES } = require('../src/path-alerts/path-alert-rule-definitions');
 
 const specialRuleIds = ['special:wbtc-bybit', 'special:usde-bybit', 'special:usdtb-bybit'];
 const fixedRule = FIXED_PATH_RULES.find((entry) => entry.id === 'fixed:usde-usdt');

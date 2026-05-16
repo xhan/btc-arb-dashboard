@@ -3,13 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const candidateUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-candidate-utils.js'), 'utf8');
+const candidateUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-candidate-utils.js'), 'utf8');
 const chainDefaultsCode = fs.readFileSync(path.join(__dirname, '..', 'chain-defaults.js'), 'utf8');
 const tradingPairUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'shared', 'trading-pair-utils.js'), 'utf8');
-const notificationUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-notification-utils.js'), 'utf8');
-const pageUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-page-utils.js'), 'utf8');
-const editorUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'path-alert-editor-utils.js'), 'utf8');
-const appCode = fs.readFileSync(path.join(__dirname, '..', 'path-alerts-app.js'), 'utf8');
+const notificationUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-notification-utils.js'), 'utf8');
+const pageUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-page-utils.js'), 'utf8');
+const editorUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-editor-utils.js'), 'utf8');
+const appCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alerts-app.js'), 'utf8');
 
 function createElement() {
   return {

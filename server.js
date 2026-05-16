@@ -29,8 +29,8 @@ const {
     buildTelegramBotApiUrl,
     DEFAULT_TELEGRAM_BOT_API_BASE_URL,
     normalizeAlertConfig
-} = require('./path-alert-utils');
-const { buildPathAlertCandidates } = require('./path-alert-candidate-utils');
+} = require('./src/path-alerts/path-alert-utils');
+const { buildPathAlertCandidates } = require('./src/path-alerts/path-alert-candidate-utils');
 const { splitCompactTradingPairSymbol } = require('./shared/trading-pair-utils');
 const {
     createCetusAggregatorClient,

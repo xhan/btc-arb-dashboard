@@ -15,7 +15,7 @@ const {
   renderPathAlertEditorRuleChoicesHtml,
   renderPathAlertEditorSelectedLegsHtml,
   validatePathAlertEditorDraft
-} = require('../path-alert-editor-utils');
+} = require('../src/path-alerts/path-alert-editor-utils');
 
 const emptyEditorDraft = createPathAlertEditorDraft({
   defaultThresholdBp: 2.5,

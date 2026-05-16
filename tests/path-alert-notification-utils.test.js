@@ -16,7 +16,7 @@ const {
   buildQuoteAlertTriggeredEntryForQuote,
   buildQuoteAlertRemotePayloadForEntry,
   getQuoteAlertDirection
-} = require('../path-alert-notification-utils');
+} = require('../src/path-alerts/path-alert-notification-utils');
 
 assert.strictEqual(formatPathAlertEvaluationText({ profitBp: 2.05 }), '📈 +2.05bp');
 assert.strictEqual(formatPathAlertEvaluationText({ profitBp: -1.23 }), '📈 -1.23bp');
@@ -511,6 +511,6 @@ assert.deepStrictEqual(
 );
 
 assert.strictEqual(
-  Object.prototype.hasOwnProperty.call(require('../path-alert-notification-utils'), 'buildLegacyQuoteAlertRemotePayload'),
+  Object.prototype.hasOwnProperty.call(require('../src/path-alerts/path-alert-notification-utils'), 'buildLegacyQuoteAlertRemotePayload'),
   false
 );

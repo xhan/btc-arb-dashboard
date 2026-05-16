@@ -44,7 +44,7 @@ const {
   createPathAlertConfigClient,
   createPathAlertSchedulerRuntime,
   createPathAlertRuntimeState
-} = require('../path-alert-utils');
+} = require('../src/path-alerts/path-alert-utils');
 
 const emptyConfig = normalizeAlertConfig();
 const defaultPathAlertSettings = emptyConfig.settings;
@@ -289,7 +289,7 @@ const browserLikeContext = {
 };
 browserLikeContext.globalThis = browserLikeContext;
 vm.createContext(browserLikeContext);
-const browserLikePathAlertUtilsSource = fs.readFileSync(path.join(__dirname, '..', 'path-alert-utils.js'), 'utf8');
+const browserLikePathAlertUtilsSource = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-utils.js'), 'utf8');
 vm.runInContext(browserLikePathAlertUtilsSource, browserLikeContext);
 browserLikeContext.SpecialRuleAlertConfigUtils = {
   normalizeSpecialRuleAlertConfig(input) {

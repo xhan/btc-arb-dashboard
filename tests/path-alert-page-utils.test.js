@@ -38,7 +38,7 @@ const {
   getPathAlertSectionTypeClass,
   getPathAlertSectionTypeLabel,
   shortenTokenText
-} = require('../path-alert-page-utils');
+} = require('../src/path-alerts/path-alert-page-utils');
 
 assert.strictEqual(shortenTokenText(''), '--');
 assert.strictEqual(shortenTokenText('0x1234567890abcdef123456'), '0x123456...123456');

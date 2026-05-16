@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   buildPathAlertCandidatesFromDashboard,
   filterPathAlertCandidates
-} = require('../path-alert-candidate-utils');
+} = require('../src/path-alerts/path-alert-candidate-utils');
 
 const dashboard = [
   {

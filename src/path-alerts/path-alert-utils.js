@@ -2,7 +2,7 @@
   if (typeof module === 'object' && module.exports) {
     module.exports = factory(
       typeof globalThis !== 'undefined' ? globalThis : root,
-      require('./special-rule-alert-config-utils')
+      require('../../special-rule-alert-config-utils')
     );
     return;
   }

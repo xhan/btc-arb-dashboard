@@ -1,9 +1,9 @@
 (function (root, factory) {
   const quotePauseUtils = typeof module !== 'undefined' && module.exports
-    ? require('./src/quote/quote-pause-utils')
+    ? require('../quote/quote-pause-utils')
     : root.QuotePauseUtils;
   const chainDefaults = typeof module !== 'undefined' && module.exports
-    ? require('./chain-defaults')
+    ? require('../../chain-defaults')
     : root.ChainDefaults;
   const api = factory(quotePauseUtils, chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
