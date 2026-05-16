@@ -1,20 +1,16 @@
 const assert = require('assert');
 
 const {
-  MUTED_PATH_LEG_DURATION_OPTIONS,
   normalizeMutedPathLeg,
   createMutedPathLegEntry,
   extendMutedPathLegEntry,
   pruneExpiredMutedPathLegs,
-  findMutedPathLeg,
   findMutedPathLegByKey,
   removeMutedPathLegByKey,
   upsertMutedPathLegEntry,
   trimMutedPathLegsForStorage,
   filterMutedPathLegs
 } = require('../muted-path-leg-utils');
-
-assert.deepStrictEqual(MUTED_PATH_LEG_DURATION_OPTIONS, [2, 8, 12]);
 
 const mutedLeg = createMutedPathLegEntry(
   {
@@ -89,16 +85,6 @@ assert.ok(extended);
 assert.strictEqual(extended.expiresAt, mutedLeg.expiresAt + (2 * 60 * 60 * 1000));
 assert.strictEqual(extended.titleSnapshot, '（ETH）tBTC -> BTC.b');
 
-assert.ok(findMutedPathLeg([mutedLeg], {
-  quoteId: 21,
-  direction: 'forward',
-  pricingMode: 'raw'
-}, 1200));
-assert.strictEqual(findMutedPathLeg([mutedLeg], {
-  quoteId: 21,
-  direction: 'inverse',
-  pricingMode: 'raw'
-}, 1200), null);
 assert.deepStrictEqual(pruneExpiredMutedPathLegs([mutedLeg], mutedLeg.expiresAt + 1), []);
 const otherMutedLeg = createMutedPathLegEntry(
   {

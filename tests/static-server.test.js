@@ -271,6 +271,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
     const pathAlertUtilsResponse = await request('/path-alert-utils.js');
     assert.strictEqual(pathAlertUtilsResponse.statusCode, 200);
+    const mutedPathLegUtilsResponse = await request('/muted-path-leg-utils.js');
+    assert.strictEqual(mutedPathLegUtilsResponse.statusCode, 200);
     const pathAlertPageUtilsResponse = await request('/path-alert-page-utils.js');
     assert.strictEqual(pathAlertPageUtilsResponse.statusCode, 200);
     const pathAlertEditorUtilsResponse = await request('/path-alert-editor-utils.js');
@@ -679,6 +681,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('typeof window.PathAlertUtils'));
     assert.ok(appJsResponse.body.includes('function getMutedPathLegUtils()'));
     assert.ok(appJsResponse.body.includes('MutedPathLegUtils is not loaded'));
+    const mutedPathLegExportBlock = mutedPathLegUtilsResponse.body.match(/return \{\n    DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT,[\s\S]*?\n  \};/);
+    assert.ok(mutedPathLegExportBlock);
+    assert.ok(!mutedPathLegExportBlock[0].includes('MUTED_PATH_LEG_DURATION_OPTIONS'));
+    assert.ok(!mutedPathLegExportBlock[0].includes('findMutedPathLeg,'));
     assert.ok(appJsResponse.body.includes('function getMutedPathStorageUtils()'));
     assert.ok(appJsResponse.body.includes('MutedPathStorageUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getArbRuntimeMemoryUtils()'));

@@ -5,7 +5,6 @@
   }
   root.MutedPathLegUtils = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  const MUTED_PATH_LEG_DURATION_OPTIONS = Object.freeze([2, 8, 12]);
   const DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT = 200;
   const DEFAULT_MUTED_PATH_LEG_DURATION_MS = 2 * 60 * 60 * 1000;
 
@@ -98,18 +97,6 @@
       .filter((entry) => entry && nowMs < entry.expiresAt);
   }
 
-  function findMutedPathLeg(entries, leg, nowMs = Date.now()) {
-    const key = buildMutedPathLegKey(leg);
-    if (!key) return null;
-    const items = pruneExpiredMutedPathLegs(entries, nowMs);
-    for (const entry of items) {
-      if (buildMutedPathLegKey(entry) === key) {
-        return entry;
-      }
-    }
-    return null;
-  }
-
   function findMutedPathLegByKey(entries, legKey) {
     const normalizedLegKey = String(legKey || '').trim();
     if (!normalizedLegKey) return null;
@@ -174,7 +161,6 @@
   }
 
   return {
-    MUTED_PATH_LEG_DURATION_OPTIONS,
     DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT,
     DEFAULT_MUTED_PATH_LEG_DURATION_MS,
     normalizeMutedPathLeg,
@@ -182,7 +168,6 @@
     createMutedPathLegEntry,
     extendMutedPathLegEntry,
     pruneExpiredMutedPathLegs,
-    findMutedPathLeg,
     findMutedPathLegByKey,
     removeMutedPathLegByKey,
     upsertMutedPathLegEntry,
