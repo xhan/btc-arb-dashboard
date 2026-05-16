@@ -590,6 +590,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getAddCategoryFormValues('));
     assert.ok(!appJsResponse.body.includes('function getQuoteSettingsFormValues('));
     assert.ok(!appJsResponse.body.includes('function getAddQuoteFormValues('));
+    assert.ok(!appJsResponse.body.includes('function renderQuoteRequestChannelOptions('));
+    assert.ok(appJsResponse.body.includes('const currentChannelId = getRequestChannelUtils().resolveRequestChannelIdForQuote(quote, requestChannelOptions);'));
     assert.ok(!appJsResponse.body.includes("sourceValue: quoteSourceSelect ? quoteSourceSelect.value : quote.preferredSource"));
     assert.ok(!appJsResponse.body.includes("showInverse: document.getElementById('show-inverse-quote').checked"));
     assert.ok(!appJsResponse.body.includes("document.getElementById('modal-title').textContent = modalState.title"));

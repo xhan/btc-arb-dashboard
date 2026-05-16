@@ -3840,22 +3840,6 @@
         getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow);
     }
 
-    function renderQuoteRequestChannelOptions(quote) {
-        if (!getRequestChannelUtils().supportsRequestChannelForQuote(quote)) {
-            getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {
-                visible: false
-            });
-            return;
-        }
-
-        const currentChannelId = getRequestChannelUtils().resolveRequestChannelIdForQuote(quote, requestChannelOptions);
-        getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {
-            visible: true,
-            optionsHtml: getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || []),
-            value: currentChannelId
-        });
-    }
-
     function startPriceSnapshotTimer() {
         priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void priceSnapshotSaveRuntime.saveIfNeeded(); });
     }
@@ -4050,7 +4034,18 @@
         getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, writePlan);
         syncKyberOnlyDirectPoolsControl(quote, writePlan.kyberOnlyDirectPoolsSource);
 
-        renderQuoteRequestChannelOptions(quote);
+        if (getRequestChannelUtils().supportsRequestChannelForQuote(quote)) {
+            const currentChannelId = getRequestChannelUtils().resolveRequestChannelIdForQuote(quote, requestChannelOptions);
+            getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {
+                visible: true,
+                optionsHtml: getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || []),
+                value: currentChannelId
+            });
+        } else {
+            getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {
+                visible: false
+            });
+        }
 
         getDashboardModalUtils().showModal(alertModal);
         return true;
