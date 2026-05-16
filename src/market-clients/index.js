@@ -63,6 +63,7 @@ function normalizeAddress(value) {
 function createMarketClients(options) {
   const tokenMetaStore = createTokenMetaStore({
     cachePath: options.cachePath,
+    ensureDir: options.ensureDir,
     readJsonFile: options.readJsonFile,
     writeFile: options.writeFile
   });

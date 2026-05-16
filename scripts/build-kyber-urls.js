@@ -5,7 +5,7 @@
  *
  * 默认输入:
  * - config.json
- * - metadata-cache.json
+ * - db/metadata-cache.json
  *
  * 默认输出:
  * - scripts/urls.json
@@ -170,7 +170,7 @@ async function buildUrlsFromConfig(quotes, metadataCache) {
 async function main() {
   const args = parseArgs(process.argv);
   const configPath = path.resolve(args.config || 'config.json');
-  const metadataPath = path.resolve(args.metadata || 'metadata-cache.json');
+  const metadataPath = path.resolve(args.metadata || path.join('db', 'metadata-cache.json'));
   const outputPath = path.resolve(args.output || 'scripts/urls.json');
 
   const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));

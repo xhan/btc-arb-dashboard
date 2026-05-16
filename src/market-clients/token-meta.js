@@ -1,4 +1,5 @@
 const { ethers } = require('ethers');
+const path = require('path');
 
 function normalizeChainKey(chain) {
   return String(chain || '').trim().toLowerCase();
@@ -73,7 +74,7 @@ function fromRawAmount(rawAmount, decimals) {
   return Number(ethers.formatUnits(String(rawAmount), decimals));
 }
 
-function createTokenMetaStore({ cachePath, readJsonFile, writeFile }) {
+function createTokenMetaStore({ cachePath, readJsonFile, writeFile, ensureDir }) {
   let cache = {};
   let loaded = false;
   let saveQueue = Promise.resolve();
@@ -95,7 +96,13 @@ function createTokenMetaStore({ cachePath, readJsonFile, writeFile }) {
   }
 
   async function save() {
-    saveQueue = saveQueue.then(() => writeFile(cachePath, JSON.stringify(cache, null, 2), 'utf-8'));
+    saveQueue = saveQueue.then(async () => {
+      const dirPath = path.dirname(cachePath);
+      if (typeof ensureDir === 'function' && dirPath && dirPath !== '.') {
+        await ensureDir(dirPath);
+      }
+      await writeFile(cachePath, JSON.stringify(cache, null, 2), 'utf-8');
+    });
     await saveQueue;
   }
 

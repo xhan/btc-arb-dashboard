@@ -1,4 +1,5 @@
 const assert = require('assert');
+const path = require('path');
 
 const {
   createTokenMetaStore,
@@ -77,6 +78,25 @@ const {
     concurrentStore.remember('ethereum', '0x2222', async () => ({ symbol: 'BBB', decimals: 18 }))
   ]);
   assert.strictEqual(concurrentWriteDetected, false, 'cache 写入应串行，避免 JSON 文件被并发写坏');
+
+  const saveOperations = [];
+  const storeWithCacheDir = createTokenMetaStore({
+    cachePath: path.join('db', 'metadata-cache.json'),
+    readJsonFile: async () => ({}),
+    ensureDir: async (dirPath) => {
+      saveOperations.push(['mkdir', dirPath]);
+    },
+    writeFile: async (filePath, content) => {
+      saveOperations.push(['write', filePath, JSON.parse(content)]);
+    }
+  });
+  await storeWithCacheDir.remember('base', '0x5678', async () => ({ symbol: 'USDT', decimals: 6 }));
+  assert.deepStrictEqual(saveOperations, [
+    ['mkdir', 'db'],
+    ['write', path.join('db', 'metadata-cache.json'), {
+      'base-0x5678': { symbol: 'USDT', decimals: 6 }
+    }]
+  ]);
 
   assert.strictEqual(toRawAmount('1.5', 6), '1500000');
   assert.strictEqual(toRawAmount('1.001619783852974', 8), '100161978');

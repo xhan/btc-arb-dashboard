@@ -14,3 +14,5 @@ assert.ok(!fs.existsSync(path.join(projectRoot, '使用说明.txt')));
 assert.ok(!fs.existsSync(path.join(projectRoot, '补充说明.md')));
 assert.ok(serverJs.includes("require('./src/market-clients')"));
 assert.ok(!serverJs.includes("require('./market-clients')"));
+assert.ok(serverJs.includes("resolveProjectFilePath(path.join('db', 'metadata-cache.json'), 'METADATA_CACHE_PATH'"));
+assert.ok(!serverJs.includes("resolveProjectFilePath('metadata-cache.json', 'METADATA_CACHE_PATH'"));

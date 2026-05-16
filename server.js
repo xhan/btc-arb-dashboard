@@ -60,7 +60,7 @@ app.get('/queue-stats', (req, res) => {
 const CONFIG_PATH = resolveProjectFilePath('config.json', 'CONFIG_PATH', { rootDir: __dirname });
 const CONFIG_MORE_PATH = resolveProjectFilePath('config_more.json', 'CONFIG_MORE_PATH', { rootDir: __dirname });
 const REQUEST_CHANNELS_PATH = resolveProjectFilePath('request_channels.json', 'REQUEST_CHANNELS_PATH', { rootDir: __dirname });
-const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json', 'METADATA_CACHE_PATH', { rootDir: __dirname });
+const METADATA_CACHE_PATH = resolveProjectFilePath(path.join('db', 'metadata-cache.json'), 'METADATA_CACHE_PATH', { rootDir: __dirname });
 const ALERT_CONFIG_PATH = resolveProjectFilePath('alert.json', 'ALERT_CONFIG_PATH', { rootDir: __dirname });
 const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
 const jsonFileWriter = createQueuedJsonFileWriter({
@@ -164,6 +164,7 @@ const marketClients = createMarketClients({
     cachePath: METADATA_CACHE_PATH,
     cetusAggregator,
     evmProviders,
+    ensureDir: (dirPath) => fs.mkdir(dirPath, { recursive: true }),
     fetchOnce,
     getConfigMore,
     logQuoteRequest,
