@@ -3360,10 +3360,6 @@
         return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol, suffix);
     }
 
-    function buildPathAlertLegKey(leg) {
-        return getPathAlertNotificationUtils().buildPathAlertLegKey(leg);
-    }
-
     function buildMutedPathTargetFromCycleLegs(legs) {
         const normalizedLegs = (Array.isArray(legs) ? legs : [])
             .filter((leg) => !isRuleLeg(leg) && Number.isFinite(Number(leg && leg.quoteId)))
@@ -3393,13 +3389,6 @@
             return buildMutedPathTargetFromCycleLegs(evaluation.cycle.legs);
         }
         return null;
-    }
-
-    function buildPathAlertChangedLegLines(changedLegs, maxCount = 3) {
-        return getPathAlertNotificationUtils().buildPathAlertChangedLegLines(changedLegs, {
-            maxCount,
-            formatLeg: buildPathAlertLegDisplayLine
-        });
     }
 
     function getPathAlertRealLegCount(alert, evaluation) {
