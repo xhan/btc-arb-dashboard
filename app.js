@@ -996,7 +996,7 @@
                 actionLink: entry && entry.actionLink ? entry.actionLink : buildQuoteAlertActionLink(quote),
                 mutedEntry,
                 targetKey: entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '',
-                statusText: mutedEntry ? buildMutedPathStatusText(mutedEntry, nowMs) : '已触发'
+                statusText: mutedEntry ? getPathAlertUtils().buildMutedPathStatusText(mutedEntry, nowMs) : '已触发'
             })
         );
         if (!card) return;
@@ -1129,20 +1129,6 @@
         updateMutedPathAlertLogCards(targetKey, nowMs);
         syncMutedPathLogTimer();
         return mutedEntry;
-    }
-
-    function buildMutedPathStatusText(mutedEntry, nowMs = Date.now()) {
-        if (!mutedEntry) return '';
-        const remainingMs = Math.max(0, Number(mutedEntry.expiresAt) - nowMs);
-        const countdown = getPathAlertUtils().formatMutedCountdown(remainingMs);
-        return `沉默中 · ${countdown}`;
-    }
-
-    function buildMutedPathLegStatusText(mutedEntry, nowMs = Date.now()) {
-        if (!mutedEntry) return '';
-        const remainingMs = Math.max(0, Number(mutedEntry.expiresAt) - nowMs);
-        const countdown = getPathAlertUtils().formatMutedCountdown(remainingMs);
-        return `屏蔽中 · ${countdown}`;
     }
 
     function buildMutedPathLegKey(legOrEntry) {
@@ -1285,7 +1271,7 @@
                 const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]');
                 if (resolvedEntry) {
                     if (statusEl) {
-                        statusEl.textContent = buildMutedPathStatusText(resolvedEntry, nowMs);
+                        statusEl.textContent = getPathAlertUtils().buildMutedPathStatusText(resolvedEntry, nowMs);
                         statusEl.className = 'path-alert-log-tag path-alert-log-tag-muted';
                     }
                     if (buttonEl) {
@@ -1317,7 +1303,7 @@
             .map((entry) => alertLogUi.buildMutedStateItemHtml({
                 title: entry.logTitleSnapshot || entry.summaryLinesSnapshot[0] || '路径沉默',
                 lines: entry.summaryLinesSnapshot,
-                status: buildMutedPathStatusText(entry, nowMs),
+                status: getPathAlertUtils().buildMutedPathStatusText(entry, nowMs),
                 actions: [
                     { label: '延长 2 小时', dataAttr: 'data-muted-path-target-extend', value: buildMutedPathTargetKey(entry) },
                     { label: '恢复', dataAttr: 'data-muted-path-target-restore', value: buildMutedPathTargetKey(entry) }
@@ -1329,7 +1315,7 @@
             .map((entry) => alertLogUi.buildMutedStateItemHtml({
                 title: entry.titleSnapshot || buildLiveQuoteLabel(entry.chain, entry.fromSymbol, entry.toSymbol),
                 lines: [],
-                status: buildMutedPathLegStatusText(entry, nowMs),
+                status: getPathAlertUtils().buildMutedPathLegStatusText(entry, nowMs),
                 actions: [
                     { label: '延长 2 小时', dataAttr: 'data-muted-path-leg-extend', value: buildMutedPathLegKey(entry) },
                     { label: '恢复', dataAttr: 'data-muted-path-leg-restore', value: buildMutedPathLegKey(entry) }
@@ -1442,7 +1428,7 @@
                 getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(entry, {
                     nowMs,
                     targetKey,
-                    statusText: buildMutedPathStatusText(entry, nowMs)
+                    statusText: getPathAlertUtils().buildMutedPathStatusText(entry, nowMs)
                 })
             );
             if (card) {
@@ -1472,7 +1458,7 @@
                     nowMs,
                     mutedEntry,
                     targetKey: entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '',
-                    statusText: mutedEntry ? buildMutedPathStatusText(mutedEntry, nowMs) : '已触发',
+                    statusText: mutedEntry ? getPathAlertUtils().buildMutedPathStatusText(mutedEntry, nowMs) : '已触发',
                     profitText: formatPathAlertEvaluationText(entry && entry.evaluation)
                 })
             );

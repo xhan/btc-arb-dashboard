@@ -267,6 +267,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(chainDefaultsResponse.statusCode, 200);
     const dashboardRendererResponse = await request('/dashboard-renderer.js');
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
+    const pathAlertUtilsResponse = await request('/path-alert-utils.js');
+    assert.strictEqual(pathAlertUtilsResponse.statusCode, 200);
     const pathAlertPageUtilsResponse = await request('/path-alert-page-utils.js');
     assert.strictEqual(pathAlertPageUtilsResponse.statusCode, 200);
     const pathAlertEditorUtilsResponse = await request('/path-alert-editor-utils.js');
@@ -558,6 +560,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function pruneInactiveAlertRuntimeState()'));
     assert.ok(appJsResponse.body.includes('function getPathAlertUtils()'));
     assert.ok(appJsResponse.body.includes('PathAlertUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getPathAlertUtils().buildMutedPathStatusText('));
+    assert.ok(appJsResponse.body.includes('getPathAlertUtils().buildMutedPathLegStatusText('));
+    assert.ok(!appJsResponse.body.includes('function buildMutedPathStatusText('));
+    assert.ok(!appJsResponse.body.includes('function buildMutedPathLegStatusText('));
+    assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathStatusText(entry, nowMs = Date.now())'));
+    assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathLegStatusText(entry, nowMs = Date.now())'));
     const pathAlertUtilsWindowRefs = appJsResponse.body.match(/window\.PathAlertUtils/g) || [];
     assert.strictEqual(pathAlertUtilsWindowRefs.length, 2);
     assert.ok(!appJsResponse.body.includes('typeof window.PathAlertUtils'));

@@ -425,6 +425,20 @@
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
+  function buildMutedStatusText(entry, nowMs, prefix) {
+    if (!entry) return '';
+    const remainingMs = Math.max(0, Number(entry.expiresAt) - nowMs);
+    return `${prefix} · ${formatMutedCountdown(remainingMs)}`;
+  }
+
+  function buildMutedPathStatusText(entry, nowMs = Date.now()) {
+    return buildMutedStatusText(entry, nowMs, '沉默中');
+  }
+
+  function buildMutedPathLegStatusText(entry, nowMs = Date.now()) {
+    return buildMutedStatusText(entry, nowMs, '屏蔽中');
+  }
+
   function buildChangedLegs(currentLegs, baselineLegs, minAbsBp = 1) {
     if (!Array.isArray(currentLegs) || !Array.isArray(baselineLegs) || !currentLegs.length || !baselineLegs.length) {
       return [];
@@ -873,6 +887,8 @@
     buildEffectiveRuntimeAlert,
     buildAllLegSnapshots,
     buildChangedLegs,
+    buildMutedPathLegStatusText,
+    buildMutedPathStatusText,
     buildPathAlertTargetDuplicateKey,
     buildPathAlertSummaryLines,
     buildTelegramBotApiUrl,

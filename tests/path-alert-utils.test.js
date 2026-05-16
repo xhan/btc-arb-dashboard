@@ -22,6 +22,8 @@ const {
   buildAllLegSnapshots,
   resolvePathAlertSnapshotState,
   buildChangedLegs,
+  buildMutedPathLegStatusText,
+  buildMutedPathStatusText,
   sortTriggeredPathAlerts,
   PATH_ALERT_MUTE_DURATION_MS,
   PATH_ALERT_MUTE_EXTEND_DURATION_MS,
@@ -258,6 +260,10 @@ assert.ok(findMutedPathAlert([mutedPathEntry], {
 assert.strictEqual(findMutedPathAlert([mutedPathEntry], mutedPathEntry, 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), null);
 assert.deepStrictEqual(pruneExpiredMutedPathTargets([mutedPathEntry], 1000 + PATH_ALERT_MUTE_DURATION_MS + 1), []);
 assert.strictEqual(formatMutedCountdown(59 * 60 * 1000 + 9000), '59:09');
+assert.strictEqual(buildMutedPathStatusText({ expiresAt: 1000 + 59 * 1000 }, 1000), '沉默中 · 00:59');
+assert.strictEqual(buildMutedPathLegStatusText({ expiresAt: 1000 + 2 * 60 * 1000 }, 1000), '屏蔽中 · 02:00');
+assert.strictEqual(buildMutedPathStatusText(null, 1000), '');
+assert.strictEqual(buildMutedPathLegStatusText(null, 1000), '');
 const extendedMutedPathEntry = extendMutedPathTargetEntry(mutedPathEntry, 2000, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
 assert.ok(extendedMutedPathEntry);
 assert.strictEqual(extendedMutedPathEntry.mutedAt, 1000);
