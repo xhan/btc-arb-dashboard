@@ -3937,24 +3937,15 @@
     }
 
     function showGlobalTooltip(htmlContent, targetEl, options = {}) {
-        globalTooltip.innerHTML = htmlContent;
-        globalTooltip.classList.remove('visible', 'cex-orderbook-tooltip-host');
-        globalTooltip.classList.add('visible');
-        if (options.className) {
-            globalTooltip.classList.add(options.className);
-        }
-        
-        const rect = targetEl.getBoundingClientRect();
-        const top = rect.top;
-        const left = rect.left + (rect.width / 2);
-        
-        globalTooltip.style.top = `${top}px`;
-        globalTooltip.style.left = `${left}px`;
+        getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {
+            html: htmlContent,
+            className: options.className
+        });
     }
 
     function hideGlobalTooltip(quoteId) {
         quoteHoverRuntime.hide(quoteId, () => {
-            globalTooltip.classList.remove('visible');
+            getDomRenderUtils().hideTooltip(globalTooltip);
         });
     }
 
@@ -3965,20 +3956,11 @@
         const trendState = getQuoteDisplayUtils().buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource);
         if (!trendState) return;
 
-        if (trendState.action === 'hide') {
-            arrowEl.classList.remove('visible');
-            return;
-        }
-
-        arrowEl.classList.remove('visible');
-        
-        void arrowEl.offsetWidth; 
-
-        arrowEl.innerHTML = trendState.html;
-        arrowEl.className = trendState.className;
+        getDomRenderUtils().applyTrendArrowState(arrowEl, trendState);
+        if (trendState.action === 'hide') return;
 
         quoteStateRuntime.scheduleTrendTimer(quoteId, () => {
-            arrowEl.classList.remove('visible');
+            getDomRenderUtils().applyTrendArrowState(arrowEl, { action: 'hide' });
         }, {
             setTimeout,
             clearTimeout,

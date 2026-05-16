@@ -374,6 +374,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getDataTerminalUtils()'));
     assert.ok(appJsResponse.body.includes('DataTerminalUtils is not loaded'));
     assert.ok(!appJsResponse.body.includes('数据终端模块未加载'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyTooltipState(tooltipEl, targetEl, tooltipState = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function hideTooltip(tooltipEl)'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyTrendArrowState(arrowEl, trendState, options = {})'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().hideTooltip(globalTooltip)'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTrendArrowState(arrowEl, trendState)'));
+    assert.ok(appJsResponse.body.includes("getDomRenderUtils().applyTrendArrowState(arrowEl, { action: 'hide' })"));
+    assert.ok(!appJsResponse.body.includes('globalTooltip.innerHTML = htmlContent'));
+    assert.ok(!appJsResponse.body.includes("globalTooltip.classList.add('visible')"));
+    assert.ok(!appJsResponse.body.includes('globalTooltip.style.top'));
+    assert.ok(!appJsResponse.body.includes('void arrowEl.offsetWidth'));
+    assert.ok(!appJsResponse.body.includes("arrowEl.classList.remove('visible')"));
     assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
     assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
     assert.ok(dashboardRendererResponse.body.includes('class="icon-btn add-quote-btn"'));

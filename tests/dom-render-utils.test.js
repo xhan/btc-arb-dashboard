@@ -1,14 +1,32 @@
 const assert = require('assert');
 
 const {
+  applyTooltipState,
+  applyTrendArrowState,
   bindDraggableElement,
   bindFloatingPanelFocus,
   closestEventTarget,
   createElementFromHtml,
   createStableHtmlRenderer,
   escapeCssAttributeValue,
+  hideTooltip,
   resolveEventTargetElement
 } = require('../src/ui/dom-render-utils');
+
+function createClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    add(...classNames) {
+      classNames.forEach((className) => values.add(className));
+    },
+    remove(...classNames) {
+      classNames.forEach((className) => values.delete(className));
+    },
+    contains(className) {
+      return values.has(className);
+    }
+  };
+}
 
 const writes = [];
 const target = { innerHTML: '' };
@@ -35,6 +53,58 @@ assert.strictEqual(renderer.render(target, '<div>B</div>'), true);
 assert.deepStrictEqual(writes, ['<div>A</div>', '<div>B</div>', '<div>B</div>']);
 
 assert.strictEqual(renderer.render(null, '<div>C</div>'), false);
+
+const tooltipEl = {
+  innerHTML: '',
+  classList: createClassList(['visible', 'cex-orderbook-tooltip-host']),
+  style: {}
+};
+const tooltipTargetEl = {
+  getBoundingClientRect() {
+    return { top: 12, left: 20, width: 40 };
+  }
+};
+assert.strictEqual(
+  applyTooltipState(tooltipEl, tooltipTargetEl, {
+    html: '<strong>Kyber</strong>',
+    className: 'cex-orderbook-tooltip-host'
+  }),
+  true
+);
+assert.strictEqual(tooltipEl.innerHTML, '<strong>Kyber</strong>');
+assert.strictEqual(tooltipEl.classList.contains('visible'), true);
+assert.strictEqual(tooltipEl.classList.contains('cex-orderbook-tooltip-host'), true);
+assert.strictEqual(tooltipEl.style.top, '12px');
+assert.strictEqual(tooltipEl.style.left, '40px');
+assert.strictEqual(hideTooltip(tooltipEl), true);
+assert.strictEqual(tooltipEl.classList.contains('visible'), false);
+assert.strictEqual(applyTooltipState(null, tooltipTargetEl, { html: 'x' }), false);
+
+const trendArrowEl = {
+  classList: createClassList(['visible']),
+  innerHTML: '',
+  className: 'trend-arrow',
+  offsetWidth: 12
+};
+let reflowCount = 0;
+assert.strictEqual(
+  applyTrendArrowState(trendArrowEl, {
+    action: 'show',
+    html: '&#8593;',
+    className: 'trend-arrow trend-up visible'
+  }, {
+    forceReflow() {
+      reflowCount += 1;
+    }
+  }),
+  true
+);
+assert.strictEqual(reflowCount, 1);
+assert.strictEqual(trendArrowEl.innerHTML, '&#8593;');
+assert.strictEqual(trendArrowEl.className, 'trend-arrow trend-up visible');
+assert.strictEqual(applyTrendArrowState(trendArrowEl, { action: 'hide' }), true);
+assert.strictEqual(trendArrowEl.classList.contains('visible'), false);
+assert.strictEqual(applyTrendArrowState(trendArrowEl, null), false);
 
 const htmlElement = { tagName: 'ARTICLE' };
 const documentImpl = {

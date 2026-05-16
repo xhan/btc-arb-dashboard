@@ -59,6 +59,60 @@
     }
   }
 
+  function removeClasses(element, classNames = []) {
+    if (!element || !element.classList || typeof element.classList.remove !== 'function') return;
+    classNames.forEach((className) => {
+      element.classList.remove(className);
+    });
+  }
+
+  function addClass(element, className) {
+    if (element && element.classList && typeof element.classList.add === 'function' && className) {
+      element.classList.add(className);
+    }
+  }
+
+  function applyTooltipState(tooltipEl, targetEl, tooltipState = {}) {
+    if (!tooltipEl || !targetEl || !tooltipState) return false;
+    tooltipEl.innerHTML = tooltipState.html || '';
+    removeClasses(tooltipEl, ['visible', 'cex-orderbook-tooltip-host']);
+    addClass(tooltipEl, 'visible');
+    addClass(tooltipEl, tooltipState.className);
+
+    const rect = typeof targetEl.getBoundingClientRect === 'function'
+      ? targetEl.getBoundingClientRect()
+      : { top: 0, left: 0, width: 0 };
+    if (tooltipEl.style) {
+      tooltipEl.style.top = `${rect.top}px`;
+      tooltipEl.style.left = `${rect.left + (rect.width / 2)}px`;
+    }
+    return true;
+  }
+
+  function hideTooltip(tooltipEl) {
+    if (!tooltipEl) return false;
+    removeClasses(tooltipEl, ['visible']);
+    return true;
+  }
+
+  function applyTrendArrowState(arrowEl, trendState, options = {}) {
+    if (!arrowEl || !trendState) return false;
+    if (trendState.action === 'hide') {
+      removeClasses(arrowEl, ['visible']);
+      return true;
+    }
+
+    removeClasses(arrowEl, ['visible']);
+    if (typeof options.forceReflow === 'function') {
+      options.forceReflow(arrowEl);
+    } else {
+      void arrowEl.offsetWidth;
+    }
+    arrowEl.innerHTML = trendState.html || '';
+    arrowEl.className = trendState.className || '';
+    return true;
+  }
+
   function bindDraggableElement(element, handle, options = {}) {
     if (!element || !handle) return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -130,12 +184,15 @@
   }
 
   return {
+    applyTooltipState,
+    applyTrendArrowState,
     bindDraggableElement,
     bindFloatingPanelFocus,
     closestEventTarget,
     createElementFromHtml,
     createStableHtmlRenderer,
     escapeCssAttributeValue,
+    hideTooltip,
     resolveEventTargetElement
   };
 }));
