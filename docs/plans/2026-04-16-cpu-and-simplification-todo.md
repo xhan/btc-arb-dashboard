@@ -134,7 +134,7 @@
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 所有权、全局过滤栏读写计划和面板内容事件动作解析已下沉到 `arb-path-template-cache-utils.js` / `arb-runtime-memory-utils.js` / `arb-panel-layout-utils.js` / `arb-panel-renderer.js`，`app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`
-  - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划和内容点击动作解析已下沉到 `data-terminal-utils.js`
+  - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划和内容点击动作解析已下沉到 `data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `dashboard-renderer.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
 
@@ -160,7 +160,7 @@
   - `path-alerts-app.js` 的编辑器已选目标摘要行、规则选择、候选搜索、交易对目标和已选 legs 渲染片段已拆到 `path-alert-editor-utils.js`
   - `path-alerts-app.js` 的候选报价建议项 HTML 已拆到 `path-alert-editor-utils.js`
   - `path-alerts-app.js` 的编辑器主模板已拆到 `path-alert-editor-utils.js`
-  - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划和事件 patch 构造已下沉到 `data-terminal-utils.js`
+  - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造和 row selection patch 已下沉到 `data-terminal-utils.js`
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的套利全局过滤栏 DOM 写入计划和事件 patch 构造已下沉到 `arb-panel-layout-utils.js`
