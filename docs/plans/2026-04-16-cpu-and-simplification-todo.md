@@ -103,9 +103,9 @@
 - 目标：避免每次刷新都重建 records 和 candidates。
 - 现状：
   - 已用 `dashboardState + quoteMarketState` cache key 缓存生成的 records
-  - records 构建已下沉到 `data-terminal-utils.js`，`app.js` 只保留缓存生命周期
+  - records 构建已下沉到 `src/data-terminal/data-terminal-utils.js`，`app.js` 只保留缓存生命周期
   - 已用同一 cache key 缓存 candidates，查询、别名、diff 变化只重跑 view model/filter
-  - records/candidates 缓存生命周期已下沉到 `data-terminal-utils.js` 的 `createDataTerminalCache()`，`app.js` 只提供 cache key 和构建函数
+  - records/candidates 缓存生命周期已下沉到 `src/data-terminal/data-terminal-utils.js` 的 `createDataTerminalCache()`，`app.js` 只提供 cache key 和构建函数
 - 预期收益：
   - 已降低数据终端打开后的持续 CPU
 - 后续建议：
@@ -136,7 +136,7 @@
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 所有权、全局过滤栏读写计划和面板内容事件动作解析已下沉到 `src/arb/arb-path-template-cache-utils.js` / `src/arb/arb-runtime-memory-utils.js` / `src/arb/arb-panel-layout-utils.js` / `src/arb/arb-panel-renderer.js`，`app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
-  - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `data-terminal-utils.js`
+  - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、控件状态读写计划、selection 更新计划、内容和 header 点击动作解析已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
   - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
@@ -150,6 +150,7 @@
     - 已启动第七步：queue stats 页面入口和队列统计工具迁入 `src/queue-stats/`，后续队列统计模块按这个目录维护
     - 已启动第八步：price snapshot payload/store/replay 和快照页入口迁入 `src/price-snapshots/`，后续快照持久化与回放模块按这个目录维护
     - 已启动第九步：alert log UI、alert debug 和 special rule alert config 工具迁入 `src/alerts/`，后续告警支撑模块按这个目录维护
+    - 已启动第十步：data terminal 工具迁入 `src/data-terminal/`，后续数据终端模块按这个目录维护
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -189,7 +190,7 @@
   - `app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
   - `app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js`
   - `app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`
-  - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `data-terminal-utils.js`
+  - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `app.js` 的套利全局过滤栏 DOM 写入计划和事件 patch 构造已下沉到 `src/arb/arb-panel-layout-utils.js`
