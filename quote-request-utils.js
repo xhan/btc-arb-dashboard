@@ -201,6 +201,82 @@
     };
   }
 
+  function resolveFetchImpl(fetchImpl) {
+    if (typeof fetchImpl === 'function') return fetchImpl;
+    if (typeof fetch === 'function') return fetch;
+    throw new Error('fetch is not available');
+  }
+
+  async function postQuoteJson(options = {}) {
+    const fetchImpl = resolveFetchImpl(options.fetchImpl);
+    const endpoint = normalizeString(options.endpoint);
+    if (!endpoint) {
+      throw new Error('Quote request endpoint is missing');
+    }
+
+    const response = await fetchImpl(`${normalizeString(options.backendUrl)}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...(options.payload || {}) }),
+      signal: options.signal
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || options.errorMessage || 'API Request Failed');
+    }
+    return data;
+  }
+
+  async function requestMarketQuote(options = {}) {
+    const requestConfig = options.requestConfig || {};
+    const quote = options.quote || {};
+    const requestQuote = requestConfig.requestQuote || quote;
+    const data = await postQuoteJson({
+      backendUrl: options.backendUrl,
+      endpoint: requestConfig.endpoint,
+      payload: requestQuote,
+      signal: options.signal,
+      fetchImpl: options.fetchImpl,
+      errorMessage: requestConfig.errorMessage || 'API Request Failed'
+    });
+    const usedSource = typeof requestConfig.resolveUsedSource === 'function'
+      ? requestConfig.resolveUsedSource(data, quote)
+      : requestConfig.source;
+    return buildMarketQuoteResult(data, usedSource, requestConfig);
+  }
+
+  async function requestCexOrderbookQuote(options = {}) {
+    const requestConfig = options.requestConfig || {};
+    const quote = options.quote || {};
+    const data = await postQuoteJson({
+      backendUrl: options.backendUrl,
+      endpoint: requestConfig.endpoint,
+      payload: quote,
+      signal: options.signal,
+      fetchImpl: options.fetchImpl,
+      errorMessage: `${requestConfig.source || 'CEX'} API Request Failed`
+    });
+    return buildCexOrderbookQuoteResult(data, quote, {
+      source: requestConfig.source,
+      buildSummary: options.buildCexSummary
+    });
+  }
+
+  async function requestResolvedQuote(options = {}) {
+    const resolvedConfig = options.resolvedConfig || {};
+    if (resolvedConfig.type === 'cex') {
+      return requestCexOrderbookQuote({
+        ...options,
+        requestConfig: resolvedConfig.config
+      });
+    }
+    return requestMarketQuote({
+      ...options,
+      requestConfig: resolvedConfig.config
+    });
+  }
+
   return {
     CEX_ORDERBOOK_REQUESTS,
     MARKET_QUOTE_REQUESTS,
@@ -211,6 +287,9 @@
     buildQuoteRequestInput,
     buildQuoteErrorTitle,
     formatQuoteErrorMessage,
+    requestCexOrderbookQuote,
+    requestMarketQuote,
+    requestResolvedQuote,
     resolveMarketQuoteRequestConfig,
     resolveQuoteRequestConfig,
     shouldDelayQuoteSource,

@@ -10,6 +10,9 @@ const {
   buildQuoteRequestInput,
   buildQuoteErrorTitle,
   formatQuoteErrorMessage,
+  requestCexOrderbookQuote,
+  requestMarketQuote,
+  requestResolvedQuote,
   resolveMarketQuoteRequestConfig,
   resolveQuoteRequestConfig,
   shouldDelayQuoteSource,
@@ -252,3 +255,115 @@ assert.deepStrictEqual(
     isCrossChain: true
   }
 );
+
+async function runRequestHelperTests() {
+  const marketFetchCalls = [];
+  const marketResult = await requestMarketQuote({
+    backendUrl: 'http://localhost:3000',
+    fetchImpl: async (url, options) => {
+      marketFetchCalls.push({
+        url,
+        options,
+        body: JSON.parse(options.body)
+      });
+      return {
+        ok: true,
+        json: async () => ({
+          fromSymbol: 'ETH',
+          toSymbol: 'USDC',
+          amountOut: 3456.789123,
+          raw_price: 3456.789123,
+          source: 'Cetus'
+        })
+      };
+    },
+    quote: { id: 901, chain: 'sui', amount: 1 },
+    signal: 'market-signal',
+    requestConfig: {
+      endpoint: '/api/get-cetus-quote',
+      requestQuote: { id: 901, amount: 2 },
+      resolveUsedSource: (data) => data.source || 'Unknown'
+    }
+  });
+
+  assert.deepStrictEqual(marketFetchCalls, [
+    {
+      url: 'http://localhost:3000/api/get-cetus-quote',
+      options: {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: 901, amount: 2 }),
+        signal: 'market-signal'
+      },
+      body: { id: 901, amount: 2 }
+    }
+  ]);
+  assert.deepStrictEqual(marketResult, {
+    symbols: { from: 'ETH', to: 'USDC' },
+    finalAmountOut: 3456.789123,
+    rawPrice: 3456.789123,
+    usedSource: 'Cetus',
+    resultText: 'ETH ≈ 3456.789123 USDC'
+  });
+
+  await assert.rejects(
+    () => requestMarketQuote({
+      backendUrl: 'http://localhost:3000',
+      fetchImpl: async () => ({
+        ok: false,
+        json: async () => ({ error: 'remote failed' })
+      }),
+      quote: { id: 902 },
+      requestConfig: {
+        endpoint: '/api/get-velora-quote',
+        source: 'Velora',
+        errorMessage: 'Velora API Request Failed'
+      }
+    }),
+    /remote failed/
+  );
+
+  const cexResult = await requestCexOrderbookQuote({
+    backendUrl: 'http://localhost:3000',
+    fetchImpl: async (url, options) => {
+      assert.strictEqual(url, 'http://localhost:3000/api/get-binance-quote');
+      assert.deepStrictEqual(JSON.parse(options.body), { id: 903, symbol: 'BTCUSDT' });
+      return {
+        ok: true,
+        json: async () => orderbookData
+      };
+    },
+    quote: { id: 903, symbol: 'BTCUSDT' },
+    requestConfig: {
+      endpoint: '/api/get-binance-quote',
+      source: 'Binance'
+    },
+    buildCexSummary: (symbol, orderbook) => `${symbol}:${orderbook.bestBidPrice}/${orderbook.bestAskPrice}`
+  });
+  assert.strictEqual(cexResult.resultText, 'BTCUSDT:100100/100200');
+  assert.strictEqual(cexResult.usedSource, 'Binance');
+
+  const resolvedResult = await requestResolvedQuote({
+    backendUrl: 'http://localhost:3000',
+    fetchImpl: async () => ({
+      ok: true,
+      json: async () => orderbookData
+    }),
+    quote: { id: 904, symbol: 'BTCUSDT' },
+    resolvedConfig: {
+      type: 'cex',
+      config: {
+        endpoint: '/api/get-bybit-quote',
+        source: 'Bybit'
+      }
+    },
+    buildCexSummary: () => 'summary'
+  });
+  assert.strictEqual(resolvedResult.usedSource, 'Bybit');
+  assert.strictEqual(resolvedResult.resultText, 'summary');
+}
+
+runRequestHelperTests().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

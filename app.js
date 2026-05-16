@@ -3760,48 +3760,17 @@
         return window.QuoteRequestUtils;
     }
 
-    async function getMarketQuote(quote, signal, config) {
-        const requestQuote = config.requestQuote || quote;
-        const response = await fetch(`${BACKEND_URL}${config.endpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...requestQuote }),
-            signal
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || config.errorMessage || 'API Request Failed');
-
-        const usedSource = typeof config.resolveUsedSource === 'function'
-            ? config.resolveUsedSource(data, quote)
-            : config.source;
-        return getQuoteRequestUtils().buildMarketQuoteResult(data, usedSource, config);
-    }
-
-    async function getCexOrderbookQuote(quote, signal, options) {
-        const response = await fetch(`${BACKEND_URL}${options.endpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quote }),
-            signal
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || `${options.source} API Request Failed`);
-
-        return getQuoteRequestUtils().buildCexOrderbookQuoteResult(data, quote, {
-            source: options.source,
-            buildSummary: buildCexOrderbookSummary
-        });
-    }
-
     async function apiGetQuote(quote, signal, targetSource) {
         const quoteRequestUtils = getQuoteRequestUtils();
-        const requestConfig = quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote);
-        if (requestConfig.type === 'cex') {
-            return getCexOrderbookQuote(quote, signal, requestConfig.config);
-        }
-        return getMarketQuote(quote, signal, requestConfig.config);
+        const resolvedConfig = quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote);
+        return quoteRequestUtils.requestResolvedQuote({
+            backendUrl: BACKEND_URL,
+            fetchImpl: fetch,
+            quote,
+            signal,
+            resolvedConfig,
+            buildCexSummary: buildCexOrderbookSummary
+        });
     }
 
     function sleep(ms) {
