@@ -184,7 +184,7 @@
   - 未被生产代码调用的 `quote-alert-config-utils.js` 旧迁移工具已移除
   - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 未使用的 generic alert log 渲染路径已移除
-  - alert log 的 restored muted selector、恢复卡片删除、click action 解析已下沉到 `src/alerts/alert-log-ui-utils.js`
+  - alert log 的 restored muted selector、恢复卡片删除、click action 解析和 active tab runtime 已下沉到 `src/alerts/alert-log-ui-utils.js`
   - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `src/path-alerts/path-alert-utils.js`
   - `src/app/dashboard-app.js` 中未调用的 muted path timer 包装函数已移除，保留唯一入口 `syncMutedPathLogTimer()`
   - `src/path-alerts/path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
@@ -237,6 +237,7 @@
   - `src/app/dashboard-app.js` 的音频 unlock 状态、循环报警音同步和 quote alert 一次性播放实现已下沉到 `src/ui/audio-utils.js`
   - `src/app/dashboard-app.js` 的浮窗拖拽实现和浮窗 focus 事件绑定已下沉到 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的浮窗 z-index 计数和默认 z-index 写入已下沉到 `src/ui/dom-render-utils.js` 的 `createFloatingPanelZIndexRuntime()`
+  - `src/app/dashboard-app.js` 的 alert log active tab 状态已下沉到 `src/alerts/alert-log-ui-utils.js` 的 `createAlertLogTabRuntime()`
   - `src/app/dashboard-app.js` 的主题 metadata、循环顺序和主题写入计划已下沉到 `src/ui/theme-utils.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
