@@ -10,6 +10,7 @@ const {
   createStableHtmlRenderer,
   escapeCssAttributeValue,
   hideTooltip,
+  resetTrendArrow,
   resolveEventTargetElement
 } = require('../src/ui/dom-render-utils');
 
@@ -105,6 +106,12 @@ assert.strictEqual(trendArrowEl.className, 'trend-arrow trend-up visible');
 assert.strictEqual(applyTrendArrowState(trendArrowEl, { action: 'hide' }), true);
 assert.strictEqual(trendArrowEl.classList.contains('visible'), false);
 assert.strictEqual(applyTrendArrowState(trendArrowEl, null), false);
+trendArrowEl.className = 'trend-arrow trend-up visible';
+trendArrowEl.innerHTML = '&#8593;';
+assert.strictEqual(resetTrendArrow(trendArrowEl), true);
+assert.strictEqual(trendArrowEl.className, 'trend-arrow');
+assert.strictEqual(trendArrowEl.innerHTML, '');
+assert.strictEqual(resetTrendArrow(null), false);
 
 const htmlElement = { tagName: 'ARTICLE' };
 const documentImpl = {

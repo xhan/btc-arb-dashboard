@@ -1752,10 +1752,7 @@
 
     function clearQuoteTrendArrow(quoteId) {
         const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
-        if (arrowEl) {
-            arrowEl.className = 'trend-arrow';
-            arrowEl.innerHTML = '';
-        }
+        getDomRenderUtils().resetTrendArrow(arrowEl);
         clearQuoteTrendTimer(quoteId);
     }
 
@@ -4599,9 +4596,7 @@
             const nextState = getDashboardRuntimeUtils().buildSwappedQuoteMarketState(state);
 
             const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
-            if (arrowEl) {
-                arrowEl.className = 'trend-arrow';
-            }
+            getDomRenderUtils().resetTrendArrow(arrowEl);
 
             const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
             if (quoteItemEl) {

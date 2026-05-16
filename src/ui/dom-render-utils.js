@@ -113,6 +113,13 @@
     return true;
   }
 
+  function resetTrendArrow(arrowEl) {
+    if (!arrowEl) return false;
+    arrowEl.className = 'trend-arrow';
+    arrowEl.innerHTML = '';
+    return true;
+  }
+
   function bindDraggableElement(element, handle, options = {}) {
     if (!element || !handle) return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -193,6 +200,7 @@
     createStableHtmlRenderer,
     escapeCssAttributeValue,
     hideTooltip,
+    resetTrendArrow,
     resolveEventTargetElement
   };
 }));
