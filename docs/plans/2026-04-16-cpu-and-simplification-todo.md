@@ -146,6 +146,7 @@
     - 已启动第三步：dashboard renderer/runtime 迁入 `src/dashboard/`，后续 dashboard 模块按这个目录继续收敛
     - 已启动第四步：request channel 配置、前端工具和 HTTP proxy agent 工具迁入 `src/request-channel/`，后续请求通道边界按这个目录维护
     - 已启动第五步：path alert 主工具、通知、页面渲染、规则定义、候选构建、编辑器和独立页面入口迁入 `src/path-alerts/`，后续 path alert 模块按这个目录继续收敛
+    - 已启动第六步：charts 页面入口、图表渲染器和图表工具迁入 `src/charts/`，后续历史图表模块按这个目录维护
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
