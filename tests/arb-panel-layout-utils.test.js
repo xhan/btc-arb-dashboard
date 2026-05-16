@@ -11,6 +11,7 @@ const {
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
   buildFixedArbSections,
+  buildGlobalArbSection,
   buildSpecialArbSections,
   buildQuotePriceWatchDisplayEntry,
   buildQuotePriceWatchSection,
@@ -231,6 +232,35 @@ const twoLegOnlyFilterState = filterGlobalArbCycles(globalFilterCycles, {
 });
 assert.deepStrictEqual(twoLegOnlyFilterState.cycles.map((cycle) => cycle.id), ['keep', 'excluded-symbol', 'excluded-chain']);
 assert.strictEqual(twoLegOnlyFilterState.hasFilter, false);
+
+const globalSectionCycles = [
+  {
+    id: 'eth-cycle',
+    profitRate: 0.0003,
+    legs: [{ from: 'ETH', to: 'USDC', chain: 'ethereum' }]
+  },
+  {
+    id: 'wbtc-cycle',
+    profitRate: 0.00025,
+    legs: [{ from: 'WBTC', to: 'cbBTC', chain: 'ethereum' }]
+  }
+];
+assert.deepStrictEqual(
+  buildGlobalArbSection({
+    sectionKey: 'global:all',
+    cycles: globalSectionCycles,
+    includedSymbols: ['WBTC'],
+    maxPositiveCount: 1,
+    buildEntry: (cycle, index) => ({ label: `机会 ${index + 1}`, cycleId: cycle.id }),
+    buildFooterHtml: (cycleDisplayState) => cycleDisplayState.canToggleExpand ? 'toggle' : ''
+  }),
+  {
+    title: '全局路径',
+    opportunities: [{ label: '机会 2', cycleId: 'wbtc-cycle' }],
+    footerHtml: '',
+    emptyText: '过滤后暂无路径'
+  }
+);
 
 const fixedDisplayCycles = [
   { id: 'pos-1', profitRate: 0.002 },

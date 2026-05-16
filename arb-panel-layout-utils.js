@@ -277,6 +277,33 @@
     };
   }
 
+  function buildGlobalArbSection(options = {}) {
+    const cycles = Array.isArray(options.cycles) ? options.cycles : [];
+    const sectionKey = String(options.sectionKey || 'global:all');
+    const filterState = filterGlobalArbCycles(cycles, {
+      includedSymbols: options.includedSymbols,
+      excludedSymbols: options.excludedSymbols,
+      excludedChains: options.excludedChains,
+      twoLegOnly: options.twoLegOnly === true,
+      isRuleLeg: options.isRuleLeg
+    });
+    const displayState = getCycleDisplayState(
+      filterState.cycles,
+      options.maxPositiveCount || 8,
+      options.expanded === true,
+      options.displayOptions || null
+    );
+    const buildEntry = typeof options.buildEntry === 'function' ? options.buildEntry : () => null;
+    const opportunities = mapEntriesForDisplayCycles(cycles, displayState.displayCycles, buildEntry);
+    const buildFooterHtml = typeof options.buildFooterHtml === 'function' ? options.buildFooterHtml : () => '';
+    return {
+      title: String(options.title || '全局路径'),
+      opportunities,
+      footerHtml: buildFooterHtml(displayState, sectionKey),
+      emptyText: filterState.hasFilter ? '过滤后暂无路径' : '等待数据...'
+    };
+  }
+
   function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {}) {
     return {
       id: opportunityId,
@@ -426,6 +453,7 @@
     buildArbOpportunityDisplayEntry,
     buildArbOpportunityStoreEntry,
     buildFixedArbSections,
+    buildGlobalArbSection,
     buildSpecialArbSections,
     buildQuotePriceWatchDisplayEntry,
     buildQuotePriceWatchSection,

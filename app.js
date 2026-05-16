@@ -2379,10 +2379,6 @@
         return getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(rule && rule.displayMinProfitBp, getDefaultArbDisplayMinProfitBp());
     }
 
-    function getCycleDisplayState(cycles, maxPositiveCount, expanded = false, options = null) {
-        return getArbPanelLayoutUtils().getCycleDisplayState(cycles, maxPositiveCount, expanded, options);
-    }
-
     function buildArbSectionToggleHtml(sectionKey, cycleDisplayState) {
         if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
         return getArbPanelRenderer().renderArbSectionToggleHtml(sectionKey, {
@@ -3891,31 +3887,25 @@
                 .filter(Boolean)
         ));
         const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);
-        const filterState = layoutUtils.filterGlobalArbCycles(globalCycles, {
+        updateGlobalArbFilterBar();
+        return layoutUtils.buildGlobalArbSection({
+            sectionKey: globalSectionKey,
+            cycles: globalCycles,
             includedSymbols,
             excludedSymbols,
             excludedChains,
             twoLegOnly: arbGlobalTwoLegOnly,
-            isRuleLeg
+            expanded: arbExpandedSections.has(globalSectionKey),
+            isRuleLeg,
+            buildEntry: (cycle, index) => createArbOpportunityEntry(
+                nextOpportunityMap,
+                nextOpportunityIdsByTargetKey,
+                cycle,
+                `机会 ${index + 1}`,
+                { section: '全局路径', alertPreset: { type: 'path' } }
+            ),
+            buildFooterHtml: (cycleDisplayState) => buildArbSectionToggleHtml(globalSectionKey, cycleDisplayState)
         });
-        const filteredGlobalCycles = filterState.cycles;
-        const hasGlobalFilter = filterState.hasFilter;
-        updateGlobalArbFilterBar();
-        const globalCycleDisplayState = getCycleDisplayState(filteredGlobalCycles, 8, arbExpandedSections.has(globalSectionKey));
-        const opportunities = layoutUtils.mapEntriesForDisplayCycles(globalCycles, globalCycleDisplayState.displayCycles, (cycle, index) => createArbOpportunityEntry(
-            nextOpportunityMap,
-            nextOpportunityIdsByTargetKey,
-            cycle,
-            `机会 ${index + 1}`,
-            { section: '全局路径', alertPreset: { type: 'path' } }
-        ));
-
-        return {
-            title: '全局路径',
-            opportunities,
-            footerHtml: buildArbSectionToggleHtml(globalSectionKey, globalCycleDisplayState),
-            emptyText: hasGlobalFilter ? '过滤后暂无路径' : '等待数据...'
-        };
     }
 
     function buildArbPanelData() {

@@ -496,6 +496,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta = {}, options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildFixedArbSections(options = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbSection(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildSpecialArbSections(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchDisplayEntry(options = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildQuotePriceWatchSection(options = {})'));
@@ -730,6 +731,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let lbtcSection = null'));
     assert.ok(!appJsResponse.body.includes('const wbtcSection = categorySections.find'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildFixedArbSections({'));
+    assert.ok(appJsResponse.body.includes('layoutUtils.buildGlobalArbSection({'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildSpecialArbSections({'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes("emptyText: '无收益率'"));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes("title: '关注列表'"));
@@ -747,7 +749,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('buildQuoteAlertWatchEntries'));
     assert.ok(appJsResponse.body.includes('const columns = ['));
     assert.ok(appJsResponse.body.includes('const includedSymbols = layoutUtils.parseFilterInput(arbGlobalIncludedSymbolsInput);'));
-    assert.ok(appJsResponse.body.includes('const filterState = layoutUtils.filterGlobalArbCycles(globalCycles, {'));
+    assert.ok(!appJsResponse.body.includes('const filterState = layoutUtils.filterGlobalArbCycles(globalCycles, {'));
     assert.ok(!appJsResponse.body.includes('function parseArbFilterInput'));
     assert.ok(!appJsResponse.body.includes('function cycleContainsAnySymbols'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function filterGlobalArbCycles(cycles, options = {})'));
