@@ -13,6 +13,7 @@ const {
   resolveAddQuoteModalClickAction,
   resolveDashboardAmountInputAction,
   resolveDashboardButtonClickAction,
+  resolveQuoteSettingsModalClickAction,
   renderCategoryModuleShell,
   renderQuoteItemShell
 } = require('../dashboard-renderer');
@@ -265,6 +266,36 @@ assert.deepStrictEqual(
 const addCategoryOverlay = { id: 'add-category-modal', closest: () => null };
 assert.deepStrictEqual(
   resolveAddCategoryModalClickAction({ target: addCategoryOverlay }, { modal: addCategoryOverlay }),
+  { type: 'close' }
+);
+
+assert.deepStrictEqual(
+  resolveQuoteSettingsModalClickAction({ target: { id: 'modal-cancel' } }),
+  { type: 'close' }
+);
+assert.deepStrictEqual(
+  resolveQuoteSettingsModalClickAction({ target: { id: 'modal-swap-quote' } }),
+  { type: 'swap' }
+);
+assert.deepStrictEqual(
+  resolveQuoteSettingsModalClickAction({ target: { id: 'modal-delete-quote' } }),
+  { type: 'delete' }
+);
+assert.deepStrictEqual(
+  resolveQuoteSettingsModalClickAction({ target: { id: 'open-quote-alerts-manage' } }),
+  { type: 'manage-alerts' }
+);
+assert.deepStrictEqual(
+  resolveQuoteSettingsModalClickAction({ target: { id: 'modal-save' } }),
+  { type: 'save' }
+);
+assert.deepStrictEqual(
+  resolveQuoteSettingsModalClickAction({ target: { id: 'other' } }),
+  { type: 'none' }
+);
+const quoteSettingsOverlay = { id: 'alert-modal', closest: () => null };
+assert.deepStrictEqual(
+  resolveQuoteSettingsModalClickAction({ target: quoteSettingsOverlay }, { modal: quoteSettingsOverlay }),
   { type: 'close' }
 );
 

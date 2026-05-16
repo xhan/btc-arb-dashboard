@@ -4838,6 +4838,11 @@
         return true;
     }
 
+    function closeQuoteSettingsModal() {
+        alertModal.classList.remove('visible');
+        currentlyEditingQuote = null;
+    }
+
     function deleteCategoryFromDashboard(categoryId) {
         const categoryIndex = dashboardState.findIndex(c => c.id == categoryId);
         if (categoryIndex === -1) return false;
@@ -4898,91 +4903,85 @@
     dashboardEl.addEventListener('click', handleDashboardClick);
 
     alertModal.addEventListener('click', (e) => {
-        if (e.target.id === 'modal-cancel' || (e.target === alertModal && !e.target.closest('.modal-box'))) {
-            alertModal.classList.remove('visible');
-            currentlyEditingQuote = null;
-        } else if (e.target.id === 'modal-swap-quote') {
-            if (currentlyEditingQuote && currentlyEditingQuote.quote) {
-                swapQuoteTokens(currentlyEditingQuote.categoryId, currentlyEditingQuote.quote.id);
-            }
-        } else if (e.target.id === 'modal-delete-quote') {
-            if (currentlyEditingQuote && currentlyEditingQuote.quote) {
-                const { categoryId, quote } = currentlyEditingQuote;
-                alertModal.classList.remove('visible');
-                currentlyEditingQuote = null;
-                showConfirmation('确定删除此报价吗？', () => {
-                    deleteQuoteFromCategory(categoryId, quote.id);
-                });
-            }
-        } else if (e.target.id === 'open-quote-alerts-manage') {
-            if (currentlyEditingQuote && currentlyEditingQuote.quote) {
-                openPathAlertsManagementPage({
-                    filterQuoteId: currentlyEditingQuote.quote.id
-                });
-            }
-        } else if (e.target.id === 'modal-save') {
-            if (currentlyEditingQuote && currentlyEditingQuote.quote) {
-                const { quote } = currentlyEditingQuote;
-                let shouldQueueRefreshQuote = false;
-                
-                if (isCrossChainQuote(quote)) {
-                    if (quote.preferredSource !== 'LI.FI') {
-                        quote.preferredSource = 'LI.FI';
+        const action = getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: alertModal });
+        if (action.type === 'close') {
+            closeQuoteSettingsModal();
+            return;
+        }
+
+        if (!currentlyEditingQuote || !currentlyEditingQuote.quote) return;
+        if (action.type === 'swap') {
+            swapQuoteTokens(currentlyEditingQuote.categoryId, currentlyEditingQuote.quote.id);
+        } else if (action.type === 'delete') {
+            const { categoryId, quote } = currentlyEditingQuote;
+            closeQuoteSettingsModal();
+            showConfirmation('确定删除此报价吗？', () => {
+                deleteQuoteFromCategory(categoryId, quote.id);
+            });
+        } else if (action.type === 'manage-alerts') {
+            openPathAlertsManagementPage({
+                filterQuoteId: currentlyEditingQuote.quote.id
+            });
+        } else if (action.type === 'save') {
+            const { quote } = currentlyEditingQuote;
+            let shouldQueueRefreshQuote = false;
+
+            if (isCrossChainQuote(quote)) {
+                if (quote.preferredSource !== 'LI.FI') {
+                    quote.preferredSource = 'LI.FI';
+                    shouldQueueRefreshQuote = true;
+                }
+            } else if (isEvmChain(quote.chain)) {
+                if (quote.chain.toLowerCase() !== 'plasma') {
+                    const newSource = quoteSourceSelect.value;
+                    if (quote.preferredSource !== newSource) {
+                        quote.preferredSource = newSource;
                         shouldQueueRefreshQuote = true;
                     }
-                } else if (isEvmChain(quote.chain)) {
-                    if (quote.chain.toLowerCase() !== 'plasma') {
-                        const newSource = quoteSourceSelect.value;
-                        if (quote.preferredSource !== newSource) {
-                            quote.preferredSource = newSource;
-                            shouldQueueRefreshQuote = true;
-                        }
-                    }
                 }
+            }
 
-                const kyberOnlyDirectPools = !isCrossChainQuote(quote) && kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;
-                if (quote.kyberOnlyDirectPools !== kyberOnlyDirectPools) {
-                    if (kyberOnlyDirectPools) {
-                        quote.kyberOnlyDirectPools = true;
+            const kyberOnlyDirectPools = !isCrossChainQuote(quote) && kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;
+            if (quote.kyberOnlyDirectPools !== kyberOnlyDirectPools) {
+                if (kyberOnlyDirectPools) {
+                    quote.kyberOnlyDirectPools = true;
+                } else {
+                    delete quote.kyberOnlyDirectPools;
+                }
+                shouldQueueRefreshQuote = true;
+            }
+
+            const showInverse = isCrossChainQuote(quote) ? false : document.getElementById('show-inverse-quote').checked;
+            if (quote.showInverse !== showInverse) {
+                quote.showInverse = showInverse;
+                shouldQueueRefreshQuote = true;
+            }
+
+            if (shouldShowRequestChannelForQuote(quote) && quoteRequestChannelSelect) {
+                const nextChannelId = quoteRequestChannelSelect.value || 'default';
+                const previousChannelId = quote.requestChannelId || 'default';
+                if (previousChannelId !== nextChannelId) {
+                    if (nextChannelId === 'default') {
+                        delete quote.requestChannelId;
                     } else {
-                        delete quote.kyberOnlyDirectPools;
+                        quote.requestChannelId = nextChannelId;
                     }
-                    shouldQueueRefreshQuote = true;
-                }
-
-                const showInverse = isCrossChainQuote(quote) ? false : document.getElementById('show-inverse-quote').checked;
-                if (quote.showInverse !== showInverse) {
-                    quote.showInverse = showInverse;
-                    shouldQueueRefreshQuote = true;
-                }
-
-                if (shouldShowRequestChannelForQuote(quote) && quoteRequestChannelSelect) {
-                    const nextChannelId = quoteRequestChannelSelect.value || 'default';
-                    const previousChannelId = quote.requestChannelId || 'default';
-                    if (previousChannelId !== nextChannelId) {
-                        if (nextChannelId === 'default') {
-                            delete quote.requestChannelId;
-                        } else {
-                            quote.requestChannelId = nextChannelId;
-                        }
-                        updateRequestChannelTagForQuote(quote);
-                        shouldQueueRefreshQuote = true;
-                    }
-                } else if (quote.requestChannelId) {
-                    delete quote.requestChannelId;
                     updateRequestChannelTagForQuote(quote);
                     shouldQueueRefreshQuote = true;
                 }
-
-                if (shouldQueueRefreshQuote) {
-                    removeFromQueue(quote.id);
-                    queueQuoteRefresh(quote);
-                }
-
-                saveData();
-                alertModal.classList.remove('visible');
-                currentlyEditingQuote = null;
+            } else if (quote.requestChannelId) {
+                delete quote.requestChannelId;
+                updateRequestChannelTagForQuote(quote);
+                shouldQueueRefreshQuote = true;
             }
+
+            if (shouldQueueRefreshQuote) {
+                removeFromQueue(quote.id);
+                queueQuoteRefresh(quote);
+            }
+
+            saveData();
+            closeQuoteSettingsModal();
         }
     });
 

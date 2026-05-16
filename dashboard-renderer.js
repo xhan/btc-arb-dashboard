@@ -437,6 +437,22 @@
     return { type: 'none' };
   }
 
+  function resolveQuoteSettingsModalClickAction(event, options = {}) {
+    const target = event && event.target;
+    if (!target) return { type: 'none' };
+    if (target.id === 'modal-cancel') return { type: 'close' };
+    if (target.id === 'modal-swap-quote') return { type: 'swap' };
+    if (target.id === 'modal-delete-quote') return { type: 'delete' };
+    if (target.id === 'open-quote-alerts-manage') return { type: 'manage-alerts' };
+    if (target.id === 'modal-save') return { type: 'save' };
+    const modal = options.modal || null;
+    if (modal && target === modal) {
+      const insideBox = typeof target.closest === 'function' ? target.closest('.modal-box') : null;
+      return insideBox ? { type: 'none' } : { type: 'close' };
+    }
+    return { type: 'none' };
+  }
+
   return {
     buildAddCategoryDraft,
     buildAddQuoteDraft,
@@ -450,6 +466,7 @@
     resolveAddQuoteModalClickAction,
     resolveDashboardAmountInputAction,
     resolveDashboardButtonClickAction,
+    resolveQuoteSettingsModalClickAction,
     renderCategoryModuleShell,
     renderQuoteItemShell
   };

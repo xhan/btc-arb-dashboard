@@ -345,6 +345,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function readAddCategoryFormValues(options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildAddCategoryDraft(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveAddCategoryModalClickAction(event, options = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function resolveQuoteSettingsModalClickAction(event, options = {})'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalViewState({'));
@@ -357,6 +358,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().readAddCategoryFormValues({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddCategoryDraft({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveAddCategoryModalClickAction(e, { modal: addCategoryModal })'));
+    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: alertModal })'));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('input', handleDashboardInput)"));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('click', handleDashboardClick)"));
     assert.ok(!appJsResponse.body.includes("const target = e.target.closest('button')"));
@@ -371,6 +373,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("document.getElementById('setting-kyber-interval').value = apiIntervals.kyber"));
     assert.ok(!appJsResponse.body.includes('const categoryName = addCategoryNameInput.value.trim();'));
     assert.ok(!appJsResponse.body.includes('const newCategory = { name: categoryName, id: Date.now(), quotes: [] };'));
+    assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-cancel'"));
+    assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-save'"));
     assert.ok(!dashboardRendererResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
     assert.ok(appJsResponse.body.includes("arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput)"));
