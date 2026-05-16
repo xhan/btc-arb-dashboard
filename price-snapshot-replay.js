@@ -1,5 +1,5 @@
 const ArbPaths = require('./arb-paths');
-const { filterEdgesForFixedRule } = require('./arb-fixed-utils');
+const { filterEdgesForFixedRule } = require('./src/arb/arb-fixed-utils');
 const { formatUtc8 } = require('./time-utils');
 const {
   DEFAULT_ARB_CYCLE_START_PRIORITY,

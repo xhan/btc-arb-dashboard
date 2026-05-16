@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const { buildSpecialArbOpportunities } = require('../arb-special-utils');
+const { buildSpecialArbOpportunities } = require('../src/arb/arb-special-utils');
 
 const rules = [
   {

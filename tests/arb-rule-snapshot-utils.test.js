@@ -231,7 +231,7 @@ const snapshotKeepsCategoryScopedEdges = buildArbRuleSnapshot({
   quoteStateById: new Map(),
   aliasRules: null,
   arbPathsApi: ArbPaths,
-  arbFixedUtils: require('../arb-fixed-utils')
+  arbFixedUtils: require('../src/arb/arb-fixed-utils')
 });
 
 assert.strictEqual(snapshotKeepsCategoryScopedEdges.fixedResults.length, 1);
@@ -282,7 +282,7 @@ const snapshotSkipsMutedLegs = buildArbRuleSnapshot({
   quoteStateById: new Map(),
   aliasRules: null,
   arbPathsApi: ArbPaths,
-  arbFixedUtils: require('../arb-fixed-utils')
+  arbFixedUtils: require('../src/arb/arb-fixed-utils')
 });
 
 assert.strictEqual(snapshotSkipsMutedLegs.fixedResults.length, 1);

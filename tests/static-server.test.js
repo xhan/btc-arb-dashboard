@@ -67,7 +67,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="copy-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-cycle-priority-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-equivalence-utils.js"'));
-    assert.ok(response.body.includes('src="arb-special-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-special-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="dom-render-utils.js"'));
     assert.ok(response.body.includes('src="arb-path-config.js"'));
@@ -181,7 +181,7 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="path-alert-rule-definitions.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="arb-fixed-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-fixed-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="muted-path-storage-utils.js"') < response.body.indexOf('src="path-alert-utils.js"')

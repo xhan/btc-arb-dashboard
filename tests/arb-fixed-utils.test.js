@@ -4,7 +4,7 @@ const {
   buildFixedRuleEdgeIndex,
   resolveEdgesForFixedRule,
   filterEdgesForFixedRule
-} = require('../arb-fixed-utils');
+} = require('../src/arb/arb-fixed-utils');
 
 const rule = {
   title: 'WBTC ETH <-> ARB',
