@@ -6,7 +6,7 @@ const {
   resolveArbPathContentClickAction,
   resolveArbPathContentKeydownAction,
   resolveArbPathContentPointerDownAction
-} = require('../arb-panel-renderer');
+} = require('../src/arb/arb-panel-renderer');
 
 function resolveArbActionFor(resolver, matches, event = { type: 'click' }, extraOptions = {}) {
   return resolver(event, {

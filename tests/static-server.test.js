@@ -269,7 +269,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
     const arbPanelLayoutUtilsResponse = await request('/arb-panel-layout-utils.js');
     assert.strictEqual(arbPanelLayoutUtilsResponse.statusCode, 200);
-    const arbPanelRendererResponse = await request('/arb-panel-renderer.js');
+    const arbPanelRendererResponse = await request('/src/arb/arb-panel-renderer.js');
     assert.strictEqual(arbPanelRendererResponse.statusCode, 200);
     const arbRuntimeMemoryUtilsResponse = await request('/arb-runtime-memory-utils.js');
     assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
@@ -1406,6 +1406,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('查看回放 JSON'));
     assert.ok(snapshotResponse.body.includes('grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);'));
     assert.ok(snapshotResponse.body.includes('src="arb-equivalence-utils.js"'));
+    assert.ok(snapshotResponse.body.includes('src="src/arb/arb-panel-renderer.js"'));
     assert.ok(snapshotResponse.body.includes('src="charts-utils.js"'));
     assert.ok(snapshotResponse.body.includes('.arb-opportunity-head {'));
     assert.ok(!snapshotResponse.body.includes('.arb-opportunity-chart-link {'));
