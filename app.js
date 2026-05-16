@@ -10,6 +10,7 @@
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
     const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
     const AMOUNT_INPUT_DEBOUNCE_MS = 600;
+    const DASHBOARD_SAVE_DEBOUNCE_MS = 1500;
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
     let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
@@ -21,7 +22,6 @@
     const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({
         AbortController
     });
-    let saveTimeout = null;
     let priceSnapshotTimer = null;
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
@@ -65,6 +65,11 @@
     let arbPanelDirty = false;
     const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
+    const dashboardSaveRuntime = getDashboardRuntimeUtils().createDashboardSaveRuntime({
+        setTimeout,
+        clearTimeout,
+        delayMs: DASHBOARD_SAVE_DEBOUNCE_MS
+    });
     const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({
         setTimeout,
         clearTimeout,
@@ -4451,7 +4456,7 @@
             manualSaveBtn.classList.add('saving');
             manualSaveText.textContent = '保存中...';
             manualSaveBtn.disabled = true;
-            if (saveTimeout) clearTimeout(saveTimeout);
+            dashboardSaveRuntime.clear();
         } else {
             manualSaveBtn.classList.add('saving');
             manualSaveText.textContent = '自动保存...';
@@ -4493,8 +4498,7 @@
     }
 
     async function saveData() {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => { performSave(false); }, 1500); 
+        dashboardSaveRuntime.schedule(() => { void performSave(false); });
     }
 
     async function loadPriceSnapshotConfig() {

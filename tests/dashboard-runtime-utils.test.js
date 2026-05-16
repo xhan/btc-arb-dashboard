@@ -10,6 +10,7 @@ const {
   buildQuotesByCategoryName,
   buildSwappedQuoteMarketState,
   clearQuoteTrendTimer,
+  createDashboardSaveRuntime,
   createInputDebounceRuntime,
   deleteQuoteUiRuntimeState,
   findDashboardQuoteById,
@@ -197,6 +198,32 @@ assert.strictEqual(inputDebounceRuntime.has(101), false);
 inputDebounceRuntime.schedule(202, () => {});
 assert.strictEqual(inputDebounceRuntime.clear(202), true);
 assert.strictEqual(inputDebounceRuntime.clear(202), false);
+
+let saveTimerId = 0;
+const saveTimers = [];
+const clearedSaveTimers = [];
+const dashboardSaveRuntime = createDashboardSaveRuntime({
+  delayMs: 1500,
+  setTimeout(callback, delayMs) {
+    const timer = { id: ++saveTimerId, callback, delayMs };
+    saveTimers.push(timer);
+    return timer;
+  },
+  clearTimeout(timer) {
+    clearedSaveTimers.push(timer.id);
+  }
+});
+let saveRunCount = 0;
+assert.strictEqual(dashboardSaveRuntime.schedule(() => { saveRunCount += 1; }).delayMs, 1500);
+dashboardSaveRuntime.schedule(() => { saveRunCount += 10; }, 500);
+assert.deepStrictEqual(clearedSaveTimers, [1]);
+assert.strictEqual(saveTimers[1].delayMs, 500);
+saveTimers[1].callback();
+assert.strictEqual(saveRunCount, 10);
+assert.strictEqual(dashboardSaveRuntime.getTimer(), null);
+dashboardSaveRuntime.schedule(() => {});
+assert.strictEqual(dashboardSaveRuntime.clear(), true);
+assert.strictEqual(dashboardSaveRuntime.clear(), false);
 
 const dashboard = [
   {

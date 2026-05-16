@@ -133,7 +133,7 @@
   - `arb-detail`：已先抽出刷新调度器 `arb-detail-refresh-utils.js`，source budget Map 所有权已下沉到 `arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`
   - `data-terminal`
-  - `dashboard-persistence`
+  - `dashboard-persistence`：配置保存 debounce timer 已下沉到 `dashboard-runtime-utils.js`
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。

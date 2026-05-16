@@ -375,6 +375,47 @@
     };
   }
 
+  function createDashboardSaveRuntime(options = {}) {
+    const setTimer = typeof options.setTimeout === 'function'
+      ? options.setTimeout
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimer = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const defaultDelayMs = Number.isFinite(Number(options.delayMs)) && Number(options.delayMs) >= 0
+      ? Number(options.delayMs)
+      : 0;
+    let saveTimer = null;
+
+    function clear() {
+      if (saveTimer === null) return false;
+      if (clearTimer) {
+        clearTimer(saveTimer);
+      }
+      saveTimer = null;
+      return true;
+    }
+
+    function schedule(callback, delayMs = defaultDelayMs) {
+      clear();
+      if (typeof callback !== 'function' || !setTimer) return null;
+      const safeDelayMs = Number.isFinite(Number(delayMs)) && Number(delayMs) >= 0
+        ? Number(delayMs)
+        : defaultDelayMs;
+      saveTimer = setTimer(() => {
+        saveTimer = null;
+        callback();
+      }, safeDelayMs);
+      return saveTimer;
+    }
+
+    return {
+      clear,
+      getTimer: () => saveTimer,
+      schedule
+    };
+  }
+
   function buildDataTerminalRecordsCacheKey(dashboardState, quoteMarketStateRevision) {
     const revision = Number.isFinite(Number(quoteMarketStateRevision)) ? Number(quoteMarketStateRevision) : 0;
     const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
@@ -410,6 +451,7 @@
     buildQuotesByCategoryName,
     buildSwappedQuoteMarketState,
     clearQuoteTrendTimer,
+    createDashboardSaveRuntime,
     createInputDebounceRuntime,
     deleteQuoteUiRuntimeState,
     findDashboardQuoteById,

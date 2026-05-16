@@ -586,6 +586,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('QuoteStateRuntimeUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getDashboardRuntimeUtils()'));
     assert.ok(appJsResponse.body.includes('DashboardRuntimeUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('const dashboardSaveRuntime = getDashboardRuntimeUtils().createDashboardSaveRuntime({'));
+    assert.ok(appJsResponse.body.includes('dashboardSaveRuntime.clear();'));
+    assert.ok(appJsResponse.body.includes('dashboardSaveRuntime.schedule(() => { void performSave(false); });'));
+    assert.ok(!appJsResponse.body.includes('let saveTimeout = null;'));
+    assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createDashboardSaveRuntime(options = {})'));
     assert.ok(appJsResponse.body.includes('const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({'));
     assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.schedule(quoteId, () => {'));
     assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.clear(quoteId);'));
