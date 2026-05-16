@@ -177,6 +177,7 @@
     - 已启动第二十七步：用户使用说明和补充说明迁入 `docs/user/`，根目录只保留运行配置、入口和包管理文件
     - 已启动第二十八步：token metadata 运行态缓存默认迁入 `db/metadata-cache.json`，`src/market-clients/token-meta.js` 写入前确保缓存目录存在，根目录不再作为 metadata cache 默认落点
     - 已启动第二十九步：Express app 构建和服务端依赖装配迁入 `src/server/server-app.js`，根目录 `server.js` 只保留兼容启动入口
+    - 已启动第三十步：补充运行配置迁入 `config/`，根目录当前只保留 `alert.json`、`config.json`、`package*` 和兼容启动入口 `server.js`
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -186,6 +187,7 @@
   - 未被生产代码调用的 `quote-alert-config-utils.js` 旧迁移工具已移除
   - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 未使用的 generic alert log 渲染路径已移除
+  - 旧的报警状态/快速设置浮窗已移除，音效、远程推送和全部立即设置统一归入提醒日志的「设置」tab，快捷键 `A` 和顶部提醒按钮直接打开该 tab
   - alert log 的 restored muted selector、恢复卡片删除、click action 解析和 active tab runtime 已下沉到 `src/alerts/alert-log-ui-utils.js`
   - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `src/path-alerts/path-alert-utils.js`
   - 套利详情 muted leg 的屏蔽时长 prompt 文案和正整数解析已下沉到 `src/path-alerts/muted-path-leg-utils.js`
@@ -242,7 +244,7 @@
   - `src/app/dashboard-app.js` 的价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
   - `src/app/dashboard-app.js` 的浮窗拖拽实现和浮窗 focus 事件绑定已下沉到 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的浮窗 z-index 计数和默认 z-index 写入已下沉到 `src/ui/dom-render-utils.js` 的 `createFloatingPanelZIndexRuntime()`
-  - `src/app/dashboard-app.js` 的 alert log active tab 状态已下沉到 `src/alerts/alert-log-ui-utils.js` 的 `createAlertLogTabRuntime()`
+  - `src/app/dashboard-app.js` 的 alert log active tab 状态、tab DOM 状态和浮窗显示状态已下沉到 `src/alerts/alert-log-ui-utils.js`
   - `src/app/dashboard-app.js` 的主题 metadata、循环顺序、主题写入计划和计划执行已下沉到 `src/ui/theme-utils.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
