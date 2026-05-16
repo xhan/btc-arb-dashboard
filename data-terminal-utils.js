@@ -400,8 +400,6 @@
     buildDataTerminalShellHtml,
     buildDataTerminalSelectionSummary,
     buildDataTerminalViewModel,
-    formatDataTerminalBp,
-    formatDataTerminalValue,
     parseDataTerminalQuery
   };
 });

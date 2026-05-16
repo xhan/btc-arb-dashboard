@@ -10,8 +10,6 @@ const {
   buildDataTerminalShellHtml,
   buildDataTerminalSelectionSummary,
   buildDataTerminalViewModel,
-  formatDataTerminalBp,
-  formatDataTerminalValue,
   parseDataTerminalQuery
 } = require('../data-terminal-utils');
 
@@ -182,12 +180,6 @@ assert.strictEqual(emptyView.mode, 'empty');
 assert.strictEqual(emptyView.leftRows.length, 0);
 assert.strictEqual(emptyView.rightRows.length, 0);
 assert.strictEqual(emptyView.emptyMessage, '输入 1 或 2 个代币开始搜索');
-
-assert.strictEqual(formatDataTerminalValue(1.001432, false), '1.00143');
-assert.strictEqual(formatDataTerminalValue(1.001432, true), '0.00143');
-assert.strictEqual(formatDataTerminalValue(0.99912, true), '-0.00088');
-assert.strictEqual(formatDataTerminalBp(1.4000419999983195), '+1.40bp');
-assert.strictEqual(formatDataTerminalBp(-3.2), '-3.20bp');
 
 assert.deepStrictEqual(
   buildDataTerminalSelectionSummary(

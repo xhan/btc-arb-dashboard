@@ -896,6 +896,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('utils.buildDataTerminalPanelHtml('));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalShellHtml'));
+    const dataTerminalExportBlock = dataTerminalUtilsResponse.body.match(/return \{\n    buildDataTerminalCandidates,[\s\S]*?\n  \};/);
+    assert.ok(dataTerminalExportBlock);
+    assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalBp'));
+    assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalValue'));
     assert.ok(appJsResponse.body.includes('utils.buildDataTerminalShellHtml()'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalRowHtml'));
