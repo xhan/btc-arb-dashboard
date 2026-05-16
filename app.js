@@ -229,6 +229,13 @@
     const arbGlobalIncludeFilterInput = document.getElementById('arb-global-include-filter-input');
     const arbGlobalTwoLegOnlyInput = document.getElementById('arb-global-two-leg-only');
     const arbGlobalFilterClearBtn = document.getElementById('arb-global-filter-clear-btn');
+    const arbGlobalFilterElements = {
+        'arb-global-filter-input': arbGlobalFilterInput,
+        'arb-global-chain-filter-input': arbGlobalChainFilterInput,
+        'arb-global-include-filter-input': arbGlobalIncludeFilterInput,
+        'arb-global-two-leg-only': arbGlobalTwoLegOnlyInput,
+        'arb-global-filter-clear-btn': arbGlobalFilterClearBtn
+    };
     const arbPathHeader = document.getElementById('arb-path-header');
     const arbPathMinBtn = document.getElementById('arb-path-min-btn');
     const toggleQuoteDisplayBtn = document.getElementById('toggle-quote-display-btn');
@@ -2225,23 +2232,25 @@
         mountDataTerminalPanel();
     }
 
+    function applyArbGlobalFilterWritePlan(plan) {
+        (plan.value || []).forEach((item) => {
+            const input = arbGlobalFilterElements[item.id];
+            if (input && input.value !== item.value) input.value = item.value;
+        });
+        (plan.checked || []).forEach((item) => {
+            const input = arbGlobalFilterElements[item.id];
+            if (input && input.checked !== item.checked) input.checked = item.checked;
+        });
+        (plan.disabled || []).forEach((item) => {
+            const input = arbGlobalFilterElements[item.id];
+            if (input && input.disabled !== item.disabled) input.disabled = item.disabled;
+        });
+    }
+
     function updateGlobalArbFilterBar() {
-        const filterState = getArbPanelLayoutUtils().buildGlobalArbFilterControlState(getArbGlobalFilterState());
-        if (arbGlobalFilterInput && arbGlobalFilterInput.value !== filterState.excludedSymbolsInput) {
-            arbGlobalFilterInput.value = filterState.excludedSymbolsInput;
-        }
-        if (arbGlobalChainFilterInput && arbGlobalChainFilterInput.value !== filterState.excludedChainsInput) {
-            arbGlobalChainFilterInput.value = filterState.excludedChainsInput;
-        }
-        if (arbGlobalIncludeFilterInput && arbGlobalIncludeFilterInput.value !== filterState.includedSymbolsInput) {
-            arbGlobalIncludeFilterInput.value = filterState.includedSymbolsInput;
-        }
-        if (arbGlobalTwoLegOnlyInput && arbGlobalTwoLegOnlyInput.checked !== filterState.twoLegOnly) {
-            arbGlobalTwoLegOnlyInput.checked = filterState.twoLegOnly;
-        }
-        if (arbGlobalFilterClearBtn && arbGlobalFilterClearBtn.disabled !== filterState.clearDisabled) {
-            arbGlobalFilterClearBtn.disabled = filterState.clearDisabled;
-        }
+        applyArbGlobalFilterWritePlan(
+            getArbPanelLayoutUtils().buildGlobalArbFilterWritePlan(getArbGlobalFilterState())
+        );
     }
 
     function getDefaultArbDisplayMinProfitBp() {
@@ -2912,10 +2921,6 @@
         arbGlobalTwoLegOnly = nextState.twoLegOnly;
     }
 
-    function getEventTargetTextValue(event) {
-        return (event && event.target && typeof event.target.value === 'string') ? event.target.value : '';
-    }
-
     function updateArbGlobalFilterState(patch) {
         const result = getArbPanelLayoutUtils().updateGlobalArbFilterState(getArbGlobalFilterState(), patch);
         if (!result.changed) return false;
@@ -2925,20 +2930,27 @@
     }
 
     function handleArbGlobalFilterInput(event) {
-        updateArbGlobalFilterState({ excludedSymbolsInput: getEventTargetTextValue(event) });
+        updateArbGlobalFilterState(
+            getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedSymbolsInput', event)
+        );
     }
 
     function handleArbGlobalChainFilterInput(event) {
-        updateArbGlobalFilterState({ excludedChainsInput: getEventTargetTextValue(event) });
+        updateArbGlobalFilterState(
+            getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedChainsInput', event)
+        );
     }
 
     function handleArbGlobalIncludeFilterInput(event) {
-        updateArbGlobalFilterState({ includedSymbolsInput: getEventTargetTextValue(event) });
+        updateArbGlobalFilterState(
+            getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('includedSymbolsInput', event)
+        );
     }
 
     function handleArbGlobalTwoLegOnlyChange(event) {
-        const nextChecked = Boolean(event && event.target && event.target.checked);
-        updateArbGlobalFilterState({ twoLegOnly: nextChecked });
+        updateArbGlobalFilterState(
+            getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('twoLegOnly', event)
+        );
     }
 
     function handleArbGlobalFilterClear() {

@@ -5,6 +5,8 @@ const {
   resolveDefaultDisplayMinProfitBp,
   buildGlobalArbFilterState,
   buildGlobalArbFilterControlState,
+  buildGlobalArbFilterEventPatch,
+  buildGlobalArbFilterWritePlan,
   updateGlobalArbFilterState,
   clearGlobalArbFilterState,
   buildArbPathLegLine,
@@ -335,6 +337,37 @@ assert.deepStrictEqual(
   }).clearDisabled,
   false
 );
+
+assert.deepStrictEqual(
+  buildGlobalArbFilterWritePlan({
+    excludedSymbolsInput: 'cbBTC',
+    excludedChainsInput: 'base',
+    includedSymbolsInput: 'WBTC',
+    twoLegOnly: true
+  }),
+  {
+    value: [
+      { id: 'arb-global-filter-input', value: 'cbBTC' },
+      { id: 'arb-global-chain-filter-input', value: 'base' },
+      { id: 'arb-global-include-filter-input', value: 'WBTC' }
+    ],
+    checked: [
+      { id: 'arb-global-two-leg-only', checked: true }
+    ],
+    disabled: [
+      { id: 'arb-global-filter-clear-btn', disabled: false }
+    ]
+  }
+);
+assert.deepStrictEqual(
+  buildGlobalArbFilterEventPatch('excludedSymbolsInput', { target: { value: ' cbBTC ' } }),
+  { excludedSymbolsInput: ' cbBTC ' }
+);
+assert.deepStrictEqual(
+  buildGlobalArbFilterEventPatch('twoLegOnly', { target: { checked: true } }),
+  { twoLegOnly: true }
+);
+assert.deepStrictEqual(buildGlobalArbFilterEventPatch('unknown', { target: { value: 'x' } }), {});
 
 assert.deepStrictEqual(
   updateGlobalArbFilterState(

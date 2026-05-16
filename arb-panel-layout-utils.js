@@ -256,6 +256,39 @@
     };
   }
 
+  function buildGlobalArbFilterWritePlan(state = {}) {
+    const controlState = buildGlobalArbFilterControlState(state);
+    return {
+      value: [
+        { id: 'arb-global-filter-input', value: controlState.excludedSymbolsInput },
+        { id: 'arb-global-chain-filter-input', value: controlState.excludedChainsInput },
+        { id: 'arb-global-include-filter-input', value: controlState.includedSymbolsInput }
+      ],
+      checked: [
+        { id: 'arb-global-two-leg-only', checked: controlState.twoLegOnly }
+      ],
+      disabled: [
+        { id: 'arb-global-filter-clear-btn', disabled: controlState.clearDisabled }
+      ]
+    };
+  }
+
+  function readEventTargetTextValue(event) {
+    return (event && event.target && typeof event.target.value === 'string')
+      ? event.target.value
+      : '';
+  }
+
+  function buildGlobalArbFilterEventPatch(field, event) {
+    if (field === 'twoLegOnly') {
+      return { twoLegOnly: Boolean(event && event.target && event.target.checked) };
+    }
+    if (field === 'excludedSymbolsInput' || field === 'excludedChainsInput' || field === 'includedSymbolsInput') {
+      return { [field]: readEventTargetTextValue(event) };
+    }
+    return {};
+  }
+
   function updateGlobalArbFilterState(currentState, patch = {}) {
     const current = buildGlobalArbFilterState(currentState);
     const next = buildGlobalArbFilterState({
@@ -499,6 +532,8 @@
     parseFilterInput,
     buildGlobalArbFilterState,
     buildGlobalArbFilterControlState,
+    buildGlobalArbFilterEventPatch,
+    buildGlobalArbFilterWritePlan,
     updateGlobalArbFilterState,
     clearGlobalArbFilterState,
     registerArbOpportunityHighlightTarget,

@@ -394,10 +394,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(!dashboardRendererResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
     assert.ok(appJsResponse.body.includes("arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput)"));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterWritePlan(state = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildGlobalArbFilterEventPatch(field, event)'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildGlobalArbFilterWritePlan(getArbGlobalFilterState())'));
+    assert.ok(appJsResponse.body.includes("getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedSymbolsInput', event)"));
     assert.ok(appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
     assert.ok(appJsResponse.body.includes("closestEventTarget(event, 'button, input, textarea, select, [contenteditable=\"true\"]')"));
     assert.ok(!appJsResponse.body.includes('makeDraggable(arbPathWindow, arbPathHeader)'));
     assert.ok(!appJsResponse.body.includes('if (!arbGlobalFilterBar) return;'));
+    assert.ok(!appJsResponse.body.includes('function getEventTargetTextValue(event)'));
+    assert.ok(!appJsResponse.body.includes('const nextChecked = Boolean(event && event.target && event.target.checked);'));
     assert.ok(appJsResponse.body.includes("addEventListener('pointerdown', handleArbPathContentPointerDown)"));
     assert.ok(!appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
     assert.ok(!appJsResponse.body.includes("closest('[data-arb-opportunity-alert-id]')"));
@@ -1108,7 +1114,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let lbtcSection = null'));
     assert.ok(!appJsResponse.body.includes('const wbtcSection = categorySections.find'));
     assert.ok(appJsResponse.body.includes('function updateArbGlobalFilterState(patch)'));
-    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildGlobalArbFilterControlState(getArbGlobalFilterState())'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildGlobalArbFilterWritePlan(getArbGlobalFilterState())'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().updateGlobalArbFilterState(getArbGlobalFilterState(), patch)'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().clearGlobalArbFilterState(getArbGlobalFilterState())'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbPathLegLine(leg, buildArbPathLegLineOptions())'));
