@@ -2165,22 +2165,9 @@
             return dataTerminalRecordsCache;
         }
 
-        const records = [];
-
-        for (const category of dashboardState) {
-            for (const quote of getActiveQuotes(Array.isArray(category && category.quotes) ? category.quotes : [])) {
-                const state = quoteMarketState.get(quote.id) || {};
-                records.push({
-                    categoryName: category && category.name,
-                    quote,
-                    fromSymbol: state.fromSymbol,
-                    toSymbol: state.toSymbol,
-                    lastRawPrice: state.lastRawPrice,
-                    inverseRawPrice: state.inverseRawPrice,
-                    cexOrderbook: state.cexOrderbook || null
-                });
-            }
-        }
+        const records = getDataTerminalUtils().buildDataTerminalRecords(dashboardState, quoteMarketState, {
+            isQuoteActive: (quote) => !isQuotePaused(quote)
+        });
 
         dataTerminalRecordsCacheKey = cacheKey;
         dataTerminalRecordsCache = records;

@@ -6,6 +6,7 @@ const vm = require('vm');
 const {
   buildDataTerminalCandidates,
   buildDataTerminalPanelHtml,
+  buildDataTerminalRecords,
   buildDataTerminalShellHtml,
   buildDataTerminalSelectionSummary,
   buildDataTerminalViewModel,
@@ -16,6 +17,51 @@ const {
 
 assert.deepStrictEqual(parseDataTerminalQuery('  WBTC, cbBTC extra  '), ['WBTC', 'cbBTC']);
 assert.deepStrictEqual(parseDataTerminalQuery(''), []);
+
+const dataTerminalRecords = buildDataTerminalRecords(
+  [
+    {
+      name: 'BTC 监控',
+      quotes: [
+        { id: 101, chain: 'ethereum', paused: false },
+        { id: 102, chain: 'base', paused: true },
+        { id: 103, chain: 'arbitrum', disabled: true }
+      ]
+    }
+  ],
+  new Map([
+    [101, {
+      fromSymbol: 'cbBTC',
+      toSymbol: 'WBTC',
+      lastRawPrice: 1.001,
+      inverseRawPrice: 0.999,
+      cexOrderbook: { bestBidPrice: 1 }
+    }],
+    [102, {
+      fromSymbol: 'PAUSED',
+      toSymbol: 'WBTC',
+      lastRawPrice: 2
+    }],
+    [103, {
+      fromSymbol: 'ARB',
+      toSymbol: 'BTC',
+      lastRawPrice: 3
+    }]
+  ]),
+  {
+    isQuoteActive: (quote) => quote && quote.paused !== true && quote.disabled !== true
+  }
+);
+assert.strictEqual(dataTerminalRecords.length, 1);
+assert.deepStrictEqual(dataTerminalRecords[0], {
+  categoryName: 'BTC 监控',
+  quote: { id: 101, chain: 'ethereum', paused: false },
+  fromSymbol: 'cbBTC',
+  toSymbol: 'WBTC',
+  lastRawPrice: 1.001,
+  inverseRawPrice: 0.999,
+  cexOrderbook: { bestBidPrice: 1 }
+});
 
 const candidates = buildDataTerminalCandidates([
   {

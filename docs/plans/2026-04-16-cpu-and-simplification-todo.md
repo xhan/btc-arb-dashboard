@@ -95,6 +95,7 @@
 - 目标：避免每次刷新都重建 records 和 candidates。
 - 现状：
   - 已用 `dataTerminalRecordsCacheKey` 缓存 `dashboardState + quoteMarketState` 生成的 records
+  - records 构建已下沉到 `data-terminal-utils.js`，`app.js` 只保留缓存生命周期
   - 已用同一 cache key 缓存 candidates，查询、别名、diff 变化只重跑 view model/filter
 - 预期收益：
   - 已降低数据终端打开后的持续 CPU

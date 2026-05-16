@@ -155,6 +155,34 @@
     return candidates;
   }
 
+  function buildDataTerminalRecords(dashboardState, quoteStateById, options = {}) {
+    const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
+    const stateById = quoteStateById instanceof Map ? quoteStateById : new Map();
+    const isQuoteActive = typeof options.isQuoteActive === 'function'
+      ? options.isQuoteActive
+      : (quote) => !isQuotePaused(quote);
+    const records = [];
+
+    for (const category of dashboard) {
+      const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
+      for (const quote of quotes) {
+        if (!isQuoteActive(quote)) continue;
+        const state = stateById.get(quote && quote.id) || {};
+        records.push({
+          categoryName: category && category.name,
+          quote,
+          fromSymbol: state.fromSymbol,
+          toSymbol: state.toSymbol,
+          lastRawPrice: state.lastRawPrice,
+          inverseRawPrice: state.inverseRawPrice,
+          cexOrderbook: state.cexOrderbook || null
+        });
+      }
+    }
+
+    return records;
+  }
+
   function formatDataTerminalValue(rate, showDiff) {
     const numericRate = Number(rate);
     if (!Number.isFinite(numericRate)) return '--';
@@ -368,6 +396,7 @@
   return {
     buildDataTerminalCandidates,
     buildDataTerminalPanelHtml,
+    buildDataTerminalRecords,
     buildDataTerminalShellHtml,
     buildDataTerminalSelectionSummary,
     buildDataTerminalViewModel,
