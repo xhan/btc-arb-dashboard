@@ -18,6 +18,26 @@
     return escapeHtml(value);
   }
 
+  const DEFAULT_CHAIN_ADDRESS_PLACEHOLDERS = Object.freeze({
+    ethereum: '0x...',
+    solana: 'Enter mint address...',
+    sui: '0x...::module::TYPE',
+    polygon: '0x...',
+    arbitrum: '0x...',
+    optimism: '0x...',
+    bsc: '0x...',
+    avalanche: '0x...',
+    base: '0x...',
+    megaeth: '0x...',
+    hemi: '0x...',
+    katana: '0x...',
+    starknet: '0x...',
+    Bybit: 'N/A',
+    bybit: 'N/A',
+    Binance: 'N/A',
+    binance: 'N/A'
+  });
+
   function renderQuoteItemShell(config = {}) {
     const quoteId = escapeAttr(config.quoteId);
     const categoryId = escapeAttr(config.categoryId);
@@ -256,8 +276,101 @@
     };
   }
 
+  function buildAddQuoteFormViewState(config = {}) {
+    const chain = String(config.chain || '');
+    const normalizeChainKey = typeof config.normalizeChainKey === 'function'
+      ? config.normalizeChainKey
+      : (value) => String(value || '').trim().toLowerCase();
+    const isCexOrderbookChain = typeof config.isCexOrderbookChain === 'function'
+      ? config.isCexOrderbookChain
+      : () => false;
+    const isEvmChain = typeof config.isEvmChain === 'function'
+      ? config.isEvmChain
+      : () => false;
+    const placeholders = config.placeholders && typeof config.placeholders === 'object'
+      ? config.placeholders
+      : DEFAULT_CHAIN_ADDRESS_PLACEHOLDERS;
+    const isCex = isCexOrderbookChain(chain);
+    const showTargetChain = Boolean(chain && !isCex && isEvmChain(chain));
+    const normalizedChain = normalizeChainKey(chain);
+    const toChain = showTargetChain ? String(config.toChain || '') : '';
+    const normalizedToChain = normalizeChainKey(toChain);
+    const symbol = String(config.symbol || '').trim();
+    const fromToken = String(config.fromToken || '').trim();
+    const toToken = String(config.toToken || '').trim();
+
+    return {
+      pairFieldsVisible: Boolean(chain && !isCex),
+      symbolFieldVisible: isCex,
+      targetChainVisible: showTargetChain,
+      toChainValue: toChain,
+      fromPlaceholder: placeholders[normalizedChain] || 'Enter token address',
+      toPlaceholder: placeholders[normalizedToChain || normalizedChain] || 'Enter token address',
+      saveDisabled: !chain || (isCex ? !symbol : (!fromToken || !toToken))
+    };
+  }
+
+  function buildAddQuoteDraft(config = {}) {
+    const chain = String(config.chain || '');
+    if (!chain) return null;
+    const normalizeChainKey = typeof config.normalizeChainKey === 'function'
+      ? config.normalizeChainKey
+      : (value) => String(value || '').trim().toLowerCase();
+    const isCexOrderbookChain = typeof config.isCexOrderbookChain === 'function'
+      ? config.isCexOrderbookChain
+      : () => false;
+    const defaultSourceResolver = typeof config.defaultSourceResolver === 'function'
+      ? config.defaultSourceResolver
+      : () => 'Kyber';
+    const quoteId = config.quoteId;
+    const normalizedChain = normalizeChainKey(chain);
+    const normalizedToChain = config.toChain ? normalizeChainKey(config.toChain) : '';
+    const quote = {
+      id: quoteId,
+      chain: normalizedChain,
+      amount: 1,
+      preferredSource: defaultSourceResolver(chain)
+    };
+
+    if (isCexOrderbookChain(chain)) {
+      const symbol = String(config.symbol || '').trim().toUpperCase();
+      if (!symbol) return null;
+      quote.chain = chain;
+      quote.symbol = symbol;
+      return quote;
+    }
+
+    const fromToken = String(config.fromToken || '').trim();
+    const toToken = String(config.toToken || '').trim();
+    if (!fromToken || !toToken) return null;
+    quote.fromToken = fromToken;
+    quote.toToken = toToken;
+    if (normalizedToChain && normalizedToChain !== normalizedChain) {
+      quote.toChain = normalizedToChain;
+      quote.preferredSource = 'LI.FI';
+      quote.showInverse = false;
+    }
+    return quote;
+  }
+
+  function resolveAddQuoteModalClickAction(event, options = {}) {
+    const target = event && event.target;
+    if (!target) return { type: 'none' };
+    if (target.id === 'add-quote-cancel') return { type: 'close' };
+    if (target.id === 'add-quote-save') return { type: 'save' };
+    const modal = options.modal || null;
+    if (modal && target === modal) {
+      const insideBox = typeof target.closest === 'function' ? target.closest('.modal-box') : null;
+      return insideBox ? { type: 'none' } : { type: 'close' };
+    }
+    return { type: 'none' };
+  }
+
   return {
+    buildAddQuoteDraft,
+    buildAddQuoteFormViewState,
     buildQuoteSettingsModalViewState,
+    resolveAddQuoteModalClickAction,
     resolveDashboardAmountInputAction,
     resolveDashboardButtonClickAction,
     renderCategoryModuleShell,

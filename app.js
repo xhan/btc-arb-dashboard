@@ -249,12 +249,6 @@
         dark: { icon: '🌙', title: '切换主题（当前：深色）' }
     };
     
-    const CHAIN_ADDRESS_PLACEHOLDERS = {
-        ethereum: '0x...', solana: 'Enter mint address...', sui: '0x...::module::TYPE',
-        polygon: '0x...', arbitrum: '0x...', optimism: '0x...',
-        bsc: '0x...', avalanche: '0x...', base: '0x...', megaeth: '0x...', hemi: '0x...', katana: '0x...', starknet: '0x...', Bybit: 'N/A', bybit: 'N/A', Binance: 'N/A', binance: 'N/A'
-    };
-
     function normalizeChainKey(chain) {
         return String(chain || '').trim().toLowerCase();
     }
@@ -5011,77 +5005,67 @@
         addQuoteFromInput.value = '';
         addQuoteToInput.value = '';
         addQuoteSymbolInput.value = '';
-        if (addQuoteToChainGroup) addQuoteToChainGroup.style.display = 'none';
-        addQuotePairFields.style.display = 'none';
-        addQuoteSymbolField.style.display = 'none';
-        addQuoteSaveBtn.disabled = true;
+        syncAddQuoteFormControls();
         addQuoteModal.classList.remove('visible');
         currentCategoryIdToAdd = null;
     }
 
-    function updateAddQuoteTokenPlaceholders() {
-        const chain = normalizeChainKey(addQuoteChainSelect.value);
-        const toChain = normalizeChainKey(addQuoteToChainSelect && addQuoteToChainSelect.value);
-        addQuoteFromInput.placeholder = CHAIN_ADDRESS_PLACEHOLDERS[chain] || 'Enter token address';
-        addQuoteToInput.placeholder = CHAIN_ADDRESS_PLACEHOLDERS[toChain || chain] || 'Enter token address';
+    function getAddQuoteFormValues() {
+        return {
+            chain: addQuoteChainSelect.value,
+            toChain: addQuoteToChainSelect ? addQuoteToChainSelect.value : '',
+            fromToken: addQuoteFromInput.value,
+            toToken: addQuoteToInput.value,
+            symbol: addQuoteSymbolInput.value
+        };
     }
 
-    function syncAddQuoteCrossChainControls() {
-        const chain = addQuoteChainSelect.value;
-        const showTarget = chain && !isCexOrderbookChain(chain) && isEvmChain(chain);
-        if (addQuoteToChainGroup) addQuoteToChainGroup.style.display = showTarget ? 'block' : 'none';
-        if (!showTarget && addQuoteToChainSelect) addQuoteToChainSelect.value = '';
-        updateAddQuoteTokenPlaceholders();
-    }
-
-    function validateAddQuoteForm() {
-        const chain = addQuoteChainSelect.value;
-        if (!chain) { addQuoteSaveBtn.disabled = true; return; }
-        if (isCexOrderbookChain(chain)) { addQuoteSaveBtn.disabled = !addQuoteSymbolInput.value.trim(); } 
-        else { addQuoteSaveBtn.disabled = !addQuoteFromInput.value.trim() || !addQuoteToInput.value.trim(); }
+    function syncAddQuoteFormControls() {
+        const viewState = getDashboardRenderer().buildAddQuoteFormViewState({
+            ...getAddQuoteFormValues(),
+            normalizeChainKey,
+            isCexOrderbookChain,
+            isEvmChain
+        });
+        if (addQuoteToChainGroup) {
+            addQuoteToChainGroup.style.display = viewState.targetChainVisible ? 'block' : 'none';
+        }
+        if (addQuoteToChainSelect && addQuoteToChainSelect.value !== viewState.toChainValue) {
+            addQuoteToChainSelect.value = viewState.toChainValue;
+        }
+        addQuoteFromInput.placeholder = viewState.fromPlaceholder;
+        addQuoteToInput.placeholder = viewState.toPlaceholder;
+        addQuotePairFields.style.display = viewState.pairFieldsVisible ? 'block' : 'none';
+        addQuoteSymbolField.style.display = viewState.symbolFieldVisible ? 'block' : 'none';
+        addQuoteSaveBtn.disabled = viewState.saveDisabled;
     }
 
     addQuoteChainSelect.addEventListener('change', () => {
-        const chain = addQuoteChainSelect.value;
-        addQuotePairFields.style.display = (chain && !isCexOrderbookChain(chain)) ? 'block' : 'none';
-        addQuoteSymbolField.style.display = isCexOrderbookChain(chain) ? 'block' : 'none';
-        syncAddQuoteCrossChainControls();
-        validateAddQuoteForm();
+        syncAddQuoteFormControls();
     });
     if (addQuoteToChainSelect) {
         addQuoteToChainSelect.addEventListener('change', () => {
-            updateAddQuoteTokenPlaceholders();
-            validateAddQuoteForm();
+            syncAddQuoteFormControls();
         });
     }
     [addQuoteFromInput, addQuoteToInput, addQuoteSymbolInput].forEach(input => {
-        input.addEventListener('input', validateAddQuoteForm);
+        input.addEventListener('input', syncAddQuoteFormControls);
     });
 
     addQuoteModal.addEventListener('click', (e) => {
-         if (e.target.id === 'add-quote-cancel' || (e.target === addQuoteModal && !e.target.closest('.modal-box'))) {
+        const action = getDashboardRenderer().resolveAddQuoteModalClickAction(e, { modal: addQuoteModal });
+        if (action.type === 'close') {
             resetAndCloseAddQuoteModal();
-        } else if (e.target.id === 'add-quote-save') {
+        } else if (action.type === 'save') {
             if (currentCategoryIdToAdd === null) return;
-            const chain = addQuoteChainSelect.value;
-            const normalizedChain = normalizeChainKey(chain);
-            const normalizedToChain = addQuoteToChainSelect && addQuoteToChainSelect.value
-                ? normalizeChainKey(addQuoteToChainSelect.value)
-                : '';
-            const defaultSource = defaultSourceResolver(chain);
-            const newQuote = { id: Date.now(), chain: normalizedChain, amount: 1, preferredSource: defaultSource };
-            if (isCexOrderbookChain(chain)) {
-                newQuote.chain = chain;
-                newQuote.symbol = addQuoteSymbolInput.value.trim().toUpperCase();
-            } else {
-                newQuote.fromToken = addQuoteFromInput.value.trim();
-                newQuote.toToken = addQuoteToInput.value.trim();
-                if (normalizedToChain && normalizedToChain !== normalizedChain) {
-                    newQuote.toChain = normalizedToChain;
-                    newQuote.preferredSource = 'LI.FI';
-                    newQuote.showInverse = false;
-                }
-            }
+            const newQuote = getDashboardRenderer().buildAddQuoteDraft({
+                ...getAddQuoteFormValues(),
+                quoteId: Date.now(),
+                normalizeChainKey,
+                isCexOrderbookChain,
+                defaultSourceResolver
+            });
+            if (!newQuote) return;
             const category = dashboardState.find(c => c.id == currentCategoryIdToAdd);
             if (!category) return;
             if (!category.quotes) category.quotes = [];

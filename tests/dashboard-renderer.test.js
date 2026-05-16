@@ -1,7 +1,10 @@
 const assert = require('assert');
 
 const {
+  buildAddQuoteDraft,
+  buildAddQuoteFormViewState,
   buildQuoteSettingsModalViewState,
+  resolveAddQuoteModalClickAction,
   resolveDashboardAmountInputAction,
   resolveDashboardButtonClickAction,
   renderCategoryModuleShell,
@@ -140,6 +143,108 @@ assert.deepStrictEqual(
   { type: 'swap-quote', categoryId: 'cat-1', quoteId: 105 }
 );
 assert.deepStrictEqual(resolveDashboardActionFor(resolveDashboardButtonClickAction, {}), { type: 'none' });
+
+assert.deepStrictEqual(
+  buildAddQuoteFormViewState({
+    chain: 'ethereum',
+    toChain: 'base',
+    fromToken: '0xfrom',
+    toToken: '0xto',
+    symbol: '',
+    isEvmChain: (chain) => chain === 'ethereum'
+  }),
+  {
+    pairFieldsVisible: true,
+    symbolFieldVisible: false,
+    targetChainVisible: true,
+    toChainValue: 'base',
+    fromPlaceholder: '0x...',
+    toPlaceholder: '0x...',
+    saveDisabled: false
+  }
+);
+assert.deepStrictEqual(
+  buildAddQuoteFormViewState({
+    chain: 'Bybit',
+    symbol: 'BTCUSDT',
+    isCexOrderbookChain: () => true
+  }),
+  {
+    pairFieldsVisible: false,
+    symbolFieldVisible: true,
+    targetChainVisible: false,
+    toChainValue: '',
+    fromPlaceholder: 'N/A',
+    toPlaceholder: 'N/A',
+    saveDisabled: false
+  }
+);
+assert.strictEqual(
+  buildAddQuoteFormViewState({
+    chain: 'ethereum',
+    fromToken: '0xfrom',
+    toToken: ''
+  }).saveDisabled,
+  true
+);
+
+assert.deepStrictEqual(
+  buildAddQuoteDraft({
+    quoteId: 123,
+    chain: 'ethereum',
+    toChain: 'base',
+    fromToken: ' 0xfrom ',
+    toToken: ' 0xto ',
+    normalizeChainKey: (chain) => String(chain || '').trim().toLowerCase(),
+    defaultSourceResolver: () => 'Kyber'
+  }),
+  {
+    id: 123,
+    chain: 'ethereum',
+    amount: 1,
+    preferredSource: 'LI.FI',
+    fromToken: '0xfrom',
+    toToken: '0xto',
+    toChain: 'base',
+    showInverse: false
+  }
+);
+assert.deepStrictEqual(
+  buildAddQuoteDraft({
+    quoteId: 124,
+    chain: 'Bybit',
+    symbol: ' btcusdt ',
+    isCexOrderbookChain: () => true,
+    normalizeChainKey: (chain) => String(chain || '').trim().toLowerCase(),
+    defaultSourceResolver: () => 'Bybit'
+  }),
+  {
+    id: 124,
+    chain: 'Bybit',
+    amount: 1,
+    preferredSource: 'Bybit',
+    symbol: 'BTCUSDT'
+  }
+);
+assert.strictEqual(buildAddQuoteDraft({ chain: 'ethereum', fromToken: '0xfrom' }), null);
+
+const addQuoteModal = { id: 'add-quote-modal', closest: () => null };
+assert.deepStrictEqual(
+  resolveAddQuoteModalClickAction({ target: { id: 'add-quote-cancel' } }, { modal: addQuoteModal }),
+  { type: 'close' }
+);
+assert.deepStrictEqual(
+  resolveAddQuoteModalClickAction({ target: { id: 'add-quote-save' } }, { modal: addQuoteModal }),
+  { type: 'save' }
+);
+assert.deepStrictEqual(
+  resolveAddQuoteModalClickAction({ target: addQuoteModal }, { modal: addQuoteModal }),
+  { type: 'close' }
+);
+assert.deepStrictEqual(
+  resolveAddQuoteModalClickAction({ target: { id: 'other' } }, { modal: addQuoteModal }),
+  { type: 'none' }
+);
 
 const modalViewState = buildQuoteSettingsModalViewState({
   quote: {
