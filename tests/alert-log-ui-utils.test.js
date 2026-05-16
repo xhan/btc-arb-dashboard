@@ -5,6 +5,7 @@ const {
   buildAlertSettingsPanelHtml,
   buildAlertLogTabState,
   applyAlertLogTabDomState,
+  applyAlertLogPanelDisplayState,
   createAlertLogTabRuntime,
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
@@ -125,6 +126,38 @@ applyAlertLogTabDomState(alertLogDomRefs, buildAlertLogTabState('muted'), {
 assert.strictEqual(alertLogDomRefs.mutedTab.active, true);
 assert.strictEqual(alertLogDomRefs.mutedContent.hidden, false);
 assert.deepStrictEqual(alertLogDomCalls, ['settings', 'muted']);
+
+const alertLogPanel = { style: { display: 'none' } };
+const openPanelResult = applyAlertLogPanelDisplayState(alertLogPanel, 'open');
+assert.deepStrictEqual(openPanelResult, {
+  panelFound: true,
+  visible: true,
+  shouldBringToFront: true,
+  shouldRender: true
+});
+assert.strictEqual(alertLogPanel.style.display, 'flex');
+
+const hiddenPanelResult = applyAlertLogPanelDisplayState(alertLogPanel, 'toggle', {
+  getComputedStyle: () => ({ display: 'flex' })
+});
+assert.deepStrictEqual(hiddenPanelResult, {
+  panelFound: true,
+  visible: false,
+  shouldBringToFront: false,
+  shouldRender: false
+});
+assert.strictEqual(alertLogPanel.style.display, 'none');
+
+const shownPanelResult = applyAlertLogPanelDisplayState(alertLogPanel, 'toggle', {
+  getComputedStyle: () => ({ display: 'none' })
+});
+assert.deepStrictEqual(shownPanelResult, {
+  panelFound: true,
+  visible: true,
+  shouldBringToFront: true,
+  shouldRender: true
+});
+assert.strictEqual(alertLogPanel.style.display, 'flex');
 
 const alertSettingsPanelHtml = buildAlertSettingsPanelHtml({
   settings: {

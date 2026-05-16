@@ -946,8 +946,7 @@
         const appendPlan = getAlertLogUiUtils().buildAlertLogAppendPlan([entry]);
         if (!appendPlan.entries.length) return;
         if (appendPlan.shouldAutoOpen) {
-            alertLogWindow.style.display = 'flex';
-            bringFloatingPanelToFront(alertLogWindow);
+            applyAlertLogPanelDisplay('open');
         }
         const logEntry = appendPlan.entries[0];
         const mutedEntry = logEntry && logEntry.mutedTargetCandidate
@@ -1312,8 +1311,7 @@
         const appendPlan = getAlertLogUiUtils().buildAlertLogAppendPlan(entries);
         if (!appendPlan.entries.length) return;
         if (appendPlan.shouldAutoOpen) {
-            alertLogWindow.style.display = 'flex';
-            bringFloatingPanelToFront(alertLogWindow);
+            applyAlertLogPanelDisplay('open');
         }
         const destinations = [];
         for (const entry of appendPlan.entries) {
@@ -3210,6 +3208,21 @@
         window.open(href, '_blank', 'noopener');
     }
 
+    function applyAlertLogPanelDisplay(action) {
+        const result = getAlertLogUiUtils().applyAlertLogPanelDisplayState(alertLogWindow, action, {
+            getComputedStyle: (element) => window.getComputedStyle(element)
+        });
+        if (!result.panelFound) return result;
+        if (result.shouldBringToFront) {
+            bringFloatingPanelToFront(alertLogWindow);
+        }
+        if (result.shouldRender) {
+            renderAlertLogTabState();
+        }
+        syncMutedPathLogTimer();
+        return result;
+    }
+
     async function loadPathAlertConfig() {
         pathAlertConfig = await pathAlertConfigClient.load();
     }
@@ -3221,10 +3234,7 @@
     function openAlertLogTab(tab) {
         if (!alertLogWindow) return;
         alertLogTabRuntime.set(tab);
-        alertLogWindow.style.display = 'flex';
-        bringFloatingPanelToFront(alertLogWindow);
-        renderAlertLogTabState();
-        syncMutedPathLogTimer();
+        applyAlertLogPanelDisplay('open');
     }
 
     function openAlertSettingsTab() {
@@ -3232,14 +3242,7 @@
     }
 
     function toggleAlertLogPanel() {
-        if (!alertLogWindow) return;
-        const isHidden = window.getComputedStyle(alertLogWindow).display === 'none';
-        alertLogWindow.style.display = isHidden ? 'flex' : 'none';
-        if (isHidden) {
-            bringFloatingPanelToFront(alertLogWindow);
-            renderAlertLogTabState();
-        }
-        syncMutedPathLogTimer();
+        applyAlertLogPanelDisplay('toggle');
     }
 
     function handleAlertLogClick(event) {

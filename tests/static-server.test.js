@@ -823,10 +823,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('alertSettingsHtmlRenderer.render(alertLogSettingsContent'));
     assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().applyAlertLogTabDomState({'));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().applyAlertLogPanelDisplayState(alertLogWindow, action, {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildAlertSettingsPanelHtml({'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildMutedAlertStatePanelHtml({'));
     assert.ok(alertLogUiResponse.body.includes('function buildMutedAlertStatePanelHtml(config = {})'));
     assert.ok(alertLogUiResponse.body.includes('function applyAlertLogTabDomState(refs = {}, tabState = buildAlertLogTabState(), callbacks = {})'));
+    assert.ok(alertLogUiResponse.body.includes('function applyAlertLogPanelDisplayState(panelEl, action = \'toggle\', options = {})'));
     const alertLogUiExportBlock = alertLogUiResponse.body.match(/return \{\n    buildAlertLogAppendPlan,[\s\S]*?\n  \};/);
     assert.ok(alertLogUiExportBlock);
     assert.ok(!alertLogUiExportBlock[0].includes('isMutedAlertLogEntry'));
@@ -1141,6 +1143,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const alertLogTabRuntime = getAlertLogUiUtils().createAlertLogTabRuntime();'));
     assert.ok(!appJsResponse.body.includes('alertLogLogTab.classList.toggle'));
     assert.ok(!appJsResponse.body.includes('alertLogMutedContent.hidden = !'));
+    assert.ok(!appJsResponse.body.includes("alertLogWindow.style.display = 'flex'"));
+    assert.ok(!appJsResponse.body.includes("alertLogWindow.style.display = isHidden ? 'flex' : 'none'"));
+    assert.ok(!appJsResponse.body.includes("window.getComputedStyle(alertLogWindow).display === 'none'"));
     assert.ok(appJsResponse.body.includes("alertLogTabRuntime.isActive('muted')"));
     assert.ok(alertLogUiResponse.body.includes('function resolveAlertLogCardPlacement(entry, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function buildRestoredMutedAlertLogPlan(entries, options = {})'));
