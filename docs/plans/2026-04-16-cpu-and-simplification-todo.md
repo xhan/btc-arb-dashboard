@@ -140,6 +140,7 @@
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `dashboard-renderer.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
   - `floating-panel-ui`：浮窗拖拽和置顶绑定已下沉到 `dom-render-utils.js`，`app.js` 只保留 z-index 状态所有权
+  - `file-layout`：在模块边界稳定后，把根目录里按职责增长的 utils/runtime/renderer/provider 文件迁入明确目录，例如 `src/quote/`、`src/arb/`、`src/path-alerts/`、`src/dashboard/`、`src/shared/`，并保留必要的兼容入口，避免一次性移动导致 review 噪声和路径风险
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -169,6 +170,7 @@
   - `app.js` 的 quote request channel tag 插入/更新/删除计划已下沉到 `quote-display-utils.js`
   - `app.js` 的 quote trend arrow 涨跌/隐藏展示模型已下沉到 `quote-display-utils.js`
   - `app.js` 的 dashboard quote 查找和 quote alert 列表读取单用途包装已移除，调用点直接委托 runtime/path alert utils
+  - `app.js` 的套利详情 summary 利润率格式化包装已移除，默认格式化归入 `arb-detail-utils.js`
   - `app.js` 的 CEX book format/summary 顶层过渡包装已移除，注入点直接委托 `quote-display-utils.js`
   - `app.js` 的 dex link label/button 顶层过渡包装已移除，调用点直接委托 `dex-link-utils.js`
   - `app.js` 的 request channel tag、quote pair label 和 arb detail source HTML 单用途包装已移除，调用点直接委托对应 utils
