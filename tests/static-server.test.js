@@ -346,9 +346,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function buildAddCategoryDraft(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveAddCategoryModalClickAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveQuoteSettingsModalClickAction(event, options = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsUpdatePlan(config = {})'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalViewState({'));
+    assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsUpdatePlan({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddQuoteFormViewState({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddQuoteDraft({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveAddQuoteModalClickAction(e, { modal: addQuoteModal })'));
@@ -375,6 +377,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const newCategory = { name: categoryName, id: Date.now(), quotes: [] };'));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-cancel'"));
     assert.ok(!appJsResponse.body.includes("e.target.id === 'modal-save'"));
+    assert.ok(!appJsResponse.body.includes("const kyberOnlyDirectPools = !isCrossChainQuote(quote) && kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;"));
+    assert.ok(!appJsResponse.body.includes("const showInverse = isCrossChainQuote(quote) ? false : document.getElementById('show-inverse-quote').checked;"));
     assert.ok(!dashboardRendererResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes("arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown)"));
     assert.ok(appJsResponse.body.includes("arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput)"));
@@ -508,7 +512,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('renderer.renderCategoryModuleShell({'));
     assert.ok(!appJsResponse.body.includes('function getCexPairLabel(quote, state)'));
     assert.ok(!appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
-    assert.ok(appJsResponse.body.includes('quote.kyberOnlyDirectPools = true;'));
+    assert.ok(dashboardRendererResponse.body.includes('updates.kyberOnlyDirectPools = true;'));
     assert.ok(appJsResponse.body.includes('const arbPanelUpdateRuntime = getArbRuntimeMemoryUtils().createArbPanelUpdateRuntime({'));
     assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.schedule();'));
     assert.ok(!appJsResponse.body.includes('let arbUpdateTimer = null;'));

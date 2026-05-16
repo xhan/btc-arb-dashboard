@@ -334,6 +334,71 @@
     };
   }
 
+  function buildQuoteSettingsUpdatePlan(config = {}) {
+    const quote = config.quote && typeof config.quote === 'object' ? config.quote : {};
+    const isCrossChainQuote = typeof config.isCrossChainQuote === 'function'
+      ? config.isCrossChainQuote
+      : () => false;
+    const isEvmChain = typeof config.isEvmChain === 'function'
+      ? config.isEvmChain
+      : () => false;
+    const isCrossChain = isCrossChainQuote(quote);
+    const updates = {};
+    const deletes = [];
+    let shouldQueueRefreshQuote = false;
+    let requestChannelChanged = false;
+
+    function setIfChanged(key, value) {
+      if (quote[key] === value) return;
+      updates[key] = value;
+      shouldQueueRefreshQuote = true;
+    }
+
+    if (isCrossChain) {
+      setIfChanged('preferredSource', 'LI.FI');
+    } else if (isEvmChain(quote.chain) && String(quote.chain || '').toLowerCase() !== 'plasma') {
+      setIfChanged('preferredSource', config.sourceValue);
+    }
+
+    const kyberOnlyDirectPools = !isCrossChain && config.kyberOnlyDirectPools === true;
+    if (quote.kyberOnlyDirectPools !== kyberOnlyDirectPools) {
+      if (kyberOnlyDirectPools) {
+        updates.kyberOnlyDirectPools = true;
+      } else {
+        deletes.push('kyberOnlyDirectPools');
+      }
+      shouldQueueRefreshQuote = true;
+    }
+
+    const showInverse = isCrossChain ? false : config.showInverse === true;
+    setIfChanged('showInverse', showInverse);
+
+    if (config.requestChannelEnabled === true) {
+      const nextChannelId = config.requestChannelId || 'default';
+      const previousChannelId = quote.requestChannelId || 'default';
+      if (previousChannelId !== nextChannelId) {
+        if (nextChannelId === 'default') {
+          deletes.push('requestChannelId');
+        } else {
+          updates.requestChannelId = nextChannelId;
+        }
+        requestChannelChanged = true;
+        shouldQueueRefreshQuote = true;
+      }
+    } else if (quote.requestChannelId) {
+      deletes.push('requestChannelId');
+      requestChannelChanged = true;
+      shouldQueueRefreshQuote = true;
+    }
+
+    return {
+      updates,
+      deletes,
+      shouldQueueRefreshQuote,
+      requestChannelChanged
+    };
+  }
+
   function buildAddQuoteFormViewState(config = {}) {
     const chain = String(config.chain || '');
     const normalizeChainKey = typeof config.normalizeChainKey === 'function'
@@ -458,6 +523,7 @@
     buildAddQuoteDraft,
     buildAddQuoteFormViewState,
     buildQuoteSettingsModalViewState,
+    buildQuoteSettingsUpdatePlan,
     buildSettingsIntervalWritePlan,
     buildSettingsIntervalsFromFormValues,
     readAddCategoryFormValues,

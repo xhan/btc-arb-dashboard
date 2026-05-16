@@ -5,6 +5,7 @@ const {
   buildAddQuoteDraft,
   buildAddQuoteFormViewState,
   buildQuoteSettingsModalViewState,
+  buildQuoteSettingsUpdatePlan,
   buildSettingsIntervalWritePlan,
   buildSettingsIntervalsFromFormValues,
   readAddCategoryFormValues,
@@ -461,6 +462,81 @@ assert.strictEqual(
     isCexOrderbookChain: () => true
   }).inverse.visible,
   false
+);
+
+assert.deepStrictEqual(
+  buildQuoteSettingsUpdatePlan({
+    quote: {
+      chain: 'ethereum',
+      preferredSource: 'Kyber',
+      kyberOnlyDirectPools: true,
+      showInverse: true,
+      requestChannelId: 'fast'
+    },
+    sourceValue: '0x',
+    kyberOnlyDirectPools: false,
+    showInverse: false,
+    requestChannelEnabled: true,
+    requestChannelId: 'default',
+    isCrossChainQuote: () => false,
+    isEvmChain: () => true
+  }),
+  {
+    updates: {
+      preferredSource: '0x',
+      showInverse: false
+    },
+    deletes: ['kyberOnlyDirectPools', 'requestChannelId'],
+    shouldQueueRefreshQuote: true,
+    requestChannelChanged: true
+  }
+);
+assert.deepStrictEqual(
+  buildQuoteSettingsUpdatePlan({
+    quote: {
+      chain: 'ethereum',
+      preferredSource: 'Kyber',
+      showInverse: true
+    },
+    sourceValue: 'Kyber',
+    kyberOnlyDirectPools: true,
+    showInverse: true,
+    requestChannelEnabled: false,
+    requestChannelId: '',
+    isCrossChainQuote: () => true,
+    isEvmChain: () => true
+  }),
+  {
+    updates: {
+      preferredSource: 'LI.FI',
+      showInverse: false
+    },
+    deletes: ['kyberOnlyDirectPools'],
+    shouldQueueRefreshQuote: true,
+    requestChannelChanged: false
+  }
+);
+assert.deepStrictEqual(
+  buildQuoteSettingsUpdatePlan({
+    quote: {
+      chain: 'plasma',
+      preferredSource: 'Kyber',
+      kyberOnlyDirectPools: false,
+      showInverse: false
+    },
+    sourceValue: '0x',
+    kyberOnlyDirectPools: false,
+    showInverse: false,
+    requestChannelEnabled: false,
+    isCrossChainQuote: () => false,
+    isEvmChain: () => true
+  }),
+  {
+    updates: {},
+    deletes: [],
+    shouldQueueRefreshQuote: false,
+    requestChannelChanged: false
+  }
 );
 
 const quoteItemHtml = renderQuoteItemShell({

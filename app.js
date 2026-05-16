@@ -4924,58 +4924,23 @@
             });
         } else if (action.type === 'save') {
             const { quote } = currentlyEditingQuote;
-            let shouldQueueRefreshQuote = false;
-
-            if (isCrossChainQuote(quote)) {
-                if (quote.preferredSource !== 'LI.FI') {
-                    quote.preferredSource = 'LI.FI';
-                    shouldQueueRefreshQuote = true;
-                }
-            } else if (isEvmChain(quote.chain)) {
-                if (quote.chain.toLowerCase() !== 'plasma') {
-                    const newSource = quoteSourceSelect.value;
-                    if (quote.preferredSource !== newSource) {
-                        quote.preferredSource = newSource;
-                        shouldQueueRefreshQuote = true;
-                    }
-                }
-            }
-
-            const kyberOnlyDirectPools = !isCrossChainQuote(quote) && kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true;
-            if (quote.kyberOnlyDirectPools !== kyberOnlyDirectPools) {
-                if (kyberOnlyDirectPools) {
-                    quote.kyberOnlyDirectPools = true;
-                } else {
-                    delete quote.kyberOnlyDirectPools;
-                }
-                shouldQueueRefreshQuote = true;
-            }
-
-            const showInverse = isCrossChainQuote(quote) ? false : document.getElementById('show-inverse-quote').checked;
-            if (quote.showInverse !== showInverse) {
-                quote.showInverse = showInverse;
-                shouldQueueRefreshQuote = true;
-            }
-
-            if (shouldShowRequestChannelForQuote(quote) && quoteRequestChannelSelect) {
-                const nextChannelId = quoteRequestChannelSelect.value || 'default';
-                const previousChannelId = quote.requestChannelId || 'default';
-                if (previousChannelId !== nextChannelId) {
-                    if (nextChannelId === 'default') {
-                        delete quote.requestChannelId;
-                    } else {
-                        quote.requestChannelId = nextChannelId;
-                    }
-                    updateRequestChannelTagForQuote(quote);
-                    shouldQueueRefreshQuote = true;
-                }
-            } else if (quote.requestChannelId) {
-                delete quote.requestChannelId;
+            const updatePlan = getDashboardRenderer().buildQuoteSettingsUpdatePlan({
+                quote,
+                sourceValue: quoteSourceSelect ? quoteSourceSelect.value : quote.preferredSource,
+                kyberOnlyDirectPools: kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked === true,
+                showInverse: document.getElementById('show-inverse-quote').checked,
+                requestChannelEnabled: shouldShowRequestChannelForQuote(quote) && Boolean(quoteRequestChannelSelect),
+                requestChannelId: quoteRequestChannelSelect ? quoteRequestChannelSelect.value : '',
+                isCrossChainQuote,
+                isEvmChain
+            });
+            Object.assign(quote, updatePlan.updates);
+            updatePlan.deletes.forEach((key) => { delete quote[key]; });
+            if (updatePlan.requestChannelChanged) {
                 updateRequestChannelTagForQuote(quote);
-                shouldQueueRefreshQuote = true;
             }
 
-            if (shouldQueueRefreshQuote) {
+            if (updatePlan.shouldQueueRefreshQuote) {
                 removeFromQueue(quote.id);
                 queueQuoteRefresh(quote);
             }
