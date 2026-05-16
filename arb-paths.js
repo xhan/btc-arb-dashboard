@@ -49,26 +49,6 @@ function formatProfitWanfen(profitRate, precision = 2) {
   return `${wanfen >= 0 ? '+' : ''}${wanfen.toFixed(precision)}‱`;
 }
 
-function findBestTwoStepCycle(edges) {
-  let best = null;
-
-  for (const first of edges) {
-    for (const second of edges) {
-      if (first.to !== second.from) continue;
-      if (second.to !== first.from) continue;
-
-      const product = first.rate * second.rate;
-      const profitRate = product - 1;
-
-      if (!best || profitRate > best.profitRate) {
-        best = { legs: [first, second], profitRate };
-      }
-    }
-  }
-
-  return best;
-}
-
 function isRuleEdge(edge) {
   return Boolean(edge && (edge.rule || edge.chain === '规则'));
 }
@@ -113,61 +93,6 @@ function hasAdjacentRuleLegs(legs) {
     if (isRuleEdge(current) && isRuleEdge(next)) return true;
   }
   return false;
-}
-
-function findBestCycle(edges, options = {}) {
-  const maxDepth = Number(options.maxDepth) || 3;
-  const acceptCycle = typeof options.acceptCycle === 'function' ? options.acceptCycle : null;
-  let best = null;
-
-  const adjacency = new Map();
-  for (const edge of edges) {
-    if (!edge || !edge.from || !edge.to || typeof edge.rate !== 'number') continue;
-    const list = adjacency.get(edge.from) || [];
-    list.push(edge);
-    adjacency.set(edge.from, list);
-  }
-
-  function dfs(start, current, visited, path, product, pricedDepth) {
-    const neighbors = adjacency.get(current) || [];
-    for (const edge of neighbors) {
-      const next = edge.to;
-      const nextProduct = product * edge.rate;
-      const prevEdge = path[path.length - 1];
-      const nextPricedDepth = pricedDepth + (isRuleEdge(edge) ? 0 : 1);
-
-      if (isRuleEdge(prevEdge) && isRuleEdge(edge)) continue;
-      if (nextPricedDepth > maxDepth) continue;
-
-      if (next === start && path.length >= 1) {
-        const profitRate = nextProduct - 1;
-        const legs = path.concat(edge);
-        if (hasAdjacentRuleLegs(legs)) {
-          continue;
-        }
-        if (acceptCycle && !acceptCycle(legs)) {
-          continue;
-        }
-        if (!best || profitRate > best.profitRate) {
-          best = { legs, profitRate };
-        }
-        continue;
-      }
-
-      if (visited.has(next)) continue;
-
-      visited.add(next);
-      dfs(start, next, visited, path.concat(edge), nextProduct, nextPricedDepth);
-      visited.delete(next);
-    }
-  }
-
-  for (const start of adjacency.keys()) {
-    const visited = new Set([start]);
-    dfs(start, start, visited, [], 1, 0);
-  }
-
-  return best;
 }
 
 function rotateCycleLegs(legs, offset) {
@@ -442,29 +367,6 @@ function findBestFixedPath(edges, rule, aliases, options = {}) {
   return Array.isArray(list) && list.length ? list[0] : null;
 }
 
-function selectBestDirectEdge(edges, from, to, aliases) {
-  const targetFrom = resolveAlias(from, aliases);
-  const targetTo = resolveAlias(to, aliases);
-  let best = null;
-
-  for (const edge of edges || []) {
-    const edgeFrom = resolveAlias(edge.from, aliases);
-    const edgeTo = resolveAlias(edge.to, aliases);
-    if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
-    if (!best || edge.rate > best.rate) {
-      best = {
-        ...edge,
-        rawFrom: edge.rawFrom || edge.from,
-        rawTo: edge.rawTo || edge.to,
-        from: targetFrom,
-        to: targetTo
-      };
-    }
-  }
-
-  return best;
-}
-
 function isMeaningfulPath(legs) {
   if (!Array.isArray(legs) || legs.length === 0) return false;
   return legs.some((leg) => leg && !leg.rule && leg.chain !== '规则');
@@ -474,16 +376,13 @@ function buildApi() {
   return {
     buildEdges,
     isCrossChainQuote,
-    findBestTwoStepCycle,
     formatLegLine,
     formatProfitWanfen,
     buildRuleEdges,
-    findBestCycle,
     findTopCycles,
     findFixedPaths,
     findBestFixedPath,
     canonicalizeCycleRotation,
-    selectBestDirectEdge,
     isMeaningfulPath
   };
 }

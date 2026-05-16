@@ -5,15 +5,12 @@ const vm = require('vm');
 
 const {
   buildEdges,
-  findBestTwoStepCycle,
   formatLegLine,
   buildRuleEdges,
-  findBestCycle,
   findTopCycles,
   findFixedPaths,
   findBestFixedPath,
   formatProfitWanfen,
-  selectBestDirectEdge,
   isMeaningfulPath
 } = require('../arb-paths');
 
@@ -28,7 +25,7 @@ const state = new Map([
 ]);
 
 const edges = buildEdges(quotes, state, ['cbBTC', 'WBTC']);
-const bestTwo = findBestTwoStepCycle(edges);
+const bestTwo = findTopCycles(edges, { maxDepth: 2, limit: 1 })[0];
 
 assert.ok(bestTwo, 'expected a best path');
 assert.strictEqual(bestTwo.legs.length, 2);
@@ -66,7 +63,7 @@ const multiState = new Map([
 
 const multiEdges = buildEdges(multiQuotes, multiState, null);
 const ruleEdges = buildRuleEdges({ xBTC: 'cbBTC' });
-const bestCycle = findBestCycle(multiEdges.concat(ruleEdges), { maxDepth: 4 });
+const bestCycle = findTopCycles(multiEdges.concat(ruleEdges), { maxDepth: 4, limit: 1 })[0];
 
 assert.ok(bestCycle, 'expected a cycle');
 assert.ok(bestCycle.legs.length >= 3 && bestCycle.legs.length <= 4);
@@ -91,29 +88,30 @@ assert.ok(caseDistinctCycles.some((cycle) =>
   cycle.legs.some((leg) => leg.rule && leg.from === 'TBTC' && leg.to === 'tBTC')
 ));
 
-const directEdges = [
-  { from: 'xBTC', to: 'WBTC', rate: 1.01, chain: 'arbitrum' },
-  { from: 'cbBTC', to: 'WBTC', rate: 1.005, chain: 'ethereum' }
-];
-
-const bestDirect = selectBestDirectEdge(directEdges, 'cbBTC', 'WBTC', { xBTC: 'cbBTC' });
-
-assert.ok(bestDirect);
-assert.strictEqual(bestDirect.from, 'cbBTC');
-assert.strictEqual(bestDirect.to, 'WBTC');
-assert.strictEqual(bestDirect.rate, 1.01);
-
 const aliasEdges = [
   { from: 'BTC.b', to: 'WBTC', rate: 1.002, chain: 'avalanche' },
-  { from: 'cbBTC', to: 'WBTC', rate: 1.001, chain: 'ethereum' }
+  { from: 'cbBTC', to: 'WBTC', rate: 1.001, chain: 'ethereum' },
+  { from: 'WBTC', to: 'BTC.b', rate: 0.999, chain: 'ethereum' },
+  { from: 'WBTC', to: 'cbBTC', rate: 0.998, chain: 'avalanche' }
 ];
-const aliasBest = selectBestDirectEdge(aliasEdges, 'BTCB', 'WBTC', { 'BTC.b': 'cbBTC', xBTC: 'cbBTC', BTCB: 'cbBTC' });
-assert.ok(aliasBest);
-assert.strictEqual(aliasBest.from, 'cbBTC');
-assert.strictEqual(aliasBest.to, 'WBTC');
-assert.strictEqual(aliasBest.rate, 1.002);
+const aliasFixedPath = findBestFixedPath(aliasEdges, {
+  base: 'BTCB',
+  quote: 'WBTC',
+  chains: ['avalanche', 'ethereum'],
+  steps: 2
+}, { 'BTC.b': 'cbBTC', xBTC: 'cbBTC', BTCB: 'cbBTC' });
+assert.ok(aliasFixedPath);
+assert.strictEqual(aliasFixedPath.legs[0].rawFrom, 'BTC.b');
+assert.strictEqual(aliasFixedPath.legs[0].from, 'cbBTC');
+assert.strictEqual(aliasFixedPath.legs[0].to, 'WBTC');
+assert.strictEqual(aliasFixedPath.legs[0].rate, 1.002);
 
-const exactAliasMiss = selectBestDirectEdge(aliasEdges, 'btcb', 'wbtc', { 'BTC.b': 'cbBTC', xBTC: 'cbBTC', BTCB: 'cbBTC' });
+const exactAliasMiss = findBestFixedPath(aliasEdges, {
+  base: 'btcb',
+  quote: 'wbtc',
+  chains: ['avalanche', 'ethereum'],
+  steps: 2
+}, { 'BTC.b': 'cbBTC', xBTC: 'cbBTC', BTCB: 'cbBTC' });
 assert.strictEqual(exactAliasMiss, null);
 
 const ruleOnly = [
@@ -127,7 +125,7 @@ const mixedPath = [
 
 assert.strictEqual(isMeaningfulPath(ruleOnly), false);
 assert.strictEqual(isMeaningfulPath(mixedPath), true);
-assert.strictEqual(findBestCycle(ruleOnly, { maxDepth: 2, acceptCycle: isMeaningfulPath }), null);
+assert.strictEqual(findTopCycles(ruleOnly, { maxDepth: 2, limit: 1, acceptCycle: isMeaningfulPath }).length, 0);
 
 const cycleEdges = [
   { from: 'A', to: 'B', rate: 1.02, chain: 'ethereum' },
