@@ -375,7 +375,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制')"));
     assert.ok(appJsResponse.body.includes('getDexLinkUtils().getDexLinkLabel(dexLinkConfig)'));
     assert.ok(appJsResponse.body.includes('getDexLinkUtils().buildDexLinkCopyButtonHtml({'));
-    assert.ok(appJsResponse.body.includes('copyDexLinkFromElement'));
+    assert.ok(appJsResponse.body.includes('getCopyUtils().copyDexLinkFromElement(targetEl, {'));
+    assert.ok(!appJsResponse.body.includes('const dexLink = utils.buildDexLink({'));
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
     assert.ok(appJsResponse.body.includes('function getDataTerminalUtils()'));
     assert.ok(appJsResponse.body.includes('DataTerminalUtils is not loaded'));
@@ -1658,6 +1659,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(copyUtilsResponse.body.includes('function createCopyToastRuntime(options = {})'));
     assert.ok(copyUtilsResponse.body.includes('function copyPriceFromText(text, options = {})'));
     assert.ok(copyUtilsResponse.body.includes('function bindCopyPriceHandler(targetEl, options = {})'));
+    assert.ok(copyUtilsResponse.body.includes('function copyDexLinkFromElement(targetEl, options = {})'));
 
     const chartsRendererResponse = await request('/src/charts/charts-renderer.js');
     assert.strictEqual(chartsRendererResponse.statusCode, 200);

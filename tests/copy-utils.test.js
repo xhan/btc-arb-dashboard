@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   bindCopyPriceHandler,
   createCopyToastRuntime,
+  copyDexLinkFromElement,
   copyPriceFromText,
   copyTextToClipboard
 } = require('../src/ui/copy-utils');
@@ -186,6 +187,58 @@ async function run() {
   assert.strictEqual(copiedPrices[copiedPrices.length - 1], '100000');
   assert.strictEqual(bindCopyPriceHandler(copyTargetEl, {}), false);
   assert.strictEqual(bindCopyPriceHandler(null, {}), false);
+
+  const copiedDexLinks = [];
+  const dexLinkToasts = [];
+  assert.strictEqual(
+    await copyDexLinkFromElement({
+      dataset: {
+        dexLinkChain: 'arbitrum',
+        dexLinkFromTokenAddress: '0xaaa',
+        dexLinkToTokenAddress: '0xbbb',
+        dexLinkInputAmount: '1.25',
+        dexLinkLabel: 'swap.defillama'
+      }
+    }, {
+      buildDexLink(config) {
+        assert.deepStrictEqual(config, {
+          chain: 'arbitrum',
+          fromTokenAddress: '0xaaa',
+          toTokenAddress: '0xbbb',
+          inputAmount: '1.25'
+        });
+        return { label: 'fallback label', url: 'https://dex.example/swap' };
+      },
+      copyText: async (value) => copiedDexLinks.push(value),
+      showToast: (message) => dexLinkToasts.push(message)
+    }),
+    true
+  );
+  assert.deepStrictEqual(copiedDexLinks, ['https://dex.example/swap']);
+  assert.deepStrictEqual(dexLinkToasts, ['已复制 swap.defillama 链接']);
+
+  assert.strictEqual(
+    await copyDexLinkFromElement({ dataset: {} }, {
+      buildDexLink: () => null,
+      copyText: async () => copiedDexLinks.push('should-not-copy'),
+      showToast: (message) => dexLinkToasts.push(message)
+    }),
+    false
+  );
+  assert.strictEqual(dexLinkToasts[dexLinkToasts.length - 1], '该交易对不支持 DEX 链接');
+
+  assert.strictEqual(
+    await copyDexLinkFromElement({ dataset: {} }, {
+      buildDexLink: () => ({ label: 'DEX', url: 'https://dex.example/fail' }),
+      copyText: async () => {
+        throw new Error('clipboard denied');
+      },
+      showToast: (message) => dexLinkToasts.push(message)
+    }),
+    false
+  );
+  assert.strictEqual(dexLinkToasts[dexLinkToasts.length - 1], '复制失败');
+  assert.strictEqual(await copyDexLinkFromElement(null, {}), false);
 }
 
 run().catch((error) => {

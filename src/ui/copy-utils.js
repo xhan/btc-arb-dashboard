@@ -139,9 +139,46 @@
     return true;
   }
 
+  async function copyDexLinkFromElement(targetEl, options = {}) {
+    if (!targetEl) return false;
+    const dataset = targetEl.dataset || {};
+    const buildDexLink = typeof options.buildDexLink === 'function'
+      ? options.buildDexLink
+      : null;
+    const dexLink = buildDexLink ? buildDexLink({
+      chain: dataset.dexLinkChain || '',
+      fromTokenAddress: dataset.dexLinkFromTokenAddress || '',
+      toTokenAddress: dataset.dexLinkToTokenAddress || '',
+      inputAmount: dataset.dexLinkInputAmount || ''
+    }) : null;
+
+    if (!dexLink || !dexLink.url) {
+      if (typeof options.showToast === 'function') {
+        options.showToast('该交易对不支持 DEX 链接');
+      }
+      return false;
+    }
+
+    try {
+      if (typeof options.copyText === 'function') {
+        await options.copyText(dexLink.url);
+      }
+      if (typeof options.showToast === 'function') {
+        options.showToast(`已复制 ${(dataset.dexLinkLabel || dexLink.label || 'DEX')} 链接`);
+      }
+      return true;
+    } catch (error) {
+      if (typeof options.showToast === 'function') {
+        options.showToast('复制失败');
+      }
+      return false;
+    }
+  }
+
   return {
     bindCopyPriceHandler,
     createCopyToastRuntime,
+    copyDexLinkFromElement,
     copyPriceFromText,
     copyTextToClipboard
   };

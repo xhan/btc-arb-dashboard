@@ -3791,27 +3791,11 @@
     }
 
     async function copyDexLinkFromElement(targetEl) {
-        if (!targetEl) return false;
-        const utils = getDexLinkUtils();
-        const dexLink = utils.buildDexLink({
-            chain: targetEl.dataset.dexLinkChain || '',
-            fromTokenAddress: targetEl.dataset.dexLinkFromTokenAddress || '',
-            toTokenAddress: targetEl.dataset.dexLinkToTokenAddress || '',
-            inputAmount: targetEl.dataset.dexLinkInputAmount || ''
+        return getCopyUtils().copyDexLinkFromElement(targetEl, {
+            buildDexLink: (config) => getDexLinkUtils().buildDexLink(config),
+            copyText: (text) => copyTextToClipboard(text),
+            showToast: (message) => showCopyToast(message)
         });
-        if (!dexLink || !dexLink.url) {
-            showCopyToast('该交易对不支持 DEX 链接');
-            return false;
-        }
-
-        try {
-            await copyTextToClipboard(dexLink.url);
-            showCopyToast(`已复制 ${(targetEl.dataset.dexLinkLabel || dexLink.label || 'DEX')} 链接`);
-            return true;
-        } catch (error) {
-            showCopyToast('复制失败');
-            return false;
-        }
     }
 
     function closestEventTarget(event, selector) {
