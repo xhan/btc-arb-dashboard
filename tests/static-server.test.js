@@ -645,10 +645,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('window.SpecialRuleAlertConfigUtils &&'));
     assert.ok(!appJsResponse.body.includes('typeof window.SpecialRuleAlertConfigUtils'));
     assert.ok(!appJsResponse.body.includes('meetsTriggerCondition: false,'));
-    assert.ok(appJsResponse.body.includes('function getTradingPairUtils()'));
-    assert.ok(appJsResponse.body.includes('TradingPairUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('function parseCexTradingPairSymbol(symbol)'));
-    assert.ok(appJsResponse.body.includes('getTradingPairUtils().parseCexTradingPairSymbol(symbol)'));
+    assert.ok(!appJsResponse.body.includes('function getTradingPairUtils()'));
+    assert.ok(!appJsResponse.body.includes('TradingPairUtils is not loaded'));
+    assert.ok(!appJsResponse.body.includes('function parseCexTradingPairSymbol(symbol)'));
+    assert.ok(!appJsResponse.body.includes('getTradingPairUtils().parseCexTradingPairSymbol(symbol)'));
     assert.ok(!appJsResponse.body.includes('window.TradingPairUtils &&'));
     assert.ok(!appJsResponse.body.includes('window.TradingPairUtils.splitCompactTradingPairSymbol(symbol)'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertMessage(alert, evaluation, {'));

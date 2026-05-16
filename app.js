@@ -386,13 +386,6 @@
         return window.SpecialRuleAlertConfigUtils;
     }
 
-    function getTradingPairUtils() {
-        if (!window.TradingPairUtils) {
-            throw new Error('TradingPairUtils is not loaded');
-        }
-        return window.TradingPairUtils;
-    }
-
     function getArbPathConfigUtils() {
         if (!window.ArbPathConfigUtils) {
             throw new Error('ArbPathConfigUtils is not loaded');
@@ -465,10 +458,6 @@
         return getChainDefaults().isCexOrderbookChain(chain);
     }
 
-    function parseCexTradingPairSymbol(symbol) {
-        return getTradingPairUtils().parseCexTradingPairSymbol(symbol);
-    }
-    
     const KYBER_SUPPORTED_CHAINS = [
         'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche', 
         'base', 'linea', 'mantle', 'sonic', 'berachain', 'ronin', 
