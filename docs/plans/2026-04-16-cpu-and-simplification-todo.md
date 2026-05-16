@@ -134,7 +134,7 @@
   - `arb-panel`：snapshot / topology 缓存和面板刷新 debounce 所有权已下沉到 `arb-path-template-cache-utils.js` / `arb-runtime-memory-utils.js`，`app.js` 只保留缓存 key 构建和面板数据装配
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `arb-detail-refresh-utils.js`，source budget Map 所有权已下沉到 `arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`
-  - `data-terminal`：records/candidates cache 和刷新 timer 已下沉到 `data-terminal-utils.js`
+  - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML 和内容点击动作解析已下沉到 `data-terminal-utils.js`
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `dashboard-runtime-utils.js`
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `price-snapshot-payload-utils.js`，复制提示 timer 已下沉到 `copy-utils.js`
 
