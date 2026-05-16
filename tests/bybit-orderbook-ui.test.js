@@ -2,9 +2,9 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const appJs = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+const appJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-app.js'), 'utf8');
 const chainDefaultsJs = fs.readFileSync(path.join(__dirname, '..', 'src/shared/chain-defaults.js'), 'utf8');
-const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'public/index.html'), 'utf8');
 const quoteDisplayUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-display-utils.js'), 'utf8');
 
 assert.ok(

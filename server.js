@@ -46,28 +46,31 @@ const path = require('path');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const SRC_DIR = path.join(__dirname, 'src');
 const SERVER_VERBOSE = process.argv.includes('-v')
     || process.argv.includes('--verbose')
     || process.env.SERVER_VERBOSE === '1'
     || ['verbose', 'silly'].includes(String(process.env.npm_config_loglevel || '').toLowerCase());
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(PUBLIC_DIR));
+app.use('/src', express.static(SRC_DIR));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 app.get('/snapshot', (req, res) => {
-    res.sendFile(path.join(__dirname, 'snapshot.html'));
+    res.sendFile(path.join(PUBLIC_DIR, 'snapshot.html'));
 });
 app.get('/charts', (req, res) => {
-    res.sendFile(path.join(__dirname, 'charts.html'));
+    res.sendFile(path.join(PUBLIC_DIR, 'charts.html'));
 });
 app.get('/path-alerts', (req, res) => {
-    res.sendFile(path.join(__dirname, 'path-alerts.html'));
+    res.sendFile(path.join(PUBLIC_DIR, 'path-alerts.html'));
 });
 app.get('/queue-stats', (req, res) => {
-    res.sendFile(path.join(__dirname, 'queue-stats.html'));
+    res.sendFile(path.join(PUBLIC_DIR, 'queue-stats.html'));
 });
 function resolveProjectFilePath(fileName, envKey) {
     const overridePath = envKey ? String(process.env[envKey] || '').trim() : '';

@@ -38,6 +38,12 @@ async function waitForServer(attempts = 12) {
     await waitForServer();
     const response = await request('/index.html');
     assert.strictEqual(response.statusCode, 200);
+    const rootAppResponse = await request('/app.js');
+    assert.strictEqual(rootAppResponse.statusCode, 404);
+    const rootConfigResponse = await request('/config.json');
+    assert.strictEqual(rootConfigResponse.statusCode, 404);
+    const pathAlertSoundResponse = await request('/assets/alert_path.mp3');
+    assert.strictEqual(pathAlertSoundResponse.statusCode, 200);
     assert.ok(response.body.includes('聚合报价看板'));
     assert.ok(response.body.includes('href="/snapshot?mode=nearest"'));
     assert.ok(response.body.includes('href="/charts"'));
@@ -108,16 +114,16 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/quote/quote-request-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/quote/quote-request-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/shared/trading-pair-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/shared/trading-pair-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/request-channel/request-channel-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/request-channel/request-channel-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/quote/quote-display-utils.js"')
@@ -126,70 +132,70 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/data-terminal/data-terminal-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/queue-stats/queue-stats-utils.js"') < response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/dashboard/dashboard-renderer.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/dashboard/dashboard-renderer.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/ui/dex-link-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/ui/dex-link-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/arb/arb-detail-refresh-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-detail-refresh-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/ui/dom-render-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/ui/dom-render-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/ui/theme-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/ui/theme-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/ui/keyboard-shortcut-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/ui/keyboard-shortcut-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/alerts/alert-debug-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/alerts/alert-debug-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/alerts/special-rule-alert-config-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/alerts/special-rule-alert-config-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/arb/arb-path-config.js"') < response.body.indexOf('src="src/arb/arb-path-config-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/arb/arb-path-config-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-path-config-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/arb/arb-paths.js"') < response.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/arb/arb-rule-snapshot-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-rule-snapshot-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/path-alerts/path-alert-rule-definitions.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/path-alerts/path-alert-rule-definitions.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/arb/arb-fixed-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-fixed-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/path-alerts/muted-path-storage-utils.js"') < response.body.indexOf('src="src/path-alerts/path-alert-utils.js"')
@@ -198,12 +204,12 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/path-alerts/muted-path-leg-utils.js"') < response.body.indexOf('src="src/path-alerts/muted-path-runtime-utils.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/path-alerts/muted-path-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/path-alerts/muted-path-runtime-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(!response.body.includes('id="alert-sound"'));
     assert.ok(!response.body.includes('src="alert.mp3"'));
     assert.ok(response.body.includes('id="path-alert-sound"'));
-    assert.ok(response.body.includes('src="alert_path.mp3"'));
+    assert.ok(response.body.includes('src="assets/alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
     assert.ok(response.body.includes('Velora (默认 700ms)'));
     assert.ok(response.body.includes('.arb-opportunity.is-alert-highlight {'));
@@ -271,7 +277,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertUtilsScriptIndex >= 0);
     assert.ok(specialRuleConfigScriptIndex < pathAlertUtilsScriptIndex);
 
-    const appJsResponse = await request('/app.js');
+    const appJsResponse = await request('/src/app/dashboard-app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
     const alertLogUiResponse = await request('/src/alerts/alert-log-ui-utils.js');
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
