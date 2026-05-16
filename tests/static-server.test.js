@@ -564,6 +564,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertPageUtilsResponse.body.includes('function getPathAlertStatusInfo(alert, runtime)'));
     assert.ok(pathAlertPageUtilsResponse.body.includes("return { text: '等待报价', className: 'path-alert-status-unavailable' };"));
     assert.ok(pathAlertPageUtilsResponse.body.includes("return { text: '', className: '' };"));
+    const pathAlertPageUtilsExportBlock = pathAlertPageUtilsResponse.body.match(/return \{\n    sanitizePathAlertDraft,[\s\S]*?\n  \};/);
+    assert.ok(pathAlertPageUtilsExportBlock);
+    assert.ok(!pathAlertPageUtilsExportBlock[0].includes('escapeHtml'));
+    assert.ok(!pathAlertPageUtilsExportBlock[0].includes('getPathAlertStatusInfo'));
+    assert.ok(!pathAlertPageUtilsExportBlock[0].includes('renderPathAlertItemHtml'));
+    assert.ok(!pathAlertPageUtilsExportBlock[0].includes('renderPathAlertToolbarHtml'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('const statusTagHtml = item.statusText'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertPanelRenderOptions({'));
     assert.ok(/\.filter\(\(\{ statusInfo \}\) => Boolean\(\s*statusInfo\s*&& statusInfo\.text\s*&& statusInfo\.className !== 'path-alert-status-unavailable'\s*\)\s*\)\s*/.test(pathAlertPageUtilsResponse.body));
