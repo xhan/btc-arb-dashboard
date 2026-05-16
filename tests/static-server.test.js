@@ -1488,10 +1488,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
     assert.ok(appJsResponse.body.includes('function mountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function unmountDataTerminalPanel()'));
-    assert.ok(appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
+    assert.ok(!appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
+    assert.ok(!appJsResponse.body.includes('function positionDataTerminalWindow(panel)'));
     assert.ok(!appJsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
-    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().applyDataTerminalDefaultSize(panel, {'));
-    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().applyDataTerminalWindowPosition(panel, {'));
+    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalDefaultSize(panel, {'));
+    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalWindowPosition(panel, {'));
     assert.ok(dataTerminalUtilsResponse.body.includes('id="data-terminal-profit-bp"'));
     assert.ok(appJsResponse.body.includes('selectedLeftKey'));
     assert.ok(appJsResponse.body.includes('selectedRightKey'));

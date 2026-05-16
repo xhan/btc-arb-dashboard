@@ -222,6 +222,7 @@
   - `src/app/dashboard-app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`
   - `src/app/dashboard-app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `src/app/dashboard-app.js` 的数据终端 DOM refs 装配、浮窗定位和默认尺寸 DOM 写入已下沉到 `src/data-terminal/data-terminal-utils.js`
+  - `src/app/dashboard-app.js` 的数据终端浮窗定位/默认尺寸单用途包装已移除，挂载流程直接委托 `src/data-terminal/data-terminal-utils.js`
   - `src/app/dashboard-app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利面板 dirty flag 已下沉到 `src/arb/arb-runtime-memory-utils.js` 的 `createArbPanelUpdateRuntime()`

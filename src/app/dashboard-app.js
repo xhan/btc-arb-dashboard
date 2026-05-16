@@ -1983,20 +1983,6 @@
         }
     }
 
-    function positionDataTerminalWindow(panel) {
-        getDataTerminalUtils().applyDataTerminalWindowPosition(panel, {
-            anchorPanel: arbPathWindow,
-            getComputedStyle: (element) => window.getComputedStyle(element)
-        });
-    }
-
-    function syncDataTerminalPanelDefaultSize(panel) {
-        getDataTerminalUtils().applyDataTerminalDefaultSize(panel, {
-            anchorPanel: arbPathWindow,
-            getComputedStyle: (element) => window.getComputedStyle(element)
-        });
-    }
-
     function mountDataTerminalPanel() {
         if (dataTerminalState.visible && dataTerminalState.domRefs && dataTerminalState.domRefs.window) {
             bringFloatingPanelToFront(dataTerminalState.domRefs.window);
@@ -2008,8 +1994,14 @@
         panel.id = 'data-terminal-window';
         panel.innerHTML = utils.buildDataTerminalShellHtml();
         floatingPanelZIndexRuntime.resetPanel(panel);
-        syncDataTerminalPanelDefaultSize(panel);
-        positionDataTerminalWindow(panel);
+        utils.applyDataTerminalDefaultSize(panel, {
+            anchorPanel: arbPathWindow,
+            getComputedStyle: (element) => window.getComputedStyle(element)
+        });
+        utils.applyDataTerminalWindowPosition(panel, {
+            anchorPanel: arbPathWindow,
+            getComputedStyle: (element) => window.getComputedStyle(element)
+        });
         document.body.appendChild(panel);
 
         const refs = utils.getDataTerminalDomRefs(panel);
