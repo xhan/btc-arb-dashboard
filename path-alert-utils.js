@@ -501,6 +501,22 @@
     });
   }
 
+  function getChangedLegMinBp(settings = {}) {
+    const value = Number(settings && settings.changedLegMinBp);
+    return Number.isFinite(value) ? value : DEFAULT_PATH_ALERT_SETTINGS.changedLegMinBp;
+  }
+
+  function buildTriggeredPathAlertChangedLegs(snapshotState, settings = {}) {
+    const source = snapshotState && typeof snapshotState === 'object' ? snapshotState : {};
+    const currentSnapshots = Array.isArray(source.currentSnapshots)
+      ? source.currentSnapshots
+      : (Array.isArray(source.currentLegSnapshots) ? source.currentLegSnapshots : []);
+    const baselineSnapshots = Array.isArray(source.baselineSnapshots)
+      ? source.baselineSnapshots
+      : (Array.isArray(source.baselineLegSnapshots) ? source.baselineLegSnapshots : []);
+    return buildChangedLegs(currentSnapshots, baselineSnapshots, getChangedLegMinBp(settings));
+  }
+
   function countPathAlertRealLegs(alert, evaluation) {
     if (alert && alert.target && alert.target.type === 'quote') {
       return 1;
@@ -938,6 +954,7 @@
     shouldActivatePathAlertSound,
     buildAllLegSnapshots,
     buildChangedLegs,
+    buildTriggeredPathAlertChangedLegs,
     buildMutedPathLogTitleSnapshot,
     buildMutedPathLegStatusText,
     buildMutedPathStatusText,

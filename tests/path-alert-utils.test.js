@@ -23,6 +23,7 @@ const {
   findDismissedPathAlert,
   getQuoteAlertsForQuoteId,
   buildAllLegSnapshots,
+  buildTriggeredPathAlertChangedLegs,
   resolvePathAlertSnapshotState,
   buildChangedLegs,
   buildMutedPathLogTitleSnapshot,
@@ -932,6 +933,20 @@ assert.deepStrictEqual(
     { chain: 'arbitrum', fromSymbol: 'cbBTC', toSymbol: 'WBTC', deltaBp: 3 },
     { chain: 'ethereum', fromSymbol: 'BTC', toSymbol: 'cbBTC', deltaBp: -3 }
   ]
+);
+assert.deepStrictEqual(
+  buildTriggeredPathAlertChangedLegs({
+    currentSnapshots: [{ key: 'a', quoteId: 1, label: 'A', rate: 1.0002 }],
+    baselineSnapshots: [{ key: 'a', quoteId: 1, label: 'A', rate: 1 }]
+  }, { changedLegMinBp: '1' }).map((item) => Number(item.deltaBp.toFixed(2))),
+  [2]
+);
+assert.deepStrictEqual(
+  buildTriggeredPathAlertChangedLegs({
+    currentLegSnapshots: [{ key: 'a', quoteId: 1, label: 'A', rate: 1.000005 }],
+    baselineLegSnapshots: [{ key: 'a', quoteId: 1, label: 'A', rate: 1 }]
+  }, { changedLegMinBp: 'bad' }),
+  []
 );
 
 assert.strictEqual(

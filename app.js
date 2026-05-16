@@ -3344,11 +3344,9 @@
             );
             let isMuted = false;
             if (next.shouldTrigger) {
-                const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
-                const changedLegs = pathAlertUtils.buildChangedLegs(
-                    snapshotState.currentSnapshots,
-                    snapshotState.baselineSnapshots,
-                    Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
+                const changedLegs = pathAlertUtils.buildTriggeredPathAlertChangedLegs(
+                    snapshotState,
+                    pathAlertConfig.settings
                 );
                 const triggeredEntry = buildTriggeredPathAlertEntry(alert, evaluation, changedLegs);
                 const mutedEntry = triggeredEntry.mutedTargetCandidate
@@ -3606,14 +3604,12 @@
                 mutePathAlertTarget(triggeredEntry, Date.now());
                 return;
             }
-            const changedLegMinBp = Number(pathAlertConfig?.settings?.changedLegMinBp);
             const triggeredEntry = buildTriggeredPathAlertEntry(
                 alert,
                 runtime.evaluation,
-                getPathAlertUtils().buildChangedLegs(
-                    Array.isArray(runtime.currentLegSnapshots) ? runtime.currentLegSnapshots : [],
-                    Array.isArray(runtime.baselineLegSnapshots) ? runtime.baselineLegSnapshots : [],
-                    Number.isFinite(changedLegMinBp) ? changedLegMinBp : 0.1
+                getPathAlertUtils().buildTriggeredPathAlertChangedLegs(
+                    runtime,
+                    pathAlertConfig.settings
                 )
             );
             mutePathAlertTarget(triggeredEntry, Date.now());
