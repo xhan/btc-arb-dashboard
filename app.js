@@ -3422,14 +3422,10 @@
     }
 
     function buildPathAlertChangedLegLines(changedLegs, maxCount = 3) {
-        return (Array.isArray(changedLegs) ? changedLegs : [])
-            .slice(0, maxCount)
-            .map((leg) => {
-                const rateText = Number.isFinite(Number(leg && leg.rate))
-                    ? ` @${Number(leg.rate).toFixed(6)}`
-                    : '';
-                return `${buildPathAlertLegDisplayLine(leg)}${rateText} ${leg.deltaBp >= 0 ? '+' : ''}${leg.deltaBp.toFixed(2)}bp`;
-            });
+        return getPathAlertNotificationUtils().buildPathAlertChangedLegLines(changedLegs, {
+            maxCount,
+            formatLeg: buildPathAlertLegDisplayLine
+        });
     }
 
     function getPathAlertRealLegCount(alert, evaluation) {

@@ -27,6 +27,27 @@
     return `${quoteId}|${direction}|${pricingMode}`;
   }
 
+  function buildPathAlertChangedLegLines(changedLegs, options = {}) {
+    const maxCount = Number.isFinite(Number(options.maxCount)) && Number(options.maxCount) > 0
+      ? Number(options.maxCount)
+      : 3;
+    const formatLeg = typeof options.formatLeg === 'function'
+      ? options.formatLeg
+      : () => '--';
+    return (Array.isArray(changedLegs) ? changedLegs : [])
+      .slice(0, maxCount)
+      .map((leg) => {
+        const rateText = Number.isFinite(Number(leg && leg.rate))
+          ? ` @${Number(leg.rate).toFixed(6)}`
+          : '';
+        const deltaBp = Number(leg && leg.deltaBp);
+        const deltaText = Number.isFinite(deltaBp)
+          ? `${deltaBp >= 0 ? '+' : ''}${deltaBp.toFixed(2)}bp`
+          : '--';
+        return `${formatLeg(leg)}${rateText} ${deltaText}`;
+      });
+  }
+
   function markSummaryLines(entry, summaryLines) {
     const changedLegs = Array.isArray(entry && entry.changedLegs) ? entry.changedLegs : [];
     if (!changedLegs.length) return summaryLines;
@@ -259,6 +280,7 @@
 
   return {
     formatPathAlertEvaluationText,
+    buildPathAlertChangedLegLines,
     buildPathAlertLegKey,
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,

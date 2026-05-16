@@ -5,6 +5,7 @@ const {
   buildPathAlertNotificationTitle,
   buildPathAlertNotificationBody,
   buildPathAlertAggregatedLog,
+  buildPathAlertChangedLegLines,
   buildPathAlertLegKey,
   buildQuoteAlertDirectionLabel,
   buildQuoteAlertCurrentValueText,
@@ -29,6 +30,20 @@ assert.strictEqual(
   '102|forward|raw'
 );
 assert.strictEqual(buildPathAlertLegKey({ quoteId: 'bad' }), '');
+assert.deepStrictEqual(
+  buildPathAlertChangedLegLines([
+    { chain: 'arbitrum', fromSymbol: 'cbBTC', toSymbol: 'WBTC', rate: 1.002688, deltaBp: 1.5 },
+    { chain: 'ethereum', fromSymbol: 'WBTC', toSymbol: 'cbBTC', deltaBp: -0.32 },
+    { chain: 'base', fromSymbol: 'cbBTC', toSymbol: 'WBTC', rate: 'bad', deltaBp: 0.1 }
+  ], {
+    maxCount: 2,
+    formatLeg: (leg) => `${leg.chain}:${leg.fromSymbol}->${leg.toSymbol}`
+  }),
+  [
+    'arbitrum:cbBTC->WBTC @1.002688 +1.50bp',
+    'ethereum:WBTC->cbBTC -0.32bp'
+  ]
+);
 
 const singleEntry = {
   alert: { name: 'WBTC ETH <-> ARB' },
