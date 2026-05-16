@@ -251,9 +251,9 @@
 - 现状：
   - 已把 `syncMutedPathLogTimer()` 从固定 1 秒 `setInterval` 改成动态 `setTimeout`
   - 日志面板可见时保留 1 秒倒计时刷新；隐藏时按最近过期时间唤醒，最长 60 秒检查一次
-  - muted target / leg 列表和 timer 所有权已下沉到 `src/path-alerts/muted-path-runtime-utils.js`，`src/app/dashboard-app.js` 保留持久化、UI 渲染和联动刷新回调
+  - muted target / leg 列表和 timer 所有权已下沉到 `src/path-alerts/muted-path-runtime-utils.js`，localStorage 读写和裁剪规则已下沉到 `src/path-alerts/muted-path-storage-utils.js`，`src/app/dashboard-app.js` 保留 UI 渲染和联动刷新回调
 - 建议：
-  - 后续如果继续拆 `src/app/dashboard-app.js`，把持久化和 UI 回调继续收拢到 `path-alerts` 模块
+  - 后续如果继续拆 `src/app/dashboard-app.js`，把 UI 回调继续收拢到 `path-alerts` 模块
 
 ### 13. 多通道默认间隔再校准
 - 现状：
