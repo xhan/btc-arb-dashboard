@@ -43,6 +43,10 @@ const {
   buildArbDetailSummaryHtml,
   formatDetailProfitRate,
   buildArbDetailShellHtml,
+  applyArbDetailShellHtml,
+  buildArbDetailErrorHtml,
+  applyArbDetailErrorHtml,
+  applyArbDetailModalVisibility,
   buildArbDetailChartMessageHtml,
   buildArbDetailProfitPreviewMessageHtml,
   buildArbDetailProfitPreviewReadyHtml,
@@ -465,6 +469,42 @@ assert.ok(detailShellHtml.includes('value="1.25 &lt;bad&gt;"'));
 assert.ok(detailShellHtml.includes('data-arb-detail-step-index="1"'));
 assert.ok(detailShellHtml.includes('id="arb-detail-rows-1"'));
 assert.ok(detailShellHtml.includes('id="arb-detail-summary-1"'));
+
+const detailGridEl = { innerHTML: '' };
+assert.strictEqual(applyArbDetailShellHtml(detailGridEl, [
+  { inputAmount: '1.25 <bad>' },
+  { inputAmount: 2 }
+]), true);
+assert.strictEqual(detailGridEl.innerHTML, detailShellHtml);
+assert.strictEqual(
+  buildArbDetailErrorHtml('失败 <原因>'),
+  '<div class="arb-detail-error">失败 &lt;原因&gt;</div>'
+);
+assert.strictEqual(applyArbDetailErrorHtml(detailGridEl, '已失效 <x>'), true);
+assert.strictEqual(detailGridEl.innerHTML, '<div class="arb-detail-error">已失效 &lt;x&gt;</div>');
+assert.strictEqual(applyArbDetailShellHtml(null, []), false);
+
+function createDetailClassList() {
+  const values = new Set();
+  return {
+    add(value) {
+      values.add(value);
+    },
+    remove(value) {
+      values.delete(value);
+    },
+    contains(value) {
+      return values.has(value);
+    }
+  };
+}
+
+const detailModalEl = { classList: createDetailClassList() };
+assert.strictEqual(applyArbDetailModalVisibility(detailModalEl, true), true);
+assert.strictEqual(detailModalEl.classList.contains('visible'), true);
+assert.strictEqual(applyArbDetailModalVisibility(detailModalEl, false), false);
+assert.strictEqual(detailModalEl.classList.contains('visible'), false);
+assert.strictEqual(applyArbDetailModalVisibility(null, true), false);
 
 assert.strictEqual(
   buildArbDetailChartMessageHtml('加载 <失败>'),

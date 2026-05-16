@@ -1392,7 +1392,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-arb-detail-leg-mute]')"));
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-arb-detail-step-index]')"));
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-arb-detail-input-index]')"));
-    assert.ok(appJsResponse.body.includes('arbDetailGrid.innerHTML = getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailShellHtml(arbDetailGrid, arbDetailState.cards);'));
+    assert.ok(appJsResponse.body.includes("getArbDetailUtils().applyArbDetailErrorHtml(arbDetailGrid, '当前套利机会已失效，请关闭后重新选择。');"));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, true);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, false);'));
+    assert.ok(!appJsResponse.body.includes('arbDetailModal.classList.add'));
+    assert.ok(!appJsResponse.body.includes('arbDetailModal.classList.remove'));
+    assert.ok(!appJsResponse.body.includes("arbDetailGrid.innerHTML = '<div class=\"arb-detail-error\">"));
+    assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailShellHtml(gridEl, cards = [])'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailErrorHtml(gridEl, message)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailModalVisibility(modalEl, visible)'));
     assert.ok(appJsResponse.body.includes('let arbDetailState = getArbDetailUtils().buildDefaultArbDetailState();'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildOpenArbDetailState(arbDetailState, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildClosedArbDetailState(arbDetailState)'));
@@ -1648,7 +1657,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailProfitPreviewState(seriesList, {'));
     assert.ok(appJsResponse.body.includes('buildArbDetailChartPreviewStripHtml(pairs, {'));
     assert.ok(appJsResponse.body.includes('buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)'));
-    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailShellHtml(arbDetailGrid, arbDetailState.cards)'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailTokenHtml'));
     assert.ok(!appJsResponse.body.includes('function buildArbDetailPairHtml'));
     assert.ok(!appJsResponse.body.includes('const cardsHtml = arbDetailState.cards.map'));

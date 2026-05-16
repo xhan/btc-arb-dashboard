@@ -2191,7 +2191,7 @@
     }
 
     function renderArbDetailShell() {
-        arbDetailGrid.innerHTML = getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards);
+        getArbDetailUtils().applyArbDetailShellHtml(arbDetailGrid, arbDetailState.cards);
     }
     function syncArbDetailInputValues() {
         arbDetailState.cards.forEach((card, index) => {
@@ -2435,7 +2435,7 @@
     function renderArbDetailModal(forceShellRebuild = false) {
         if (!arbDetailGrid || !arbDetailModal) return;
         if (!arbDetailState.visible) {
-            arbDetailModal.classList.remove('visible');
+            getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, false);
             return;
         }
 
@@ -2444,8 +2444,8 @@
             arbDetailSubtitle.textContent = '当前套利机会不可用';
             setArbDetailChartLinkState('');
             destroyArbDetailChartPreview();
-            arbDetailGrid.innerHTML = '<div class="arb-detail-error">当前套利机会已失效，请关闭后重新选择。</div>';
-            arbDetailModal.classList.add('visible');
+            getArbDetailUtils().applyArbDetailErrorHtml(arbDetailGrid, '当前套利机会已失效，请关闭后重新选择。');
+            getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, true);
             return;
         }
 
@@ -2457,7 +2457,7 @@
         }
         syncArbDetailInputValues();
         renderArbDetailCardContents();
-        arbDetailModal.classList.add('visible');
+        getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, true);
     }
 
     function abortActiveQuoteFetches() {
@@ -2486,9 +2486,7 @@
         destroyArbDetailChartPreview();
         arbDetailChartAutoRefreshRuntime.clear();
         setArbDetailChartLinkState('');
-        if (arbDetailModal) {
-            arbDetailModal.classList.remove('visible');
-        }
+        getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, false);
         setArbDetailDashboardPause(false);
     }
 

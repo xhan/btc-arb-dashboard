@@ -707,6 +707,34 @@
     }).join('');
   }
 
+  function setElementHtml(element, html) {
+    if (!element) return false;
+    element.innerHTML = html;
+    return true;
+  }
+
+  function applyArbDetailShellHtml(gridEl, cards = []) {
+    return setElementHtml(gridEl, buildArbDetailShellHtml(cards));
+  }
+
+  function buildArbDetailErrorHtml(message) {
+    return `<div class="arb-detail-error">${escapeHtml(message)}</div>`;
+  }
+
+  function applyArbDetailErrorHtml(gridEl, message) {
+    return setElementHtml(gridEl, buildArbDetailErrorHtml(message));
+  }
+
+  function applyArbDetailModalVisibility(modalEl, visible) {
+    if (!modalEl || !modalEl.classList) return false;
+    if (visible === true) {
+      modalEl.classList.add('visible');
+      return true;
+    }
+    modalEl.classList.remove('visible');
+    return false;
+  }
+
   function buildArbDetailChartMessageHtml(message) {
     return `<div class="arb-detail-chart-message">${escapeHtml(message)}</div>`;
   }
@@ -924,6 +952,10 @@
     buildArbDetailRowsHtml,
     buildArbDetailSummaryHtml,
     buildArbDetailShellHtml,
+    applyArbDetailShellHtml,
+    buildArbDetailErrorHtml,
+    applyArbDetailErrorHtml,
+    applyArbDetailModalVisibility,
     buildArbDetailChartMessageHtml,
     buildArbDetailProfitPreviewMessageHtml,
     buildArbDetailProfitPreviewReadyHtml,
