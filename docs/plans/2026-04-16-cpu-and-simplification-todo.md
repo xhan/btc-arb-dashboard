@@ -147,6 +147,7 @@
     - 已启动第四步：request channel 配置、前端工具和 HTTP proxy agent 工具迁入 `src/request-channel/`，后续请求通道边界按这个目录维护
     - 已启动第五步：path alert 主工具、通知、页面渲染、规则定义、候选构建、编辑器和独立页面入口迁入 `src/path-alerts/`，后续 path alert 模块按这个目录继续收敛
     - 已启动第六步：charts 页面入口、图表渲染器和图表工具迁入 `src/charts/`，后续历史图表模块按这个目录维护
+    - 已启动第七步：queue stats 页面入口和队列统计工具迁入 `src/queue-stats/`，后续队列统计模块按这个目录维护
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
@@ -183,7 +184,7 @@
   - `app.js` 中未调用的 CEX trading pair parser 包装和 `TradingPairUtils` 入口已移除
   - `app.js` 的 single-chain display name 和 paused monitor state 单用途包装已移除，调用点复用现有 helper / utils
   - `app.js` 的多渠道开关 storage 值解析/序列化已下沉到 `src/request-channel/request-channel-utils.js`
-  - `app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `queue-stats-utils.js`
+  - `app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
   - `app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js`
   - `app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`
   - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `data-terminal-utils.js`
