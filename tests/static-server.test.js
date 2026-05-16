@@ -523,7 +523,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!quoteDisplayExportBlock[0].includes('normalizeQuoteDisplayMode'));
     assert.ok(appJsResponse.body.includes('function getQuoteDisplayUtils()'));
     assert.ok(appJsResponse.body.includes('QuoteDisplayUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook)'));
+    assert.ok(!appJsResponse.body.includes('function formatCexBookValue(value, maxDecimals = 10)'));
+    assert.ok(!appJsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
+    assert.ok(appJsResponse.body.includes('formatCexBookValue: (value, maxDecimals) => getQuoteDisplayUtils().formatCexBookValue(value, maxDecimals)'));
+    assert.ok(appJsResponse.body.includes('buildCexSummary: (symbol, orderbook) => getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(!appJsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction)'));

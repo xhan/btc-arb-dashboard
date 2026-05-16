@@ -1634,7 +1634,7 @@
         return {
             formatLegLine: (line) => getArbPaths().formatLegLine(line),
             formatChainLabel,
-            formatCexBookValue
+            formatCexBookValue: (value, maxDecimals) => getQuoteDisplayUtils().formatCexBookValue(value, maxDecimals)
         };
     }
 
@@ -1711,14 +1711,6 @@
     function formatDetailProfitRate(profitRate) {
         if (typeof profitRate !== 'number' || !Number.isFinite(profitRate)) return '--';
         return getArbPaths().formatProfitWanfen(profitRate);
-    }
-
-    function formatCexBookValue(value, maxDecimals = 10) {
-        return getQuoteDisplayUtils().formatCexBookValue(value, maxDecimals);
-    }
-
-    function buildCexOrderbookSummary(symbol, orderbook) {
-        return getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook);
     }
 
     function buildQuotePairLabelHtml(quote, state) {
@@ -3725,7 +3717,7 @@
             quote,
             signal,
             resolvedConfig,
-            buildCexSummary: buildCexOrderbookSummary
+            buildCexSummary: (symbol, orderbook) => getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook)
         });
     }
 
