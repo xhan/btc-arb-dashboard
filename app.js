@@ -3366,7 +3366,10 @@
                     remoteTriggeredEntries.push(triggeredEntry);
                 }
             }
-            next.isSoundActive = Boolean(next.shouldTrigger && !isMuted && pathAlertConfig.settings && pathAlertConfig.settings.localSoundEnabled !== false);
+            next.isSoundActive = pathAlertUtils.shouldActivatePathAlertSound(next, {
+                muted: isMuted,
+                settings: pathAlertConfig.settings
+            });
             pathAlertRuntimeState.set(alert.id, next);
         }
 

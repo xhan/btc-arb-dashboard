@@ -851,6 +851,18 @@
     return next;
   }
 
+  function shouldActivatePathAlertSound(runtime, options = {}) {
+    const settings = options.settings && typeof options.settings === 'object'
+      ? options.settings
+      : {};
+    return Boolean(
+      runtime
+      && runtime.shouldTrigger
+      && options.muted !== true
+      && settings.localSoundEnabled !== false
+    );
+  }
+
   function resolvePathAlertSnapshotState(alert, previousRuntime, nextRuntime, evaluation, allLegSnapshots) {
     const currentSnapshots = Array.isArray(evaluation && evaluation.legSnapshots)
       ? evaluation.legSnapshots.map((leg) => ({ ...leg }))
@@ -923,6 +935,7 @@
     advancePathAlertRuntime,
     advanceQuoteAlertRuntime,
     buildEffectiveRuntimeAlert,
+    shouldActivatePathAlertSound,
     buildAllLegSnapshots,
     buildChangedLegs,
     buildMutedPathLogTitleSnapshot,

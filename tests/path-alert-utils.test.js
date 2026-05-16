@@ -12,6 +12,7 @@ const {
   evaluatePathAlert,
   advancePathAlertRuntime,
   advanceQuoteAlertRuntime,
+  shouldActivatePathAlertSound,
   isPathAlertConfirmDelayDisabled,
   buildPathAlertWebhookUrl,
   buildPathAlertSummaryLines,
@@ -1215,6 +1216,10 @@ assert.deepStrictEqual(advancedQuoteRuntime.evaluation, {
   meetsTriggerCondition: true,
   currentValue: 0.100115
 });
+assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: true }, { settings: { localSoundEnabled: true } }), true);
+assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: true }, { muted: true, settings: { localSoundEnabled: true } }), false);
+assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: true }, { settings: { localSoundEnabled: false } }), false);
+assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: false }, { settings: { localSoundEnabled: true } }), false);
 
 assert.strictEqual(isPathAlertConfirmDelayDisabled('immediate'), true);
 assert.strictEqual(isPathAlertConfirmDelayDisabled('delayed'), false);
