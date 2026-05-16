@@ -1,6 +1,9 @@
 const assert = require('assert');
 
-const { buildPriceSnapshotPayload } = require('../price-snapshot-payload-utils');
+const {
+  buildPriceSnapshotPayload,
+  createPriceSnapshotTimerRuntime
+} = require('../price-snapshot-payload-utils');
 
 const payload = buildPriceSnapshotPayload({
   dashboardState: [
@@ -41,3 +44,28 @@ assert.deepStrictEqual(payload.quotes[0], {
   inversePair: '',
   inverseResultText: ''
 });
+
+let timerId = 0;
+const timers = [];
+const clearedTimers = [];
+const timerRuntime = createPriceSnapshotTimerRuntime({
+  setInterval(callback, intervalMs) {
+    const timer = { id: ++timerId, callback, intervalMs };
+    timers.push(timer);
+    return timer;
+  },
+  clearInterval(timer) {
+    clearedTimers.push(timer.id);
+  }
+});
+
+let snapshotSaveCount = 0;
+assert.strictEqual(timerRuntime.start({ enabled: false, intervalSec: 10 }, () => { snapshotSaveCount += 1; }), false);
+assert.strictEqual(timerRuntime.start({ enabled: true, intervalSec: 5 }, () => { snapshotSaveCount += 1; }), true);
+assert.strictEqual(timers[0].intervalMs, 5000);
+assert.strictEqual(timerRuntime.start({ enabled: true, intervalSec: 10 }, () => { snapshotSaveCount += 10; }), true);
+assert.deepStrictEqual(clearedTimers, [1]);
+timers[1].callback();
+assert.strictEqual(snapshotSaveCount, 10);
+assert.strictEqual(timerRuntime.clear(), true);
+assert.strictEqual(timerRuntime.clear(), false);

@@ -115,6 +115,7 @@
 - 现状：
   - `price-snapshot-store.js` 仍按调用打开/关闭 DB
   - 已增加 per-dbPath schema-ready 缓存，避免每次调用重复执行 `ensureSchema()`
+  - 前端 price snapshot interval timer 生命周期已下沉到 `price-snapshot-payload-utils.js`
 - 预期收益：
   - 降低 Node CPU 和重复 schema 初始化成本
   - 降低图表预览自动刷新带来的额外成本

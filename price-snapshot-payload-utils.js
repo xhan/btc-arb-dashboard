@@ -69,7 +69,42 @@
     };
   }
 
+  function createPriceSnapshotTimerRuntime(options = {}) {
+    const setTimer = typeof options.setInterval === 'function'
+      ? options.setInterval
+      : (typeof setInterval === 'function' ? setInterval : null);
+    const clearTimer = typeof options.clearInterval === 'function'
+      ? options.clearInterval
+      : (typeof clearInterval === 'function' ? clearInterval : null);
+    let timer = null;
+
+    function clear() {
+      if (timer === null) return false;
+      if (clearTimer) {
+        clearTimer(timer);
+      }
+      timer = null;
+      return true;
+    }
+
+    function start(config = {}, callback) {
+      clear();
+      if (!config || config.enabled !== true || typeof callback !== 'function' || !setTimer) return false;
+      const intervalSec = Number(config.intervalSec);
+      if (!Number.isFinite(intervalSec) || intervalSec <= 0) return false;
+      timer = setTimer(callback, intervalSec * 1000);
+      return true;
+    }
+
+    return {
+      clear,
+      getTimer: () => timer,
+      start
+    };
+  }
+
   return {
-    buildPriceSnapshotPayload
+    buildPriceSnapshotPayload,
+    createPriceSnapshotTimerRuntime
   };
 });

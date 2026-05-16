@@ -22,7 +22,6 @@
     const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({
         AbortController
     });
-    let priceSnapshotTimer = null;
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
     let arbUpdateTimer = null;
@@ -65,6 +64,10 @@
     let arbPanelDirty = false;
     const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
+    const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({
+        setInterval,
+        clearInterval
+    });
     const dashboardSaveRuntime = getDashboardRuntimeUtils().createDashboardSaveRuntime({
         setTimeout,
         clearTimeout,
@@ -4609,12 +4612,7 @@
     }
 
     function startPriceSnapshotTimer() {
-        if (priceSnapshotTimer) clearInterval(priceSnapshotTimer);
-        priceSnapshotTimer = null;
-        if (!priceSnapshotConfig.enabled) return;
-        priceSnapshotTimer = setInterval(() => {
-            savePriceSnapshot();
-        }, priceSnapshotConfig.intervalSec * 1000);
+        priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void savePriceSnapshot(); });
     }
 
     function normalizeTheme(theme) {

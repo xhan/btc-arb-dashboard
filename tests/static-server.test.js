@@ -281,6 +281,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
     const quotePauseUtilsResponse = await request('/quote-pause-utils.js');
     assert.strictEqual(quotePauseUtilsResponse.statusCode, 200);
+    const priceSnapshotPayloadUtilsResponse = await request('/price-snapshot-payload-utils.js');
+    assert.strictEqual(priceSnapshotPayloadUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
     const requestChannelUtilsResponse = await request('/request-channel-utils.js');
@@ -919,6 +921,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('data-toggle-category-pause-id'));
     assert.ok(quotePauseUtilsResponse.body.includes('暂停分区'));
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
+    assert.ok(appJsResponse.body.includes('const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({'));
+    assert.ok(appJsResponse.body.includes('priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void savePriceSnapshot(); });'));
+    assert.ok(!appJsResponse.body.includes('let priceSnapshotTimer = null;'));
+    assert.ok(priceSnapshotPayloadUtilsResponse.body.includes('function createPriceSnapshotTimerRuntime(options = {})'));
     assert.ok(appJsResponse.body.includes('已暂停'));
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
     assert.ok(arbDetailUtilsResponse.body.includes('recordArbDetailBudgetTimestamp'));
