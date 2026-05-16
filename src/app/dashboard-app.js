@@ -16,6 +16,11 @@
     let multiChannelEnabled = true;
     let showRequestChannelTags = true;
     let requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
+    const dashboardApiClient = getDashboardApiUtils().createDashboardApiClient({
+        backendUrl: BACKEND_URL,
+        fetchImpl: fetch,
+        logger: console
+    });
 
     const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({
         AbortController
@@ -366,6 +371,13 @@
             throw new Error('PriceSnapshotPayloadUtils is not loaded');
         }
         return window.PriceSnapshotPayloadUtils;
+    }
+
+    function getDashboardApiUtils() {
+        if (!window.DashboardApiUtils) {
+            throw new Error('DashboardApiUtils is not loaded');
+        }
+        return window.DashboardApiUtils;
     }
 
     function getAlertLogUiUtils() {
@@ -4295,11 +4307,7 @@
                 settings: apiIntervals
             };
 
-            await fetch(`${BACKEND_URL}/api/save-config`, {
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(payload)
-            });
+            await dashboardApiClient.saveDashboardConfig(payload);
             
             manualSaveFeedbackRuntime.showSuccess();
 
@@ -4314,45 +4322,19 @@
     }
 
     async function loadPriceSnapshotConfig() {
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/get-price-snapshot-config`);
-            if (!response.ok) throw new Error('获取价格快照配置失败');
-            const data = await response.json();
-            const intervalSec = Number.parseInt(data.intervalSec, 10);
-            priceSnapshotConfig = {
-                enabled: data.enabled === true,
-                intervalSec: Number.isFinite(intervalSec) && intervalSec > 0 ? intervalSec : 10
-            };
-        } catch (error) {
-            console.warn('加载价格快照配置失败:', error);
-            priceSnapshotConfig = { enabled: false, intervalSec: 10 };
-        }
+        priceSnapshotConfig = await dashboardApiClient.loadPriceSnapshotConfig();
     }
 
     async function loadArbSettings() {
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/get-arb-settings`);
-            if (!response.ok) throw new Error('获取套利路径配置失败');
-            const data = await response.json();
-            const nextPriority = getArbCyclePriorityUtils().normalizeArbCycleStartPriority(data && data.cycleStartPriority);
-            arbCycleStartPriority = nextPriority;
-        } catch (error) {
-            console.warn('加载套利路径配置失败:', error);
-            arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
-        }
+        arbCycleStartPriority = await dashboardApiClient.loadArbSettings({
+            normalizePriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority,
+            defaultPriority: DEFAULT_ARB_CYCLE_START_PRIORITY
+        });
         invalidateArbCaches();
     }
 
     async function loadRequestChannels() {
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/get-request-channels`);
-            if (!response.ok) throw new Error('获取请求通道失败');
-            const data = await response.json();
-            requestChannelPayload = data && typeof data === 'object' ? data : { channels: [] };
-        } catch (error) {
-            console.warn('加载请求通道失败:', error);
-            requestChannelPayload = { channels: [] };
-        }
+        requestChannelPayload = await dashboardApiClient.loadRequestChannels();
         refreshRequestChannelOptions();
         dashboardState.forEach((category) => {
             (category.quotes || []).forEach((quote) => updateRequestChannelTagForQuote(quote));
@@ -4406,11 +4388,7 @@
         if (!payload.quotes.length) return;
 
         try {
-            await fetch(`${BACKEND_URL}/api/save-price-snapshot`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            await dashboardApiClient.savePriceSnapshot(payload);
         } catch (error) {
             console.warn('保存价格快照失败:', error);
         }
@@ -4968,18 +4946,7 @@
     });
 
     async function requestBackendConfigRefresh() {
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/request-update-config`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: '{}'
-            });
-            if (!response.ok) {
-                throw new Error('刷新后端配置失败');
-            }
-        } catch (error) {
-            console.warn('刷新后端配置失败:', error);
-        }
+        await dashboardApiClient.requestBackendConfigRefresh();
     }
 
     async function init() {
@@ -4996,28 +4963,11 @@
         mutedPathRuntime.setLegs(loadMutedPathLegsFromStorage());
         
         try {
-            const response = await fetch(`${BACKEND_URL}/api/get-config`);
-            if(!response.ok) {
-                console.warn("Server returned error, initializing empty dashboard");
-                dashboardState = [];
-            } else {
-                const rawData = await response.json();
-                
-                if (Array.isArray(rawData)) {
-                    dashboardState = rawData;
-                    apiIntervals = { ...DEFAULT_INTERVALS };
-                } else if (typeof rawData === 'object' && rawData !== null) {
-                    dashboardState = Array.isArray(rawData.dashboard) ? rawData.dashboard : [];
-                    if (rawData.settings) {
-                        apiIntervals = { ...DEFAULT_INTERVALS, ...rawData.settings };
-                        if (apiIntervals.solana === 1200) {
-                            apiIntervals.solana = 3500;
-                            saveData(); 
-                        }
-                    }
-                } else {
-                    dashboardState = [];
-                }
+            const loadedConfig = await dashboardApiClient.loadDashboardConfig(DEFAULT_INTERVALS);
+            dashboardState = loadedConfig.dashboardState;
+            apiIntervals = loadedConfig.apiIntervals;
+            if (loadedConfig.migratedSolanaInterval) {
+                saveData();
             }
             refreshRequestChannelOptions();
             await loadRequestChannels();

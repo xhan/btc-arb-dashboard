@@ -102,6 +102,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/ui/keyboard-shortcut-utils.js"'));
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(response.body.includes('src="src/data-terminal/data-terminal-utils.js"'));
+    assert.ok(response.body.includes('src="src/dashboard/dashboard-api-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/muted-path-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
@@ -133,6 +134,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/dashboard/dashboard-api-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="src/quote/quote-state-runtime-utils.js"')
@@ -319,6 +323,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(chainDefaultsResponse.statusCode, 200);
     const dashboardRendererResponse = await request('/src/dashboard/dashboard-renderer.js');
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
+    const dashboardApiUtilsResponse = await request('/src/dashboard/dashboard-api-utils.js');
+    assert.strictEqual(dashboardApiUtilsResponse.statusCode, 200);
     const pathAlertUtilsResponse = await request('/src/path-alerts/path-alert-utils.js');
     assert.strictEqual(pathAlertUtilsResponse.statusCode, 200);
     const mutedPathStorageUtilsResponse = await request('/src/path-alerts/muted-path-storage-utils.js');
@@ -447,8 +453,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("closest('[data-arb-opportunity-alert-id]')"));
     assert.ok(appJsResponse.body.includes('function buildArbOpportunityChartHref(entry)'));
     assert.ok(appJsResponse.body.includes('/api/get-alert-config'));
-    assert.ok(appJsResponse.body.includes('/api/request-update-config'));
-    assert.ok(appJsResponse.body.includes('/api/get-request-channels'));
+    assert.ok(appJsResponse.body.includes('function getDashboardApiUtils()'));
+    assert.ok(appJsResponse.body.includes('DashboardApiUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('dashboardApiClient.loadDashboardConfig(DEFAULT_INTERVALS)'));
+    assert.ok(dashboardApiUtilsResponse.body.includes('/api/request-update-config'));
+    assert.ok(dashboardApiUtilsResponse.body.includes('/api/get-request-channels'));
+    assert.ok(dashboardApiUtilsResponse.body.includes('/api/save-config'));
+    assert.ok(dashboardApiUtilsResponse.body.includes('/api/save-price-snapshot'));
     assert.ok(!appJsResponse.body.includes('/api/get-evm-meta'));
     assert.ok(!appJsResponse.body.includes('function getEvmMetadata'));
     assert.ok(!appJsResponse.body.includes('const MARKET_QUOTE_REQUESTS = {'));
@@ -878,7 +889,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;'));
     assert.ok(appJsResponse.body.includes('getArbRuleSnapshotUtils().buildArbRuleSnapshot({'));
     assert.ok(appJsResponse.body.includes('getArbCyclePriorityUtils().buildPreferredCycleStartSymbols(aliasRules, configuredPriority)'));
-    assert.ok(appJsResponse.body.includes('getArbCyclePriorityUtils().normalizeArbCycleStartPriority(data && data.cycleStartPriority)'));
+    assert.ok(appJsResponse.body.includes('normalizePriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority'));
     assert.ok(appJsResponse.body.includes('getArbEquivalenceUtils().DEFAULT_ASSET_EQUIVALENCE_GROUPS'));
     assert.ok(appJsResponse.body.includes('getArbEquivalenceUtils().buildAliasRulesFromGroups(getAssetEquivalenceGroups())'));
     assert.ok(!appJsResponse.body.includes('window.ArbRuleSnapshotUtils &&'));
