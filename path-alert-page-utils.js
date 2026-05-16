@@ -559,6 +559,111 @@
     return `🗃️已忽略 · 🕒${dismissedAtText}`;
   }
 
+  function buildPathAlertCardSubtitle(alert) {
+    if (alert && alert.target && alert.target.type === 'quote') {
+      return alert.target.ruleKind || '交易对报警';
+    }
+    if (alert && alert.target && alert.target.type === 'rule') {
+      return alert.target.ruleKind === 'fixed' ? '固定规则路径' : '特殊规则路径';
+    }
+    return `${getTargetLegCount(alert && alert.target)} 腿路径`;
+  }
+
+  function getPathAlertSectionTypeClass(sectionKey) {
+    if (sectionKey === 'quote') return 'quote';
+    if (sectionKey === 'rule') return 'rule';
+    if (sectionKey === 'special') return 'special';
+    return 'path';
+  }
+
+  function getPathAlertSectionTypeLabel(sectionKey) {
+    if (sectionKey === 'quote') return '交易对';
+    if (sectionKey === 'rule') return '固定';
+    if (sectionKey === 'special') return '特殊';
+    return '路径';
+  }
+
+  function renderPathAlertCardHtml(item = {}) {
+    const alertId = String(item.alertId || '');
+    const routeHtml = item.routeHtml || renderPathAlertRouteLinesHtml(item.summaryLines, 'alert-card-route-line');
+    return `
+        <article class="alert-card" data-alert-open="${escapeHtml(alertId)}">
+          <div class="alert-card-shell">
+            <input class="alert-card-select" type="checkbox" data-alert-select="${escapeHtml(alertId)}" ${item.selected ? 'checked' : ''}>
+            <div class="alert-card-main">
+              <div class="alert-card-head">
+                <div>
+                  <div class="alert-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+                  <div class="alert-card-subline">${escapeHtml(item.subtitle)}</div>
+                </div>
+                <div class="alert-card-meta-tags">
+                  <span class="tag ${escapeHtml(item.typeClass)}">${escapeHtml(item.typeLabel)}</span>
+                  <span class="tag live">${item.enabled === false ? '停用' : '启用'}</span>
+                </div>
+              </div>
+              <div class="alert-card-route">${routeHtml}</div>
+              <div class="alert-card-foot">
+                <div class="alert-card-meta" title="${escapeHtml(item.metaText)}">${escapeHtml(item.metaText)}</div>
+                <div class="alert-card-actions">
+                  <button type="button" class="inline-action-btn" data-alert-edit="${escapeHtml(alertId)}">编辑</button>
+                  <button type="button" class="inline-action-btn" data-alert-toggle="${escapeHtml(alertId)}">${item.enabled === false ? '启用' : '停用'}</button>
+                  <button type="button" class="inline-action-btn" data-alert-dismiss-delete="${escapeHtml(alertId)}">忽略并删除</button>
+                  <button type="button" class="inline-action-btn danger" data-alert-delete="${escapeHtml(alertId)}">删除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+  }
+
+  function renderDismissedTargetCardHtml(item = {}) {
+    const targetKey = String(item.targetKey || '');
+    const routeHtml = item.routeHtml || renderPathAlertRouteLinesHtml(item.summaryLines, 'alert-card-route-line');
+    return `
+          <article class="alert-card">
+            <div class="alert-card-shell">
+              <input class="alert-card-select" type="checkbox" data-dismissed-select="${escapeHtml(targetKey)}" ${item.selected ? 'checked' : ''}>
+              <div class="alert-card-main">
+                <div class="alert-card-head">
+                  <div>
+                    <div class="alert-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+                    <div class="alert-card-subline">已忽略规则</div>
+                  </div>
+                  <div class="alert-card-meta-tags">
+                    <span class="tag path">已忽略</span>
+                  </div>
+                </div>
+                <div class="alert-card-route">${routeHtml}</div>
+                <div class="alert-card-foot">
+                  <div class="alert-card-meta" title="${escapeHtml(item.metaText)}">${escapeHtml(item.metaText)}</div>
+                  <div class="alert-card-actions">
+                    <button type="button" class="inline-action-btn" data-dismissed-restore="${escapeHtml(targetKey)}">取消标记</button>
+                    <button type="button" class="inline-action-btn danger" data-dismissed-delete="${escapeHtml(targetKey)}">删除</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+  }
+
+  function renderPathAlertSectionHtml(section = {}, cardsHtml = '') {
+    return `
+        <section id="${escapeHtml(section.id)}" class="panel section-block section-anchor">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="tag ${escapeHtml(section.tagClass)}">${escapeHtml(section.title)}</span>
+              <h2>${escapeHtml(section.title)}</h2>
+              <small>${escapeHtml(section.note)}</small>
+            </div>
+            <div class="section-link">${Number(section.count || 0)} 条</div>
+          </div>
+          <div class="card-grid">${cardsHtml || ''}</div>
+        </section>
+      `;
+  }
+
   function isQuoteScopedAlertTarget(target, quoteId) {
     const filterQuoteId = String(quoteId || '').trim();
     if (!filterQuoteId) return true;
@@ -654,6 +759,7 @@
     buildDismissedTargetCardTitle,
     buildDismissedTargetMetaText,
     buildPathAlertCardMetaText,
+    buildPathAlertCardSubtitle,
     buildPathAlertCardTitle,
     buildPathAlertDefaultQuoteAlertName,
     buildPathAlertQuoteLabel,
@@ -670,11 +776,16 @@
     groupAlertsBySection,
     parsePathAlertsPagePrefill,
     pruneSelectionSet,
+    renderDismissedTargetCardHtml,
+    renderPathAlertCardHtml,
     renderPathAlertItemHtml,
     renderPathAlertPanelHtml,
     renderPathAlertRouteLinesHtml,
+    renderPathAlertSectionHtml,
     renderPathAlertSummaryLinesHtml,
     renderPathAlertToolbarHtml,
+    getPathAlertSectionTypeClass,
+    getPathAlertSectionTypeLabel,
     shortenTokenText
   };
 }));

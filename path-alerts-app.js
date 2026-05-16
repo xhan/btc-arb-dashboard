@@ -531,39 +531,18 @@
       });
       const subtitle = alert && alert.target && alert.target.type === 'quote'
         ? buildQuoteAlertRuleLine(alert.target)
-        : alert && alert.target && alert.target.type === 'rule'
-          ? (alert.target.ruleKind === 'fixed' ? '固定规则路径' : '特殊规则路径')
-          : `${Array.isArray(alert?.target?.legs) ? alert.target.legs.length : 0} 腿路径`;
-      const typeClass = sectionKey === 'quote' ? 'quote' : sectionKey === 'rule' ? 'rule' : sectionKey === 'special' ? 'special' : 'path';
-      return `
-        <article class="alert-card" data-alert-open="${escapeHtml(alert.id)}">
-          <div class="alert-card-shell">
-            <input class="alert-card-select" type="checkbox" data-alert-select="${escapeHtml(alert.id)}" ${pageState.selectedAlertIds.has(alert.id) ? 'checked' : ''}>
-            <div class="alert-card-main">
-              <div class="alert-card-head">
-                <div>
-                  <div class="alert-card-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
-                  <div class="alert-card-subline">${escapeHtml(subtitle)}</div>
-                </div>
-                <div class="alert-card-meta-tags">
-                  <span class="tag ${typeClass}">${sectionKey === 'quote' ? '交易对' : sectionKey === 'rule' ? '固定' : sectionKey === 'special' ? '特殊' : '路径'}</span>
-                  <span class="tag live">${alert.enabled === false ? '停用' : '启用'}</span>
-                </div>
-              </div>
-              <div class="alert-card-route">${window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(summaryLines, 'alert-card-route-line')}</div>
-              <div class="alert-card-foot">
-                <div class="alert-card-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
-                <div class="alert-card-actions">
-                  <button type="button" class="inline-action-btn" data-alert-edit="${escapeHtml(alert.id)}">编辑</button>
-                  <button type="button" class="inline-action-btn" data-alert-toggle="${escapeHtml(alert.id)}">${alert.enabled === false ? '启用' : '停用'}</button>
-                  <button type="button" class="inline-action-btn" data-alert-dismiss-delete="${escapeHtml(alert.id)}">忽略并删除</button>
-                  <button type="button" class="inline-action-btn danger" data-alert-delete="${escapeHtml(alert.id)}">删除</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-      `;
+        : window.PathAlertPageUtils.buildPathAlertCardSubtitle(alert);
+      return window.PathAlertPageUtils.renderPathAlertCardHtml({
+        alertId: alert.id,
+        selected: pageState.selectedAlertIds.has(alert.id),
+        title,
+        subtitle,
+        typeClass: window.PathAlertPageUtils.getPathAlertSectionTypeClass(sectionKey),
+        typeLabel: window.PathAlertPageUtils.getPathAlertSectionTypeLabel(sectionKey),
+        enabled: alert.enabled,
+        summaryLines,
+        metaText
+      });
     }).join('');
   }
 
@@ -609,19 +588,10 @@
       filterQuoteId: pageState.filterQuoteId
     })
       .filter((section) => section.items.length)
-      .map((section) => `
-        <section id="${section.id}" class="panel section-block section-anchor">
-          <div class="section-head">
-            <div class="section-title">
-              <span class="tag ${section.tagClass}">${escapeHtml(section.title)}</span>
-              <h2>${escapeHtml(section.title)}</h2>
-              <small>${escapeHtml(section.note)}</small>
-            </div>
-            <div class="section-link">${section.items.length} 条</div>
-          </div>
-          <div class="card-grid">${renderSectionCards(section.key, section.items)}</div>
-        </section>
-      `).join('');
+      .map((section) => window.PathAlertPageUtils.renderPathAlertSectionHtml(
+        { ...section, count: section.items.length },
+        renderSectionCards(section.key, section.items)
+      )).join('');
     syncSelectionCounters();
   }
 
@@ -636,32 +606,13 @@
         const title = window.PathAlertPageUtils.buildDismissedTargetCardTitle(entry);
         const summaryLines = buildDismissedSummaryLines(entry);
         const metaText = window.PathAlertPageUtils.buildDismissedTargetMetaText(entry);
-        return `
-          <article class="alert-card">
-            <div class="alert-card-shell">
-              <input class="alert-card-select" type="checkbox" data-dismissed-select="${escapeHtml(targetKey)}" ${pageState.selectedDismissedKeys.has(targetKey) ? 'checked' : ''}>
-              <div class="alert-card-main">
-                <div class="alert-card-head">
-                  <div>
-                    <div class="alert-card-title" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
-                    <div class="alert-card-subline">已忽略规则</div>
-                  </div>
-                  <div class="alert-card-meta-tags">
-                    <span class="tag path">已忽略</span>
-                  </div>
-                </div>
-                <div class="alert-card-route">${window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(summaryLines, 'alert-card-route-line')}</div>
-                <div class="alert-card-foot">
-                  <div class="alert-card-meta" title="${escapeHtml(metaText)}">${escapeHtml(metaText)}</div>
-                  <div class="alert-card-actions">
-                    <button type="button" class="inline-action-btn" data-dismissed-restore="${escapeHtml(targetKey)}">取消标记</button>
-                    <button type="button" class="inline-action-btn danger" data-dismissed-delete="${escapeHtml(targetKey)}">删除</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-        `;
+        return window.PathAlertPageUtils.renderDismissedTargetCardHtml({
+          targetKey,
+          selected: pageState.selectedDismissedKeys.has(targetKey),
+          title,
+          summaryLines,
+          metaText
+        });
       }).join('')
       : `<div class="empty">${dismissedTargets.length ? '没有匹配的已忽略项' : '暂无已忽略项'}</div>`;
 

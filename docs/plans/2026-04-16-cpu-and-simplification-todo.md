@@ -135,6 +135,7 @@
   - 未使用的 generic alert log 渲染路径已移除
   - `path-alerts-app.js` 中旧的批量删除/忽略辅助函数已移除，当前无只定义未调用的顶层函数
   - `path-alerts-app.js` 的卡片标题、meta、section 配置和路线行渲染已下沉到 `path-alert-page-utils.js`
+  - `path-alerts-app.js` 的报警卡片、已忽略卡片和 section HTML 片段已下沉到 `path-alert-page-utils.js`
   - `path-alerts-app.js` 的 dashboard quote 到候选报价转换已下沉到 `path-alert-candidate-utils.js`
   - `path-alerts-app.js` 的编辑器草稿创建、克隆、prefill/alert 还原、target 转换、校验和 alert 构造规则已拆到 `path-alert-editor-utils.js`
   - `path-alerts-app.js` 的交易对报警展示 label、pair text 和默认名称规则已下沉到 `path-alert-page-utils.js`

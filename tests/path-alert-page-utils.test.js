@@ -5,6 +5,7 @@ const {
   buildDismissedTargetCardTitle,
   buildDismissedTargetMetaText,
   buildPathAlertCardMetaText,
+  buildPathAlertCardSubtitle,
   buildPathAlertCardTitle,
   buildPathAlertDefaultQuoteAlertName,
   buildPathAlertQuoteDisplayLabel,
@@ -21,11 +22,16 @@ const {
   groupAlertsBySection,
   parsePathAlertsPagePrefill,
   pruneSelectionSet,
+  renderDismissedTargetCardHtml,
+  renderPathAlertCardHtml,
   renderPathAlertItemHtml,
   renderPathAlertPanelHtml,
   renderPathAlertRouteLinesHtml,
+  renderPathAlertSectionHtml,
   renderPathAlertSummaryLinesHtml,
   renderPathAlertToolbarHtml,
+  getPathAlertSectionTypeClass,
+  getPathAlertSectionTypeLabel,
   shortenTokenText
 } = require('../path-alert-page-utils');
 
@@ -195,6 +201,60 @@ assert.strictEqual(
   buildDismissedTargetMetaText({ dismissedAt: 1710000000000 }, { formatDate: () => '2024/3/9 12:00:00' }),
   '🗃️已忽略 · 🕒2024/3/9 12:00:00'
 );
+assert.strictEqual(
+  buildPathAlertCardSubtitle({ target: { type: 'rule', ruleKind: 'fixed' } }),
+  '固定规则路径'
+);
+assert.strictEqual(
+  buildPathAlertCardSubtitle({ target: { type: 'path', legs: [{}, {}] } }),
+  '2 腿路径'
+);
+assert.strictEqual(getPathAlertSectionTypeClass('special'), 'special');
+assert.strictEqual(getPathAlertSectionTypeClass('unknown'), 'path');
+assert.strictEqual(getPathAlertSectionTypeLabel('quote'), '交易对');
+assert.strictEqual(getPathAlertSectionTypeLabel('unknown'), '路径');
+
+const alertCardHtml = renderPathAlertCardHtml({
+  alertId: 'alert-1',
+  selected: true,
+  title: '路径 <A>',
+  subtitle: '2 腿路径',
+  typeClass: 'path',
+  typeLabel: '路径',
+  enabled: false,
+  summaryLines: ['ETH <USDC>'],
+  metaText: '阈值 <1>'
+});
+assert.ok(alertCardHtml.includes('data-alert-open="alert-1"'));
+assert.ok(alertCardHtml.includes('data-alert-select="alert-1" checked'));
+assert.ok(alertCardHtml.includes('路径 &lt;A&gt;'));
+assert.ok(alertCardHtml.includes('ETH &lt;USDC&gt;'));
+assert.ok(alertCardHtml.includes('阈值 &lt;1&gt;'));
+assert.ok(alertCardHtml.includes('data-alert-toggle="alert-1">启用</button>'));
+
+const dismissedCardHtml = renderDismissedTargetCardHtml({
+  targetKey: 'target-1',
+  selected: true,
+  title: '已忽略 <A>',
+  summaryLines: ['ETH/USDC'],
+  metaText: '已忽略'
+});
+assert.ok(dismissedCardHtml.includes('data-dismissed-select="target-1" checked'));
+assert.ok(dismissedCardHtml.includes('已忽略 &lt;A&gt;'));
+assert.ok(dismissedCardHtml.includes('data-dismissed-restore="target-1"'));
+assert.ok(dismissedCardHtml.includes('data-dismissed-delete="target-1"'));
+
+const sectionHtml = renderPathAlertSectionHtml({
+  id: 'path-section',
+  tagClass: 'path',
+  title: '手工路径',
+  note: '保留完整 legs',
+  count: 2
+}, '<article></article>');
+assert.ok(sectionHtml.includes('id="path-section"'));
+assert.ok(sectionHtml.includes('手工路径'));
+assert.ok(sectionHtml.includes('2 条'));
+assert.ok(sectionHtml.includes('<article></article>'));
 
 const pathDraft = sanitizePathAlertDraft({
   name: 'WBTC 路径',
