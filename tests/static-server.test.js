@@ -385,6 +385,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
     assert.ok(appJsResponse.body.includes('function getDataTerminalUtils()'));
     assert.ok(appJsResponse.body.includes('DataTerminalUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getWindowModule(globalName, missingMessage)'));
+    assert.ok(!appJsResponse.body.includes('if (!window.ChainDefaults)'));
     assert.ok(!appJsResponse.body.includes('数据终端模块未加载'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyTooltipState(tooltipEl, targetEl, tooltipState = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function showTooltip(tooltipEl, targetEl, htmlContent, options = {})'));
@@ -1296,8 +1298,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pathAlertUtilsExportBlock[0].includes('formatMutedCountdown'));
     assert.ok(!pathAlertUtilsExportBlock[0].includes('isPathAlertConfirmDelayDisabled'));
     assert.ok(!pathAlertUtilsExportBlock[0].includes('normalizeDismissedTarget'));
-    const pathAlertUtilsWindowRefs = appJsResponse.body.match(/window\.PathAlertUtils/g) || [];
-    assert.strictEqual(pathAlertUtilsWindowRefs.length, 2);
+    assert.ok(appJsResponse.body.includes("getWindowModule('PathAlertUtils', 'PathAlertUtils is not loaded')"));
+    assert.ok(!appJsResponse.body.includes('window.PathAlertUtils'));
     assert.ok(!appJsResponse.body.includes('typeof window.PathAlertUtils'));
     assert.ok(appJsResponse.body.includes('function getMutedPathLegUtils()'));
     assert.ok(appJsResponse.body.includes('MutedPathLegUtils is not loaded'));

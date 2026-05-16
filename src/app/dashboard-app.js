@@ -379,200 +379,124 @@
         clearTimeout
     });
 
-    function getChainDefaults() {
-        if (!window.ChainDefaults) {
-            throw new Error('ChainDefaults is not loaded');
+    function getWindowModule(globalName, missingMessage) {
+        const loadedModule = window[globalName];
+        if (!loadedModule) {
+            throw new Error(missingMessage);
         }
-        return window.ChainDefaults;
+        return loadedModule;
+    }
+
+    function getChainDefaults() {
+        return getWindowModule('ChainDefaults', 'ChainDefaults is not loaded');
     }
 
     function getPathAlertUtils() {
-        if (!window.PathAlertUtils) {
-            throw new Error('PathAlertUtils is not loaded');
-        }
-        return window.PathAlertUtils;
+        return getWindowModule('PathAlertUtils', 'PathAlertUtils is not loaded');
     }
 
     function getMutedPathLegUtils() {
-        if (!window.MutedPathLegUtils) {
-            throw new Error('MutedPathLegUtils is not loaded');
-        }
-        return window.MutedPathLegUtils;
+        return getWindowModule('MutedPathLegUtils', 'MutedPathLegUtils is not loaded');
     }
 
     function getMutedPathRuntimeUtils() {
-        if (!window.MutedPathRuntimeUtils) {
-            throw new Error('MutedPathRuntimeUtils is not loaded');
-        }
-        return window.MutedPathRuntimeUtils;
+        return getWindowModule('MutedPathRuntimeUtils', 'MutedPathRuntimeUtils is not loaded');
     }
 
     function getMutedPathStorageUtils() {
-        if (!window.MutedPathStorageUtils) {
-            throw new Error('MutedPathStorageUtils is not loaded');
-        }
-        return window.MutedPathStorageUtils;
+        return getWindowModule('MutedPathStorageUtils', 'MutedPathStorageUtils is not loaded');
     }
 
     function getArbRuntimeMemoryUtils() {
-        if (!window.ArbRuntimeMemoryUtils) {
-            throw new Error('ArbRuntimeMemoryUtils is not loaded');
-        }
-        return window.ArbRuntimeMemoryUtils;
+        return getWindowModule('ArbRuntimeMemoryUtils', 'ArbRuntimeMemoryUtils is not loaded');
     }
 
     function getArbPanelLayoutUtils() {
-        if (!window.ArbPanelLayoutUtils) {
-            throw new Error('ArbPanelLayoutUtils is not loaded');
-        }
-        return window.ArbPanelLayoutUtils;
+        return getWindowModule('ArbPanelLayoutUtils', 'ArbPanelLayoutUtils is not loaded');
     }
 
     function getPathAlertRuleDefinitionsUtils() {
-        if (!window.PathAlertRuleDefinitions) {
-            throw new Error('PathAlertRuleDefinitions is not loaded');
-        }
-        return window.PathAlertRuleDefinitions;
+        return getWindowModule('PathAlertRuleDefinitions', 'PathAlertRuleDefinitions is not loaded');
     }
 
     function getArbRuleSnapshotUtils() {
-        if (!window.ArbRuleSnapshotUtils) {
-            throw new Error('ArbRuleSnapshotUtils is not loaded');
-        }
-        return window.ArbRuleSnapshotUtils;
+        return getWindowModule('ArbRuleSnapshotUtils', 'ArbRuleSnapshotUtils is not loaded');
     }
 
     function getArbFixedUtils() {
-        if (!window.ArbFixedUtils) {
-            throw new Error('ArbFixedUtils is not loaded');
-        }
-        return window.ArbFixedUtils;
+        return getWindowModule('ArbFixedUtils', 'ArbFixedUtils is not loaded');
     }
 
     function getArbSpecialUtils() {
-        if (!window.ArbSpecialUtils) {
-            throw new Error('ArbSpecialUtils is not loaded');
-        }
-        return window.ArbSpecialUtils;
+        return getWindowModule('ArbSpecialUtils', 'ArbSpecialUtils is not loaded');
     }
 
     function getArbCyclePriorityUtils() {
-        if (!window.ArbCyclePriorityUtils) {
-            throw new Error('ArbCyclePriorityUtils is not loaded');
-        }
-        return window.ArbCyclePriorityUtils;
+        return getWindowModule('ArbCyclePriorityUtils', 'ArbCyclePriorityUtils is not loaded');
     }
 
     function getArbEquivalenceUtils() {
-        if (!window.ArbEquivalenceUtils) {
-            throw new Error('ArbEquivalenceUtils is not loaded');
-        }
-        return window.ArbEquivalenceUtils;
+        return getWindowModule('ArbEquivalenceUtils', 'ArbEquivalenceUtils is not loaded');
     }
 
     function getPriceSnapshotPayloadUtils() {
-        if (!window.PriceSnapshotPayloadUtils) {
-            throw new Error('PriceSnapshotPayloadUtils is not loaded');
-        }
-        return window.PriceSnapshotPayloadUtils;
+        return getWindowModule('PriceSnapshotPayloadUtils', 'PriceSnapshotPayloadUtils is not loaded');
     }
 
     function getDashboardApiUtils() {
-        if (!window.DashboardApiUtils) {
-            throw new Error('DashboardApiUtils is not loaded');
-        }
-        return window.DashboardApiUtils;
+        return getWindowModule('DashboardApiUtils', 'DashboardApiUtils is not loaded');
     }
 
     function getDashboardModalUtils() {
-        if (!window.DashboardModalUtils) {
-            throw new Error('DashboardModalUtils is not loaded');
-        }
-        return window.DashboardModalUtils;
+        return getWindowModule('DashboardModalUtils', 'DashboardModalUtils is not loaded');
     }
 
     function getAlertLogUiUtils() {
-        if (!window.AlertLogUiUtils) {
-            throw new Error('AlertLogUiUtils is not loaded');
-        }
-        return window.AlertLogUiUtils;
+        return getWindowModule('AlertLogUiUtils', 'AlertLogUiUtils is not loaded');
     }
 
     function getSpecialRuleAlertConfigUtils() {
-        if (!window.SpecialRuleAlertConfigUtils) {
-            throw new Error('SpecialRuleAlertConfigUtils is not loaded');
-        }
-        return window.SpecialRuleAlertConfigUtils;
+        return getWindowModule('SpecialRuleAlertConfigUtils', 'SpecialRuleAlertConfigUtils is not loaded');
     }
 
     function getArbPathConfigUtils() {
-        if (!window.ArbPathConfigUtils) {
-            throw new Error('ArbPathConfigUtils is not loaded');
-        }
-        return window.ArbPathConfigUtils;
+        return getWindowModule('ArbPathConfigUtils', 'ArbPathConfigUtils is not loaded');
     }
 
     function getArbPaths() {
-        if (!window.ArbPaths) {
-            throw new Error('ArbPaths is not loaded');
-        }
-        return window.ArbPaths;
+        return getWindowModule('ArbPaths', 'ArbPaths is not loaded');
     }
 
     function getArbPanelRenderer() {
-        if (!window.ArbPanelRenderer) {
-            throw new Error('ArbPanelRenderer is not loaded');
-        }
-        return window.ArbPanelRenderer;
+        return getWindowModule('ArbPanelRenderer', 'ArbPanelRenderer is not loaded');
     }
 
     function getArbPathConfig() {
-        if (!window.ArbPathConfig) {
-            throw new Error('ArbPathConfig is not loaded');
-        }
-        return window.ArbPathConfig;
+        return getWindowModule('ArbPathConfig', 'ArbPathConfig is not loaded');
     }
 
     function getDomRenderUtils() {
-        if (!window.DomRenderUtils) {
-            throw new Error('DomRenderUtils is not loaded');
-        }
-        return window.DomRenderUtils;
+        return getWindowModule('DomRenderUtils', 'DomRenderUtils is not loaded');
     }
 
     function getAudioUtils() {
-        if (!window.AudioUtils) {
-            throw new Error('AudioUtils is not loaded');
-        }
-        return window.AudioUtils;
+        return getWindowModule('AudioUtils', 'AudioUtils is not loaded');
     }
 
     function getThemeUtils() {
-        if (!window.ThemeUtils) {
-            throw new Error('ThemeUtils is not loaded');
-        }
-        return window.ThemeUtils;
+        return getWindowModule('ThemeUtils', 'ThemeUtils is not loaded');
     }
 
     function getKeyboardShortcutUtils() {
-        if (!window.KeyboardShortcutUtils) {
-            throw new Error('KeyboardShortcutUtils is not loaded');
-        }
-        return window.KeyboardShortcutUtils;
+        return getWindowModule('KeyboardShortcutUtils', 'KeyboardShortcutUtils is not loaded');
     }
 
     function getArbDetailRefreshUtils() {
-        if (!window.ArbDetailRefreshUtils) {
-            throw new Error('ArbDetailRefreshUtils is not loaded');
-        }
-        return window.ArbDetailRefreshUtils;
+        return getWindowModule('ArbDetailRefreshUtils', 'ArbDetailRefreshUtils is not loaded');
     }
 
     function getAlertDebugUtils() {
-        if (!window.AlertDebugUtils) {
-            throw new Error('AlertDebugUtils is not loaded');
-        }
-        return window.AlertDebugUtils;
+        return getWindowModule('AlertDebugUtils', 'AlertDebugUtils is not loaded');
     }
 
     function isCrossChainQuote(quote) {
@@ -598,10 +522,7 @@
     }
 
     function getQuotePauseUtils() {
-        if (!window.QuotePauseUtils) {
-            throw new Error('QuotePauseUtils is not loaded');
-        }
-        return window.QuotePauseUtils;
+        return getWindowModule('QuotePauseUtils', 'QuotePauseUtils is not loaded');
     }
 
     function isQuotePaused(quote) {
@@ -617,31 +538,19 @@
     }
 
     function getRequestChannelUtils() {
-        if (!window.RequestChannelUtils) {
-            throw new Error('RequestChannelUtils is not loaded');
-        }
-        return window.RequestChannelUtils;
+        return getWindowModule('RequestChannelUtils', 'RequestChannelUtils is not loaded');
     }
 
     function getQueueStatsUtils() {
-        if (!window.QueueStatsUtils) {
-            throw new Error('QueueStatsUtils is not loaded');
-        }
-        return window.QueueStatsUtils;
+        return getWindowModule('QueueStatsUtils', 'QueueStatsUtils is not loaded');
     }
 
     function getQuoteQueueRuntimeUtils() {
-        if (!window.QuoteQueueRuntimeUtils) {
-            throw new Error('QuoteQueueRuntimeUtils is not loaded');
-        }
-        return window.QuoteQueueRuntimeUtils;
+        return getWindowModule('QuoteQueueRuntimeUtils', 'QuoteQueueRuntimeUtils is not loaded');
     }
 
     function getQuoteStateRuntimeUtils() {
-        if (!window.QuoteStateRuntimeUtils) {
-            throw new Error('QuoteStateRuntimeUtils is not loaded');
-        }
-        return window.QuoteStateRuntimeUtils;
+        return getWindowModule('QuoteStateRuntimeUtils', 'QuoteStateRuntimeUtils is not loaded');
     }
 
     const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
@@ -1330,10 +1239,7 @@
     }
 
     function getArbPathTemplateCacheUtils() {
-        if (!window.ArbPathTemplateCacheUtils) {
-            throw new Error('ArbPathTemplateCacheUtils is not loaded');
-        }
-        return window.ArbPathTemplateCacheUtils;
+        return getWindowModule('ArbPathTemplateCacheUtils', 'ArbPathTemplateCacheUtils is not loaded');
     }
 
     function getArbPathTopologyCache() {
@@ -1408,17 +1314,11 @@
     }
 
     function getArbDetailUtils() {
-        if (!window.ArbDetailUtils) {
-            throw new Error('ArbDetailUtils is not loaded');
-        }
-        return window.ArbDetailUtils;
+        return getWindowModule('ArbDetailUtils', 'ArbDetailUtils is not loaded');
     }
 
     function getChartsUtils() {
-        if (!window.ChartsUtils) {
-            throw new Error('ChartsUtils is not loaded');
-        }
-        return window.ChartsUtils;
+        return getWindowModule('ChartsUtils', 'ChartsUtils is not loaded');
     }
 
     function getChartsRenderer() {
@@ -1426,31 +1326,19 @@
     }
 
     function getDataTerminalUtils() {
-        if (!window.DataTerminalUtils) {
-            throw new Error('DataTerminalUtils is not loaded');
-        }
-        return window.DataTerminalUtils;
+        return getWindowModule('DataTerminalUtils', 'DataTerminalUtils is not loaded');
     }
 
     function getDashboardRenderer() {
-        if (!window.DashboardRenderer) {
-            throw new Error('DashboardRenderer is not loaded');
-        }
-        return window.DashboardRenderer;
+        return getWindowModule('DashboardRenderer', 'DashboardRenderer is not loaded');
     }
 
     function getQuoteDisplayUtils() {
-        if (!window.QuoteDisplayUtils) {
-            throw new Error('QuoteDisplayUtils is not loaded');
-        }
-        return window.QuoteDisplayUtils;
+        return getWindowModule('QuoteDisplayUtils', 'QuoteDisplayUtils is not loaded');
     }
 
     function getDexLinkUtils() {
-        if (!window.DexLinkUtils) {
-            throw new Error('DexLinkUtils is not loaded');
-        }
-        return window.DexLinkUtils;
+        return getWindowModule('DexLinkUtils', 'DexLinkUtils is not loaded');
     }
 
     function formatDetailNumber(value, precision = 6) {
@@ -1618,10 +1506,7 @@
     }
 
     function getDashboardRuntimeUtils() {
-        if (!window.DashboardRuntimeUtils) {
-            throw new Error('DashboardRuntimeUtils is not loaded');
-        }
-        return window.DashboardRuntimeUtils;
+        return getWindowModule('DashboardRuntimeUtils', 'DashboardRuntimeUtils is not loaded');
     }
 
     function isArbPanelVisible() {
@@ -2569,10 +2454,7 @@
     }
 
     function getPathAlertNotificationUtils() {
-        if (!window.PathAlertNotificationUtils) {
-            throw new Error('PathAlertNotificationUtils is not loaded');
-        }
-        return window.PathAlertNotificationUtils;
+        return getWindowModule('PathAlertNotificationUtils', 'PathAlertNotificationUtils is not loaded');
     }
 
     function buildQuoteAlertSummaryLabel(target) {
@@ -2614,10 +2496,7 @@
     }
 
     function getPathAlertPageUtils() {
-        if (!window.PathAlertPageUtils) {
-            throw new Error('PathAlertPageUtils is not loaded');
-        }
-        return window.PathAlertPageUtils;
+        return getWindowModule('PathAlertPageUtils', 'PathAlertPageUtils is not loaded');
     }
 
     function buildPathAlertLegDisplayLine(leg) {
@@ -3138,10 +3017,7 @@
     }
 
     function getQuoteRequestUtils() {
-        if (!window.QuoteRequestUtils) {
-            throw new Error('QuoteRequestUtils is not loaded');
-        }
-        return window.QuoteRequestUtils;
+        return getWindowModule('QuoteRequestUtils', 'QuoteRequestUtils is not loaded');
     }
 
     async function apiGetQuote(quote, signal, targetSource) {
@@ -3351,10 +3227,7 @@
     }
 
     function getCopyUtils() {
-        if (!window.CopyUtils) {
-            throw new Error('CopyUtils is not loaded');
-        }
-        return window.CopyUtils;
+        return getWindowModule('CopyUtils', 'CopyUtils is not loaded');
     }
 
     async function copyTextToClipboard(text) {
