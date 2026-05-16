@@ -822,6 +822,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let mutedPathTargets = [];'));
     assert.ok(!appJsResponse.body.includes('let mutedPathLegs = [];'));
     assert.ok(!appJsResponse.body.includes('let mutedPathLogTimer = null;'));
+    assert.ok(!appJsResponse.body.includes('function clearMutedPathLogTimer'));
+    assert.ok(!appJsResponse.body.includes('function scheduleMutedPathLogTimer'));
     const mutedPathLegExportBlock = mutedPathLegUtilsResponse.body.match(/return \{\n    DEFAULT_MUTED_PATH_LEG_DURATION_MS,[\s\S]*?\n  \};/);
     assert.ok(mutedPathLegExportBlock);
     assert.ok(!mutedPathLegExportBlock[0].includes('DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT'));

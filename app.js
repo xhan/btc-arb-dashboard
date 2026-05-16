@@ -1278,10 +1278,6 @@
         }
     }
 
-    function clearMutedPathLogTimer() {
-        mutedPathRuntime.clearTimer();
-    }
-
     function refreshMutedPathRuntime(nowMs = Date.now()) {
         const previousLegKeys = mutedPathRuntime.getLegKeySnapshot(buildMutedPathLegKey);
         pruneMutedPathTargetsInPlace(nowMs);
@@ -1299,10 +1295,6 @@
             triggerMutedPathLegRefresh({ closeDetail: false });
         }
         return mutedPathRuntime.hasEntries();
-    }
-
-    function scheduleMutedPathLogTimer(nowMs = Date.now()) {
-        mutedPathRuntime.scheduleRefresh(nowMs, refreshMutedPathRuntime);
     }
 
     function syncMutedPathLogTimer() {
