@@ -3282,14 +3282,6 @@
         };
     }
 
-    function formatPathAlertNotificationTitle(triggeredEntries) {
-        return getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries);
-    }
-
-    function buildPathAlertNotificationBody(triggeredEntries) {
-        return getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries);
-    }
-
     async function sendPathAlertWebhookNotification(triggeredEntries) {
         if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
         try {
@@ -3297,8 +3289,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: formatPathAlertNotificationTitle(triggeredEntries),
-                    body: buildPathAlertNotificationBody(triggeredEntries)
+                    title: getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries),
+                    body: getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries)
                 })
             });
             if (!response.ok) {
@@ -3628,7 +3620,7 @@
                     quote,
                     buildQuoteAlertMessage(alert, runtime.evaluation),
                     {
-                        currentValueText: buildQuoteAlertCurrentValueText(quote, alert, runtime.evaluation)
+                        currentValueText: buildQuoteAlertCurrentValueText(alert, runtime.evaluation)
                     }
                 );
                 mutePathAlertTarget(triggeredEntry, Date.now());
@@ -4401,8 +4393,7 @@
         });
     }
 
-    function buildQuoteAlertCurrentValueText(quote, alert, evaluation) {
-        if (!quote) return '';
+    function buildQuoteAlertCurrentValueText(alert, evaluation) {
         return getPathAlertNotificationUtils().buildQuoteAlertCurrentValueText(alert, evaluation, {
             formatNumber: formatDetailNumber
         });
@@ -4482,7 +4473,7 @@
             if (!next.shouldTrigger) continue;
             hasTriggeredThisTick = true;
             triggerAlert(quote, alert, buildQuoteAlertMessage(alert, evaluation), {
-                currentValueText: buildQuoteAlertCurrentValueText(quote, alert, evaluation)
+                currentValueText: buildQuoteAlertCurrentValueText(alert, evaluation)
             });
         }
 

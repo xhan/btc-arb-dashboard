@@ -456,6 +456,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('window.TradingPairUtils.splitCompactTradingPairSymbol(symbol)'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertMessage(alert, evaluation, {'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertCurrentValueText(alert, evaluation, {'));
+    assert.ok(appJsResponse.body.includes('function buildQuoteAlertCurrentValueText(alert, evaluation)'));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteAlertCurrentValueText(quote, alert, evaluation)'));
+    assert.ok(!appJsResponse.body.includes('buildQuoteAlertCurrentValueText(quote, alert,'));
+    assert.ok(!appJsResponse.body.includes('function formatPathAlertNotificationTitle(triggeredEntries)'));
+    assert.ok(!appJsResponse.body.includes('function buildPathAlertNotificationBody(triggeredEntries)'));
+    assert.ok(appJsResponse.body.includes('title: getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries),'));
+    assert.ok(appJsResponse.body.includes('body: getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries)'));
     assert.ok(appJsResponse.body.includes('return getPathAlertNotificationUtils().buildQuoteAlertActionLink(dexLink);'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntry({'));
     assert.ok(!appJsResponse.body.includes('汇率已达到或超过目标'));
