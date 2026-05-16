@@ -44,6 +44,21 @@
     });
   }
 
+  function applySettingsIntervalWritePlan(refs = {}, writePlan = []) {
+    (writePlan || []).forEach((item) => {
+      setElementValue(refs[item.id], item.value);
+    });
+  }
+
+  function readSettingsIntervalFormValues(refs = {}, options = {}) {
+    const readSettingsIntervalFormValues = typeof options.readSettingsIntervalFormValues === 'function'
+      ? options.readSettingsIntervalFormValues
+      : () => ({});
+    return readSettingsIntervalFormValues({
+      readValue: (id) => readElementValue(refs[id])
+    });
+  }
+
   function readQuoteSettingsFormValues(refs = {}) {
     return {
       sourceValue: readElementValue(refs['quote-source-pref']),
@@ -113,8 +128,10 @@
   return {
     applyAddQuoteFormViewState,
     applyQuoteSettingsModalWritePlan,
+    applySettingsIntervalWritePlan,
     readAddQuoteFormValues,
     readQuoteSettingsFormValues,
+    readSettingsIntervalFormValues,
     resetAddQuoteModal,
     syncAddQuoteFormControls
   };

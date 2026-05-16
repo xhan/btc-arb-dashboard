@@ -194,6 +194,17 @@
     const settingsBtn = document.getElementById('global-settings-btn');
     const settingsSaveBtn = document.getElementById('settings-save');
     const settingsModal = document.getElementById('settings-modal');
+    const settingsIntervalInputRefs = {
+        'setting-kyber-interval': document.getElementById('setting-kyber-interval'),
+        'setting-zerox-interval': document.getElementById('setting-zerox-interval'),
+        'setting-velora-interval': document.getElementById('setting-velora-interval'),
+        'setting-lifi-interval': document.getElementById('setting-lifi-interval'),
+        'setting-bybit-interval': document.getElementById('setting-bybit-interval'),
+        'setting-binance-interval': document.getElementById('setting-binance-interval'),
+        'setting-solana-interval': document.getElementById('setting-solana-interval'),
+        'setting-sui-interval': document.getElementById('setting-sui-interval'),
+        'setting-starknet-interval': document.getElementById('setting-starknet-interval')
+    };
     const settingsSaveFeedbackRuntime = getDashboardRuntimeUtils().createButtonFeedbackRuntime({
         setTimeout,
         clearTimeout,
@@ -763,18 +774,13 @@
     }
 
     function syncSettingsIntervalInputs() {
-        getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals).forEach((item) => {
-            const input = document.getElementById(item.id);
-            if (input) input.value = item.value;
-        });
+        const writePlan = getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals);
+        getDashboardModalUtils().applySettingsIntervalWritePlan(settingsIntervalInputRefs, writePlan);
     }
 
     function readSettingsIntervalInputs() {
-        return getDashboardRenderer().readSettingsIntervalFormValues({
-            readValue: (id) => {
-                const input = document.getElementById(id);
-                return input ? input.value : '';
-            }
+        return getDashboardModalUtils().readSettingsIntervalFormValues(settingsIntervalInputRefs, {
+            readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues
         });
     }
 

@@ -3,8 +3,10 @@ const assert = require('assert');
 const {
   applyAddQuoteFormViewState,
   applyQuoteSettingsModalWritePlan,
+  applySettingsIntervalWritePlan,
   readAddQuoteFormValues,
   readQuoteSettingsFormValues,
+  readSettingsIntervalFormValues,
   resetAddQuoteModal,
   syncAddQuoteFormControls
 } = require('../src/dashboard/dashboard-modal-utils');
@@ -159,4 +161,28 @@ assert.deepStrictEqual(readQuoteSettingsFormValues(quoteSettingsRefs), {
   kyberOnlyDirectPools: true,
   showInverse: true,
   requestChannelId: 'default'
+});
+
+const settingsIntervalRefs = {
+  'setting-kyber-interval': { value: '100' },
+  'setting-zerox-interval': { value: '200' }
+};
+applySettingsIntervalWritePlan(settingsIntervalRefs, [
+  { id: 'setting-kyber-interval', value: 171 },
+  { id: 'setting-zerox-interval', value: 111 },
+  { id: 'missing-interval', value: 999 }
+]);
+assert.strictEqual(settingsIntervalRefs['setting-kyber-interval'].value, 171);
+assert.strictEqual(settingsIntervalRefs['setting-zerox-interval'].value, 111);
+
+assert.deepStrictEqual(readSettingsIntervalFormValues(settingsIntervalRefs, {
+  readSettingsIntervalFormValues: ({ readValue }) => ({
+    kyber: readValue('setting-kyber-interval'),
+    zerox: readValue('setting-zerox-interval'),
+    missing: readValue('missing-interval')
+  })
+}), {
+  kyber: 171,
+  zerox: 111,
+  missing: ''
 });

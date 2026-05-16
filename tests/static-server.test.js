@@ -411,10 +411,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().syncAddQuoteFormControls(addQuoteModalRefs, {'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readQuoteSettingsFormValues(refs = {})'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function applySettingsIntervalWritePlan(refs = {}, writePlan = [])'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function readSettingsIntervalFormValues(refs = {}, options = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readAddQuoteFormValues(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function syncAddQuoteFormControls(refs = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().readSettingsIntervalFormValues({'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applySettingsIntervalWritePlan(settingsIntervalInputRefs, writePlan)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readSettingsIntervalFormValues(settingsIntervalInputRefs, {'));
+    assert.ok(appJsResponse.body.includes('readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildSettingsIntervalsFromFormValues('));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().readAddCategoryFormValues({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddCategoryDraft({'));
