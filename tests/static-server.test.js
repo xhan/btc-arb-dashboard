@@ -423,11 +423,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function syncQuoteAlertDismissButton('));
     assert.ok(!appJsResponse.body.includes("document.createElement('button')"));
     assert.ok(!appJsResponse.body.includes("dismissBtn.dataset.dismissHighlightId = quoteId"));
-    assert.ok(appJsResponse.body.includes('return getDomRenderUtils().getQuoteDomRefs(document, quoteId);'));
+    assert.ok(!appJsResponse.body.includes('function getQuoteDomRefs('));
     assert.ok(!appJsResponse.body.includes('itemEl: document.getElementById(`quote-item-${quoteId}`)'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyPausedQuoteDomState(getQuoteDomRefs(quote.id))'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyActiveQuoteDomState(getQuoteDomRefs(quote.id), options)'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyPausedQuoteDomState('));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyActiveQuoteDomState('));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().getQuoteDomRefs(document, quote.id)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteSwitchingDomState({'));
+    assert.ok(appJsResponse.body.includes('...getDomRenderUtils().getQuoteDomRefs(document, quoteId),'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteDisplayTextDomState({'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuotePairLabelDomState('));
     assert.ok(!appJsResponse.body.includes('pairLabelEl.innerHTML = getQuoteDisplayUtils().buildQuotePairLabelHtml'));

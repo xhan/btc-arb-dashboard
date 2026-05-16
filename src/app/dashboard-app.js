@@ -1556,12 +1556,10 @@
         activeFetchControllerRuntime.abort(quoteId);
     }
 
-    function getQuoteDomRefs(quoteId) {
-        return getDomRenderUtils().getQuoteDomRefs(document, quoteId);
-    }
-
     function applyPausedQuoteUiState(quote, state) {
-        getDomRenderUtils().applyPausedQuoteDomState(getQuoteDomRefs(quote.id));
+        getDomRenderUtils().applyPausedQuoteDomState(
+            getDomRenderUtils().getQuoteDomRefs(document, quote.id)
+        );
         updateQuotePairLabel(quote, state);
         updatePauseButtonState(quote);
         removeInverseQuoteElement(quote.id);
@@ -1571,7 +1569,10 @@
 
     function applyActiveQuoteUiState(quote, options = {}) {
         const state = getQuoteMarketState(quote.id) || {};
-        getDomRenderUtils().applyActiveQuoteDomState(getQuoteDomRefs(quote.id), options);
+        getDomRenderUtils().applyActiveQuoteDomState(
+            getDomRenderUtils().getQuoteDomRefs(document, quote.id),
+            options
+        );
         updateQuotePairLabel(quote, state);
         updatePauseButtonState(quote);
         clearQuoteAlertUi(quote.id);
@@ -4030,7 +4031,7 @@
         updateAlertSoundState();
 
         getDomRenderUtils().applyQuoteSwitchingDomState({
-            ...getQuoteDomRefs(quoteId),
+            ...getDomRenderUtils().getQuoteDomRefs(document, quoteId),
             inverseEl: document.getElementById(`inverse-quote-${quoteId}`)
         });
 

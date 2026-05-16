@@ -214,6 +214,7 @@
   - `src/app/dashboard-app.js` 的 quote hover tooltip CEX/source/preference 展示模型已下沉到 `src/quote/quote-display-utils.js`
   - `src/app/dashboard-app.js` 的 quote tooltip show/hide 单用途包装已移除，hover 回调直接委托 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的 quote request channel tag 插入/更新/删除计划已下沉到 `src/quote/quote-display-utils.js`
+  - `src/app/dashboard-app.js` 的 quote DOM refs 单用途包装已移除，调用点直接委托 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的 quote trend arrow 涨跌/隐藏展示模型已下沉到 `src/quote/quote-display-utils.js`
   - `src/app/dashboard-app.js` 的 dashboard quote 查找和 quote alert 列表读取单用途包装已移除，调用点直接委托 runtime/path alert utils
   - `src/app/dashboard-app.js` 的套利详情 summary 利润率格式化包装已移除，默认格式化归入 `src/arb/arb-detail-utils.js`
