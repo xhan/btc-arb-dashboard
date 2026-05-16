@@ -26,6 +26,7 @@ const {
     resolveProjectFilePath
 } = require('./src/server/json-file-utils');
 const { createRuntimeConfigStore, loadStartupCetusAggregatorConfig } = require('./src/server/runtime-config-utils');
+const { createQuoteLogger, withQuoteLogRequestChannel } = require('./src/server/quote-log-utils');
 const { registerQuoteRoutes } = require('./src/server/quote-route-utils');
 const { sendPathAlertRemoteWebhooks } = require('./src/server/path-alert-webhook-utils');
 const { registerPriceSnapshotRoutes } = require('./src/server/price-snapshot-route-utils');
@@ -120,55 +121,11 @@ function verboseLog(category, message) {
     logMessage(category, message, 'info');
 }
 
-function shortAddr(addr = '') {
-    const s = String(addr);
-    if (s.length <= 12) return s;
-    return `${s.slice(0, 6)}...${s.slice(-4)}`;
-}
-
-function getQuoteLogPairLabel(chain, fromSymbol, toSymbol, fromToken, toToken) {
-    const left = fromSymbol || shortAddr(fromToken);
-    const right = toSymbol || shortAddr(toToken);
-    return `${String(chain || '').toLowerCase()} ${left}/${right}`;
-}
-
-function logQuoteRequest(source, ctx) {
-    const pair = getQuoteLogPairLabel(ctx.chain, ctx.fromSymbol, ctx.toSymbol, ctx.fromToken, ctx.toToken);
-    verboseLog(`${source}_REQ`, `${pair} amount=${ctx.amount ?? ''} url=${ctx.url}`);
-}
-
-function logQuoteResult(source, ctx) {
-    const pair = getQuoteLogPairLabel(ctx.chain, ctx.fromSymbol, ctx.toSymbol, ctx.fromToken, ctx.toToken);
-    const price = Number.isFinite(ctx.rawPrice) ? ctx.rawPrice : NaN;
-    const amountOut = Number.isFinite(ctx.amountOut) ? ctx.amountOut : NaN;
-    const priceText = Number.isFinite(price) ? price.toFixed(10) : 'NaN';
-    const amountOutText = Number.isFinite(amountOut) ? amountOut.toString() : 'NaN';
-    verboseLog(`${source}_RES`, `${pair} 结果=OK price=${priceText} amountOut=${amountOutText}`);
-}
-
-function getQuoteLogChannelLabel(ctx) {
-    const channelId = String(ctx && ctx.channelId || '').trim() || 'default';
-    const channelName = String(ctx && ctx.channelName || '').trim();
-    if (channelName && channelName !== channelId) {
-        return `${channelName}/${channelId}`;
-    }
-    return channelId;
-}
-
-function withQuoteLogRequestChannel(ctx, input) {
-    const requestContext = input && input.requestContext ? input.requestContext : null;
-    return {
-        ...(ctx && typeof ctx === 'object' ? ctx : {}),
-        channelId: requestContext && requestContext.channelId ? requestContext.channelId : undefined,
-        channelName: requestContext && requestContext.channelName ? requestContext.channelName : undefined
-    };
-}
-
-function logQuoteError(source, ctx, error) {
-    const pair = getQuoteLogPairLabel(ctx.chain, ctx.fromSymbol, ctx.toSymbol, ctx.fromToken, ctx.toToken);
-    const channel = getQuoteLogChannelLabel(ctx);
-    logMessage(`${source}_ERR`, `[channel=${channel}] ${pair} ${error.message}`, 'warn');
-}
+const {
+    logQuoteError,
+    logQuoteRequest,
+    logQuoteResult
+} = createQuoteLogger({ logMessage, verboseLog });
 
 const runtimeConfigStore = createRuntimeConfigStore({
     configPath: CONFIG_PATH,
