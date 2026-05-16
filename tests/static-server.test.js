@@ -390,6 +390,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function resetTrendArrow(arrowEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function clearQuoteHighlightUi(itemEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteAlertHighlightUi(itemEl, uiUpdate = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteAlertDismissButtonState(resultDiv, state = {}, quoteId = \'\', options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyPausedQuoteDomState(refs = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyActiveQuoteDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteSwitchingDomState(refs = {})'));
@@ -413,6 +414,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(itemEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteAlertHighlightUi(itemEl, uiUpdate)'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteAlertDismissButtonState(resultDiv, uiUpdate.nextState, quote.id, { documentImpl: document })'));
+    assert.ok(!appJsResponse.body.includes('function syncQuoteAlertDismissButton('));
+    assert.ok(!appJsResponse.body.includes("document.createElement('button')"));
+    assert.ok(!appJsResponse.body.includes("dismissBtn.dataset.dismissHighlightId = quoteId"));
     assert.ok(appJsResponse.body.includes('return getDomRenderUtils().getQuoteDomRefs(document, quoteId);'));
     assert.ok(!appJsResponse.body.includes('itemEl: document.getElementById(`quote-item-${quoteId}`)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyPausedQuoteDomState(getQuoteDomRefs(quote.id))'));

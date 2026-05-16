@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   applyTooltipState,
   applyTrendArrowState,
+  applyQuoteAlertDismissButtonState,
   applyQuoteAlertHighlightUi,
   applyActiveQuoteDomState,
   applyPausedQuoteDomState,
@@ -213,6 +214,53 @@ assert.strictEqual(applyQuoteAlertHighlightUi(quoteHighlightToggleEl, {
 assert.strictEqual(quoteHighlightToggleEl.classList.contains('highlight'), false);
 assert.strictEqual(quoteHighlightToggleEl.classList.contains('highlight-past'), true);
 assert.strictEqual(applyQuoteAlertHighlightUi(null, { highlighted: true }), false);
+
+let insertedDismissButton = null;
+const dismissSettingsButton = {};
+dismissSettingsButton.parentElement = {
+  insertBefore(button, beforeElement) {
+    insertedDismissButton = button;
+    assert.strictEqual(beforeElement, dismissSettingsButton);
+  }
+};
+const dismissResultDiv = {
+  querySelector(selector) {
+    if (selector === '.dismiss-highlight-btn') return null;
+    if (selector === '[data-edit-alert-id]') return dismissSettingsButton;
+    return null;
+  }
+};
+assert.strictEqual(applyQuoteAlertDismissButtonState(dismissResultDiv, { hasUnreadAlert: true }, 101, {
+  documentImpl: {
+    createElement(tagName) {
+      assert.strictEqual(tagName, 'button');
+      return { dataset: {} };
+    }
+  }
+}), true);
+assert.deepStrictEqual({
+  className: insertedDismissButton.className,
+  title: insertedDismissButton.title,
+  dismissHighlightId: insertedDismissButton.dataset.dismissHighlightId,
+  html: insertedDismissButton.innerHTML
+}, {
+  className: 'icon-btn dismiss-highlight-btn',
+  title: '确认报警/清除状态',
+  dismissHighlightId: 101,
+  html: '✔️'
+});
+
+let removedDismissButton = false;
+const dismissExistingResultDiv = {
+  querySelector(selector) {
+    return selector === '.dismiss-highlight-btn'
+      ? { remove: () => { removedDismissButton = true; } }
+      : null;
+  }
+};
+assert.strictEqual(applyQuoteAlertDismissButtonState(dismissExistingResultDiv, { hasUnreadAlert: false }, 101), true);
+assert.strictEqual(removedDismissButton, true);
+assert.strictEqual(applyQuoteAlertDismissButtonState(null, { hasUnreadAlert: true }, 101), false);
 
 function createAttributeTarget() {
   return {

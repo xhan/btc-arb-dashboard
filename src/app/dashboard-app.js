@@ -3706,23 +3706,6 @@
         }
     }
 
-    function syncQuoteAlertDismissButton(resultDiv, state, quoteId) {
-        if (resultDiv && !resultDiv.querySelector('.dismiss-highlight-btn')) {
-            if (state.hasUnreadAlert) {
-                const dismissBtn = document.createElement('button');
-                dismissBtn.className = 'icon-btn dismiss-highlight-btn';
-                dismissBtn.title = '确认报警/清除状态';
-                dismissBtn.dataset.dismissHighlightId = quoteId;
-                dismissBtn.innerHTML = '✔️';
-                const settingsBtn = resultDiv.querySelector('[data-edit-alert-id]');
-                if (settingsBtn) settingsBtn.parentElement.insertBefore(dismissBtn, settingsBtn);
-            }
-        } else if (resultDiv && !state.hasUnreadAlert) {
-            const dismissBtn = resultDiv.querySelector('.dismiss-highlight-btn');
-            if (dismissBtn) dismissBtn.remove();
-        }
-    }
-
     function playPathAlertSoundOnce() {
         if (pathAlertConfig?.settings?.localSoundEnabled === false) {
             console.info('[quote-alert] sound skipped: local sound disabled');
@@ -3803,7 +3786,7 @@
         getDomRenderUtils().applyQuoteAlertHighlightUi(itemEl, uiUpdate);
 
         setQuoteUiState(quote.id, uiUpdate.nextState);
-        syncQuoteAlertDismissButton(resultDiv, uiUpdate.nextState, quote.id);
+        getDomRenderUtils().applyQuoteAlertDismissButtonState(resultDiv, uiUpdate.nextState, quote.id, { documentImpl: document });
         updateAlertSoundState();
     }
 

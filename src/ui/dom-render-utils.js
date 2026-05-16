@@ -210,6 +210,34 @@
     return true;
   }
 
+  function applyQuoteAlertDismissButtonState(resultDiv, state = {}, quoteId = '', options = {}) {
+    if (!resultDiv || typeof resultDiv.querySelector !== 'function') return false;
+    const dismissButton = resultDiv.querySelector('.dismiss-highlight-btn');
+    if (!state.hasUnreadAlert) {
+      if (dismissButton && typeof dismissButton.remove === 'function') {
+        dismissButton.remove();
+        return true;
+      }
+      return false;
+    }
+    if (dismissButton) return false;
+
+    const documentImpl = options.documentImpl || resultDiv.ownerDocument || (typeof document !== 'undefined' ? document : null);
+    if (!documentImpl || typeof documentImpl.createElement !== 'function') return false;
+    const button = documentImpl.createElement('button');
+    button.className = 'icon-btn dismiss-highlight-btn';
+    button.title = '确认报警/清除状态';
+    button.dataset.dismissHighlightId = quoteId;
+    button.innerHTML = '✔️';
+
+    const settingsButton = resultDiv.querySelector('[data-edit-alert-id]');
+    if (settingsButton && settingsButton.parentElement && typeof settingsButton.parentElement.insertBefore === 'function') {
+      settingsButton.parentElement.insertBefore(button, settingsButton);
+      return true;
+    }
+    return false;
+  }
+
   function clearQuoteDataError(quoteDataEl) {
     if (!quoteDataEl) return false;
     removeClasses(quoteDataEl, ['error']);
@@ -453,6 +481,7 @@
     applyFloatingPanelDisplayState,
     applyTooltipState,
     applyTrendArrowState,
+    applyQuoteAlertDismissButtonState,
     applyQuoteAlertHighlightUi,
     bindDraggableElement,
     bindFloatingPanelFocus,
