@@ -91,6 +91,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="chain-defaults.js"'));
+    assert.ok(response.body.includes('src="theme-utils.js"'));
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-runtime-utils.js"'));
@@ -148,6 +149,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="dom-render-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="theme-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
@@ -319,6 +323,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(alertDebugUtilsResponse.statusCode, 200);
     const domRenderUtilsResponse = await request('/dom-render-utils.js');
     assert.strictEqual(domRenderUtilsResponse.statusCode, 200);
+    const themeUtilsResponse = await request('/theme-utils.js');
+    assert.strictEqual(themeUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-dex-link-copy]')"));
@@ -530,6 +536,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let currentHoveredQuoteId = null;'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function createQuoteHoverRuntime(options = {})'));
     assert.ok(!appJsResponse.body.includes('return `${symbol}: 等待盘口...`;'));
+    assert.ok(themeUtilsResponse.body.includes('function buildThemeWritePlan(theme)'));
+    assert.ok(themeUtilsResponse.body.includes('function getNextTheme(currentTheme)'));
+    assert.ok(appJsResponse.body.includes('function getThemeUtils()'));
+    assert.ok(appJsResponse.body.includes('ThemeUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('const plan = getThemeUtils().buildThemeWritePlan(theme);'));
+    assert.ok(appJsResponse.body.includes('return getThemeUtils().getNextTheme(currentTheme);'));
+    assert.ok(!appJsResponse.body.includes('const THEME_ORDER ='));
+    assert.ok(!appJsResponse.body.includes('const THEME_META ='));
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function renderCategoryModuleShell(config = {})'));
     assert.ok(appJsResponse.body.includes('function getDashboardRenderer()'));

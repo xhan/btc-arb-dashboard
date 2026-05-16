@@ -271,13 +271,7 @@
         setTimeout,
         clearTimeout
     });
-    const THEME_ORDER = ['light', 'warm', 'dark'];
-    const THEME_META = {
-        light: { icon: '☀️', title: '切换主题（当前：浅色）' },
-        warm: { icon: '🌤️', title: '切换主题（当前：暖色）' },
-        dark: { icon: '🌙', title: '切换主题（当前：深色）' }
-    };
-    
+
     function normalizeChainKey(chain) {
         return String(chain || '').trim().toLowerCase();
     }
@@ -434,6 +428,13 @@
             throw new Error('DomRenderUtils is not loaded');
         }
         return window.DomRenderUtils;
+    }
+
+    function getThemeUtils() {
+        if (!window.ThemeUtils) {
+            throw new Error('ThemeUtils is not loaded');
+        }
+        return window.ThemeUtils;
     }
 
     function getArbDetailRefreshUtils() {
@@ -4592,30 +4593,26 @@
         priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void savePriceSnapshot(); });
     }
 
-    function normalizeTheme(theme) {
-        return THEME_ORDER.includes(theme) ? theme : 'light';
-    }
-
     function applyTheme(theme) {
-        const nextTheme = normalizeTheme(theme);
-        document.body.classList.remove('dark-mode', 'warm-mode');
-        if (nextTheme === 'dark') document.body.classList.add('dark-mode');
-        if (nextTheme === 'warm') document.body.classList.add('warm-mode');
-        document.body.dataset.theme = nextTheme;
+        const plan = getThemeUtils().buildThemeWritePlan(theme);
+        document.body.classList.remove(...plan.body.removeClasses);
+        (plan.body.addClasses || []).forEach((className) => {
+            document.body.classList.add(className);
+        });
+        document.body.dataset.theme = plan.body.dataset.theme;
         if (themeToggleBtn) {
-            themeToggleBtn.innerHTML = THEME_META[nextTheme].icon;
-            themeToggleBtn.title = THEME_META[nextTheme].title;
-            themeToggleBtn.setAttribute('aria-label', THEME_META[nextTheme].title);
+            themeToggleBtn.innerHTML = plan.button.html;
+            themeToggleBtn.title = plan.button.title;
+            themeToggleBtn.setAttribute('aria-label', plan.button.ariaLabel);
         }
         const storage = getLocalStorageSafe();
         if (storage) {
-            storage.setItem('theme', nextTheme);
+            storage.setItem(plan.storage.key, plan.storage.value);
         }
     }
 
     function getNextTheme(currentTheme) {
-        const index = THEME_ORDER.indexOf(normalizeTheme(currentTheme));
-        return THEME_ORDER[(index + 1) % THEME_ORDER.length];
+        return getThemeUtils().getNextTheme(currentTheme);
     }
 
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
