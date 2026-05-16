@@ -528,6 +528,13 @@
     }
   }
 
+  function resolveArbDetailIntervalMs(source, intervals = {}) {
+    const intervalKey = getArbDetailIntervalKey(source);
+    if (!intervalKey) return 0;
+    const configured = Number(intervals[intervalKey]);
+    return Number.isFinite(configured) && configured > 0 ? configured : 0;
+  }
+
   function getArbDetailRateLimitDelay(lastRequestAt, intervalMs, now = Date.now()) {
     const safeInterval = Number(intervalMs);
     if (!Number.isFinite(safeInterval) || safeInterval <= 0) return 0;
@@ -1148,6 +1155,7 @@
     resolveArbDetailGridKeydownAction,
     resolveArbDetailGridMouseDownAction,
     getArbDetailIntervalKey,
+    resolveArbDetailIntervalMs,
     getArbDetailRateLimitDelay,
     getArbDetailBudgetTimestamp,
     recordArbDetailBudgetTimestamp,

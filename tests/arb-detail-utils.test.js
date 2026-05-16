@@ -27,6 +27,7 @@ const {
   resolveArbDetailGridKeydownAction,
   resolveArbDetailGridMouseDownAction,
   getArbDetailIntervalKey,
+  resolveArbDetailIntervalMs,
   getArbDetailRateLimitDelay,
   getArbDetailBudgetTimestamp,
   recordArbDetailBudgetTimestamp,
@@ -1065,6 +1066,26 @@ assert.strictEqual(
 assert.strictEqual(
   getArbDetailIntervalKey('Unknown'),
   null
+);
+
+assert.strictEqual(
+  resolveArbDetailIntervalMs('Kyber', { kyber: 170 }),
+  170
+);
+
+assert.strictEqual(
+  resolveArbDetailIntervalMs('Jupiter', { solana: '3500' }),
+  3500
+);
+
+assert.strictEqual(
+  resolveArbDetailIntervalMs('Kyber', { kyber: 0 }),
+  0
+);
+
+assert.strictEqual(
+  resolveArbDetailIntervalMs('Unknown', { kyber: 170 }),
+  0
 );
 
 assert.strictEqual(

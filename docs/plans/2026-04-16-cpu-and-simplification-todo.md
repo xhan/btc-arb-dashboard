@@ -280,6 +280,7 @@
   - `src/app/dashboard-app.js` 的套利详情 input value 同步策略与写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 card rows/summary DOM 查找与写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 chart/profit preview 清空、消息、strip、链接状态、已有内容检查、收益卡片 HTML、canvas/meta 查询、meta 文案和图表错误 DOM 写入已下沉到 `src/arb/arb-detail-utils.js`
+  - `src/app/dashboard-app.js` 的套利详情 source interval ms 解析单层包装已移除，调用点直接委托 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的音频 unlock 状态、循环报警音同步和 quote alert 一次性播放实现已下沉到 `src/ui/audio-utils.js`
   - `src/app/dashboard-app.js` 的价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
   - `src/app/dashboard-app.js` 的 price snapshot timer 启动单用途包装已移除，初始化流程直接委托 timer runtime

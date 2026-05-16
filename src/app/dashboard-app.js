@@ -1809,13 +1809,6 @@
         });
     }
 
-    function getArbDetailIntervalMsForSource(source) {
-        const intervalKey = getArbDetailUtils().getArbDetailIntervalKey(source);
-        if (!intervalKey) return 0;
-        const configured = Number(apiIntervals[intervalKey]);
-        return Number.isFinite(configured) && configured > 0 ? configured : 0;
-    }
-
     function syncArbDetailPrimaryCardQuoteState(quote, data, successSource, isInverseFetch) {
         if (!quote) return;
         const previousState = getQuoteMarketState(quote.id) || {};
@@ -1837,7 +1830,7 @@
 
         const waitMs = getArbDetailUtils().getArbDetailRateLimitDelay(
             arbDetailSourceBudgetRuntime.getTimestamp(source),
-            getArbDetailIntervalMsForSource(source)
+            getArbDetailUtils().resolveArbDetailIntervalMs(source, apiIntervals)
         );
 
         if (waitMs > 0) {
