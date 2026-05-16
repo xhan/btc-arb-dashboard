@@ -111,6 +111,26 @@
       .filter((item) => Number.isFinite(item.quoteId) && item.quoteId > 0);
   }
 
+  function buildArbDetailChartPreviewSignature(pairs) {
+    return JSON.stringify((pairs || []).map((pair) => `${pair.quoteId}:${pair.direction}`));
+  }
+
+  function buildArbOpportunityChartHref(entry, buildChartsPageHref) {
+    const cycle = entry && entry.cycle ? entry.cycle : entry;
+    if (!cycle || typeof buildChartsPageHref !== 'function') return '';
+    const chartPairs = buildArbDetailChartPairs(cycle);
+    return chartPairs.length ? buildChartsPageHref(chartPairs) : '';
+  }
+
+  function resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg = () => false) {
+    const legs = Array.isArray(cycle?.legs) ? cycle.legs : [];
+    const firstLeg = legs.find((leg) => !isRuleLeg(leg) && leg && leg.quoteId !== undefined && leg.quoteId !== null);
+    if (!firstLeg || typeof findQuoteById !== 'function') return 1;
+    const match = findQuoteById(firstLeg.quoteId);
+    const amount = match && match.quote ? Number(match.quote.amount) : NaN;
+    return Number.isFinite(amount) && amount > 0 ? amount : 1;
+  }
+
   function collectBestIndices(items, selector) {
     let bestValue = null;
     const indices = [];
@@ -527,6 +547,9 @@
     summarizeDetailResult,
     getQuoteRunState,
     buildArbDetailChartPairs,
+    buildArbDetailChartPreviewSignature,
+    buildArbOpportunityChartHref,
+    resolveArbOpportunityBaseAmount,
     findBestSummaryIndices,
     getArbDetailCardDomIds,
     shouldSyncArbDetailInput,

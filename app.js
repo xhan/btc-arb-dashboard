@@ -1980,11 +1980,7 @@
     }
 
     function getArbOpportunityBaseAmount(cycle) {
-        const firstLeg = (cycle?.legs || []).find(leg => !isRuleLeg(leg) && leg.quoteId !== undefined && leg.quoteId !== null);
-        if (!firstLeg) return 1;
-        const match = findQuoteById(firstLeg.quoteId);
-        const amount = match && match.quote ? Number(match.quote.amount) : NaN;
-        return Number.isFinite(amount) && amount > 0 ? amount : 1;
+        return getArbDetailUtils().resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg);
     }
 
     function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
@@ -2463,14 +2459,14 @@
     }
 
     function buildArbOpportunityChartHref(entry) {
-        const cycle = entry && entry.cycle ? entry.cycle : entry;
-        if (!cycle) return '';
         const chartsUtils = getChartsUtils();
         if (!chartsUtils || typeof chartsUtils.buildChartsPageHref !== 'function') {
             return '';
         }
-        const chartPairs = getArbDetailUtils().buildArbDetailChartPairs(cycle);
-        return chartPairs.length ? chartsUtils.buildChartsPageHref(chartPairs) : '';
+        return getArbDetailUtils().buildArbOpportunityChartHref(
+            entry,
+            (chartPairs) => chartsUtils.buildChartsPageHref(chartPairs)
+        );
     }
 
     function refreshArbOpportunityStore(nextOpportunityMap) {
@@ -2666,10 +2662,6 @@
         arbDetailChartPreview.innerHTML = getArbDetailUtils().buildArbDetailChartMessageHtml(message);
     }
 
-    function buildArbDetailChartPreviewSignature(pairs) {
-        return JSON.stringify((pairs || []).map((pair) => `${pair.quoteId}:${pair.direction}`));
-    }
-
     function getArbDetailProfitCardEl() {
         return arbDetailChartPreview
             ? arbDetailChartPreview.querySelector('[data-arb-detail-profit-card]')
@@ -2734,7 +2726,7 @@
         const pairs = current && current.cycle
             ? getArbDetailUtils().buildArbDetailChartPairs(current.cycle)
             : [];
-        const signature = buildArbDetailChartPreviewSignature(pairs);
+        const signature = getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs);
         const chartHref = buildArbOpportunityChartHref(current);
 
         setArbDetailChartLinkState(chartHref);

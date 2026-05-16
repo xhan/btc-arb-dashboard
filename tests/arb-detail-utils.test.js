@@ -5,6 +5,9 @@ const {
   summarizeDetailResult,
   getQuoteRunState,
   buildArbDetailChartPairs,
+  buildArbDetailChartPreviewSignature,
+  buildArbOpportunityChartHref,
+  resolveArbOpportunityBaseAmount,
   findBestSummaryIndices,
   getArbDetailCardDomIds,
   shouldSyncArbDetailInput,
@@ -286,6 +289,58 @@ assert.deepStrictEqual(
     { quoteId: 12, direction: 'forward', chain: 'arbitrum', fromSymbol: 'xBTC', toSymbol: 'WBTC' },
     { quoteId: 18, direction: 'inverse', chain: 'ethereum', fromSymbol: 'WBTC', toSymbol: 'BTCB' }
   ]
+);
+
+assert.strictEqual(
+  buildArbDetailChartPreviewSignature([
+    { quoteId: 12, direction: 'forward' },
+    { quoteId: 18, direction: 'inverse' }
+  ]),
+  '["12:forward","18:inverse"]'
+);
+
+assert.strictEqual(
+  buildArbOpportunityChartHref({
+    cycle: {
+      legs: [
+        { chain: 'arbitrum', from: 'cbBTC', to: 'WBTC', quoteId: 12, inverse: false },
+        { chain: 'ethereum', from: 'WBTC', to: 'cbBTC', quoteId: 18, inverse: true }
+      ]
+    }
+  }, (pairs) => `/charts?count=${pairs.length}&first=${pairs[0].quoteId}:${pairs[0].direction}`),
+  '/charts?count=2&first=12:forward'
+);
+
+assert.strictEqual(
+  buildArbOpportunityChartHref({ cycle: { legs: [{ chain: '规则', rule: true }] } }, () => '/charts'),
+  ''
+);
+
+assert.strictEqual(
+  buildArbOpportunityChartHref({ cycle: { legs: [] } }, null),
+  ''
+);
+
+assert.strictEqual(
+  resolveArbOpportunityBaseAmount(
+    {
+      legs: [
+        { chain: '规则', rule: true, quoteId: 1 },
+        { chain: 'ethereum', quoteId: 12 }
+      ]
+    },
+    (quoteId) => ({ quote: { id: quoteId, amount: '2.5' } }),
+    (leg) => leg && leg.rule === true
+  ),
+  2.5
+);
+
+assert.strictEqual(
+  resolveArbOpportunityBaseAmount(
+    { legs: [{ chain: 'ethereum', quoteId: 99 }] },
+    () => ({ quote: { amount: 0 } })
+  ),
+  1
 );
 
 assert.deepStrictEqual(
