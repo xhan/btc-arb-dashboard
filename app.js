@@ -1427,7 +1427,7 @@
                     mutedEntry,
                     targetKey: entry && entry.mutedTargetCandidate ? buildMutedPathTargetKey(entry.mutedTargetCandidate) : '',
                     statusText: mutedEntry ? getPathAlertUtils().buildMutedPathStatusText(mutedEntry, nowMs) : '已触发',
-                    profitText: formatPathAlertEvaluationText(entry && entry.evaluation)
+                    profitText: getPathAlertNotificationUtils().formatPathAlertEvaluationText(entry && entry.evaluation)
                 })
             );
             if (card) {
@@ -3164,19 +3164,11 @@
         };
     }
 
-    function buildQuoteAlertThresholdLine(target) {
-        return getPathAlertNotificationUtils().buildQuoteAlertThresholdLine(target);
-    }
-
     function getPathAlertNotificationUtils() {
         if (!window.PathAlertNotificationUtils) {
             throw new Error('PathAlertNotificationUtils is not loaded');
         }
         return window.PathAlertNotificationUtils;
-    }
-
-    function formatPathAlertEvaluationText(evaluation) {
-        return getPathAlertNotificationUtils().formatPathAlertEvaluationText(evaluation);
     }
 
     function buildQuoteAlertSummaryLabel(target) {
@@ -3192,7 +3184,7 @@
     function buildPathAlertSummaryLines(alert) {
         return getPathAlertPageUtils().buildPathAlertPageSummaryLines(alert, {
             getDisplayTitle: (item) => String(item && item.name || '').trim(),
-            buildQuoteAlertThresholdLine,
+            buildQuoteAlertThresholdLine: (target) => getPathAlertNotificationUtils().buildQuoteAlertThresholdLine(target),
             buildQuoteAlertQuoteLabel: buildQuoteAlertSummaryLabel,
             buildQuoteAlertRuleLine: (target) => getPathAlertNotificationUtils().buildQuoteAlertSummaryRuleLine(target),
             buildPathAlertSummaryLines: (item, options) => getPathAlertUtils().buildPathAlertSummaryLines(item, options),

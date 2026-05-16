@@ -463,6 +463,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function buildPathAlertNotificationBody(triggeredEntries)'));
     assert.ok(appJsResponse.body.includes('title: getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries),'));
     assert.ok(appJsResponse.body.includes('body: getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries)'));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteAlertThresholdLine(target)'));
+    assert.ok(!appJsResponse.body.includes('function formatPathAlertEvaluationText(evaluation)'));
+    assert.ok(appJsResponse.body.includes('buildQuoteAlertThresholdLine: (target) => getPathAlertNotificationUtils().buildQuoteAlertThresholdLine(target)'));
+    assert.ok(appJsResponse.body.includes('profitText: getPathAlertNotificationUtils().formatPathAlertEvaluationText(entry && entry.evaluation)'));
     assert.ok(appJsResponse.body.includes('return getPathAlertNotificationUtils().buildQuoteAlertActionLink(dexLink);'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntry({'));
     assert.ok(!appJsResponse.body.includes('汇率已达到或超过目标'));
