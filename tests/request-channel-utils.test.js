@@ -6,11 +6,13 @@ const {
   buildMultiChannelToggleState,
   buildQueueKey,
   buildRequestChannelOptionsHtml,
+  formatMultiChannelEnabledStorageValue,
   getEffectiveRequestChannelIdForQuote,
   getEffectiveIntervalForQueue,
   getQueueKeyForQuote,
   getRequestChannelDisplayForQuote,
   getRequestChannelOptions,
+  parseMultiChannelEnabledStorageValue,
   resolveRequestChannelIdForQuote,
   supportsRequestChannelForQuote
 } = require('../request-channel-utils');
@@ -49,6 +51,13 @@ assert.deepStrictEqual(
     active: false
   }
 );
+assert.strictEqual(parseMultiChannelEnabledStorageValue(null), true);
+assert.strictEqual(parseMultiChannelEnabledStorageValue(null, false), false);
+assert.strictEqual(parseMultiChannelEnabledStorageValue('false'), false);
+assert.strictEqual(parseMultiChannelEnabledStorageValue('true'), true);
+assert.strictEqual(parseMultiChannelEnabledStorageValue('unexpected'), true);
+assert.strictEqual(formatMultiChannelEnabledStorageValue(true), 'true');
+assert.strictEqual(formatMultiChannelEnabledStorageValue(false), 'false');
 
 assert.strictEqual(
   getQueueKeyForQuote({ chain: 'ethereum', preferredSource: 'Kyber' }, channels),

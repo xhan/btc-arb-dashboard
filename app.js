@@ -552,8 +552,7 @@
         if (!storage) return true;
         try {
             const raw = storage.getItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY);
-            if (raw === null) return true;
-            return raw !== 'false';
+            return getRequestChannelUtils().parseMultiChannelEnabledStorageValue(raw);
         } catch (error) {
             console.warn('读取多渠道开关本地缓存失败:', error);
         }
@@ -564,7 +563,10 @@
         const storage = getLocalStorageSafe();
         if (!storage) return;
         try {
-            storage.setItem(MULTI_CHANNEL_ENABLED_STORAGE_KEY, multiChannelEnabled ? 'true' : 'false');
+            storage.setItem(
+                MULTI_CHANNEL_ENABLED_STORAGE_KEY,
+                getRequestChannelUtils().formatMultiChannelEnabledStorageValue(multiChannelEnabled)
+            );
         } catch (error) {
             console.warn('保存多渠道开关本地缓存失败:', error);
         }

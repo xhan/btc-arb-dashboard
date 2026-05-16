@@ -215,6 +215,15 @@
     };
   }
 
+  function parseMultiChannelEnabledStorageValue(value, fallback = true) {
+    if (value == null) return fallback !== false;
+    return value !== 'false';
+  }
+
+  function formatMultiChannelEnabledStorageValue(enabled) {
+    return enabled === true ? 'true' : 'false';
+  }
+
   function buildQueueKey(sourceKey, channelId) {
     const normalizedSourceKey = normalizeString(sourceKey).toLowerCase();
     if (!normalizedSourceKey) return '';
@@ -283,6 +292,7 @@
     buildQueueKey,
     buildMultiChannelToggleState,
     buildRequestChannelOptionsHtml,
+    formatMultiChannelEnabledStorageValue,
     getEffectiveRequestChannelIdForQuote,
     getEffectiveIntervalForQueue,
     getRequestChannelDisplayForQuote,
@@ -290,6 +300,7 @@
     getRequestChannelOptions,
     isChannelAwareSourceKey,
     normalizeIntervals,
+    parseMultiChannelEnabledStorageValue,
     parseQueueKey,
     resolveRequestChannelIdForQuote,
     supportsRequestChannelForQuote
