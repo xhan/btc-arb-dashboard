@@ -1126,11 +1126,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("closestEventTarget(event, '.arb-path-expand-toggle')"));
     assert.ok(!appJsResponse.body.includes("closestEventTarget(event, '[data-arb-opportunity-id]')"));
     assert.ok(arbPanelRendererResponse.body.includes('function renderArbSectionToggleHtml(sectionKey, cycleDisplayState)'));
+    assert.ok(arbPanelRendererResponse.body.includes('function applyArbPanelErrorText(contentEl, errorText)'));
     assert.ok(arbPanelRendererResponse.body.includes('function resolveArbPathContentClickAction(event, options = {})'));
     assert.ok(arbPanelRendererResponse.body.includes('function resolveArbPathContentKeydownAction(event, options = {})'));
     assert.ok(arbPanelRendererResponse.body.includes('function resolveArbPathContentPointerDownAction(event, options = {})'));
     assert.ok(appJsResponse.body.includes('const nextArbPanelHtml = getArbPanelRenderer().renderArbGrid({'));
     assert.ok(appJsResponse.body.includes('arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);'));
+    assert.ok(appJsResponse.body.includes('getArbPanelRenderer().applyArbPanelErrorText(arbPathContent, panelData.error);'));
+    assert.ok(!appJsResponse.body.includes('arbPathContent.textContent = panelData.error'));
     assert.ok(/dataTerminalState\.htmlRenderer\.render\(\s*refs\.content,/.test(appJsResponse.body));
     assert.ok(!appJsResponse.body.includes('refs.content.innerHTML = buildDataTerminalPanelHtml'));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: getQuoteMarketStateMap() })'));

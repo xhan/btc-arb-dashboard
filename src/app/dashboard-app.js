@@ -3331,7 +3331,7 @@
         const panelData = buildArbPanelData();
         if (panelData.error) {
             arbPanelHtmlRenderer.reset();
-            arbPathContent.textContent = panelData.error;
+            getArbPanelRenderer().applyArbPanelErrorText(arbPathContent, panelData.error);
             return;
         }
 

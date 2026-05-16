@@ -1,12 +1,18 @@
 const assert = require('assert');
 
 const {
+  applyArbPanelErrorText,
   renderArbGrid,
   renderArbSectionToggleHtml,
   resolveArbPathContentClickAction,
   resolveArbPathContentKeydownAction,
   resolveArbPathContentPointerDownAction
 } = require('../src/arb/arb-panel-renderer');
+
+const arbPanelErrorEl = { textContent: '' };
+assert.strictEqual(applyArbPanelErrorText(arbPanelErrorEl, '配置加载失败'), true);
+assert.strictEqual(arbPanelErrorEl.textContent, '配置加载失败');
+assert.strictEqual(applyArbPanelErrorText(null, 'x'), false);
 
 function resolveArbActionFor(resolver, matches, event = { type: 'click' }, extraOptions = {}) {
   return resolver(event, {

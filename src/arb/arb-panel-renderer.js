@@ -202,6 +202,12 @@
     return `<div class="arb-path-grid">${columnHtml}</div>`;
   }
 
+  function applyArbPanelErrorText(contentEl, errorText) {
+    if (!contentEl) return false;
+    contentEl.textContent = String(errorText || '');
+    return true;
+  }
+
   function readDatasetValue(element, key) {
     return String(element && element.dataset && element.dataset[key] || '').trim();
   }
@@ -257,6 +263,7 @@
   }
 
   return {
+    applyArbPanelErrorText,
     resolveArbPathContentClickAction,
     resolveArbPathContentKeydownAction,
     resolveArbPathContentPointerDownAction,
