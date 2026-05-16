@@ -209,6 +209,18 @@
     return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;
   }
 
+  function findDashboardQuoteById(dashboardState, quoteId) {
+    const numericQuoteId = Number(quoteId);
+    if (!Number.isFinite(numericQuoteId)) return null;
+    const categories = Array.isArray(dashboardState) ? dashboardState : [];
+    for (const category of categories) {
+      const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
+      const quote = quotes.find((item) => Number(item && item.id) === numericQuoteId);
+      if (quote) return quote;
+    }
+    return null;
+  }
+
   function getNextFutureExpiryMs(entries, nowMs) {
     const items = Array.isArray(entries) ? entries : [];
     let nextExpiry = Infinity;
@@ -278,6 +290,7 @@
     buildSwappedQuoteMarketState,
     clearQuoteTrendTimer,
     deleteQuoteUiRuntimeState,
+    findDashboardQuoteById,
     getActivePathAlertEvaluationAlerts,
     getQuoteUiState,
     hasQuoteMarketStateChanged,

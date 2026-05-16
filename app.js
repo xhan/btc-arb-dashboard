@@ -893,10 +893,7 @@
     }
 
     function findDashboardQuoteById(quoteId) {
-        const numericQuoteId = Number(quoteId);
-        if (!Number.isFinite(numericQuoteId)) return null;
-        const category = dashboardState.find((item) => Array.isArray(item && item.quotes) && item.quotes.some((quote) => Number(quote && quote.id) === numericQuoteId));
-        return category ? category.quotes.find((quote) => Number(quote && quote.id) === numericQuoteId) || null : null;
+        return getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, quoteId);
     }
 
     function pruneArbOpportunityHighlightsInPlace(nowMs = Date.now()) {

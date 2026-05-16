@@ -8,6 +8,7 @@ const {
   buildSwappedQuoteMarketState,
   clearQuoteTrendTimer,
   deleteQuoteUiRuntimeState,
+  findDashboardQuoteById,
   getActivePathAlertEvaluationAlerts,
   getQuoteUiState,
   hasQuoteMarketStateChanged,
@@ -79,6 +80,32 @@ assert.deepStrictEqual(
     { id: 'rule-1', target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:wbtc-eth-arb' } }
   ]
 );
+assert.strictEqual(findDashboardQuoteById(null, 101), null);
+assert.strictEqual(findDashboardQuoteById([{ quotes: [] }], 'bad'), null);
+const dashboardQuoteLookupState = [
+  {
+    id: 'cat-1',
+    quotes: [
+      { id: 101, symbol: 'BTCUSDT' },
+      { id: 102, symbol: 'ETHUSDT' }
+    ]
+  },
+  {
+    id: 'cat-2',
+    quotes: [
+      { id: '103', symbol: 'SOLUSDT' }
+    ]
+  }
+];
+assert.deepStrictEqual(
+  findDashboardQuoteById(dashboardQuoteLookupState, '101'),
+  { id: 101, symbol: 'BTCUSDT' }
+);
+assert.deepStrictEqual(
+  findDashboardQuoteById(dashboardQuoteLookupState, 103),
+  { id: '103', symbol: 'SOLUSDT' }
+);
+assert.strictEqual(findDashboardQuoteById(dashboardQuoteLookupState, 999), null);
 
 assert.strictEqual(resolveMutedStateRefreshDelay({ nowMs: 1000 }), null);
 assert.strictEqual(
