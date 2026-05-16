@@ -62,8 +62,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(/#data-terminal-content\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?overscroll-behavior:\s*contain;/.test(response.body));
     assert.ok(response.body.includes('#alert-log-window { position: fixed; bottom: 20px; right: 20px; width: 315px; max-height: 400px;'));
     assert.ok(response.body.includes('#data-terminal-window { position: fixed; bottom: 20px; left: 20px; width: 807px;'));
-    assert.ok(response.body.includes('src="charts-utils.js"'));
-    assert.ok(response.body.includes('src="charts-renderer.js"'));
+    assert.ok(response.body.includes('src="src/charts/charts-utils.js"'));
+    assert.ok(response.body.includes('src="src/charts/charts-renderer.js"'));
     assert.ok(response.body.includes('src="copy-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-paths.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-cycle-priority-utils.js"'));
@@ -1416,7 +1416,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-paths.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-equivalence-utils.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-panel-renderer.js"'));
-    assert.ok(snapshotResponse.body.includes('src="charts-utils.js"'));
+    assert.ok(snapshotResponse.body.includes('src="src/charts/charts-utils.js"'));
     assert.ok(snapshotResponse.body.includes('.arb-opportunity-head {'));
     assert.ok(!snapshotResponse.body.includes('.arb-opportunity-chart-link {'));
     assert.ok(!snapshotResponse.body.includes('.arb-opportunity-add-alert-btn {'));
@@ -1433,19 +1433,19 @@ async function waitForServer(attempts = 12) {
     assert.ok(chartsResponse.body.includes('id="chart-refresh-btn"'));
     assert.ok(chartsResponse.body.includes('id="chart-auto-refresh-toggle"'));
     assert.ok(chartsResponse.body.includes('id="chart-panels"'));
-    assert.ok(chartsResponse.body.includes('src="charts-app.js"'));
+    assert.ok(chartsResponse.body.includes('src="src/charts/charts-app.js"'));
     assert.ok(chartsResponse.body.includes('grid-template-columns: minmax(0, 1fr) 112px 112px auto;'));
     assert.ok(!chartsResponse.body.includes('<section class="hero">'));
     assert.ok(!chartsResponse.body.includes('读取最近两小时的历史快照'));
     assert.ok(!chartsResponse.body.includes('当前页只负责图表查看'));
 
-    const chartsAppResponse = await request('/charts-app.js');
+    const chartsAppResponse = await request('/src/charts/charts-app.js');
     assert.strictEqual(chartsAppResponse.statusCode, 200);
     assert.ok(chartsAppResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(chartsAppResponse.body.includes('syncChartAutoRefreshTimer'));
     assert.ok(chartsAppResponse.body.includes('chart-auto-refresh-toggle'));
 
-    const chartsUtilsResponse = await request('/charts-utils.js');
+    const chartsUtilsResponse = await request('/src/charts/charts-utils.js');
     assert.strictEqual(chartsUtilsResponse.statusCode, 200);
     const chartsUtilsExportBlock = chartsUtilsResponse.body.match(/return \{\n    buildChartPairKey,[\s\S]*?\n  \};/);
     assert.ok(chartsUtilsExportBlock);
@@ -1459,7 +1459,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(copyUtilsResponse.body.includes('Clipboard fallback failed'));
     assert.ok(copyUtilsResponse.body.includes('function createCopyToastRuntime(options = {})'));
 
-    const chartsRendererResponse = await request('/charts-renderer.js');
+    const chartsRendererResponse = await request('/src/charts/charts-renderer.js');
     assert.strictEqual(chartsRendererResponse.statusCode, 200);
     assert.ok(chartsRendererResponse.body.includes('showRightPriceScale'));
     assert.ok(chartsRendererResponse.body.includes('const chart = createChartInstance(container, options);'));

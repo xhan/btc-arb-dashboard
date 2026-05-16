@@ -10,7 +10,7 @@ const {
   formatUtc8ChartTime,
   formatChartPrice,
   buildProfitChartPoints
-} = require('../charts-utils');
+} = require('../src/charts/charts-utils');
 
 assert.strictEqual(buildChartPairKey(12, 'forward'), '12:forward');
 assert.strictEqual(buildChartPairKey(12, 'inverse'), '12:inverse');
