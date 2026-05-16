@@ -408,9 +408,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function removeQuoteInverseElement(inverseEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainResultDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainErrorDomState(refs = {}, options = {})'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().showTooltip(globalTooltip, targetEl, htmlContent, options)'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().showTooltip(globalTooltip, textWrapper, tooltipState.html, {'));
     assert.ok(!appJsResponse.body.includes('getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().hideTooltip(globalTooltip)'));
+    assert.ok(!appJsResponse.body.includes('function showGlobalTooltip('));
+    assert.ok(!appJsResponse.body.includes('function hideGlobalTooltip('));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTrendArrowState(arrowEl, trendState)'));
     assert.ok(appJsResponse.body.includes("getDomRenderUtils().applyTrendArrowState(arrowEl, { action: 'hide' })"));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().resetTrendArrow(arrowEl)'));

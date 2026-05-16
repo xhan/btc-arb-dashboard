@@ -3432,22 +3432,18 @@
         
         if (!quote) return; 
 
-        textWrapper.onmouseleave = () => hideGlobalTooltip(quoteId);
+        textWrapper.onmouseleave = () => {
+            quoteHoverRuntime.hide(quoteId, () => {
+                getDomRenderUtils().hideTooltip(globalTooltip);
+            });
+        };
         
         quoteHoverRuntime.schedule(quoteId, () => {
             const tooltipState = getQuoteDisplayUtils().buildQuoteHoverTooltipState(quote, state, { isEvmChain });
             if (!tooltipState) return;
-            showGlobalTooltip(tooltipState.html, textWrapper, { className: tooltipState.className });
-        });
-    }
-
-    function showGlobalTooltip(htmlContent, targetEl, options = {}) {
-        getDomRenderUtils().showTooltip(globalTooltip, targetEl, htmlContent, options);
-    }
-
-    function hideGlobalTooltip(quoteId) {
-        quoteHoverRuntime.hide(quoteId, () => {
-            getDomRenderUtils().hideTooltip(globalTooltip);
+            getDomRenderUtils().showTooltip(globalTooltip, textWrapper, tooltipState.html, {
+                className: tooltipState.className
+            });
         });
     }
 
