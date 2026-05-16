@@ -1592,6 +1592,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('if (nextValue === arbGlobalExcludedChainsInput)'));
     assert.ok(!appJsResponse.body.includes('if (nextValue === arbGlobalIncludedSymbolsInput)'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildFixedArbSections({'));
+    assert.ok(appJsResponse.body.includes('getDisplayMinProfitBp: (rule) => getArbPanelLayoutUtils().normalizeDisplayMinProfitBp('));
+    assert.ok(!appJsResponse.body.includes('function getFixedRuleDisplayMinProfitBp('));
     assert.ok(appJsResponse.body.includes('layoutUtils.buildGlobalArbSection({'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildSpecialArbSections({'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes("emptyText: '无收益率'"));
@@ -1794,6 +1796,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!arbDetailExportBlock[0].includes('getNextArbDetailRequestVersion'));
     assert.ok(appJsResponse.body.includes('function getChartsUtils()'));
     assert.ok(appJsResponse.body.includes('ChartsUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('const renderer = window.ChartsRenderer || null;'));
+    assert.ok(!appJsResponse.body.includes('function getChartsRenderer('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs)'));
     assert.ok(appJsResponse.body.includes('return getArbDetailUtils().isArbRuleLeg(leg);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId)'));

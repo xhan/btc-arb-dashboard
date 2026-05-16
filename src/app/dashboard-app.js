@@ -1321,10 +1321,6 @@
         return getWindowModule('ChartsUtils', 'ChartsUtils is not loaded');
     }
 
-    function getChartsRenderer() {
-        return window.ChartsRenderer || null;
-    }
-
     function getDataTerminalUtils() {
         return getWindowModule('DataTerminalUtils', 'DataTerminalUtils is not loaded');
     }
@@ -1735,13 +1731,6 @@
         );
     }
 
-    function getFixedRuleDisplayMinProfitBp(rule) {
-        return getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(
-            rule && rule.displayMinProfitBp,
-            getArbPanelLayoutUtils().resolveDefaultDisplayMinProfitBp(getPathAlertRuleDefinitionsUtils())
-        );
-    }
-
     function handleArbPathContentClick(event) {
         if (!arbPathContent) return;
         const action = getArbPanelRenderer().resolveArbPathContentClickAction(event, {
@@ -1996,7 +1985,7 @@
             buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)
         });
 
-        const renderer = getChartsRenderer();
+        const renderer = window.ChartsRenderer || null;
         if (!renderer || typeof renderer.mountPriceHistoryChart !== 'function') {
             renderArbDetailChartPreviewMessage('图表模块未就绪，请刷新页面后重试。');
             renderArbDetailProfitPreviewMessage('图表模块未就绪，请刷新页面后重试。');
@@ -2866,7 +2855,10 @@
     function buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
         return getArbPanelLayoutUtils().buildFixedArbSections({
             fixedResults: sharedRuleSnapshot.fixedResults,
-            getDisplayMinProfitBp: getFixedRuleDisplayMinProfitBp,
+            getDisplayMinProfitBp: (rule) => getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(
+                rule && rule.displayMinProfitBp,
+                getArbPanelLayoutUtils().resolveDefaultDisplayMinProfitBp(getPathAlertRuleDefinitionsUtils())
+            ),
             buildEntry: (cycle, index, items, rule) => createArbOpportunityEntry(
                 nextOpportunityMap,
                 nextOpportunityIdsByTargetKey,
