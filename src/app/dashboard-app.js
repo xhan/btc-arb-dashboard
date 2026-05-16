@@ -1764,10 +1764,6 @@
         renderDataTerminalPanel();
     }
 
-    function scheduleDataTerminalUpdate() {
-        dataTerminalUpdateRuntime.schedule();
-    }
-
     function handleDataTerminalHeaderClick(event) {
         const action = getDataTerminalUtils().resolveDataTerminalHeaderClickAction(event, { closestEventTarget });
         if (action.type !== 'blur-search') return;
@@ -3326,7 +3322,7 @@
                 const marketStateChanged = setQuoteMarketState(quote.id, newState);
                 if (marketStateChanged) {
                     scheduleArbUpdate();
-                    scheduleDataTerminalUpdate();
+                    dataTerminalUpdateRuntime.schedule();
                 }
                 
                 updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);

@@ -235,6 +235,7 @@
   - `src/app/dashboard-app.js` 的数据终端 control/selection patch 状态应用和 selection summary DOM 写入已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `src/app/dashboard-app.js` 的数据终端 shell 元素创建、DOM refs 装配、浮窗定位和默认尺寸 DOM 写入已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `src/app/dashboard-app.js` 的数据终端浮窗定位/默认尺寸单用途包装已移除，挂载流程直接委托 `src/data-terminal/data-terminal-utils.js`
+  - `src/app/dashboard-app.js` 的数据终端更新调度单用途包装已移除，报价状态变更后直接调度 data terminal runtime
   - `src/app/dashboard-app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利面板 dirty flag 已下沉到 `src/arb/arb-runtime-memory-utils.js` 的 `createArbPanelUpdateRuntime()`

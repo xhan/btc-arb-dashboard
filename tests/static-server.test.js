@@ -1692,6 +1692,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(panel, refs.header, {'));
     assert.ok(appJsResponse.body.includes('dataTerminalUpdateRuntime.clear();'));
     assert.ok(appJsResponse.body.includes('dataTerminalUpdateRuntime.schedule();'));
+    assert.ok(!appJsResponse.body.includes('function scheduleDataTerminalUpdate('));
     assert.ok(!appJsResponse.body.includes('timer: null,'));
     assert.ok(!appJsResponse.body.includes('dataTerminalState.timer'));
     assert.ok(!appJsResponse.body.includes('refs.searchInput.value = dataTerminalState.query;'));
