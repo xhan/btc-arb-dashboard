@@ -1,12 +1,9 @@
 const assert = require('assert');
 
 const {
-  buildDetailInputAmounts,
-  buildArbDetailCards,
   buildDefaultArbDetailState,
   buildOpenArbDetailState,
   buildClosedArbDetailState,
-  cloneArbDetailOpportunity,
   summarizeDetailResult,
   getQuoteRunState,
   isArbRuleLeg,
@@ -27,9 +24,7 @@ const {
   getArbDetailRateLimitDelay,
   getArbDetailBudgetTimestamp,
   recordArbDetailBudgetTimestamp,
-  buildArbOpportunityStableId,
   buildUniqueArbOpportunityId,
-  getNextArbDetailRequestVersion,
   shouldApplyArbDetailRequestVersion,
   applyArbDetailCardError,
   shouldSyncArbDetailSnapshotForCard,
@@ -37,52 +32,31 @@ const {
   buildArbDetailDexLink,
   buildArbDetailRow,
   applyArbDetailRateDeltas,
-  buildArbDetailRateText,
-  buildArbDetailRateDeltaText,
-  getArbDetailRateDeltaTone,
-  buildArbDetailTokenHtml,
-  buildArbDetailPairHtml,
-  buildArbDetailMuteButtonHtml,
   formatDetailNumber,
-  buildArbDetailSourceActionsHtml,
   buildArbDetailSourceHtml,
-  buildArbDetailSourceMetaHtml,
   buildArbDetailRowsHtml,
   buildArbDetailSummaryHtml,
   buildArbDetailShellHtml,
   buildArbDetailChartMessageHtml,
-  buildArbDetailChartPreviewCardHtml,
-  buildArbDetailProfitPreviewCardHtml,
   buildArbDetailProfitPreviewMessageHtml,
   buildArbDetailProfitPreviewReadyHtml,
   buildArbDetailProfitPreviewState,
   buildArbDetailChartPreviewStripHtml
 } = require('../arb-detail-utils');
 
-assert.deepStrictEqual(
-  buildDetailInputAmounts(10),
-  [10, 5, 15, 30]
-);
+const expectedDetailCardsForBase2 = [
+  { inputAmount: 2, rows: [], summary: null, error: '', requestVersion: 0 },
+  { inputAmount: 1, rows: [], summary: null, error: '', requestVersion: 0 },
+  { inputAmount: 3, rows: [], summary: null, error: '', requestVersion: 0 },
+  { inputAmount: 6, rows: [], summary: null, error: '', requestVersion: 0 }
+];
 
-assert.deepStrictEqual(
-  buildDetailInputAmounts(undefined),
-  [1, 0.5, 1.5, 3]
-);
-
-assert.deepStrictEqual(
-  buildDetailInputAmounts(3),
-  [3, 1.5, 4.5, 9]
-);
-
-assert.deepStrictEqual(
-  buildArbDetailCards(2),
-  [
-    { inputAmount: 2, rows: [], summary: null, error: '', requestVersion: 0 },
-    { inputAmount: 1, rows: [], summary: null, error: '', requestVersion: 0 },
-    { inputAmount: 3, rows: [], summary: null, error: '', requestVersion: 0 },
-    { inputAmount: 6, rows: [], summary: null, error: '', requestVersion: 0 }
-  ]
-);
+const expectedDetailCardsForDefaultBase = [
+  { inputAmount: 1, rows: [], summary: null, error: '', requestVersion: 0 },
+  { inputAmount: 0.5, rows: [], summary: null, error: '', requestVersion: 0 },
+  { inputAmount: 1.5, rows: [], summary: null, error: '', requestVersion: 0 },
+  { inputAmount: 3, rows: [], summary: null, error: '', requestVersion: 0 }
+];
 
 const detailOpportunitySource = {
   id: 'op-1',
@@ -95,11 +69,6 @@ const detailOpportunitySource = {
     ]
   }
 };
-const clonedDetailOpportunity = cloneArbDetailOpportunity(detailOpportunitySource);
-assert.deepStrictEqual(clonedDetailOpportunity, detailOpportunitySource);
-assert.notStrictEqual(clonedDetailOpportunity, detailOpportunitySource);
-assert.notStrictEqual(clonedDetailOpportunity.cycle, detailOpportunitySource.cycle);
-assert.notStrictEqual(clonedDetailOpportunity.cycle.legs[0], detailOpportunitySource.cycle.legs[0]);
 
 assert.deepStrictEqual(
   buildDefaultArbDetailState(),
@@ -116,32 +85,40 @@ assert.deepStrictEqual(
   }
 );
 
+const openedDetailState = buildOpenArbDetailState(
+  {
+    ...buildDefaultArbDetailState(),
+    refreshToken: 3,
+    pausedDashboard: true,
+    editingInputIndex: 1,
+    chartPreviewSignature: 'old'
+  },
+  {
+    opportunityId: 'op-1',
+    opportunity: detailOpportunitySource,
+    baseAmount: 2
+  }
+);
 assert.deepStrictEqual(
-  buildOpenArbDetailState(
-    {
-      ...buildDefaultArbDetailState(),
-      refreshToken: 3,
-      pausedDashboard: true,
-      editingInputIndex: 1,
-      chartPreviewSignature: 'old'
-    },
-    {
-      opportunityId: 'op-1',
-      opportunity: detailOpportunitySource,
-      baseAmount: 2
-    }
-  ),
+  openedDetailState,
   {
     visible: true,
     opportunityId: 'op-1',
     selectedOpportunity: detailOpportunitySource,
-    cards: buildArbDetailCards(2),
+    cards: expectedDetailCardsForBase2,
     pausedDashboard: true,
     refreshToken: 4,
     isRefreshing: false,
     editingInputIndex: null,
     chartPreviewSignature: ''
   }
+);
+assert.notStrictEqual(openedDetailState.selectedOpportunity, detailOpportunitySource);
+assert.notStrictEqual(openedDetailState.selectedOpportunity.cycle, detailOpportunitySource.cycle);
+assert.notStrictEqual(openedDetailState.selectedOpportunity.cycle.legs[0], detailOpportunitySource.cycle.legs[0]);
+assert.deepStrictEqual(
+  buildOpenArbDetailState({}, { opportunityId: 'default-base' }).cards,
+  expectedDetailCardsForDefaultBase
 );
 
 assert.deepStrictEqual(
@@ -150,7 +127,7 @@ assert.deepStrictEqual(
     visible: true,
     opportunityId: 'op-1',
     selectedOpportunity: detailOpportunitySource,
-    cards: buildArbDetailCards(2),
+    cards: expectedDetailCardsForBase2,
     pausedDashboard: true,
     refreshToken: 7,
     isRefreshing: true,
@@ -169,36 +146,6 @@ assert.deepStrictEqual(
     chartPreviewSignature: ''
   }
 );
-
-assert.strictEqual(
-  buildArbDetailRateText(0.9981234, 'cbBTC', 'WBTC'),
-  '1 cbBTC ≈ 0.998123 WBTC'
-);
-
-assert.strictEqual(
-  buildArbDetailRateText(null, 'cbBTC', 'WBTC'),
-  '--'
-);
-
-assert.strictEqual(
-  buildArbDetailRateDeltaText(1.0, 1.0001),
-  '+1.0bp'
-);
-
-assert.strictEqual(
-  buildArbDetailRateDeltaText(1.0, 0.9998),
-  '-2.0bp'
-);
-
-assert.strictEqual(
-  buildArbDetailRateDeltaText(null, 1.0001),
-  '--'
-);
-
-assert.strictEqual(getArbDetailRateDeltaTone('+1.0bp'), 'positive');
-assert.strictEqual(getArbDetailRateDeltaTone('-2.0bp'), 'negative');
-assert.strictEqual(getArbDetailRateDeltaTone('0.0bp'), 'neutral');
-assert.strictEqual(getArbDetailRateDeltaTone('--'), 'neutral');
 
 assert.strictEqual(isArbRuleLeg({ rule: true }), true);
 assert.strictEqual(isArbRuleLeg({ chain: '规则' }), true);
@@ -323,58 +270,15 @@ assert.deepStrictEqual(
 
 assert.deepStrictEqual(
   applyArbDetailRateDeltas(
-    [{ rawPrice: 1.001 }, { rawPrice: 0.9998 }],
-    [{ rawPrice: 1 }, { rawPrice: 1 }]
+    [{ rawPrice: 1.001 }, { rawPrice: 0.9998 }, { rawPrice: 1 }, { rawPrice: 1.0001 }],
+    [{ rawPrice: 1 }, { rawPrice: 1 }, { rawPrice: 1 }, { rawPrice: null }]
   ),
   [
     { rawPrice: 1.001, rateDeltaText: '+10.0bp', rateDeltaTone: 'positive' },
-    { rawPrice: 0.9998, rateDeltaText: '-2.0bp', rateDeltaTone: 'negative' }
+    { rawPrice: 0.9998, rateDeltaText: '-2.0bp', rateDeltaTone: 'negative' },
+    { rawPrice: 1, rateDeltaText: '+0.0bp', rateDeltaTone: 'neutral' },
+    { rawPrice: 1.0001, rateDeltaText: '--', rateDeltaTone: 'neutral' }
   ]
-);
-
-assert.strictEqual(
-  buildArbDetailTokenHtml('cb<BTC>', ''),
-  'cb&lt;BTC&gt;'
-);
-
-assert.strictEqual(
-  buildArbDetailTokenHtml('cb<BTC>', '0x"abc'),
-  '<span class="arb-detail-token" data-arb-detail-token-address="0x&quot;abc" data-arb-detail-token-symbol="cb&lt;BTC&gt;" title="0x&quot;abc">cb&lt;BTC&gt;</span>'
-);
-
-assert.strictEqual(
-  buildArbDetailPairHtml({
-    chainLabel: 'Ethereum <Main>',
-    fromSymbol: 'cb<BTC>',
-    fromTokenAddress: '0xfrom',
-    toSymbol: 'WBTC & ETH',
-    toTokenAddress: '0xto'
-  }),
-  '（Ethereum &lt;Main&gt;）<span class="arb-detail-token" data-arb-detail-token-address="0xfrom" data-arb-detail-token-symbol="cb&lt;BTC&gt;" title="0xfrom">cb&lt;BTC&gt;</span> -> <span class="arb-detail-token" data-arb-detail-token-address="0xto" data-arb-detail-token-symbol="WBTC &amp; ETH" title="0xto">WBTC &amp; ETH</span>'
-);
-
-assert.strictEqual(
-  buildArbDetailMuteButtonHtml(1, 0, 12),
-  ''
-);
-
-assert.ok(
-  buildArbDetailMuteButtonHtml(0, 2, 'quote<12>').includes('data-arb-detail-leg-mute="quote&lt;12&gt;"')
-);
-
-const sourceMetaHtml = buildArbDetailSourceMetaHtml({
-  chain: 'arbitrum',
-  fromTokenAddress: '0xaaa',
-  toTokenAddress: '0xbbb',
-  inputAmount: 1.25,
-  sourceText: 'Kyber <Main>'
-});
-assert.ok(sourceMetaHtml.includes('Kyber &lt;Main&gt;'));
-assert.ok(sourceMetaHtml.includes('data-dex-link-copy="1"'));
-assert.ok(sourceMetaHtml.includes('data-dex-link-label="swap.defillama"'));
-
-assert.ok(
-  buildArbDetailSourceActionsHtml({ quoteId: 12 }, { cardIndex: 0, rowIndex: 1 }).includes('data-arb-detail-row-index="1"')
 );
 
 const sourceHtml = buildArbDetailSourceHtml(
@@ -391,15 +295,18 @@ const sourceHtml = buildArbDetailSourceHtml(
 assert.ok(sourceHtml.includes('arb-detail-leg-source-main'));
 assert.ok(sourceHtml.includes('arb-detail-leg-source-actions'));
 assert.ok(sourceHtml.includes('arb-detail-leg-mute-btn'));
+assert.ok(sourceHtml.includes('Kyber'));
+assert.ok(sourceHtml.includes('data-dex-link-copy="1"'));
+assert.ok(sourceHtml.includes('data-arb-detail-row-index="1"'));
 
 const detailRowsHtml = buildArbDetailRowsHtml(
   {
     rows: [
       {
-        chainLabel: 'Ethereum',
-        fromSymbol: 'cbBTC',
+        chainLabel: 'Ethereum <Main>',
+        fromSymbol: 'cb<BTC>',
         fromTokenAddress: '0xfrom',
-        toSymbol: 'WBTC',
+        toSymbol: 'WBTC & ETH',
         toTokenAddress: '0xto',
         rateText: '1 cbBTC ≈ 1.001 WBTC',
         rateDeltaText: '+1.2bp',
@@ -409,14 +316,17 @@ const detailRowsHtml = buildArbDetailRowsHtml(
   },
   {
     cardIndex: 0,
-    buildSourceHtml: (row, options) => `<span data-source="${options.cardIndex}:${options.rowIndex}">${row.fromSymbol}</span>`
+    buildSourceHtml: (row, options) => `<span data-source="${options.cardIndex}:${options.rowIndex}">${String(row.fromSymbol).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`
   }
 );
 
 assert.ok(detailRowsHtml.includes('arb-detail-leg'));
 assert.ok(detailRowsHtml.includes('arb-detail-leg-pair'));
+assert.ok(detailRowsHtml.includes('Ethereum &lt;Main&gt;'));
 assert.ok(detailRowsHtml.includes('data-arb-detail-token-address="0xfrom"'));
-assert.ok(detailRowsHtml.includes('<span data-source="0:0">cbBTC</span>'));
+assert.ok(detailRowsHtml.includes('data-arb-detail-token-symbol="cb&lt;BTC&gt;"'));
+assert.ok(detailRowsHtml.includes('WBTC &amp; ETH'));
+assert.ok(detailRowsHtml.includes('<span data-source="0:0">cb&lt;BTC&gt;</span>'));
 assert.ok(detailRowsHtml.includes('1 cbBTC ≈ 1.001 WBTC'));
 assert.ok(detailRowsHtml.includes('arb-detail-leg-rate-delta positive'));
 assert.ok(detailRowsHtml.includes('+1.2bp'));
@@ -465,19 +375,16 @@ assert.strictEqual(
   '<div class="arb-detail-chart-message">加载 &lt;失败&gt;</div>'
 );
 
-const chartCardHtml = buildArbDetailChartPreviewCardHtml(
-  { quoteId: 1, direction: 'forward', fromSymbol: 'cbBTC', toSymbol: 'WBTC' },
-  2,
+const chartStripHtml = buildArbDetailChartPreviewStripHtml(
+  [{ quoteId: 1, direction: 'forward', fromSymbol: 'cbBTC', toSymbol: 'WBTC' }],
   { buildChartPairLabel: () => 'cb<BTC> -> W&BTC' }
 );
-assert.ok(chartCardHtml.includes('data-arb-detail-chart-index="2"'));
-assert.ok(chartCardHtml.includes('cb&lt;BTC&gt; -&gt; W&amp;BTC'));
-assert.ok(chartCardHtml.includes('等待历史图表...'));
-assert.ok(chartCardHtml.includes('arb-detail-chart-canvas'));
-
-const profitCardHtml = buildArbDetailProfitPreviewCardHtml();
-assert.ok(profitCardHtml.includes('data-arb-detail-profit-card="true"'));
-assert.ok(profitCardHtml.includes('等待价格图表加载完成...'));
+assert.ok(chartStripHtml.includes('data-arb-detail-chart-index="0"'));
+assert.ok(chartStripHtml.includes('cb&lt;BTC&gt; -&gt; W&amp;BTC'));
+assert.ok(chartStripHtml.includes('等待历史图表...'));
+assert.ok(chartStripHtml.includes('arb-detail-chart-canvas'));
+assert.ok(chartStripHtml.includes('data-arb-detail-profit-card="true"'));
+assert.ok(chartStripHtml.includes('等待价格图表加载完成...'));
 
 const profitMessageHtml = buildArbDetailProfitPreviewMessageHtml('至少 <2> 张');
 assert.ok(profitMessageHtml.includes('arb-detail-profit-meta">至少 &lt;2&gt; 张'));
@@ -864,34 +771,18 @@ const stableCycleC = {
   ]
 };
 
-assert.strictEqual(
-  buildArbOpportunityStableId('固定路径', '机会 1', stableCycleA),
-  buildArbOpportunityStableId('固定路径', '机会 1', stableCycleB)
-);
-
-assert.notStrictEqual(
-  buildArbOpportunityStableId('固定路径', '机会 1', stableCycleA),
-  buildArbOpportunityStableId('固定路径', '机会 1', stableCycleC)
-);
-
 const uniqueIdA = buildUniqueArbOpportunityId(new Set(), '固定路径', '机会 1', stableCycleA);
+const uniqueIdRateChanged = buildUniqueArbOpportunityId(new Set(), '固定路径', '机会 1', stableCycleB);
+const uniqueIdDifferentLeg = buildUniqueArbOpportunityId(new Set(), '固定路径', '机会 1', stableCycleC);
 const uniqueIdB = buildUniqueArbOpportunityId(new Set([uniqueIdA]), '固定路径', '机会 1', stableCycleA);
 const uniqueIdC = buildUniqueArbOpportunityId(new Set([uniqueIdA, uniqueIdB]), '固定路径', '机会 2', stableCycleA);
 
+assert.strictEqual(uniqueIdA, uniqueIdRateChanged);
+assert.notStrictEqual(uniqueIdA, uniqueIdDifferentLeg);
 assert.notStrictEqual(uniqueIdA, uniqueIdB);
 assert.notStrictEqual(uniqueIdA, uniqueIdC);
 assert.ok(uniqueIdA.includes(':机会 1:'));
 assert.ok(uniqueIdC.includes(':机会 2:'));
-
-assert.strictEqual(
-  getNextArbDetailRequestVersion(0),
-  1
-);
-
-assert.strictEqual(
-  getNextArbDetailRequestVersion(3),
-  4
-);
 
 assert.strictEqual(
   shouldApplyArbDetailRequestVersion(2, 2),
