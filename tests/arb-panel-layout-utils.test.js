@@ -23,6 +23,8 @@ const {
   buildSpecialArbSections,
   buildQuotePriceWatchSection,
   parseFilterInput,
+  buildArbOpportunityHighlightTargetKeyFromCycle,
+  buildTriggeredArbOpportunityHighlightTargetKey,
   registerArbOpportunityHighlightTarget,
   selectFirstUnmutedDisplayedCycle
 } = require('../src/arb/arb-panel-layout-utils');
@@ -756,6 +758,47 @@ registerArbOpportunityHighlightTarget(highlightTargetMap, 'target-1', 'op-2');
 registerArbOpportunityHighlightTarget(highlightTargetMap, '', 'op-3');
 assert.deepStrictEqual(highlightTargetMap.get('target-1'), ['op-1', 'op-2']);
 assert.strictEqual(highlightTargetMap.has(''), false);
+
+{
+  const highlightOptions = {
+    buildMutedPathTargetFromCycleLegs: (legs) => {
+      const realLegs = legs.filter((leg) => !leg.rule);
+      return realLegs.length ? { target: { legs: realLegs } } : null;
+    },
+    buildTargetKey: (target) => {
+      const legs = target && target.target && target.target.legs;
+      return `key:${Array.isArray(legs) ? legs.map((leg) => leg.quoteId).join('-') : target.id}`;
+    }
+  };
+  const cycle = { legs: [{ quoteId: 1 }, { quoteId: 2 }, { quoteId: 3, rule: true }] };
+
+  assert.strictEqual(buildArbOpportunityHighlightTargetKeyFromCycle(cycle, highlightOptions), 'key:1-2');
+  assert.strictEqual(buildArbOpportunityHighlightTargetKeyFromCycle(null, highlightOptions), '');
+  assert.strictEqual(
+    buildTriggeredArbOpportunityHighlightTargetKey(
+      { target: { type: 'path' }, id: 'path-alert' },
+      { cycle },
+      highlightOptions
+    ),
+    'key:path-alert'
+  );
+  assert.strictEqual(
+    buildTriggeredArbOpportunityHighlightTargetKey(
+      { target: { type: 'rule' } },
+      { cycle },
+      highlightOptions
+    ),
+    'key:1-2'
+  );
+  assert.strictEqual(
+    buildTriggeredArbOpportunityHighlightTargetKey(
+      { target: { type: 'quote' } },
+      { cycle },
+      highlightOptions
+    ),
+    ''
+  );
+}
 
 assert.deepStrictEqual(
   buildQuotePriceWatchSection({

@@ -725,30 +725,11 @@
         });
     }
 
-    function isArbOpportunityHighlighted(opportunityId, nowMs = Date.now()) {
-        return arbOpportunityHighlightRuntime.isHighlighted(opportunityId, nowMs);
-    }
-
-    function buildArbOpportunityHighlightTargetKeyFromCycle(cycle) {
-        if (!cycle || !Array.isArray(cycle.legs)) return '';
-        const candidate = buildMutedPathTargetFromCycleLegs(cycle.legs);
-        return candidate ? buildMutedPathTargetKey(candidate) : '';
-    }
-
-    function buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation) {
-        if (!alert || !alert.target || alert.target.type === 'quote') return '';
-        if (alert.target.type === 'path') {
-            return buildMutedPathTargetKey(alert);
-        }
-        return buildArbOpportunityHighlightTargetKeyFromCycle(evaluation && evaluation.cycle);
-    }
-
-    function registerArbOpportunityHighlightTarget(nextTargetMap, targetKey, opportunityId) {
-        getArbPanelLayoutUtils().registerArbOpportunityHighlightTarget(nextTargetMap, targetKey, opportunityId);
-    }
-
     function markTriggeredArbOpportunities(alert, evaluation, nowMs = Date.now()) {
-        const targetKey = buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation);
+        const targetKey = getArbPanelLayoutUtils().buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation, {
+            buildMutedPathTargetFromCycleLegs,
+            buildTargetKey: buildMutedPathTargetKey
+        });
         if (!targetKey) return false;
         const opportunityIds = arbOpportunityRuntime.getOpportunityIdsForTarget(targetKey);
         if (!Array.isArray(opportunityIds) || !opportunityIds.length) return false;
@@ -1756,14 +1737,17 @@
         );
         const entry = getArbPanelLayoutUtils().buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta);
         targetMap.set(opportunityId, entry);
-        registerArbOpportunityHighlightTarget(
+        getArbPanelLayoutUtils().registerArbOpportunityHighlightTarget(
             highlightTargetMap,
-            buildArbOpportunityHighlightTargetKeyFromCycle(cycle),
+            getArbPanelLayoutUtils().buildArbOpportunityHighlightTargetKeyFromCycle(cycle, {
+                buildMutedPathTargetFromCycleLegs,
+                buildTargetKey: buildMutedPathTargetKey
+            }),
             opportunityId
         );
 
         return getArbPanelLayoutUtils().buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {
-            isAlertHighlighted: isArbOpportunityHighlighted(opportunityId),
+            isAlertHighlighted: arbOpportunityHighlightRuntime.isHighlighted(opportunityId),
         });
     }
 

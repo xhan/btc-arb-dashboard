@@ -549,6 +549,29 @@
     targetMap.set(targetKey, [opportunityId]);
   }
 
+  function buildArbOpportunityHighlightTargetKeyFromCycle(cycle, options = {}) {
+    if (!cycle || !Array.isArray(cycle.legs)) return '';
+    const buildMutedPathTargetFromCycleLegs = typeof options.buildMutedPathTargetFromCycleLegs === 'function'
+      ? options.buildMutedPathTargetFromCycleLegs
+      : () => null;
+    const buildTargetKey = typeof options.buildTargetKey === 'function'
+      ? options.buildTargetKey
+      : () => '';
+    const candidate = buildMutedPathTargetFromCycleLegs(cycle.legs);
+    return candidate ? buildTargetKey(candidate) : '';
+  }
+
+  function buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation, options = {}) {
+    if (!alert || !alert.target || alert.target.type === 'quote') return '';
+    const buildTargetKey = typeof options.buildTargetKey === 'function'
+      ? options.buildTargetKey
+      : () => '';
+    if (alert.target.type === 'path') {
+      return buildTargetKey(alert);
+    }
+    return buildArbOpportunityHighlightTargetKeyFromCycle(evaluation && evaluation.cycle, options);
+  }
+
   function buildFixedArbSections(options = {}) {
     const fixedResults = Array.isArray(options.fixedResults) ? options.fixedResults : [];
     const getDisplayMinProfitBp = typeof options.getDisplayMinProfitBp === 'function'
@@ -680,6 +703,8 @@
     clearGlobalArbFilterState,
     createGlobalArbFilterStateRuntime,
     registerArbOpportunityHighlightTarget,
+    buildArbOpportunityHighlightTargetKeyFromCycle,
+    buildTriggeredArbOpportunityHighlightTargetKey,
     selectFirstUnmutedDisplayedCycle
   };
 }));

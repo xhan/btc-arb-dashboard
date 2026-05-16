@@ -1239,6 +1239,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('durationMs: 8000'));
     assert.ok(appJsResponse.body.includes('onExpired: () => updateArbPanel()'));
     assert.ok(appJsResponse.body.includes('markTriggeredArbOpportunities'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation, {'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().buildArbOpportunityHighlightTargetKeyFromCycle(cycle, {'));
+    assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().registerArbOpportunityHighlightTarget('));
+    assert.ok(appJsResponse.body.includes('isAlertHighlighted: arbOpportunityHighlightRuntime.isHighlighted(opportunityId)'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityHighlightTargetKeyFromCycle(cycle, options = {})'));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation, options = {})'));
+    assert.ok(!appJsResponse.body.includes('function isArbOpportunityHighlighted('));
+    assert.ok(!appJsResponse.body.includes('function buildArbOpportunityHighlightTargetKeyFromCycle('));
+    assert.ok(!appJsResponse.body.includes('function buildTriggeredArbOpportunityHighlightTargetKey('));
+    assert.ok(!appJsResponse.body.includes('function registerArbOpportunityHighlightTarget('));
     assert.ok(appJsResponse.body.includes('return arbOpportunityHighlightRuntime.mark(opportunityIds, nowMs);'));
     assert.ok(!appJsResponse.body.includes('let arbHighlightedOpportunityUntilById = new Map();'));
     assert.ok(!appJsResponse.body.includes('let arbOpportunityHighlightCleanupTimer = null;'));
