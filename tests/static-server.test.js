@@ -454,9 +454,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("telegramHtmlBody: ''"));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertMessage(alert, evaluation, options = {})'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertCurrentValueText(alert, evaluation, options = {})'));
+    assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertSummaryRuleLine(target)'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertActionLink(dexLink)'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertTriggeredEntry(options = {})'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({'));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertPageSummaryLines(alert, {'));
+    assert.ok(appJsResponse.body.includes('buildQuoteAlertRuleLine: (target) => getPathAlertNotificationUtils().buildQuoteAlertSummaryRuleLine(target)'));
     assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
     assert.ok(!pathAlertNotificationUtilsResponse.body.includes('buildLegacyQuoteAlertRemotePayload'));
     assert.ok(appJsResponse.body.includes('let quoteUiState = new Map();'));

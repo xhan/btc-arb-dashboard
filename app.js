@@ -3180,31 +3180,22 @@
         return getPathAlertNotificationUtils().formatPathAlertEvaluationText(evaluation);
     }
 
+    function buildQuoteAlertSummaryLabel(target) {
+        const match = findQuoteById(Number(target && target.quoteId));
+        const quote = match ? match.quote : null;
+        const monitorState = quote ? quoteMarketState.get(Number(quote.id)) : null;
+        return quote
+            ? buildQuoteAlertDisplayLabel(quote, monitorState || {}, getQuoteAlertDirection(target))
+            : `报价 #${String(target && target.quoteId || '--')}`;
+    }
+
     function buildPathAlertSummaryLines(alert) {
-        if (alert && alert.target && alert.target.type === 'quote') {
-            const displayTitle = String(alert.name || '').trim();
-            if (displayTitle) {
-                return [
-                    displayTitle,
-                    buildQuoteAlertThresholdLine(alert.target)
-                ];
-            }
-            const match = findQuoteById(Number(alert.target.quoteId));
-            const quote = match ? match.quote : null;
-            const monitorState = quote ? quoteMarketState.get(Number(quote.id)) : null;
-            const label = quote
-                ? buildQuoteAlertDisplayLabel(quote, monitorState || {}, getQuoteAlertDirection(alert.target))
-                : `报价 #${String(alert.target.quoteId || '--')}`;
-            const ruleLine = alert.target.ruleKind === 'targetAbove'
-                ? `汇率 >= ${String(alert.target.value != null ? alert.target.value : '--')}`
-                : alert.target.ruleKind === 'targetBelow'
-                    ? `汇率 <= ${String(alert.target.value != null ? alert.target.value : '--')}`
-                    : alert.target.ruleKind === 'percentUp'
-                        ? `相对基准上涨 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`
-                        : `相对基准下跌 >= ${String(alert.target.value != null ? alert.target.value : '--')}%`;
-            return [label, ruleLine];
-        }
-        return getPathAlertUtils().buildPathAlertSummaryLines(alert, {
+        return getPathAlertPageUtils().buildPathAlertPageSummaryLines(alert, {
+            getDisplayTitle: (item) => String(item && item.name || '').trim(),
+            buildQuoteAlertThresholdLine,
+            buildQuoteAlertQuoteLabel: buildQuoteAlertSummaryLabel,
+            buildQuoteAlertRuleLine: (target) => getPathAlertNotificationUtils().buildQuoteAlertSummaryRuleLine(target),
+            buildPathAlertSummaryLines: (item, options) => getPathAlertUtils().buildPathAlertSummaryLines(item, options),
             formatLeg(leg) {
                 const match = findQuoteById(Number(leg.quoteId));
                 const state = match ? quoteMarketState.get(Number(leg.quoteId)) : null;

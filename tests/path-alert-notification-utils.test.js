@@ -16,6 +16,7 @@ const {
   buildQuoteAlertRuleLine,
   buildQuoteAlertMessage,
   buildQuoteAlertThresholdLine,
+  buildQuoteAlertSummaryRuleLine,
   buildQuoteAlertActionLink,
   buildQuoteAlertTriggeredEntry,
   buildQuoteAlertRemotePayload,
@@ -339,6 +340,18 @@ assert.strictEqual(
 assert.strictEqual(
   buildQuoteAlertRuleLine({ type: 'quote', ruleKind: 'percentUp', value: 0.1, basePrice: 1.0001 }),
   '相对基准上涨 >= 0.1%（基准 1.0001）'
+);
+assert.strictEqual(
+  buildQuoteAlertSummaryRuleLine({ type: 'quote', ruleKind: 'targetAbove', value: 1.01 }),
+  '汇率 >= 1.01'
+);
+assert.strictEqual(
+  buildQuoteAlertSummaryRuleLine({ type: 'quote', ruleKind: 'percentUp', value: 0.1 }),
+  '相对基准上涨 >= 0.1%'
+);
+assert.strictEqual(
+  buildQuoteAlertSummaryRuleLine({ type: 'quote', ruleKind: 'percentDown', value: null }),
+  '相对基准下跌 >= --%'
 );
 
 assert.strictEqual(

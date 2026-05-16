@@ -301,6 +301,23 @@
     return '--';
   }
 
+  function buildQuoteAlertSummaryRuleLine(target) {
+    if (!target || target.type !== 'quote') return '--';
+    if (target.ruleKind === 'targetAbove') {
+      return `汇率 >= ${String(target.value != null ? target.value : '--')}`;
+    }
+    if (target.ruleKind === 'targetBelow') {
+      return `汇率 <= ${String(target.value != null ? target.value : '--')}`;
+    }
+    if (target.ruleKind === 'percentUp') {
+      return `相对基准上涨 >= ${String(target.value != null ? target.value : '--')}%`;
+    }
+    if (target.ruleKind === 'percentDown') {
+      return `相对基准下跌 >= ${String(target.value != null ? target.value : '--')}%`;
+    }
+    return '--';
+  }
+
   function buildQuoteAlertMessage(alert, evaluation, options = {}) {
     if (!alert || !alert.target || !evaluation) return '';
     const target = alert.target;
@@ -408,6 +425,7 @@
     buildQuoteAlertDirectionLabel,
     buildQuoteAlertCurrentValueText,
     buildQuoteAlertRuleLine,
+    buildQuoteAlertSummaryRuleLine,
     buildQuoteAlertMessage,
     buildQuoteAlertThresholdLine,
     buildQuoteAlertActionLink,
