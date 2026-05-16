@@ -10,6 +10,7 @@ const {
   buildQuoteDisplayToggleState,
   buildQuoteHoverTooltipState,
   buildQuoteRequestChannelTagHtml,
+  buildQuoteTrendArrowState,
   createQuoteHoverRuntime,
   extractPriceFromText,
   formatCexBookValue,
@@ -229,6 +230,31 @@ const cexHoverTooltipState = buildQuoteHoverTooltipState(
 );
 assert.strictEqual(cexHoverTooltipState.className, 'cex-orderbook-tooltip-host');
 assert.ok(cexHoverTooltipState.html.includes('cex-orderbook-tooltip'));
+
+assert.deepStrictEqual(
+  buildQuoteTrendArrowState(1.2, 1, 'Kyber', 'Kyber'),
+  {
+    action: 'show',
+    html: '&#8593;&#8593;&#8593;',
+    className: 'trend-arrow trend-up visible'
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuoteTrendArrowState(0.8, 1, 'Kyber', 'Kyber'),
+  {
+    action: 'show',
+    html: '&#8595;&#8595;&#8595;',
+    className: 'trend-arrow trend-down visible'
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuoteTrendArrowState(1.2, 1, '0x', 'Kyber'),
+  { action: 'hide' }
+);
+assert.strictEqual(buildQuoteTrendArrowState(1.00001, 1, 'Kyber', 'Kyber'), null);
+assert.strictEqual(buildQuoteTrendArrowState(1.1, null, 'Kyber', 'Kyber'), null);
 
 assert.strictEqual(
   buildQuoteAlertDisplayLabel({ chain: 'Bybit', symbol: 'BTCUSDT' }, {}, 'forward'),

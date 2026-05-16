@@ -275,6 +275,29 @@
     };
   }
 
+  function buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource) {
+    if (currentSource && oldSource && currentSource !== oldSource) {
+      return { action: 'hide' };
+    }
+    if (typeof oldPrice !== 'number' || currentPrice === oldPrice) return null;
+
+    const changeRatio = Math.abs((currentPrice - oldPrice) / oldPrice);
+    if (changeRatio < 0.0001) return null;
+
+    if (currentPrice > oldPrice) {
+      return {
+        action: 'show',
+        html: '&#8593;&#8593;&#8593;',
+        className: 'trend-arrow trend-up visible'
+      };
+    }
+    return {
+      action: 'show',
+      html: '&#8595;&#8595;&#8595;',
+      className: 'trend-arrow trend-down visible'
+    };
+  }
+
   function createQuoteHoverRuntime(options = {}) {
     const setTimer = typeof options.setTimeout === 'function'
       ? options.setTimeout
@@ -360,6 +383,7 @@
     buildQuoteDisplayToggleState,
     buildQuoteHoverTooltipState,
     buildQuoteRequestChannelTagHtml,
+    buildQuoteTrendArrowState,
     extractPriceFromText,
     formatCexBookValue,
     getNextQuoteDisplayMode

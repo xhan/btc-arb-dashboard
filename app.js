@@ -4014,28 +4014,20 @@
         const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
         if (!arrowEl) return;
 
-        if (currentSource && oldSource && currentSource !== oldSource) {
+        const trendState = getQuoteDisplayUtils().buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource);
+        if (!trendState) return;
+
+        if (trendState.action === 'hide') {
             arrowEl.classList.remove('visible');
             return;
         }
-
-        if (typeof oldPrice !== 'number' || currentPrice === oldPrice) return;
-
-        const changeRatio = Math.abs((currentPrice - oldPrice) / oldPrice);
-        
-        if (changeRatio < 0.0001) return; 
 
         arrowEl.classList.remove('visible');
         
         void arrowEl.offsetWidth; 
 
-        if (currentPrice > oldPrice) {
-            arrowEl.innerHTML = '&#8593;&#8593;&#8593;'; 
-            arrowEl.className = 'trend-arrow trend-up visible';
-        } else {
-            arrowEl.innerHTML = '&#8595;&#8595;&#8595;'; 
-            arrowEl.className = 'trend-arrow trend-down visible';
-        }
+        arrowEl.innerHTML = trendState.html;
+        arrowEl.className = trendState.className;
 
         quoteStateRuntime.scheduleTrendTimer(quoteId, () => {
             arrowEl.classList.remove('visible');

@@ -509,6 +509,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteHoverTooltipState(quote, state, options = {})'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('quote-direct-badge'));
     const quoteDisplayExportBlock = quoteDisplayUtilsResponse.body.match(/return \{\n    buildCexOrderbookSummary,[\s\S]*?\n  \};/);
     assert.ok(quoteDisplayExportBlock);
@@ -534,6 +535,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('quoteHoverRuntime.schedule(quoteId, () => {'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteHoverTooltipState(quote, state, { isEvmChain })'));
     assert.ok(appJsResponse.body.includes('quoteHoverRuntime.hide(quoteId, () => {'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource)'));
+    assert.ok(!appJsResponse.body.includes('const changeRatio = Math.abs((currentPrice - oldPrice) / oldPrice);'));
     assert.ok(!appJsResponse.body.includes('let hoverTimeout = null;'));
     assert.ok(!appJsResponse.body.includes('let currentHoveredQuoteId = null;'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function createQuoteHoverRuntime(options = {})'));
