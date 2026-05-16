@@ -192,16 +192,21 @@
     }
   }
 
-  function hasActivePathAlertEvaluationTarget(alertConfig) {
+  function getActivePathAlertEvaluationAlerts(alertConfig) {
     const alerts = Array.isArray(alertConfig && alertConfig.alerts)
       ? alertConfig.alerts
       : [];
-    return alerts.some((alert) => (
+    return alerts.filter((alert) => (
       alert
+        && alert.id
         && alert.enabled !== false
         && alert.target
         && alert.target.type !== 'quote'
     ));
+  }
+
+  function hasActivePathAlertEvaluationTarget(alertConfig) {
+    return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;
   }
 
   function getNextFutureExpiryMs(entries, nowMs) {
@@ -273,6 +278,7 @@
     buildSwappedQuoteMarketState,
     clearQuoteTrendTimer,
     deleteQuoteUiRuntimeState,
+    getActivePathAlertEvaluationAlerts,
     getQuoteUiState,
     hasQuoteMarketStateChanged,
     mergeQuoteUiState,

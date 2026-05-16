@@ -2102,14 +2102,7 @@
     }
 
     function getActivePathAlertEvaluationAlerts() {
-        return (Array.isArray(pathAlertConfig && pathAlertConfig.alerts) ? pathAlertConfig.alerts : [])
-            .filter((alert) => (
-                alert
-                && alert.id
-                && alert.enabled !== false
-                && alert.target
-                && alert.target.type !== 'quote'
-            ));
+        return getDashboardRuntimeUtils().getActivePathAlertEvaluationAlerts(pathAlertConfig);
     }
 
     function pruneInactiveAlertRuntimeState() {

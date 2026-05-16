@@ -8,6 +8,7 @@ const {
   buildSwappedQuoteMarketState,
   clearQuoteTrendTimer,
   deleteQuoteUiRuntimeState,
+  getActivePathAlertEvaluationAlerts,
   getQuoteUiState,
   hasQuoteMarketStateChanged,
   mergeQuoteUiState,
@@ -62,6 +63,21 @@ assert.strictEqual(
     ]
   }),
   true
+);
+assert.deepStrictEqual(
+  getActivePathAlertEvaluationAlerts({
+    alerts: [
+      { id: 'quote-1', enabled: true, target: { type: 'quote', quoteId: 1 } },
+      { id: 'disabled-path', enabled: false, target: { type: 'path', legs: [{ quoteId: 2 }] } },
+      { id: '', enabled: true, target: { type: 'path', legs: [{ quoteId: 3 }] } },
+      { id: 'path-1', enabled: true, target: { type: 'path', legs: [{ quoteId: 4 }] } },
+      { id: 'rule-1', target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:wbtc-eth-arb' } }
+    ]
+  }),
+  [
+    { id: 'path-1', enabled: true, target: { type: 'path', legs: [{ quoteId: 4 }] } },
+    { id: 'rule-1', target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:wbtc-eth-arb' } }
+  ]
 );
 
 assert.strictEqual(resolveMutedStateRefreshDelay({ nowMs: 1000 }), null);

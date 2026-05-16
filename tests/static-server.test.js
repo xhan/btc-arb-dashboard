@@ -455,6 +455,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function sanitizeQuoteMarketState(state)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().sanitizeQuoteMarketState(state)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasQuoteMarketStateChanged(previousState, nextState)'));
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().getActivePathAlertEvaluationAlerts(pathAlertConfig)'));
+    assert.ok(dashboardRuntimeUtilsResponse.body.includes('function getActivePathAlertEvaluationAlerts(alertConfig)'));
+    assert.ok(dashboardRuntimeUtilsResponse.body.includes('return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;'));
     assert.ok(!appJsResponse.body.includes('return previousState !== nextState;'));
     assert.ok(appJsResponse.body.includes('function setQuoteUiState(quoteId, nextState)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().setQuoteUiState(quoteUiState, quoteId, nextState)'));

@@ -34,16 +34,14 @@
 ### 3. 路径报警无任务时停表
 - 目标：没有有效路径报警时不跑 1s 评估循环。
 - 现状：
-  - `restartPathAlertScheduler()` 会直接启动 `setInterval`
-  - `evaluatePathAlertsOnce()` 每次都取共享套利快照并做完整评估
-  - 报警面板是否打开不影响这套计算
+  - `restartPathAlertScheduler()` 启动前会通过 `dashboard-runtime-utils.hasActivePathAlertEvaluationTarget()` 判断是否存在启用中的非 quote 报警
+  - 非 quote 报警过滤已统一到 `dashboard-runtime-utils.getActivePathAlertEvaluationAlerts()`，调度器和实际评估列表共用同一规则
+  - 只有 quote 报警时不启动路径报警 1s 轮询，quote alert 仍保留独立判断链路
 - 预期收益：
-  - 降低前端持续 CPU 占用
+  - 已降低前端持续 CPU 占用
   - 降低套利快照被高频消费的频率
-- 建议改法：
-  - 没有非 quote 类型 alert 时不启动路径报警轮询
-  - 只有新增相关 alert 时再启动
-  - 保留 quote alert 的独立判断链路
+- 后续建议：
+  - 若未来新增报警类型，先补 `getActivePathAlertEvaluationAlerts()` 的目标过滤测试
 
 ### 4. 套利详情刷新从“死循环”改成“受控轮询”
 - 目标：避免详情弹窗打开后无间隔连续刷新。
