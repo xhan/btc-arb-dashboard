@@ -93,7 +93,7 @@
 
 - 一个 queue 的一次 tick 只会处理一个 task
 - 同一个 quote 如果上一次请求还没结束，`processQueue()` 不会重复发，而是把当前任务 defer 到队尾
-- 这个保护依赖 `activeFetchControllers.has(quote.id)`
+- 这个保护依赖 `activeFetchControllerRuntime.has(quote.id)`
 
 所以更准确地说：
 

@@ -16,6 +16,59 @@
     return new Set();
   }
 
+  function createActiveFetchControllerRuntime(options = {}) {
+    const controllers = new Map();
+    const Controller = typeof options.AbortController === 'function'
+      ? options.AbortController
+      : (typeof AbortController === 'function' ? AbortController : null);
+
+    function abort(quoteId) {
+      const controller = controllers.get(quoteId);
+      if (!controller) return false;
+      if (typeof controller.abort === 'function') {
+        controller.abort();
+      }
+      controllers.delete(quoteId);
+      return true;
+    }
+
+    function create(quoteId) {
+      abort(quoteId);
+      if (!Controller) return null;
+      const controller = new Controller();
+      controllers.set(quoteId, controller);
+      return controller;
+    }
+
+    function abortAll() {
+      let abortedCount = 0;
+      for (const controller of controllers.values()) {
+        if (controller && typeof controller.abort === 'function') {
+          controller.abort();
+          abortedCount += 1;
+        }
+      }
+      controllers.clear();
+      return abortedCount;
+    }
+
+    function deleteIfCurrent(quoteId, controller) {
+      if (controllers.get(quoteId) !== controller) return false;
+      controllers.delete(quoteId);
+      return true;
+    }
+
+    return {
+      abort,
+      abortAll,
+      create,
+      deleteIfCurrent,
+      get: (quoteId) => controllers.get(quoteId) || null,
+      getControllers: () => controllers,
+      has: (quoteId) => controllers.has(quoteId)
+    };
+  }
+
   function createQuoteQueueRuntime(options = {}) {
     const queues = {};
     const indices = {};
@@ -168,6 +221,7 @@
   }
 
   return {
+    createActiveFetchControllerRuntime,
     createQuoteQueueRuntime
   };
 });

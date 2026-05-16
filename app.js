@@ -18,7 +18,9 @@
     let showRequestChannelTags = true;
     let requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
 
-    let activeFetchControllers = new Map(); 
+    const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({
+        AbortController
+    });
     let saveTimeout = null;
     let priceSnapshotTimer = null;
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
@@ -634,7 +636,7 @@
             { multiChannelEnabled }
         ),
         isSchedulerPaused: () => arbDetailState.pausedDashboard,
-        hasActiveFetchController: (quoteId) => activeFetchControllers.has(quoteId),
+        hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId),
         fetchQuote: (quote, mode) => fetchSingleQuote(quote, mode)
     });
 
@@ -1737,10 +1739,7 @@
     }
 
     function abortQuoteFetch(quoteId) {
-        const controller = activeFetchControllers.get(quoteId);
-        if (!controller) return;
-        controller.abort();
-        activeFetchControllers.delete(quoteId);
+        activeFetchControllerRuntime.abort(quoteId);
     }
 
     function applyPausedQuoteUiState(quote, state) {
@@ -2636,10 +2635,7 @@
     }
 
     function abortActiveQuoteFetches() {
-        for (const controller of activeFetchControllers.values()) {
-            controller.abort();
-        }
-        activeFetchControllers.clear();
+        activeFetchControllerRuntime.abortAll();
     }
 
     function setArbDetailDashboardPause(paused) {
@@ -3776,14 +3772,8 @@
         }
         const isInverseFetch = fetchMode === 'inverse' && shouldQueueInverseFetch(quote);
 
-        if (activeFetchControllers.has(quote.id)) {
-            activeFetchControllers.get(quote.id).abort();
-            activeFetchControllers.delete(quote.id);
-        }
-
-        const controller = new AbortController();
-        const signal = controller.signal;
-        activeFetchControllers.set(quote.id, controller);
+        const controller = activeFetchControllerRuntime.create(quote.id);
+        const signal = controller ? controller.signal : null;
 
         if (!isInverseFetch) {
             quoteDataEl.classList.remove('error');
@@ -3887,9 +3877,7 @@
                 quoteDataEl.title = errorTitle;
             }
         } finally {
-            if (activeFetchControllers.get(quote.id) === controller) {
-                activeFetchControllers.delete(quote.id);
-            }
+            activeFetchControllerRuntime.deleteIfCurrent(quote.id, controller);
         }
     }
 

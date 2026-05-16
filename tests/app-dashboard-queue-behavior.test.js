@@ -11,6 +11,16 @@ assert.ok(
 );
 
 assert.ok(
+  appJs.includes('const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({'),
+  '主看板应通过 QuoteQueueRuntimeUtils 创建 fetch controller 运行时'
+);
+
+assert.ok(
+  !appJs.includes('let activeFetchControllers = new Map();'),
+  '主看板不应直接持有 active fetch controller Map'
+);
+
+assert.ok(
   appJs.includes('quoteQueueRuntime.addToQueue(quote);'),
   '主看板添加报价时应委托队列运行时'
 );
@@ -43,6 +53,11 @@ assert.ok(
 assert.ok(
   queueRuntimeJs.includes('const queues = {};') && queueRuntimeJs.includes('const indices = {};') && queueRuntimeJs.includes('const timers = {};'),
   '队列运行时应集中持有队列、索引和定时器状态'
+);
+
+assert.ok(
+  queueRuntimeJs.includes('function createActiveFetchControllerRuntime(options = {})'),
+  'fetch controller 状态应集中在 QuoteQueueRuntimeUtils'
 );
 
 assert.ok(

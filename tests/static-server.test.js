@@ -349,6 +349,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('quoteRequestUtils.requestResolvedQuote({'));
     assert.ok(!appJsResponse.body.includes('function getMarketQuote(quote, signal, config)'));
     assert.ok(!appJsResponse.body.includes('function getCexOrderbookQuote(quote, signal, options)'));
+    assert.ok(appJsResponse.body.includes('const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({'));
+    assert.ok(appJsResponse.body.includes('hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId)'));
+    assert.ok(appJsResponse.body.includes('const controller = activeFetchControllerRuntime.create(quote.id);'));
+    assert.ok(appJsResponse.body.includes('activeFetchControllerRuntime.deleteIfCurrent(quote.id, controller);'));
+    assert.ok(!appJsResponse.body.includes('let activeFetchControllers = new Map();'));
+    assert.ok(quoteQueueRuntimeUtilsResponse.body.includes('function createActiveFetchControllerRuntime(options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('const MARKET_QUOTE_REQUESTS = Object.freeze({'));
     assert.ok(quoteRequestUtilsResponse.body.includes('const CEX_ORDERBOOK_REQUESTS = Object.freeze({'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildQuoteRequestInput(quote, options = {})'));

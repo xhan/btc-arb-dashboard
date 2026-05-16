@@ -1,6 +1,39 @@
 const assert = require('assert');
 
-const { createQuoteQueueRuntime } = require('../quote-queue-runtime-utils');
+const {
+  createActiveFetchControllerRuntime,
+  createQuoteQueueRuntime
+} = require('../quote-queue-runtime-utils');
+
+class FakeAbortController {
+  constructor() {
+    this.signal = { id: `signal-${FakeAbortController.instances.length + 1}` };
+    this.aborted = false;
+    FakeAbortController.instances.push(this);
+  }
+
+  abort() {
+    this.aborted = true;
+  }
+}
+FakeAbortController.instances = [];
+
+{
+  const fetchRuntime = createActiveFetchControllerRuntime({ AbortController: FakeAbortController });
+  const first = fetchRuntime.create(101);
+  assert.strictEqual(fetchRuntime.has(101), true);
+  assert.strictEqual(fetchRuntime.get(101), first);
+  const second = fetchRuntime.create(101);
+  assert.strictEqual(first.aborted, true, 'creating a new controller should abort the previous one for the same quote');
+  assert.strictEqual(fetchRuntime.get(101), second);
+  assert.strictEqual(fetchRuntime.deleteIfCurrent(101, first), false);
+  assert.strictEqual(fetchRuntime.deleteIfCurrent(101, second), true);
+  assert.strictEqual(fetchRuntime.has(101), false);
+  fetchRuntime.create(201);
+  fetchRuntime.create(202);
+  assert.strictEqual(fetchRuntime.abortAll(), 2);
+  assert.strictEqual(fetchRuntime.getControllers().size, 0);
+}
 
 function createRuntimeHarness(overrides = {}) {
   let dashboardState = overrides.dashboardState || [];
