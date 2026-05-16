@@ -94,6 +94,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="muted-path-runtime-utils.js"'));
     assert.ok(response.body.includes('src="quote-state-runtime-utils.js"'));
     assert.ok(response.body.includes('src="quote-queue-runtime-utils.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
@@ -180,6 +181,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="muted-path-storage-utils.js"') < response.body.indexOf('src="path-alert-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="muted-path-leg-utils.js"') < response.body.indexOf('src="muted-path-runtime-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="muted-path-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(!response.body.includes('id="alert-sound"'));
     assert.ok(!response.body.includes('src="alert.mp3"'));
@@ -288,6 +295,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(pathAlertUtilsResponse.statusCode, 200);
     const mutedPathLegUtilsResponse = await request('/muted-path-leg-utils.js');
     assert.strictEqual(mutedPathLegUtilsResponse.statusCode, 200);
+    const mutedPathRuntimeUtilsResponse = await request('/muted-path-runtime-utils.js');
+    assert.strictEqual(mutedPathRuntimeUtilsResponse.statusCode, 200);
     const pathAlertPageUtilsResponse = await request('/path-alert-page-utils.js');
     assert.strictEqual(pathAlertPageUtilsResponse.statusCode, 200);
     const pathAlertEditorUtilsResponse = await request('/path-alert-editor-utils.js');
@@ -453,7 +462,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getAlertLogUiUtils()'));
     assert.ok(appJsResponse.body.includes('AlertLogUiUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildQuoteAlertLogHtml(logEntry, {'));
-    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogPlan(mutedPathTargets, {'));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogPlan(mutedPathRuntime.getTargets(), {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(item.entry, {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildPathAlertLogCardHtml(entry, {'));
     assert.ok(!appJsResponse.body.includes('appendAlertLogEntry'));
@@ -749,6 +758,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('typeof window.PathAlertUtils'));
     assert.ok(appJsResponse.body.includes('function getMutedPathLegUtils()'));
     assert.ok(appJsResponse.body.includes('MutedPathLegUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getMutedPathRuntimeUtils()'));
+    assert.ok(appJsResponse.body.includes('MutedPathRuntimeUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('const mutedPathRuntime = getMutedPathRuntimeUtils().createMutedPathRuntime({'));
+    assert.ok(mutedPathRuntimeUtilsResponse.body.includes('function createMutedPathRuntime(options = {})'));
+    assert.ok(!appJsResponse.body.includes('let mutedPathTargets = [];'));
+    assert.ok(!appJsResponse.body.includes('let mutedPathLegs = [];'));
+    assert.ok(!appJsResponse.body.includes('let mutedPathLogTimer = null;'));
     const mutedPathLegExportBlock = mutedPathLegUtilsResponse.body.match(/return \{\n    DEFAULT_MUTED_PATH_LEG_DURATION_MS,[\s\S]*?\n  \};/);
     assert.ok(mutedPathLegExportBlock);
     assert.ok(!mutedPathLegExportBlock[0].includes('DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT'));
@@ -762,7 +778,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbRuntimeMemoryUtils().buildRetainedArbOpportunityStore(nextOpportunityMap, retainedEntries)'));
     assert.ok(!appJsResponse.body.includes('window.ArbRuntimeMemoryUtils &&'));
     assert.ok(appJsResponse.body.includes('let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();'));
-    assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathLegs, nowMs)'));
+    assert.ok(appJsResponse.body.includes('getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathRuntime.getLegs(), nowMs)'));
     const pruneMutedPathTargetsMatch = appJsResponse.body.match(/function pruneMutedPathTargetsInPlace\([\s\S]*?\n    \}/);
     assert.ok(pruneMutedPathTargetsMatch);
     assert.ok(!pruneMutedPathTargetsMatch[0].includes('window.PathAlertUtils'));

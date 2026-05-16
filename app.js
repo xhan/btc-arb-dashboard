@@ -29,10 +29,7 @@
     let pathAlertPanelHidden = true;
     const pathAlertPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let pathAlertRuntimeState = new Map();
-    let mutedPathTargets = [];
-    let mutedPathLegs = [];
     const mutedAlertStateHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
-    let mutedPathLogTimer = null;
     let pathAlertReloading = false;
     let pathAlertExternalReloadTimer = null;
     let forceImmediateAlerts = false;
@@ -223,6 +220,13 @@
             throw new Error('MutedPathLegUtils is not loaded');
         }
         return window.MutedPathLegUtils;
+    }
+
+    function getMutedPathRuntimeUtils() {
+        if (!window.MutedPathRuntimeUtils) {
+            throw new Error('MutedPathRuntimeUtils is not loaded');
+        }
+        return window.MutedPathRuntimeUtils;
     }
 
     function getMutedPathStorageUtils() {
@@ -482,6 +486,21 @@
         dashboardRuntimeUtils: getDashboardRuntimeUtils()
     });
     const dataTerminalCache = getDataTerminalUtils().createDataTerminalCache();
+    const mutedPathRuntime = getMutedPathRuntimeUtils().createMutedPathRuntime({
+        pruneTargets: (entries, nowMs) => getPathAlertUtils().pruneExpiredMutedPathTargets(entries, nowMs),
+        pruneLegs: (entries, nowMs) => getMutedPathLegUtils().pruneExpiredMutedPathLegs(entries, nowMs),
+        resolveRefreshDelay: ({ mutedPathTargets, mutedPathLegs, nowMs }) => getDashboardRuntimeUtils().resolveMutedStateRefreshDelay({
+            mutedPathTargets,
+            mutedPathLegs,
+            nowMs,
+            visible: isAlertLogPanelVisible(),
+            visibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS,
+            hiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS
+        }),
+        clearTimeout,
+        setTimeout,
+        now: () => Date.now()
+    });
 
     function refreshRequestChannelOptions() {
         requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
@@ -929,13 +948,12 @@
     }
 
     function pruneMutedPathTargetsInPlace(nowMs = Date.now()) {
-        mutedPathTargets = getPathAlertUtils().pruneExpiredMutedPathTargets(mutedPathTargets, nowMs);
-        return mutedPathTargets;
+        return mutedPathRuntime.pruneTargets(nowMs);
     }
 
     function getMutedPathTargetEntry(alertOrTarget, nowMs = Date.now()) {
         pruneMutedPathTargetsInPlace(nowMs);
-        return getPathAlertUtils().findMutedPathAlert(mutedPathTargets, alertOrTarget, nowMs);
+        return getPathAlertUtils().findMutedPathAlert(mutedPathRuntime.getTargets(), alertOrTarget, nowMs);
     }
 
     function buildMutedPathTargetKey(alertOrTarget) {
@@ -986,9 +1004,9 @@
         const storage = getLocalStorageSafe();
         if (!storage) return;
         try {
-            const list = getMutedPathStorageUtils().trimMutedPathTargetsForStorage(mutedPathTargets);
-            mutedPathTargets = Array.isArray(list) ? list : [];
-            storage.setItem(MUTED_PATH_TARGETS_STORAGE_KEY, JSON.stringify(mutedPathTargets));
+            const list = getMutedPathStorageUtils().trimMutedPathTargetsForStorage(mutedPathRuntime.getTargets());
+            mutedPathRuntime.setTargets(list);
+            storage.setItem(MUTED_PATH_TARGETS_STORAGE_KEY, JSON.stringify(mutedPathRuntime.getTargets()));
         } catch (error) {
             console.warn('保存沉默报警本地缓存失败:', error);
         }
@@ -998,9 +1016,9 @@
         const storage = getLocalStorageSafe();
         if (!storage) return;
         try {
-            const list = getMutedPathLegUtils().trimMutedPathLegsForStorage(mutedPathLegs);
-            mutedPathLegs = Array.isArray(list) ? list : [];
-            storage.setItem(MUTED_PATH_LEGS_STORAGE_KEY, JSON.stringify(mutedPathLegs));
+            const list = getMutedPathLegUtils().trimMutedPathLegsForStorage(mutedPathRuntime.getLegs());
+            mutedPathRuntime.setLegs(list);
+            storage.setItem(MUTED_PATH_LEGS_STORAGE_KEY, JSON.stringify(mutedPathRuntime.getLegs()));
         } catch (error) {
             console.warn('保存屏蔽腿本地缓存失败:', error);
         }
@@ -1014,7 +1032,7 @@
         if (!targetKey) return null;
         const logTitleSnapshot = buildMutedPathLogTitleSnapshot(entry);
         pruneMutedPathTargetsInPlace(nowMs);
-        const existingEntry = pathAlertUtils.findMutedPathTargetByKey(mutedPathTargets, targetKey);
+        const existingEntry = pathAlertUtils.findMutedPathTargetByKey(mutedPathRuntime.getTargets(), targetKey);
         const nextMutedEntry = existingEntry
             ? pathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS)
             : pathAlertUtils.createMutedPathTargetEntry(
@@ -1031,7 +1049,7 @@
             })
             : nextMutedEntry;
         if (!mutedEntry) return null;
-        mutedPathTargets = pathAlertUtils.upsertMutedPathTargetEntry(mutedPathTargets, mutedEntry);
+        mutedPathRuntime.setTargets(pathAlertUtils.upsertMutedPathTargetEntry(mutedPathRuntime.getTargets(), mutedEntry));
         persistMutedPathTargets();
         renderMutedAlertStatePanel(nowMs);
         updateMutedPathAlertLogCards(targetKey, nowMs);
@@ -1044,8 +1062,7 @@
     }
 
     function pruneMutedPathLegsInPlace(nowMs = Date.now()) {
-        mutedPathLegs = getMutedPathLegUtils().pruneExpiredMutedPathLegs(mutedPathLegs, nowMs);
-        return mutedPathLegs;
+        return mutedPathRuntime.pruneLegs(nowMs);
     }
 
     function triggerMutedPathLegRefresh(options = {}) {
@@ -1072,7 +1089,7 @@
         const legKey = buildMutedPathLegKey(leg);
         if (!legKey) return null;
         pruneMutedPathLegsInPlace(nowMs);
-        const existingEntry = mutedPathLegUtils.findMutedPathLegByKey(mutedPathLegs, legKey);
+        const existingEntry = mutedPathLegUtils.findMutedPathLegByKey(mutedPathRuntime.getLegs(), legKey);
         const nextEntry = existingEntry
             ? mutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, durationMs)
             : mutedPathLegUtils.createMutedPathLegEntry(
@@ -1089,7 +1106,7 @@
             })
             : nextEntry;
         if (!mutedEntry) return null;
-        mutedPathLegs = mutedPathLegUtils.upsertMutedPathLegEntry(mutedPathLegs, mutedEntry);
+        mutedPathRuntime.setLegs(mutedPathLegUtils.upsertMutedPathLegEntry(mutedPathRuntime.getLegs(), mutedEntry));
         persistMutedPathLegs();
         syncMutedPathLogTimer();
         triggerMutedPathLegRefresh({ closeDetail: true });
@@ -1100,11 +1117,11 @@
         if (!targetKey) return null;
         const pathAlertUtils = getPathAlertUtils();
         pruneMutedPathTargetsInPlace(nowMs);
-        const existingEntry = pathAlertUtils.findMutedPathTargetByKey(mutedPathTargets, targetKey);
+        const existingEntry = pathAlertUtils.findMutedPathTargetByKey(mutedPathRuntime.getTargets(), targetKey);
         if (!existingEntry) return null;
         const nextEntry = pathAlertUtils.extendMutedPathTargetEntry(existingEntry, nowMs, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
         if (!nextEntry) return null;
-        mutedPathTargets = pathAlertUtils.upsertMutedPathTargetEntry(mutedPathTargets, nextEntry);
+        mutedPathRuntime.setTargets(pathAlertUtils.upsertMutedPathTargetEntry(mutedPathRuntime.getTargets(), nextEntry));
         persistMutedPathTargets();
         renderMutedAlertStatePanel(nowMs);
         updateMutedPathAlertLogCards(targetKey, nowMs);
@@ -1114,7 +1131,7 @@
 
     function removeMutedPathTargetByKey(targetKey, nowMs = Date.now()) {
         if (!targetKey) return;
-        mutedPathTargets = getPathAlertUtils().removeMutedPathTargetByKey(mutedPathTargets, targetKey);
+        mutedPathRuntime.setTargets(getPathAlertUtils().removeMutedPathTargetByKey(mutedPathRuntime.getTargets(), targetKey));
         persistMutedPathTargets();
         renderMutedAlertStatePanel(nowMs);
         updateMutedPathAlertLogCards(targetKey, nowMs);
@@ -1125,11 +1142,11 @@
         if (!targetKey) return null;
         const mutedPathLegUtils = getMutedPathLegUtils();
         pruneMutedPathLegsInPlace(nowMs);
-        const existingEntry = mutedPathLegUtils.findMutedPathLegByKey(mutedPathLegs, targetKey);
+        const existingEntry = mutedPathLegUtils.findMutedPathLegByKey(mutedPathRuntime.getLegs(), targetKey);
         if (!existingEntry) return null;
         const nextEntry = mutedPathLegUtils.extendMutedPathLegEntry(existingEntry, nowMs, MUTED_PATH_LEG_EXTEND_DURATION_MS);
         if (!nextEntry) return null;
-        mutedPathLegs = mutedPathLegUtils.upsertMutedPathLegEntry(mutedPathLegs, nextEntry);
+        mutedPathRuntime.setLegs(mutedPathLegUtils.upsertMutedPathLegEntry(mutedPathRuntime.getLegs(), nextEntry));
         persistMutedPathLegs();
         syncMutedPathLogTimer();
         triggerMutedPathLegRefresh({ closeDetail: false });
@@ -1138,7 +1155,7 @@
 
     function removeMutedPathLegByKey(targetKey, nowMs = Date.now()) {
         if (!targetKey) return;
-        mutedPathLegs = getMutedPathLegUtils().removeMutedPathLegByKey(mutedPathLegs, targetKey);
+        mutedPathRuntime.setLegs(getMutedPathLegUtils().removeMutedPathLegByKey(mutedPathRuntime.getLegs(), targetKey));
         persistMutedPathLegs();
         syncMutedPathLogTimer();
         triggerMutedPathLegRefresh({ closeDetail: false });
@@ -1171,7 +1188,7 @@
             cards.forEach((card) => {
                 if (targetKey && card.dataset.mutedTargetKey !== targetKey) return;
                 const resolvedEntry = getPathAlertUtils().findMutedPathTargetByKey(
-                    mutedPathTargets,
+                    mutedPathRuntime.getTargets(),
                     card.dataset.mutedTargetKey
                 );
                 const statusEl = card.querySelector('[data-path-alert-muted-status]');
@@ -1196,8 +1213,8 @@
         pruneMutedPathTargetsInPlace(nowMs);
         pruneMutedPathLegsInPlace(nowMs);
         const panelHtml = getAlertLogUiUtils().buildMutedAlertStatePanelHtml({
-            mutedPathTargets,
-            mutedPathLegs,
+            mutedPathTargets: mutedPathRuntime.getTargets(),
+            mutedPathLegs: mutedPathRuntime.getLegs(),
             buildPathTargetKey: buildMutedPathTargetKey,
             buildPathStatusText: (entry) => getPathAlertUtils().buildMutedPathStatusText(entry, nowMs),
             buildLegKey: buildMutedPathLegKey,
@@ -1237,25 +1254,12 @@
         }
     }
 
-    function resolveMutedStateRefreshDelay(nowMs = Date.now()) {
-        return getDashboardRuntimeUtils().resolveMutedStateRefreshDelay({
-            mutedPathTargets,
-            mutedPathLegs,
-            nowMs,
-            visible: isAlertLogPanelVisible(),
-            visibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS,
-            hiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS
-        });
-    }
-
     function clearMutedPathLogTimer() {
-        if (!mutedPathLogTimer) return;
-        clearTimeout(mutedPathLogTimer);
-        mutedPathLogTimer = null;
+        mutedPathRuntime.clearTimer();
     }
 
     function refreshMutedPathRuntime(nowMs = Date.now()) {
-        const previousLegKeys = mutedPathLegs.map((entry) => buildMutedPathLegKey(entry)).join('|');
+        const previousLegKeys = mutedPathRuntime.getLegKeySnapshot(buildMutedPathLegKey);
         pruneMutedPathTargetsInPlace(nowMs);
         pruneMutedPathLegsInPlace(nowMs);
         persistMutedPathTargets();
@@ -1266,38 +1270,24 @@
                 renderMutedAlertStatePanel(nowMs);
             }
         }
-        const nextLegKeys = mutedPathLegs.map((entry) => buildMutedPathLegKey(entry)).join('|');
+        const nextLegKeys = mutedPathRuntime.getLegKeySnapshot(buildMutedPathLegKey);
         if (previousLegKeys !== nextLegKeys) {
             triggerMutedPathLegRefresh({ closeDetail: false });
         }
-        return Boolean(mutedPathTargets.length || mutedPathLegs.length);
+        return mutedPathRuntime.hasEntries();
     }
 
     function scheduleMutedPathLogTimer(nowMs = Date.now()) {
-        clearMutedPathLogTimer();
-        const delayMs = resolveMutedStateRefreshDelay(nowMs);
-        if (delayMs === null) return;
-        mutedPathLogTimer = setTimeout(() => {
-            mutedPathLogTimer = null;
-            const nextNow = Date.now();
-            if (refreshMutedPathRuntime(nextNow)) {
-                scheduleMutedPathLogTimer(nextNow);
-            }
-        }, delayMs);
+        mutedPathRuntime.scheduleRefresh(nowMs, refreshMutedPathRuntime);
     }
 
     function syncMutedPathLogTimer() {
-        const nowMs = Date.now();
-        if (!refreshMutedPathRuntime(nowMs)) {
-            clearMutedPathLogTimer();
-            return;
-        }
-        scheduleMutedPathLogTimer(nowMs);
+        mutedPathRuntime.syncRefresh(refreshMutedPathRuntime);
     }
 
     function restoreMutedAlertLogEntries(nowMs = Date.now()) {
-        if (!alertLogMutedLogContent || !mutedPathTargets.length) return;
-        const renderPlan = getAlertLogUiUtils().buildRestoredMutedAlertLogPlan(mutedPathTargets, {
+        if (!alertLogMutedLogContent || !mutedPathRuntime.getTargets().length) return;
+        const renderPlan = getAlertLogUiUtils().buildRestoredMutedAlertLogPlan(mutedPathRuntime.getTargets(), {
             buildTargetKey: buildMutedPathTargetKey,
             buildStatusText: (entry) => getPathAlertUtils().buildMutedPathStatusText(entry, nowMs)
         });
@@ -1460,12 +1450,12 @@
 
     function filterMutedArbEdges(edges, nowMs = Date.now()) {
         pruneMutedPathLegsInPlace(nowMs);
-        return getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathLegs, nowMs);
+        return getMutedPathLegUtils().filterMutedPathLegs(edges, mutedPathRuntime.getLegs(), nowMs);
     }
 
     function filterMutedArbCycles(cycles, nowMs = Date.now()) {
         pruneMutedPathLegsInPlace(nowMs);
-        return getMutedPathLegUtils().filterMutedCycles(cycles, mutedPathLegs, nowMs);
+        return getMutedPathLegUtils().filterMutedCycles(cycles, mutedPathRuntime.getLegs(), nowMs);
     }
 
     function buildVisibleArbEdges(quotes, nowMs = Date.now()) {
@@ -1501,7 +1491,7 @@
             quotesByCategoryName,
             quoteStateById: getQuoteMarketStateMap(),
             aliasRules,
-            mutedPathLegs,
+            mutedPathLegs: mutedPathRuntime.getLegs(),
             mutedPathLegUtils: getMutedPathLegUtils(),
             preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
             arbPathsApi: arbPaths,
@@ -5287,8 +5277,8 @@
         await loadArbSettings();
         const storage = getLocalStorageSafe();
         applyTheme(storage ? storage.getItem('theme') : null);
-        mutedPathTargets = loadMutedPathTargetsFromStorage();
-        mutedPathLegs = loadMutedPathLegsFromStorage();
+        mutedPathRuntime.setTargets(loadMutedPathTargetsFromStorage());
+        mutedPathRuntime.setLegs(loadMutedPathLegsFromStorage());
         
         try {
             const response = await fetch(`${BACKEND_URL}/api/get-config`);
