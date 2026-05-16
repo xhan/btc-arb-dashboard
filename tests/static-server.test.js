@@ -682,6 +682,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(requestChannelUtilsResponse.body.includes('function buildRequestChannelTagPatch(quote, channel, options = {})'));
     assert.ok(requestChannelUtilsResponse.body.includes('function applyRequestChannelTagForQuote(quote, requestChannels, options = {})'));
     assert.ok(requestChannelUtilsResponse.body.includes('function applyRequestChannelTagsVisibility(bodyEl, visible)'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function createRequestChannelTagVisibilityRuntime(options = {})'));
     assert.ok(requestChannelUtilsResponse.body.includes('function parseMultiChannelEnabledStorageValue(value, fallback = true)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function formatMultiChannelEnabledStorageValue(enabled)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function loadMultiChannelEnabledFromStorage(storage, options = {})'));
@@ -693,7 +694,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!requestChannelExportBlock[0].includes('getQueueSourceKeyForQuote'));
     assert.ok(!requestChannelExportBlock[0].includes('normalizeRequestChannelId'));
     assert.ok(appJsResponse.body.includes('const multiChannelToggleRuntime = getRequestChannelUtils().createMultiChannelToggleRuntime({'));
+    assert.ok(appJsResponse.body.includes('const requestChannelTagVisibilityRuntime = getRequestChannelUtils().createRequestChannelTagVisibilityRuntime({'));
     assert.ok(appJsResponse.body.includes('multiChannelEnabled = multiChannelToggleRuntime.load();'));
+    assert.ok(appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
+    assert.ok(appJsResponse.body.includes('requestChannelTagVisibilityRuntime.toggle();'));
     assert.ok(appJsResponse.body.includes('const result = multiChannelToggleRuntime.set(nextValue);'));
     assert.ok(!appJsResponse.body.includes('utils.loadMultiChannelEnabledFromStorage(getDashboardLocalStorage(), {'));
     assert.ok(!appJsResponse.body.includes('utils.persistMultiChannelEnabledToStorage(getDashboardLocalStorage(), multiChannelEnabled, {'));
@@ -785,7 +789,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, monitorState)'));
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildRequestChannelTagHtml(quote, requestChannel)'));
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagForQuote(quote, requestChannelOptions, {'));
-    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body, showRequestChannelTags)'));
+    assert.ok(!appJsResponse.body.includes('showRequestChannelTags'));
+    assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body'));
     assert.ok(!appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml'));
     assert.ok(!appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch'));
     assert.ok(!appJsResponse.body.includes("itemEl.querySelector(`#quote-channel-tag-${quote.id}`)"));
@@ -1340,8 +1345,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
     assert.ok(appJsResponse.body.includes('toggleQuoteDisplayMode()'));
     assert.ok(appJsResponse.body.includes('toggleDataTerminalPanel()'));
-    assert.ok(appJsResponse.body.includes('toggleRequestChannelTags()'));
-    assert.ok(appJsResponse.body.includes('let showRequestChannelTags = true;'));
+    assert.ok(appJsResponse.body.includes('requestChannelTagVisibilityRuntime.toggle();'));
+    assert.ok(!appJsResponse.body.includes('toggleRequestChannelTags()'));
+    assert.ok(!appJsResponse.body.includes('let showRequestChannelTags = true;'));
     assert.ok(!appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));
     assert.ok(!appJsResponse.body.includes("USDE: 'USDe'"));
     assert.ok(arbEquivalenceUtilsResponse.body.includes("USDe: ['USDe', 'USDE']"));

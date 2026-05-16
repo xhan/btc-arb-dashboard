@@ -10,7 +10,6 @@
     let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
     let requestChannelPayload = { channels: [] };
     let multiChannelEnabled = true;
-    let showRequestChannelTags = true;
     let requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
     const dashboardApiClient = getDashboardApiUtils().createDashboardApiClient({
         backendUrl: BACKEND_URL,
@@ -292,6 +291,10 @@
         getStorage: getDashboardLocalStorage,
         onLoadError: (error) => console.warn('读取多渠道开关本地缓存失败:', error),
         onPersistError: (error) => console.warn('保存多渠道开关本地缓存失败:', error)
+    });
+    const requestChannelTagVisibilityRuntime = getRequestChannelUtils().createRequestChannelTagVisibilityRuntime({
+        getBody: () => document.body,
+        visible: true
     });
     const arbDetailModal = document.getElementById('arb-detail-modal');
     const arbDetailCloseBtn = document.getElementById('arb-detail-close-btn');
@@ -641,15 +644,6 @@
         getRequestChannelUtils().applyRequestChannelTagForQuote(quote, requestChannelOptions, {
             getElementById: (id) => document.getElementById(id)
         });
-    }
-
-    function syncRequestChannelTagVisibility() {
-        getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body, showRequestChannelTags);
-    }
-
-    function toggleRequestChannelTags() {
-        showRequestChannelTags = !showRequestChannelTags;
-        syncRequestChannelTagVisibility();
     }
 
     const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({
@@ -3657,7 +3651,7 @@
                 toggleAlertLogPanel();
                 break;
             case 'toggle-request-channel-tags':
-                toggleRequestChannelTags();
+                requestChannelTagVisibilityRuntime.toggle();
                 break;
         }
     }
@@ -4464,7 +4458,7 @@
     async function init() {
         audioNoticeEl.style.display = 'block';
         multiChannelEnabled = multiChannelToggleRuntime.load();
-        syncRequestChannelTagVisibility();
+        requestChannelTagVisibilityRuntime.apply();
         await requestBackendConfigRefresh();
         await loadPriceSnapshotConfig();
         await loadArbSettings();

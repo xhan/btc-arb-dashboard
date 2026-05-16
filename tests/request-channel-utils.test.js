@@ -12,6 +12,7 @@ const {
   buildRequestChannelTagPatch,
   buildRequestChannelOptionsHtml,
   createMultiChannelToggleRuntime,
+  createRequestChannelTagVisibilityRuntime,
   formatMultiChannelEnabledStorageValue,
   getBrowserLocalStorage,
   getEffectiveRequestChannelIdForQuote,
@@ -280,6 +281,19 @@ assert.strictEqual(requestChannelVisibilityClasses.has('show-request-channel-tag
 assert.strictEqual(applyRequestChannelTagsVisibility(requestChannelVisibilityBody, false), true);
 assert.strictEqual(requestChannelVisibilityClasses.has('show-request-channel-tags'), false);
 assert.strictEqual(applyRequestChannelTagsVisibility(null, true), false);
+const requestChannelVisibilityRuntime = createRequestChannelTagVisibilityRuntime({
+  body: requestChannelVisibilityBody,
+  visible: true
+});
+assert.strictEqual(requestChannelVisibilityRuntime.get(), true);
+assert.strictEqual(requestChannelVisibilityRuntime.apply(), true);
+assert.strictEqual(requestChannelVisibilityClasses.has('show-request-channel-tags'), true);
+assert.strictEqual(requestChannelVisibilityRuntime.toggle(), false);
+assert.strictEqual(requestChannelVisibilityRuntime.get(), false);
+assert.strictEqual(requestChannelVisibilityClasses.has('show-request-channel-tags'), false);
+assert.strictEqual(requestChannelVisibilityRuntime.set(true), true);
+assert.strictEqual(requestChannelVisibilityClasses.has('show-request-channel-tags'), true);
+assert.strictEqual(createRequestChannelTagVisibilityRuntime({ body: null }).apply(), false);
 
 const browserStorage = {};
 assert.strictEqual(getBrowserLocalStorage({ window: { localStorage: browserStorage } }), browserStorage);

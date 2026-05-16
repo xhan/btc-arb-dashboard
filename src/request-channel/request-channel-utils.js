@@ -319,6 +319,30 @@
     return true;
   }
 
+  function createRequestChannelTagVisibilityRuntime(options = {}) {
+    let visible = options.visible !== false;
+    const getBody = typeof options.getBody === 'function'
+      ? options.getBody
+      : () => options.body || (typeof document !== 'undefined' ? document.body : null);
+
+    function apply() {
+      return applyRequestChannelTagsVisibility(getBody(), visible);
+    }
+
+    function set(nextVisible) {
+      visible = nextVisible === true;
+      apply();
+      return visible;
+    }
+
+    return {
+      apply,
+      get: () => visible,
+      set,
+      toggle: () => set(!visible)
+    };
+  }
+
   function parseMultiChannelEnabledStorageValue(value, fallback = true) {
     if (value == null) return fallback !== false;
     return value !== 'false';
@@ -498,6 +522,7 @@
     buildRequestChannelTagPatch,
     buildRequestChannelOptionsHtml,
     createMultiChannelToggleRuntime,
+    createRequestChannelTagVisibilityRuntime,
     formatMultiChannelEnabledStorageValue,
     getBrowserLocalStorage,
     getEffectiveRequestChannelIdForQuote,
