@@ -9,7 +9,7 @@
 - 现状：
   - 运行时配置默认值、容错读取和缓存刷新已下沉到 `src/server/runtime-config-utils.js`
   - `server.js` 通过 `createRuntimeConfigStore()` 持有缓存，`buildQuoteRequestInput()` 通过缓存读取 request-channel 配置
-  - `config.json`、`config_more.json`、`request_channels.json` 只在启动、`/api/request-update-config`、`/api/save-config` 后重读并归一化
+  - `config.json`、`config/config_more.json`、`config/request_channels.json` 只在启动、`/api/request-update-config`、`/api/save-config` 后重读并归一化
   - `tests/runtime-config-utils.test.js` 覆盖默认值、归一化、缺失/坏 JSON fallback 和 Cetus 启动配置；`tests/request-channels-api.test.js` 覆盖 `/api/save-config` 后缓存刷新
 - 预期收益：
   - 已降低高频报价接口的 Node CPU 和磁盘 IO

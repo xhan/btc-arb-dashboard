@@ -29,7 +29,7 @@ https://api-sui.cetus.zone/router_v3/find_routes
 
 ## 可选配置
 
-可以在 `config_more.json` 里增加下面两个字段：
+可以在 `config/config_more.json` 里增加下面两个字段：
 
 ```json
 {

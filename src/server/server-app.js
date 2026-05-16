@@ -90,8 +90,8 @@ function createDashboardServer(options = {}) {
   });
 
   const configPath = resolveProjectFilePath('config.json', 'CONFIG_PATH', { rootDir });
-  const configMorePath = resolveProjectFilePath('config_more.json', 'CONFIG_MORE_PATH', { rootDir });
-  const requestChannelsPath = resolveProjectFilePath('request_channels.json', 'REQUEST_CHANNELS_PATH', { rootDir });
+  const configMorePath = resolveProjectFilePath(path.join('config', 'config_more.json'), 'CONFIG_MORE_PATH', { rootDir });
+  const requestChannelsPath = resolveProjectFilePath(path.join('config', 'request_channels.json'), 'REQUEST_CHANNELS_PATH', { rootDir });
   const metadataCachePath = resolveProjectFilePath(path.join('db', 'metadata-cache.json'), 'METADATA_CACHE_PATH', { rootDir });
   const alertConfigPath = resolveProjectFilePath('alert.json', 'ALERT_CONFIG_PATH', { rootDir });
   const priceSnapshotDir = path.resolve(env.PRICE_SNAPSHOT_DIR || path.join(rootDir, 'db', 'price'));

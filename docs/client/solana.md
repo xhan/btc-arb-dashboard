@@ -22,7 +22,7 @@ GET https://api.jup.ag/swap/v1/quote
 说明：
 
 - 现在已经迁移到新版 `api.jup.ag`
-- `Jupiter API Key` 通过 [config_more.json](/Users/xhan/Desktop/market_diff/config_more.json) 中的 `jupiterApiKey` 提供
+- `Jupiter API Key` 通过 [config/config_more.json](/Users/xhan/Desktop/market_diff/config/config_more.json) 中的 `jupiterApiKey` 提供
 
 ### Helius 元数据
 
