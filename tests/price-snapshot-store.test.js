@@ -8,6 +8,7 @@ const {
   normalizePriceSnapshotConfig,
   buildPriceSnapshotEntry,
   getPriceSnapshotDbPath,
+  createPriceSnapshotStore,
   appendPriceSnapshot,
   prunePriceSnapshots,
   getNearestPriceSnapshot,
@@ -63,6 +64,43 @@ const dbPath = getPriceSnapshotDbPath('db/price');
 assert.strictEqual(dbPath, path.join('db/price', 'price-snapshots.db'));
 
 (async () => {
+  const reuseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'price-snapshot-store-reuse-'));
+  fs.writeFileSync(getPriceSnapshotDbPath(reuseDir), '');
+  const openedDbPaths = [];
+  const closedDbPaths = [];
+  class FakeDatabase {
+    constructor(fakeDbPath) {
+      this.dbPath = fakeDbPath;
+      openedDbPaths.push(fakeDbPath);
+    }
+
+    exec() {}
+
+    prepare() {
+      return {
+        get: () => null,
+        all: () => [],
+        run: () => ({ lastInsertRowid: 1 })
+      };
+    }
+
+    close() {
+      closedDbPaths.push(this.dbPath);
+    }
+  }
+
+  const reusableStore = createPriceSnapshotStore(reuseDir, { DatabaseSync: FakeDatabase });
+  await reusableStore.getNearestPriceSnapshot(new Date('2026-02-28T12:00:00.000Z'));
+  await reusableStore.getClosestPriceSnapshot(new Date('2026-02-28T12:05:00.000Z'));
+  assert.strictEqual(openedDbPaths.length, 1);
+  assert.deepStrictEqual(closedDbPaths, []);
+  reusableStore.close();
+  assert.deepStrictEqual(closedDbPaths, [getPriceSnapshotDbPath(reuseDir)]);
+  await reusableStore.listRecentChartPairs();
+  assert.strictEqual(openedDbPaths.length, 2);
+  reusableStore.close();
+  fs.rmSync(reuseDir, { recursive: true, force: true });
+
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'price-snapshot-'));
   const firstTime = new Date('2026-02-28T12:00:00.000Z');
   const secondTime = new Date('2026-02-28T12:10:00.000Z');

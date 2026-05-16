@@ -117,6 +117,54 @@ function withDatabase(dbPath, fn) {
   }
 }
 
+function createPriceSnapshotDatabaseSession(options = {}) {
+  const DatabaseImpl = options.DatabaseSync || DatabaseSync;
+  let activeDbPath = '';
+  let activeDb = null;
+
+  function close() {
+    if (activeDb && typeof activeDb.close === 'function') {
+      activeDb.close();
+    }
+    activeDb = null;
+    activeDbPath = '';
+  }
+
+  function open(dbPath) {
+    if (activeDb && activeDbPath === dbPath) {
+      return activeDb;
+    }
+    close();
+    const nextDb = new DatabaseImpl(dbPath);
+    try {
+      ensureSchemaOnce(dbPath, nextDb);
+    } catch (error) {
+      if (nextDb && typeof nextDb.close === 'function') {
+        nextDb.close();
+      }
+      throw error;
+    }
+    activeDb = nextDb;
+    activeDbPath = dbPath;
+    return activeDb;
+  }
+
+  return {
+    close,
+    withDatabase(dbPath, fn) {
+      return fn(open(dbPath));
+    }
+  };
+}
+
+function resolveWithDatabase(options = {}) {
+  const session = options && options.databaseSession;
+  if (session && typeof session.withDatabase === 'function') {
+    return session.withDatabase;
+  }
+  return withDatabase;
+}
+
 function getLatestSnapshotMeta(db) {
   return db.prepare(`
     SELECT id, captured_at_ms
@@ -183,7 +231,7 @@ function getSnapshotByBatchId(db, batchId) {
   };
 }
 
-async function appendPriceSnapshot(baseDir, payload = {}, now = new Date()) {
+async function appendPriceSnapshot(baseDir, payload = {}, now = new Date(), options = {}) {
   await fs.mkdir(baseDir, { recursive: true });
   const dbPath = getPriceSnapshotDbPath(baseDir);
   try {
@@ -192,8 +240,9 @@ async function appendPriceSnapshot(baseDir, payload = {}, now = new Date()) {
     markSchemaDirty(dbPath);
   }
   const entry = buildPriceSnapshotEntry(payload, now);
+  const withDb = resolveWithDatabase(options);
 
-  withDatabase(dbPath, (db) => {
+  withDb(dbPath, (db) => {
     const insertBatch = db.prepare(`
       INSERT INTO snapshot_batches (captured_at, captured_at_ms, client_captured_at, quote_count)
       VALUES (?, ?, ?, ?)
@@ -269,8 +318,9 @@ async function prunePriceSnapshots(baseDir, options = {}) {
   const cutoffMs = nowMs - maxAgeMs;
   const shouldVacuum = options.vacuum !== false;
   const isDryRun = options.dryRun === true;
+  const withDb = resolveWithDatabase(options);
 
-  return withDatabase(dbPath, (db) => {
+  return withDb(dbPath, (db) => {
     const before = getSnapshotTotals(db);
     const stale = getSnapshotTotals(db, 'WHERE captured_at_ms < ?', cutoffMs);
 
@@ -328,7 +378,7 @@ async function prunePriceSnapshots(baseDir, options = {}) {
   });
 }
 
-async function getNearestPriceSnapshot(baseDir, targetTime = new Date()) {
+async function getNearestPriceSnapshot(baseDir, targetTime = new Date(), options = {}) {
   const dbPath = getPriceSnapshotDbPath(baseDir);
   try {
     await fs.access(dbPath);
@@ -339,7 +389,8 @@ async function getNearestPriceSnapshot(baseDir, targetTime = new Date()) {
   const targetMs = targetTime instanceof Date ? targetTime.getTime() : new Date(targetTime).getTime();
   if (!Number.isFinite(targetMs)) return null;
 
-  return withDatabase(dbPath, (db) => {
+  const withDb = resolveWithDatabase(options);
+  return withDb(dbPath, (db) => {
     const batch = db.prepare(`
       SELECT id, captured_at, captured_at_ms, client_captured_at, quote_count
       FROM snapshot_batches
@@ -367,7 +418,8 @@ async function getClosestPriceSnapshot(baseDir, targetTime = new Date(), options
   const mode = ['floor', 'ceil', 'nearest'].includes(options.mode) ? options.mode : 'floor';
   const maxGapMs = Number.isFinite(options.maxGapMs) && options.maxGapMs >= 0 ? options.maxGapMs : null;
 
-  return withDatabase(dbPath, (db) => {
+  const withDb = resolveWithDatabase(options);
+  return withDb(dbPath, (db) => {
     const before = db.prepare(`
       SELECT id, captured_at_ms
       FROM snapshot_batches
@@ -468,7 +520,8 @@ async function listRecentChartPairs(baseDir, options = {}) {
     ? options.windowMs
     : 2 * 60 * 60 * 1000;
 
-  return withDatabase(dbPath, (db) => {
+  const withDb = resolveWithDatabase(options);
+  return withDb(dbPath, (db) => {
     const latest = getLatestSnapshotMeta(db);
     if (!latest) return [];
 
@@ -540,7 +593,8 @@ async function getChartSeries(baseDir, options = {}) {
     ? options.windowMs
     : 2 * 60 * 60 * 1000;
 
-  return withDatabase(dbPath, (db) => {
+  const withDb = resolveWithDatabase(options);
+  return withDb(dbPath, (db) => {
     const latest = getLatestSnapshotMeta(db);
     if (!latest) return null;
 
@@ -597,10 +651,40 @@ async function getChartSeries(baseDir, options = {}) {
   });
 }
 
+function createPriceSnapshotStore(baseDir, options = {}) {
+  const databaseSession = createPriceSnapshotDatabaseSession(options);
+  const withSession = { databaseSession };
+
+  return {
+    appendPriceSnapshot(payload = {}, now = new Date()) {
+      return appendPriceSnapshot(baseDir, payload, now, withSession);
+    },
+    prunePriceSnapshots(options = {}) {
+      return prunePriceSnapshots(baseDir, { ...options, databaseSession });
+    },
+    getNearestPriceSnapshot(targetTime = new Date()) {
+      return getNearestPriceSnapshot(baseDir, targetTime, withSession);
+    },
+    getClosestPriceSnapshot(targetTime = new Date(), options = {}) {
+      return getClosestPriceSnapshot(baseDir, targetTime, { ...options, databaseSession });
+    },
+    listRecentChartPairs(options = {}) {
+      return listRecentChartPairs(baseDir, { ...options, databaseSession });
+    },
+    getChartSeries(options = {}) {
+      return getChartSeries(baseDir, { ...options, databaseSession });
+    },
+    close() {
+      databaseSession.close();
+    }
+  };
+}
+
 module.exports = {
   normalizePriceSnapshotConfig,
   buildPriceSnapshotEntry,
   getPriceSnapshotDbPath,
+  createPriceSnapshotStore,
   appendPriceSnapshot,
   prunePriceSnapshots,
   getNearestPriceSnapshot,

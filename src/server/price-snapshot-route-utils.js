@@ -1,9 +1,6 @@
 const {
     normalizePriceSnapshotConfig,
-    appendPriceSnapshot: defaultAppendPriceSnapshot,
-    getClosestPriceSnapshot: defaultGetClosestPriceSnapshot,
-    listRecentChartPairs: defaultListRecentChartPairs,
-    getChartSeries: defaultGetChartSeries
+    createPriceSnapshotStore
 } = require('../price-snapshots/price-snapshot-store');
 const {
     decorateSnapshotSelection: defaultDecorateSnapshotSelection,
@@ -31,10 +28,15 @@ function registerPriceSnapshotRoutes(options) {
     const priceSnapshotDir = options.priceSnapshotDir;
     const getConfigMore = options.getConfigMore;
     const chartPairWindowMs = options.chartPairWindowMs || DEFAULT_CHART_PAIR_WINDOW_MS;
-    const appendPriceSnapshot = options.appendPriceSnapshot || defaultAppendPriceSnapshot;
-    const getClosestPriceSnapshot = options.getClosestPriceSnapshot || defaultGetClosestPriceSnapshot;
-    const listRecentChartPairs = options.listRecentChartPairs || defaultListRecentChartPairs;
-    const getChartSeries = options.getChartSeries || defaultGetChartSeries;
+    const priceSnapshotStore = options.priceSnapshotStore || createPriceSnapshotStore(priceSnapshotDir);
+    const appendPriceSnapshot = options.appendPriceSnapshot
+        || ((dir, payload) => priceSnapshotStore.appendPriceSnapshot(payload));
+    const getClosestPriceSnapshot = options.getClosestPriceSnapshot
+        || ((dir, at, selectionOptions) => priceSnapshotStore.getClosestPriceSnapshot(at, selectionOptions));
+    const listRecentChartPairs = options.listRecentChartPairs
+        || ((dir, pairOptions) => priceSnapshotStore.listRecentChartPairs(pairOptions));
+    const getChartSeries = options.getChartSeries
+        || ((dir, seriesOptions) => priceSnapshotStore.getChartSeries(seriesOptions));
     const decorateSnapshotSelection = options.decorateSnapshotSelection || defaultDecorateSnapshotSelection;
     const buildReplayFromSnapshot = options.buildReplayFromSnapshot || defaultBuildReplayFromSnapshot;
     const renderReplayText = options.renderReplayText || defaultRenderReplayText;

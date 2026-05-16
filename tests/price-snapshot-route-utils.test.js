@@ -117,10 +117,58 @@ async function runReplayTextTest() {
   assert.strictEqual(replayResponse.body, 'replay:USDC');
 }
 
+async function runStoreDefaultTest() {
+  const storeApp = createFakeApp();
+  const storeCalls = [];
+  registerPriceSnapshotRoutes({
+    app: storeApp,
+    priceSnapshotDir: '/ignored',
+    getConfigMore: async () => ({ enablePriceSnapshot: true }),
+    priceSnapshotStore: {
+      appendPriceSnapshot: async (payload) => {
+        storeCalls.push(['store-append', payload]);
+        return '/snapshots/store.db';
+      },
+      getClosestPriceSnapshot: async (at, options) => {
+        storeCalls.push(['store-closest', at.toISOString(), options]);
+        return { snapshot: { capturedAt: '2026-02-28T16:00:10.000Z' } };
+      },
+      listRecentChartPairs: async (options) => {
+        storeCalls.push(['store-pairs', options]);
+        return [{ key: '2:forward' }];
+      },
+      getChartSeries: async (options) => {
+        storeCalls.push(['store-series', options]);
+        return { key: `${options.quoteId}:${options.direction}`, points: [] };
+      }
+    },
+    buildReplayFromSnapshot: (selection) => ({ selection }),
+    decorateSnapshotSelection: (selection) => ({ decorated: selection }),
+    renderReplayText: () => ''
+  });
+
+  const saveResponse = createResponse();
+  await storeApp.handlers.get('POST /api/save-price-snapshot')({ body: { quotes: [{ quoteId: 2 }] } }, saveResponse);
+  assert.deepStrictEqual(storeCalls[0], ['store-append', { quotes: [{ quoteId: 2 }] }]);
+
+  const pairsResponse = createResponse();
+  await storeApp.handlers.get('GET /api/chart-pairs')({ query: {} }, pairsResponse);
+  assert.deepStrictEqual(pairsResponse.body, [{ key: '2:forward' }]);
+  assert.deepStrictEqual(storeCalls[1], ['store-pairs', { windowMs: 600000 }]);
+
+  const snapshotResponse = createResponse();
+  await storeApp.handlers.get('GET /api/get-price-snapshot')({
+    query: { at: '2026-03-01 00:00:00', mode: 'nearest' }
+  }, snapshotResponse);
+  assert.strictEqual(storeCalls[2][0], 'store-closest');
+  assert.deepStrictEqual(storeCalls[2][2], { mode: 'nearest', maxGapMs: null });
+}
+
 Promise.resolve()
   .then(runConfigAndSaveTests)
   .then(runChartTests)
   .then(runReplayTextTest)
+  .then(runStoreDefaultTest)
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;
