@@ -11,6 +11,7 @@ const {
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
   buildFixedArbSections,
+  buildSpecialArbSections,
   buildQuotePriceWatchDisplayEntry,
   buildQuotePriceWatchSection,
   cycleContainsAnyChains,
@@ -415,6 +416,58 @@ assert.deepStrictEqual(
       title: '固定路径',
       opportunities: [],
       emptyText: '无收益率 > 1bp'
+    }
+  ]
+);
+
+const specialCyclePositive = { id: 'special-positive', profitRate: 0.0003 };
+const specialCycleNegative = { id: 'special-negative', profitRate: -0.0001 };
+assert.deepStrictEqual(
+  buildSpecialArbSections({
+    specialResults: [
+      {
+        opportunities: [
+          { label: 'USDTB 规则', ruleId: 'usdtb', cycle: specialCyclePositive, display_message: 'positive' },
+          { label: '负收益规则', ruleId: 'loss', cycle: specialCycleNegative, display_message: 'negative' }
+        ]
+      }
+    ],
+    specialRules: [
+      { title: 'USDTB 规则' },
+      { title: '负收益规则' },
+      { title: '空规则' },
+      { title: '' }
+    ],
+    buildEntry: (opportunity) => ({
+      label: opportunity.label,
+      cycle: opportunity.cycle,
+      ruleId: opportunity.ruleId,
+      message: opportunity.display_message
+    })
+  }),
+  [
+    {
+      title: 'USDTB 规则',
+      sectionType: 'special-rule',
+      titleProfitRate: 0.0003,
+      opportunities: [
+        { label: '', cycle: specialCyclePositive, ruleId: 'usdtb', message: 'positive' }
+      ],
+      emptyText: '无收益率'
+    },
+    {
+      title: '负收益规则',
+      sectionType: 'special-rule',
+      titleProfitRate: null,
+      opportunities: [],
+      emptyText: '无收益率'
+    },
+    {
+      title: '空规则',
+      sectionType: 'special-rule',
+      titleProfitRate: null,
+      opportunities: [],
+      emptyText: '无收益率'
     }
   ]
 );

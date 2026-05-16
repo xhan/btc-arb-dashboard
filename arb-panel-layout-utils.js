@@ -329,6 +329,38 @@
     });
   }
 
+  function buildSpecialArbSections(options = {}) {
+    const specialResults = Array.isArray(options.specialResults) ? options.specialResults : [];
+    const specialRules = Array.isArray(options.specialRules) ? options.specialRules : [];
+    const buildEntry = typeof options.buildEntry === 'function' ? options.buildEntry : () => null;
+    const specialOpportunities = specialResults
+      .flatMap(({ opportunities }) => Array.isArray(opportunities) ? opportunities : []);
+    const specialEntries = specialOpportunities
+      .map((opportunity) => buildEntry(opportunity))
+      .filter(Boolean);
+    const entriesByLabel = new Map(
+      specialEntries
+        .filter((entry) => entry && typeof entry.label === 'string' && entry.label.trim())
+        .map((entry) => [entry.label.trim(), entry])
+    );
+    return specialRules
+      .filter((rule) => rule && typeof rule.title === 'string' && rule.title.trim())
+      .map((rule) => {
+        const title = rule.title.trim();
+        const entry = entriesByLabel.get(title);
+        const opportunity = entry && entry.cycle && entry.cycle.profitRate > 0
+          ? { ...entry, label: '' }
+          : null;
+        return {
+          title,
+          sectionType: 'special-rule',
+          titleProfitRate: opportunity && opportunity.cycle ? opportunity.cycle.profitRate : null,
+          opportunities: opportunity ? [opportunity] : [],
+          emptyText: '无收益率'
+        };
+      });
+  }
+
   function buildQuotePriceWatchDisplayEntry(options = {}) {
     const hasQuote = options.hasQuote === true;
     const hasValue = options.value !== null && options.value !== undefined;
@@ -394,6 +426,7 @@
     buildArbOpportunityDisplayEntry,
     buildArbOpportunityStoreEntry,
     buildFixedArbSections,
+    buildSpecialArbSections,
     buildQuotePriceWatchDisplayEntry,
     buildQuotePriceWatchSection,
     getCycleDisplayState,

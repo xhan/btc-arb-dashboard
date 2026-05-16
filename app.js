@@ -3853,10 +3853,10 @@
     }
 
     function buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
-        const specialOpportunities = sharedRuleSnapshot.specialResults
-            .flatMap(({ opportunities }) => Array.isArray(opportunities) ? opportunities : []);
-        const specialEntries = specialOpportunities
-            .map((opportunity) => createArbOpportunityEntry(
+        return getArbPanelLayoutUtils().buildSpecialArbSections({
+            specialResults: sharedRuleSnapshot.specialResults,
+            specialRules: SPECIAL_ARB_RULES,
+            buildEntry: (opportunity) => createArbOpportunityEntry(
                 nextOpportunityMap,
                 nextOpportunityIdsByTargetKey,
                 opportunity.cycle,
@@ -3873,29 +3873,8 @@
                         ruleId: opportunity.ruleId
                     }
                 }
-            ))
-            .filter(Boolean);
-        const specialEntriesByLabel = new Map(
-            specialEntries
-                .filter((entry) => entry && typeof entry.label === 'string' && entry.label.trim())
-                .map((entry) => [entry.label.trim(), entry])
-        );
-        return SPECIAL_ARB_RULES
-            .filter((rule) => rule && typeof rule.title === 'string' && rule.title.trim())
-            .map((rule) => {
-                const title = rule.title.trim();
-                const entry = specialEntriesByLabel.get(title);
-                const opportunity = entry && entry.cycle && entry.cycle.profitRate > 0
-                    ? { ...entry, label: '' }
-                    : null;
-                return {
-                    title,
-                    sectionType: 'special-rule',
-                    titleProfitRate: opportunity && opportunity.cycle ? opportunity.cycle.profitRate : null,
-                    opportunities: opportunity ? [opportunity] : [],
-                    emptyText: '无收益率'
-                };
-            });
+            )
+        });
     }
 
     function buildGlobalArbSection(topologyCache, templateUtils, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
