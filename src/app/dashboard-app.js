@@ -779,14 +779,6 @@
         return floatingPanelZIndexRuntime.bringToFront(panel);
     }
 
-    function bindFloatingPanelChrome(panel, header, options = {}) {
-        return getDomRenderUtils().bindFloatingPanelChrome(panel, header, {
-            documentImpl: document,
-            zIndexRuntime: floatingPanelZIndexRuntime,
-            draggable: options.draggable !== false
-        });
-    }
-
     function getAlertLogEntryContainers() {
         return [alertLogContent, alertLogMutedLogContent].filter(Boolean);
     }
@@ -1904,7 +1896,10 @@
             onMinimize: toggleDataTerminalPanel
         });
         if (refs.header) {
-            bindFloatingPanelChrome(panel, refs.header);
+            getDomRenderUtils().bindFloatingPanelChrome(panel, refs.header, {
+                documentImpl: document,
+                zIndexRuntime: floatingPanelZIndexRuntime
+            });
         }
 
         renderDataTerminalPanel();
@@ -4485,10 +4480,17 @@
             restartPathAlertScheduler();
             
             if (alertLogWindow && alertLogHeader) {
-                bindFloatingPanelChrome(alertLogWindow, alertLogHeader);
+                getDomRenderUtils().bindFloatingPanelChrome(alertLogWindow, alertLogHeader, {
+                    documentImpl: document,
+                    zIndexRuntime: floatingPanelZIndexRuntime
+                });
             }
             if (arbPathWindow && arbPathHeader) {
-                bindFloatingPanelChrome(arbPathWindow, arbPathHeader, { draggable: false });
+                getDomRenderUtils().bindFloatingPanelChrome(arbPathWindow, arbPathHeader, {
+                    documentImpl: document,
+                    zIndexRuntime: floatingPanelZIndexRuntime,
+                    draggable: false
+                });
             }
 
             renderQuoteDisplayToggle();

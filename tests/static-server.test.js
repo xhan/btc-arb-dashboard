@@ -593,8 +593,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedSymbolsInput', event)"));
     assert.ok(appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
     assert.ok(appJsResponse.body.includes("closestEventTarget(event, 'button, input, textarea, select, [contenteditable=\"true\"]')"));
-    assert.ok(appJsResponse.body.includes('function bindFloatingPanelChrome(panel, header, options = {})'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(panel, header, {'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(alertLogWindow, alertLogHeader, {'));
+    assert.ok(!appJsResponse.body.includes('function bindFloatingPanelChrome(panel, header, options = {})'));
     assert.ok(appJsResponse.body.includes('const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({'));
     assert.ok(appJsResponse.body.includes('return floatingPanelZIndexRuntime.bringToFront(panel);'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyFloatingPanelDisplayState(panel, action, {'));
@@ -1650,7 +1650,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-data-terminal-row-key]')"));
     assert.ok(!appJsResponse.body.includes('<div id="data-terminal-header">'));
     assert.ok(appJsResponse.body.includes('const dataTerminalUpdateRuntime = getDataTerminalUtils().createDataTerminalUpdateRuntime({'));
-    assert.ok(appJsResponse.body.includes('bindFloatingPanelChrome(panel, refs.header);'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(panel, refs.header, {'));
     assert.ok(appJsResponse.body.includes('dataTerminalUpdateRuntime.clear();'));
     assert.ok(appJsResponse.body.includes('dataTerminalUpdateRuntime.schedule();'));
     assert.ok(!appJsResponse.body.includes('timer: null,'));
