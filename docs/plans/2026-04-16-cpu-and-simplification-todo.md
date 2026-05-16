@@ -130,7 +130,7 @@
   - `quote-polling`：队列运行态、scheduler 和消费状态机已下沉到 `quote-queue-runtime-utils.js`，`app.js` 只保留业务依赖注入和入口包装
   - `arb-panel`：snapshot / topology 缓存所有权已下沉到 `arb-path-template-cache-utils.js`，`app.js` 只保留缓存 key 构建和面板数据装配
   - `arb-detail`：已先抽出刷新调度器 `arb-detail-refresh-utils.js`，source budget Map 所有权已下沉到 `arb-detail-utils.js`
-  - `path-alerts`：runtime Map 和 force-immediate flag 所有权已下沉到 `path-alert-utils.js`
+  - `path-alerts`：runtime Map、force-immediate flag 和保存/评估/reload timer 生命周期已下沉到 `path-alert-utils.js`
   - `data-terminal`
   - `dashboard-persistence`
 

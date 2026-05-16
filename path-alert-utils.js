@@ -939,6 +939,88 @@
     };
   }
 
+  function createPathAlertSchedulerRuntime(options = {}) {
+    const setIntervalFn = typeof options.setInterval === 'function'
+      ? options.setInterval
+      : (typeof setInterval === 'function' ? setInterval : null);
+    const clearIntervalFn = typeof options.clearInterval === 'function'
+      ? options.clearInterval
+      : (typeof clearInterval === 'function' ? clearInterval : null);
+    const setTimeoutFn = typeof options.setTimeout === 'function'
+      ? options.setTimeout
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimeoutFn = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    let evaluationTimer = null;
+    let configSaveTimer = null;
+    let externalReloadTimer = null;
+
+    function clearTimer(timer, clearFn) {
+      if (timer !== null && clearFn) {
+        clearFn(timer);
+      }
+      return null;
+    }
+
+    function clearEvaluation() {
+      evaluationTimer = clearTimer(evaluationTimer, clearIntervalFn);
+    }
+
+    function restartEvaluation(config = {}) {
+      clearEvaluation();
+      const hasActiveTarget = typeof config.hasActiveTarget === 'function'
+        ? config.hasActiveTarget()
+        : Boolean(config.hasActiveTarget);
+      if (!hasActiveTarget || typeof config.evaluate !== 'function' || !setIntervalFn) return false;
+
+      const intervalMs = Number(config.intervalMs);
+      if (!Number.isFinite(intervalMs) || intervalMs <= 0) return false;
+
+      evaluationTimer = setIntervalFn(config.evaluate, intervalMs);
+      config.evaluate();
+      return true;
+    }
+
+    function scheduleTimeout(name, callback, delayMs) {
+      if (typeof callback !== 'function' || !setTimeoutFn) return false;
+      const safeDelayMs = Number.isFinite(Number(delayMs)) && Number(delayMs) >= 0
+        ? Number(delayMs)
+        : 0;
+
+      if (name === 'configSave') {
+        configSaveTimer = clearTimer(configSaveTimer, clearTimeoutFn);
+        configSaveTimer = setTimeoutFn(() => {
+          configSaveTimer = null;
+          callback();
+        }, safeDelayMs);
+        return true;
+      }
+
+      externalReloadTimer = clearTimer(externalReloadTimer, clearTimeoutFn);
+      externalReloadTimer = setTimeoutFn(() => {
+        externalReloadTimer = null;
+        callback();
+      }, safeDelayMs);
+      return true;
+    }
+
+    return {
+      getTimers: () => ({
+        evaluationTimer,
+        configSaveTimer,
+        externalReloadTimer
+      }),
+      restartEvaluation,
+      scheduleConfigSave(callback, delayMs = 250) {
+        return scheduleTimeout('configSave', callback, delayMs);
+      },
+      scheduleExternalReload(callback, delayMs = 60) {
+        return scheduleTimeout('externalReload', callback, delayMs);
+      }
+    };
+  }
+
   function shouldActivatePathAlertSound(runtime, options = {}) {
     const settings = options.settings && typeof options.settings === 'object'
       ? options.settings
@@ -1021,6 +1103,7 @@
     advancePathAlertRuntime,
     advanceQuoteAlertRuntime,
     buildEffectiveRuntimeAlert,
+    createPathAlertSchedulerRuntime,
     createPathAlertRuntimeState,
     shouldActivatePathAlertSound,
     buildAllLegSnapshots,

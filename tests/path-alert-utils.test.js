@@ -37,6 +37,7 @@ const {
   findMutedPathAlert,
   pruneExpiredMutedPathTargets,
   buildEffectiveRuntimeAlert,
+  createPathAlertSchedulerRuntime,
   createPathAlertRuntimeState
 } = require('../path-alert-utils');
 
@@ -1201,6 +1202,50 @@ assert.strictEqual(pathAlertRuntimeState.isForceImmediateEnabled(), true);
 pathAlertRuntimeState.reset({ forceImmediate: false });
 assert.strictEqual(pathAlertRuntimeState.get('active-alert'), null);
 assert.strictEqual(pathAlertRuntimeState.isForceImmediateEnabled(), false);
+
+let timerId = 0;
+const clearedIntervals = [];
+const clearedTimeouts = [];
+const scheduledIntervals = [];
+const scheduledTimeouts = [];
+const pathAlertSchedulerRuntime = createPathAlertSchedulerRuntime({
+  setInterval(callback, delayMs) {
+    const timer = { id: ++timerId, type: 'interval', callback, delayMs };
+    scheduledIntervals.push(timer);
+    return timer;
+  },
+  clearInterval(timer) {
+    clearedIntervals.push(timer.id);
+  },
+  setTimeout(callback, delayMs) {
+    const timer = { id: ++timerId, type: 'timeout', callback, delayMs };
+    scheduledTimeouts.push(timer);
+    return timer;
+  },
+  clearTimeout(timer) {
+    clearedTimeouts.push(timer.id);
+  }
+});
+let evaluationCount = 0;
+assert.strictEqual(pathAlertSchedulerRuntime.restartEvaluation({
+  hasActiveTarget: () => true,
+  intervalMs: 1000,
+  evaluate: () => { evaluationCount += 1; }
+}), true);
+assert.strictEqual(evaluationCount, 1);
+assert.strictEqual(scheduledIntervals[0].delayMs, 1000);
+assert.strictEqual(pathAlertSchedulerRuntime.restartEvaluation({
+  hasActiveTarget: () => false,
+  intervalMs: 1000,
+  evaluate: () => { evaluationCount += 1; }
+}), false);
+assert.deepStrictEqual(clearedIntervals, [scheduledIntervals[0].id]);
+let saveCount = 0;
+assert.strictEqual(pathAlertSchedulerRuntime.scheduleConfigSave(() => { saveCount += 1; }, 250), true);
+assert.strictEqual(pathAlertSchedulerRuntime.scheduleConfigSave(() => { saveCount += 10; }, 300), true);
+assert.deepStrictEqual(clearedTimeouts, [scheduledTimeouts[0].id]);
+scheduledTimeouts[1].callback();
+assert.strictEqual(saveCount, 10);
 
 let delayedRuntime = advancePathAlertRuntime(delayedAlert, null, {
   available: true,

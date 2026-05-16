@@ -24,14 +24,17 @@
     const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
     let arbUpdateTimer = null;
     let pathAlertConfig = getPathAlertUtils().normalizeAlertConfig();
-    let pathAlertSaveTimer = null;
-    let pathAlertEvalTimer = null;
     let pathAlertPanelHidden = true;
     const pathAlertPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     const pathAlertRuntimeState = getPathAlertUtils().createPathAlertRuntimeState();
+    const pathAlertSchedulerRuntime = getPathAlertUtils().createPathAlertSchedulerRuntime({
+        setInterval,
+        clearInterval,
+        setTimeout,
+        clearTimeout
+    });
     const mutedAlertStateHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let pathAlertReloading = false;
-    let pathAlertExternalReloadTimer = null;
     let alertLogActiveTab = 'log';
     const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
     const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
@@ -3239,13 +3242,13 @@
     }
 
     function restartPathAlertScheduler() {
-        if (pathAlertEvalTimer) clearInterval(pathAlertEvalTimer);
-        pathAlertEvalTimer = null;
-        if (!hasActivePathAlertEvaluationTarget()) return;
-        const intervalMs = Number(pathAlertConfig?.settings?.pathAlertEvalIntervalMs);
-        if (!Number.isFinite(intervalMs) || intervalMs <= 0) return;
-        pathAlertEvalTimer = setInterval(evaluatePathAlertsOnce, intervalMs);
-        evaluatePathAlertsOnce();
+        pathAlertSchedulerRuntime.restartEvaluation({
+            hasActiveTarget: hasActivePathAlertEvaluationTarget,
+            intervalMs: pathAlertConfig && pathAlertConfig.settings
+                ? pathAlertConfig.settings.pathAlertEvalIntervalMs
+                : 0,
+            evaluate: evaluatePathAlertsOnce
+        });
     }
 
     function emitPathAlertConfigSync(source) {
@@ -3264,13 +3267,11 @@
     }
 
     function scheduleExternalPathAlertReload(reason) {
-        if (pathAlertExternalReloadTimer) clearTimeout(pathAlertExternalReloadTimer);
-        pathAlertExternalReloadTimer = setTimeout(() => {
-            pathAlertExternalReloadTimer = null;
+        pathAlertSchedulerRuntime.scheduleExternalReload(() => {
             reloadPathAlertConfigFromServer().catch((error) => {
                 console.error('[path-alert-config] external reload failed', reason, error);
             });
-        }, 60);
+        });
     }
 
     function handlePathAlertConfigSyncStorage(event) {
@@ -3298,11 +3299,9 @@
     }
 
     function queuePathAlertConfigSave() {
-        if (pathAlertSaveTimer) clearTimeout(pathAlertSaveTimer);
-        pathAlertSaveTimer = setTimeout(() => {
-            pathAlertSaveTimer = null;
+        pathAlertSchedulerRuntime.scheduleConfigSave(() => {
             persistPathAlertConfig().catch((error) => console.error('保存路径报警配置失败:', error));
-        }, 250);
+        });
     }
 
     function buildPathAlertsManagementHref(options = {}) {
