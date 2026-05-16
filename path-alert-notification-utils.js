@@ -226,6 +226,13 @@
     }).join('\n\n');
   }
 
+  function buildPathAlertWebhookPayload(triggeredEntries) {
+    return {
+      title: buildPathAlertNotificationTitle(triggeredEntries),
+      body: buildPathAlertNotificationBody(triggeredEntries)
+    };
+  }
+
   function buildPathAlertAggregatedLog(triggeredEntries) {
     const list = (Array.isArray(triggeredEntries) ? triggeredEntries : []).slice(0, 3);
     if (!list.length) {
@@ -452,6 +459,7 @@
     sortTriggeredPathAlertEntries,
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,
+    buildPathAlertWebhookPayload,
     buildPathAlertAggregatedLog,
     buildQuoteAlertDirectionLabel,
     buildQuoteAlertCurrentValueText,

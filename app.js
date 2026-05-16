@@ -3283,10 +3283,7 @@
     }
 
     async function sendPathAlertWebhookNotification(triggeredEntries) {
-        const payload = {
-            title: getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries),
-            body: getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries)
-        };
+        const payload = getPathAlertNotificationUtils().buildPathAlertWebhookPayload(triggeredEntries);
         await sendPathAlertWebhookPayload(payload, '路径报警 webhook 发送失败:');
     }
 

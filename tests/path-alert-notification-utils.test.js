@@ -4,6 +4,7 @@ const {
   formatPathAlertEvaluationText,
   buildPathAlertNotificationTitle,
   buildPathAlertNotificationBody,
+  buildPathAlertWebhookPayload,
   buildPathAlertAggregatedLog,
   buildPathAlertChangedLegLines,
   buildPathAlertLegKey,
@@ -249,6 +250,20 @@ assert.strictEqual(
     '⚡ 异动腿:',
     '（Arbitrum）cbBTC -> WBTC @1.002688 +1.50bp'
   ].join('\n')
+);
+assert.deepStrictEqual(
+  buildPathAlertWebhookPayload([singleEntry]),
+  {
+    title: 'WBTC ETH <-> ARB',
+    body: [
+      '📈 +2.05bp',
+      '⚡ （Arbitrum）cbBTC -> WBTC @1.002688',
+      '（ETH）WBTC -> cbBTC @0.997524',
+      '',
+      '⚡ 异动腿:',
+      '（Arbitrum）cbBTC -> WBTC @1.002688 +1.50bp'
+    ].join('\n')
+  }
 );
 
 const multiEntries = [
