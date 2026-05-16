@@ -17,10 +17,10 @@
     return `📈 ${value >= 0 ? '+' : ''}${value.toFixed(2)}bp`;
   }
 
-  function buildLegKey(leg) {
+  function buildPathAlertLegKey(leg) {
     const quoteId = Number(leg && leg.quoteId);
     if (!Number.isFinite(quoteId) || quoteId <= 0) return '';
-    const direction = leg && leg.direction === 'inverse' ? 'inverse' : 'forward';
+    const direction = leg && (leg.direction === 'inverse' || leg.inverse) ? 'inverse' : 'forward';
     const pricingMode = ['raw', 'cex-bid1', 'cex-ask1-inverse'].includes(leg && leg.pricingMode)
       ? leg.pricingMode
       : 'raw';
@@ -31,7 +31,7 @@
     const changedLegs = Array.isArray(entry && entry.changedLegs) ? entry.changedLegs : [];
     if (!changedLegs.length) return summaryLines;
 
-    const changedKeys = new Set(changedLegs.map((leg) => buildLegKey(leg)).filter(Boolean));
+    const changedKeys = new Set(changedLegs.map((leg) => buildPathAlertLegKey(leg)).filter(Boolean));
     const summaryLegKeys = Array.isArray(entry && entry.summaryLegKeys) ? entry.summaryLegKeys : [];
     return summaryLines.map((line, index) => {
       const key = summaryLegKeys[index];
@@ -259,6 +259,7 @@
 
   return {
     formatPathAlertEvaluationText,
+    buildPathAlertLegKey,
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,
     buildPathAlertAggregatedLog,

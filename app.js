@@ -3372,13 +3372,7 @@
     }
 
     function buildPathAlertLegKey(leg) {
-        const quoteId = Number(leg && leg.quoteId);
-        if (!Number.isFinite(quoteId) || quoteId <= 0) return '';
-        const direction = (leg && (leg.direction === 'inverse' || leg.inverse)) ? 'inverse' : 'forward';
-        const pricingMode = ['raw', 'cex-bid1', 'cex-ask1-inverse'].includes(leg && leg.pricingMode)
-            ? leg.pricingMode
-            : 'raw';
-        return `${quoteId}|${direction}|${pricingMode}`;
+        return getPathAlertNotificationUtils().buildPathAlertLegKey(leg);
     }
 
     function buildMutedPathTargetFromCycleLegs(legs) {

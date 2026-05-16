@@ -5,6 +5,7 @@ const {
   buildPathAlertNotificationTitle,
   buildPathAlertNotificationBody,
   buildPathAlertAggregatedLog,
+  buildPathAlertLegKey,
   buildQuoteAlertDirectionLabel,
   buildQuoteAlertCurrentValueText,
   buildQuoteAlertRuleLine,
@@ -19,6 +20,15 @@ const {
 assert.strictEqual(formatPathAlertEvaluationText({ profitBp: 2.05 }), '📈 +2.05bp');
 assert.strictEqual(formatPathAlertEvaluationText({ profitBp: -1.23 }), '📈 -1.23bp');
 assert.strictEqual(formatPathAlertEvaluationText(null), '--');
+assert.strictEqual(
+  buildPathAlertLegKey({ quoteId: '101', inverse: true, pricingMode: 'cex-ask1-inverse' }),
+  '101|inverse|cex-ask1-inverse'
+);
+assert.strictEqual(
+  buildPathAlertLegKey({ quoteId: 102, direction: 'forward', pricingMode: 'unknown' }),
+  '102|forward|raw'
+);
+assert.strictEqual(buildPathAlertLegKey({ quoteId: 'bad' }), '');
 
 const singleEntry = {
   alert: { name: 'WBTC ETH <-> ARB' },
