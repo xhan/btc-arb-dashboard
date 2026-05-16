@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const {
   applyAddQuoteFormViewState,
+  applyKyberDirectPoolsControlVisibility,
   applyQuoteSettingsModalWritePlan,
   applySettingsIntervalWritePlan,
   closeAddCategoryModal,
@@ -142,6 +143,8 @@ function createQuoteSettingsRefs() {
     'quote-to-token-line': { textContent: '' },
     'source-select-group': { style: { display: '' } },
     'quote-source-pref': { value: '', disabled: false },
+    'kyber-direct-pools-group': { style: { display: '' } },
+    'kyber-direct-pools-note': { style: { display: '' } },
     'kyber-only-direct-pools': { checked: false },
     'inverse-toggle-group': { style: { display: '' } },
     'show-inverse-quote': { checked: false },
@@ -180,6 +183,12 @@ assert.strictEqual(quoteSettingsRefs['quote-source-pref'].disabled, true);
 assert.strictEqual(quoteSettingsRefs['quote-source-pref'].value, 'LI.FI');
 assert.strictEqual(quoteSettingsRefs['kyber-only-direct-pools'].checked, true);
 assert.strictEqual(quoteSettingsRefs['show-inverse-quote'].checked, true);
+assert.strictEqual(applyKyberDirectPoolsControlVisibility(quoteSettingsRefs, true), true);
+assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-group'].style.display, 'flex');
+assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-note'].style.display, 'block');
+assert.strictEqual(applyKyberDirectPoolsControlVisibility(quoteSettingsRefs, false), false);
+assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-group'].style.display, 'none');
+assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-note'].style.display, 'none');
 
 assert.deepStrictEqual(readQuoteSettingsFormValues(quoteSettingsRefs), {
   sourceValue: 'LI.FI',

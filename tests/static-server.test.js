@@ -476,8 +476,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalViewState({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalWritePlan(modalState)'));
-    assert.ok(appJsResponse.body.includes('function applyQuoteSettingsModalWritePlan(plan)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, plan)'));
+    assert.ok(!appJsResponse.body.includes('function applyQuoteSettingsModalWritePlan(plan)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, writePlan)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readQuoteSettingsFormValues(quoteSettingsModalElements)'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsUpdatePlan({'));
     assert.ok(appJsResponse.body.includes('buildAddQuoteFormViewState: getDashboardRenderer().buildAddQuoteFormViewState'));
@@ -492,6 +492,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardModalUtilsResponse.body.includes('function showModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function hideModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function applyKyberDirectPoolsControlVisibility(refs = {}, visible = false)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readQuoteSettingsFormValues(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applySettingsIntervalWritePlan(refs = {}, writePlan = [])'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readSettingsIntervalFormValues(refs = {}, options = {})'));
@@ -704,6 +705,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("channels: [{ id: 'default', name: '默认通道'"));
     assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow)'));
+    assert.ok(!appJsResponse.body.includes("kyberDirectPoolsGroup.style.display = shouldShow ? 'flex' : 'none'"));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes("function buildQuoteAlertDisplayLabel(quote, state = {}, direction = 'forward')"));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));

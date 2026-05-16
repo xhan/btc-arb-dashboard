@@ -290,6 +290,8 @@
         'quote-to-token-line': quoteToTokenLineEl,
         'source-select-group': quoteSourceGroup,
         'quote-source-pref': quoteSourceSelect,
+        'kyber-direct-pools-group': kyberDirectPoolsGroup,
+        'kyber-direct-pools-note': kyberDirectPoolsNote,
         'kyber-only-direct-pools': kyberOnlyDirectPoolsInput,
         'inverse-toggle-group': inverseToggleGroup,
         'show-inverse-quote': inverseCheckbox,
@@ -4132,12 +4134,7 @@
 
     function syncKyberOnlyDirectPoolsControl(quote, selectedSource) {
         const shouldShow = shouldShowKyberOnlyDirectPoolsControl(quote, selectedSource);
-        if (kyberDirectPoolsGroup) {
-            kyberDirectPoolsGroup.style.display = shouldShow ? 'flex' : 'none';
-        }
-        if (kyberDirectPoolsNote) {
-            kyberDirectPoolsNote.style.display = shouldShow ? 'block' : 'none';
-        }
+        getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow);
     }
 
     function renderQuoteRequestChannelOptions(quote) {
@@ -4379,10 +4376,6 @@
         getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl);
     }
 
-    function applyQuoteSettingsModalWritePlan(plan) {
-        getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, plan);
-    }
-
     function openQuoteSettingsModal(categoryId, quoteId) {
         const category = dashboardState.find(c => c.id == categoryId);
         if (!category) return false;
@@ -4400,7 +4393,7 @@
             getSingleChainDisplayName: formatChainLabel
         });
         const writePlan = getDashboardRenderer().buildQuoteSettingsModalWritePlan(modalState);
-        applyQuoteSettingsModalWritePlan(writePlan);
+        getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, writePlan);
         syncKyberOnlyDirectPoolsControl(quote, writePlan.kyberOnlyDirectPoolsSource);
 
         renderQuoteRequestChannelOptions(quote);

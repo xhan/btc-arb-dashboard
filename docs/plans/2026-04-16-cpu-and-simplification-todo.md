@@ -244,6 +244,7 @@
   - `src/app/dashboard-app.js` 的 add quote 目标分区和 quote settings 当前报价选择状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createModalSelectionRuntime()`
   - `src/app/dashboard-app.js` 的确认弹窗动作回调状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createConfirmActionRuntime()`
   - `src/app/dashboard-app.js` 的报价设置 modal viewState 写入规则已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只执行 DOM write plan
+  - `src/app/dashboard-app.js` 的报价设置 Kyber direct pools 控件显示写入和 modal write plan 单行包装已收敛到 `src/dashboard/dashboard-modal-utils.js`
   - `src/app/dashboard-app.js` 的音频 unlock 状态、循环报警音同步和 quote alert 一次性播放实现已下沉到 `src/ui/audio-utils.js`
   - `src/app/dashboard-app.js` 的价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
   - `src/app/dashboard-app.js` 的浮窗拖拽实现、浮窗 focus 事件绑定和通用显示切换状态已下沉到 `src/ui/dom-render-utils.js`

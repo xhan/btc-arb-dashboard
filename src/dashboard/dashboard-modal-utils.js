@@ -64,6 +64,12 @@
     });
   }
 
+  function applyKyberDirectPoolsControlVisibility(refs = {}, visible = false) {
+    setDisplay(refs['kyber-direct-pools-group'], visible ? 'flex' : 'none');
+    setDisplay(refs['kyber-direct-pools-note'], visible ? 'block' : 'none');
+    return visible === true;
+  }
+
   function applySettingsIntervalWritePlan(refs = {}, writePlan = []) {
     (writePlan || []).forEach((item) => {
       setElementValue(refs[item.id], item.value);
@@ -217,6 +223,7 @@
 
   return {
     applyAddQuoteFormViewState,
+    applyKyberDirectPoolsControlVisibility,
     applyQuoteSettingsModalWritePlan,
     applySettingsIntervalWritePlan,
     closeAddCategoryModal,
