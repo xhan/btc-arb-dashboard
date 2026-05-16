@@ -1571,6 +1571,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalDefaultSize(panel, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalWindowPosition(panel, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalSelectionPatch(selectionState = {}, action = {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalSelectionSummaryDomState(refs = {}, summary = {})'));
     const dataTerminalExportBlock = dataTerminalUtilsResponse.body.match(/return \{\n    buildDataTerminalCandidates,[\s\S]*?\n  \};/);
     assert.ok(dataTerminalExportBlock);
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalBp'));
@@ -1579,8 +1580,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const refs = utils.getDataTerminalDomRefs(panel);'));
     assert.ok(!appJsResponse.body.includes("panel.querySelector('#data-terminal-header')"));
     assert.ok(appJsResponse.body.includes('utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs)'));
+    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalSelectionSummaryDomState(refs, selectionSummary)'));
     assert.ok(!appJsResponse.body.includes('function getDataTerminalControlElements(refs)'));
     assert.ok(!appJsResponse.body.includes('function applyDataTerminalControlWritePlan(plan, refs)'));
+    assert.ok(!appJsResponse.body.includes('refs.profitBp.textContent = selectionSummary.text'));
+    assert.ok(!appJsResponse.body.includes("refs.profitBp.classList.toggle('data-terminal-profit-bp-empty'"));
     assert.ok(appJsResponse.body.includes("utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('query', event))"));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().applyDataTerminalStatePatch('));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget })'));

@@ -8,6 +8,7 @@ const {
   buildDataTerminalControlEventPatch,
   buildDataTerminalControlWritePlan,
   applyDataTerminalControlWritePlan,
+  applyDataTerminalSelectionSummaryDomState,
   applyDataTerminalStatePatch,
   buildDataTerminalPanelHtml,
   applyDataTerminalDefaultSize,
@@ -568,6 +569,35 @@ assert.deepStrictEqual(
     text: '--'
   }
 );
+
+const dataTerminalSummaryClasses = new Set(['data-terminal-profit-bp-empty']);
+const dataTerminalSummaryRefs = {
+  profitBp: {
+    textContent: '--',
+    classList: {
+      toggle(className, enabled) {
+        if (enabled) {
+          dataTerminalSummaryClasses.add(className);
+        } else {
+          dataTerminalSummaryClasses.delete(className);
+        }
+      }
+    }
+  }
+};
+assert.strictEqual(applyDataTerminalSelectionSummaryDomState(dataTerminalSummaryRefs, {
+  profitBp: 5.507398400002028,
+  text: '+5.51bp'
+}), true);
+assert.strictEqual(dataTerminalSummaryRefs.profitBp.textContent, '+5.51bp');
+assert.strictEqual(dataTerminalSummaryClasses.has('data-terminal-profit-bp-empty'), false);
+assert.strictEqual(applyDataTerminalSelectionSummaryDomState(dataTerminalSummaryRefs, {
+  profitBp: null,
+  text: '--'
+}), true);
+assert.strictEqual(dataTerminalSummaryRefs.profitBp.textContent, '--');
+assert.strictEqual(dataTerminalSummaryClasses.has('data-terminal-profit-bp-empty'), true);
+assert.strictEqual(applyDataTerminalSelectionSummaryDomState({}, { text: '+1.00bp' }), false);
 
 const panelHtml = buildDataTerminalPanelHtml(
   {

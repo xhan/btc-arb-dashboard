@@ -1829,10 +1829,7 @@
         dataTerminalState.selectedLeftKey = selectionSummary.leftKey;
         dataTerminalState.selectedRightKey = selectionSummary.rightKey;
 
-        if (refs.profitBp) {
-            refs.profitBp.textContent = selectionSummary.text;
-            refs.profitBp.classList.toggle('data-terminal-profit-bp-empty', selectionSummary.profitBp === null);
-        }
+        utils.applyDataTerminalSelectionSummaryDomState(refs, selectionSummary);
 
         dataTerminalState.htmlRenderer.render(
             refs.content,

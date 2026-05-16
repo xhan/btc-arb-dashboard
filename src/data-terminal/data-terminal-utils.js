@@ -313,6 +313,16 @@
     };
   }
 
+  function applyDataTerminalSelectionSummaryDomState(refs = {}, summary = {}) {
+    const profitBpEl = refs.profitBp;
+    if (!profitBpEl) return false;
+    profitBpEl.textContent = summary.text || '--';
+    if (profitBpEl.classList && typeof profitBpEl.classList.toggle === 'function') {
+      profitBpEl.classList.toggle('data-terminal-profit-bp-empty', summary.profitBp === null);
+    }
+    return true;
+  }
+
   function buildDataTerminalRowHtml(row, side, selectedKey, options = {}) {
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
@@ -685,6 +695,7 @@
     buildDataTerminalControlEventPatch,
     buildDataTerminalControlWritePlan,
     applyDataTerminalControlWritePlan,
+    applyDataTerminalSelectionSummaryDomState,
     applyDataTerminalStatePatch,
     buildDataTerminalPanelHtml,
     buildDataTerminalRecords,
