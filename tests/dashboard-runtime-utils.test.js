@@ -1,10 +1,13 @@
 const assert = require('assert');
 
 const {
+  buildArbRuleSnapshotCacheKey,
   buildDefaultQuoteUiState,
   buildDataTerminalRecordsCacheKey,
+  buildQuoteMetaById,
   buildQuoteResultMarketState,
   buildQuoteMarketStateSignature,
+  buildQuotesByCategoryName,
   buildSwappedQuoteMarketState,
   clearQuoteTrendTimer,
   deleteQuoteUiRuntimeState,
@@ -175,6 +178,42 @@ const firstKey = buildDataTerminalRecordsCacheKey(dashboard, 1);
 assert.strictEqual(firstKey, buildDataTerminalRecordsCacheKey(dashboard, 1));
 assert.notStrictEqual(firstKey, buildDataTerminalRecordsCacheKey(dashboard, 2));
 
+const arbSnapshotKey = buildArbRuleSnapshotCacheKey([
+  {
+    name: 'WBTC监控',
+    quotes: [
+      { id: 101, chain: 'ethereum', toChain: '', showInverse: true },
+      { id: 102, chain: 'bsc', toChain: 'ethereum', showInverse: false, paused: true }
+    ]
+  },
+  {
+    name: 'ETH监控',
+    quotes: [
+      { id: 201, chain: 'arbitrum', toChain: '', showInverse: false }
+    ]
+  }
+], 7);
+assert.strictEqual(arbSnapshotKey, '7|WBTC监控:101:ethereum::1|ETH监控:201:arbitrum::0');
+assert.strictEqual(
+  arbSnapshotKey,
+  buildArbRuleSnapshotCacheKey([
+    {
+      name: 'WBTC监控',
+      quotes: [
+        { id: 101, chain: 'ethereum', toChain: '', showInverse: true },
+        { id: 102, chain: 'polygon', toChain: '', showInverse: true, paused: true }
+      ]
+    },
+    {
+      name: 'ETH监控',
+      quotes: [
+        { id: 201, chain: 'arbitrum', toChain: '', showInverse: false }
+      ]
+    }
+  ], 7)
+);
+assert.notStrictEqual(arbSnapshotKey, buildArbRuleSnapshotCacheKey(dashboard, 8));
+
 const pausedDashboard = JSON.parse(JSON.stringify(dashboard));
 pausedDashboard[0].quotes[0].paused = true;
 assert.notStrictEqual(firstKey, buildDataTerminalRecordsCacheKey(pausedDashboard, 1));
@@ -182,6 +221,36 @@ assert.notStrictEqual(firstKey, buildDataTerminalRecordsCacheKey(pausedDashboard
 const retokenizedDashboard = JSON.parse(JSON.stringify(dashboard));
 retokenizedDashboard[0].quotes[0].toToken = '0xccc';
 assert.notStrictEqual(firstKey, buildDataTerminalRecordsCacheKey(retokenizedDashboard, 1));
+
+const quotesByCategoryName = buildQuotesByCategoryName([
+  {
+    name: 'WBTC监控',
+    quotes: [
+      { id: 101, paused: false },
+      { id: 102, paused: true }
+    ]
+  },
+  {
+    name: '',
+    quotes: [{ id: 999 }]
+  }
+], (quote) => quote && quote.paused !== true);
+assert.deepStrictEqual(Array.from(quotesByCategoryName.keys()), ['WBTC监控']);
+assert.deepStrictEqual(quotesByCategoryName.get('WBTC监控').map((quote) => quote.id), [101]);
+
+const quoteMetaById = buildQuoteMetaById([
+  {
+    name: 'WBTC监控',
+    quotes: [{ id: 101 }, { id: '102' }]
+  },
+  {
+    name: 'ETH监控',
+    quotes: [{ id: 201 }]
+  }
+]);
+assert.deepStrictEqual(quoteMetaById.get(101), { categoryName: 'WBTC监控' });
+assert.deepStrictEqual(quoteMetaById.get('102'), { categoryName: 'WBTC监控' });
+assert.deepStrictEqual(quoteMetaById.get(201), { categoryName: 'ETH监控' });
 
 const marketState = {
   fromSymbol: 'cbBTC',

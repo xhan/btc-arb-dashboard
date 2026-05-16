@@ -221,6 +221,49 @@
     return null;
   }
 
+  function buildArbRuleSnapshotCacheKey(dashboardState, quoteMarketStateRevision) {
+    const revision = Number.isFinite(Number(quoteMarketStateRevision)) ? Number(quoteMarketStateRevision) : 0;
+    const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
+    const categorySignature = dashboard
+      .map((category) => {
+        const quotes = Array.isArray(category && category.quotes)
+          ? category.quotes
+          : [];
+        const quoteIds = quotes
+          .filter((quote) => quote && quote.paused !== true)
+          .map((quote) => `${quote.id}:${quote.chain}:${quote.toChain || ''}:${quote.showInverse ? 1 : 0}`)
+          .join(',');
+        return `${category && category.name || ''}:${quoteIds}`;
+      })
+      .join('|');
+    return `${revision}|${categorySignature}`;
+  }
+
+  function buildQuotesByCategoryName(dashboardState, isQuoteActive) {
+    const result = new Map();
+    const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
+    const isActive = typeof isQuoteActive === 'function' ? isQuoteActive : () => true;
+    for (const category of dashboard) {
+      if (!category || !category.name) continue;
+      const quotes = Array.isArray(category.quotes) ? category.quotes : [];
+      result.set(category.name, quotes.filter(isActive));
+    }
+    return result;
+  }
+
+  function buildQuoteMetaById(dashboardState) {
+    const result = new Map();
+    const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
+    for (const category of dashboard) {
+      const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
+      for (const quote of quotes) {
+        if (!quote || quote.id === undefined || quote.id === null) continue;
+        result.set(quote.id, { categoryName: category && category.name });
+      }
+    }
+    return result;
+  }
+
   function getNextFutureExpiryMs(entries, nowMs) {
     const items = Array.isArray(entries) ? entries : [];
     let nextExpiry = Infinity;
@@ -283,10 +326,13 @@
   }
 
   return {
+    buildArbRuleSnapshotCacheKey,
     buildDataTerminalRecordsCacheKey,
     buildDefaultQuoteUiState,
+    buildQuoteMetaById,
     buildQuoteResultMarketState,
     buildQuoteMarketStateSignature,
+    buildQuotesByCategoryName,
     buildSwappedQuoteMarketState,
     clearQuoteTrendTimer,
     deleteQuoteUiRuntimeState,

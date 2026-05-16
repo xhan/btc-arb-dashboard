@@ -1549,27 +1549,11 @@
     }
 
     function buildArbRuleSnapshotCacheKey() {
-        const categorySignature = dashboardState
-            .map((category) => {
-                const quoteIds = Array.isArray(category && category.quotes)
-                    ? category.quotes
-                        .filter((quote) => quote && quote.paused !== true)
-                        .map((quote) => `${quote.id}:${quote.chain}:${quote.toChain || ''}:${quote.showInverse ? 1 : 0}`)
-                        .join(',')
-                    : '';
-                return `${category && category.name || ''}:${quoteIds}`;
-            })
-            .join('|');
-        return `${quoteMarketStateRevision}|${categorySignature}`;
+        return getDashboardRuntimeUtils().buildArbRuleSnapshotCacheKey(dashboardState, quoteMarketStateRevision);
     }
 
     function buildQuotesByCategoryName() {
-        const result = new Map();
-        for (const category of dashboardState) {
-            if (!category || !category.name) continue;
-            result.set(category.name, getActiveQuotes(Array.isArray(category.quotes) ? category.quotes : []));
-        }
-        return result;
+        return getDashboardRuntimeUtils().buildQuotesByCategoryName(dashboardState, getActiveQuotes);
     }
 
     function filterMutedArbEdges(edges, nowMs = Date.now()) {
@@ -2023,13 +2007,7 @@
     }
 
     function buildQuoteMetaById() {
-        const quoteMetaById = new Map();
-        for (const category of dashboardState) {
-            for (const quote of (category.quotes || [])) {
-                quoteMetaById.set(quote.id, { categoryName: category.name });
-            }
-        }
-        return quoteMetaById;
+        return getDashboardRuntimeUtils().buildQuoteMetaById(dashboardState);
     }
 
     function getFixedRuleById(ruleId) {
