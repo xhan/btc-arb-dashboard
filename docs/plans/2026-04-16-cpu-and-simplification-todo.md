@@ -169,6 +169,7 @@
     - 已启动第二十三步：`/api/save-config`、运行时配置刷新、配置读取、request channel 暴露和 arb settings API 注册迁入 `src/server/config-route-utils.js`，`server.js` 只注入 runtime config store 和 JSON 读写依赖
     - 已启动第二十四步：path alert 配置读写、候选报价列表和远程 webhook API 注册迁入 `src/server/path-alert-route-utils.js`，`server.js` 只注入配置路径、market clients、fetch 和运行时配置依赖
     - 已启动第二十五步：市场客户端聚合器、provider 和 token metadata store 迁入 `src/market-clients/`，根目录不再保留 `market-clients/` 业务目录，`server.js` 从 `src/market-clients` 注入市场客户端
+    - 已启动第二十六步：清理空的根目录 `shared/` 遗留目录，并用 project layout 测试约束共享工具只保留在 `src/shared/`
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
