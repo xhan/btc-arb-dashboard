@@ -1,6 +1,6 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./src/arb/arb-path-template-cache-utils'));
+    module.exports = factory(require('./arb-path-template-cache-utils'));
     return;
   }
   root.ArbRuleSnapshotUtils = factory(root.ArbPathTemplateCacheUtils);

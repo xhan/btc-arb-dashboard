@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const { buildArbRuleSnapshot } = require('../arb-rule-snapshot-utils');
+const { buildArbRuleSnapshot } = require('../src/arb/arb-rule-snapshot-utils');
 const ArbPaths = require('../arb-paths');
 
 const fixedEdges = [

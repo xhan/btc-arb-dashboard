@@ -4,7 +4,7 @@ const {
   DEFAULT_ARB_CYCLE_START_PRIORITY,
   normalizeArbCycleStartPriority,
   buildPreferredCycleStartSymbols
-} = require('../arb-cycle-priority-utils');
+} = require('../src/arb/arb-cycle-priority-utils');
 
 assert.deepStrictEqual(DEFAULT_ARB_CYCLE_START_PRIORITY, ['cbBTC', 'WBTC', 'ETH']);
 

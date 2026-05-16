@@ -65,14 +65,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="charts-utils.js"'));
     assert.ok(response.body.includes('src="charts-renderer.js"'));
     assert.ok(response.body.includes('src="copy-utils.js"'));
-    assert.ok(response.body.includes('src="arb-cycle-priority-utils.js"'));
-    assert.ok(response.body.includes('src="arb-equivalence-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-cycle-priority-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-equivalence-utils.js"'));
     assert.ok(response.body.includes('src="arb-special-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-panel-layout-utils.js"'));
     assert.ok(response.body.includes('src="dom-render-utils.js"'));
     assert.ok(response.body.includes('src="arb-path-config.js"'));
     assert.ok(response.body.includes('src="arb-path-config-utils.js"'));
-    assert.ok(response.body.includes('src="arb-rule-snapshot-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-rule-snapshot-utils.js"'));
     assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="muted-path-storage-utils.js"'));
     assert.ok(response.body.includes('src="dex-link-utils.js"'));
@@ -169,13 +169,13 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="arb-path-config-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="arb-rule-snapshot-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-rule-snapshot-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="arb-cycle-priority-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="arb-equivalence-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="path-alert-rule-definitions.js"') < response.body.indexOf('src="app.js"')
@@ -275,7 +275,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
     const arbPathTemplateCacheUtilsResponse = await request('/src/arb/arb-path-template-cache-utils.js');
     assert.strictEqual(arbPathTemplateCacheUtilsResponse.statusCode, 200);
-    const arbEquivalenceUtilsResponse = await request('/arb-equivalence-utils.js');
+    const arbEquivalenceUtilsResponse = await request('/src/arb/arb-equivalence-utils.js');
     assert.strictEqual(arbEquivalenceUtilsResponse.statusCode, 200);
     const dataTerminalUtilsResponse = await request('/data-terminal-utils.js');
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
@@ -1405,7 +1405,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('查看快照 JSON'));
     assert.ok(snapshotResponse.body.includes('查看回放 JSON'));
     assert.ok(snapshotResponse.body.includes('grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);'));
-    assert.ok(snapshotResponse.body.includes('src="arb-equivalence-utils.js"'));
+    assert.ok(snapshotResponse.body.includes('src="src/arb/arb-equivalence-utils.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-panel-renderer.js"'));
     assert.ok(snapshotResponse.body.includes('src="charts-utils.js"'));
     assert.ok(snapshotResponse.body.includes('.arb-opportunity-head {'));

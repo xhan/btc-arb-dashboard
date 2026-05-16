@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const { buildAliasRulesFromGroups, DEFAULT_ASSET_EQUIVALENCE_GROUPS } = require('../arb-equivalence-utils');
+const { buildAliasRulesFromGroups, DEFAULT_ASSET_EQUIVALENCE_GROUPS } = require('../src/arb/arb-equivalence-utils');
 
 const aliasRules = buildAliasRulesFromGroups({
   cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
@@ -27,7 +27,7 @@ assert.strictEqual(defaultAliasRules.USDE, 'USDe');
 assert.strictEqual(defaultAliasRules.USDTB, 'USDtb');
 assert.ok(!Object.prototype.hasOwnProperty.call(defaultAliasRules, 'BTC.B'));
 
-const browserCode = fs.readFileSync(path.join(__dirname, '..', 'arb-equivalence-utils.js'), 'utf8');
+const browserCode = fs.readFileSync(path.join(__dirname, '..', 'src/arb/arb-equivalence-utils.js'), 'utf8');
 const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
 assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));

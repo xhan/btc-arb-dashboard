@@ -39,7 +39,7 @@ const {
 const {
     DEFAULT_ARB_CYCLE_START_PRIORITY,
     normalizeArbCycleStartPriority
-} = require('./arb-cycle-priority-utils');
+} = require('./src/arb/arb-cycle-priority-utils');
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
