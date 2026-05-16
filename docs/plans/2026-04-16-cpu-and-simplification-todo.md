@@ -175,6 +175,7 @@
   - `app.js` 的 single-chain display name 和 paused monitor state 单用途包装已移除，调用点复用现有 helper / utils
   - `app.js` 的多渠道开关 storage 值解析/序列化已下沉到 `request-channel-utils.js`
   - `app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `request-channel-utils.js` / `queue-stats-utils.js`
+  - `app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `request-channel-utils.js`
   - `app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `quote-request-utils.js`
   - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `data-terminal-utils.js`
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `arb-runtime-memory-utils.js`
