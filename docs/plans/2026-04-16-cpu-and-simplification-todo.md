@@ -191,6 +191,7 @@
   - `request-channel`：请求通道标签 HTML/patch、DOM 插入/删除和可见性 class 已收敛到 `src/request-channel/request-channel-utils.js`，主入口只负责调度当前报价和 body 状态
   - `quote-pause`：单报价/分区暂停按钮的 aria/title/icon DOM 应用已下沉到 `src/quote/quote-pause-utils.js`
   - `dom-render`：报价 pair label 的 HTML 写入已下沉到 `src/ui/dom-render-utils.js`
+  - `quote-display`：报价显示模式按钮的 text/title DOM 应用已下沉到 `src/quote/quote-display-utils.js`
   - alert log 的 restored muted selector、恢复卡片删除、click action 解析和 active tab runtime 已下沉到 `src/alerts/alert-log-ui-utils.js`
   - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `src/path-alerts/path-alert-utils.js`
   - 套利详情 muted leg 的屏蔽时长 prompt 文案和正整数解析已下沉到 `src/path-alerts/muted-path-leg-utils.js`

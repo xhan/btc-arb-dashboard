@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const {
+  applyQuoteDisplayToggleButtonState,
   buildCexOrderbookSummary,
   buildCexOrderbookTooltipHtml,
   buildInverseQuoteDisplayTextForState,
@@ -36,6 +37,14 @@ assert.strictEqual(buildQuoteDisplayToggleState('bad').mode, 'rate');
 assert.strictEqual(getNextQuoteDisplayMode('rate'), 'amount');
 assert.strictEqual(getNextQuoteDisplayMode('amount'), 'rate');
 assert.strictEqual(getNextQuoteDisplayMode('bad'), 'amount');
+
+const quoteDisplayToggleButton = { textContent: '', title: '' };
+assert.strictEqual(applyQuoteDisplayToggleButtonState(quoteDisplayToggleButton, 'amount'), true);
+assert.deepStrictEqual(quoteDisplayToggleButton, {
+  textContent: '价格: 数量',
+  title: '切换看板报价显示为汇率 (P)'
+});
+assert.strictEqual(applyQuoteDisplayToggleButtonState(null, 'rate'), false);
 
 let hoverTimerId = 0;
 const hoverTimers = [];

@@ -728,6 +728,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildInverseQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayToggleState(mode)'));
+    assert.ok(quoteDisplayUtilsResponse.body.includes('function applyQuoteDisplayToggleButtonState(buttonEl, mode)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function getNextQuoteDisplayMode(mode)'));
     assert.ok(!quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagHtml(quote, channel)'));
     assert.ok(!quoteDisplayUtilsResponse.body.includes('function buildQuoteRequestChannelTagPatch(quote, channel, options = {})'));
@@ -756,7 +757,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildInverseQuoteDisplayTextForState(quote, state'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayToggleState(quoteDisplayMode)'));
+    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode)'));
+    assert.ok(!appJsResponse.body.includes('toggleQuoteDisplayBtn.textContent = state.text'));
+    assert.ok(!appJsResponse.body.includes('toggleQuoteDisplayBtn.title = state.title'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode)'));
     assert.ok(!appJsResponse.body.includes('function buildRequestChannelTagHtml(quote)'));
     assert.ok(!appJsResponse.body.includes('function buildQuotePairLabelHtml(quote, state)'));

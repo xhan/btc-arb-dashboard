@@ -1611,10 +1611,7 @@
     }
 
     function renderQuoteDisplayToggle() {
-        if (!toggleQuoteDisplayBtn) return;
-        const state = getQuoteDisplayUtils().buildQuoteDisplayToggleState(quoteDisplayMode);
-        toggleQuoteDisplayBtn.textContent = state.text;
-        toggleQuoteDisplayBtn.title = state.title;
+        getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode);
     }
 
     function rerenderQuoteDisplayTexts() {

@@ -35,6 +35,14 @@
     };
   }
 
+  function applyQuoteDisplayToggleButtonState(buttonEl, mode) {
+    if (!buttonEl) return false;
+    const state = buildQuoteDisplayToggleState(mode);
+    buttonEl.textContent = state.text;
+    buttonEl.title = state.title;
+    return true;
+  }
+
   function getNextQuoteDisplayMode(mode) {
     return normalizeQuoteDisplayMode(mode) === QUOTE_DISPLAY_MODE_RATE
       ? QUOTE_DISPLAY_MODE_AMOUNT
@@ -376,6 +384,7 @@
     buildQuotePairLabelHtml,
     buildQuoteDisplayTextForState,
     buildQuoteDisplayToggleState,
+    applyQuoteDisplayToggleButtonState,
     buildQuoteHoverTooltipState,
     buildQuoteTrendArrowState,
     extractPriceFromText,
