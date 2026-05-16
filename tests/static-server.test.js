@@ -1061,6 +1061,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState.getState())'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function hasActivePathAlertSound(runtimeState)'));
     assert.ok(appJsResponse.body.includes('quoteStateRuntime.clearTrendTimer(quoteId, clearTimeout)'));
+    assert.ok(appJsResponse.body.includes('quoteStateRuntime.getUiState(quote.id)'));
+    assert.ok(!appJsResponse.body.includes('function clearQuoteTrendTimer('));
+    assert.ok(!appJsResponse.body.includes('function getQuoteUiState('));
     assert.ok(appJsResponse.body.includes('quoteStateRuntime.resetUiRuntimeState(quoteId, clearTimeout)'));
     assert.ok(!appJsResponse.body.includes('function buildDefaultQuoteUiState()'));
     const dashboardRuntimeExportBlock = dashboardRuntimeUtilsResponse.body.match(/return \{\n    buildArbRuleSnapshotCacheKey,[\s\S]*?\n  \};/);

@@ -1249,16 +1249,8 @@
         return quoteStateRuntime.deleteMarketState(quoteId);
     }
 
-    function getQuoteUiState(quoteId) {
-        return quoteStateRuntime.getUiState(quoteId);
-    }
-
     function setQuoteUiState(quoteId, nextState) {
         return quoteStateRuntime.setUiState(quoteId, nextState);
-    }
-
-    function clearQuoteTrendTimer(quoteId) {
-        quoteStateRuntime.clearTrendTimer(quoteId, clearTimeout);
     }
 
     function resetQuoteUiRuntimeState(quoteId) {
@@ -1539,7 +1531,7 @@
     function clearQuoteTrendArrow(quoteId) {
         const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
         getDomRenderUtils().resetTrendArrow(arrowEl);
-        clearQuoteTrendTimer(quoteId);
+        quoteStateRuntime.clearTrendTimer(quoteId, clearTimeout);
     }
 
     function clearQuoteAlertUi(quoteId) {
@@ -3554,7 +3546,7 @@
     function checkPriceForAlerts(quote) {
         if (isQuotePaused(quote)) return;
 
-        const uiState = getQuoteUiState(quote.id);
+        const uiState = quoteStateRuntime.getUiState(quote.id);
         const quoteAlerts = getPathAlertUtils().getQuoteAlertsForQuoteId(pathAlertConfig, quote.id);
         const itemEl = document.getElementById(`quote-item-${quote.id}`);
         const resultDiv = itemEl ? itemEl.querySelector('.quote-result') : null;
