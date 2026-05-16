@@ -279,7 +279,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbEquivalenceUtilsResponse.statusCode, 200);
     const dataTerminalUtilsResponse = await request('/data-terminal-utils.js');
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
-    const arbDetailUtilsResponse = await request('/arb-detail-utils.js');
+    const arbDetailUtilsResponse = await request('/src/arb/arb-detail-utils.js');
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
     const arbDetailRefreshUtilsResponse = await request('/arb-detail-refresh-utils.js');
     assert.strictEqual(arbDetailRefreshUtilsResponse.statusCode, 200);

@@ -48,7 +48,7 @@ const {
   buildArbDetailProfitPreviewReadyHtml,
   buildArbDetailProfitPreviewState,
   buildArbDetailChartPreviewStripHtml
-} = require('../arb-detail-utils');
+} = require('../src/arb/arb-detail-utils');
 
 function resolveGridActionFor(resolver, matches, event = { type: 'click' }) {
   return resolver(event, {
