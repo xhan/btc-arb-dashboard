@@ -372,6 +372,37 @@ assert.deepStrictEqual(quoteAlertEntry, {
 assert.deepStrictEqual(
   buildQuoteAlertTriggeredEntryForQuote({
     alert: {
+      id: 'quote-auto-text',
+      target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 1.01 }
+    },
+    quote: { id: 101 },
+    state: { fromSymbol: 'cbBTC', toSymbol: 'WBTC' },
+    displayName: 'Arbitrum',
+    evaluation: { currentValue: 1.011234 },
+    formatNumber: (value) => Number(value.toFixed(3)),
+    buildQuoteAlertDisplayLabel: () => 'cbBTC/WBTC'
+  }),
+  {
+    alert: {
+      id: 'quote-auto-text',
+      target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 1.01 }
+    },
+    quote: { id: 101 },
+    displayName: 'Arbitrum',
+    label: 'cbBTC/WBTC',
+    message: '汇率已达到或超过目标 1.01',
+    currentValueText: '当前汇率 1.011',
+    actionLink: null,
+    summaryLines: ['Arbitrum cbBTC/WBTC', '汇率已达到或超过目标 1.01'],
+    mutedTargetCandidate: {
+      id: 'quote-auto-text',
+      target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 1.01 }
+    }
+  }
+);
+assert.deepStrictEqual(
+  buildQuoteAlertTriggeredEntryForQuote({
+    alert: {
       id: 'quote-default-link',
       target: { type: 'quote', quoteId: 103, ruleKind: 'targetAbove', value: 1.01 }
     },

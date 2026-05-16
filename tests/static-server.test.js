@@ -661,9 +661,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('getTradingPairUtils().parseCexTradingPairSymbol(symbol)'));
     assert.ok(!appJsResponse.body.includes('window.TradingPairUtils &&'));
     assert.ok(!appJsResponse.body.includes('window.TradingPairUtils.splitCompactTradingPairSymbol(symbol)'));
-    assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertMessage(alert, evaluation, {'));
-    assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertCurrentValueText(alert, evaluation, {'));
-    assert.ok(appJsResponse.body.includes('function buildQuoteAlertCurrentValueText(alert, evaluation)'));
+    assert.ok(appJsResponse.body.includes('evaluation,\n            formatNumber: formatDetailNumber,'));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteAlertMessage(alert, evaluation)'));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteAlertCurrentValueText(alert, evaluation)'));
     assert.ok(!appJsResponse.body.includes('function buildQuoteAlertCurrentValueText(quote, alert, evaluation)'));
     assert.ok(!appJsResponse.body.includes('buildQuoteAlertCurrentValueText(quote, alert,'));
     assert.ok(!appJsResponse.body.includes('function formatPathAlertNotificationTitle(triggeredEntries)'));
@@ -689,6 +689,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("telegramHtmlBody: ''"));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertMessage(alert, evaluation, options = {})'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertCurrentValueText(alert, evaluation, options = {})'));
+    assert.ok(pathAlertNotificationUtilsResponse.body.includes(': buildQuoteAlertMessage(alert, options.evaluation, options);'));
+    assert.ok(pathAlertNotificationUtilsResponse.body.includes(': buildQuoteAlertCurrentValueText(alert, options.evaluation, options);'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertSummaryRuleLine(target)'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertActionLink(dexLink)'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertTriggeredEntry(options = {})'));

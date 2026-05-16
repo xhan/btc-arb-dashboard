@@ -883,14 +883,14 @@
         });
     }
 
-    function buildQuoteAlertTriggeredEntry(alert, quote, message, options = {}) {
+    function buildQuoteAlertTriggeredEntry(alert, quote, evaluation) {
         return getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntryForQuote({
             alert,
             quote,
             state: quote && quote.id != null ? getQuoteMarketState(quote.id) || {} : {},
             displayName: getQuoteChainDisplayName(quote),
-            message,
-            currentValueText: options.currentValueText || '',
+            evaluation,
+            formatNumber: formatDetailNumber,
             dexLink: buildQuoteAlertDexLink(quote),
             buildQuoteAlertDisplayLabel
         });
@@ -3397,10 +3397,7 @@
                 const triggeredEntry = buildQuoteAlertTriggeredEntry(
                     alert,
                     quote,
-                    buildQuoteAlertMessage(alert, runtime.evaluation),
-                    {
-                        currentValueText: buildQuoteAlertCurrentValueText(alert, runtime.evaluation)
-                    }
+                    runtime.evaluation
                 );
                 mutePathAlertTarget(triggeredEntry, Date.now());
                 return;
@@ -4056,18 +4053,6 @@
         }
     }
 
-    function buildQuoteAlertMessage(alert, evaluation) {
-        return getPathAlertNotificationUtils().buildQuoteAlertMessage(alert, evaluation, {
-            formatNumber: formatDetailNumber
-        });
-    }
-
-    function buildQuoteAlertCurrentValueText(alert, evaluation) {
-        return getPathAlertNotificationUtils().buildQuoteAlertCurrentValueText(alert, evaluation, {
-            formatNumber: formatDetailNumber
-        });
-    }
-
     function playPathAlertSoundOnce() {
         if (pathAlertConfig?.settings?.localSoundEnabled === false) {
             console.info('[quote-alert] sound skipped: local sound disabled');
@@ -4087,8 +4072,8 @@
         oneShotAudio.play().catch((error) => console.error('[quote-alert] sound play failed', error));
     }
 
-    function triggerAlert(quote, alert, message, options = {}) {
-        const entry = buildQuoteAlertTriggeredEntry(alert, quote, message, options);
+    function triggerAlert(quote, alert, evaluation) {
+        const entry = buildQuoteAlertTriggeredEntry(alert, quote, evaluation);
         const mutedEntry = entry.mutedTargetCandidate
             ? getMutedPathTargetEntry(entry.mutedTargetCandidate, Date.now())
             : null;
@@ -4096,7 +4081,7 @@
             quoteId: quote.id,
             chain: entry.displayName,
             label: entry.label,
-            message,
+            message: entry.message,
             currentValueText: entry.currentValueText,
             muted: Boolean(mutedEntry)
         });
@@ -4141,9 +4126,7 @@
 
             if (!next.shouldTrigger) continue;
             hasTriggeredThisTick = true;
-            triggerAlert(quote, alert, buildQuoteAlertMessage(alert, evaluation), {
-                currentValueText: buildQuoteAlertCurrentValueText(alert, evaluation)
-            });
+            triggerAlert(quote, alert, evaluation);
         }
 
         const uiUpdate = getDashboardRuntimeUtils().buildQuoteAlertUiUpdate(uiState, hasTriggeredThisTick);

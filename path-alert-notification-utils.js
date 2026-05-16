@@ -358,13 +358,19 @@
     const direction = getQuoteAlertDirection(alert && alert.target);
     const label = buildQuoteAlertDisplayLabel(quote, state, direction);
     const actionLink = options.actionLink || buildQuoteAlertActionLink(options.dexLink);
+    const message = options.message != null
+      ? options.message
+      : buildQuoteAlertMessage(alert, options.evaluation, options);
+    const currentValueText = options.currentValueText != null
+      ? options.currentValueText
+      : buildQuoteAlertCurrentValueText(alert, options.evaluation, options);
     return buildQuoteAlertTriggeredEntry({
       alert,
       quote,
       displayName: options.displayName,
       label,
-      message: options.message,
-      currentValueText: options.currentValueText,
+      message,
+      currentValueText,
       actionLink
     });
   }
