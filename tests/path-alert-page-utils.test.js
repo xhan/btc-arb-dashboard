@@ -9,6 +9,7 @@ const {
   buildPathAlertCardTitle,
   buildPathAlertContextQuoteLabel,
   buildPathAlertDefaultQuoteAlertName,
+  buildQuoteAlertSummaryLabel,
   buildPathAlertQuoteDisplayLabel,
   buildPathAlertQuoteLabel,
   buildPathAlertPageSummaryLines,
@@ -65,6 +66,29 @@ assert.strictEqual(
     }
   ),
   '反向 (Bybit) BTC->WBTC'
+);
+assert.strictEqual(
+  buildQuoteAlertSummaryLabel(
+    { quoteId: 1, direction: 'inverse' },
+    { id: 1, chain: 'ethereum' },
+    { fromSymbol: 'WBTC', toSymbol: 'cbBTC' },
+    {
+      getQuoteAlertDirection: (target) => target.direction,
+      buildQuoteAlertDisplayLabel: (quote, state, direction) => `${quote.chain}:${direction}:${state.toSymbol}/${state.fromSymbol}`
+    }
+  ),
+  'ethereum:inverse:cbBTC/WBTC'
+);
+assert.strictEqual(
+  buildQuoteAlertSummaryLabel(
+    { quoteId: 42 },
+    null,
+    {},
+    {
+      buildQuoteAlertDisplayLabel: () => 'unused'
+    }
+  ),
+  '报价 #42'
 );
 const quotePairOptions = {
   formatChainLabel: (chain) => chain === 'avalanche' ? 'Avalanche' : chain,

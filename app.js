@@ -3183,9 +3183,10 @@
         const match = findQuoteById(Number(target && target.quoteId));
         const quote = match ? match.quote : null;
         const monitorState = quote ? quoteMarketState.get(Number(quote.id)) : null;
-        return quote
-            ? buildQuoteAlertDisplayLabel(quote, monitorState || {}, getQuoteAlertDirection(target))
-            : `报价 #${String(target && target.quoteId || '--')}`;
+        return getPathAlertPageUtils().buildQuoteAlertSummaryLabel(target, quote, monitorState || {}, {
+            buildQuoteAlertDisplayLabel,
+            getQuoteAlertDirection
+        });
     }
 
     function buildPathAlertSummaryLines(alert) {

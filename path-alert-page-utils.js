@@ -113,6 +113,19 @@
     )}`;
   }
 
+  function buildQuoteAlertSummaryLabel(target, quote, state = {}, options = {}) {
+    if (!quote) {
+      return `报价 #${String(target && target.quoteId || '--')}`;
+    }
+    const getQuoteAlertDirection = typeof options.getQuoteAlertDirection === 'function'
+      ? options.getQuoteAlertDirection
+      : getPathAlertQuoteDirection;
+    const buildQuoteAlertDisplayLabel = typeof options.buildQuoteAlertDisplayLabel === 'function'
+      ? options.buildQuoteAlertDisplayLabel
+      : () => '--';
+    return buildQuoteAlertDisplayLabel(quote, state || {}, getQuoteAlertDirection(target));
+  }
+
   function findPathAlertQuoteCandidateForTarget(target, candidates, options = {}) {
     const quoteId = Number(target && target.quoteId);
     if (!Number.isFinite(quoteId)) return null;
@@ -939,6 +952,7 @@
     buildPathAlertCardSubtitle,
     buildPathAlertCardTitle,
     buildPathAlertDefaultQuoteAlertName,
+    buildQuoteAlertSummaryLabel,
     buildPathAlertQuoteLabel,
     buildPathAlertQuoteDisplayLabel,
     buildPathAlertQuotePairText,
