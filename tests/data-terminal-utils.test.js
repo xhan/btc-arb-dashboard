@@ -8,6 +8,8 @@ const {
   buildDataTerminalControlEventPatch,
   buildDataTerminalControlWritePlan,
   buildDataTerminalPanelHtml,
+  applyDataTerminalDefaultSize,
+  applyDataTerminalWindowPosition,
   buildDataTerminalRecords,
   buildDataTerminalShellHtml,
   buildDataTerminalSelectionPatch,
@@ -51,6 +53,73 @@ assert.deepStrictEqual(
   { showDiff: true }
 );
 assert.deepStrictEqual(buildDataTerminalControlEventPatch('unknown', { target: { value: 'x' } }), {});
+
+const dataTerminalPanel = { style: {} };
+assert.strictEqual(applyDataTerminalWindowPosition(dataTerminalPanel), true);
+assert.deepStrictEqual(dataTerminalPanel.style, {
+  left: '20px',
+  bottom: '20px',
+  top: ''
+});
+
+assert.strictEqual(
+  applyDataTerminalWindowPosition(dataTerminalPanel, {
+    anchorPanel: {
+      getBoundingClientRect: () => ({ left: 120, top: 90 })
+    },
+    getComputedStyle: () => ({ display: 'flex' })
+  }),
+  true
+);
+assert.deepStrictEqual(dataTerminalPanel.style, {
+  left: '144px',
+  bottom: '',
+  top: '114px'
+});
+
+assert.strictEqual(
+  applyDataTerminalWindowPosition(dataTerminalPanel, {
+    anchorPanel: {
+      getBoundingClientRect: () => ({ left: -20, top: 10 })
+    },
+    getComputedStyle: () => ({ display: 'flex' })
+  }),
+  true
+);
+assert.deepStrictEqual(dataTerminalPanel.style, {
+  left: '20px',
+  bottom: '',
+  top: '80px'
+});
+
+const dataTerminalSizePanel = { style: {} };
+assert.strictEqual(
+  applyDataTerminalDefaultSize(dataTerminalSizePanel, {
+    anchorPanel: {},
+    getComputedStyle: () => ({ width: '1000px', height: '640px' })
+  }),
+  true
+);
+assert.deepStrictEqual(dataTerminalSizePanel.style, {
+  width: '650px',
+  height: '640px'
+});
+
+assert.strictEqual(
+  applyDataTerminalDefaultSize(dataTerminalSizePanel, {
+    anchorPanel: {},
+    getComputedStyle: () => ({ width: '70vw', height: '50vh' })
+  }),
+  true
+);
+assert.deepStrictEqual(dataTerminalSizePanel.style, {
+  width: '46px',
+  height: '50vh'
+});
+
+assert.strictEqual(applyDataTerminalWindowPosition(null), false);
+assert.strictEqual(applyDataTerminalDefaultSize(null), false);
+
 assert.deepStrictEqual(
   buildDataTerminalSelectionPatch(
     { selectedLeftKey: 'old-left', selectedRightKey: 'old-right' },

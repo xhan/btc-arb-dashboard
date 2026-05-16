@@ -1489,7 +1489,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function mountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function unmountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
-    assert.ok(appJsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
+    assert.ok(!appJsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
+    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().applyDataTerminalDefaultSize(panel, {'));
+    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().applyDataTerminalWindowPosition(panel, {'));
     assert.ok(dataTerminalUtilsResponse.body.includes('id="data-terminal-profit-bp"'));
     assert.ok(appJsResponse.body.includes('selectedLeftKey'));
     assert.ok(appJsResponse.body.includes('selectedRightKey'));
@@ -1501,6 +1503,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('function resolveDataTerminalHeaderClickAction(event, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlWritePlan(state = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlEventPatch(field, event)'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalDefaultSize(panel, options = {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalWindowPosition(panel, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalSelectionPatch(selectionState = {}, action = {})'));
     const dataTerminalExportBlock = dataTerminalUtilsResponse.body.match(/return \{\n    buildDataTerminalCandidates,[\s\S]*?\n  \};/);
     assert.ok(dataTerminalExportBlock);

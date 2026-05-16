@@ -14,6 +14,8 @@
     root.window.DataTerminalUtils = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils, chainDefaults) {
+  const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;
+
   const isQuotePaused = quotePauseUtils && typeof quotePauseUtils.isQuotePaused === 'function'
     ? quotePauseUtils.isQuotePaused
     : (quote) => !!quote && quote.paused === true;
@@ -437,6 +439,63 @@
     return {};
   }
 
+  function readElementDisplay(element, getComputedStyle) {
+    if (typeof getComputedStyle === 'function') {
+      const computedStyle = getComputedStyle(element);
+      return String(computedStyle && computedStyle.display || '');
+    }
+    return String(element && element.style && element.style.display || '');
+  }
+
+  function applyDataTerminalWindowPosition(panel, options = {}) {
+    if (!panel || !panel.style) return false;
+
+    const baseLeft = Number.isFinite(Number(options.baseLeft)) ? Number(options.baseLeft) : 20;
+    const baseBottom = Number.isFinite(Number(options.baseBottom)) ? Number(options.baseBottom) : 20;
+    const anchorOffsetLeft = Number.isFinite(Number(options.anchorOffsetLeft)) ? Number(options.anchorOffsetLeft) : 24;
+    const anchorOffsetTop = Number.isFinite(Number(options.anchorOffsetTop)) ? Number(options.anchorOffsetTop) : 24;
+    const minTop = Number.isFinite(Number(options.minTop)) ? Number(options.minTop) : 80;
+    panel.style.left = `${baseLeft}px`;
+    panel.style.bottom = `${baseBottom}px`;
+    panel.style.top = '';
+
+    const anchorPanel = options.anchorPanel;
+    if (!anchorPanel || readElementDisplay(anchorPanel, options.getComputedStyle) === 'none') {
+      return true;
+    }
+    if (typeof anchorPanel.getBoundingClientRect !== 'function') return true;
+
+    const rect = anchorPanel.getBoundingClientRect();
+    const anchorLeft = Number(rect && rect.left);
+    const anchorTop = Number(rect && rect.top);
+    panel.style.left = `${Math.max(baseLeft, (Number.isFinite(anchorLeft) ? anchorLeft : 0) + anchorOffsetLeft)}px`;
+    panel.style.top = `${Math.max(minTop, (Number.isFinite(anchorTop) ? anchorTop : 0) + anchorOffsetTop)}px`;
+    panel.style.bottom = '';
+    return true;
+  }
+
+  function applyDataTerminalDefaultSize(panel, options = {}) {
+    if (!panel || !panel.style || !options.anchorPanel) return false;
+    const anchorStyle = typeof options.getComputedStyle === 'function'
+      ? options.getComputedStyle(options.anchorPanel)
+      : null;
+    if (!anchorStyle) return false;
+
+    const widthScale = Number.isFinite(Number(options.widthScale))
+      ? Number(options.widthScale)
+      : DATA_TERMINAL_DEFAULT_WIDTH_SCALE;
+    if (anchorStyle.width) {
+      const anchorWidth = parseFloat(anchorStyle.width);
+      panel.style.width = Number.isFinite(anchorWidth)
+        ? `${Math.round(anchorWidth * widthScale)}px`
+        : anchorStyle.width;
+    }
+    if (anchorStyle.height) {
+      panel.style.height = anchorStyle.height;
+    }
+    return true;
+  }
+
   function buildDataTerminalSelectionPatch(selectionState = {}, action = {}) {
     if (!action || action.type !== 'toggle-row') return {};
     const rowKey = String(action.rowKey || '');
@@ -575,6 +634,8 @@
     buildDataTerminalPanelHtml,
     buildDataTerminalRecords,
     buildDataTerminalShellHtml,
+    applyDataTerminalDefaultSize,
+    applyDataTerminalWindowPosition,
     buildDataTerminalSelectionPatch,
     buildDataTerminalSelectionSummary,
     buildDataTerminalViewModel,
