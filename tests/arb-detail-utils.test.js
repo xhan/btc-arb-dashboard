@@ -49,6 +49,8 @@ const {
   applyArbDetailShellHtml,
   buildArbDetailErrorHtml,
   applyArbDetailErrorHtml,
+  buildArbDetailSubtitleText,
+  applyArbDetailSubtitleText,
   applyArbDetailModalVisibility,
   buildArbDetailChartMessageHtml,
   clearArbDetailPreviewContainers,
@@ -518,6 +520,17 @@ assert.strictEqual(
 assert.strictEqual(applyArbDetailErrorHtml(detailGridEl, '已失效 <x>'), true);
 assert.strictEqual(detailGridEl.innerHTML, '<div class="arb-detail-error">已失效 &lt;x&gt;</div>');
 assert.strictEqual(applyArbDetailShellHtml(null, []), false);
+
+assert.strictEqual(buildArbDetailSubtitleText(null), '当前套利机会不可用');
+assert.strictEqual(
+  buildArbDetailSubtitleText({ label: '机会 1', cycle: {} }, ['ETH -> USDC', 'USDC -> WBTC']),
+  '机会 1 | ETH -> USDC | USDC -> WBTC'
+);
+assert.strictEqual(buildArbDetailSubtitleText({ cycle: {} }, []), '套利机会 | ');
+const detailSubtitleEl = { textContent: '' };
+assert.strictEqual(applyArbDetailSubtitleText(detailSubtitleEl, '机会 1 | ETH -> USDC'), true);
+assert.strictEqual(detailSubtitleEl.textContent, '机会 1 | ETH -> USDC');
+assert.strictEqual(applyArbDetailSubtitleText(null, 'x'), false);
 
 function createDetailClassList() {
   const values = new Set();

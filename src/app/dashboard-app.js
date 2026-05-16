@@ -2347,7 +2347,10 @@
 
         const current = arbDetailState.selectedOpportunity;
         if (!current || !current.cycle) {
-            arbDetailSubtitle.textContent = '当前套利机会不可用';
+            getArbDetailUtils().applyArbDetailSubtitleText(
+                arbDetailSubtitle,
+                getArbDetailUtils().buildArbDetailSubtitleText(current)
+            );
             setArbDetailChartLinkState('');
             destroyArbDetailChartPreview();
             getArbDetailUtils().applyArbDetailErrorHtml(arbDetailGrid, '当前套利机会已失效，请关闭后重新选择。');
@@ -2356,7 +2359,10 @@
         }
 
         const legLines = buildLegLines((current.cycle.legs || []).filter(leg => !isRuleLeg(leg)));
-        arbDetailSubtitle.textContent = `${current.label || '套利机会'} | ${legLines.join(' | ')}`;
+        getArbDetailUtils().applyArbDetailSubtitleText(
+            arbDetailSubtitle,
+            getArbDetailUtils().buildArbDetailSubtitleText(current, legLines)
+        );
         void syncArbDetailChartPreview(current);
         if (forceShellRebuild || shouldRebuildArbDetailShell()) {
             renderArbDetailShell();

@@ -814,6 +814,17 @@
     return setElementHtml(gridEl, buildArbDetailErrorHtml(message));
   }
 
+  function buildArbDetailSubtitleText(opportunity, legLines = []) {
+    if (!opportunity || !opportunity.cycle) return '当前套利机会不可用';
+    const label = String(opportunity.label || '套利机会');
+    const lines = Array.isArray(legLines) ? legLines : [];
+    return `${label} | ${lines.join(' | ')}`;
+  }
+
+  function applyArbDetailSubtitleText(subtitleEl, text) {
+    return setElementText(subtitleEl, text);
+  }
+
   function applyArbDetailModalVisibility(modalEl, visible) {
     if (!modalEl || !modalEl.classList) return false;
     if (visible === true) {
@@ -1152,6 +1163,8 @@
     applyArbDetailShellHtml,
     buildArbDetailErrorHtml,
     applyArbDetailErrorHtml,
+    buildArbDetailSubtitleText,
+    applyArbDetailSubtitleText,
     applyArbDetailModalVisibility,
     buildArbDetailChartMessageHtml,
     clearArbDetailPreviewContainers,

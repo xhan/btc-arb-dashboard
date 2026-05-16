@@ -1710,6 +1710,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function syncArbDetailInputValues(cards = [], options = {})'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildNudgedArbDetailInputAmount(card.inputAmount, delta)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, rawValue)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSubtitleText(opportunity, legLines = [])'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailSubtitleText(subtitleEl, text)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailSubtitleText('));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailSubtitleText(current, legLines)'));
+    assert.ok(!appJsResponse.body.includes('arbDetailSubtitle.textContent ='));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailCardContents(arbDetailState.cards, {'));
     assert.ok(appJsResponse.body.includes('getElementById: (id) => document.getElementById(id)'));
     assert.ok(appJsResponse.body.includes('buildRowsHtml: (card, index) => buildArbDetailRowsHtml(card, index)'));
