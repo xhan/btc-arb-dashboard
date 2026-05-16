@@ -93,6 +93,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/price-snapshots/price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="src/shared/chain-defaults.js"'));
     assert.ok(response.body.includes('src="src/ui/theme-utils.js"'));
+    assert.ok(response.body.includes('src="src/ui/keyboard-shortcut-utils.js"'));
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(response.body.includes('src="src/data-terminal/data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-runtime-utils.js"'));
@@ -153,6 +154,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/ui/theme-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/ui/keyboard-shortcut-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
@@ -333,6 +337,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(domRenderUtilsResponse.statusCode, 200);
     const themeUtilsResponse = await request('/src/ui/theme-utils.js');
     assert.strictEqual(themeUtilsResponse.statusCode, 200);
+    const keyboardShortcutUtilsResponse = await request('/src/ui/keyboard-shortcut-utils.js');
+    assert.strictEqual(keyboardShortcutUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-dex-link-copy]')"));
@@ -591,6 +597,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('return getThemeUtils().getNextTheme(currentTheme);'));
     assert.ok(!appJsResponse.body.includes('const THEME_ORDER ='));
     assert.ok(!appJsResponse.body.includes('const THEME_META ='));
+    assert.ok(keyboardShortcutUtilsResponse.body.includes('function resolveGlobalShortcutAction(event, state = {})'));
+    assert.ok(keyboardShortcutUtilsResponse.body.includes('function isTypingShortcutTarget(target)'));
+    assert.ok(appJsResponse.body.includes('function getKeyboardShortcutUtils()'));
+    assert.ok(appJsResponse.body.includes('KeyboardShortcutUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('getKeyboardShortcutUtils().resolveGlobalShortcutAction(event, {'));
+    assert.ok(!appJsResponse.body.includes('function isTypingTarget(target)'));
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function renderCategoryModuleShell(config = {})'));
     assert.ok(appJsResponse.body.includes('function getDashboardRenderer()'));
@@ -1024,13 +1036,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('输入屏蔽时长（小时，正整数）'));
     assert.ok(!appJsResponse.body.includes('屏蔽 8 小时'));
     assert.ok(pathAlertUtilsResponse.body.includes('沉默中'));
-    assert.ok(appJsResponse.body.includes("if (key === 'a')"));
-    assert.ok(appJsResponse.body.includes("if (key === 'c')"));
-    assert.ok(appJsResponse.body.includes("if (key === 'l')"));
-    assert.ok(appJsResponse.body.includes("if (key === 'p')"));
-    assert.ok(appJsResponse.body.includes("if (key === 's')"));
-    assert.ok(!appJsResponse.body.includes("if (key === 'd')"));
-    assert.ok(!appJsResponse.body.includes("if (key === 'r')"));
+    assert.ok(keyboardShortcutUtilsResponse.body.includes("a: 'toggle-path-alert'"));
+    assert.ok(keyboardShortcutUtilsResponse.body.includes("c: 'toggle-request-channel-tags'"));
+    assert.ok(keyboardShortcutUtilsResponse.body.includes("l: 'toggle-alert-log'"));
+    assert.ok(keyboardShortcutUtilsResponse.body.includes("p: 'toggle-quote-display'"));
+    assert.ok(keyboardShortcutUtilsResponse.body.includes("s: 'toggle-data-terminal'"));
+    assert.ok(!keyboardShortcutUtilsResponse.body.includes("d: '"));
+    assert.ok(!keyboardShortcutUtilsResponse.body.includes("r: '"));
     assert.ok(!appJsResponse.body.includes('toggleCalcPanel()'));
     assert.ok(!appJsResponse.body.includes('resetCalculator()'));
     assert.ok(!appJsResponse.body.includes('calculatorEntries'));

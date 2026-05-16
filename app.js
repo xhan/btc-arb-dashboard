@@ -424,6 +424,13 @@
         return window.ThemeUtils;
     }
 
+    function getKeyboardShortcutUtils() {
+        if (!window.KeyboardShortcutUtils) {
+            throw new Error('KeyboardShortcutUtils is not loaded');
+        }
+        return window.KeyboardShortcutUtils;
+    }
+
     function getArbDetailRefreshUtils() {
         if (!window.ArbDetailRefreshUtils) {
             throw new Error('ArbDetailRefreshUtils is not loaded');
@@ -3945,54 +3952,35 @@
         }
     }
 
-    function isTypingTarget(target) {
-        if (!target || typeof target.closest !== 'function') return false;
-        if (target.isContentEditable) return true;
-        return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
-    }
-
     function handleGlobalShortcuts(event) {
-        if (event.defaultPrevented) return;
-        if (event.metaKey || event.ctrlKey || event.altKey) return;
-        if (isTypingTarget(event.target)) return;
+        const action = getKeyboardShortcutUtils().resolveGlobalShortcutAction(event, {
+            arbDetailVisible: arbDetailState.visible
+        });
+        if (!action) return;
+        event.preventDefault();
 
-        const key = (event.key || '').toLowerCase();
-        if (!key) return;
-
-        if (key === 'escape' && arbDetailState.visible) {
-            event.preventDefault();
-            closeArbDetailModal();
-            return;
-        }
-        if (key === 't') {
-            event.preventDefault();
-            toggleArbPanel();
-            return;
-        }
-        if (key === 's') {
-            event.preventDefault();
-            toggleDataTerminalPanel();
-            return;
-        }
-        if (key === 'p') {
-            event.preventDefault();
-            toggleQuoteDisplayMode();
-            return;
-        }
-        if (key === 'a') {
-            event.preventDefault();
-            togglePathAlertPanel();
-            return;
-        }
-        if (key === 'l') {
-            event.preventDefault();
-            toggleAlertLogPanel();
-            return;
-        }
-        if (key === 'c') {
-            event.preventDefault();
-            toggleRequestChannelTags();
-            return;
+        switch (action) {
+            case 'close-arb-detail':
+                closeArbDetailModal();
+                break;
+            case 'toggle-arb-panel':
+                toggleArbPanel();
+                break;
+            case 'toggle-data-terminal':
+                toggleDataTerminalPanel();
+                break;
+            case 'toggle-quote-display':
+                toggleQuoteDisplayMode();
+                break;
+            case 'toggle-path-alert':
+                togglePathAlertPanel();
+                break;
+            case 'toggle-alert-log':
+                toggleAlertLogPanel();
+                break;
+            case 'toggle-request-channel-tags':
+                toggleRequestChannelTags();
+                break;
         }
     }
 
