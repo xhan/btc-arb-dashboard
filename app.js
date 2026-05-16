@@ -4422,7 +4422,7 @@
             return;
         }
         playPathAlertSoundOnce();
-        sendQuoteWebhookNotification(entry.displayName, entry.label, message, entry.currentValueText, entry.actionLink);
+        sendQuoteWebhookNotification(entry);
     }
 
     function checkPriceForAlerts(quote) {
@@ -4477,15 +4477,9 @@
         updateAlertSoundState();
     }
 
-    async function sendQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null) {
+    async function sendQuoteWebhookNotification(entry) {
         if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
-        const payload = getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({
-            chainName: displayName,
-            label,
-            currentValueText,
-            message,
-            actionLink
-        });
+        const payload = getPathAlertNotificationUtils().buildQuoteAlertRemotePayloadForEntry(entry);
         try {
             const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
                 method: 'POST',

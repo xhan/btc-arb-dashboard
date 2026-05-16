@@ -432,6 +432,16 @@
     };
   }
 
+  function buildQuoteAlertRemotePayloadForEntry(entry) {
+    return buildQuoteAlertRemotePayload({
+      chainName: entry && entry.displayName,
+      label: entry && entry.label,
+      currentValueText: entry && entry.currentValueText,
+      message: entry && entry.message,
+      actionLink: entry && entry.actionLink
+    });
+  }
+
   return {
     formatPathAlertEvaluationText,
     buildPathAlertChangedLegLines,
@@ -453,6 +463,7 @@
     buildQuoteAlertTriggeredEntry,
     buildQuoteAlertTriggeredEntryForQuote,
     buildQuoteAlertRemotePayload,
+    buildQuoteAlertRemotePayloadForEntry,
     getQuoteAlertDirection
   };
 }));

@@ -21,6 +21,7 @@ const {
   buildQuoteAlertTriggeredEntry,
   buildQuoteAlertTriggeredEntryForQuote,
   buildQuoteAlertRemotePayload,
+  buildQuoteAlertRemotePayloadForEntry,
   getQuoteAlertDirection
 } = require('../path-alert-notification-utils');
 
@@ -525,6 +526,21 @@ assert.deepStrictEqual(
     title: 'ETH cbBTC/BTC.b  1 -> 1.000224',
     body: '总价已达到或超过目标 1.00017\nswap.defillama: https://swap.defillama.com/?chain=ethereum&from=0x1&tab=swap&to=0x2',
     telegramHtmlBody: '总价已达到或超过目标 1.00017\n<a href="https://swap.defillama.com/?chain=ethereum&amp;from=0x1&amp;tab=swap&amp;to=0x2">swap.defillama</a>'
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuoteAlertRemotePayloadForEntry({
+    displayName: 'Ethereum',
+    label: 'WBTC/cbBTC',
+    currentValueText: '当前汇率 0.98',
+    message: '汇率已达到或低于目标 0.99',
+    actionLink: { label: 'swap', url: 'https://example.test/swap' }
+  }),
+  {
+    title: 'Ethereum WBTC/cbBTC  当前汇率 0.98',
+    body: '汇率已达到或低于目标 0.99\nswap: https://example.test/swap',
+    telegramHtmlBody: '汇率已达到或低于目标 0.99\n<a href="https://example.test/swap">swap</a>'
   }
 );
 
