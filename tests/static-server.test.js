@@ -94,6 +94,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="request-channel-utils.js"'));
     assert.ok(response.body.includes('src="data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="dashboard-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="quote-state-runtime-utils.js"'));
     assert.ok(response.body.includes('src="quote-queue-runtime-utils.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
@@ -122,6 +123,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="dashboard-runtime-utils.js"') < response.body.indexOf('src="quote-state-runtime-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="quote-state-runtime-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="queue-stats-utils.js"') < response.body.indexOf('src="quote-queue-runtime-utils.js"')
@@ -287,6 +294,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(pathAlertEditorUtilsResponse.statusCode, 200);
     const dashboardRuntimeUtilsResponse = await request('/dashboard-runtime-utils.js');
     assert.strictEqual(dashboardRuntimeUtilsResponse.statusCode, 200);
+    const quoteStateRuntimeUtilsResponse = await request('/quote-state-runtime-utils.js');
+    assert.strictEqual(quoteStateRuntimeUtilsResponse.statusCode, 200);
     const pathAlertNotificationUtilsResponse = await request('/path-alert-notification-utils.js');
     assert.strictEqual(pathAlertNotificationUtilsResponse.statusCode, 200);
     const alertDebugUtilsResponse = await request('/alert-debug-utils.js');
@@ -554,12 +563,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("leg.pricingMode === 'cex-ask1-inverse'"));
     assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
     assert.ok(!pathAlertNotificationUtilsResponse.body.includes('buildLegacyQuoteAlertRemotePayload'));
-    assert.ok(appJsResponse.body.includes('let quoteUiState = new Map();'));
+    assert.ok(!appJsResponse.body.includes('let quoteUiState = new Map();'));
+    assert.ok(!appJsResponse.body.includes('let quoteMarketState = new Map();'));
+    assert.ok(appJsResponse.body.includes('const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({'));
+    assert.ok(appJsResponse.body.includes('QuoteStateRuntimeUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getDashboardRuntimeUtils()'));
     assert.ok(appJsResponse.body.includes('DashboardRuntimeUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('function sanitizeQuoteMarketState(state)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().sanitizeQuoteMarketState(state)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasQuoteMarketStateChanged(previousState, nextState)'));
+    assert.ok(!appJsResponse.body.includes('function sanitizeQuoteMarketState(state)'));
+    assert.ok(quoteStateRuntimeUtilsResponse.body.includes('function createQuoteStateRuntime(options = {})'));
+    assert.ok(quoteStateRuntimeUtilsResponse.body.includes('dashboardRuntimeUtils.sanitizeQuoteMarketState(nextState)'));
+    assert.ok(quoteStateRuntimeUtilsResponse.body.includes('dashboardRuntimeUtils.hasQuoteMarketStateChanged(previousState, marketState)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().getActivePathAlertEvaluationAlerts(pathAlertConfig)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, quoteId)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function findDashboardQuoteById(dashboardState, quoteId)'));
@@ -567,13 +580,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;'));
     assert.ok(!appJsResponse.body.includes('return previousState !== nextState;'));
     assert.ok(appJsResponse.body.includes('function setQuoteUiState(quoteId, nextState)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().setQuoteUiState(quoteUiState, quoteId, nextState)'));
+    assert.ok(appJsResponse.body.includes('return quoteStateRuntime.setUiState(quoteId, nextState)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().buildQuoteAlertUiUpdate(uiState, hasTriggeredThisTick)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteAlertUiUpdate(currentState, hasTriggered)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function hasActivePathAlertSound(runtimeState)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().clearQuoteTrendTimer(quoteUiState, quoteId, clearTimeout)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().resetQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeout)'));
+    assert.ok(appJsResponse.body.includes('quoteStateRuntime.clearTrendTimer(quoteId, clearTimeout)'));
+    assert.ok(appJsResponse.body.includes('quoteStateRuntime.resetUiRuntimeState(quoteId, clearTimeout)'));
     assert.ok(!appJsResponse.body.includes('function buildDefaultQuoteUiState()'));
     const dashboardRuntimeExportBlock = dashboardRuntimeUtilsResponse.body.match(/return \{\n    buildArbRuleSnapshotCacheKey,[\s\S]*?\n  \};/);
     assert.ok(dashboardRuntimeExportBlock);
@@ -677,7 +690,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);'));
     assert.ok(/dataTerminalState\.htmlRenderer\.render\(\s*refs\.content,/.test(appJsResponse.body));
     assert.ok(!appJsResponse.body.includes('refs.content.innerHTML = buildDataTerminalPanelHtml'));
-    assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: quoteMarketState })'));
+    assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: getQuoteMarketStateMap() })'));
     assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
     assert.ok(!appJsResponse.body.includes('syncLoopingAlertSound(alertSound, shouldPlayQuoteAlert);'));
     assert.ok(appJsResponse.body.includes('path-alert-config-sync'));
@@ -882,7 +895,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function buildGlobalArbSection('));
     assert.ok(appJsResponse.body.includes('function getArbPathTemplateCacheUtils()'));
     assert.ok(appJsResponse.body.includes('ArbPathTemplateCacheUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('templateUtils.evaluateCycleTemplate(template, quoteMarketState)'));
+    assert.ok(appJsResponse.body.includes('templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap())'));
     assert.ok(!appJsResponse.body.includes('topologyCache && templateUtils'));
     assert.ok(!appJsResponse.body.includes('window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges)'));
     assert.ok(appJsResponse.body.includes('const fixedSections = buildFixedArbSections('));

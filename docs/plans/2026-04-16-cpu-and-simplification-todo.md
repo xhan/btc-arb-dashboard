@@ -75,12 +75,13 @@
   - quote 跨链显示名已下沉到 `chain-defaults.js`
   - dashboardState 按 quoteId 查找 quote 的逻辑已下沉到 `dashboard-runtime-utils.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
+  - `quoteMarketState` / `quoteUiState` 的 Map 所有权和 market revision 已下沉到 `quote-state-runtime-utils.js`，`app.js` 只通过 runtime wrapper 读写
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效
   - 继续降低前端重复计算
 - 后续建议：
   - 保持只有行情字段变更时才失效套利缓存
-  - 后续拆 `app.js` 时把 `quoteMarketState` / `quoteUiState` 放入各自模块边界
+  - 后续继续拆 `app.js` 时，保留 quote state runtime 作为唯一状态边界，不再新增直接 Map source of truth
 
 ### 6. 减少整块 `innerHTML` 重建
 - 目标：减少大面板反复全量重绘。
