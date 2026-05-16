@@ -75,7 +75,7 @@
     let arbLastPointerOpenedOpportunityId = null;
     let arbDetailState = getArbDetailUtils().buildDefaultArbDetailState();
     let arbDetailFetchController = null;
-    let quoteSourceLastRequestAtByIntervalKey = new Map();
+    const arbDetailSourceBudgetRuntime = getArbDetailUtils().createArbDetailSourceBudgetRuntime();
     let arbDetailChartPreviewCharts = [];
     let arbDetailChartPreviewRunId = 0;
     let arbDetailChartAutoRefreshTimer = null;
@@ -2386,18 +2386,11 @@
     }
 
     function getQuoteSourceBudgetTimestamp(source) {
-        return getArbDetailUtils().getArbDetailBudgetTimestamp(
-            quoteSourceLastRequestAtByIntervalKey,
-            source
-        );
+        return arbDetailSourceBudgetRuntime.getTimestamp(source);
     }
 
     function recordQuoteSourceBudgetTimestamp(source, requestedAt = Date.now()) {
-        return getArbDetailUtils().recordArbDetailBudgetTimestamp(
-            quoteSourceLastRequestAtByIntervalKey,
-            source,
-            requestedAt
-        );
+        return arbDetailSourceBudgetRuntime.recordTimestamp(source, requestedAt);
     }
 
     function syncArbDetailPrimaryCardQuoteState(quote, data, successSource, isInverseFetch) {

@@ -424,6 +424,20 @@
     return appliedTimestamp;
   }
 
+  function createArbDetailSourceBudgetRuntime() {
+    const budgetState = new Map();
+
+    return {
+      getState: () => budgetState,
+      getTimestamp(source) {
+        return getArbDetailBudgetTimestamp(budgetState, source);
+      },
+      recordTimestamp(source, requestedAt = Date.now()) {
+        return recordArbDetailBudgetTimestamp(budgetState, source, requestedAt);
+      }
+    };
+  }
+
   function shouldSyncArbDetailSnapshotForCard(cardIndex) {
     return Number(cardIndex) === 0;
   }
@@ -805,6 +819,7 @@
     getArbDetailRateLimitDelay,
     getArbDetailBudgetTimestamp,
     recordArbDetailBudgetTimestamp,
+    createArbDetailSourceBudgetRuntime,
     shouldSyncArbDetailSnapshotForCard,
     buildArbDetailSnapshotMonitorState,
     buildArbDetailDexLink,

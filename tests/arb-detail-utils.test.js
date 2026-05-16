@@ -24,6 +24,7 @@ const {
   getArbDetailRateLimitDelay,
   getArbDetailBudgetTimestamp,
   recordArbDetailBudgetTimestamp,
+  createArbDetailSourceBudgetRuntime,
   buildUniqueArbOpportunityId,
   shouldApplyArbDetailRequestVersion,
   applyArbDetailCardError,
@@ -751,6 +752,13 @@ assert.strictEqual(
   getArbDetailBudgetTimestamp(detailBudgetState, 'Velora'),
   1200
 );
+
+const detailBudgetRuntime = createArbDetailSourceBudgetRuntime();
+assert.strictEqual(detailBudgetRuntime.getTimestamp('Kyber'), null);
+assert.strictEqual(detailBudgetRuntime.recordTimestamp('Kyber', 1500), 1500);
+assert.strictEqual(detailBudgetRuntime.recordTimestamp('Kyber', 1400), 1500);
+assert.strictEqual(detailBudgetRuntime.getTimestamp('Kyber'), 1500);
+assert.ok(detailBudgetRuntime.getState() instanceof Map);
 
 const stableCycleA = {
   legs: [

@@ -892,7 +892,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(appJsResponse.body.includes('已暂停'));
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
-    assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));
+    assert.ok(arbDetailUtilsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRow(match.quote, data, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailRateDeltas(rows, baseRows)'));
@@ -904,6 +904,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('let arbDetailState = getArbDetailUtils().buildDefaultArbDetailState();'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildOpenArbDetailState(arbDetailState, {'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildClosedArbDetailState(arbDetailState)'));
+    assert.ok(appJsResponse.body.includes('const arbDetailSourceBudgetRuntime = getArbDetailUtils().createArbDetailSourceBudgetRuntime();'));
+    assert.ok(appJsResponse.body.includes('return arbDetailSourceBudgetRuntime.getTimestamp(source);'));
+    assert.ok(appJsResponse.body.includes('return arbDetailSourceBudgetRuntime.recordTimestamp(source, requestedAt);'));
+    assert.ok(!appJsResponse.body.includes('quoteSourceLastRequestAtByIntervalKey'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function createArbDetailSourceBudgetRuntime()'));
     assert.ok(!appJsResponse.body.includes('详情渲染模块未加载'));
     assert.ok(!appJsResponse.body.includes('typeof utils.buildArbDetail'));
     assert.ok(!appJsResponse.body.includes('buildDetailInputAmounts(baseAmount) {'));
