@@ -468,7 +468,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertPageSummaryLines(alert, {'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertLegDisplayLine(leg, {'));
+    assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertSummaryLegLine(leg, state, {'));
     assert.ok(appJsResponse.body.includes('buildQuoteAlertRuleLine: (target) => getPathAlertNotificationUtils().buildQuoteAlertSummaryRuleLine(target)'));
+    assert.ok(!appJsResponse.body.includes("leg.pricingMode === 'cex-ask1-inverse'"));
     assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
     assert.ok(!pathAlertNotificationUtilsResponse.body.includes('buildLegacyQuoteAlertRemotePayload'));
     assert.ok(appJsResponse.body.includes('let quoteUiState = new Map();'));
@@ -683,6 +685,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertPageUtilsResponse.body.includes('function renderPathAlertSummaryLinesHtml(lines)'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function buildPathAlertMetaText(alert, options = {})'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function buildPathAlertLegDisplayLine(leg, options = {})'));
+    assert.ok(pathAlertPageUtilsResponse.body.includes('function buildPathAlertSummaryLegLine(leg, state, options = {})'));
     assert.ok(appJsResponse.body.includes('function getPathAlertPageUtils()'));
     assert.ok(appJsResponse.body.includes('PathAlertPageUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildPathAlertQuoteLabel({'));

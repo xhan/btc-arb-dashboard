@@ -228,6 +228,29 @@
     );
   }
 
+  function buildPathAlertSummaryLegLine(leg, state, options = {}) {
+    if (!leg) return '--';
+    let fromSymbol = leg.fromSymbol;
+    let toSymbol = leg.toSymbol;
+    let suffix = '';
+    if (!state || !state.fromSymbol || !state.toSymbol) {
+      return buildPathAlertQuotePairLabel(leg.chain, fromSymbol, toSymbol, suffix, options);
+    }
+    fromSymbol = state.fromSymbol;
+    toSymbol = state.toSymbol;
+    if (leg.pricingMode === 'cex-ask1-inverse' || leg.direction === 'inverse') {
+      fromSymbol = state.toSymbol;
+      toSymbol = state.fromSymbol;
+    }
+    if (leg.pricingMode === 'cex-ask1-inverse') {
+      suffix = ' [ask1]';
+    }
+    if (leg.pricingMode === 'cex-bid1') {
+      suffix = ' [bid1]';
+    }
+    return buildPathAlertQuotePairLabel(leg.chain, fromSymbol, toSymbol, suffix, options);
+  }
+
   function buildDismissedPathAlertPageSummaryLines(entry, options = {}) {
     const lines = Array.isArray(entry && entry.summaryLinesSnapshot)
       ? entry.summaryLinesSnapshot.filter(Boolean)
@@ -922,6 +945,7 @@
     buildPathAlertPanelRenderOptions,
     buildPathAlertPageSummaryLines,
     buildPathAlertLegDisplayLine,
+    buildPathAlertSummaryLegLine,
     buildPathAlertSectionConfigs,
     buildPathAlertMetaText,
     buildPathAlertsPageHref,

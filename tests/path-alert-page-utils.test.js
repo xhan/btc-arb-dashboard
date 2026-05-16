@@ -13,6 +13,7 @@ const {
   buildPathAlertQuoteLabel,
   buildPathAlertPageSummaryLines,
   buildPathAlertLegDisplayLine,
+  buildPathAlertSummaryLegLine,
   buildPathAlertQuotePairText,
   buildPathAlertPanelRenderOptions,
   buildPathAlertSectionConfigs,
@@ -131,6 +132,41 @@ assert.strictEqual(
     { buildQuoteLabel: (chain, fromSymbol, toSymbol, suffix) => `(${chain}) ${fromSymbol}->${toSymbol}${suffix}` }
   ),
   '(Bybit) BTC->WBTC [ask1]'
+);
+function buildSummaryLegLabel(chain, fromSymbol, toSymbol, suffix) {
+  return `(${chain}) ${fromSymbol}->${toSymbol}${suffix}`;
+}
+assert.strictEqual(
+  buildPathAlertSummaryLegLine(
+    { chain: 'Bybit', fromSymbol: 'WBTC', toSymbol: 'BTC', pricingMode: 'cex-ask1-inverse' },
+    { fromSymbol: 'WBTC', toSymbol: 'BTC' },
+    { buildQuoteLabel: buildSummaryLegLabel }
+  ),
+  '(Bybit) BTC->WBTC [ask1]'
+);
+assert.strictEqual(
+  buildPathAlertSummaryLegLine(
+    { chain: 'Bybit', fromSymbol: 'WBTC', toSymbol: 'BTC', pricingMode: 'cex-bid1' },
+    { fromSymbol: 'WBTC', toSymbol: 'BTC' },
+    { buildQuoteLabel: buildSummaryLegLabel }
+  ),
+  '(Bybit) WBTC->BTC [bid1]'
+);
+assert.strictEqual(
+  buildPathAlertSummaryLegLine(
+    { chain: 'ethereum', fromSymbol: 'WETH', toSymbol: 'USDC', direction: 'inverse' },
+    { fromSymbol: 'WETH', toSymbol: 'USDC' },
+    { buildQuoteLabel: buildSummaryLegLabel }
+  ),
+  '(ethereum) USDC->WETH'
+);
+assert.strictEqual(
+  buildPathAlertSummaryLegLine(
+    { chain: 'ethereum', fromSymbol: 'WETH', toSymbol: 'USDC' },
+    null,
+    { buildQuoteLabel: buildSummaryLegLabel }
+  ),
+  '(ethereum) WETH->USDC'
 );
 assert.deepStrictEqual(
   buildDismissedPathAlertPageSummaryLines({

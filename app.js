@@ -3198,19 +3198,9 @@
             formatLeg(leg) {
                 const match = findQuoteById(Number(leg.quoteId));
                 const state = match ? quoteMarketState.get(Number(leg.quoteId)) : null;
-                if (state && state.fromSymbol && state.toSymbol) {
-                    if (leg.pricingMode === 'cex-ask1-inverse') {
-                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol, ' [ask1]');
-                    }
-                    if (leg.pricingMode === 'cex-bid1') {
-                        return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol, ' [bid1]');
-                    }
-                    if (leg.direction === 'inverse') {
-                        return buildLiveQuoteLabel(leg.chain, state.toSymbol, state.fromSymbol);
-                    }
-                    return buildLiveQuoteLabel(leg.chain, state.fromSymbol, state.toSymbol);
-                }
-                return buildLiveQuoteLabel(leg.chain, leg.fromSymbol, leg.toSymbol);
+                return getPathAlertPageUtils().buildPathAlertSummaryLegLine(leg, state, {
+                    buildQuoteLabel: buildLiveQuoteLabel
+                });
             },
             findRule(ruleKind, ruleId) {
                 const sourceList = getPathAlertRuleDefinitions(ruleKind);
