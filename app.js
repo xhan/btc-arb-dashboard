@@ -1993,21 +1993,45 @@
         return dataTerminalCache.getCandidates(cacheKey, () => utils.buildDataTerminalCandidates(buildDataTerminalRecords()));
     }
 
+    function getDataTerminalControlElements(refs) {
+        return {
+            'data-terminal-search-input': refs && refs.searchInput,
+            'data-terminal-alias-toggle': refs && refs.aliasToggle,
+            'data-terminal-diff-toggle': refs && refs.diffToggle
+        };
+    }
+
+    function applyDataTerminalControlWritePlan(plan, refs) {
+        const elements = getDataTerminalControlElements(refs);
+        (plan.value || []).forEach((item) => {
+            const element = elements[item.id];
+            if (element && element.value !== item.value) element.value = item.value;
+        });
+        (plan.checked || []).forEach((item) => {
+            const element = elements[item.id];
+            if (element && element.checked !== item.checked) element.checked = item.checked;
+        });
+    }
+
+    function applyDataTerminalControlPatch(patch) {
+        if (Object.prototype.hasOwnProperty.call(patch, 'query')) {
+            dataTerminalState.query = patch.query;
+        }
+        if (Object.prototype.hasOwnProperty.call(patch, 'allowAliases')) {
+            dataTerminalState.allowAliases = patch.allowAliases;
+        }
+        if (Object.prototype.hasOwnProperty.call(patch, 'showDiff')) {
+            dataTerminalState.showDiff = patch.showDiff;
+        }
+    }
+
     function renderDataTerminalPanel() {
         if (!dataTerminalState.visible || !dataTerminalState.domRefs) return;
         const refs = dataTerminalState.domRefs;
         const utils = getDataTerminalUtils();
         if (!refs.content) return;
 
-        if (refs.searchInput && refs.searchInput.value !== dataTerminalState.query) {
-            refs.searchInput.value = dataTerminalState.query;
-        }
-        if (refs.aliasToggle) {
-            refs.aliasToggle.checked = dataTerminalState.allowAliases;
-        }
-        if (refs.diffToggle) {
-            refs.diffToggle.checked = dataTerminalState.showDiff;
-        }
+        applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
 
         const candidates = buildDataTerminalCandidates(utils);
         const viewModel = utils.buildDataTerminalViewModel(candidates, {
@@ -2164,11 +2188,11 @@
         dataTerminalState.visible = true;
         dataTerminalState.domRefs = refs;
         dataTerminalState.htmlRenderer.reset();
+        applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
 
         if (refs.searchInput) {
-            refs.searchInput.value = dataTerminalState.query;
             refs.searchInput.addEventListener('input', (event) => {
-                dataTerminalState.query = event.target.value || '';
+                applyDataTerminalControlPatch(utils.buildDataTerminalControlEventPatch('query', event));
                 renderDataTerminalPanel();
             });
             refs.searchInput.addEventListener('keydown', (event) => {
@@ -2178,16 +2202,14 @@
             });
         }
         if (refs.aliasToggle) {
-            refs.aliasToggle.checked = dataTerminalState.allowAliases;
             refs.aliasToggle.addEventListener('change', (event) => {
-                dataTerminalState.allowAliases = event.target.checked;
+                applyDataTerminalControlPatch(utils.buildDataTerminalControlEventPatch('allowAliases', event));
                 renderDataTerminalPanel();
             });
         }
         if (refs.diffToggle) {
-            refs.diffToggle.checked = dataTerminalState.showDiff;
             refs.diffToggle.addEventListener('change', (event) => {
-                dataTerminalState.showDiff = event.target.checked;
+                applyDataTerminalControlPatch(utils.buildDataTerminalControlEventPatch('showDiff', event));
                 renderDataTerminalPanel();
             });
         }

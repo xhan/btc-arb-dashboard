@@ -1175,11 +1175,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalShellHtml'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function resolveDataTerminalContentClickAction(event, options = {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlWritePlan(state = {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlEventPatch(field, event)'));
     const dataTerminalExportBlock = dataTerminalUtilsResponse.body.match(/return \{\n    buildDataTerminalCandidates,[\s\S]*?\n  \};/);
     assert.ok(dataTerminalExportBlock);
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalBp'));
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalValue'));
     assert.ok(appJsResponse.body.includes('utils.buildDataTerminalShellHtml()'));
+    assert.ok(appJsResponse.body.includes('utils.buildDataTerminalControlWritePlan(dataTerminalState)'));
+    assert.ok(appJsResponse.body.includes("utils.buildDataTerminalControlEventPatch('query', event)"));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget })'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalRowHtml'));
@@ -1191,6 +1195,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('dataTerminalUpdateRuntime.schedule();'));
     assert.ok(!appJsResponse.body.includes('timer: null,'));
     assert.ok(!appJsResponse.body.includes('dataTerminalState.timer'));
+    assert.ok(!appJsResponse.body.includes('refs.searchInput.value = dataTerminalState.query;'));
+    assert.ok(!appJsResponse.body.includes('dataTerminalState.allowAliases = event.target.checked;'));
+    assert.ok(!appJsResponse.body.includes('dataTerminalState.showDiff = event.target.checked;'));
     assert.ok(!appJsResponse.body.includes('let dataTerminalRecordsCacheKey = \'\';'));
     assert.ok(!appJsResponse.body.includes('let dataTerminalCandidatesCacheKey = \'\';'));
     assert.ok(appJsResponse.body.includes('const dataTerminalCache = getDataTerminalUtils().createDataTerminalCache();'));

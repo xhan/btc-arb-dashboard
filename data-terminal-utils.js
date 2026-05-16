@@ -398,6 +398,37 @@
     return { type: 'none' };
   }
 
+  function buildDataTerminalControlWritePlan(state = {}) {
+    return {
+      value: [
+        { id: 'data-terminal-search-input', value: String(state.query || '') }
+      ],
+      checked: [
+        { id: 'data-terminal-alias-toggle', checked: state.allowAliases === true },
+        { id: 'data-terminal-diff-toggle', checked: state.showDiff === true }
+      ]
+    };
+  }
+
+  function readEventTargetTextValue(event) {
+    return (event && event.target && typeof event.target.value === 'string')
+      ? event.target.value
+      : '';
+  }
+
+  function buildDataTerminalControlEventPatch(field, event) {
+    if (field === 'query') {
+      return { query: readEventTargetTextValue(event) };
+    }
+    if (field === 'allowAliases') {
+      return { allowAliases: Boolean(event && event.target && event.target.checked) };
+    }
+    if (field === 'showDiff') {
+      return { showDiff: Boolean(event && event.target && event.target.checked) };
+    }
+    return {};
+  }
+
   function buildDataTerminalShellHtml() {
     return `
             <div id="data-terminal-header">
@@ -516,6 +547,8 @@
 
   return {
     buildDataTerminalCandidates,
+    buildDataTerminalControlEventPatch,
+    buildDataTerminalControlWritePlan,
     buildDataTerminalPanelHtml,
     buildDataTerminalRecords,
     buildDataTerminalShellHtml,

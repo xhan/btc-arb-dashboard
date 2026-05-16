@@ -5,6 +5,8 @@ const vm = require('vm');
 
 const {
   buildDataTerminalCandidates,
+  buildDataTerminalControlEventPatch,
+  buildDataTerminalControlWritePlan,
   buildDataTerminalPanelHtml,
   buildDataTerminalRecords,
   buildDataTerminalShellHtml,
@@ -18,6 +20,35 @@ const {
 
 assert.deepStrictEqual(parseDataTerminalQuery('  WBTC, cbBTC extra  '), ['WBTC', 'cbBTC']);
 assert.deepStrictEqual(parseDataTerminalQuery(''), []);
+assert.deepStrictEqual(
+  buildDataTerminalControlWritePlan({
+    query: 'WBTC cbBTC',
+    allowAliases: true,
+    showDiff: false
+  }),
+  {
+    value: [
+      { id: 'data-terminal-search-input', value: 'WBTC cbBTC' }
+    ],
+    checked: [
+      { id: 'data-terminal-alias-toggle', checked: true },
+      { id: 'data-terminal-diff-toggle', checked: false }
+    ]
+  }
+);
+assert.deepStrictEqual(
+  buildDataTerminalControlEventPatch('query', { target: { value: 'ETH USDC' } }),
+  { query: 'ETH USDC' }
+);
+assert.deepStrictEqual(
+  buildDataTerminalControlEventPatch('allowAliases', { target: { checked: false } }),
+  { allowAliases: false }
+);
+assert.deepStrictEqual(
+  buildDataTerminalControlEventPatch('showDiff', { target: { checked: true } }),
+  { showDiff: true }
+);
+assert.deepStrictEqual(buildDataTerminalControlEventPatch('unknown', { target: { value: 'x' } }), {});
 
 const cache = createDataTerminalCache();
 let recordsBuildCount = 0;
