@@ -28,12 +28,17 @@ const {
 const { buildPathAlertQuoteCandidatesFromConfig } = require('./src/server/path-alert-candidate-service');
 const { createCetusAggregatorClient } = require('./src/server/cetus-aggregator-config');
 const { createEvmProviders } = require('./src/server/evm-provider-utils');
+const {
+    createQueuedJsonFileWriter,
+    readJsonFile,
+    readJsonFileSync,
+    resolveProjectFilePath
+} = require('./src/server/json-file-utils');
 const { createRuntimeConfigStore, loadStartupCetusAggregatorConfig } = require('./src/server/runtime-config-utils');
 const { registerQuoteRoutes } = require('./src/server/quote-route-utils');
 const { sendPathAlertRemoteWebhooks } = require('./src/server/path-alert-webhook-utils');
 const { normalizeArbCycleStartPriority } = require('./src/arb/arb-cycle-priority-utils');
 const fs = require('fs').promises;
-const fsSync = require('fs');
 const path = require('path');
 
 const app = express();
@@ -64,27 +69,18 @@ app.get('/path-alerts', (req, res) => {
 app.get('/queue-stats', (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, 'queue-stats.html'));
 });
-function resolveProjectFilePath(fileName, envKey) {
-    const overridePath = envKey ? String(process.env[envKey] || '').trim() : '';
-    if (overridePath) {
-        return path.resolve(overridePath);
-    }
-    return path.join(__dirname, fileName);
-}
-
-function readJsonFileSync(filePath) {
-    const data = fsSync.readFileSync(filePath, 'utf-8');
-    return JSON.parse(stripBom(data));
-}
-
-const CONFIG_PATH = resolveProjectFilePath('config.json', 'CONFIG_PATH');
-const CONFIG_MORE_PATH = resolveProjectFilePath('config_more.json', 'CONFIG_MORE_PATH');
-const REQUEST_CHANNELS_PATH = resolveProjectFilePath('request_channels.json', 'REQUEST_CHANNELS_PATH');
-const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json', 'METADATA_CACHE_PATH');
-const ALERT_CONFIG_PATH = resolveProjectFilePath('alert.json', 'ALERT_CONFIG_PATH');
+const CONFIG_PATH = resolveProjectFilePath('config.json', 'CONFIG_PATH', { rootDir: __dirname });
+const CONFIG_MORE_PATH = resolveProjectFilePath('config_more.json', 'CONFIG_MORE_PATH', { rootDir: __dirname });
+const REQUEST_CHANNELS_PATH = resolveProjectFilePath('request_channels.json', 'REQUEST_CHANNELS_PATH', { rootDir: __dirname });
+const METADATA_CACHE_PATH = resolveProjectFilePath('metadata-cache.json', 'METADATA_CACHE_PATH', { rootDir: __dirname });
+const ALERT_CONFIG_PATH = resolveProjectFilePath('alert.json', 'ALERT_CONFIG_PATH', { rootDir: __dirname });
 const PRICE_SNAPSHOT_DIR = path.resolve(process.env.PRICE_SNAPSHOT_DIR || path.join(__dirname, 'db', 'price'));
 const CHART_PAIR_WINDOW_MS = 10 * 60 * 1000;
-let writeQueue = Promise.resolve();
+const jsonFileWriter = createQueuedJsonFileWriter({
+    writeFile: (filePath, content, encoding) => fs.writeFile(filePath, content, encoding),
+    rename: (tempPath, targetPath) => fs.rename(tempPath, targetPath),
+    logger: console
+});
 const requestChannelAgentCache = createRequestChannelAgentCache();
 const fetchOnce = createFetchOnce({
     fetchImpl: fetch,
@@ -95,24 +91,11 @@ const fetchOnce = createFetchOnce({
 });
 
 async function safeWriteJsonFile(filePath, data) {
-    writeQueue = writeQueue.then(async () => {
-        try {
-            const tempPath = `${filePath}.tmp`;
-            await fs.writeFile(tempPath, JSON.stringify(data, null, 2), 'utf-8');
-            await fs.rename(tempPath, filePath);
-        } catch (error) {
-            console.error('❌ 写入配置失败:', error);
-        }
-    });
-    return writeQueue;
+    return jsonFileWriter.writeJsonFile(filePath, data);
 }
 
 async function safeWriteConfig(data) {
     return safeWriteJsonFile(CONFIG_PATH, data);
-}
-
-function stripBom(text) {
-    return text.replace(/^\uFEFF/, '');
 }
 
 function getLogTimestamp() {
@@ -194,11 +177,6 @@ function logQuoteError(source, ctx, error) {
     const pair = getQuoteLogPairLabel(ctx.chain, ctx.fromSymbol, ctx.toSymbol, ctx.fromToken, ctx.toToken);
     const channel = getQuoteLogChannelLabel(ctx);
     logMessage(`${source}_ERR`, `[channel=${channel}] ${pair} ${error.message}`, 'warn');
-}
-
-async function readJsonFile(filePath) {
-    const data = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(stripBom(data));
 }
 
 const runtimeConfigStore = createRuntimeConfigStore({
