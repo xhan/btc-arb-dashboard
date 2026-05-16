@@ -37,6 +37,17 @@
     Binance: 'N/A',
     binance: 'N/A'
   });
+  const SETTINGS_INTERVAL_FIELDS = Object.freeze([
+    Object.freeze({ key: 'kyber', id: 'setting-kyber-interval' }),
+    Object.freeze({ key: 'zerox', id: 'setting-zerox-interval' }),
+    Object.freeze({ key: 'velora', id: 'setting-velora-interval' }),
+    Object.freeze({ key: 'lifi', id: 'setting-lifi-interval' }),
+    Object.freeze({ key: 'bybit', id: 'setting-bybit-interval' }),
+    Object.freeze({ key: 'binance', id: 'setting-binance-interval' }),
+    Object.freeze({ key: 'solana', id: 'setting-solana-interval' }),
+    Object.freeze({ key: 'sui', id: 'setting-sui-interval' }),
+    Object.freeze({ key: 'starknet', id: 'setting-starknet-interval' })
+  ]);
 
   function renderQuoteItemShell(config = {}) {
     const quoteId = escapeAttr(config.quoteId);
@@ -89,6 +100,34 @@
                 </div>
             </div>
             <ul class="quote-list" id="quote-list-${categoryId}"></ul>`;
+  }
+
+  function buildSettingsIntervalWritePlan(intervals = {}) {
+    return SETTINGS_INTERVAL_FIELDS.map((field) => ({
+      id: field.id,
+      key: field.key,
+      value: intervals[field.key]
+    }));
+  }
+
+  function readSettingsIntervalFormValues(options = {}) {
+    const readValue = typeof options.readValue === 'function'
+      ? options.readValue
+      : () => '';
+    return SETTINGS_INTERVAL_FIELDS.reduce((result, field) => {
+      result[field.key] = readValue(field.id);
+      return result;
+    }, {});
+  }
+
+  function buildSettingsIntervalsFromFormValues(values = {}, defaultIntervals = {}) {
+    return SETTINGS_INTERVAL_FIELDS.reduce((result, field) => {
+      const parsed = Number.parseInt(values[field.key], 10);
+      result[field.key] = Number.isFinite(parsed) && parsed > 0
+        ? parsed
+        : defaultIntervals[field.key];
+      return result;
+    }, {});
   }
 
   function readDatasetValue(element, key) {
@@ -370,6 +409,9 @@
     buildAddQuoteDraft,
     buildAddQuoteFormViewState,
     buildQuoteSettingsModalViewState,
+    buildSettingsIntervalWritePlan,
+    buildSettingsIntervalsFromFormValues,
+    readSettingsIntervalFormValues,
     resolveAddQuoteModalClickAction,
     resolveDashboardAmountInputAction,
     resolveDashboardButtonClickAction,

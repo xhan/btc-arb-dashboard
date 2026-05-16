@@ -4,6 +4,9 @@ const {
   buildAddQuoteDraft,
   buildAddQuoteFormViewState,
   buildQuoteSettingsModalViewState,
+  buildSettingsIntervalWritePlan,
+  buildSettingsIntervalsFromFormValues,
+  readSettingsIntervalFormValues,
   resolveAddQuoteModalClickAction,
   resolveDashboardAmountInputAction,
   resolveDashboardButtonClickAction,
@@ -143,6 +146,88 @@ assert.deepStrictEqual(
   { type: 'swap-quote', categoryId: 'cat-1', quoteId: 105 }
 );
 assert.deepStrictEqual(resolveDashboardActionFor(resolveDashboardButtonClickAction, {}), { type: 'none' });
+
+assert.deepStrictEqual(
+  buildSettingsIntervalWritePlan({
+    kyber: 170,
+    zerox: 110,
+    velora: 700,
+    lifi: 170,
+    bybit: 1000,
+    binance: 1000,
+    solana: 3500,
+    sui: 500,
+    starknet: 1000
+  }).map((item) => [item.key, item.id, item.value]),
+  [
+    ['kyber', 'setting-kyber-interval', 170],
+    ['zerox', 'setting-zerox-interval', 110],
+    ['velora', 'setting-velora-interval', 700],
+    ['lifi', 'setting-lifi-interval', 170],
+    ['bybit', 'setting-bybit-interval', 1000],
+    ['binance', 'setting-binance-interval', 1000],
+    ['solana', 'setting-solana-interval', 3500],
+    ['sui', 'setting-sui-interval', 500],
+    ['starknet', 'setting-starknet-interval', 1000]
+  ]
+);
+assert.deepStrictEqual(
+  readSettingsIntervalFormValues({
+    readValue: (id) => ({
+      'setting-kyber-interval': '171',
+      'setting-zerox-interval': '111',
+      'setting-velora-interval': '701'
+    }[id] || '')
+  }),
+  {
+    kyber: '171',
+    zerox: '111',
+    velora: '701',
+    lifi: '',
+    bybit: '',
+    binance: '',
+    solana: '',
+    sui: '',
+    starknet: ''
+  }
+);
+assert.deepStrictEqual(
+  buildSettingsIntervalsFromFormValues(
+    {
+      kyber: '171',
+      zerox: 'bad',
+      velora: '0',
+      lifi: '180',
+      bybit: '',
+      binance: '1200',
+      solana: '3600',
+      sui: '-1',
+      starknet: '900'
+    },
+    {
+      kyber: 170,
+      zerox: 110,
+      velora: 700,
+      lifi: 170,
+      bybit: 1000,
+      binance: 1000,
+      solana: 3500,
+      sui: 500,
+      starknet: 1000
+    }
+  ),
+  {
+    kyber: 171,
+    zerox: 110,
+    velora: 700,
+    lifi: 180,
+    bybit: 1000,
+    binance: 1200,
+    solana: 3600,
+    sui: 500,
+    starknet: 900
+  }
+);
 
 assert.deepStrictEqual(
   buildAddQuoteFormViewState({

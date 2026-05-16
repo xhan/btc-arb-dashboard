@@ -760,16 +760,24 @@
         quoteQueueRuntime.updateSchedulers();
     }
 
+    function syncSettingsIntervalInputs() {
+        getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals).forEach((item) => {
+            const input = document.getElementById(item.id);
+            if (input) input.value = item.value;
+        });
+    }
+
+    function readSettingsIntervalInputs() {
+        return getDashboardRenderer().readSettingsIntervalFormValues({
+            readValue: (id) => {
+                const input = document.getElementById(id);
+                return input ? input.value : '';
+            }
+        });
+    }
+
     settingsBtn.addEventListener('click', () => {
-        document.getElementById('setting-kyber-interval').value = apiIntervals.kyber;
-        document.getElementById('setting-zerox-interval').value = apiIntervals.zerox;
-        document.getElementById('setting-velora-interval').value = apiIntervals.velora;
-        document.getElementById('setting-lifi-interval').value = apiIntervals.lifi;
-        document.getElementById('setting-bybit-interval').value = apiIntervals.bybit;
-        document.getElementById('setting-binance-interval').value = apiIntervals.binance;
-        document.getElementById('setting-solana-interval').value = apiIntervals.solana;
-        document.getElementById('setting-sui-interval').value = apiIntervals.sui;
-        document.getElementById('setting-starknet-interval').value = apiIntervals.starknet;
+        syncSettingsIntervalInputs();
         settingsModal.classList.add('visible');
     });
 
@@ -778,17 +786,10 @@
     });
 
     settingsSaveBtn.addEventListener('click', () => {
-        const newIntervals = {
-            kyber: parseInt(document.getElementById('setting-kyber-interval').value) || DEFAULT_INTERVALS.kyber,
-            zerox: parseInt(document.getElementById('setting-zerox-interval').value) || DEFAULT_INTERVALS.zerox,
-            velora: parseInt(document.getElementById('setting-velora-interval').value) || DEFAULT_INTERVALS.velora,
-            lifi: parseInt(document.getElementById('setting-lifi-interval').value) || DEFAULT_INTERVALS.lifi,
-            bybit: parseInt(document.getElementById('setting-bybit-interval').value) || DEFAULT_INTERVALS.bybit,
-            binance: parseInt(document.getElementById('setting-binance-interval').value) || DEFAULT_INTERVALS.binance,
-            solana: parseInt(document.getElementById('setting-solana-interval').value) || DEFAULT_INTERVALS.solana,
-            sui: parseInt(document.getElementById('setting-sui-interval').value) || DEFAULT_INTERVALS.sui,
-            starknet: parseInt(document.getElementById('setting-starknet-interval').value) || DEFAULT_INTERVALS.starknet
-        };
+        const newIntervals = getDashboardRenderer().buildSettingsIntervalsFromFormValues(
+            readSettingsIntervalInputs(),
+            DEFAULT_INTERVALS
+        );
         
         apiIntervals = newIntervals;
         refreshRequestChannelOptions();
