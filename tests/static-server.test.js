@@ -596,7 +596,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(alertLogWindow, alertLogHeader, {'));
     assert.ok(!appJsResponse.body.includes('function bindFloatingPanelChrome(panel, header, options = {})'));
     assert.ok(appJsResponse.body.includes('const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({'));
-    assert.ok(appJsResponse.body.includes('return floatingPanelZIndexRuntime.bringToFront(panel);'));
+    assert.ok(appJsResponse.body.includes('floatingPanelZIndexRuntime.bringToFront(panel);'));
+    assert.ok(!appJsResponse.body.includes('function bringFloatingPanelToFront(panel)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyFloatingPanelDisplayState(panel, action, {'));
     assert.ok(!appJsResponse.body.includes('let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;'));
     assert.ok(!appJsResponse.body.includes('panel.style.zIndex = String(FLOATING_PANEL_BASE_Z_INDEX);'));

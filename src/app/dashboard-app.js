@@ -775,10 +775,6 @@
         );
     }
 
-    function bringFloatingPanelToFront(panel) {
-        return floatingPanelZIndexRuntime.bringToFront(panel);
-    }
-
     function getAlertLogEntryContainers() {
         return [alertLogContent, alertLogMutedLogContent].filter(Boolean);
     }
@@ -1862,7 +1858,7 @@
 
     function mountDataTerminalPanel() {
         if (dataTerminalState.visible && dataTerminalState.domRefs && dataTerminalState.domRefs.window) {
-            bringFloatingPanelToFront(dataTerminalState.domRefs.window);
+            floatingPanelZIndexRuntime.bringToFront(dataTerminalState.domRefs.window);
             return;
         }
         const utils = getDataTerminalUtils();
@@ -1903,7 +1899,7 @@
         }
 
         renderDataTerminalPanel();
-        bringFloatingPanelToFront(panel);
+        floatingPanelZIndexRuntime.bringToFront(panel);
         if (refs.searchInput && !String(dataTerminalState.query || '').trim()) {
             refs.searchInput.focus();
         }
@@ -3002,7 +2998,7 @@
         });
         if (!result.panelFound) return result;
         if (result.shouldBringToFront) {
-            bringFloatingPanelToFront(panel);
+            floatingPanelZIndexRuntime.bringToFront(panel);
         }
         if (result.shouldRender && typeof options.render === 'function') {
             options.render(result);
