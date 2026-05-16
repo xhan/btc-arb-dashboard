@@ -1220,13 +1220,9 @@
         arbPanelCache.clearRuleSnapshot();
     }
 
-    function invalidateArbPathTopologyCache() {
-        arbPanelCache.clearTopology();
-    }
-
     function invalidateArbCaches() {
         invalidateArbRuleSnapshotCache();
-        invalidateArbPathTopologyCache();
+        arbPanelCache.clearTopology();
     }
 
     function getQuoteMarketState(quoteId, fallback = null) {

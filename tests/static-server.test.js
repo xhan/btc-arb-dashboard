@@ -1561,6 +1561,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const arbPanelCache = getArbPathTemplateCacheUtils().createArbPanelCache();'));
     assert.ok(appJsResponse.body.includes('arbPanelCache.clearRuleSnapshot();'));
     assert.ok(appJsResponse.body.includes('arbPanelCache.clearTopology();'));
+    assert.ok(!appJsResponse.body.includes('function invalidateArbPathTopologyCache('));
     assert.ok(appJsResponse.body.includes('arbPanelCache.getRuleSnapshot(cacheKey)'));
     assert.ok(appJsResponse.body.includes('arbPanelCache.setRuleSnapshot(cacheKey, {'));
     assert.ok(appJsResponse.body.includes('arbPanelCache.getTopology(cacheKey)'));

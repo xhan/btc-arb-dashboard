@@ -239,6 +239,7 @@
   - `src/app/dashboard-app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利面板 dirty flag 已下沉到 `src/arb/arb-runtime-memory-utils.js` 的 `createArbPanelUpdateRuntime()`
+  - `src/app/dashboard-app.js` 的套利 topology cache 清理单用途包装已移除，组合失效入口直接清理 topology cache
   - `src/app/dashboard-app.js` 的套利全局过滤栏 DOM 写入计划和事件 patch 构造已下沉到 `src/arb/arb-panel-layout-utils.js`
   - `src/app/dashboard-app.js` 的套利面板 section key/footer、链过滤 token 和详情 leg lines 单用途包装已移除，调用点直接委托已有 layout/chain utils
   - `src/app/dashboard-app.js` 的路径腿 live quote label 格式化已委托给 `src/path-alerts/path-alert-page-utils.js`
