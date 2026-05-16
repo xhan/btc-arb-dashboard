@@ -477,6 +477,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertActionLink(dexLink)'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertTriggeredEntry(options = {})'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertTriggeredEntryForQuote(options = {})'));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null)'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildQuoteAlertSummaryLabel(target, quote, monitorState || {}, {'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('function buildQuoteAlertSummaryLabel(target, quote, state = {}, options = {})'));

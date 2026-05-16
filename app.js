@@ -4484,19 +4484,15 @@
         updateAlertSoundState();
     }
 
-    function buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null) {
-        return getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({
+    async function sendQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null) {
+        if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
+        const payload = getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({
             chainName: displayName,
             label,
             currentValueText,
             message,
             actionLink
         });
-    }
-
-    async function sendQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null) {
-        if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
-        const payload = buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink);
         try {
             const response = await fetch(`${BACKEND_URL}/api/send-path-alert-webhook`, {
                 method: 'POST',
