@@ -2499,14 +2499,6 @@
         return Number.isFinite(value) && value > 0 ? value : null;
     }
 
-    function getArbDetailRateDeltaTone(rateDeltaText) {
-        const value = Number.parseFloat(String(rateDeltaText || ''));
-        if (!Number.isFinite(value)) return 'neutral';
-        if (value > 0) return 'positive';
-        if (value < 0) return 'negative';
-        return 'neutral';
-    }
-
     function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
         return getArbDetailUtils().buildArbDetailSummaryHtml(card, {
             index,
@@ -3069,7 +3061,7 @@
                                 row && row.rawPrice
                             );
                             row.rateDeltaText = rateDeltaText;
-                            row.rateDeltaTone = getArbDetailRateDeltaTone(rateDeltaText);
+                            row.rateDeltaTone = getArbDetailUtils().getArbDetailRateDeltaTone(rateDeltaText);
                         });
                     }
                     card.rows = rows;

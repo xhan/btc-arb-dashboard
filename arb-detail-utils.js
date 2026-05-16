@@ -77,6 +77,14 @@
     return `${sign}${roundedDelta.toFixed(safeDecimals)}bp`;
   }
 
+  function getArbDetailRateDeltaTone(rateDeltaText) {
+    const value = Number.parseFloat(String(rateDeltaText || ''));
+    if (!Number.isFinite(value)) return 'neutral';
+    if (value > 0) return 'positive';
+    if (value < 0) return 'negative';
+    return 'neutral';
+  }
+
   function summarizeDetailResult(startAmount, finalAmount) {
     const safeStart = normalizePositiveAmount(startAmount, 1);
     const safeFinal = Number(finalAmount);
@@ -543,6 +551,7 @@
     buildDetailInputAmounts,
     buildArbDetailRateText,
     buildArbDetailRateDeltaText,
+    getArbDetailRateDeltaTone,
     formatDetailNumber,
     summarizeDetailResult,
     getQuoteRunState,

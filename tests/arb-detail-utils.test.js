@@ -27,6 +27,7 @@ const {
   buildArbDetailDexLink,
   buildArbDetailRateText,
   buildArbDetailRateDeltaText,
+  getArbDetailRateDeltaTone,
   buildArbDetailTokenHtml,
   buildArbDetailPairHtml,
   buildArbDetailMuteButtonHtml,
@@ -84,6 +85,11 @@ assert.strictEqual(
   buildArbDetailRateDeltaText(null, 1.0001),
   '--'
 );
+
+assert.strictEqual(getArbDetailRateDeltaTone('+1.0bp'), 'positive');
+assert.strictEqual(getArbDetailRateDeltaTone('-2.0bp'), 'negative');
+assert.strictEqual(getArbDetailRateDeltaTone('0.0bp'), 'neutral');
+assert.strictEqual(getArbDetailRateDeltaTone('--'), 'neutral');
 
 assert.strictEqual(formatDetailNumber(1.2345678), 1.234568);
 assert.strictEqual(formatDetailNumber('1.2345678', 4), 1.2346);

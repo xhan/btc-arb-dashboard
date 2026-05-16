@@ -696,6 +696,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
     assert.ok(appJsResponse.body.includes('buildArbDetailRateDeltaText'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().getArbDetailRateDeltaTone(rateDeltaText)'));
     assert.ok(appJsResponse.body.includes('function getArbDetailUtils()'));
     assert.ok(appJsResponse.body.includes('ArbDetailUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailRowsHtml(card, {'));
@@ -812,6 +813,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('mini: true'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailPairHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRowsHtml'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function getArbDetailRateDeltaTone(rateDeltaText)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSummaryHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailShellHtml'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailChartPreviewSignature(pairs)'));
