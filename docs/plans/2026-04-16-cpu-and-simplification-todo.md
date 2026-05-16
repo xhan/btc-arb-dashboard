@@ -163,6 +163,7 @@
     - 已启动第十九步：EVM RPC 默认列表和 provider 初始化容错迁入 `src/server/evm-provider-utils.js`，`server.js` 只注入 ethers Provider class
     - 已启动第二十步：项目文件路径解析、BOM JSON 读取和串行安全写入队列迁入 `src/server/json-file-utils.js`，为后续配置目录迁移保留统一入口
     - 已启动第二十一步：price snapshot 配置、保存、历史快照、图表序列和回放 API 注册迁入 `src/server/price-snapshot-route-utils.js`，`server.js` 只注入目录、运行时配置和日志依赖
+    - 已启动第二十二步：quote 请求/结果/错误日志格式、request-channel label 和错误日志上下文绑定迁入 `src/server/quote-log-utils.js`，相关测试从 `server.js` 文本 grep 改为行为断言
 
 ### 10. 清理历史命名和过渡兼容层
 - 目标：去掉“功能已变，但名字还停留在旧时代”的残留。
