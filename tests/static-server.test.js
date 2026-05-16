@@ -1087,6 +1087,8 @@ async function waitForServer(attempts = 12) {
 
     const pathAlertsAppResponse = await request('/path-alerts-app.js');
     assert.strictEqual(pathAlertsAppResponse.statusCode, 200);
+    const pathAlertCandidateUtilsResponse = await request('/path-alert-candidate-utils.js');
+    assert.strictEqual(pathAlertCandidateUtilsResponse.statusCode, 200);
     assert.ok(pathAlertEditorUtilsResponse.body.includes('path-alert-search-input'));
     assert.ok(pathAlertEditorUtilsResponse.body.includes('path-alert-add-leg-btn'));
     assert.ok(pathAlertEditorUtilsResponse.body.includes('path-alert-suggestions'));
@@ -1095,6 +1097,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertCandidateUtils'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertCandidateUtils.filterPathAlertCandidates(quoteCandidates, query, 12)'));
     assert.ok(!pathAlertsAppResponse.body.includes('function matchesCandidate(candidate, query)'));
+    const pathAlertCandidateExportBlock = pathAlertCandidateUtilsResponse.body.match(/return \{\n    buildPathAlertCandidates,[\s\S]*?\n  \};/);
+    assert.ok(pathAlertCandidateExportBlock);
+    assert.ok(!pathAlertCandidateExportBlock[0].includes('buildPathAlertCandidateRecordsFromDashboard'));
+    assert.ok(!pathAlertCandidateExportBlock[0].includes('matchesPathAlertCandidate'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertEditorUtils.buildPathAlertEditorTarget(draft)'));
     assert.ok(pathAlertEditorUtilsResponse.body.includes('function validatePathAlertEditorDraft(draft, options = {})'));
     assert.ok(pathAlertEditorUtilsResponse.body.includes('function renderPathAlertEditorSelectedLegsHtml(draft, options = {})'));

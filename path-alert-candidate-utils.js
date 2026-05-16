@@ -181,10 +181,8 @@
   }
 
   return {
-    buildPathAlertCandidateRecordsFromDashboard,
     buildPathAlertCandidates,
     buildPathAlertCandidatesFromDashboard,
-    filterPathAlertCandidates,
-    matchesPathAlertCandidate
+    filterPathAlertCandidates
   };
 });
