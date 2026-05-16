@@ -2123,10 +2123,8 @@
     }
 
     function handleDataTerminalHeaderClick(event) {
-        if (!event) return;
-        if (closestEventTarget(event, 'button')) {
-            return;
-        }
+        const action = getDataTerminalUtils().resolveDataTerminalHeaderClickAction(event, { closestEventTarget });
+        if (action.type !== 'blur-search') return;
         const refs = dataTerminalState.domRefs;
         if (refs && refs.searchInput && document.activeElement === refs.searchInput) {
             refs.searchInput.blur();

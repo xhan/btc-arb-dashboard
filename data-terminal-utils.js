@@ -371,14 +371,15 @@
     return String(element && element.dataset && element.dataset[key] || '').trim();
   }
 
-  function resolveDataTerminalContentClickAction(event, options = {}) {
+  function createClosestResolver(event, options = {}) {
     const closestEventTarget = typeof options.closestEventTarget === 'function'
       ? options.closestEventTarget
       : () => null;
-    function closest(selector) {
-      return closestEventTarget(event, selector);
-    }
+    return (selector) => closestEventTarget(event, selector);
+  }
 
+  function resolveDataTerminalContentClickAction(event, options = {}) {
+    const closest = createClosestResolver(event, options);
     const dexLinkEl = closest('[data-dex-link-copy]');
     if (dexLinkEl) {
       return { type: 'copy-dex-link', element: dexLinkEl };
@@ -396,6 +397,13 @@
     }
 
     return { type: 'none' };
+  }
+
+  function resolveDataTerminalHeaderClickAction(event, options = {}) {
+    if (!event) return { type: 'none' };
+    const closest = createClosestResolver(event, options);
+    if (closest('button')) return { type: 'none' };
+    return { type: 'blur-search' };
   }
 
   function buildDataTerminalControlWritePlan(state = {}) {
@@ -573,6 +581,7 @@
     createDataTerminalCache,
     createDataTerminalUpdateRuntime,
     parseDataTerminalQuery,
-    resolveDataTerminalContentClickAction
+    resolveDataTerminalContentClickAction,
+    resolveDataTerminalHeaderClickAction
   };
 });

@@ -1175,6 +1175,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalShellHtml'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function resolveDataTerminalContentClickAction(event, options = {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function resolveDataTerminalHeaderClickAction(event, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlWritePlan(state = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlEventPatch(field, event)'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalSelectionPatch(selectionState = {}, action = {})'));
@@ -1187,6 +1188,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("utils.buildDataTerminalControlEventPatch('query', event)"));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().buildDataTerminalSelectionPatch(dataTerminalState, action)'));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget })'));
+    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalHeaderClickAction(event, { closestEventTarget })'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalRowHtml'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalColumnHtml'));
@@ -1201,6 +1203,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('dataTerminalState.allowAliases = event.target.checked;'));
     assert.ok(!appJsResponse.body.includes('dataTerminalState.showDiff = event.target.checked;'));
     assert.ok(!appJsResponse.body.includes("dataTerminalState.selectedLeftKey = dataTerminalState.selectedLeftKey === action.rowKey ? '' : action.rowKey;"));
+    assert.ok(!appJsResponse.body.includes("closestEventTarget(event, 'button')"));
     assert.ok(!appJsResponse.body.includes('let dataTerminalRecordsCacheKey = \'\';'));
     assert.ok(!appJsResponse.body.includes('let dataTerminalCandidatesCacheKey = \'\';'));
     assert.ok(appJsResponse.body.includes('const dataTerminalCache = getDataTerminalUtils().createDataTerminalCache();'));

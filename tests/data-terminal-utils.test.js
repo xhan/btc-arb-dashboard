@@ -16,7 +16,8 @@ const {
   createDataTerminalCache,
   createDataTerminalUpdateRuntime,
   parseDataTerminalQuery,
-  resolveDataTerminalContentClickAction
+  resolveDataTerminalContentClickAction,
+  resolveDataTerminalHeaderClickAction
 } = require('../data-terminal-utils');
 
 assert.deepStrictEqual(parseDataTerminalQuery('  WBTC, cbBTC extra  '), ['WBTC', 'cbBTC']);
@@ -180,6 +181,16 @@ assert.deepStrictEqual(
   { type: 'none' }
 );
 assert.deepStrictEqual(resolveContentActionFor({}), { type: 'none' });
+
+function resolveHeaderActionFor(matches, event = { type: 'click' }) {
+  return resolveDataTerminalHeaderClickAction(event, {
+    closestEventTarget: (sourceEvent, selector) => matches[selector] || null
+  });
+}
+
+assert.deepStrictEqual(resolveHeaderActionFor({ button: {} }), { type: 'none' });
+assert.deepStrictEqual(resolveHeaderActionFor({}), { type: 'blur-search' });
+assert.deepStrictEqual(resolveHeaderActionFor({}, null), { type: 'none' });
 
 const dataTerminalRecords = buildDataTerminalRecords(
   [
