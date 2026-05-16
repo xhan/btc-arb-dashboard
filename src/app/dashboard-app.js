@@ -1770,25 +1770,17 @@
         activeFetchControllerRuntime.abort(quoteId);
     }
 
-    function applyPausedQuoteUiState(quote, state) {
-        const itemEl = document.getElementById(`quote-item-${quote.id}`);
-        const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
-        const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
-        const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
+    function getQuoteDomRefs(quoteId) {
+        return {
+            itemEl: document.getElementById(`quote-item-${quoteId}`),
+            quoteDataEl: document.getElementById(`quote-data-${quoteId}`),
+            quoteTextWrapperEl: document.getElementById(`quote-text-wrapper-${quoteId}`),
+            quoteTextEl: document.getElementById(`quote-text-${quoteId}`)
+        };
+    }
 
-        if (itemEl) {
-            itemEl.classList.add('quote-item-paused');
-        }
-        if (quoteDataEl) {
-            quoteDataEl.classList.remove('error');
-            quoteDataEl.removeAttribute('title');
-        }
-        if (quoteTextWrapperEl) {
-            quoteTextWrapperEl.classList.remove('loading-text');
-        }
-        if (quoteTextEl) {
-            quoteTextEl.textContent = '已暂停';
-        }
+    function applyPausedQuoteUiState(quote, state) {
+        getDomRenderUtils().applyPausedQuoteDomState(getQuoteDomRefs(quote.id));
         updateQuotePairLabel(quote, state);
         updatePauseButtonState(quote);
         removeInverseQuoteElement(quote.id);
@@ -1797,28 +1789,8 @@
     }
 
     function applyActiveQuoteUiState(quote, options = {}) {
-        const itemEl = document.getElementById(`quote-item-${quote.id}`);
-        const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
-        const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
-        const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
         const state = getQuoteMarketState(quote.id) || {};
-
-        if (itemEl) {
-            itemEl.classList.remove('quote-item-paused', 'highlight', 'highlight-past');
-        }
-        if (quoteDataEl) {
-            quoteDataEl.classList.remove('error');
-            quoteDataEl.removeAttribute('title');
-        }
-        if (quoteTextWrapperEl) {
-            quoteTextWrapperEl.classList.remove('loading-text');
-            if (options.loading) {
-                quoteTextWrapperEl.classList.add('loading-text');
-            }
-        }
-        if (quoteTextEl && options.text) {
-            quoteTextEl.textContent = options.text;
-        }
+        getDomRenderUtils().applyActiveQuoteDomState(getQuoteDomRefs(quote.id), options);
         updateQuotePairLabel(quote, state);
         updatePauseButtonState(quote);
         clearQuoteAlertUi(quote.id);

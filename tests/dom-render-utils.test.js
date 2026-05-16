@@ -4,6 +4,8 @@ const {
   applyTooltipState,
   applyTrendArrowState,
   applyQuoteAlertHighlightUi,
+  applyActiveQuoteDomState,
+  applyPausedQuoteDomState,
   bindDraggableElement,
   bindFloatingPanelFocus,
   closestEventTarget,
@@ -162,6 +164,52 @@ assert.strictEqual(applyQuoteAlertHighlightUi(quoteHighlightToggleEl, {
 assert.strictEqual(quoteHighlightToggleEl.classList.contains('highlight'), false);
 assert.strictEqual(quoteHighlightToggleEl.classList.contains('highlight-past'), true);
 assert.strictEqual(applyQuoteAlertHighlightUi(null, { highlighted: true }), false);
+
+function createAttributeTarget() {
+  return {
+    removedAttributes: [],
+    removeAttribute(name) {
+      this.removedAttributes.push(name);
+    }
+  };
+}
+
+const pausedQuoteRefs = {
+  itemEl: { classList: createClassList([]) },
+  quoteDataEl: {
+    classList: createClassList(['error']),
+    ...createAttributeTarget()
+  },
+  quoteTextWrapperEl: { classList: createClassList(['loading-text']) },
+  quoteTextEl: { textContent: 'loading' }
+};
+assert.strictEqual(applyPausedQuoteDomState(pausedQuoteRefs), true);
+assert.strictEqual(pausedQuoteRefs.itemEl.classList.contains('quote-item-paused'), true);
+assert.strictEqual(pausedQuoteRefs.quoteDataEl.classList.contains('error'), false);
+assert.deepStrictEqual(pausedQuoteRefs.quoteDataEl.removedAttributes, ['title']);
+assert.strictEqual(pausedQuoteRefs.quoteTextWrapperEl.classList.contains('loading-text'), false);
+assert.strictEqual(pausedQuoteRefs.quoteTextEl.textContent, '已暂停');
+assert.strictEqual(applyPausedQuoteDomState({}), false);
+
+const activeQuoteRefs = {
+  itemEl: { classList: createClassList(['quote-item-paused', 'highlight', 'highlight-past', 'keep-class']) },
+  quoteDataEl: {
+    classList: createClassList(['error']),
+    ...createAttributeTarget()
+  },
+  quoteTextWrapperEl: { classList: createClassList(['loading-text']) },
+  quoteTextEl: { textContent: 'old' }
+};
+assert.strictEqual(applyActiveQuoteDomState(activeQuoteRefs, { loading: true, text: '刷新中...' }), true);
+assert.strictEqual(activeQuoteRefs.itemEl.classList.contains('quote-item-paused'), false);
+assert.strictEqual(activeQuoteRefs.itemEl.classList.contains('highlight'), false);
+assert.strictEqual(activeQuoteRefs.itemEl.classList.contains('highlight-past'), false);
+assert.strictEqual(activeQuoteRefs.itemEl.classList.contains('keep-class'), true);
+assert.strictEqual(activeQuoteRefs.quoteDataEl.classList.contains('error'), false);
+assert.deepStrictEqual(activeQuoteRefs.quoteDataEl.removedAttributes, ['title']);
+assert.strictEqual(activeQuoteRefs.quoteTextWrapperEl.classList.contains('loading-text'), true);
+assert.strictEqual(activeQuoteRefs.quoteTextEl.textContent, '刷新中...');
+assert.strictEqual(applyActiveQuoteDomState({}, {}), false);
 
 const htmlElement = { tagName: 'ARTICLE' };
 const documentImpl = {

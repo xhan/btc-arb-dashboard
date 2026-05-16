@@ -139,6 +139,54 @@
     return true;
   }
 
+  function clearQuoteDataError(quoteDataEl) {
+    if (!quoteDataEl) return false;
+    removeClasses(quoteDataEl, ['error']);
+    if (typeof quoteDataEl.removeAttribute === 'function') {
+      quoteDataEl.removeAttribute('title');
+    }
+    return true;
+  }
+
+  function applyPausedQuoteDomState(refs = {}) {
+    let changed = false;
+    if (refs.itemEl) {
+      addClass(refs.itemEl, 'quote-item-paused');
+      changed = true;
+    }
+    changed = clearQuoteDataError(refs.quoteDataEl) || changed;
+    if (refs.quoteTextWrapperEl) {
+      removeClasses(refs.quoteTextWrapperEl, ['loading-text']);
+      changed = true;
+    }
+    if (refs.quoteTextEl) {
+      refs.quoteTextEl.textContent = '已暂停';
+      changed = true;
+    }
+    return changed;
+  }
+
+  function applyActiveQuoteDomState(refs = {}, options = {}) {
+    let changed = false;
+    if (refs.itemEl) {
+      removeClasses(refs.itemEl, ['quote-item-paused', 'highlight', 'highlight-past']);
+      changed = true;
+    }
+    changed = clearQuoteDataError(refs.quoteDataEl) || changed;
+    if (refs.quoteTextWrapperEl) {
+      removeClasses(refs.quoteTextWrapperEl, ['loading-text']);
+      if (options.loading) {
+        addClass(refs.quoteTextWrapperEl, 'loading-text');
+      }
+      changed = true;
+    }
+    if (refs.quoteTextEl && options.text) {
+      refs.quoteTextEl.textContent = options.text;
+      changed = true;
+    }
+    return changed;
+  }
+
   function bindDraggableElement(element, handle, options = {}) {
     if (!element || !handle) return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -210,6 +258,8 @@
   }
 
   return {
+    applyActiveQuoteDomState,
+    applyPausedQuoteDomState,
     applyTooltipState,
     applyTrendArrowState,
     applyQuoteAlertHighlightUi,

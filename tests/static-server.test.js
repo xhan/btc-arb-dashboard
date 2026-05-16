@@ -380,6 +380,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function resetTrendArrow(arrowEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function clearQuoteHighlightUi(itemEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteAlertHighlightUi(itemEl, uiUpdate = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyPausedQuoteDomState(refs = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyActiveQuoteDomState(refs = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().hideTooltip(globalTooltip)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTrendArrowState(arrowEl, trendState)'));
@@ -388,6 +390,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(itemEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteAlertHighlightUi(itemEl, uiUpdate)'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyPausedQuoteDomState(getQuoteDomRefs(quote.id))'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyActiveQuoteDomState(getQuoteDomRefs(quote.id), options)'));
     assert.ok(!appJsResponse.body.includes('globalTooltip.innerHTML = htmlContent'));
     assert.ok(!appJsResponse.body.includes("globalTooltip.classList.add('visible')"));
     assert.ok(!appJsResponse.body.includes('globalTooltip.style.top'));
@@ -399,6 +403,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("itemEl.classList.remove('highlight', 'highlight-past')"));
     assert.ok(!appJsResponse.body.includes("itemEl.classList.toggle('highlight'"));
     assert.ok(!appJsResponse.body.includes("itemEl.classList.toggle('highlight-past'"));
+    assert.ok(!appJsResponse.body.includes("quoteTextEl.textContent = '已暂停'"));
     assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
     assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
     assert.ok(dashboardRendererResponse.body.includes('class="icon-btn add-quote-btn"'));
@@ -1230,7 +1235,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void savePriceSnapshot(); });'));
     assert.ok(!appJsResponse.body.includes('let priceSnapshotTimer = null;'));
     assert.ok(priceSnapshotPayloadUtilsResponse.body.includes('function createPriceSnapshotTimerRuntime(options = {})'));
-    assert.ok(appJsResponse.body.includes('已暂停'));
+    assert.ok(domRenderUtilsResponse.body.includes('已暂停'));
     assert.ok(appJsResponse.body.includes('quote-item-paused'));
     assert.ok(arbDetailUtilsResponse.body.includes('recordArbDetailBudgetTimestamp'));
     assert.ok(appJsResponse.body.includes('buildArbDetailSnapshotMonitorState'));
