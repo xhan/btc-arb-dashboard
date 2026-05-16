@@ -739,6 +739,17 @@
     return `<div class="arb-detail-chart-message">${escapeHtml(message)}</div>`;
   }
 
+  function clearArbDetailPreviewContainers(refs = {}) {
+    return {
+      chartPreviewCleared: setElementHtml(refs.chartPreview, ''),
+      profitPreviewCleared: setElementHtml(refs.profitPreview, '')
+    };
+  }
+
+  function applyArbDetailChartPreviewMessage(containerEl, message) {
+    return setElementHtml(containerEl, buildArbDetailChartMessageHtml(message));
+  }
+
   function buildArbDetailChartPreviewCardHtml(pair, index, options = {}) {
     const buildChartPairLabel = typeof options.buildChartPairLabel === 'function'
       ? options.buildChartPairLabel
@@ -796,6 +807,19 @@
             </div>
             <div class="arb-detail-chart-canvas arb-detail-profit-canvas"></div>
         `;
+  }
+
+  function getArbDetailProfitCardElement(chartPreviewEl) {
+    if (!chartPreviewEl || typeof chartPreviewEl.querySelector !== 'function') return null;
+    return chartPreviewEl.querySelector('[data-arb-detail-profit-card]');
+  }
+
+  function applyArbDetailProfitPreviewMessage(cardEl, message) {
+    return setElementHtml(cardEl, buildArbDetailProfitPreviewMessageHtml(message));
+  }
+
+  function applyArbDetailProfitPreviewReady(cardEl, seriesCount) {
+    return setElementHtml(cardEl, buildArbDetailProfitPreviewReadyHtml(seriesCount));
   }
 
   function buildArbDetailProfitPreviewState(seriesList, options = {}) {
@@ -860,6 +884,10 @@
     const list = Array.isArray(pairs) ? pairs : [];
     const cardsHtml = list.map((pair, index) => buildArbDetailChartPreviewCardHtml(pair, index, options)).join('');
     return `<div class="arb-detail-chart-strip">${cardsHtml}${buildArbDetailProfitPreviewCardHtml()}</div>`;
+  }
+
+  function applyArbDetailChartPreviewStrip(containerEl, pairs = [], options = {}) {
+    return setElementHtml(containerEl, buildArbDetailChartPreviewStripHtml(pairs, options));
   }
 
   function buildArbOpportunityStableId(section, label, cycle) {
@@ -957,10 +985,16 @@
     applyArbDetailErrorHtml,
     applyArbDetailModalVisibility,
     buildArbDetailChartMessageHtml,
+    clearArbDetailPreviewContainers,
+    applyArbDetailChartPreviewMessage,
     buildArbDetailProfitPreviewMessageHtml,
     buildArbDetailProfitPreviewReadyHtml,
+    getArbDetailProfitCardElement,
+    applyArbDetailProfitPreviewMessage,
+    applyArbDetailProfitPreviewReady,
     buildArbDetailProfitPreviewState,
     buildArbDetailChartPreviewStripHtml,
+    applyArbDetailChartPreviewStrip,
     buildUniqueArbOpportunityId,
     shouldApplyArbDetailRequestVersion,
     applyArbDetailCardError

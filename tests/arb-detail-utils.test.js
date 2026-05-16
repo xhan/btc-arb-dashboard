@@ -48,10 +48,16 @@ const {
   applyArbDetailErrorHtml,
   applyArbDetailModalVisibility,
   buildArbDetailChartMessageHtml,
+  clearArbDetailPreviewContainers,
+  applyArbDetailChartPreviewMessage,
   buildArbDetailProfitPreviewMessageHtml,
   buildArbDetailProfitPreviewReadyHtml,
+  getArbDetailProfitCardElement,
+  applyArbDetailProfitPreviewMessage,
+  applyArbDetailProfitPreviewReady,
   buildArbDetailProfitPreviewState,
-  buildArbDetailChartPreviewStripHtml
+  buildArbDetailChartPreviewStripHtml,
+  applyArbDetailChartPreviewStrip
 } = require('../src/arb/arb-detail-utils');
 
 function resolveGridActionFor(resolver, matches, event = { type: 'click' }) {
@@ -511,6 +517,25 @@ assert.strictEqual(
   '<div class="arb-detail-chart-message">加载 &lt;失败&gt;</div>'
 );
 
+const chartPreviewEl = { innerHTML: 'old chart' };
+const profitPreviewEl = { innerHTML: 'old profit' };
+assert.deepStrictEqual(clearArbDetailPreviewContainers({
+  chartPreview: chartPreviewEl,
+  profitPreview: profitPreviewEl
+}), {
+  chartPreviewCleared: true,
+  profitPreviewCleared: true
+});
+assert.strictEqual(chartPreviewEl.innerHTML, '');
+assert.strictEqual(profitPreviewEl.innerHTML, '');
+assert.deepStrictEqual(clearArbDetailPreviewContainers({}), {
+  chartPreviewCleared: false,
+  profitPreviewCleared: false
+});
+assert.strictEqual(applyArbDetailChartPreviewMessage(chartPreviewEl, '加载 <失败>'), true);
+assert.strictEqual(chartPreviewEl.innerHTML, '<div class="arb-detail-chart-message">加载 &lt;失败&gt;</div>');
+assert.strictEqual(applyArbDetailChartPreviewMessage(null, 'x'), false);
+
 const chartStripHtml = buildArbDetailChartPreviewStripHtml(
   [{ quoteId: 1, direction: 'forward', fromSymbol: 'cbBTC', toSymbol: 'WBTC' }],
   { buildChartPairLabel: () => 'cb<BTC> -> W&BTC' }
@@ -529,6 +554,21 @@ assert.ok(profitMessageHtml.includes('arb-detail-chart-message">至少 &lt;2&gt;
 const readyProfitHtml = buildArbDetailProfitPreviewReadyHtml(3);
 assert.ok(readyProfitHtml.includes('按当前 3 张价格图逐时点乘积计算'));
 assert.ok(readyProfitHtml.includes('arb-detail-profit-canvas'));
+
+const profitCardEl = { innerHTML: '' };
+assert.strictEqual(applyArbDetailProfitPreviewMessage(profitCardEl, '至少 <2> 张'), true);
+assert.strictEqual(profitCardEl.innerHTML, profitMessageHtml);
+assert.strictEqual(applyArbDetailProfitPreviewReady(profitCardEl, 3), true);
+assert.strictEqual(profitCardEl.innerHTML, readyProfitHtml);
+assert.strictEqual(applyArbDetailProfitPreviewReady(null, 3), false);
+const queryProfitCard = { dataset: { profit: 'card' } };
+assert.strictEqual(getArbDetailProfitCardElement({
+  querySelector(selector) {
+    assert.strictEqual(selector, '[data-arb-detail-profit-card]');
+    return queryProfitCard;
+  }
+}), queryProfitCard);
+assert.strictEqual(getArbDetailProfitCardElement(null), null);
 
 assert.deepStrictEqual(
   buildArbDetailProfitPreviewState([[], [{ time: 1, value: 1 }]], {
@@ -591,6 +631,11 @@ const stripHtml = buildArbDetailChartPreviewStripHtml(
 assert.ok(stripHtml.includes('arb-detail-chart-strip'));
 assert.ok(stripHtml.includes('Pair &lt;1&gt;'));
 assert.ok(stripHtml.includes('data-arb-detail-profit-card="true"'));
+assert.strictEqual(applyArbDetailChartPreviewStrip(chartPreviewEl, [{ quoteId: 1, direction: 'forward' }], {
+  buildChartPairLabel: () => 'Pair <1>'
+}), true);
+assert.strictEqual(chartPreviewEl.innerHTML, stripHtml);
+assert.strictEqual(applyArbDetailChartPreviewStrip(null, []), false);
 
 assert.deepStrictEqual(
   summarizeDetailResult(0.2, 0.201),

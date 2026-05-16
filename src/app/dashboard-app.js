@@ -2277,12 +2277,10 @@
             }
         });
         arbDetailChartPreviewCharts = [];
-        if (arbDetailChartPreview) {
-            arbDetailChartPreview.innerHTML = '';
-        }
-        if (arbDetailProfitPreview) {
-            arbDetailProfitPreview.innerHTML = '';
-        }
+        getArbDetailUtils().clearArbDetailPreviewContainers({
+            chartPreview: arbDetailChartPreview,
+            profitPreview: arbDetailProfitPreview
+        });
     }
 
     function syncArbDetailChartAutoRefreshTimer() {
@@ -2290,20 +2288,16 @@
     }
 
     function renderArbDetailChartPreviewMessage(message) {
-        if (!arbDetailChartPreview) return;
-        arbDetailChartPreview.innerHTML = getArbDetailUtils().buildArbDetailChartMessageHtml(message);
+        getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview, message);
     }
 
     function getArbDetailProfitCardEl() {
-        return arbDetailChartPreview
-            ? arbDetailChartPreview.querySelector('[data-arb-detail-profit-card]')
-            : null;
+        return getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);
     }
 
     function renderArbDetailProfitPreviewMessage(message) {
         const cardEl = getArbDetailProfitCardEl();
-        if (!cardEl) return;
-        cardEl.innerHTML = getArbDetailUtils().buildArbDetailProfitPreviewMessageHtml(message);
+        getArbDetailUtils().applyArbDetailProfitPreviewMessage(cardEl, message);
     }
 
     function syncArbDetailProfitPreview(seriesList, renderer) {
@@ -2320,7 +2314,7 @@
             return;
         }
 
-        cardEl.innerHTML = getArbDetailUtils().buildArbDetailProfitPreviewReadyHtml(previewState.seriesCount);
+        getArbDetailUtils().applyArbDetailProfitPreviewReady(cardEl, previewState.seriesCount);
         const canvasEl = cardEl.querySelector('.arb-detail-profit-canvas');
         const metaEl = cardEl ? cardEl.querySelector('.arb-detail-profit-meta') : null;
         if (!canvasEl) return;
@@ -2366,7 +2360,7 @@
         const runId = arbDetailChartPreviewRunId;
         arbDetailState.chartPreviewSignature = signature;
         destroyArbDetailChartPreview();
-        arbDetailChartPreview.innerHTML = getArbDetailUtils().buildArbDetailChartPreviewStripHtml(pairs, {
+        getArbDetailUtils().applyArbDetailChartPreviewStrip(arbDetailChartPreview, pairs, {
             buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)
         });
 

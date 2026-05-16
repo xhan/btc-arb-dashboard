@@ -246,6 +246,7 @@
   - `src/app/dashboard-app.js` 的报价设置 modal viewState 写入规则已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只执行 DOM write plan
   - `src/app/dashboard-app.js` 的报价设置 Kyber direct pools 控件显示写入、请求渠道选择器 DOM 写入和 modal write plan 单行包装已收敛到 `src/dashboard/dashboard-modal-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 shell/error HTML 写入和 modal visible class 切换已下沉到 `src/arb/arb-detail-utils.js`
+  - `src/app/dashboard-app.js` 的套利详情 chart/profit preview 清空、消息、strip 和收益卡片 HTML 写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的音频 unlock 状态、循环报警音同步和 quote alert 一次性播放实现已下沉到 `src/ui/audio-utils.js`
   - `src/app/dashboard-app.js` 的价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
   - `src/app/dashboard-app.js` 的浮窗拖拽实现、浮窗 focus 事件绑定和通用显示切换状态已下沉到 `src/ui/dom-render-utils.js`
