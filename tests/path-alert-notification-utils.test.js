@@ -2,12 +2,7 @@ const assert = require('assert');
 
 const {
   formatPathAlertEvaluationText,
-  buildPathAlertNotificationTitle,
-  buildPathAlertNotificationBody,
   buildPathAlertWebhookPayload,
-  buildPathAlertAggregatedLog,
-  buildPathAlertChangedLegLines,
-  buildPathAlertLegKey,
   buildMutedPathTargetCandidate,
   buildMutedPathTargetFromCycleLegs,
   buildTriggeredPathAlertEntry,
@@ -18,10 +13,7 @@ const {
   buildQuoteAlertMessage,
   buildQuoteAlertThresholdLine,
   buildQuoteAlertSummaryRuleLine,
-  buildQuoteAlertActionLink,
-  buildQuoteAlertTriggeredEntry,
   buildQuoteAlertTriggeredEntryForQuote,
-  buildQuoteAlertRemotePayload,
   buildQuoteAlertRemotePayloadForEntry,
   getQuoteAlertDirection
 } = require('../path-alert-notification-utils');
@@ -29,29 +21,6 @@ const {
 assert.strictEqual(formatPathAlertEvaluationText({ profitBp: 2.05 }), '📈 +2.05bp');
 assert.strictEqual(formatPathAlertEvaluationText({ profitBp: -1.23 }), '📈 -1.23bp');
 assert.strictEqual(formatPathAlertEvaluationText(null), '--');
-assert.strictEqual(
-  buildPathAlertLegKey({ quoteId: '101', inverse: true, pricingMode: 'cex-ask1-inverse' }),
-  '101|inverse|cex-ask1-inverse'
-);
-assert.strictEqual(
-  buildPathAlertLegKey({ quoteId: 102, direction: 'forward', pricingMode: 'unknown' }),
-  '102|forward|raw'
-);
-assert.strictEqual(buildPathAlertLegKey({ quoteId: 'bad' }), '');
-assert.deepStrictEqual(
-  buildPathAlertChangedLegLines([
-    { chain: 'arbitrum', fromSymbol: 'cbBTC', toSymbol: 'WBTC', rate: 1.002688, deltaBp: 1.5 },
-    { chain: 'ethereum', fromSymbol: 'WBTC', toSymbol: 'cbBTC', deltaBp: -0.32 },
-    { chain: 'base', fromSymbol: 'cbBTC', toSymbol: 'WBTC', rate: 'bad', deltaBp: 0.1 }
-  ], {
-    maxCount: 2,
-    formatLeg: (leg) => `${leg.chain}:${leg.fromSymbol}->${leg.toSymbol}`
-  }),
-  [
-    'arbitrum:cbBTC->WBTC @1.002688 +1.50bp',
-    'ethereum:WBTC->cbBTC -0.32bp'
-  ]
-);
 assert.deepStrictEqual(
   buildMutedPathTargetFromCycleLegs([
     { quoteId: '101', inverse: true, cexLevelLabel: 'ask1', chain: 'ethereum', from: 'WBTC', to: 'cbBTC' },
@@ -239,18 +208,6 @@ const singleEntry = {
   ]
 };
 
-assert.strictEqual(buildPathAlertNotificationTitle([singleEntry]), 'WBTC ETH <-> ARB');
-assert.strictEqual(
-  buildPathAlertNotificationBody([singleEntry]),
-  [
-    '📈 +2.05bp',
-    '⚡ （Arbitrum）cbBTC -> WBTC @1.002688',
-    '（ETH）WBTC -> cbBTC @0.997524',
-    '',
-    '⚡ 异动腿:',
-    '（Arbitrum）cbBTC -> WBTC @1.002688 +1.50bp'
-  ].join('\n')
-);
 assert.deepStrictEqual(
   buildPathAlertWebhookPayload([singleEntry]),
   {
@@ -281,47 +238,11 @@ const multiEntries = [
   }
 ];
 
-assert.strictEqual(buildPathAlertNotificationTitle(multiEntries), '2 条');
-assert.strictEqual(
-  buildPathAlertNotificationBody(multiEntries),
-  [
-    'WBTC ETH <-> ARB',
-    '📈 +2.05bp',
-    '⚡ （Arbitrum）cbBTC -> WBTC @1.002688',
-    '（ETH）WBTC -> cbBTC @0.997524',
-    '',
-    '⚡ 异动腿:',
-    '（Arbitrum）cbBTC -> WBTC @1.002688 +1.50bp',
-    '',
-    'WBTC ETH <-> ARB (第二条路径)',
-    '📈 +1.88bp',
-    '（Base）cbBTC -> WBTC @1.002188',
-    '（ETH）WBTC -> cbBTC @0.997992'
-  ].join('\n')
-);
-
 assert.deepStrictEqual(
-  buildPathAlertAggregatedLog([singleEntry]),
+  buildPathAlertWebhookPayload(multiEntries),
   {
-    title: '🚨 [路径报警] WBTC ETH <-> ARB',
-    subtitle: '',
-    message: [
-      '📈 +2.05bp',
-      '⚡ （Arbitrum）cbBTC -> WBTC @1.002688',
-      '（ETH）WBTC -> cbBTC @0.997524',
-      '',
-      '⚡ 异动腿:',
-      '（Arbitrum）cbBTC -> WBTC @1.002688 +1.50bp'
-    ].join('\n')
-  }
-);
-
-assert.deepStrictEqual(
-  buildPathAlertAggregatedLog(multiEntries),
-  {
-    title: '🚨 [路径报警] 2 条命中',
-    subtitle: '',
-    message: [
+    title: '2 条',
+    body: [
       'WBTC ETH <-> ARB',
       '📈 +2.05bp',
       '⚡ （Arbitrum）cbBTC -> WBTC @1.002688',
@@ -412,31 +333,21 @@ assert.strictEqual(
   '基准汇率 1.0001 -> 0.9997'
 );
 
-assert.deepStrictEqual(
-  buildQuoteAlertActionLink({ label: 'swap.defillama', url: 'https://example.test/swap' }),
-  { label: 'swap.defillama', url: 'https://example.test/swap' }
-);
-assert.deepStrictEqual(
-  buildQuoteAlertActionLink({ url: 'https://example.test/swap' }),
-  { label: '交易链接', url: 'https://example.test/swap' }
-);
-assert.strictEqual(buildQuoteAlertActionLink({ label: 'swap.defillama' }), null);
-assert.strictEqual(buildQuoteAlertActionLink(null), null);
-
-const quoteAlertEntry = buildQuoteAlertTriggeredEntry({
+const quoteAlertEntry = buildQuoteAlertTriggeredEntryForQuote({
   alert: {
     id: 'quote-1',
     target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 1.01 }
   },
   quote: { id: 101 },
+  state: { fromSymbol: 'cbBTC', toSymbol: 'WBTC' },
   displayName: 'Arbitrum',
-  label: 'cbBTC/WBTC',
   message: '汇率已达到或超过目标 1.01',
   currentValueText: '当前汇率 1.011',
   actionLink: {
     label: '交易链接',
     url: 'https://example.test/swap'
-  }
+  },
+  buildQuoteAlertDisplayLabel: () => 'cbBTC/WBTC'
 });
 assert.deepStrictEqual(quoteAlertEntry, {
   alert: {
@@ -459,11 +370,20 @@ assert.deepStrictEqual(quoteAlertEntry, {
   }
 });
 assert.deepStrictEqual(
-  buildQuoteAlertTriggeredEntry({
-    alert: { id: 'path-1', target: { type: 'path', legs: [] } },
-    message: '路径命中'
-  }).mutedTargetCandidate,
-  null
+  buildQuoteAlertTriggeredEntryForQuote({
+    alert: {
+      id: 'quote-default-link',
+      target: { type: 'quote', quoteId: 103, ruleKind: 'targetAbove', value: 1.01 }
+    },
+    quote: { id: 103, chain: 'base' },
+    state: { fromSymbol: 'cbBTC', toSymbol: 'WBTC' },
+    displayName: 'Base',
+    message: '汇率已达到或超过目标 1.01',
+    currentValueText: '当前汇率 1.011',
+    dexLink: { url: 'https://example.test/swap' },
+    buildQuoteAlertDisplayLabel: () => 'cbBTC/WBTC'
+  }).actionLink,
+  { label: '交易链接', url: 'https://example.test/swap' }
 );
 assert.deepStrictEqual(
   buildQuoteAlertTriggeredEntryForQuote({
@@ -499,8 +419,8 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
-  buildQuoteAlertRemotePayload({
-    chainName: 'Arbitrum',
+  buildQuoteAlertRemotePayloadForEntry({
+    displayName: 'Arbitrum',
     label: 'BTCB/syBTC',
     currentValueText: '0.1 -> 0.100115',
     message: '价格相比基准(100.000000) 上涨 0.250% (>0.1%)'
@@ -513,8 +433,8 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
-  buildQuoteAlertRemotePayload({
-    chainName: 'Bybit',
+  buildQuoteAlertRemotePayloadForEntry({
+    displayName: 'Bybit',
     label: 'BTCB/syBTC',
     currentValueText: '0.1 -> 0.100115',
     message: '总价已达到或超过目标 70000'
@@ -527,8 +447,8 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
-  buildQuoteAlertRemotePayload({
-    chainName: 'ETH',
+  buildQuoteAlertRemotePayloadForEntry({
+    displayName: 'ETH',
     label: 'cbBTC/BTC.b',
     currentValueText: '1 -> 1.000224',
     message: '总价已达到或超过目标 1.00017',

@@ -233,31 +233,6 @@
     };
   }
 
-  function buildPathAlertAggregatedLog(triggeredEntries) {
-    const list = (Array.isArray(triggeredEntries) ? triggeredEntries : []).slice(0, 3);
-    if (!list.length) {
-      return {
-        title: '[路径报警]',
-        subtitle: '',
-        message: '本轮无可通知路径'
-      };
-    }
-
-    if (list.length === 1) {
-      return {
-        title: `🚨 [路径报警] ${buildPathAlertNotificationTitle(list)}`,
-        subtitle: '',
-        message: buildPathAlertNotificationBody(list)
-      };
-    }
-
-    return {
-      title: `🚨 [路径报警] ${list.length} 条命中`,
-      subtitle: '',
-      message: buildPathAlertNotificationBody(list)
-    };
-  }
-
   function defaultQuoteAlertNumberFormatter(value, precision = 6) {
     return (typeof value === 'number' && Number.isFinite(value))
       ? Number(value.toFixed(precision))
@@ -451,26 +426,18 @@
 
   return {
     formatPathAlertEvaluationText,
-    buildPathAlertChangedLegLines,
-    buildPathAlertLegKey,
     buildMutedPathTargetCandidate,
     buildMutedPathTargetFromCycleLegs,
     buildTriggeredPathAlertEntry,
     sortTriggeredPathAlertEntries,
-    buildPathAlertNotificationTitle,
-    buildPathAlertNotificationBody,
     buildPathAlertWebhookPayload,
-    buildPathAlertAggregatedLog,
     buildQuoteAlertDirectionLabel,
     buildQuoteAlertCurrentValueText,
     buildQuoteAlertRuleLine,
     buildQuoteAlertSummaryRuleLine,
     buildQuoteAlertMessage,
     buildQuoteAlertThresholdLine,
-    buildQuoteAlertActionLink,
-    buildQuoteAlertTriggeredEntry,
     buildQuoteAlertTriggeredEntryForQuote,
-    buildQuoteAlertRemotePayload,
     buildQuoteAlertRemotePayloadForEntry,
     getQuoteAlertDirection
   };

@@ -496,6 +496,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertTriggeredEntry(options = {})'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertTriggeredEntryForQuote(options = {})'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertRemotePayloadForEntry(entry)'));
+    const pathAlertNotificationExportBlock = pathAlertNotificationUtilsResponse.body.match(/return \{\n    formatPathAlertEvaluationText,[\s\S]*?\n  \};/);
+    assert.ok(pathAlertNotificationExportBlock);
+    assert.ok(!pathAlertNotificationExportBlock[0].includes('buildPathAlertChangedLegLines'));
+    assert.ok(!pathAlertNotificationExportBlock[0].includes('buildPathAlertLegKey'));
+    assert.ok(!pathAlertNotificationExportBlock[0].includes('buildPathAlertNotificationTitle'));
+    assert.ok(!pathAlertNotificationExportBlock[0].includes('buildPathAlertNotificationBody'));
+    assert.ok(!pathAlertNotificationExportBlock[0].includes('buildPathAlertAggregatedLog'));
+    assert.ok(!pathAlertNotificationExportBlock[0].includes('buildQuoteAlertActionLink'));
+    assert.ok(!pathAlertNotificationExportBlock[0].includes('buildQuoteAlertTriggeredEntry,'));
+    assert.ok(!pathAlertNotificationExportBlock[0].includes('buildQuoteAlertRemotePayload,'));
     assert.ok(!appJsResponse.body.includes('function buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null)'));
     assert.ok(!appJsResponse.body.includes('async function sendQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null)'));
     assert.ok(appJsResponse.body.includes('async function sendQuoteWebhookNotification(entry)'));
