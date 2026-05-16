@@ -6,6 +6,7 @@ const {
   buildAlertLogAppendPlan,
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
+  buildRestoredMutedAlertLogPlan,
   buildMutedStateItemHtml,
   buildMutedStateSectionHtml,
   buildMutedAlertStatePanelHtml,
@@ -83,6 +84,25 @@ assert.deepStrictEqual(
     buttonText: '忽略 1 小时',
     buttonDisabled: false
   }
+);
+
+assert.deepStrictEqual(
+  buildRestoredMutedAlertLogPlan([
+    { id: 'new', mutedAt: 3000 },
+    { id: '', mutedAt: 2000 },
+    { id: 'old', mutedAt: 1000 }
+  ], {
+    buildTargetKey: (entry) => entry.id,
+    buildStatusText: (entry) => `status ${entry.id}`
+  }).map((item) => ({
+    id: item.entry.id,
+    targetKey: item.targetKey,
+    statusText: item.statusText
+  })),
+  [
+    { id: 'old', targetKey: 'old', statusText: 'status old' },
+    { id: 'new', targetKey: 'new', statusText: 'status new' }
+  ]
 );
 
 const itemHtml = buildMutedStateItemHtml({

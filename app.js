@@ -1350,21 +1350,20 @@
 
     function restoreMutedAlertLogEntries(nowMs = Date.now()) {
         if (!alertLogMutedLogContent || !mutedPathTargets.length) return;
-        const sortedEntries = mutedPathTargets
-            .slice()
-            .sort((left, right) => Number(left && left.mutedAt) - Number(right && right.mutedAt));
-        sortedEntries.forEach((entry) => {
-            const targetKey = buildMutedPathTargetKey(entry);
-            if (!targetKey) return;
-            const escapedTargetKey = getDomRenderUtils().escapeCssAttributeValue(targetKey);
+        const renderPlan = getAlertLogUiUtils().buildRestoredMutedAlertLogPlan(mutedPathTargets, {
+            buildTargetKey: buildMutedPathTargetKey,
+            buildStatusText: (entry) => getPathAlertUtils().buildMutedPathStatusText(entry, nowMs)
+        });
+        renderPlan.forEach((item) => {
+            const escapedTargetKey = getDomRenderUtils().escapeCssAttributeValue(item.targetKey);
             if (alertLogMutedLogContent.querySelector(`.log-entry[data-muted-target-key="${escapedTargetKey}"]`)) {
                 return;
             }
             const card = getDomRenderUtils().createElementFromHtml(
-                getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(entry, {
+                getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(item.entry, {
                     nowMs,
-                    targetKey,
-                    statusText: getPathAlertUtils().buildMutedPathStatusText(entry, nowMs)
+                    targetKey: item.targetKey,
+                    statusText: item.statusText
                 })
             );
             if (card) {

@@ -410,7 +410,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getAlertLogUiUtils()'));
     assert.ok(appJsResponse.body.includes('AlertLogUiUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildQuoteAlertLogHtml(logEntry, {'));
-    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(entry, {'));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogPlan(mutedPathTargets, {'));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(item.entry, {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildPathAlertLogCardHtml(entry, {'));
     assert.ok(!appJsResponse.body.includes('appendAlertLogEntry'));
     assert.ok(!alertLogUiResponse.body.includes('buildGenericAlertLogEntryHtml'));
@@ -628,6 +629,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().resolveAlertLogCardPlacement('));
     assert.ok(alertLogUiResponse.body.includes('function buildAlertLogAppendPlan(entries)'));
     assert.ok(alertLogUiResponse.body.includes('function resolveAlertLogCardPlacement(entry, options = {})'));
+    assert.ok(alertLogUiResponse.body.includes('function buildRestoredMutedAlertLogPlan(entries, options = {})'));
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));
     assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));

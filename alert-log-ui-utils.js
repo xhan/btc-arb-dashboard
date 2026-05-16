@@ -71,6 +71,24 @@
     };
   }
 
+  function buildRestoredMutedAlertLogPlan(entries, options = {}) {
+    const buildTargetKey = typeof options.buildTargetKey === 'function'
+      ? options.buildTargetKey
+      : () => '';
+    const buildStatusText = typeof options.buildStatusText === 'function'
+      ? options.buildStatusText
+      : () => '';
+    return (Array.isArray(entries) ? entries : [])
+      .slice()
+      .sort((left, right) => Number(left && left.mutedAt) - Number(right && right.mutedAt))
+      .map((entry) => ({
+        entry,
+        targetKey: String(buildTargetKey(entry) || '').trim(),
+        statusText: String(buildStatusText(entry) || '')
+      }))
+      .filter((item) => item.targetKey);
+  }
+
   function buildMutedStateItemHtml(config = {}) {
     const linesHtml = (Array.isArray(config.lines) ? config.lines : [])
       .filter(Boolean)
@@ -316,6 +334,7 @@
     buildAlertLogEntryDisplayState,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
+    buildRestoredMutedAlertLogPlan,
     buildMutedStateItemHtml,
     buildMutedStateSectionHtml,
     buildMutedAlertStatePanelHtml,
