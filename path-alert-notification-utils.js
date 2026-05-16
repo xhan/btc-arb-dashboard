@@ -48,6 +48,45 @@
       });
   }
 
+  function getPathAlertLegPricingMode(leg) {
+    if (!leg || typeof leg !== 'object') return 'raw';
+    if (leg.cexLevelLabel === 'bid1') return 'cex-bid1';
+    if (leg.cexLevelLabel === 'ask1') return 'cex-ask1-inverse';
+    return 'raw';
+  }
+
+  function buildMutedPathTargetFromCycleLegs(legs, options = {}) {
+    const isRuleLeg = typeof options.isRuleLeg === 'function' ? options.isRuleLeg : () => false;
+    const normalizedLegs = (Array.isArray(legs) ? legs : [])
+      .filter((leg) => !isRuleLeg(leg) && Number.isFinite(Number(leg && leg.quoteId)))
+      .map((leg) => ({
+        quoteId: Number(leg.quoteId),
+        direction: leg.inverse ? 'inverse' : 'forward',
+        pricingMode: getPathAlertLegPricingMode(leg),
+        chain: leg.chain,
+        fromSymbol: leg.from,
+        toSymbol: leg.to
+      }));
+    if (!normalizedLegs.length) return null;
+    return {
+      target: {
+        type: 'path',
+        legs: normalizedLegs
+      }
+    };
+  }
+
+  function buildMutedPathTargetCandidate(alert, evaluation, options = {}) {
+    if (!alert || !alert.target) return null;
+    if (alert.target.type === 'path') {
+      return alert;
+    }
+    if (alert.target.type === 'rule' && alert.target.ruleKind === 'fixed' && evaluation && evaluation.cycle) {
+      return buildMutedPathTargetFromCycleLegs(evaluation.cycle.legs, options);
+    }
+    return null;
+  }
+
   function splitAlertMessageLines(message) {
     return String(message || '')
       .split('\n')
@@ -93,7 +132,7 @@
       : 0;
     const mutedTargetCandidate = typeof options.buildMutedTargetCandidate === 'function'
       ? options.buildMutedTargetCandidate(alert, evaluation)
-      : null;
+      : buildMutedPathTargetCandidate(alert, evaluation, options);
 
     return {
       alert: {
@@ -345,6 +384,8 @@
     formatPathAlertEvaluationText,
     buildPathAlertChangedLegLines,
     buildPathAlertLegKey,
+    buildMutedPathTargetCandidate,
+    buildMutedPathTargetFromCycleLegs,
     buildTriggeredPathAlertEntry,
     buildPathAlertNotificationTitle,
     buildPathAlertNotificationBody,

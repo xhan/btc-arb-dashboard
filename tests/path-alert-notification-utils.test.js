@@ -7,6 +7,8 @@ const {
   buildPathAlertAggregatedLog,
   buildPathAlertChangedLegLines,
   buildPathAlertLegKey,
+  buildMutedPathTargetCandidate,
+  buildMutedPathTargetFromCycleLegs,
   buildTriggeredPathAlertEntry,
   buildQuoteAlertDirectionLabel,
   buildQuoteAlertCurrentValueText,
@@ -44,6 +46,75 @@ assert.deepStrictEqual(
     'arbitrum:cbBTC->WBTC @1.002688 +1.50bp',
     'ethereum:WBTC->cbBTC -0.32bp'
   ]
+);
+assert.deepStrictEqual(
+  buildMutedPathTargetFromCycleLegs([
+    { quoteId: '101', inverse: true, cexLevelLabel: 'ask1', chain: 'ethereum', from: 'WBTC', to: 'cbBTC' },
+    { rule: true, quoteId: 999, chain: '规则', from: 'cbBTC', to: 'WBTC' },
+    { quoteId: 102, cexLevelLabel: 'bid1', chain: 'Bybit', from: 'WBTC', to: 'BTC' },
+    { quoteId: 'bad', chain: 'base', from: 'cbBTC', to: 'WBTC' }
+  ], {
+    isRuleLeg: (leg) => Boolean(leg && leg.rule)
+  }),
+  {
+    target: {
+      type: 'path',
+      legs: [
+        {
+          quoteId: 101,
+          direction: 'inverse',
+          pricingMode: 'cex-ask1-inverse',
+          chain: 'ethereum',
+          fromSymbol: 'WBTC',
+          toSymbol: 'cbBTC'
+        },
+        {
+          quoteId: 102,
+          direction: 'forward',
+          pricingMode: 'cex-bid1',
+          chain: 'Bybit',
+          fromSymbol: 'WBTC',
+          toSymbol: 'BTC'
+        }
+      ]
+    }
+  }
+);
+assert.strictEqual(buildMutedPathTargetFromCycleLegs([{ rule: true, quoteId: 101 }], { isRuleLeg: (leg) => Boolean(leg && leg.rule) }), null);
+assert.deepStrictEqual(
+  buildMutedPathTargetCandidate(
+    { id: 'path-1', target: { type: 'path', legs: [] } },
+    null
+  ),
+  { id: 'path-1', target: { type: 'path', legs: [] } }
+);
+assert.deepStrictEqual(
+  buildMutedPathTargetCandidate(
+    { id: 'fixed-1', target: { type: 'rule', ruleKind: 'fixed' } },
+    { cycle: { legs: [{ quoteId: 101, chain: 'ethereum', from: 'WBTC', to: 'cbBTC' }] } }
+  ),
+  {
+    target: {
+      type: 'path',
+      legs: [
+        {
+          quoteId: 101,
+          direction: 'forward',
+          pricingMode: 'raw',
+          chain: 'ethereum',
+          fromSymbol: 'WBTC',
+          toSymbol: 'cbBTC'
+        }
+      ]
+    }
+  }
+);
+assert.strictEqual(
+  buildMutedPathTargetCandidate(
+    { id: 'special-1', target: { type: 'rule', ruleKind: 'special' } },
+    { cycle: { legs: [{ quoteId: 101 }] } }
+  ),
+  null
 );
 const triggeredPathEntry = buildTriggeredPathAlertEntry({
   alert: {
