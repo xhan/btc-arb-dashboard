@@ -842,6 +842,12 @@
         return [alertLogContent, alertLogMutedLogContent].filter(Boolean);
     }
 
+    function getAlertLogSelectorOptions() {
+        return {
+            escapeCssAttributeValue: (value) => getDomRenderUtils().escapeCssAttributeValue(value)
+        };
+    }
+
     function prependAlertLogCard(entry, card) {
         if (!card) return '';
         const targetKey = String(card.dataset && card.dataset.mutedTargetKey || '');
@@ -1194,13 +1200,11 @@
     }
 
     function removeRestoredMutedAlertLogCards(targetKey = '') {
-        if (!targetKey) return;
-        const escapedTargetKey = getDomRenderUtils().escapeCssAttributeValue(targetKey);
-        getAlertLogEntryContainers().forEach((container) => {
-            container
-                .querySelectorAll(`.log-entry[data-muted-restored="1"][data-muted-target-key="${escapedTargetKey}"]`)
-                .forEach((card) => card.remove());
-        });
+        getAlertLogUiUtils().removeRestoredMutedAlertLogCards(
+            getAlertLogEntryContainers(),
+            targetKey,
+            getAlertLogSelectorOptions()
+        );
     }
 
     function updateMutedPathAlertLogCards(targetKey = '', nowMs = Date.now()) {
@@ -1308,8 +1312,11 @@
             buildStatusText: (entry) => getPathAlertUtils().buildMutedPathStatusText(entry, nowMs)
         });
         renderPlan.forEach((item) => {
-            const escapedTargetKey = getDomRenderUtils().escapeCssAttributeValue(item.targetKey);
-            if (alertLogMutedLogContent.querySelector(`.log-entry[data-muted-target-key="${escapedTargetKey}"]`)) {
+            if (getAlertLogUiUtils().hasMutedTargetLogCard(
+                alertLogMutedLogContent,
+                item.targetKey,
+                getAlertLogSelectorOptions()
+            )) {
                 return;
             }
             const card = getDomRenderUtils().createElementFromHtml(

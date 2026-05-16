@@ -4,11 +4,14 @@ const {
   buildAlertLogAppendPlan,
   resolveAlertLogCardPlacement,
   buildAlertLogMutedStatusState,
+  buildMutedTargetLogCardSelector,
   buildRestoredMutedAlertLogPlan,
   buildMutedAlertStatePanelHtml,
   buildRestoredMutedAlertLogHtml,
   buildPathAlertLogCardHtml,
-  buildQuoteAlertLogHtml
+  buildQuoteAlertLogHtml,
+  hasMutedTargetLogCard,
+  removeRestoredMutedAlertLogCards
 } = require('../alert-log-ui-utils');
 
 const appendPlan = buildAlertLogAppendPlan([
@@ -80,6 +83,39 @@ assert.deepStrictEqual(
     { id: 'new', targetKey: 'new', statusText: 'status new' }
   ]
 );
+
+assert.strictEqual(
+  buildMutedTargetLogCardSelector('target"1', {
+    restoredOnly: true,
+    escapeCssAttributeValue: (value) => String(value).replace(/"/g, '\\"')
+  }),
+  '.log-entry[data-muted-restored="1"][data-muted-target-key="target\\"1"]'
+);
+
+let queriedSelector = '';
+const fakeExistingContainer = {
+  querySelector(selector) {
+    queriedSelector = selector;
+    return selector.includes('target');
+  }
+};
+assert.strictEqual(hasMutedTargetLogCard(fakeExistingContainer, 'target'), true);
+assert.ok(queriedSelector.includes('[data-muted-target-key="target"]'));
+assert.strictEqual(hasMutedTargetLogCard(fakeExistingContainer, ''), false);
+
+const removedCards = [];
+const removableCards = [
+  { remove: () => removedCards.push('a') },
+  { remove: () => removedCards.push('b') }
+];
+const fakeRestoredContainer = {
+  querySelectorAll(selector) {
+    assert.strictEqual(selector, '.log-entry[data-muted-restored="1"][data-muted-target-key="target"]');
+    return removableCards;
+  }
+};
+assert.strictEqual(removeRestoredMutedAlertLogCards([fakeRestoredContainer, null], 'target'), 2);
+assert.deepStrictEqual(removedCards, ['a', 'b']);
 
 const mutedStatePanelHtml = buildMutedAlertStatePanelHtml({
   mutedPathTargets: [

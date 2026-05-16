@@ -89,6 +89,46 @@
       .filter((item) => item.targetKey);
   }
 
+  function escapeCssAttributeValue(value, options = {}) {
+    if (typeof options.escapeCssAttributeValue === 'function') {
+      return options.escapeCssAttributeValue(value);
+    }
+    return String(value == null ? '' : value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  }
+
+  function buildMutedTargetLogCardSelector(targetKey, options = {}) {
+    const normalizedTargetKey = String(targetKey || '').trim();
+    if (!normalizedTargetKey) return '';
+    const restoredOnly = options.restoredOnly === true ? '[data-muted-restored="1"]' : '';
+    return `.log-entry${restoredOnly}[data-muted-target-key="${escapeCssAttributeValue(normalizedTargetKey, options)}"]`;
+  }
+
+  function hasMutedTargetLogCard(container, targetKey, options = {}) {
+    const selector = buildMutedTargetLogCardSelector(targetKey, options);
+    if (!selector || !container || typeof container.querySelector !== 'function') return false;
+    return Boolean(container.querySelector(selector));
+  }
+
+  function removeRestoredMutedAlertLogCards(containers, targetKey, options = {}) {
+    const selector = buildMutedTargetLogCardSelector(targetKey, {
+      ...options,
+      restoredOnly: true
+    });
+    if (!selector) return 0;
+    const list = Array.isArray(containers) ? containers : [containers];
+    let removedCount = 0;
+    list.filter(Boolean).forEach((container) => {
+      if (typeof container.querySelectorAll !== 'function') return;
+      container.querySelectorAll(selector).forEach((card) => {
+        if (card && typeof card.remove === 'function') {
+          card.remove();
+          removedCount += 1;
+        }
+      });
+    });
+    return removedCount;
+  }
+
   function buildMutedStateItemHtml(config = {}) {
     const linesHtml = (Array.isArray(config.lines) ? config.lines : [])
       .filter(Boolean)
@@ -331,10 +371,13 @@
     buildAlertLogAppendPlan,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,
+    buildMutedTargetLogCardSelector,
     buildRestoredMutedAlertLogPlan,
     buildMutedAlertStatePanelHtml,
     buildRestoredMutedAlertLogHtml,
     buildPathAlertLogCardHtml,
-    buildQuoteAlertLogHtml
+    buildQuoteAlertLogHtml,
+    hasMutedTargetLogCard,
+    removeRestoredMutedAlertLogCards
   };
 }));

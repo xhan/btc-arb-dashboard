@@ -486,10 +486,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildQuoteAlertLogHtml(logEntry, {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogPlan(mutedPathRuntime.getTargets(), {'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildRestoredMutedAlertLogHtml(item.entry, {'));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().hasMutedTargetLogCard('));
+    assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().removeRestoredMutedAlertLogCards('));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildPathAlertLogCardHtml(entry, {'));
     assert.ok(!appJsResponse.body.includes('appendAlertLogEntry'));
     assert.ok(!alertLogUiResponse.body.includes('buildGenericAlertLogEntryHtml'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().escapeCssAttributeValue(targetKey)'));
+    assert.ok(appJsResponse.body.includes('function getAlertLogSelectorOptions()'));
+    assert.ok(!appJsResponse.body.includes('querySelectorAll(`.log-entry[data-muted-restored="1"]'));
+    assert.ok(!appJsResponse.body.includes('querySelector(`.log-entry[data-muted-target-key='));
     assert.ok(appJsResponse.body.includes('pathAlertPanelHtmlRenderer.render(pathAlertContent'));
     assert.ok(appJsResponse.body.includes('mutedAlertStateHtmlRenderer.render(alertLogMutedContent'));
     assert.ok(appJsResponse.body.includes('getAlertLogUiUtils().buildMutedAlertStatePanelHtml({'));
@@ -783,6 +787,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertLogUiResponse.body.includes('function buildAlertLogAppendPlan(entries)'));
     assert.ok(alertLogUiResponse.body.includes('function resolveAlertLogCardPlacement(entry, options = {})'));
     assert.ok(alertLogUiResponse.body.includes('function buildRestoredMutedAlertLogPlan(entries, options = {})'));
+    assert.ok(alertLogUiResponse.body.includes('function hasMutedTargetLogCard(container, targetKey, options = {})'));
+    assert.ok(alertLogUiResponse.body.includes('function removeRestoredMutedAlertLogCards(containers, targetKey, options = {})'));
     assert.ok(appJsResponse.body.includes('data-path-alert-log-mute'));
     assert.ok(appJsResponse.body.includes('data-alert-log-collapsed'));
     assert.ok(appJsResponse.body.includes('expandCollapsedAlertLogCard'));
