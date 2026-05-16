@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   applyRequestChannelToFetchOptions,
   createRequestChannelAgentCache
-} = require('../request-channel-http');
+} = require('../src/request-channel/request-channel-http');
 
 (async () => {
   const cache = createRequestChannelAgentCache();

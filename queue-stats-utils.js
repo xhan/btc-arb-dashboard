@@ -3,7 +3,7 @@
     ? require('./src/quote/quote-pause-utils')
     : root.QuotePauseUtils;
   const requestChannelUtils = typeof module !== 'undefined' && module.exports
-    ? require('./request-channel-utils')
+    ? require('./src/request-channel/request-channel-utils')
     : root.RequestChannelUtils;
   const chainDefaults = typeof module !== 'undefined' && module.exports
     ? require('./chain-defaults')

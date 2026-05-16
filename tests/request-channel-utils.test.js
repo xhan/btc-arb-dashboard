@@ -15,7 +15,7 @@ const {
   parseMultiChannelEnabledStorageValue,
   resolveRequestChannelIdForQuote,
   supportsRequestChannelForQuote
-} = require('../request-channel-utils');
+} = require('../src/request-channel/request-channel-utils');
 
 const channels = getRequestChannelOptions({
   channels: [

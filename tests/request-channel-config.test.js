@@ -4,7 +4,7 @@ const {
   normalizeRequestChannelsConfig,
   resolveRequestChannelContext,
   sanitizeRequestChannelsForClient
-} = require('../request-channel-config');
+} = require('../src/request-channel/request-channel-config');
 
 const defaultIntervals = {
   kyber: 170,

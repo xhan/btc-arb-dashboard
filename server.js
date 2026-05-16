@@ -14,15 +14,15 @@ const {
 const { decorateSnapshotSelection, buildReplayFromSnapshot, renderReplayText } = require('./price-snapshot-replay');
 const { parseUtc8Input } = require('./time-utils');
 const { createMarketClients } = require('./market-clients');
-const { DEFAULT_INTERVALS, normalizeIntervals } = require('./request-channel-utils');
+const { DEFAULT_INTERVALS, normalizeIntervals } = require('./src/request-channel/request-channel-utils');
 const {
     normalizeRequestChannelsConfig,
     resolveRequestChannelContext,
     sanitizeRequestChannelsForClient
-} = require('./request-channel-config');
+} = require('./src/request-channel/request-channel-config');
 const {
     createRequestChannelAgentCache
-} = require('./request-channel-http');
+} = require('./src/request-channel/request-channel-http');
 const { createFetchOnce } = require('./fetch-once');
 const {
     buildPathAlertWebhookUrl,
