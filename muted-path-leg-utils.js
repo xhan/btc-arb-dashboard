@@ -161,7 +161,6 @@
   }
 
   return {
-    DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT,
     DEFAULT_MUTED_PATH_LEG_DURATION_MS,
     normalizeMutedPathLeg,
     buildMutedPathLegKey,

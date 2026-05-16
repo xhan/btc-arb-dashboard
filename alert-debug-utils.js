@@ -196,7 +196,6 @@
 
   return {
     buildRuntimeDebugSnapshot,
-    inferRuntimeDebugReason,
     createAlertDebugController
   };
 }));

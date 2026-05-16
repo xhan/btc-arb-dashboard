@@ -2,16 +2,9 @@ const assert = require('assert');
 
 const {
   buildRuntimeDebugSnapshot,
-  createAlertDebugController,
-  inferRuntimeDebugReason
+  createAlertDebugController
 } = require('../alert-debug-utils');
 
-assert.strictEqual(inferRuntimeDebugReason(null, null), 'skip');
-assert.strictEqual(inferRuntimeDebugReason(null, { shouldTrigger: true }), 'trigger');
-assert.strictEqual(inferRuntimeDebugReason({}, { eligibleSince: 1000, status: 'pending_confirm' }), 'condition_on');
-assert.strictEqual(inferRuntimeDebugReason({ eligibleSince: 1000 }, { status: 'idle' }), 'condition_off');
-assert.strictEqual(inferRuntimeDebugReason({ eligibleSince: 1000 }, { eligibleSince: 1000, status: 'cooldown' }), 'cooldown_block');
-assert.strictEqual(inferRuntimeDebugReason({ eligibleSince: 1000 }, { eligibleSince: 1000, status: 'pending_confirm' }), 'pending_confirm');
 assert.deepStrictEqual(
   buildRuntimeDebugSnapshot(
     { eligibleSince: 1000 },
@@ -41,6 +34,27 @@ assert.deepStrictEqual(
       minNetProfit: 2
     }
   }
+);
+assert.strictEqual(
+  buildRuntimeDebugSnapshot(null, { shouldTrigger: true }, null, { nowMs: 1500 }).reason,
+  'trigger'
+);
+assert.strictEqual(
+  buildRuntimeDebugSnapshot({}, { eligibleSince: 1000, status: 'pending_confirm' }, null, { nowMs: 1500 }).reason,
+  'condition_on'
+);
+assert.strictEqual(
+  buildRuntimeDebugSnapshot({ eligibleSince: 1000 }, { status: 'idle' }, null, { nowMs: 1500 }).reason,
+  'condition_off'
+);
+assert.strictEqual(
+  buildRuntimeDebugSnapshot(
+    { eligibleSince: 1000 },
+    { eligibleSince: 1000, status: 'pending_confirm' },
+    null,
+    { nowMs: 1500 }
+  ).reason,
+  'pending_confirm'
 );
 assert.strictEqual(buildRuntimeDebugSnapshot(null, null, null, { nowMs: 1500 }), null);
 

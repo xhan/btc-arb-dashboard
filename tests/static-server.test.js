@@ -281,6 +281,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dashboardRuntimeUtilsResponse.statusCode, 200);
     const pathAlertNotificationUtilsResponse = await request('/path-alert-notification-utils.js');
     assert.strictEqual(pathAlertNotificationUtilsResponse.statusCode, 200);
+    const alertDebugUtilsResponse = await request('/alert-debug-utils.js');
+    assert.strictEqual(alertDebugUtilsResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(appJsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(appJsResponse.body.includes('data-dex-link-copy'));
@@ -681,8 +683,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('typeof window.PathAlertUtils'));
     assert.ok(appJsResponse.body.includes('function getMutedPathLegUtils()'));
     assert.ok(appJsResponse.body.includes('MutedPathLegUtils is not loaded'));
-    const mutedPathLegExportBlock = mutedPathLegUtilsResponse.body.match(/return \{\n    DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT,[\s\S]*?\n  \};/);
+    const mutedPathLegExportBlock = mutedPathLegUtilsResponse.body.match(/return \{\n    DEFAULT_MUTED_PATH_LEG_DURATION_MS,[\s\S]*?\n  \};/);
     assert.ok(mutedPathLegExportBlock);
+    assert.ok(!mutedPathLegExportBlock[0].includes('DEFAULT_MUTED_PATH_LEG_STORAGE_LIMIT'));
     assert.ok(!mutedPathLegExportBlock[0].includes('MUTED_PATH_LEG_DURATION_OPTIONS'));
     assert.ok(!mutedPathLegExportBlock[0].includes('findMutedPathLeg,'));
     assert.ok(appJsResponse.body.includes('function getMutedPathStorageUtils()'));
@@ -908,6 +911,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getAlertDebugUtils()'));
     assert.ok(appJsResponse.body.includes('AlertDebugUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('const alertDebugController = getAlertDebugUtils().createAlertDebugController({'));
+    const alertDebugExportBlock = alertDebugUtilsResponse.body.match(/return \{\n    buildRuntimeDebugSnapshot,[\s\S]*?\n  \};/);
+    assert.ok(alertDebugExportBlock);
+    assert.ok(!alertDebugExportBlock[0].includes('inferRuntimeDebugReason'));
     assert.ok(appJsResponse.body.includes('window.enableAlertDebug ='));
     assert.ok(!appJsResponse.body.includes('window.AlertDebugUtils &&'));
     assert.ok(!appJsResponse.body.includes('typeof window.AlertDebugUtils'));
