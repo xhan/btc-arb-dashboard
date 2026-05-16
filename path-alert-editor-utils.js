@@ -419,6 +419,20 @@
     `;
   }
 
+  function renderPathAlertEditorCandidateSuggestionsHtml(candidates, activeIndex = -1) {
+    const items = Array.isArray(candidates) ? candidates : [];
+    return items.map((candidate, index) => `
+      <button
+        type="button"
+        class="path-alert-suggestion${index === activeIndex ? ' active' : ''}"
+        data-path-alert-candidate-key="${escapeHtml(candidate && candidate.key)}"
+      >
+        <span class="path-alert-suggestion-label">${escapeHtml(candidate && candidate.label)}</span>
+        <span class="path-alert-suggestion-meta">${escapeHtml(candidate && candidate.categoryName || '')}</span>
+      </button>
+    `).join('');
+  }
+
   function renderPathAlertEditorQuoteTargetHtml(draft, quoteOptions, options = {}) {
     const items = Array.isArray(quoteOptions) ? quoteOptions : [];
     const selectedQuoteId = String(draft && draft.selectedQuoteId || '');
@@ -512,6 +526,7 @@
     clonePathAlertEditorDraft,
     createPathAlertEditorDraft,
     renderPathAlertEditorCandidateSearchHtml,
+    renderPathAlertEditorCandidateSuggestionsHtml,
     renderPathAlertEditorQuoteTargetHtml,
     renderPathAlertEditorRuleChoicesHtml,
     renderPathAlertEditorSelectedLegsHtml,

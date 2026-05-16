@@ -559,6 +559,56 @@
     return `🗃️已忽略 · 🕒${dismissedAtText}`;
   }
 
+  function buildPathAlertContextQuoteLabel(options = {}) {
+    const quote = options.quote && typeof options.quote === 'object' ? options.quote : null;
+    const filterQuoteId = String(options.filterQuoteId || '').trim();
+    if (!quote) return `交易对 #${filterQuoteId || '--'}`;
+
+    const isCexOrderbookChain = typeof options.isCexOrderbookChain === 'function'
+      ? options.isCexOrderbookChain
+      : () => false;
+    const formatChainLabel = typeof options.formatChainLabel === 'function'
+      ? options.formatChainLabel
+      : (chain) => String(chain || '');
+    const shortenToken = typeof options.shortenToken === 'function'
+      ? options.shortenToken
+      : shortenTokenText;
+    const buildQuoteLabel = typeof options.buildQuoteLabel === 'function'
+      ? options.buildQuoteLabel
+      : (chain, fromSymbol, toSymbol) => buildPathAlertQuoteLabel({
+        chain,
+        fromSymbol,
+        toSymbol,
+        formatChainLabel
+      });
+
+    if (isCexOrderbookChain(quote.chain)) {
+      return `${formatChainLabel(quote.chain)} ${quote.symbol || '--'}`;
+    }
+    return buildQuoteLabel(
+      quote.chain,
+      shortenToken(quote.fromToken),
+      shortenToken(quote.toToken)
+    ).replace(/[()]/g, '');
+  }
+
+  function renderPathAlertContextBarHtml(options = {}) {
+    const filteredCount = Number.isFinite(Number(options.filteredCount))
+      ? Number(options.filteredCount)
+      : 0;
+    return `
+      <div class="context-left">
+        <span class="chip context">当前交易对 · ${escapeHtml(options.quoteLabel)}</span>
+        <span class="chip">仅展示这个交易对相关报警</span>
+      </div>
+      <div class="toolbar-right">
+        <button type="button" data-context-create="forward">新增正向报警</button>
+        <button type="button" data-context-create="inverse">新增反向报警</button>
+        <div class="inline-count">当前 ${filteredCount} 条</div>
+      </div>
+    `;
+  }
+
   function buildPathAlertCardSubtitle(alert) {
     if (alert && alert.target && alert.target.type === 'quote') {
       return alert.target.ruleKind || '交易对报警';
@@ -770,6 +820,7 @@
     buildPathAlertMetaText,
     buildPathAlertsPageHref,
     buildDismissedPathAlertPageSummaryLines,
+    buildPathAlertContextQuoteLabel,
     escapeHtml,
     filterAlertsByQuoteId,
     filterDismissedTargetsByQuoteId,
@@ -777,6 +828,7 @@
     parsePathAlertsPagePrefill,
     pruneSelectionSet,
     renderDismissedTargetCardHtml,
+    renderPathAlertContextBarHtml,
     renderPathAlertCardHtml,
     renderPathAlertItemHtml,
     renderPathAlertPanelHtml,

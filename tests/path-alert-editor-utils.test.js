@@ -9,6 +9,7 @@ const {
   clonePathAlertEditorDraft,
   createPathAlertEditorDraft,
   renderPathAlertEditorCandidateSearchHtml,
+  renderPathAlertEditorCandidateSuggestionsHtml,
   renderPathAlertEditorQuoteTargetHtml,
   renderPathAlertEditorRuleChoicesHtml,
   renderPathAlertEditorSelectedLegsHtml,
@@ -259,6 +260,14 @@ assert.ok(renderPathAlertEditorCandidateSearchHtml(
   { searchQuery: 'ETH <USDC>' },
   { hasQuoteCandidates: false }
 ).includes('暂无可选报价腿'));
+const candidateSuggestionsHtml = renderPathAlertEditorCandidateSuggestionsHtml([
+  { key: 'quote:1', label: 'ETH <USDC>', categoryName: 'Base <main>' },
+  { key: 'quote:2', label: 'WBTC/cbBTC', categoryName: '' }
+], 1);
+assert.ok(candidateSuggestionsHtml.includes('data-path-alert-candidate-key="quote:1"'));
+assert.ok(candidateSuggestionsHtml.includes('ETH &lt;USDC&gt;'));
+assert.ok(candidateSuggestionsHtml.includes('Base &lt;main&gt;'));
+assert.ok(candidateSuggestionsHtml.includes('path-alert-suggestion active'));
 const quoteTargetHtml = renderPathAlertEditorQuoteTargetHtml(
   {
     selectedQuoteId: '202',

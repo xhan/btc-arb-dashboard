@@ -318,16 +318,10 @@
       pageState.activeCandidateIndex = 0;
     }
 
-    suggestionsEl.innerHTML = pageState.filteredCandidates.map((candidate, index) => `
-      <button
-        type="button"
-        class="path-alert-suggestion${index === pageState.activeCandidateIndex ? ' active' : ''}"
-        data-path-alert-candidate-key="${escapeHtml(candidate.key)}"
-      >
-        <span class="path-alert-suggestion-label">${escapeHtml(candidate.label)}</span>
-        <span class="path-alert-suggestion-meta">${escapeHtml(candidate.categoryName || '')}</span>
-      </button>
-    `).join('');
+    suggestionsEl.innerHTML = window.PathAlertEditorUtils.renderPathAlertEditorCandidateSuggestionsHtml(
+      pageState.filteredCandidates,
+      pageState.activeCandidateIndex
+    );
     suggestionsEl.classList.add('visible');
   }
 
@@ -554,24 +548,20 @@
       return;
     }
     const quote = quoteById.get(Number(pageState.filterQuoteId));
-    const quoteLabel = quote
-      ? (isCexOrderbookChain(quote.chain)
-        ? `${formatChainLabel(quote.chain)} ${quote.symbol || '--'}`
-        : buildQuoteLabel(quote.chain, shortToken(quote.fromToken), shortToken(quote.toToken)).replace(/[()]/g, ''))
-      : `交易对 #${pageState.filterQuoteId}`;
+    const quoteLabel = window.PathAlertPageUtils.buildPathAlertContextQuoteLabel({
+      filterQuoteId: pageState.filterQuoteId,
+      quote,
+      isCexOrderbookChain,
+      formatChainLabel,
+      shortenToken: shortToken,
+      buildQuoteLabel
+    });
     const filteredCount = getFilteredAlerts().length;
     contextBarEl.classList.add('visible');
-    contextBarEl.innerHTML = `
-      <div class="context-left">
-        <span class="chip context">当前交易对 · ${escapeHtml(quoteLabel)}</span>
-        <span class="chip">仅展示这个交易对相关报警</span>
-      </div>
-      <div class="toolbar-right">
-        <button type="button" data-context-create="forward">新增正向报警</button>
-        <button type="button" data-context-create="inverse">新增反向报警</button>
-        <div class="inline-count">当前 ${filteredCount} 条</div>
-      </div>
-    `;
+    contextBarEl.innerHTML = window.PathAlertPageUtils.renderPathAlertContextBarHtml({
+      quoteLabel,
+      filteredCount
+    });
   }
 
   function renderList() {

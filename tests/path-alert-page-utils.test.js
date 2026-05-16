@@ -7,6 +7,7 @@ const {
   buildPathAlertCardMetaText,
   buildPathAlertCardSubtitle,
   buildPathAlertCardTitle,
+  buildPathAlertContextQuoteLabel,
   buildPathAlertDefaultQuoteAlertName,
   buildPathAlertQuoteDisplayLabel,
   buildPathAlertQuoteLabel,
@@ -24,6 +25,7 @@ const {
   pruneSelectionSet,
   renderDismissedTargetCardHtml,
   renderPathAlertCardHtml,
+  renderPathAlertContextBarHtml,
   renderPathAlertItemHtml,
   renderPathAlertPanelHtml,
   renderPathAlertRouteLinesHtml,
@@ -201,6 +203,39 @@ assert.strictEqual(
   buildDismissedTargetMetaText({ dismissedAt: 1710000000000 }, { formatDate: () => '2024/3/9 12:00:00' }),
   '🗃️已忽略 · 🕒2024/3/9 12:00:00'
 );
+assert.strictEqual(
+  buildPathAlertContextQuoteLabel({
+    quote: { chain: 'Bybit', symbol: 'BTCUSDT' },
+    isCexOrderbookChain: (chain) => chain === 'Bybit',
+    formatChainLabel: (chain) => chain
+  }),
+  'Bybit BTCUSDT'
+);
+assert.strictEqual(
+  buildPathAlertContextQuoteLabel({
+    filterQuoteId: 101,
+    quote: {
+      chain: 'ethereum',
+      fromToken: '0x50b7545627a5162f82a992c33b87adc75187b218',
+      toToken: '0x0555e30da8f98308edb960aa94c0db47230d2b9c'
+    },
+    formatChainLabel: (chain) => chain.toUpperCase(),
+    shortenToken: (token) => token.slice(0, 6),
+    buildQuoteLabel: (chain, fromSymbol, toSymbol) => `(${chain}) ${fromSymbol} -> ${toSymbol}`
+  }),
+  'ethereum 0x50b7 -> 0x0555'
+);
+assert.strictEqual(
+  buildPathAlertContextQuoteLabel({ filterQuoteId: 999 }),
+  '交易对 #999'
+);
+const contextBarHtml = renderPathAlertContextBarHtml({
+  quoteLabel: 'ETH <USDC>',
+  filteredCount: 3
+});
+assert.ok(contextBarHtml.includes('当前交易对 · ETH &lt;USDC&gt;'));
+assert.ok(contextBarHtml.includes('data-context-create="forward"'));
+assert.ok(contextBarHtml.includes('当前 3 条'));
 assert.strictEqual(
   buildPathAlertCardSubtitle({ target: { type: 'rule', ruleKind: 'fixed' } }),
   '固定规则路径'
