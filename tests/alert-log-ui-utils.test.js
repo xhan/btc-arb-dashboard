@@ -5,6 +5,7 @@ const {
   buildAlertSettingsPanelHtml,
   buildAlertLogTabState,
   applyAlertLogTabDomState,
+  applyAlertLogMutedStatusDomState,
   applyExpandedAlertLogCardDomState,
   createAlertLogTabRuntime,
   resolveAlertLogCardPlacement,
@@ -228,6 +229,34 @@ assert.deepStrictEqual(
     buttonDisabled: false
   }
 );
+
+const mutedStatusEl = { textContent: '', className: '' };
+const mutedButtonEl = { textContent: '', disabled: false };
+const mutedStatusCard = {
+  querySelector(selector) {
+    if (selector === '[data-path-alert-muted-status]') return mutedStatusEl;
+    if (selector === '[data-path-alert-log-mute], [data-quote-alert-log-mute]') return mutedButtonEl;
+    return null;
+  }
+};
+assert.strictEqual(
+  applyAlertLogMutedStatusDomState(mutedStatusCard, {
+    statusText: '沉默中 · 59:59',
+    statusClassName: 'path-alert-log-tag path-alert-log-tag-muted',
+    buttonText: '延长 2 小时',
+    buttonDisabled: true
+  }),
+  true
+);
+assert.deepStrictEqual(mutedStatusEl, {
+  textContent: '沉默中 · 59:59',
+  className: 'path-alert-log-tag path-alert-log-tag-muted'
+});
+assert.deepStrictEqual(mutedButtonEl, {
+  textContent: '延长 2 小时',
+  disabled: true
+});
+assert.strictEqual(applyAlertLogMutedStatusDomState({}), false);
 
 assert.deepStrictEqual(
   buildRestoredMutedAlertLogPlan([

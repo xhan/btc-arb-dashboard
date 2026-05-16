@@ -143,6 +143,27 @@
     };
   }
 
+  function applyAlertLogMutedStatusDomState(card, statusState = {}) {
+    if (!card || typeof card.querySelector !== 'function') return false;
+    let applied = false;
+
+    const statusEl = card.querySelector('[data-path-alert-muted-status]');
+    if (statusEl) {
+      statusEl.textContent = statusState.statusText || '';
+      statusEl.className = statusState.statusClassName || '';
+      applied = true;
+    }
+
+    const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]');
+    if (buttonEl) {
+      buttonEl.textContent = statusState.buttonText || '';
+      buttonEl.disabled = statusState.buttonDisabled === true;
+      applied = true;
+    }
+
+    return applied;
+  }
+
   function buildRestoredMutedAlertLogPlan(entries, options = {}) {
     const buildTargetKey = typeof options.buildTargetKey === 'function'
       ? options.buildTargetKey
@@ -611,6 +632,7 @@
     buildAlertSettingsPanelHtml,
     buildAlertLogTabState,
     applyAlertLogTabDomState,
+    applyAlertLogMutedStatusDomState,
     applyExpandedAlertLogCardDomState,
     resolveAlertLogCardPlacement,
     buildAlertLogMutedStatusState,

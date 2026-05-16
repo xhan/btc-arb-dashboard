@@ -1157,19 +1157,10 @@
                     mutedPathRuntime.getTargets(),
                     card.dataset.mutedTargetKey
                 );
-                const statusEl = card.querySelector('[data-path-alert-muted-status]');
-                const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]');
                 const statusState = getAlertLogUiUtils().buildAlertLogMutedStatusState(resolvedEntry, {
                     statusText: resolvedEntry ? getPathAlertUtils().buildMutedPathStatusText(resolvedEntry, nowMs) : ''
                 });
-                if (statusEl) {
-                    statusEl.textContent = statusState.statusText;
-                    statusEl.className = statusState.statusClassName;
-                }
-                if (buttonEl) {
-                    buttonEl.textContent = statusState.buttonText;
-                    buttonEl.disabled = statusState.buttonDisabled;
-                }
+                getAlertLogUiUtils().applyAlertLogMutedStatusDomState(card, statusState);
             });
         });
     }
