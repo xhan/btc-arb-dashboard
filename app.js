@@ -1949,9 +1949,7 @@
     function nudgeArbDetailInput(index, delta) {
         const card = arbDetailState.cards[index];
         if (!card) return;
-        const currentValue = Number(card.inputAmount);
-        const base = Number.isFinite(currentValue) && currentValue > 0 ? currentValue : 1;
-        const nextValue = Math.max(0.1, Number((base + delta).toFixed(4)));
+        const nextValue = getArbDetailUtils().buildNudgedArbDetailInputAmount(card.inputAmount, delta);
         arbDetailState.editingInputIndex = null;
         updateArbDetailInput(index, nextValue);
         renderArbDetailModal();
@@ -2879,15 +2877,7 @@
     }
 
     function updateArbDetailInput(index, rawValue) {
-        const card = arbDetailState.cards[index];
-        if (!card) return;
-        const parsed = getArbDetailUtils().parseCommittedArbDetailInput(rawValue);
-        if (parsed === null) return;
-        card.inputAmount = parsed;
-        card.rows = [];
-        card.summary = null;
-        card.error = '';
-        card.requestVersion = getArbDetailUtils().getNextArbDetailRequestVersion(card.requestVersion);
+        getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, rawValue);
     }
 
     function restartArbDetailRefresh() {

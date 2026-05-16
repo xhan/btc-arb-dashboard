@@ -16,7 +16,9 @@ const {
   findBestSummaryIndices,
   getArbDetailCardDomIds,
   shouldSyncArbDetailInput,
+  buildNudgedArbDetailInputAmount,
   parseCommittedArbDetailInput,
+  applyArbDetailInputUpdate,
   shouldCommitArbDetailInputOnKey,
   getArbDetailIntervalKey,
   getArbDetailRateLimitDelay,
@@ -640,6 +642,21 @@ assert.strictEqual(
 );
 
 assert.strictEqual(
+  buildNudgedArbDetailInputAmount(1, 0.23456),
+  1.2346
+);
+
+assert.strictEqual(
+  buildNudgedArbDetailInputAmount(0.12, -1),
+  0.1
+);
+
+assert.strictEqual(
+  buildNudgedArbDetailInputAmount('bad', 0.5),
+  1.5
+);
+
+assert.strictEqual(
   parseCommittedArbDetailInput('1.5'),
   1.5
 );
@@ -647,6 +664,44 @@ assert.strictEqual(
 assert.strictEqual(
   parseCommittedArbDetailInput('0'),
   null
+);
+
+const updatedInputCards = [
+  {
+    inputAmount: 1,
+    rows: [{ quoteId: 1 }],
+    summary: { profit: 0.1 },
+    error: 'old',
+    requestVersion: 2
+  }
+];
+
+assert.strictEqual(
+  applyArbDetailInputUpdate(updatedInputCards, 0, '2.5'),
+  2.5
+);
+
+assert.deepStrictEqual(
+  updatedInputCards,
+  [
+    {
+      inputAmount: 2.5,
+      rows: [],
+      summary: null,
+      error: '',
+      requestVersion: 3
+    }
+  ]
+);
+
+assert.strictEqual(
+  applyArbDetailInputUpdate(updatedInputCards, 0, 'bad'),
+  null
+);
+
+assert.strictEqual(
+  updatedInputCards[0].requestVersion,
+  3
 );
 
 assert.strictEqual(

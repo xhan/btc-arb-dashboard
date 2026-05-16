@@ -302,9 +302,31 @@
     return index !== editingInputIndex;
   }
 
+  function buildNudgedArbDetailInputAmount(currentAmount, delta) {
+    const currentValue = Number(currentAmount);
+    const base = Number.isFinite(currentValue) && currentValue > 0 ? currentValue : 1;
+    return Math.max(0.1, Number((base + Number(delta)).toFixed(4)));
+  }
+
   function parseCommittedArbDetailInput(rawValue) {
     const parsed = Number(rawValue);
     if (!Number.isFinite(parsed) || parsed <= 0) return null;
+    return parsed;
+  }
+
+  function applyArbDetailInputUpdate(cards, cardIndex, rawValue) {
+    if (!Array.isArray(cards)) return null;
+    const card = cards[cardIndex];
+    if (!card || typeof card !== 'object') return null;
+
+    const parsed = parseCommittedArbDetailInput(rawValue);
+    if (parsed === null) return null;
+
+    card.inputAmount = parsed;
+    card.rows = [];
+    card.summary = null;
+    card.error = '';
+    card.requestVersion = getNextArbDetailRequestVersion(card.requestVersion);
     return parsed;
   }
 
@@ -747,7 +769,9 @@
     findBestSummaryIndices,
     getArbDetailCardDomIds,
     shouldSyncArbDetailInput,
+    buildNudgedArbDetailInputAmount,
     parseCommittedArbDetailInput,
+    applyArbDetailInputUpdate,
     shouldCommitArbDetailInputOnKey,
     getArbDetailIntervalKey,
     getArbDetailRateLimitDelay,
