@@ -84,6 +84,17 @@
     };
   }
 
+  function buildQuoteAlertUiUpdate(currentState, hasTriggered) {
+    const nextState = mergeQuoteUiState(currentState, {
+      hasUnreadAlert: hasTriggered ? true : currentState && currentState.hasUnreadAlert === true
+    });
+    return {
+      nextState,
+      highlighted: hasTriggered === true,
+      highlightPast: hasTriggered !== true && nextState.hasUnreadAlert === true
+    };
+  }
+
   function setQuoteUiState(stateMap, quoteId, nextState) {
     const map = stateMap instanceof Map ? stateMap : new Map();
     const key = normalizeQuoteStateKey(quoteId);
@@ -334,6 +345,7 @@
     buildArbRuleSnapshotCacheKey,
     buildDataTerminalRecordsCacheKey,
     buildDefaultQuoteUiState,
+    buildQuoteAlertUiUpdate,
     buildQuoteMetaById,
     buildQuoteResultMarketState,
     buildQuoteMarketStateSignature,

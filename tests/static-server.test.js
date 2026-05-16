@@ -515,6 +515,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('return previousState !== nextState;'));
     assert.ok(appJsResponse.body.includes('function setQuoteUiState(quoteId, nextState)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().setQuoteUiState(quoteUiState, quoteId, nextState)'));
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().buildQuoteAlertUiUpdate(uiState, hasTriggeredThisTick)'));
+    assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteAlertUiUpdate(currentState, hasTriggered)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().clearQuoteTrendTimer(quoteUiState, quoteId, clearTimeout)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().resetQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeout)'));
     assert.ok(!appJsResponse.body.includes('function buildDefaultQuoteUiState()'));

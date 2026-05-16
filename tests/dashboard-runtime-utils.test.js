@@ -5,6 +5,7 @@ const {
   buildDefaultQuoteUiState,
   buildDataTerminalRecordsCacheKey,
   buildQuoteMetaById,
+  buildQuoteAlertUiUpdate,
   buildQuoteResultMarketState,
   buildQuoteMarketStateSignature,
   buildQuotesByCategoryName,
@@ -330,6 +331,30 @@ assert.strictEqual(normalizeQuoteStateKey('quote-x'), 'quote-x');
 assert.deepStrictEqual(
   mergeQuoteUiState({ hasUnreadAlert: true, trendTimer: 123 }, { hasUnreadAlert: false }),
   { hasUnreadAlert: false, trendTimer: 123 }
+);
+assert.deepStrictEqual(
+  buildQuoteAlertUiUpdate({ hasUnreadAlert: false, trendTimer: 'timer-1' }, true),
+  {
+    nextState: { hasUnreadAlert: true, trendTimer: 'timer-1' },
+    highlighted: true,
+    highlightPast: false
+  }
+);
+assert.deepStrictEqual(
+  buildQuoteAlertUiUpdate({ hasUnreadAlert: true, trendTimer: null }, false),
+  {
+    nextState: { hasUnreadAlert: true, trendTimer: null },
+    highlighted: false,
+    highlightPast: true
+  }
+);
+assert.deepStrictEqual(
+  buildQuoteAlertUiUpdate({ hasUnreadAlert: false, trendTimer: null }, false),
+  {
+    nextState: { hasUnreadAlert: false, trendTimer: null },
+    highlighted: false,
+    highlightPast: false
+  }
 );
 
 const quoteUiState = new Map();

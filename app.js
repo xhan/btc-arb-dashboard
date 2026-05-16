@@ -4458,24 +4458,14 @@
             });
         }
 
-        const nextUiState = { ...uiState };
-        if (hasTriggeredThisTick) {
-            nextUiState.hasUnreadAlert = true;
-            if (itemEl) {
-                itemEl.classList.add('highlight');
-                itemEl.classList.remove('highlight-past');
-            }
-        } else if (itemEl) {
-            itemEl.classList.remove('highlight');
-            if (nextUiState.hasUnreadAlert) {
-                itemEl.classList.add('highlight-past');
-            } else {
-                itemEl.classList.remove('highlight-past');
-            }
+        const uiUpdate = getDashboardRuntimeUtils().buildQuoteAlertUiUpdate(uiState, hasTriggeredThisTick);
+        if (itemEl) {
+            itemEl.classList.toggle('highlight', uiUpdate.highlighted);
+            itemEl.classList.toggle('highlight-past', uiUpdate.highlightPast);
         }
 
-        setQuoteUiState(quote.id, nextUiState);
-        syncQuoteAlertDismissButton(resultDiv, nextUiState, quote.id);
+        setQuoteUiState(quote.id, uiUpdate.nextState);
+        syncQuoteAlertDismissButton(resultDiv, uiUpdate.nextState, quote.id);
         updateAlertSoundState();
     }
 
