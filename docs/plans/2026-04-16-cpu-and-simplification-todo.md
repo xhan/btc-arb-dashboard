@@ -171,6 +171,7 @@
   - `app.js` 的 dex link label/button 顶层过渡包装已移除，调用点直接委托 `dex-link-utils.js`
   - `app.js` 的 request channel tag、quote pair label 和 arb detail source HTML 单用途包装已移除，调用点直接委托对应 utils
   - `app.js` 中未调用的 CEX trading pair parser 包装和 `TradingPairUtils` 入口已移除
+  - `app.js` 的 single-chain display name 和 paused monitor state 单用途包装已移除，调用点复用现有 helper / utils
   - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `data-terminal-utils.js`
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `arb-runtime-memory-utils.js`
