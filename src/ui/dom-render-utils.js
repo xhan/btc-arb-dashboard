@@ -50,13 +50,17 @@
     const bringToFront = typeof options.bringToFront === 'function'
       ? options.bringToFront
       : () => {};
+    let bound = false;
     if (header && typeof header.addEventListener === 'function') {
       header.addEventListener('mousedown', () => bringToFront(panel));
       header.addEventListener('click', () => bringToFront(panel));
+      bound = true;
     }
     if (panel && typeof panel.addEventListener === 'function') {
       panel.addEventListener('mousedown', () => bringToFront(panel));
+      bound = true;
     }
+    return bound;
   }
 
   function readElementDisplay(element, getComputedStyle) {
@@ -442,6 +446,32 @@
     return true;
   }
 
+  function bindFloatingPanelChrome(panel, header, options = {}) {
+    const zIndexRuntime = options.zIndexRuntime || null;
+    const bringToFront = typeof options.bringToFront === 'function'
+      ? options.bringToFront
+      : (
+        zIndexRuntime && typeof zIndexRuntime.bringToFront === 'function'
+          ? (targetPanel) => zIndexRuntime.bringToFront(targetPanel)
+          : () => {}
+      );
+    const resetApplied = zIndexRuntime && typeof zIndexRuntime.resetPanel === 'function'
+      ? zIndexRuntime.resetPanel(panel)
+      : false;
+    const focusBound = bindFloatingPanelFocus(panel, header, { bringToFront });
+    const dragBound = options.draggable === false
+      ? false
+      : bindDraggableElement(panel, header, {
+        documentImpl: options.documentImpl,
+        onDragStart: bringToFront
+      });
+    return {
+      resetApplied: Boolean(resetApplied),
+      focusBound,
+      dragBound
+    };
+  }
+
   function createStableHtmlRenderer(options = {}) {
     const setHtml = typeof options.setHtml === 'function'
       ? options.setHtml
@@ -494,6 +524,7 @@
     applyQuoteAlertHighlightUi,
     bindDraggableElement,
     bindFloatingPanelFocus,
+    bindFloatingPanelChrome,
     clearQuoteDataError,
     clearQuoteHighlightUi,
     closestEventTarget,

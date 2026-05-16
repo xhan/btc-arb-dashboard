@@ -20,6 +20,7 @@ const {
   applyFloatingPanelViewportHeight,
   bindDraggableElement,
   bindFloatingPanelFocus,
+  bindFloatingPanelChrome,
   clearQuoteDataError,
   closestEventTarget,
   createElementFromHtml,
@@ -530,15 +531,16 @@ const panel = createListenerTarget();
 panel.style = {};
 const header = createListenerTarget();
 const focusCalls = [];
-bindFloatingPanelFocus(panel, header, {
+assert.strictEqual(bindFloatingPanelFocus(panel, header, {
   bringToFront(targetPanel) {
     focusCalls.push(targetPanel);
   }
-});
+}), true);
 header.listeners.mousedown();
 header.listeners.click();
 panel.listeners.mousedown();
 assert.deepStrictEqual(focusCalls, [panel, panel, panel]);
+assert.strictEqual(bindFloatingPanelFocus(null, null), false);
 
 const displayPanel = { style: { display: 'none' } };
 const openDisplayResult = applyFloatingPanelDisplayState(displayPanel, 'open');
@@ -596,6 +598,49 @@ assert.strictEqual(zIndexRuntime.bringToFront(zIndexPanel), 2102);
 assert.strictEqual(zIndexPanel.style.zIndex, '2102');
 assert.strictEqual(zIndexRuntime.resetPanel(null), false);
 assert.strictEqual(zIndexRuntime.bringToFront(null), null);
+
+const chromePanel = createListenerTarget();
+chromePanel.style = {};
+const chromeHeader = createListenerTarget();
+const chromeDocumentImpl = {};
+const chromeFocusCalls = [];
+const chromeRuntime = {
+  resetPanel(targetPanel) {
+    targetPanel.style.zIndex = '2100';
+    return true;
+  },
+  bringToFront(targetPanel) {
+    chromeFocusCalls.push(targetPanel);
+    targetPanel.style.zIndex = '2101';
+    return 2101;
+  }
+};
+assert.deepStrictEqual(bindFloatingPanelChrome(chromePanel, chromeHeader, {
+  documentImpl: chromeDocumentImpl,
+  zIndexRuntime: chromeRuntime
+}), {
+  resetApplied: true,
+  focusBound: true,
+  dragBound: true
+});
+assert.strictEqual(chromePanel.style.zIndex, '2100');
+chromeHeader.listeners.click();
+assert.deepStrictEqual(chromeFocusCalls, [chromePanel]);
+assert.strictEqual(chromePanel.style.zIndex, '2101');
+assert.strictEqual(typeof chromeHeader.onmousedown, 'function');
+
+const staticChromePanel = createListenerTarget();
+staticChromePanel.style = {};
+const staticChromeHeader = createListenerTarget();
+assert.deepStrictEqual(bindFloatingPanelChrome(staticChromePanel, staticChromeHeader, {
+  zIndexRuntime,
+  draggable: false
+}), {
+  resetApplied: true,
+  focusBound: true,
+  dragBound: false
+});
+assert.strictEqual(staticChromeHeader.onmousedown, undefined);
 
 const dragElement = {
   offsetTop: 50,

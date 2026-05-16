@@ -780,14 +780,11 @@
         return floatingPanelZIndexRuntime.bringToFront(panel);
     }
 
-    function bindFloatingPanelFocus(panel, header) {
-        getDomRenderUtils().bindFloatingPanelFocus(panel, header, { bringToFront: bringFloatingPanelToFront });
-    }
-
-    function bindDraggableFloatingPanel(element, handle) {
-        getDomRenderUtils().bindDraggableElement(element, handle, {
+    function bindFloatingPanelChrome(panel, header, options = {}) {
+        return getDomRenderUtils().bindFloatingPanelChrome(panel, header, {
             documentImpl: document,
-            onDragStart: bringFloatingPanelToFront
+            zIndexRuntime: floatingPanelZIndexRuntime,
+            draggable: options.draggable !== false
         });
     }
 
@@ -1881,7 +1878,6 @@
 
         const panel = utils.createDataTerminalPanelElement({ documentImpl: document });
         if (!panel) return;
-        floatingPanelZIndexRuntime.resetPanel(panel);
         utils.applyDataTerminalDefaultSize(panel, {
             anchorPanel: arbPathWindow,
             getComputedStyle: (element) => window.getComputedStyle(element)
@@ -1933,8 +1929,7 @@
         }
         if (refs.header) {
             refs.header.addEventListener('click', handleDataTerminalHeaderClick);
-            bindDraggableFloatingPanel(panel, refs.header);
-            bindFloatingPanelFocus(panel, refs.header);
+            bindFloatingPanelChrome(panel, refs.header);
         }
 
         renderDataTerminalPanel();
@@ -4547,17 +4542,11 @@
             restartPathAlertScheduler();
             
             if (alertLogWindow && alertLogHeader) {
-                bindDraggableFloatingPanel(alertLogWindow, alertLogHeader);
-                bindFloatingPanelFocus(alertLogWindow, alertLogHeader);
+                bindFloatingPanelChrome(alertLogWindow, alertLogHeader);
             }
             if (arbPathWindow && arbPathHeader) {
-                bindFloatingPanelFocus(arbPathWindow, arbPathHeader);
+                bindFloatingPanelChrome(arbPathWindow, arbPathHeader, { draggable: false });
             }
-            [alertLogWindow, arbPathWindow].forEach((panel) => {
-                if (panel) {
-                    floatingPanelZIndexRuntime.resetPanel(panel);
-                }
-            });
 
             renderQuoteDisplayToggle();
             if (toggleArbBtn) {

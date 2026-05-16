@@ -146,7 +146,7 @@
   - `dashboard-modal-dom`：add quote、add category、confirm 弹窗的 DOM 读写与显示/关闭适配、modal 当前选择状态和 confirm 动作回调 runtime 已下沉到 `src/dashboard/dashboard-modal-utils.js`，quote settings 弹窗和全局 settings interval 的 DOM 读写适配也已下沉，dashboard modal 的通用 show/hide 也统一走该边界，主入口只保留新增/更新 quote、保存设置和确认动作后的 dashboard 状态更新与刷新调度
   - `snapshot/copy-ui`：价格快照 timer 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer、价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
   - `audio-ui`：报警音频解锁 runtime、循环播放同步和一次性播放已下沉到 `src/ui/audio-utils.js`，`src/app/dashboard-app.js` 只保留业务触发条件和日志语义
-  - `floating-panel-ui`：浮窗拖拽、显示切换、视口高度写入、置顶绑定和 z-index runtime 已下沉到 `src/ui/dom-render-utils.js`，全局快捷键解析和输入目标判断已下沉到 `src/ui/keyboard-shortcut-utils.js`，`src/app/dashboard-app.js` 只保留快捷键动作分发和面板打开后的业务刷新
+  - `floating-panel-ui`：浮窗拖拽、显示切换、视口高度写入、置顶绑定、z-index runtime 和浮窗 chrome 绑定已下沉到 `src/ui/dom-render-utils.js`，全局快捷键解析和输入目标判断已下沉到 `src/ui/keyboard-shortcut-utils.js`，`src/app/dashboard-app.js` 只保留快捷键动作分发和面板打开后的业务刷新
   - `file-layout`：在模块边界稳定后，把根目录里按职责增长的 utils/runtime/renderer/provider 文件迁入明确目录，例如 `src/quote/`、`src/arb/`、`src/path-alerts/`、`src/dashboard/`、`src/shared/`，并保留必要的兼容入口，避免一次性移动导致 review 噪声和路径风险
     - 已启动第一步：套利核心路径算法、套利详情工具、详情刷新 runtime、套利面板渲染器、套利面板 layout/runtime/cache 工具、规则快照、循环起点优先级、资产等价规则、fixed/special 套利工具、watchlist 配置及解析工具迁入 `src/arb/`，后续同类 arb 模块可按这个模式继续迁移
     - 已启动第二步：quote pause/request/display/state/queue runtime 迁入 `src/quote/`，后续同类 quote 模块可按这个模式继续迁移
