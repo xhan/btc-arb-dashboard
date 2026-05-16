@@ -253,23 +253,16 @@
   }
 
   return {
-    QUOTE_DISPLAY_MODE_AMOUNT,
-    QUOTE_DISPLAY_MODE_RATE,
     buildCexOrderbookSummary,
     buildCexOrderbookTooltipHtml,
     buildInverseQuoteDisplayTextForState,
     buildQuoteAlertDisplayLabel,
     buildQuotePairLabelHtml,
-    buildQuoteDisplayText,
     buildQuoteDisplayTextForState,
     buildQuoteDisplayToggleState,
     buildQuoteRequestChannelTagHtml,
     extractPriceFromText,
     formatCexBookValue,
-    getNextQuoteDisplayMode,
-    getCexPairLabel,
-    getQuotePairLabel,
-    shouldShowKyberDirectPoolsBadge,
-    normalizeQuoteDisplayMode
+    getNextQuoteDisplayMode
   };
 });

@@ -378,6 +378,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('quote-direct-badge'));
+    const quoteDisplayExportBlock = quoteDisplayUtilsResponse.body.match(/return \{\n    buildCexOrderbookSummary,[\s\S]*?\n  \};/);
+    assert.ok(quoteDisplayExportBlock);
+    assert.ok(!quoteDisplayExportBlock[0].includes('QUOTE_DISPLAY_MODE_AMOUNT'));
+    assert.ok(!quoteDisplayExportBlock[0].includes('QUOTE_DISPLAY_MODE_RATE'));
+    assert.ok(!quoteDisplayExportBlock[0].includes('buildQuoteDisplayText,'));
+    assert.ok(!quoteDisplayExportBlock[0].includes('getCexPairLabel'));
+    assert.ok(!quoteDisplayExportBlock[0].includes('getQuotePairLabel'));
+    assert.ok(!quoteDisplayExportBlock[0].includes('shouldShowKyberDirectPoolsBadge'));
+    assert.ok(!quoteDisplayExportBlock[0].includes('normalizeQuoteDisplayMode'));
     assert.ok(appJsResponse.body.includes('function getQuoteDisplayUtils()'));
     assert.ok(appJsResponse.body.includes('QuoteDisplayUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook)'));

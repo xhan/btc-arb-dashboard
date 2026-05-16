@@ -1,82 +1,42 @@
 const assert = require('assert');
 
 const {
-  QUOTE_DISPLAY_MODE_AMOUNT,
-  QUOTE_DISPLAY_MODE_RATE,
   buildCexOrderbookSummary,
   buildCexOrderbookTooltipHtml,
   buildInverseQuoteDisplayTextForState,
   buildQuoteAlertDisplayLabel,
   buildQuotePairLabelHtml,
-  buildQuoteDisplayText,
   buildQuoteDisplayTextForState,
   buildQuoteDisplayToggleState,
   buildQuoteRequestChannelTagHtml,
   extractPriceFromText,
   formatCexBookValue,
-  getCexPairLabel,
-  getNextQuoteDisplayMode,
-  getQuotePairLabel,
-  shouldShowKyberDirectPoolsBadge,
-  normalizeQuoteDisplayMode
+  getNextQuoteDisplayMode
 } = require('../quote-display-utils');
 
-assert.strictEqual(normalizeQuoteDisplayMode(), QUOTE_DISPLAY_MODE_RATE);
-assert.strictEqual(normalizeQuoteDisplayMode('amount'), QUOTE_DISPLAY_MODE_AMOUNT);
-assert.strictEqual(normalizeQuoteDisplayMode('unknown'), QUOTE_DISPLAY_MODE_RATE);
 assert.deepStrictEqual(
-  buildQuoteDisplayToggleState(QUOTE_DISPLAY_MODE_RATE),
+  buildQuoteDisplayToggleState('rate'),
   {
     text: '价格: 汇率',
     title: '切换看板报价显示为数量 (P)',
-    mode: QUOTE_DISPLAY_MODE_RATE
+    mode: 'rate'
   }
 );
 assert.deepStrictEqual(
-  buildQuoteDisplayToggleState(QUOTE_DISPLAY_MODE_AMOUNT),
+  buildQuoteDisplayToggleState('amount'),
   {
     text: '价格: 数量',
     title: '切换看板报价显示为汇率 (P)',
-    mode: QUOTE_DISPLAY_MODE_AMOUNT
+    mode: 'amount'
   }
 );
-assert.strictEqual(getNextQuoteDisplayMode(QUOTE_DISPLAY_MODE_RATE), QUOTE_DISPLAY_MODE_AMOUNT);
-assert.strictEqual(getNextQuoteDisplayMode(QUOTE_DISPLAY_MODE_AMOUNT), QUOTE_DISPLAY_MODE_RATE);
-assert.strictEqual(getNextQuoteDisplayMode('bad'), QUOTE_DISPLAY_MODE_AMOUNT);
+assert.strictEqual(buildQuoteDisplayToggleState('bad').mode, 'rate');
+assert.strictEqual(getNextQuoteDisplayMode('rate'), 'amount');
+assert.strictEqual(getNextQuoteDisplayMode('amount'), 'rate');
+assert.strictEqual(getNextQuoteDisplayMode('bad'), 'amount');
 
 assert.strictEqual(
-  buildQuoteDisplayText({
-    mode: QUOTE_DISPLAY_MODE_RATE,
-    fromSymbol: 'WBTC',
-    toSymbol: 'cbBTC',
-    rate: 0.99912,
-    fallbackText: '...'
-  }),
-  '1 WBTC ≈ 0.999120 cbBTC'
-);
-
-assert.strictEqual(
-  buildQuoteDisplayText({
-    mode: QUOTE_DISPLAY_MODE_AMOUNT,
-    amount: 0.5,
-    fromSymbol: 'WBTC',
-    toSymbol: 'cbBTC',
-    totalAmountOut: 0.49956,
-    hideAmountPrefix: true,
-    fallbackText: '...'
-  }),
-  'WBTC ≈ 0.499560 cbBTC'
-);
-
-assert.strictEqual(
-  buildQuoteDisplayText({
-    mode: QUOTE_DISPLAY_MODE_AMOUNT,
-    amount: 1,
-    fromSymbol: '',
-    toSymbol: 'cbBTC',
-    totalAmountOut: 0.49956,
-    fallbackText: '等待报价...'
-  }),
+  buildQuoteDisplayTextForState({ chain: 'ethereum' }, {}, { mode: 'amount', fallbackText: '等待报价...' }),
   '等待报价...'
 );
 
@@ -84,7 +44,7 @@ assert.strictEqual(
   buildQuoteDisplayTextForState(
     { chain: 'ethereum', amount: 2 },
     { fromSymbol: 'ETH', toSymbol: 'USDC', lastTotalAmountOut: 6.5, lastRawPrice: 3.25, lastResultText: '旧报价' },
-    { mode: QUOTE_DISPLAY_MODE_AMOUNT }
+    { mode: 'amount' }
   ),
   'ETH ≈ 6.500000 USDC'
 );
@@ -93,7 +53,7 @@ assert.strictEqual(
   buildQuoteDisplayTextForState(
     { chain: 'ethereum', amount: 2 },
     { fromSymbol: 'ETH', toSymbol: 'USDC', lastTotalAmountOut: 6.5, lastRawPrice: 3.25 },
-    { mode: QUOTE_DISPLAY_MODE_RATE }
+    { mode: 'rate' }
   ),
   '1 ETH ≈ 3.250000 USDC'
 );
@@ -102,7 +62,7 @@ assert.strictEqual(
   buildQuoteDisplayTextForState(
     { chain: 'Bybit' },
     { lastResultText: 'bid 1 / ask 2' },
-    { mode: QUOTE_DISPLAY_MODE_RATE }
+    { mode: 'rate' }
   ),
   'bid 1 / ask 2'
 );
@@ -116,7 +76,7 @@ assert.strictEqual(
   buildInverseQuoteDisplayTextForState(
     { chain: 'ethereum', amount: 3 },
     { inverseFromSymbol: 'USDC', inverseToSymbol: 'ETH', inverseTotalAmountOut: 1.5, inverseRawPrice: 0.5 },
-    { mode: QUOTE_DISPLAY_MODE_AMOUNT }
+    { mode: 'amount' }
   ),
   '3 USDC ≈ 1.500000 ETH'
 );
@@ -154,33 +114,23 @@ assert.ok(
 );
 
 assert.strictEqual(
-  getCexPairLabel({ chain: 'Bybit', symbol: 'btcusdt' }, {}),
+  buildQuotePairLabelHtml({ chain: 'Bybit', symbol: 'btcusdt' }, {}),
   'BTCUSDT'
 );
 
 assert.strictEqual(
-  getCexPairLabel({ chain: 'Binance', symbol: 'ETHUSDT' }, { fromSymbol: 'ETH', toSymbol: 'USDT' }),
+  buildQuotePairLabelHtml({ chain: 'Binance', symbol: 'ETHUSDT' }, { fromSymbol: 'ETH', toSymbol: 'USDT' }),
   'ETH/USDT'
 );
 
 assert.strictEqual(
-  getCexPairLabel({ chain: 'ethereum', symbol: 'ETHUSDT' }, {}),
+  buildQuotePairLabelHtml({ chain: 'ethereum', symbol: 'ETHUSDT' }, {}),
   ''
 );
 
 assert.strictEqual(
-  getQuotePairLabel({ chain: 'ethereum' }, { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }),
-  'cb<BTC>/WBTC'
-);
-
-assert.strictEqual(
-  shouldShowKyberDirectPoolsBadge({ kyberOnlyDirectPools: true, preferredSource: 'Kyber' }),
-  true
-);
-
-assert.strictEqual(
-  shouldShowKyberDirectPoolsBadge({ kyberOnlyDirectPools: true, preferredSource: '0x' }),
-  false
+  buildQuotePairLabelHtml({ chain: 'ethereum' }, { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }),
+  'cb&lt;BTC&gt;/WBTC'
 );
 
 assert.strictEqual(
@@ -189,6 +139,14 @@ assert.strictEqual(
     { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }
   ),
   'cb&lt;BTC&gt;/WBTC<span class="quote-direct-badge" title="Kyber 仅直连池"></span>'
+);
+
+assert.strictEqual(
+  buildQuotePairLabelHtml(
+    { chain: 'ethereum', kyberOnlyDirectPools: true, preferredSource: '0x' },
+    { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }
+  ),
+  'cb&lt;BTC&gt;/WBTC'
 );
 
 assert.strictEqual(
