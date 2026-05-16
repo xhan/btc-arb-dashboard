@@ -59,6 +59,67 @@
     return result;
   }
 
+  function buildDefaultQuoteUiState() {
+    return {
+      hasUnreadAlert: false,
+      trendTimer: null
+    };
+  }
+
+  function normalizeQuoteStateKey(quoteId) {
+    const numericQuoteId = Number(quoteId);
+    return Number.isFinite(numericQuoteId) ? numericQuoteId : quoteId;
+  }
+
+  function getQuoteUiState(stateMap, quoteId) {
+    const map = stateMap instanceof Map ? stateMap : new Map();
+    return map.get(normalizeQuoteStateKey(quoteId)) || buildDefaultQuoteUiState();
+  }
+
+  function mergeQuoteUiState(currentState, nextState) {
+    return {
+      ...buildDefaultQuoteUiState(),
+      ...(currentState && typeof currentState === 'object' ? currentState : {}),
+      ...(nextState && typeof nextState === 'object' ? nextState : {})
+    };
+  }
+
+  function setQuoteUiState(stateMap, quoteId, nextState) {
+    const map = stateMap instanceof Map ? stateMap : new Map();
+    const key = normalizeQuoteStateKey(quoteId);
+    const merged = mergeQuoteUiState(getQuoteUiState(map, key), nextState);
+    map.set(key, merged);
+    return merged;
+  }
+
+  function clearQuoteTrendTimer(stateMap, quoteId, clearTimeoutImpl) {
+    const map = stateMap instanceof Map ? stateMap : new Map();
+    const key = normalizeQuoteStateKey(quoteId);
+    const state = map.get(key);
+    if (!state || !state.trendTimer) return false;
+    const clearTimer = typeof clearTimeoutImpl === 'function'
+      ? clearTimeoutImpl
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    if (clearTimer) {
+      clearTimer(state.trendTimer);
+    }
+    map.set(key, { ...state, trendTimer: null });
+    return true;
+  }
+
+  function resetQuoteUiRuntimeState(stateMap, quoteId, clearTimeoutImpl) {
+    const map = stateMap instanceof Map ? stateMap : new Map();
+    clearQuoteTrendTimer(map, quoteId, clearTimeoutImpl);
+    map.set(normalizeQuoteStateKey(quoteId), buildDefaultQuoteUiState());
+    return buildDefaultQuoteUiState();
+  }
+
+  function deleteQuoteUiRuntimeState(stateMap, quoteId, clearTimeoutImpl) {
+    const map = stateMap instanceof Map ? stateMap : new Map();
+    clearQuoteTrendTimer(map, quoteId, clearTimeoutImpl);
+    return map.delete(normalizeQuoteStateKey(quoteId));
+  }
+
   function getQuoteResultSymbols(quoteResult) {
     return quoteResult && quoteResult.symbols && typeof quoteResult.symbols === 'object'
       ? quoteResult.symbols
@@ -206,11 +267,19 @@
 
   return {
     buildDataTerminalRecordsCacheKey,
+    buildDefaultQuoteUiState,
     buildQuoteResultMarketState,
     buildQuoteMarketStateSignature,
     buildSwappedQuoteMarketState,
+    clearQuoteTrendTimer,
+    deleteQuoteUiRuntimeState,
+    getQuoteUiState,
     hasQuoteMarketStateChanged,
+    mergeQuoteUiState,
+    normalizeQuoteStateKey,
+    resetQuoteUiRuntimeState,
     sanitizeQuoteMarketState,
+    setQuoteUiState,
     hasActivePathAlertEvaluationTarget,
     isPanelVisible,
     resolveMutedStateRefreshDelay

@@ -1583,51 +1583,24 @@
         return marketStateChanged;
     }
 
-    function buildDefaultQuoteUiState() {
-        return {
-            hasUnreadAlert: false,
-            trendTimer: null
-        };
-    }
-
-    function normalizeQuoteStateKey(quoteId) {
-        const numericQuoteId = Number(quoteId);
-        return Number.isFinite(numericQuoteId) ? numericQuoteId : quoteId;
-    }
-
     function getQuoteUiState(quoteId) {
-        return quoteUiState.get(normalizeQuoteStateKey(quoteId)) || buildDefaultQuoteUiState();
+        return getDashboardRuntimeUtils().getQuoteUiState(quoteUiState, quoteId);
     }
 
     function setQuoteUiState(quoteId, nextState) {
-        const key = normalizeQuoteStateKey(quoteId);
-        const current = getQuoteUiState(key);
-        const merged = {
-            ...buildDefaultQuoteUiState(),
-            ...current,
-            ...(nextState && typeof nextState === 'object' ? nextState : {})
-        };
-        quoteUiState.set(key, merged);
-        return merged;
+        return getDashboardRuntimeUtils().setQuoteUiState(quoteUiState, quoteId, nextState);
     }
 
     function clearQuoteTrendTimer(quoteId) {
-        const key = normalizeQuoteStateKey(quoteId);
-        const state = quoteUiState.get(key);
-        if (state && state.trendTimer) {
-            clearTimeout(state.trendTimer);
-            quoteUiState.set(key, { ...state, trendTimer: null });
-        }
+        getDashboardRuntimeUtils().clearQuoteTrendTimer(quoteUiState, quoteId, clearTimeout);
     }
 
     function resetQuoteUiRuntimeState(quoteId) {
-        clearQuoteTrendTimer(quoteId);
-        quoteUiState.set(normalizeQuoteStateKey(quoteId), buildDefaultQuoteUiState());
+        getDashboardRuntimeUtils().resetQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeout);
     }
 
     function deleteQuoteUiRuntimeState(quoteId) {
-        clearQuoteTrendTimer(quoteId);
-        quoteUiState.delete(normalizeQuoteStateKey(quoteId));
+        getDashboardRuntimeUtils().deleteQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeout);
     }
 
     function buildArbRuleSnapshotCacheKey() {

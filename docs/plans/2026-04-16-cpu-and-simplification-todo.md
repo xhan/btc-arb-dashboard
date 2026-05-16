@@ -67,6 +67,7 @@
   - 已新增独立 `quoteUiState`，趋势箭头 timer、未读报警等 UI-only 字段不再写入 `quoteMarketState`
   - `quoteUiState` 已移除旧 `logShown` / quote 级 `isSoundActive` 运行时字段，边界层仅保留对这些旧字段的过滤兼容
   - `setQuoteMarketState()` 会净化行情状态，避免 UI 字段重新混入市场状态 Map
+  - `quoteUiState` 的默认值、key 规范化、merge、timer 清理已下沉到 `dashboard-runtime-utils.js`
   - `quote-pause-utils.buildPausedQuoteState()` 已停止输出 UI-only 字段
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
 - 预期收益：

@@ -448,7 +448,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasQuoteMarketStateChanged(previousState, nextState)'));
     assert.ok(!appJsResponse.body.includes('return previousState !== nextState;'));
     assert.ok(appJsResponse.body.includes('function setQuoteUiState(quoteId, nextState)'));
-    const defaultQuoteUiStateMatch = appJsResponse.body.match(/function buildDefaultQuoteUiState\(\) \{([\s\S]*?)function normalizeQuoteStateKey/);
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().setQuoteUiState(quoteUiState, quoteId, nextState)'));
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().clearQuoteTrendTimer(quoteUiState, quoteId, clearTimeout)'));
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().resetQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeout)'));
+    assert.ok(!appJsResponse.body.includes('function buildDefaultQuoteUiState()'));
+    const defaultQuoteUiStateMatch = dashboardRuntimeUtilsResponse.body.match(/function buildDefaultQuoteUiState\(\) \{([\s\S]*?)function normalizeQuoteStateKey/);
     assert.ok(defaultQuoteUiStateMatch);
     assert.ok(defaultQuoteUiStateMatch[1].includes('hasUnreadAlert: false'));
     assert.ok(defaultQuoteUiStateMatch[1].includes('trendTimer: null'));

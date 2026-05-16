@@ -1,12 +1,20 @@
 const assert = require('assert');
 
 const {
+  buildDefaultQuoteUiState,
   buildDataTerminalRecordsCacheKey,
   buildQuoteResultMarketState,
   buildQuoteMarketStateSignature,
   buildSwappedQuoteMarketState,
+  clearQuoteTrendTimer,
+  deleteQuoteUiRuntimeState,
+  getQuoteUiState,
   hasQuoteMarketStateChanged,
+  mergeQuoteUiState,
+  normalizeQuoteStateKey,
+  resetQuoteUiRuntimeState,
   sanitizeQuoteMarketState,
+  setQuoteUiState,
   hasActivePathAlertEvaluationTarget,
   isPanelVisible,
   resolveMutedStateRefreshDelay
@@ -183,6 +191,48 @@ assert.deepStrictEqual(
   []
 );
 assert.strictEqual(sanitizedMarketState.lastRawPrice, marketState.lastRawPrice);
+
+assert.deepStrictEqual(buildDefaultQuoteUiState(), {
+  hasUnreadAlert: false,
+  trendTimer: null
+});
+assert.strictEqual(normalizeQuoteStateKey('101'), 101);
+assert.strictEqual(normalizeQuoteStateKey('quote-x'), 'quote-x');
+assert.deepStrictEqual(
+  mergeQuoteUiState({ hasUnreadAlert: true, trendTimer: 123 }, { hasUnreadAlert: false }),
+  { hasUnreadAlert: false, trendTimer: 123 }
+);
+
+const quoteUiState = new Map();
+assert.deepStrictEqual(getQuoteUiState(quoteUiState, 101), buildDefaultQuoteUiState());
+assert.deepStrictEqual(
+  setQuoteUiState(quoteUiState, '101', { hasUnreadAlert: true }),
+  { hasUnreadAlert: true, trendTimer: null }
+);
+assert.deepStrictEqual(getQuoteUiState(quoteUiState, 101), {
+  hasUnreadAlert: true,
+  trendTimer: null
+});
+
+const clearedTimers = [];
+setQuoteUiState(quoteUiState, 101, { trendTimer: 'timer-1' });
+assert.strictEqual(clearQuoteTrendTimer(quoteUiState, '101', (timer) => clearedTimers.push(timer)), true);
+assert.deepStrictEqual(clearedTimers, ['timer-1']);
+assert.strictEqual(getQuoteUiState(quoteUiState, 101).trendTimer, null);
+assert.strictEqual(clearQuoteTrendTimer(quoteUiState, '101', (timer) => clearedTimers.push(timer)), false);
+
+setQuoteUiState(quoteUiState, 101, { hasUnreadAlert: true, trendTimer: 'timer-2' });
+assert.deepStrictEqual(
+  resetQuoteUiRuntimeState(quoteUiState, 101, (timer) => clearedTimers.push(timer)),
+  buildDefaultQuoteUiState()
+);
+assert.deepStrictEqual(getQuoteUiState(quoteUiState, 101), buildDefaultQuoteUiState());
+assert.ok(clearedTimers.includes('timer-2'));
+
+setQuoteUiState(quoteUiState, 101, { trendTimer: 'timer-3' });
+assert.strictEqual(deleteQuoteUiRuntimeState(quoteUiState, 101, (timer) => clearedTimers.push(timer)), true);
+assert.deepStrictEqual(getQuoteUiState(quoteUiState, 101), buildDefaultQuoteUiState());
+assert.ok(clearedTimers.includes('timer-3'));
 
 assert.deepStrictEqual(
   buildQuoteResultMarketState(
