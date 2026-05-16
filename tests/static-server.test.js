@@ -563,11 +563,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getPathAlertUtils().buildMutedPathStatusText('));
     assert.ok(appJsResponse.body.includes('getPathAlertUtils().buildMutedPathLegStatusText('));
     assert.ok(appJsResponse.body.includes('return getPathAlertUtils().buildMutedPathTargetKey(alertOrTarget);'));
+    assert.ok(appJsResponse.body.includes('return getPathAlertUtils().buildMutedPathLogTitleSnapshot(entry);'));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathStatusText('));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathLegStatusText('));
     assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathStatusText(entry, nowMs = Date.now())'));
     assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathLegStatusText(entry, nowMs = Date.now())'));
     assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathTargetKey(alertOrTarget)'));
+    assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathLogTitleSnapshot(entry)'));
     const pathAlertUtilsWindowRefs = appJsResponse.body.match(/window\.PathAlertUtils/g) || [];
     assert.strictEqual(pathAlertUtilsWindowRefs.length, 2);
     assert.ok(!appJsResponse.body.includes('typeof window.PathAlertUtils'));

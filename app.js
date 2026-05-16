@@ -1054,14 +1054,7 @@
     }
 
     function buildMutedPathLogTitleSnapshot(entry) {
-        if (!entry || typeof entry !== 'object') return '';
-        const explicitTitle = String(entry.logTitleSnapshot || '').trim();
-        if (explicitTitle) return explicitTitle;
-        if (entry.quote) {
-            return String(entry.displayName || (entry.alert && entry.alert.name) || '报价提醒').trim();
-        }
-        const alertName = String(entry.alert && entry.alert.name || '').trim();
-        return alertName ? `🚨 [路径报警] ${alertName}` : '🚨 [路径报警]';
+        return getPathAlertUtils().buildMutedPathLogTitleSnapshot(entry);
     }
 
     function buildMutedPathLegTitleSnapshot(leg) {

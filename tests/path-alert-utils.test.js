@@ -22,6 +22,7 @@ const {
   buildAllLegSnapshots,
   resolvePathAlertSnapshotState,
   buildChangedLegs,
+  buildMutedPathLogTitleSnapshot,
   buildMutedPathLegStatusText,
   buildMutedPathStatusText,
   buildMutedPathTargetKey,
@@ -265,6 +266,24 @@ assert.strictEqual(buildMutedPathStatusText({ expiresAt: 1000 + 59 * 1000 }, 100
 assert.strictEqual(buildMutedPathLegStatusText({ expiresAt: 1000 + 2 * 60 * 1000 }, 1000), '屏蔽中 · 02:00');
 assert.strictEqual(buildMutedPathStatusText(null, 1000), '');
 assert.strictEqual(buildMutedPathLegStatusText(null, 1000), '');
+assert.strictEqual(
+  buildMutedPathLogTitleSnapshot({ logTitleSnapshot: '自定义标题' }),
+  '自定义标题'
+);
+assert.strictEqual(
+  buildMutedPathLogTitleSnapshot({ quote: { id: 101 }, displayName: 'Ethereum', alert: { name: '报价提醒名' } }),
+  'Ethereum'
+);
+assert.strictEqual(
+  buildMutedPathLogTitleSnapshot({ quote: { id: 101 }, alert: { name: '报价提醒名' } }),
+  '报价提醒名'
+);
+assert.strictEqual(
+  buildMutedPathLogTitleSnapshot({ alert: { name: 'tBTC - BTC' } }),
+  '🚨 [路径报警] tBTC - BTC'
+);
+assert.strictEqual(buildMutedPathLogTitleSnapshot({}), '🚨 [路径报警]');
+assert.strictEqual(buildMutedPathLogTitleSnapshot(null), '');
 const extendedMutedPathEntry = extendMutedPathTargetEntry(mutedPathEntry, 2000, PATH_ALERT_MUTE_EXTEND_DURATION_MS);
 assert.ok(extendedMutedPathEntry);
 assert.strictEqual(extendedMutedPathEntry.mutedAt, 1000);

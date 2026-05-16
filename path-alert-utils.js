@@ -325,6 +325,17 @@
     return buildPathAlertTargetDuplicateKey(target);
   }
 
+  function buildMutedPathLogTitleSnapshot(entry) {
+    if (!entry || typeof entry !== 'object') return '';
+    const explicitTitle = String(entry.logTitleSnapshot || '').trim();
+    if (explicitTitle) return explicitTitle;
+    if (entry.quote) {
+      return String(entry.displayName || (entry.alert && entry.alert.name) || '报价提醒').trim();
+    }
+    const alertName = String(entry.alert && entry.alert.name || '').trim();
+    return alertName ? `🚨 [路径报警] ${alertName}` : '🚨 [路径报警]';
+  }
+
   function findDuplicatePathAlert(alerts, alertOrTarget, options = {}) {
     const items = Array.isArray(alerts) ? alerts : [];
     const target = alertOrTarget && alertOrTarget.target ? alertOrTarget.target : alertOrTarget;
@@ -892,6 +903,7 @@
     buildEffectiveRuntimeAlert,
     buildAllLegSnapshots,
     buildChangedLegs,
+    buildMutedPathLogTitleSnapshot,
     buildMutedPathLegStatusText,
     buildMutedPathStatusText,
     buildMutedPathTargetKey,
