@@ -16,6 +16,7 @@ const {
   getArbDetailCardDomIds,
   shouldRebuildArbDetailShell,
   shouldSyncArbDetailInput,
+  syncArbDetailInputValues,
   buildNudgedArbDetailInputAmount,
   parseCommittedArbDetailInput,
   applyArbDetailInputUpdate,
@@ -811,6 +812,28 @@ assert.strictEqual(
   shouldSyncArbDetailInput(1, null),
   true
 );
+
+const inputElements = {
+  'arb-detail-input-0': { value: 'old' },
+  'arb-detail-input-1': { value: '2' },
+  'arb-detail-input-2': { value: 'stale' }
+};
+assert.deepStrictEqual(syncArbDetailInputValues([
+  { inputAmount: 1 },
+  { inputAmount: 2 },
+  { inputAmount: 3 },
+  { inputAmount: 4 }
+], {
+  editingInputIndex: 2,
+  getElementById: (id) => inputElements[id] || null
+}), {
+  syncedCount: 1,
+  skippedCount: 2,
+  unchangedCount: 1
+});
+assert.strictEqual(inputElements['arb-detail-input-0'].value, '1');
+assert.strictEqual(inputElements['arb-detail-input-1'].value, '2');
+assert.strictEqual(inputElements['arb-detail-input-2'].value, 'stale');
 
 assert.strictEqual(
   buildNudgedArbDetailInputAmount(1, 0.23456),

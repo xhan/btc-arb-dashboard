@@ -2194,17 +2194,9 @@
         getArbDetailUtils().applyArbDetailShellHtml(arbDetailGrid, arbDetailState.cards);
     }
     function syncArbDetailInputValues() {
-        arbDetailState.cards.forEach((card, index) => {
-            const ids = getArbDetailUtils().getArbDetailCardDomIds(index);
-            const inputEl = document.getElementById(ids.inputId);
-            if (!inputEl) return;
-            if (!getArbDetailUtils().shouldSyncArbDetailInput(index, arbDetailState.editingInputIndex)) {
-                return;
-            }
-            const nextValue = String(card.inputAmount);
-            if (inputEl.value !== nextValue) {
-                inputEl.value = nextValue;
-            }
+        getArbDetailUtils().syncArbDetailInputValues(arbDetailState.cards, {
+            editingInputIndex: arbDetailState.editingInputIndex,
+            getElementById: (id) => document.getElementById(id)
         });
     }
 

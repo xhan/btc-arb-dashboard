@@ -342,6 +342,40 @@
     return index !== editingInputIndex;
   }
 
+  function syncArbDetailInputValues(cards = [], options = {}) {
+    const getElementById = typeof options.getElementById === 'function'
+      ? options.getElementById
+      : () => null;
+    const editingInputIndex = options.editingInputIndex;
+    const result = {
+      syncedCount: 0,
+      skippedCount: 0,
+      unchangedCount: 0
+    };
+
+    (Array.isArray(cards) ? cards : []).forEach((card, index) => {
+      if (!shouldSyncArbDetailInput(index, editingInputIndex)) {
+        result.skippedCount += 1;
+        return;
+      }
+      const ids = getArbDetailCardDomIds(index);
+      const inputEl = getElementById(ids.inputId);
+      if (!inputEl) {
+        result.skippedCount += 1;
+        return;
+      }
+      const nextValue = String(card && card.inputAmount);
+      if (inputEl.value === nextValue) {
+        result.unchangedCount += 1;
+        return;
+      }
+      inputEl.value = nextValue;
+      result.syncedCount += 1;
+    });
+
+    return result;
+  }
+
   function buildNudgedArbDetailInputAmount(currentAmount, delta) {
     const currentValue = Number(currentAmount);
     const base = Number.isFinite(currentValue) && currentValue > 0 ? currentValue : 1;
@@ -991,6 +1025,7 @@
     getArbDetailCardDomIds,
     shouldRebuildArbDetailShell,
     shouldSyncArbDetailInput,
+    syncArbDetailInputValues,
     buildNudgedArbDetailInputAmount,
     parseCommittedArbDetailInput,
     applyArbDetailInputUpdate,

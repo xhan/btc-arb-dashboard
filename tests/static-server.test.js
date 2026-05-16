@@ -1653,6 +1653,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbOpportunityChartHref('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShell(arbDetailState.cards, {'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().syncArbDetailInputValues(arbDetailState.cards, {'));
+    assert.ok(appJsResponse.body.includes('editingInputIndex: arbDetailState.editingInputIndex'));
+    assert.ok(!appJsResponse.body.includes('const inputEl = document.getElementById(ids.inputId);'));
+    assert.ok(!appJsResponse.body.includes('inputEl.value = nextValue;'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function syncArbDetailInputValues(cards = [], options = {})'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildNudgedArbDetailInputAmount(card.inputAmount, delta)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, rawValue)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailCardContents(arbDetailState.cards, {'));
