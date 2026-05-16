@@ -271,6 +271,12 @@
     const toggleArbBtn = document.getElementById('toggle-arb-btn');
     const toggleAlertLogBtn = document.getElementById('toggle-alert-log-btn');
     const toggleMultiChannelBtn = document.getElementById('toggle-multi-channel-btn');
+    const multiChannelToggleRuntime = getRequestChannelUtils().createMultiChannelToggleRuntime({
+        button: toggleMultiChannelBtn,
+        getStorage: getDashboardLocalStorage,
+        onLoadError: (error) => console.warn('读取多渠道开关本地缓存失败:', error),
+        onPersistError: (error) => console.warn('保存多渠道开关本地缓存失败:', error)
+    });
     const arbDetailModal = document.getElementById('arb-detail-modal');
     const arbDetailCloseBtn = document.getElementById('arb-detail-close-btn');
     const arbDetailChartLink = document.getElementById('arb-detail-chart-link');
@@ -606,24 +612,6 @@
         });
     }
 
-    function loadMultiChannelEnabledFromStorage() {
-        const utils = getRequestChannelUtils();
-        return utils.loadMultiChannelEnabledFromStorage(getDashboardLocalStorage(), {
-            onError: (error) => console.warn('读取多渠道开关本地缓存失败:', error)
-        });
-    }
-
-    function persistMultiChannelEnabled() {
-        const utils = getRequestChannelUtils();
-        utils.persistMultiChannelEnabledToStorage(getDashboardLocalStorage(), multiChannelEnabled, {
-            onError: (error) => console.warn('保存多渠道开关本地缓存失败:', error)
-        });
-    }
-
-    function renderMultiChannelToggle() {
-        getRequestChannelUtils().applyMultiChannelToggleButtonState(toggleMultiChannelBtn, multiChannelEnabled);
-    }
-
     function getEffectiveRequestChannelIdForQuote(quote, options = {}) {
         const nextMultiChannelEnabled = typeof options.multiChannelEnabled === 'boolean'
             ? options.multiChannelEnabled
@@ -721,17 +709,12 @@
     }
 
     function setMultiChannelEnabled(nextValue) {
-        const normalized = nextValue !== false;
-        const previousEnabled = multiChannelEnabled;
-        if (previousEnabled === normalized) {
-            renderMultiChannelToggle();
-            persistMultiChannelEnabled();
+        const result = multiChannelToggleRuntime.set(nextValue);
+        multiChannelEnabled = result.nextEnabled;
+        if (!result.changed) {
             return;
         }
-        multiChannelEnabled = normalized;
-        renderMultiChannelToggle();
-        persistMultiChannelEnabled();
-        rebuildQueuesForMultiChannelToggle(previousEnabled, normalized);
+        rebuildQueuesForMultiChannelToggle(result.previousEnabled, result.nextEnabled);
     }
 
     function removeFromQueue(quoteId) {
@@ -4524,8 +4507,7 @@
 
     async function init() {
         audioNoticeEl.style.display = 'block';
-        multiChannelEnabled = loadMultiChannelEnabledFromStorage();
-        renderMultiChannelToggle();
+        multiChannelEnabled = multiChannelToggleRuntime.load();
         syncRequestChannelTagVisibility();
         await requestBackendConfigRefresh();
         await loadPriceSnapshotConfig();

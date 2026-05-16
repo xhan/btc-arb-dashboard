@@ -188,7 +188,7 @@
   - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 未使用的 generic alert log 渲染路径已移除
   - 旧的报警状态/快速设置浮窗已移除，音效、远程推送和全部立即设置统一归入提醒日志的「设置」tab，快捷键 `A` 直接打开该 tab
-  - `request-channel`：请求通道标签 HTML/patch、DOM 插入/删除和可见性 class 已收敛到 `src/request-channel/request-channel-utils.js`，主入口只负责调度当前报价和 body 状态
+  - `request-channel`：请求通道标签 HTML/patch、DOM 插入/删除、可见性 class 和多渠道开关本地缓存/按钮状态 runtime 已收敛到 `src/request-channel/request-channel-utils.js`，主入口只负责调度当前报价和 body 状态
   - `quote-pause`：单报价/分区暂停按钮的 aria/title/icon DOM 应用已下沉到 `src/quote/quote-pause-utils.js`
   - `dom-render`：报价 pair label HTML 写入、quote run state tag 的 text/class 写入和 quote alert 确认按钮 DOM 写入已下沉到 `src/ui/dom-render-utils.js`
   - `quote-display`：报价显示模式按钮的 text/title DOM 应用已下沉到 `src/quote/quote-display-utils.js`

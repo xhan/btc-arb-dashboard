@@ -11,6 +11,7 @@ const {
   buildRequestChannelTagHtml,
   buildRequestChannelTagPatch,
   buildRequestChannelOptionsHtml,
+  createMultiChannelToggleRuntime,
   formatMultiChannelEnabledStorageValue,
   getBrowserLocalStorage,
   getEffectiveRequestChannelIdForQuote,
@@ -120,6 +121,49 @@ assert.strictEqual(applyMultiChannelToggleButtonState(multiChannelToggleEl, fals
 assert.strictEqual(multiChannelToggleEl.textContent, '多渠道: 关');
 assert.strictEqual(multiChannelToggleClasses.has('active'), false);
 assert.strictEqual(applyMultiChannelToggleButtonState(null, true), false);
+
+const multiChannelRuntimeStorage = {
+  values: new Map([['dashboard-multi-channel-enabled', 'false']]),
+  getItem(key) {
+    return this.values.has(key) ? this.values.get(key) : null;
+  },
+  setItem(key, value) {
+    this.values.set(key, value);
+  }
+};
+const multiChannelRuntimeButton = {
+  textContent: '',
+  title: '',
+  attributes: {},
+  setAttribute(name, value) {
+    this.attributes[name] = value;
+  },
+  classList: {
+    toggle(className, active) {
+      if (active) multiChannelToggleClasses.add(className);
+      else multiChannelToggleClasses.delete(className);
+    }
+  }
+};
+const multiChannelRuntime = createMultiChannelToggleRuntime({
+  button: multiChannelRuntimeButton,
+  storage: multiChannelRuntimeStorage
+});
+assert.strictEqual(multiChannelRuntime.load(), false);
+assert.strictEqual(multiChannelRuntime.get(), false);
+assert.strictEqual(multiChannelRuntimeButton.textContent, '多渠道: 关');
+assert.deepStrictEqual(multiChannelRuntime.set(true), {
+  previousEnabled: false,
+  nextEnabled: true,
+  changed: true
+});
+assert.strictEqual(multiChannelRuntimeStorage.values.get('dashboard-multi-channel-enabled'), 'true');
+assert.strictEqual(multiChannelRuntimeButton.textContent, '多渠道: 开');
+assert.deepStrictEqual(multiChannelRuntime.set(true), {
+  previousEnabled: true,
+  nextEnabled: true,
+  changed: false
+});
 
 assert.strictEqual(
   buildRequestChannelTagHtml({ id: 'quote-1' }, { name: '主通道 <A>' }),

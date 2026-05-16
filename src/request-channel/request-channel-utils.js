@@ -360,6 +360,56 @@
     }
   }
 
+  function createMultiChannelToggleRuntime(options = {}) {
+    let enabled = options.initialEnabled !== false;
+    const getStorage = typeof options.getStorage === 'function'
+      ? options.getStorage
+      : () => options.storage || null;
+    const getButton = typeof options.getButton === 'function'
+      ? options.getButton
+      : () => options.button || null;
+
+    function render() {
+      return applyMultiChannelToggleButtonState(getButton(), enabled);
+    }
+
+    function persist() {
+      return persistMultiChannelEnabledToStorage(getStorage(), enabled, {
+        onError: options.onPersistError
+      });
+    }
+
+    function load() {
+      enabled = loadMultiChannelEnabledFromStorage(getStorage(), {
+        fallback: enabled,
+        onError: options.onLoadError
+      });
+      render();
+      return enabled;
+    }
+
+    function set(nextValue) {
+      const previousEnabled = enabled;
+      enabled = nextValue !== false;
+      render();
+      persist();
+      return {
+        previousEnabled,
+        nextEnabled: enabled,
+        changed: previousEnabled !== enabled
+      };
+    }
+
+    return {
+      get: () => enabled,
+      load,
+      persist,
+      render,
+      set,
+      toggle: () => set(!enabled)
+    };
+  }
+
   function getBrowserLocalStorage(env = {}, options = {}) {
     const runtimeWindow = env.window || (typeof window !== 'undefined' ? window : null);
     if (!runtimeWindow) return null;
@@ -447,6 +497,7 @@
     buildRequestChannelTagHtml,
     buildRequestChannelTagPatch,
     buildRequestChannelOptionsHtml,
+    createMultiChannelToggleRuntime,
     formatMultiChannelEnabledStorageValue,
     getBrowserLocalStorage,
     getEffectiveRequestChannelIdForQuote,
