@@ -2691,38 +2691,6 @@
         return getPathAlertUtils().countPathAlertRealLegs(alert, evaluation);
     }
 
-    function createDismissedTargetEntry(alert) {
-        return getPathAlertUtils().createDismissedTargetEntry(
-            alert,
-            buildPathAlertSummaryLines(alert),
-            Date.now()
-        );
-    }
-
-    function removePathAlertById(alertId) {
-        pathAlertConfig.alerts = (pathAlertConfig.alerts || []).filter((item) => item.id !== alertId);
-        pathAlertRuntimeState.delete(alertId);
-        updateAlertSoundState();
-        renderAlertSettingsPanel();
-    }
-
-    function dismissPathAlertById(alertId) {
-        const alert = (pathAlertConfig.alerts || []).find((item) => item.id === alertId);
-        if (!alert) {
-            removePathAlertById(alertId);
-            return;
-        }
-        const entry = createDismissedTargetEntry(alert);
-        if (entry && !getPathAlertUtils().findDismissedPathAlert(pathAlertConfig.dismissedTargets, entry)) {
-            const nextDismissed = Array.isArray(pathAlertConfig.dismissedTargets)
-                ? [...pathAlertConfig.dismissedTargets]
-                : [];
-            nextDismissed.push(entry);
-            pathAlertConfig.dismissedTargets = nextDismissed;
-        }
-        removePathAlertById(alertId);
-    }
-
     function buildPathAlertEvaluationContext(sharedRuleSnapshot) {
         return {
             quoteStateById: getQuoteMarketStateMap(),

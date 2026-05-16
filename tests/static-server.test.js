@@ -1183,6 +1183,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(audioUtilsResponse.body.includes('function syncLoopingAudio(audioEl, shouldPlay, options = {})'));
     assert.ok(audioUtilsResponse.body.includes('function playAudioOnceFromSource(sourceAudioEl, options = {})'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildTriggeredPathAlertEntry({'));
+    assert.ok(!appJsResponse.body.includes('function dismissPathAlertById('));
+    assert.ok(!appJsResponse.body.includes('function createDismissedTargetEntry('));
+    assert.ok(!appJsResponse.body.includes('function removePathAlertById('));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('customAlertMessage: String(evaluation && evaluation.alertMessage || \'\').trim()'));
     assert.ok(appJsResponse.body.includes("console.info('[quote-alert] trigger'"));
     assert.ok(appJsResponse.body.includes("console.warn('[quote-alert] sound skipped: audio not unlocked'"));

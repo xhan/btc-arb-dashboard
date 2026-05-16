@@ -225,6 +225,7 @@
   - `src/app/dashboard-app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
   - `src/app/dashboard-app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`
+  - `src/app/dashboard-app.js` 中已无事件入口的 path alert dismiss/remove 旧实现已删除，忽略项维护只保留在 `src/path-alerts/path-alerts-app.js`
   - `src/app/dashboard-app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `src/app/dashboard-app.js` 的数据终端搜索框/alias/diff toggle、内容区、header 和关闭按钮事件绑定已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `src/app/dashboard-app.js` 的数据终端控件 write plan DOM 应用已下沉到 `src/data-terminal/data-terminal-utils.js`
