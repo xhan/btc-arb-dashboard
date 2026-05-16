@@ -103,8 +103,48 @@
     };
   }
 
+  function createPriceSnapshotSaveRuntime(options = {}) {
+    const getConfig = typeof options.getConfig === 'function'
+      ? options.getConfig
+      : () => options.config || {};
+    const buildPayload = typeof options.buildPayload === 'function'
+      ? options.buildPayload
+      : () => null;
+    const savePayload = typeof options.savePayload === 'function'
+      ? options.savePayload
+      : async () => {};
+    const logWarning = typeof options.logWarning === 'function'
+      ? options.logWarning
+      : () => {};
+
+    async function saveIfNeeded() {
+      const config = getConfig() || {};
+      if (config.enabled !== true) {
+        return { saved: false, reason: 'disabled' };
+      }
+
+      const payload = buildPayload();
+      if (!payload || !Array.isArray(payload.quotes) || !payload.quotes.length) {
+        return { saved: false, reason: 'empty' };
+      }
+
+      try {
+        await savePayload(payload);
+        return { saved: true, reason: 'saved', payload };
+      } catch (error) {
+        logWarning('保存价格快照失败:', error);
+        return { saved: false, reason: 'error', error };
+      }
+    }
+
+    return {
+      saveIfNeeded
+    };
+  }
+
   return {
     buildPriceSnapshotPayload,
+    createPriceSnapshotSaveRuntime,
     createPriceSnapshotTimerRuntime
   };
 });

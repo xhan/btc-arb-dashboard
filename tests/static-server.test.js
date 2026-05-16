@@ -1425,7 +1425,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("pathAlertModal.addEventListener('click', handlePathAlertModalClick)"));
     assert.ok(appJsResponse.body.includes('function getPriceSnapshotPayloadUtils()'));
     assert.ok(appJsResponse.body.includes('PriceSnapshotPayloadUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('getPriceSnapshotPayloadUtils().buildPriceSnapshotPayload({'));
+    assert.ok(appJsResponse.body.includes('const priceSnapshotSaveRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotSaveRuntime({'));
+    assert.ok(appJsResponse.body.includes('buildPayload: () => getPriceSnapshotPayloadUtils().buildPriceSnapshotPayload({'));
+    assert.ok(appJsResponse.body.includes('savePayload: (payload) => dashboardApiClient.savePriceSnapshot(payload)'));
     assert.ok(!appJsResponse.body.includes('window.PriceSnapshotPayloadUtils\n            ?'));
     assert.ok(!appJsResponse.body.includes('clientCapturedAt: new Date().toISOString(),\n                quotes: []'));
     assert.ok(appJsResponse.body.includes('data-toggle-pause-id'));
@@ -1433,9 +1435,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(quotePauseUtilsResponse.body.includes('暂停分区'));
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(appJsResponse.body.includes('const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({'));
-    assert.ok(appJsResponse.body.includes('priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void savePriceSnapshot(); });'));
+    assert.ok(appJsResponse.body.includes('priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void priceSnapshotSaveRuntime.saveIfNeeded(); });'));
+    assert.ok(!appJsResponse.body.includes('async function savePriceSnapshot()'));
     assert.ok(!appJsResponse.body.includes('let priceSnapshotTimer = null;'));
     assert.ok(priceSnapshotPayloadUtilsResponse.body.includes('function createPriceSnapshotTimerRuntime(options = {})'));
+    assert.ok(priceSnapshotPayloadUtilsResponse.body.includes('function createPriceSnapshotSaveRuntime(options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('已暂停'));
     assert.ok(dashboardRendererResponse.body.includes('quote-item-paused'));
     assert.ok(arbDetailUtilsResponse.body.includes('recordArbDetailBudgetTimestamp'));

@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const {
   buildPriceSnapshotPayload,
+  createPriceSnapshotSaveRuntime,
   createPriceSnapshotTimerRuntime
 } = require('../src/price-snapshots/price-snapshot-payload-utils');
 
@@ -69,3 +70,53 @@ timers[1].callback();
 assert.strictEqual(snapshotSaveCount, 10);
 assert.strictEqual(timerRuntime.clear(), true);
 assert.strictEqual(timerRuntime.clear(), false);
+
+const savedPayloads = [];
+const snapshotWarnings = [];
+let snapshotEnabled = false;
+let nextSnapshotPayload = { quotes: [{ quoteId: 1 }] };
+const saveRuntime = createPriceSnapshotSaveRuntime({
+  getConfig: () => ({ enabled: snapshotEnabled }),
+  buildPayload: () => nextSnapshotPayload,
+  savePayload: async (nextPayload) => {
+    savedPayloads.push(nextPayload);
+  },
+  logWarning: (...args) => {
+    snapshotWarnings.push(args);
+  }
+});
+
+(async () => {
+  assert.deepStrictEqual(await saveRuntime.saveIfNeeded(), { saved: false, reason: 'disabled' });
+  snapshotEnabled = true;
+  nextSnapshotPayload = { quotes: [] };
+  assert.deepStrictEqual(await saveRuntime.saveIfNeeded(), { saved: false, reason: 'empty' });
+  nextSnapshotPayload = { quotes: [{ quoteId: 101 }] };
+  assert.deepStrictEqual(await saveRuntime.saveIfNeeded(), {
+    saved: true,
+    reason: 'saved',
+    payload: nextSnapshotPayload
+  });
+  assert.deepStrictEqual(savedPayloads, [nextSnapshotPayload]);
+
+  const saveError = new Error('save failed');
+  const failingRuntime = createPriceSnapshotSaveRuntime({
+    config: { enabled: true },
+    buildPayload: () => ({ quotes: [{ quoteId: 102 }] }),
+    savePayload: async () => {
+      throw saveError;
+    },
+    logWarning: (...args) => {
+      snapshotWarnings.push(args);
+    }
+  });
+  assert.deepStrictEqual(await failingRuntime.saveIfNeeded(), {
+    saved: false,
+    reason: 'error',
+    error: saveError
+  });
+  assert.deepStrictEqual(snapshotWarnings[0], ['保存价格快照失败:', saveError]);
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

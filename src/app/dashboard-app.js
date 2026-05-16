@@ -77,6 +77,16 @@
         setInterval,
         clearInterval
     });
+    const priceSnapshotSaveRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotSaveRuntime({
+        getConfig: () => priceSnapshotConfig,
+        buildPayload: () => getPriceSnapshotPayloadUtils().buildPriceSnapshotPayload({
+            dashboardState,
+            quoteStateById: getQuoteMarketStateMap(),
+            clientCapturedAt: new Date().toISOString()
+        }),
+        savePayload: (payload) => dashboardApiClient.savePriceSnapshot(payload),
+        logWarning: (...args) => console.warn(...args)
+    });
     const dashboardSaveRuntime = getDashboardRuntimeUtils().createDashboardSaveRuntime({
         setTimeout,
         clearTimeout,
@@ -4025,28 +4035,8 @@
         });
     }
 
-    function buildPriceSnapshotPayload() {
-        return getPriceSnapshotPayloadUtils().buildPriceSnapshotPayload({
-            dashboardState,
-            quoteStateById: getQuoteMarketStateMap(),
-            clientCapturedAt: new Date().toISOString()
-        });
-    }
-
-    async function savePriceSnapshot() {
-        if (!priceSnapshotConfig.enabled) return;
-        const payload = buildPriceSnapshotPayload();
-        if (!payload.quotes.length) return;
-
-        try {
-            await dashboardApiClient.savePriceSnapshot(payload);
-        } catch (error) {
-            console.warn('保存价格快照失败:', error);
-        }
-    }
-
     function startPriceSnapshotTimer() {
-        priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void savePriceSnapshot(); });
+        priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => { void priceSnapshotSaveRuntime.saveIfNeeded(); });
     }
 
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
