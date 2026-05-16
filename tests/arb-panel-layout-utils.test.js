@@ -12,6 +12,8 @@ const {
   buildGlobalArbFilterControlState,
   updateGlobalArbFilterState,
   clearGlobalArbFilterState,
+  buildArbPathLegLine,
+  buildArbPathLegLines,
   buildArbPanelColumns,
   buildArbOpportunityDisplayEntry,
   buildArbOpportunityStoreEntry,
@@ -108,6 +110,51 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(resolveItemsBySelectors(items, [99, '不存在']), []);
+
+const legFormatOptions = {
+  formatLegLine: (line) => `${line.chainLabel}:${line.from}->${line.to}@${line.rate}`,
+  formatChainLabel: (chain) => `Chain:${chain}`,
+  formatCexBookValue: (value, maxDecimals) => `${Number(value).toFixed(1)}/${maxDecimals}`
+};
+
+assert.strictEqual(
+  buildArbPathLegLine(
+    {
+      chain: 'binance',
+      from: 'WBTC',
+      to: 'BTC',
+      rawFrom: 'rawWBTC',
+      rawTo: 'rawBTC',
+      rate: 1.01,
+      cexLevelLabel: 'ask1',
+      cexLevelSize: 2.345
+    },
+    legFormatOptions
+  ),
+  'Chain:binance:rawWBTC->rawBTC@1.01 ask1×2.3/6'
+);
+
+assert.strictEqual(
+  buildArbPathLegLine(
+    { chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 0.99 },
+    legFormatOptions
+  ),
+  'Chain:ethereum:cbBTC->WBTC@0.99'
+);
+
+assert.deepStrictEqual(
+  buildArbPathLegLines(
+    [
+      { chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 0.99 },
+      { chain: 'arbitrum', from: 'WBTC', to: 'cbBTC', rate: 1.01 }
+    ],
+    legFormatOptions
+  ),
+  [
+    'Chain:ethereum:cbBTC->WBTC@0.99',
+    'Chain:arbitrum:WBTC->cbBTC@1.01'
+  ]
+);
 
 assert.deepStrictEqual(
   selectPositiveCyclesOrBest([

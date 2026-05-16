@@ -1678,23 +1678,20 @@
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
     const ARB_PATH_CONFIG = getArbPathConfig();
 
+    function buildArbPathLegLineOptions() {
+        return {
+            formatLegLine: (line) => getArbPaths().formatLegLine(line),
+            formatChainLabel,
+            formatCexBookValue
+        };
+    }
+
     function formatArbPathLegLine(leg) {
-        const displayFrom = leg && leg.rawFrom ? leg.rawFrom : leg.from;
-        const displayTo = leg && leg.rawTo ? leg.rawTo : leg.to;
-        const baseLine = getArbPaths().formatLegLine({
-            from: displayFrom,
-            to: displayTo,
-            rate: leg.rate,
-            chainLabel: formatChainLabel(leg.chain)
-        });
-        if (leg && leg.cexLevelLabel && typeof leg.cexLevelSize === 'number' && Number.isFinite(leg.cexLevelSize)) {
-            return `${baseLine} ${leg.cexLevelLabel}×${formatCexBookValue(leg.cexLevelSize, 6)}`;
-        }
-        return baseLine;
+        return getArbPanelLayoutUtils().buildArbPathLegLine(leg, buildArbPathLegLineOptions());
     }
 
     function buildLegLines(legs) {
-        return legs.map((leg) => formatArbPathLegLine(leg));
+        return getArbPanelLayoutUtils().buildArbPathLegLines(legs, buildArbPathLegLineOptions());
     }
 
     function isRuleLeg(leg) {

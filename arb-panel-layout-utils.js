@@ -120,6 +120,36 @@
     return matches;
   }
 
+  function buildArbPathLegLine(leg, options = {}) {
+    const item = leg || {};
+    const displayFrom = item.rawFrom || item.from;
+    const displayTo = item.rawTo || item.to;
+    const formatLegLine = typeof options.formatLegLine === 'function'
+      ? options.formatLegLine
+      : (line) => `${line.chainLabel}: ${line.from} -> ${line.to}`;
+    const formatChainLabel = typeof options.formatChainLabel === 'function'
+      ? options.formatChainLabel
+      : (chain) => String(chain || '');
+    const formatCexBookValue = typeof options.formatCexBookValue === 'function'
+      ? options.formatCexBookValue
+      : (value) => String(value);
+    const baseLine = formatLegLine({
+      from: displayFrom,
+      to: displayTo,
+      rate: item.rate,
+      chainLabel: formatChainLabel(item.chain)
+    });
+
+    if (item.cexLevelLabel && typeof item.cexLevelSize === 'number' && Number.isFinite(item.cexLevelSize)) {
+      return `${baseLine} ${item.cexLevelLabel}×${formatCexBookValue(item.cexLevelSize, 6)}`;
+    }
+    return baseLine;
+  }
+
+  function buildArbPathLegLines(legs, options = {}) {
+    return (Array.isArray(legs) ? legs : []).map((leg) => buildArbPathLegLine(leg, options));
+  }
+
   function normalizeDisplayMinProfitBp(value, fallback = DEFAULT_DISPLAY_MIN_PROFIT_BP) {
     const numericValue = Number(value);
     if (Number.isFinite(numericValue)) return Math.max(0, numericValue);
@@ -509,6 +539,8 @@
     splitSectionsBySectionCount,
     buildArbPanelColumns,
     resolveItemsBySelectors,
+    buildArbPathLegLine,
+    buildArbPathLegLines,
     DEFAULT_DISPLAY_MIN_PROFIT_BP,
     normalizeDisplayMinProfitBp,
     resolveDefaultDisplayMinProfitBp,
