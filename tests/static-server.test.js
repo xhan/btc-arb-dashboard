@@ -833,6 +833,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function buildOpenArbDetailState(previousState, options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildClosedArbDetailState(previousState)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function cloneArbDetailOpportunity(opportunity)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function isArbRuleLeg(leg)'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function doesArbDetailUseQuote(selectedOpportunity, quoteId)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRow(quote, quoteData, options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailRateDeltas(rows, baseRows)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailRateDeltaText(baseRate, nextRate, decimals = 1)'));
@@ -850,6 +852,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getChartsUtils()'));
     assert.ok(appJsResponse.body.includes('ChartsUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs)'));
+    assert.ok(appJsResponse.body.includes('return getArbDetailUtils().isArbRuleLeg(leg);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbOpportunityChartHref('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().shouldRebuildArbDetailShell(arbDetailState.cards, {'));

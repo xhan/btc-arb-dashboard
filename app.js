@@ -1698,7 +1698,7 @@
     }
 
     function isRuleLeg(leg) {
-        return Boolean(leg && (leg.rule || leg.chain === '规则'));
+        return getArbDetailUtils().isArbRuleLeg(leg);
     }
 
     function getArbDetailUtils() {
@@ -1941,9 +1941,7 @@
     }
 
     function doesArbDetailUseQuote(quoteId) {
-        const selectedOpportunity = arbDetailState.selectedOpportunity;
-        if (!selectedOpportunity || !selectedOpportunity.cycle) return false;
-        return (selectedOpportunity.cycle.legs || []).some((leg) => !isRuleLeg(leg) && Number(leg.quoteId) === Number(quoteId));
+        return getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId);
     }
 
     function nudgeArbDetailInput(index, delta) {

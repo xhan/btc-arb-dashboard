@@ -9,6 +9,8 @@ const {
   cloneArbDetailOpportunity,
   summarizeDetailResult,
   getQuoteRunState,
+  isArbRuleLeg,
+  doesArbDetailUseQuote,
   buildArbDetailChartPairs,
   buildArbDetailChartPreviewSignature,
   buildArbOpportunityChartHref,
@@ -197,6 +199,44 @@ assert.strictEqual(getArbDetailRateDeltaTone('+1.0bp'), 'positive');
 assert.strictEqual(getArbDetailRateDeltaTone('-2.0bp'), 'negative');
 assert.strictEqual(getArbDetailRateDeltaTone('0.0bp'), 'neutral');
 assert.strictEqual(getArbDetailRateDeltaTone('--'), 'neutral');
+
+assert.strictEqual(isArbRuleLeg({ rule: true }), true);
+assert.strictEqual(isArbRuleLeg({ chain: '规则' }), true);
+assert.strictEqual(isArbRuleLeg({ chain: 'ethereum', quoteId: 1 }), false);
+assert.strictEqual(isArbRuleLeg(null), false);
+
+assert.strictEqual(
+  doesArbDetailUseQuote(
+    {
+      cycle: {
+        legs: [
+          { quoteId: '12', chain: 'ethereum' },
+          { quoteId: 13, rule: true },
+          { quoteId: 14, chain: '规则' }
+        ]
+      }
+    },
+    12
+  ),
+  true
+);
+
+assert.strictEqual(
+  doesArbDetailUseQuote(
+    {
+      cycle: {
+        legs: [
+          { quoteId: 13, rule: true },
+          { quoteId: 14, chain: '规则' }
+        ]
+      }
+    },
+    13
+  ),
+  false
+);
+
+assert.strictEqual(doesArbDetailUseQuote(null, 12), false);
 
 assert.strictEqual(formatDetailNumber(1.2345678), 1.234568);
 assert.strictEqual(formatDetailNumber('1.2345678', 4), 1.2346);

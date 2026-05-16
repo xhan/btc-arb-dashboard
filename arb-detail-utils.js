@@ -225,10 +225,24 @@
       : { text: '报价中', tone: 'running' };
   }
 
+  function isArbRuleLeg(leg) {
+    return Boolean(leg && (leg.rule || leg.chain === '规则'));
+  }
+
+  function doesArbDetailUseQuote(selectedOpportunity, quoteId) {
+    if (!selectedOpportunity || !selectedOpportunity.cycle) return false;
+    const targetQuoteId = Number(quoteId);
+    if (!Number.isFinite(targetQuoteId)) return false;
+    const legs = Array.isArray(selectedOpportunity.cycle.legs)
+      ? selectedOpportunity.cycle.legs
+      : [];
+    return legs.some((leg) => !isArbRuleLeg(leg) && Number(leg && leg.quoteId) === targetQuoteId);
+  }
+
   function buildArbDetailChartPairs(cycle) {
     const legs = Array.isArray(cycle?.legs) ? cycle.legs : [];
     return legs
-      .filter((leg) => !(leg && (leg.rule || leg.chain === '规则')))
+      .filter((leg) => !isArbRuleLeg(leg))
       .map((leg) => ({
         quoteId: Number(leg?.quoteId),
         direction: leg?.inverse ? 'inverse' : 'forward',
@@ -779,6 +793,8 @@
     formatDetailNumber,
     summarizeDetailResult,
     getQuoteRunState,
+    isArbRuleLeg,
+    doesArbDetailUseQuote,
     buildArbDetailChartPairs,
     buildArbDetailChartPreviewSignature,
     buildArbOpportunityChartHref,
