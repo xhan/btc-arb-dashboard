@@ -36,7 +36,8 @@ const {
   extendMutedPathTargetEntry,
   findMutedPathAlert,
   pruneExpiredMutedPathTargets,
-  buildEffectiveRuntimeAlert
+  buildEffectiveRuntimeAlert,
+  createPathAlertRuntimeState
 } = require('../path-alert-utils');
 
 const emptyConfig = normalizeAlertConfig();
@@ -1181,6 +1182,25 @@ assert.strictEqual(forcedImmediateAlert.triggerMode, 'immediate');
 assert.strictEqual(forcedImmediateAlert.confirmDelaySec, 0);
 assert.strictEqual(forcedImmediateAlert.cooldownSec, delayedAlert.cooldownSec);
 assert.strictEqual(buildEffectiveRuntimeAlert(delayedAlert, { forceImmediate: false }), delayedAlert);
+
+const pathAlertRuntimeState = createPathAlertRuntimeState();
+pathAlertRuntimeState.set('active-alert', { status: 'monitoring' });
+pathAlertRuntimeState.set('disabled-alert', { status: 'monitoring' });
+assert.deepStrictEqual(
+  Array.from(pathAlertRuntimeState.getState().keys()),
+  ['active-alert', 'disabled-alert']
+);
+pathAlertRuntimeState.pruneInactive([
+  { id: 'active-alert', enabled: true },
+  { id: 'disabled-alert', enabled: false }
+]);
+assert.strictEqual(pathAlertRuntimeState.get('active-alert').status, 'monitoring');
+assert.strictEqual(pathAlertRuntimeState.get('disabled-alert'), null);
+assert.strictEqual(pathAlertRuntimeState.setForceImmediate(true), true);
+assert.strictEqual(pathAlertRuntimeState.isForceImmediateEnabled(), true);
+pathAlertRuntimeState.reset({ forceImmediate: false });
+assert.strictEqual(pathAlertRuntimeState.get('active-alert'), null);
+assert.strictEqual(pathAlertRuntimeState.isForceImmediateEnabled(), false);
 
 let delayedRuntime = advancePathAlertRuntime(delayedAlert, null, {
   available: true,

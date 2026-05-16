@@ -887,6 +887,58 @@
     return next;
   }
 
+  function createPathAlertRuntimeState() {
+    let runtimeState = new Map();
+    let forceImmediate = false;
+
+    function get(alertId) {
+      if (!alertId) return null;
+      return runtimeState.get(alertId) || null;
+    }
+
+    function set(alertId, nextState) {
+      if (!alertId) return nextState || null;
+      runtimeState.set(alertId, nextState || null);
+      return nextState || null;
+    }
+
+    function pruneInactive(alerts) {
+      const activeIds = new Set(
+        (Array.isArray(alerts) ? alerts : [])
+          .filter((alert) => alert && alert.id && alert.enabled !== false)
+          .map((alert) => alert.id)
+      );
+      for (const alertId of Array.from(runtimeState.keys())) {
+        if (!activeIds.has(alertId)) {
+          runtimeState.delete(alertId);
+        }
+      }
+      return runtimeState;
+    }
+
+    function reset(options = {}) {
+      runtimeState = new Map();
+      if (Object.prototype.hasOwnProperty.call(options, 'forceImmediate')) {
+        forceImmediate = options.forceImmediate === true;
+      }
+      return runtimeState;
+    }
+
+    return {
+      delete: (alertId) => runtimeState.delete(alertId),
+      get,
+      getState: () => runtimeState,
+      isForceImmediateEnabled: () => forceImmediate,
+      pruneInactive,
+      reset,
+      set,
+      setForceImmediate(enabled) {
+        forceImmediate = enabled === true;
+        return forceImmediate;
+      }
+    };
+  }
+
   function shouldActivatePathAlertSound(runtime, options = {}) {
     const settings = options.settings && typeof options.settings === 'object'
       ? options.settings
@@ -969,6 +1021,7 @@
     advancePathAlertRuntime,
     advanceQuoteAlertRuntime,
     buildEffectiveRuntimeAlert,
+    createPathAlertRuntimeState,
     shouldActivatePathAlertSound,
     buildAllLegSnapshots,
     buildTriggeredPathAlertChangedLegs,

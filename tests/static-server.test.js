@@ -594,7 +594,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('return quoteStateRuntime.setUiState(quoteId, nextState)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().buildQuoteAlertUiUpdate(uiState, hasTriggeredThisTick)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteAlertUiUpdate(currentState, hasTriggered)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState)'));
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState.getState())'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function hasActivePathAlertSound(runtimeState)'));
     assert.ok(appJsResponse.body.includes('quoteStateRuntime.clearTrendTimer(quoteId, clearTimeout)'));
     assert.ok(appJsResponse.body.includes('quoteStateRuntime.resetUiRuntimeState(quoteId, clearTimeout)'));
@@ -837,8 +837,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('path-alert-reload-btn'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('data-path-alert-force-immediate'));
     assert.ok(pathAlertPageUtilsResponse.body.includes('全部立即'));
-    assert.ok(appJsResponse.body.includes('let forceImmediateAlerts = false;'));
-    assert.ok(appJsResponse.body.includes('buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts })'));
+    assert.ok(appJsResponse.body.includes('const pathAlertRuntimeState = getPathAlertUtils().createPathAlertRuntimeState();'));
+    assert.ok(appJsResponse.body.includes('forceImmediate: pathAlertRuntimeState.isForceImmediateEnabled()'));
+    assert.ok(appJsResponse.body.includes('forceImmediateAlerts: pathAlertRuntimeState.isForceImmediateEnabled()'));
+    assert.ok(appJsResponse.body.includes('pathAlertRuntimeState.reset({ forceImmediate: false });'));
+    assert.ok(!appJsResponse.body.includes('let forceImmediateAlerts = false;'));
+    assert.ok(!appJsResponse.body.includes('pathAlertRuntimeState = new Map();'));
+    assert.ok(pathAlertUtilsResponse.body.includes('function createPathAlertRuntimeState()'));
     assert.ok(appJsResponse.body.includes('pathAlertUtils.advanceQuoteAlertRuntime(alert, previous, evaluation, {'));
     assert.ok(pathAlertUtilsResponse.body.includes('function advanceQuoteAlertRuntime(alert, runtimeState, evaluation, options = {})'));
     assert.ok(appJsResponse.body.includes('pathAlertUtils.shouldActivatePathAlertSound(next, {'));

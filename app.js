@@ -28,11 +28,10 @@
     let pathAlertEvalTimer = null;
     let pathAlertPanelHidden = true;
     const pathAlertPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
-    let pathAlertRuntimeState = new Map();
+    const pathAlertRuntimeState = getPathAlertUtils().createPathAlertRuntimeState();
     const mutedAlertStateHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
     let pathAlertReloading = false;
     let pathAlertExternalReloadTimer = null;
-    let forceImmediateAlerts = false;
     let alertLogActiveTab = 'log';
     const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
     const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
@@ -758,7 +757,7 @@
 
     function updateAlertSoundState() {
         if (!isAudioUnlocked) return;
-        syncLoopingAlertSound(pathAlertSound, getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState));
+        syncLoopingAlertSound(pathAlertSound, getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState.getState()));
     }
 
     function bringFloatingPanelToFront(panel) {
@@ -1883,16 +1882,7 @@
     }
 
     function pruneInactiveAlertRuntimeState() {
-        const activeIds = new Set(
-            (Array.isArray(pathAlertConfig && pathAlertConfig.alerts) ? pathAlertConfig.alerts : [])
-                .filter((alert) => alert && alert.id && alert.enabled !== false)
-                .map((alert) => alert.id)
-        );
-        for (const alertId of Array.from(pathAlertRuntimeState.keys())) {
-            if (!activeIds.has(alertId)) {
-                pathAlertRuntimeState.delete(alertId);
-            }
-        }
+        pathAlertRuntimeState.pruneInactive(pathAlertConfig && pathAlertConfig.alerts);
     }
 
     function resolveDataTerminalRecordsCacheKey() {
@@ -3185,9 +3175,11 @@
         let shouldRefreshArbPanelHighlights = false;
 
         for (const alert of evaluationAlerts) {
-            const runtimeAlert = pathAlertUtils.buildEffectiveRuntimeAlert(alert, { forceImmediate: forceImmediateAlerts });
+            const runtimeAlert = pathAlertUtils.buildEffectiveRuntimeAlert(alert, {
+                forceImmediate: pathAlertRuntimeState.isForceImmediateEnabled()
+            });
             const evaluation = pathAlertUtils.evaluatePathAlert(alert, context);
-            const previous = pathAlertRuntimeState.get(alert.id) || null;
+            const previous = pathAlertRuntimeState.get(alert.id);
             const next = pathAlertUtils.advancePathAlertRuntime(runtimeAlert, previous, evaluation, nowMs);
             const snapshotState = pathAlertUtils.resolvePathAlertSnapshotState(runtimeAlert, previous, next, evaluation, allLegSnapshots);
             next.evaluation = evaluation;
@@ -3350,8 +3342,8 @@
             alerts,
             settings,
             dismissedCount,
-            forceImmediateAlerts,
-            getRuntime: (alert) => pathAlertRuntimeState.get(alert.id) || null,
+            forceImmediateAlerts: pathAlertRuntimeState.isForceImmediateEnabled(),
+            getRuntime: (alert) => pathAlertRuntimeState.get(alert.id),
             buildTitle: buildPathAlertDisplayTitle,
             renderSummaryLinesHtml: (alert) => getPathAlertPageUtils().renderPathAlertSummaryLinesHtml(buildPathAlertSummaryLines(alert)),
             buildMetaText: (alert) => getPathAlertPageUtils().buildPathAlertMetaText(alert, {
@@ -3483,8 +3475,8 @@
     function handlePathAlertPanelChange(event) {
         const forceImmediateToggle = closestEventTarget(event, '[data-path-alert-force-immediate]');
         if (forceImmediateToggle) {
-            forceImmediateAlerts = forceImmediateToggle.checked;
-            if (forceImmediateAlerts) {
+            const forceImmediateEnabled = pathAlertRuntimeState.setForceImmediate(forceImmediateToggle.checked);
+            if (forceImmediateEnabled) {
                 evaluatePathAlertsOnce();
                 evaluateQuoteAlertsOnce();
                 renderPathAlertPanel();
@@ -3524,9 +3516,8 @@
         pathAlertReloading = true;
         renderPathAlertPanel();
         try {
-            forceImmediateAlerts = false;
+            pathAlertRuntimeState.reset({ forceImmediate: false });
             await loadPathAlertConfig({ fallbackToDefault: false });
-            pathAlertRuntimeState = new Map();
             restartPathAlertScheduler();
         } finally {
             pathAlertReloading = false;
@@ -4253,10 +4244,10 @@
 
         for (const alert of quoteAlerts) {
             const pathAlertUtils = getPathAlertUtils();
-            const previous = pathAlertRuntimeState.get(alert.id) || null;
+            const previous = pathAlertRuntimeState.get(alert.id);
             const evaluation = pathAlertUtils.evaluatePathAlert(alert, { quoteStateById: getQuoteMarketStateMap() });
             const next = pathAlertUtils.advanceQuoteAlertRuntime(alert, previous, evaluation, {
-                forceImmediate: forceImmediateAlerts,
+                forceImmediate: pathAlertRuntimeState.isForceImmediateEnabled(),
                 nowMs: Date.now()
             });
             pathAlertRuntimeState.set(alert.id, next);
