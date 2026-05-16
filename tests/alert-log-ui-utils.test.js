@@ -13,7 +13,7 @@ const {
   hasMutedTargetLogCard,
   removeRestoredMutedAlertLogCards,
   resolveAlertLogClickAction
-} = require('../alert-log-ui-utils');
+} = require('../src/alerts/alert-log-ui-utils');
 
 const appendPlan = buildAlertLogAppendPlan([
   { id: 'first', mutedEntry: null },

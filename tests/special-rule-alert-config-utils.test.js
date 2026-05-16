@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   normalizeSpecialRuleAlertConfig,
   evaluateSpecialRuleTrigger
-} = require('../special-rule-alert-config-utils');
+} = require('../src/alerts/special-rule-alert-config-utils');
 
 assert.deepStrictEqual(
   normalizeSpecialRuleAlertConfig({ minNetProfit: 8, minNetProfitBp: 0.5 }),

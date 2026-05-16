@@ -74,13 +74,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/arb/arb-path-config.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-path-config-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-rule-snapshot-utils.js"'));
-    assert.ok(response.body.includes('src="alert-log-ui-utils.js"'));
+    assert.ok(response.body.includes('src="src/alerts/alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/muted-path-storage-utils.js"'));
     assert.ok(response.body.includes('src="dex-link-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-detail-refresh-utils.js"'));
-    assert.ok(response.body.includes('src="special-rule-alert-config-utils.js"'));
+    assert.ok(response.body.includes('src="src/alerts/special-rule-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/path-alert-utils.js"'));
-    assert.ok(response.body.includes('src="alert-debug-utils.js"'));
+    assert.ok(response.body.includes('src="src/alerts/alert-debug-utils.js"'));
     assert.ok(!response.body.includes('src="special-rule-alert-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/path-alert-notification-utils.js"'));
     assert.ok(!response.body.includes('src="quote-alert-config-utils.js"'));
@@ -158,10 +158,10 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="alert-debug-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/alerts/alert-debug-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="special-rule-alert-config-utils.js"') < response.body.indexOf('src="app.js"')
+      response.body.indexOf('src="src/alerts/special-rule-alert-config-utils.js"') < response.body.indexOf('src="app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/arb/arb-path-config.js"') < response.body.indexOf('src="src/arb/arb-path-config-utils.js"')
@@ -269,7 +269,7 @@ async function waitForServer(attempts = 12) {
 
     const appJsResponse = await request('/app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
-    const alertLogUiResponse = await request('/alert-log-ui-utils.js');
+    const alertLogUiResponse = await request('/src/alerts/alert-log-ui-utils.js');
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
     const arbPathsResponse = await request('/src/arb/arb-paths.js');
     assert.strictEqual(arbPathsResponse.statusCode, 200);
@@ -327,7 +327,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteStateRuntimeUtilsResponse.statusCode, 200);
     const pathAlertNotificationUtilsResponse = await request('/src/path-alerts/path-alert-notification-utils.js');
     assert.strictEqual(pathAlertNotificationUtilsResponse.statusCode, 200);
-    const alertDebugUtilsResponse = await request('/alert-debug-utils.js');
+    const alertDebugUtilsResponse = await request('/src/alerts/alert-debug-utils.js');
     assert.strictEqual(alertDebugUtilsResponse.statusCode, 200);
     const domRenderUtilsResponse = await request('/dom-render-utils.js');
     assert.strictEqual(domRenderUtilsResponse.statusCode, 200);
@@ -1508,7 +1508,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="chain-defaults.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-candidate-utils.js"'));
-    assert.ok(pathAlertsResponse.body.includes('src="special-rule-alert-config-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="src/alerts/special-rule-alert-config-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-notification-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-editor-utils.js"'));
     assert.ok(

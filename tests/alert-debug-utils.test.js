@@ -3,7 +3,7 @@ const assert = require('assert');
 const {
   buildRuntimeDebugSnapshot,
   createAlertDebugController
-} = require('../alert-debug-utils');
+} = require('../src/alerts/alert-debug-utils');
 
 assert.deepStrictEqual(
   buildRuntimeDebugSnapshot(
