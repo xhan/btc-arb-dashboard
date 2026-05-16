@@ -29,7 +29,8 @@
 - `showInverse = false`：只生成 `main` 任务
 - `showInverse = true` 且非 `Bybit`：生成 `main` + `inverse` 两个任务
 - task 生成、task key、去重入队、删除 quote task、defer 当前 task、managed queue key 和 task 状态判断都由 `queue-stats-utils.js` 统一维护。
-- `app.js` 只负责持有当前队列运行态、启动/停止 scheduler，以及在 task 状态为 `fetch` 时调用 `fetchSingleQuote()`。
+- 队列运行态（队列、当前索引、timer）和 `processQueue()` / `updateSchedulers()` 状态机由 `quote-queue-runtime-utils.js` 统一维护。
+- `app.js` 只负责提供当前业务依赖：quote 列表、请求通道配置、暂停状态、活跃请求判断，以及在 task 状态为 `fetch` 时调用 `fetchSingleQuote()`。
 
 ## 当前有几个队列
 
@@ -63,14 +64,15 @@
 
 ## 队列与执行逻辑
 
-1. `addToQueue(quote)` 按数据源类型（`kyber/zerox/velora/lifi/bybit/binance/solana/sui/starknet`）决定进入哪个队列
-2. 把 `quote` 展开成一个或两个任务（`main`、`inverse`）
-3. `processQueue(type)` 每次轮询取出一个任务
-4. 通过 `task.quoteId` 找到当前 quote 配置
-5. 调用 `fetchSingleQuote(quote, task.mode)`
-6. `main` 模式更新主价格/趋势/告警
-7. `main` 模式成功后会请求一次套利路径刷新，但当前有 `1000ms` 节流窗口
-8. `inverse` 模式只更新反向小字，不触发主价格告警逻辑
+1. `app.js` 收到新增、编辑、切换 source/channel/showInverse 等事件后调用本地入口 `addToQueue(quote)`
+2. `quote-queue-runtime-utils.js` 按数据源类型（`kyber/zerox/velora/lifi/bybit/binance/solana/sui/starknet` 或 `source:channel`）决定进入哪个队列
+3. `queue-stats-utils.js` 把 `quote` 展开成一个或两个任务（`main`、`inverse`），并负责去重
+4. `quote-queue-runtime-utils.js` 的 `processQueue(type)` 每次轮询取出一个任务
+5. 运行时通过 `task.quoteId` 找到当前 quote 配置，并让 `queue-stats-utils.js` 判断 task 状态
+6. task 状态为 `fetch` 时，运行时调用 `app.js` 注入的 `fetchSingleQuote(quote, task.mode)`
+7. `main` 模式更新主价格/趋势/告警
+8. `main` 模式成功后会请求一次套利路径刷新，但当前有 `1000ms` 节流窗口
+9. `inverse` 模式只更新反向小字，不触发主价格告警逻辑
 
 ## 为什么更好
 
@@ -150,13 +152,13 @@
 
 ```mermaid
 flowchart TD
-  A["addToQueue(quote)"] --> B["根据 quote 决定 queue type"]
+  A["app.js addToQueue(quote)"] --> B["QuoteQueueRuntime 根据 quote 决定 queue type"]
   B --> C{"QueueStatsUtils 生成 tasks"}
   C -- "否" --> D["入队 task: {quoteId, mode: main}"]
   C -- "是" --> E["入队 task: {quoteId, mode: main}"]
   E --> F["入队 task: {quoteId, mode: inverse}"]
 
-  G["scheduler tick"] --> H["processQueue(type)"]
+  G["scheduler tick"] --> H["QuoteQueueRuntime processQueue(type)"]
   H --> I["取下一个 task"]
   I --> J["按 task.quoteId 查找 quote"]
   J --> K{"QueueStatsUtils task status"}
@@ -174,3 +176,4 @@ flowchart TD
 
 - `showInverse` 开关变化时需要 `removeFromQueue(quote.id)` 后再 `addToQueue(quote)`，以重建任务列表
 - 启动时已注释 burst 首刷，避免与 scheduler 并行造成瞬时放大
+- 如果要改队列索引、timer 或 active request defer 规则，应优先改 `quote-queue-runtime-utils.js` 并补 `tests/quote-queue-runtime-utils.test.js`
