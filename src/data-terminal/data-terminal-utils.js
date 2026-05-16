@@ -486,6 +486,60 @@
     return changed;
   }
 
+  function bindDataTerminalControlEvents(refs = {}, handlers = {}) {
+    const onPatch = typeof handlers.onPatch === 'function' ? handlers.onPatch : () => {};
+    const onContentClick = typeof handlers.onContentClick === 'function' ? handlers.onContentClick : () => {};
+    const onHeaderClick = typeof handlers.onHeaderClick === 'function' ? handlers.onHeaderClick : () => {};
+    const onMinimize = typeof handlers.onMinimize === 'function' ? handlers.onMinimize : () => {};
+    const bindings = {};
+
+    if (refs.searchInput && typeof refs.searchInput.addEventListener === 'function') {
+      refs.searchInput.addEventListener('input', (event) => {
+        onPatch(buildDataTerminalControlEventPatch('query', event));
+      });
+      refs.searchInput.addEventListener('keydown', (event) => {
+        if (!event || event.key !== 'Enter') return;
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (event.target && typeof event.target.blur === 'function') event.target.blur();
+      });
+      bindings.searchInput = true;
+    }
+
+    if (refs.aliasToggle && typeof refs.aliasToggle.addEventListener === 'function') {
+      refs.aliasToggle.addEventListener('change', (event) => {
+        onPatch(buildDataTerminalControlEventPatch('allowAliases', event));
+      });
+      bindings.aliasToggle = true;
+    }
+
+    if (refs.diffToggle && typeof refs.diffToggle.addEventListener === 'function') {
+      refs.diffToggle.addEventListener('change', (event) => {
+        onPatch(buildDataTerminalControlEventPatch('showDiff', event));
+      });
+      bindings.diffToggle = true;
+    }
+
+    if (refs.content && typeof refs.content.addEventListener === 'function') {
+      refs.content.addEventListener('click', onContentClick);
+      bindings.content = true;
+    }
+
+    if (refs.minBtn && typeof refs.minBtn.addEventListener === 'function') {
+      refs.minBtn.addEventListener('click', (event) => {
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+        onMinimize(event);
+      });
+      bindings.minBtn = true;
+    }
+
+    if (refs.header && typeof refs.header.addEventListener === 'function') {
+      refs.header.addEventListener('click', onHeaderClick);
+      bindings.header = true;
+    }
+
+    return bindings;
+  }
+
   function readElementDisplay(element, getComputedStyle) {
     if (typeof getComputedStyle === 'function') {
       const computedStyle = getComputedStyle(element);
@@ -706,6 +760,7 @@
     applyDataTerminalControlWritePlan,
     applyDataTerminalSelectionSummaryDomState,
     applyDataTerminalStatePatch,
+    bindDataTerminalControlEvents,
     buildDataTerminalPanelHtml,
     buildDataTerminalRecords,
     buildDataTerminalShellHtml,

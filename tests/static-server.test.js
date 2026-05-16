@@ -1599,6 +1599,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalControlWritePlan(plan = {}, refs = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlEventPatch(field, event)'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalStatePatch(state = {}, patch = {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function bindDataTerminalControlEvents(refs = {}, handlers = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalDefaultSize(panel, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function applyDataTerminalWindowPosition(panel, options = {})'));
@@ -1616,7 +1617,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function applyDataTerminalControlWritePlan(plan, refs)'));
     assert.ok(!appJsResponse.body.includes('refs.profitBp.textContent = selectionSummary.text'));
     assert.ok(!appJsResponse.body.includes("refs.profitBp.classList.toggle('data-terminal-profit-bp-empty'"));
-    assert.ok(appJsResponse.body.includes("utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('query', event))"));
+    assert.ok(appJsResponse.body.includes('utils.bindDataTerminalControlEvents(refs, {'));
+    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalStatePatch(dataTerminalState, patch);'));
+    assert.ok(!appJsResponse.body.includes("refs.searchInput.addEventListener('input'"));
+    assert.ok(!appJsResponse.body.includes("refs.searchInput.addEventListener('keydown'"));
+    assert.ok(!appJsResponse.body.includes("refs.aliasToggle.addEventListener('change'"));
+    assert.ok(!appJsResponse.body.includes("refs.diffToggle.addEventListener('change'"));
+    assert.ok(!appJsResponse.body.includes("refs.content.addEventListener('click'"));
+    assert.ok(!appJsResponse.body.includes("refs.minBtn.addEventListener('click'"));
+    assert.ok(!appJsResponse.body.includes("refs.header.addEventListener('click'"));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().applyDataTerminalStatePatch('));
     assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget })'));
     assert.ok(!appJsResponse.body.includes('function applyDataTerminalControlPatch(patch)'));

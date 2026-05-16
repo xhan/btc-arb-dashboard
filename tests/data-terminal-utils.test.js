@@ -10,6 +10,7 @@ const {
   applyDataTerminalControlWritePlan,
   applyDataTerminalSelectionSummaryDomState,
   applyDataTerminalStatePatch,
+  bindDataTerminalControlEvents,
   buildDataTerminalPanelHtml,
   applyDataTerminalDefaultSize,
   applyDataTerminalWindowPosition,
@@ -103,6 +104,78 @@ assert.deepStrictEqual(dataTerminalPatchState, {
   selectedRightKey: 'new-right'
 });
 assert.strictEqual(applyDataTerminalStatePatch(dataTerminalPatchState, {}), false);
+
+function createDataTerminalEventTarget() {
+  const listeners = {};
+  return {
+    listeners,
+    addEventListener(type, listener) {
+      listeners[type] = listener;
+    }
+  };
+}
+
+const dataTerminalBindingRefs = {
+  searchInput: createDataTerminalEventTarget(),
+  aliasToggle: createDataTerminalEventTarget(),
+  diffToggle: createDataTerminalEventTarget(),
+  content: createDataTerminalEventTarget(),
+  minBtn: createDataTerminalEventTarget(),
+  header: createDataTerminalEventTarget()
+};
+const dataTerminalControlPatches = [];
+const dataTerminalControlCalls = [];
+assert.deepStrictEqual(
+  bindDataTerminalControlEvents(dataTerminalBindingRefs, {
+    onPatch: (patch) => dataTerminalControlPatches.push(patch),
+    onContentClick: () => dataTerminalControlCalls.push('content'),
+    onHeaderClick: () => dataTerminalControlCalls.push('header'),
+    onMinimize: () => dataTerminalControlCalls.push('minimize')
+  }),
+  {
+    searchInput: true,
+    aliasToggle: true,
+    diffToggle: true,
+    content: true,
+    minBtn: true,
+    header: true
+  }
+);
+dataTerminalBindingRefs.searchInput.listeners.input({ target: { value: 'WBTC cbBTC' } });
+dataTerminalBindingRefs.aliasToggle.listeners.change({ target: { checked: false } });
+dataTerminalBindingRefs.diffToggle.listeners.change({ target: { checked: true } });
+assert.deepStrictEqual(dataTerminalControlPatches, [
+  { query: 'WBTC cbBTC' },
+  { allowAliases: false },
+  { showDiff: true }
+]);
+let dataTerminalEnterPrevented = false;
+let dataTerminalEnterBlurred = false;
+dataTerminalBindingRefs.searchInput.listeners.keydown({
+  key: 'Enter',
+  preventDefault() {
+    dataTerminalEnterPrevented = true;
+  },
+  target: {
+    blur() {
+      dataTerminalEnterBlurred = true;
+    }
+  }
+});
+assert.strictEqual(dataTerminalEnterPrevented, true);
+assert.strictEqual(dataTerminalEnterBlurred, true);
+dataTerminalBindingRefs.searchInput.listeners.keydown({ key: 'Escape' });
+dataTerminalBindingRefs.content.listeners.click({});
+dataTerminalBindingRefs.header.listeners.click({});
+let dataTerminalMinStopped = false;
+dataTerminalBindingRefs.minBtn.listeners.click({
+  stopPropagation() {
+    dataTerminalMinStopped = true;
+  }
+});
+assert.strictEqual(dataTerminalMinStopped, true);
+assert.deepStrictEqual(dataTerminalControlCalls, ['content', 'header', 'minimize']);
+assert.deepStrictEqual(bindDataTerminalControlEvents({}, {}), {});
 
 const dataTerminalPanel = { style: {} };
 assert.strictEqual(applyDataTerminalWindowPosition(dataTerminalPanel), true);

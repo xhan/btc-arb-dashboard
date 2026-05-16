@@ -1911,40 +1911,16 @@
         dataTerminalState.htmlRenderer.reset();
         utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
 
-        if (refs.searchInput) {
-            refs.searchInput.addEventListener('input', (event) => {
-                utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('query', event));
+        utils.bindDataTerminalControlEvents(refs, {
+            onPatch: (patch) => {
+                utils.applyDataTerminalStatePatch(dataTerminalState, patch);
                 renderDataTerminalPanel();
-            });
-            refs.searchInput.addEventListener('keydown', (event) => {
-                if (event.key !== 'Enter') return;
-                event.preventDefault();
-                event.target.blur();
-            });
-        }
-        if (refs.aliasToggle) {
-            refs.aliasToggle.addEventListener('change', (event) => {
-                utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('allowAliases', event));
-                renderDataTerminalPanel();
-            });
-        }
-        if (refs.diffToggle) {
-            refs.diffToggle.addEventListener('change', (event) => {
-                utils.applyDataTerminalStatePatch(dataTerminalState, utils.buildDataTerminalControlEventPatch('showDiff', event));
-                renderDataTerminalPanel();
-            });
-        }
-        if (refs.content) {
-            refs.content.addEventListener('click', handleDataTerminalContentClick);
-        }
-        if (refs.minBtn) {
-            refs.minBtn.addEventListener('click', (event) => {
-                event.stopPropagation();
-                toggleDataTerminalPanel();
-            });
-        }
+            },
+            onContentClick: handleDataTerminalContentClick,
+            onHeaderClick: handleDataTerminalHeaderClick,
+            onMinimize: toggleDataTerminalPanel
+        });
         if (refs.header) {
-            refs.header.addEventListener('click', handleDataTerminalHeaderClick);
             bindFloatingPanelChrome(panel, refs.header);
         }
 
