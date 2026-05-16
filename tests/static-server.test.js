@@ -246,7 +246,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('id="path-alert-search-input"'));
     assert.ok(response.body.includes('id="toggle-quote-display-btn"'));
     assert.ok(response.body.includes('价格: 汇率'));
-    assert.ok(response.body.includes('id="toggle-alert-settings-btn"'));
+    assert.ok(!response.body.includes('id="toggle-alert-settings-btn"'));
     assert.ok(response.body.includes('id="toggle-data-terminal-btn"'));
     assert.ok(response.body.includes('id="toggle-multi-channel-btn"'));
     assert.ok(response.body.includes('id="arb-global-include-filter-input"'));
@@ -257,7 +257,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('id="arb-global-filter-bar"'));
     assert.ok(response.body.includes('多渠道'));
     assert.ok(response.body.includes('数据终端'));
-    assert.ok(response.body.includes('<button id="toggle-alert-settings-btn" title="提醒设置 (A)">🚨</button>'));
+    assert.ok(response.body.includes('<button id="alert-log-settings-tab" class="alert-log-tab" type="button" title="快速提醒设置 (A)">设置</button>'));
     assert.ok(response.body.includes('<button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">📝</button>'));
     assert.ok(response.body.includes('<a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">📸</a>'));
     assert.ok(response.body.includes('<a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">📊</a>'));
@@ -1253,14 +1253,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('输入屏蔽时长（小时，正整数）'));
     assert.ok(!appJsResponse.body.includes('屏蔽 8 小时'));
     assert.ok(pathAlertUtilsResponse.body.includes('沉默中'));
-    assert.ok(response.body.includes('title="提醒设置 (A)"'));
-    assert.ok(keyboardShortcutUtilsResponse.body.includes("a: 'toggle-alert-settings'"));
+    assert.ok(!response.body.includes('title="提醒设置 (A)"'));
+    assert.ok(response.body.includes('title="快速提醒设置 (A)"'));
+    assert.ok(keyboardShortcutUtilsResponse.body.includes("a: 'open-alert-log-settings'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("c: 'toggle-request-channel-tags'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("l: 'toggle-alert-log'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("p: 'toggle-quote-display'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("s: 'toggle-data-terminal'"));
-    assert.ok(appJsResponse.body.includes("case 'toggle-alert-settings':"));
-    assert.ok(appJsResponse.body.includes("alertSettingsBtn.addEventListener('click', openAlertSettingsTab);"));
+    assert.ok(appJsResponse.body.includes("case 'open-alert-log-settings':"));
+    assert.ok(appJsResponse.body.includes('function openAlertLogSettingsTab()'));
+    assert.ok(!appJsResponse.body.includes('alertSettingsBtn'));
     assert.ok(!appJsResponse.body.includes("togglePathAlertBtn.addEventListener('click'"));
     assert.ok(!keyboardShortcutUtilsResponse.body.includes("d: '"));
     assert.ok(!keyboardShortcutUtilsResponse.body.includes("r: '"));

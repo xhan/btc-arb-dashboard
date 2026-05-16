@@ -187,7 +187,7 @@
   - 未被生产代码调用的 `quote-alert-config-utils.js` 旧迁移工具已移除
   - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 未使用的 generic alert log 渲染路径已移除
-  - 旧的报警状态/快速设置浮窗已移除，音效、远程推送和全部立即设置统一归入提醒日志的「设置」tab，快捷键 `A` 和顶部提醒按钮直接打开该 tab
+  - 旧的报警状态/快速设置浮窗已移除，音效、远程推送和全部立即设置统一归入提醒日志的「设置」tab，快捷键 `A` 直接打开该 tab
   - alert log 的 restored muted selector、恢复卡片删除、click action 解析和 active tab runtime 已下沉到 `src/alerts/alert-log-ui-utils.js`
   - muted target key 兼容逻辑、日志标题 snapshot、muted target / muted leg 的状态文案已下沉到 `src/path-alerts/path-alert-utils.js`
   - 套利详情 muted leg 的屏蔽时长 prompt 文案和正整数解析已下沉到 `src/path-alerts/muted-path-leg-utils.js`

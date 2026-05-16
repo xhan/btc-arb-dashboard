@@ -12,7 +12,7 @@
     t: 'toggle-arb-panel',
     s: 'toggle-data-terminal',
     p: 'toggle-quote-display',
-    a: 'toggle-alert-settings',
+    a: 'open-alert-log-settings',
     l: 'toggle-alert-log',
     c: 'toggle-request-channel-tags'
   };

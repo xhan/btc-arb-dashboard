@@ -164,7 +164,6 @@
         onUnlocked: updateAlertSoundState
     });
     const alertModal = document.getElementById('alert-modal');
-    const alertSettingsBtn = document.getElementById('toggle-alert-settings-btn');
     const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
     const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
     const modalTitleEl = document.getElementById('modal-title');
@@ -3177,7 +3176,7 @@
         applyAlertLogPanelDisplay('open');
     }
 
-    function openAlertSettingsTab() {
+    function openAlertLogSettingsTab() {
         openAlertLogTab('settings');
     }
 
@@ -3771,8 +3770,8 @@
             case 'toggle-quote-display':
                 toggleQuoteDisplayMode();
                 break;
-            case 'toggle-alert-settings':
-                openAlertSettingsTab();
+            case 'open-alert-log-settings':
+                openAlertLogSettingsTab();
                 break;
             case 'toggle-alert-log':
                 toggleAlertLogPanel();
@@ -4697,9 +4696,6 @@
             }
             if (toggleDataTerminalBtn) {
                 toggleDataTerminalBtn.addEventListener('click', toggleDataTerminalPanel);
-            }
-            if (alertSettingsBtn) {
-                alertSettingsBtn.addEventListener('click', openAlertSettingsTab);
             }
             if (toggleAlertLogBtn) {
                 toggleAlertLogBtn.addEventListener('click', toggleAlertLogPanel);
