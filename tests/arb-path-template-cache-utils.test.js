@@ -8,7 +8,7 @@ const {
   evaluateCycleTemplate,
   evaluateFixedPathTemplate,
   createArbPanelCache
-} = require('../arb-path-template-cache-utils');
+} = require('../src/arb/arb-path-template-cache-utils');
 
 const dashboardState = [
   {

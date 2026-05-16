@@ -273,7 +273,7 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbPanelRendererResponse.statusCode, 200);
     const arbRuntimeMemoryUtilsResponse = await request('/src/arb/arb-runtime-memory-utils.js');
     assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
-    const arbPathTemplateCacheUtilsResponse = await request('/arb-path-template-cache-utils.js');
+    const arbPathTemplateCacheUtilsResponse = await request('/src/arb/arb-path-template-cache-utils.js');
     assert.strictEqual(arbPathTemplateCacheUtilsResponse.statusCode, 200);
     const arbEquivalenceUtilsResponse = await request('/arb-equivalence-utils.js');
     assert.strictEqual(arbEquivalenceUtilsResponse.statusCode, 200);
