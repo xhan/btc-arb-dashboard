@@ -762,7 +762,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteStateRuntimeUtilsResponse.body.includes('dashboardRuntimeUtils.sanitizeQuoteMarketState(nextState)'));
     assert.ok(quoteStateRuntimeUtilsResponse.body.includes('dashboardRuntimeUtils.hasQuoteMarketStateChanged(previousState, marketState)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().getActivePathAlertEvaluationAlerts(pathAlertConfig)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, quoteId)'));
+    assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, item.quoteId)'));
+    assert.ok(!appJsResponse.body.includes('function findDashboardQuoteById(quoteId)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function findDashboardQuoteById(dashboardState, quoteId)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function getActivePathAlertEvaluationAlerts(alertConfig)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;'));
@@ -942,7 +943,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getPathAlertUtils().buildMutedPathLegStatusText('));
     assert.ok(appJsResponse.body.includes('return getPathAlertUtils().buildMutedPathTargetKey(alertOrTarget);'));
     assert.ok(appJsResponse.body.includes('return getPathAlertUtils().buildMutedPathLogTitleSnapshot(entry);'));
-    assert.ok(appJsResponse.body.includes('return getPathAlertUtils().getQuoteAlertsForQuoteId(pathAlertConfig, quoteId);'));
+    assert.ok(appJsResponse.body.includes('getPathAlertUtils().getQuoteAlertsForQuoteId(pathAlertConfig, quote.id)'));
+    assert.ok(!appJsResponse.body.includes('function getQuoteAlertsForQuoteId(quoteId)'));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathStatusText('));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathLegStatusText('));
     assert.ok(pathAlertUtilsResponse.body.includes('function buildMutedPathStatusText(entry, nowMs = Date.now())'));

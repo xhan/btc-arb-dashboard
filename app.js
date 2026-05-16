@@ -886,10 +886,6 @@
         });
     }
 
-    function findDashboardQuoteById(quoteId) {
-        return getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, quoteId);
-    }
-
     function isArbOpportunityHighlighted(opportunityId, nowMs = Date.now()) {
         return arbOpportunityHighlightRuntime.isHighlighted(opportunityId, nowMs);
     }
@@ -3382,7 +3378,7 @@
             const alert = (pathAlertConfig.alerts || []).find((item) => item && item.id === alertId);
             if (!alert || !alert.target) return;
             if (alert.target.type === 'quote') {
-                const quote = findDashboardQuoteById(alert.target.quoteId);
+                const quote = getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, alert.target.quoteId);
                 if (!quote) return;
                 const triggeredEntry = buildQuoteAlertTriggeredEntry(
                     alert,
@@ -3462,7 +3458,7 @@
     function buildQuotePriceWatchSection() {
         return getArbPanelLayoutUtils().buildQuotePriceWatchSection({
             watchItems: getArbPathConfigUtils().getQuotePriceWatchItems(ARB_PATH_CONFIG),
-            findQuote: (item) => findDashboardQuoteById(item.quoteId),
+            findQuote: (item) => getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, item.quoteId),
             getQuoteState: (quote) => getQuoteMarketState(Number(quote.id)) || {},
             resolveValue: (item, state) => getArbPathConfigUtils().resolveQuotePriceValue(item, state),
             isQuotePaused,
@@ -4016,10 +4012,6 @@
         return getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction);
     }
 
-    function getQuoteAlertsForQuoteId(quoteId) {
-        return getPathAlertUtils().getQuoteAlertsForQuoteId(pathAlertConfig, quoteId);
-    }
-
     function evaluateQuoteAlertsOnce() {
         for (const quote of dashboardState.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : [])) {
             checkPriceForAlerts(quote);
@@ -4094,7 +4086,7 @@
         if (isQuotePaused(quote)) return;
 
         const uiState = getQuoteUiState(quote.id);
-        const quoteAlerts = getQuoteAlertsForQuoteId(quote.id);
+        const quoteAlerts = getPathAlertUtils().getQuoteAlertsForQuoteId(pathAlertConfig, quote.id);
         const itemEl = document.getElementById(`quote-item-${quote.id}`);
         const resultDiv = itemEl ? itemEl.querySelector('.quote-result') : null;
         let hasTriggeredThisTick = false;
