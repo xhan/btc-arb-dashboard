@@ -11,7 +11,8 @@ const {
   buildPathAlertLogCardHtml,
   buildQuoteAlertLogHtml,
   hasMutedTargetLogCard,
-  removeRestoredMutedAlertLogCards
+  removeRestoredMutedAlertLogCards,
+  resolveAlertLogClickAction
 } = require('../alert-log-ui-utils');
 
 const appendPlan = buildAlertLogAppendPlan([
@@ -116,6 +117,53 @@ const fakeRestoredContainer = {
 };
 assert.strictEqual(removeRestoredMutedAlertLogCards([fakeRestoredContainer, null], 'target'), 2);
 assert.deepStrictEqual(removedCards, ['a', 'b']);
+
+function resolveActionFor(matches) {
+  return resolveAlertLogClickAction({ type: 'click' }, {
+    closestEventTarget: (event, selector) => matches[selector] || null
+  });
+}
+
+assert.deepStrictEqual(
+  resolveActionFor({ '#alert-log-muted-tab': {} }),
+  { type: 'set-tab', tab: 'muted' }
+);
+const quoteDexElement = {};
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-quote-alert-dex-link-copy]': quoteDexElement }),
+  { type: 'copy-quote-dex-link', element: quoteDexElement }
+);
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-muted-path-target-extend]': { dataset: { mutedPathTargetExtend: 'target-1' } } }),
+  { type: 'extend-muted-path-target', key: 'target-1' }
+);
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-muted-path-target-restore]': { dataset: { mutedPathTargetRestore: 'target-2' } } }),
+  { type: 'restore-muted-path-target', key: 'target-2' }
+);
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-muted-path-leg-extend]': { dataset: { mutedPathLegExtend: 'leg-1' } } }),
+  { type: 'extend-muted-path-leg', key: 'leg-1' }
+);
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-muted-path-leg-restore]': { dataset: { mutedPathLegRestore: 'leg-2' } } }),
+  { type: 'restore-muted-path-leg', key: 'leg-2' }
+);
+const muteButton = { dataset: { pathAlertLogMute: 'path-alert-1' } };
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-path-alert-log-mute]': muteButton }),
+  { type: 'mute-alert-target', alertId: 'path-alert-1', buttonEl: muteButton }
+);
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-quote-alert-log-mute]': { disabled: true, dataset: { quoteAlertLogMute: 'quote-alert-1' } } }),
+  { type: 'ignore' }
+);
+const collapsedCard = {};
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-alert-log-collapsed="1"]': collapsedCard }),
+  { type: 'expand-collapsed-card', card: collapsedCard }
+);
+assert.deepStrictEqual(resolveActionFor({}), { type: 'none' });
 
 const mutedStatePanelHtml = buildMutedAlertStatePanelHtml({
   mutedPathTargets: [

@@ -3399,62 +3399,38 @@
     }
 
     function handleAlertLogClick(event) {
-        const logTabBtn = closestEventTarget(event, '#alert-log-log-tab');
-        if (logTabBtn) {
-            alertLogActiveTab = 'log';
+        const action = getAlertLogUiUtils().resolveAlertLogClickAction(event, { closestEventTarget });
+        if (action.type === 'set-tab') {
+            alertLogActiveTab = action.tab;
             renderAlertLogTabState();
             return;
         }
-        const mutedLogTabBtn = closestEventTarget(event, '#alert-log-muted-log-tab');
-        if (mutedLogTabBtn) {
-            alertLogActiveTab = 'muted-log';
-            renderAlertLogTabState();
-            return;
-        }
-        const mutedTabBtn = closestEventTarget(event, '#alert-log-muted-tab');
-        if (mutedTabBtn) {
-            alertLogActiveTab = 'muted';
-            renderAlertLogTabState();
-            return;
-        }
-        const quoteDexLinkEl = closestEventTarget(event, '[data-quote-alert-dex-link-copy]');
-        if (quoteDexLinkEl) {
+        if (action.type === 'copy-quote-dex-link') {
             event.preventDefault();
-            void copyDexLinkFromElement(quoteDexLinkEl);
+            void copyDexLinkFromElement(action.element);
             return;
         }
-        const extendMutedPathTargetBtn = closestEventTarget(event, '[data-muted-path-target-extend]');
-        if (extendMutedPathTargetBtn) {
-            extendMutedPathTargetByKey(String(extendMutedPathTargetBtn.dataset.mutedPathTargetExtend || ''), Date.now());
+        if (action.type === 'extend-muted-path-target') {
+            extendMutedPathTargetByKey(action.key, Date.now());
             return;
         }
-        const restoreMutedPathTargetBtn = closestEventTarget(event, '[data-muted-path-target-restore]');
-        if (restoreMutedPathTargetBtn) {
-            removeMutedPathTargetByKey(String(restoreMutedPathTargetBtn.dataset.mutedPathTargetRestore || ''), Date.now());
+        if (action.type === 'restore-muted-path-target') {
+            removeMutedPathTargetByKey(action.key, Date.now());
             return;
         }
-        const extendMutedPathLegBtn = closestEventTarget(event, '[data-muted-path-leg-extend]');
-        if (extendMutedPathLegBtn) {
-            extendMutedPathLegByKey(String(extendMutedPathLegBtn.dataset.mutedPathLegExtend || ''), Date.now());
+        if (action.type === 'extend-muted-path-leg') {
+            extendMutedPathLegByKey(action.key, Date.now());
             return;
         }
-        const restoreMutedPathLegBtn = closestEventTarget(event, '[data-muted-path-leg-restore]');
-        if (restoreMutedPathLegBtn) {
-            removeMutedPathLegByKey(String(restoreMutedPathLegBtn.dataset.mutedPathLegRestore || ''), Date.now());
+        if (action.type === 'restore-muted-path-leg') {
+            removeMutedPathLegByKey(action.key, Date.now());
             return;
         }
-        const muteBtn = closestEventTarget(event, '[data-path-alert-log-mute]');
-        const quoteMuteBtn = closestEventTarget(event, '[data-quote-alert-log-mute]');
-        const buttonEl = muteBtn || quoteMuteBtn;
-        if (buttonEl && !buttonEl.disabled) {
-            if (extendMutedPathTargetFromLogButton(buttonEl, Date.now())) {
+        if (action.type === 'mute-alert-target') {
+            if (extendMutedPathTargetFromLogButton(action.buttonEl, Date.now())) {
                 return;
             }
-            const alertId = String(
-                (muteBtn && muteBtn.dataset.pathAlertLogMute)
-                || (quoteMuteBtn && quoteMuteBtn.dataset.quoteAlertLogMute)
-                || ''
-            ).trim();
+            const alertId = action.alertId;
             if (!alertId) return;
             const runtime = pathAlertRuntimeState.get(alertId);
             if (!runtime || !runtime.evaluation) return;
@@ -3485,10 +3461,9 @@
             mutePathAlertTarget(triggeredEntry, Date.now());
             return;
         }
-        if (closestEventTarget(event, 'a, button')) return;
-        const collapsedCard = closestEventTarget(event, '[data-alert-log-collapsed="1"]');
-        if (collapsedCard) {
-            expandCollapsedAlertLogCard(collapsedCard);
+        if (action.type === 'ignore') return;
+        if (action.type === 'expand-collapsed-card') {
+            expandCollapsedAlertLogCard(action.card);
             return;
         }
     }

@@ -129,6 +129,88 @@
     return removedCount;
   }
 
+  function readDatasetValue(element, key) {
+    return String(element && element.dataset && element.dataset[key] || '').trim();
+  }
+
+  function resolveAlertLogClickAction(event, options = {}) {
+    const closestEventTarget = typeof options.closestEventTarget === 'function'
+      ? options.closestEventTarget
+      : () => null;
+    function closest(selector) {
+      return closestEventTarget(event, selector);
+    }
+
+    const tabActions = [
+      ['#alert-log-log-tab', 'log'],
+      ['#alert-log-muted-log-tab', 'muted-log'],
+      ['#alert-log-muted-tab', 'muted']
+    ];
+    for (const [selector, tab] of tabActions) {
+      if (closest(selector)) {
+        return { type: 'set-tab', tab };
+      }
+    }
+
+    const quoteDexLinkEl = closest('[data-quote-alert-dex-link-copy]');
+    if (quoteDexLinkEl) {
+      return { type: 'copy-quote-dex-link', element: quoteDexLinkEl };
+    }
+
+    const extendMutedPathTargetBtn = closest('[data-muted-path-target-extend]');
+    if (extendMutedPathTargetBtn) {
+      return {
+        type: 'extend-muted-path-target',
+        key: readDatasetValue(extendMutedPathTargetBtn, 'mutedPathTargetExtend')
+      };
+    }
+
+    const restoreMutedPathTargetBtn = closest('[data-muted-path-target-restore]');
+    if (restoreMutedPathTargetBtn) {
+      return {
+        type: 'restore-muted-path-target',
+        key: readDatasetValue(restoreMutedPathTargetBtn, 'mutedPathTargetRestore')
+      };
+    }
+
+    const extendMutedPathLegBtn = closest('[data-muted-path-leg-extend]');
+    if (extendMutedPathLegBtn) {
+      return {
+        type: 'extend-muted-path-leg',
+        key: readDatasetValue(extendMutedPathLegBtn, 'mutedPathLegExtend')
+      };
+    }
+
+    const restoreMutedPathLegBtn = closest('[data-muted-path-leg-restore]');
+    if (restoreMutedPathLegBtn) {
+      return {
+        type: 'restore-muted-path-leg',
+        key: readDatasetValue(restoreMutedPathLegBtn, 'mutedPathLegRestore')
+      };
+    }
+
+    const muteBtn = closest('[data-path-alert-log-mute]');
+    const quoteMuteBtn = closest('[data-quote-alert-log-mute]');
+    const buttonEl = muteBtn || quoteMuteBtn;
+    if (buttonEl) {
+      if (buttonEl.disabled) return { type: 'ignore' };
+      return {
+        type: 'mute-alert-target',
+        alertId: readDatasetValue(muteBtn, 'pathAlertLogMute') || readDatasetValue(quoteMuteBtn, 'quoteAlertLogMute'),
+        buttonEl
+      };
+    }
+
+    if (closest('a, button')) return { type: 'ignore' };
+
+    const collapsedCard = closest('[data-alert-log-collapsed="1"]');
+    if (collapsedCard) {
+      return { type: 'expand-collapsed-card', card: collapsedCard };
+    }
+
+    return { type: 'none' };
+  }
+
   function buildMutedStateItemHtml(config = {}) {
     const linesHtml = (Array.isArray(config.lines) ? config.lines : [])
       .filter(Boolean)
@@ -378,6 +460,7 @@
     buildPathAlertLogCardHtml,
     buildQuoteAlertLogHtml,
     hasMutedTargetLogCard,
-    removeRestoredMutedAlertLogCards
+    removeRestoredMutedAlertLogCards,
+    resolveAlertLogClickAction
   };
 }));
