@@ -611,6 +611,64 @@
         `;
   }
 
+  function buildArbDetailProfitPreviewState(seriesList, options = {}) {
+    const validSeries = (Array.isArray(seriesList) ? seriesList : [])
+      .filter((series) => Array.isArray(series) && series.length);
+    if (validSeries.length < 2) {
+      return {
+        ready: false,
+        message: '至少需要 2 张价格图表。',
+        validSeries,
+        points: [],
+        seriesCount: validSeries.length,
+        metaText: ''
+      };
+    }
+
+    if (typeof options.buildProfitChartPoints !== 'function') {
+      return {
+        ready: false,
+        message: '收益图算法未就绪，请刷新页面后重试。',
+        validSeries,
+        points: [],
+        seriesCount: validSeries.length,
+        metaText: ''
+      };
+    }
+
+    if (options.canMountProfitHistoryChart !== true) {
+      return {
+        ready: false,
+        message: '图表模块未就绪，请刷新页面后重试。',
+        validSeries,
+        points: [],
+        seriesCount: validSeries.length,
+        metaText: ''
+      };
+    }
+
+    const points = options.buildProfitChartPoints(validSeries);
+    if (!Array.isArray(points) || !points.length) {
+      return {
+        ready: false,
+        message: '当前价格图表缺少对齐时间点，暂时无法计算收益。',
+        validSeries,
+        points: [],
+        seriesCount: validSeries.length,
+        metaText: ''
+      };
+    }
+
+    return {
+      ready: true,
+      message: '',
+      validSeries,
+      points,
+      seriesCount: validSeries.length,
+      metaText: `按当前 ${validSeries.length} 张价格图逐时点乘积计算，> 1.0 为正收益。`
+    };
+  }
+
   function buildArbDetailChartPreviewStripHtml(pairs = [], options = {}) {
     const list = Array.isArray(pairs) ? pairs : [];
     const cardsHtml = list.map((pair, index) => buildArbDetailChartPreviewCardHtml(pair, index, options)).join('');
@@ -712,6 +770,7 @@
     buildArbDetailProfitPreviewCardHtml,
     buildArbDetailProfitPreviewMessageHtml,
     buildArbDetailProfitPreviewReadyHtml,
+    buildArbDetailProfitPreviewState,
     buildArbDetailChartPreviewStripHtml,
     buildArbOpportunityStableId,
     buildUniqueArbOpportunityId,

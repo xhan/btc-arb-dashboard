@@ -2661,30 +2661,17 @@
         const cardEl = getArbDetailProfitCardEl();
         if (!cardEl) return;
 
-        const validSeries = (seriesList || []).filter((series) => Array.isArray(series) && series.length);
-        if (validSeries.length < 2) {
-            renderArbDetailProfitPreviewMessage('至少需要 2 张价格图表。');
-            return;
-        }
-
         const utils = getChartsUtils();
-        if (!utils || typeof utils.buildProfitChartPoints !== 'function') {
-            renderArbDetailProfitPreviewMessage('收益图算法未就绪，请刷新页面后重试。');
+        const previewState = getArbDetailUtils().buildArbDetailProfitPreviewState(seriesList, {
+            buildProfitChartPoints: utils && utils.buildProfitChartPoints,
+            canMountProfitHistoryChart: Boolean(renderer && typeof renderer.mountProfitHistoryChart === 'function')
+        });
+        if (!previewState.ready) {
+            renderArbDetailProfitPreviewMessage(previewState.message);
             return;
         }
 
-        if (!renderer || typeof renderer.mountProfitHistoryChart !== 'function') {
-            renderArbDetailProfitPreviewMessage('图表模块未就绪，请刷新页面后重试。');
-            return;
-        }
-
-        const points = utils.buildProfitChartPoints(validSeries);
-        if (!points.length) {
-            renderArbDetailProfitPreviewMessage('当前价格图表缺少对齐时间点，暂时无法计算收益。');
-            return;
-        }
-
-        cardEl.innerHTML = getArbDetailUtils().buildArbDetailProfitPreviewReadyHtml(validSeries.length);
+        cardEl.innerHTML = getArbDetailUtils().buildArbDetailProfitPreviewReadyHtml(previewState.seriesCount);
         const canvasEl = cardEl.querySelector('.arb-detail-profit-canvas');
         const metaEl = cardEl ? cardEl.querySelector('.arb-detail-profit-meta') : null;
         if (!canvasEl) return;
@@ -2694,11 +2681,11 @@
             height: 104,
             showRightPriceScale: true
         });
-        chartInstance.update(points);
+        chartInstance.update(previewState.points);
         arbDetailChartPreviewCharts.push(chartInstance);
 
         if (metaEl) {
-            metaEl.textContent = `按当前 ${validSeries.length} 张价格图逐时点乘积计算，> 1.0 为正收益。`;
+            metaEl.textContent = previewState.metaText;
         }
     }
 

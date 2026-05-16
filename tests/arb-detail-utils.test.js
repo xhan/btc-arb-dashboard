@@ -50,6 +50,7 @@ const {
   buildArbDetailProfitPreviewCardHtml,
   buildArbDetailProfitPreviewMessageHtml,
   buildArbDetailProfitPreviewReadyHtml,
+  buildArbDetailProfitPreviewState,
   buildArbDetailChartPreviewStripHtml
 } = require('../arb-detail-utils');
 
@@ -442,6 +443,60 @@ assert.ok(profitMessageHtml.includes('arb-detail-chart-message">至少 &lt;2&gt;
 const readyProfitHtml = buildArbDetailProfitPreviewReadyHtml(3);
 assert.ok(readyProfitHtml.includes('按当前 3 张价格图逐时点乘积计算'));
 assert.ok(readyProfitHtml.includes('arb-detail-profit-canvas'));
+
+assert.deepStrictEqual(
+  buildArbDetailProfitPreviewState([[], [{ time: 1, value: 1 }]], {
+    buildProfitChartPoints: () => [{ time: 1, value: 1 }],
+    canMountProfitHistoryChart: true
+  }),
+  {
+    ready: false,
+    message: '至少需要 2 张价格图表。',
+    validSeries: [[{ time: 1, value: 1 }]],
+    points: [],
+    seriesCount: 1,
+    metaText: ''
+  }
+);
+
+assert.deepStrictEqual(
+  buildArbDetailProfitPreviewState([[{ time: 1, value: 1 }], [{ time: 1, value: 2 }]], {
+    buildProfitChartPoints: null,
+    canMountProfitHistoryChart: true
+  }).message,
+  '收益图算法未就绪，请刷新页面后重试。'
+);
+
+assert.deepStrictEqual(
+  buildArbDetailProfitPreviewState([[{ time: 1, value: 1 }], [{ time: 1, value: 2 }]], {
+    buildProfitChartPoints: () => [{ time: 1, value: 2 }],
+    canMountProfitHistoryChart: false
+  }).message,
+  '图表模块未就绪，请刷新页面后重试。'
+);
+
+assert.deepStrictEqual(
+  buildArbDetailProfitPreviewState([[{ time: 1, value: 1 }], [{ time: 2, value: 2 }]], {
+    buildProfitChartPoints: () => [],
+    canMountProfitHistoryChart: true
+  }).message,
+  '当前价格图表缺少对齐时间点，暂时无法计算收益。'
+);
+
+assert.deepStrictEqual(
+  buildArbDetailProfitPreviewState([[{ time: 1, value: 1 }], [{ time: 1, value: 2 }]], {
+    buildProfitChartPoints: () => [{ time: 1, value: 2 }],
+    canMountProfitHistoryChart: true
+  }),
+  {
+    ready: true,
+    message: '',
+    validSeries: [[{ time: 1, value: 1 }], [{ time: 1, value: 2 }]],
+    points: [{ time: 1, value: 2 }],
+    seriesCount: 2,
+    metaText: '按当前 2 张价格图逐时点乘积计算，> 1.0 为正收益。'
+  }
+);
 
 const stripHtml = buildArbDetailChartPreviewStripHtml(
   [{ quoteId: 1, direction: 'forward' }],

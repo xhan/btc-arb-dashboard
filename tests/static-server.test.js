@@ -843,11 +843,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbOpportunityChartHref(entry, buildChartsPageHref)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg = () => false)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailChartPreviewStripHtml'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailProfitPreviewState(seriesList, options = {})'));
     assert.ok(appJsResponse.body.includes('function getChartsUtils()'));
     assert.ok(appJsResponse.body.includes('ChartsUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbOpportunityChartHref('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailProfitPreviewState(seriesList, {'));
     assert.ok(appJsResponse.body.includes('buildArbDetailChartPreviewStripHtml(pairs, {'));
     assert.ok(appJsResponse.body.includes('buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailShellHtml(arbDetailState.cards)'));
