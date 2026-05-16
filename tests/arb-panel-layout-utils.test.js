@@ -6,6 +6,7 @@ const {
   buildGlobalArbFilterState,
   buildGlobalArbFilterControlState,
   buildGlobalArbFilterEventPatch,
+  bindGlobalArbFilterEvents,
   buildGlobalArbFilterWritePlan,
   updateGlobalArbFilterState,
   clearGlobalArbFilterState,
@@ -368,6 +369,58 @@ assert.deepStrictEqual(
   { twoLegOnly: true }
 );
 assert.deepStrictEqual(buildGlobalArbFilterEventPatch('unknown', { target: { value: 'x' } }), {});
+
+function createListenerTarget() {
+  const listeners = {};
+  return {
+    listeners,
+    addEventListener(type, handler) {
+      listeners[type] = handler;
+    }
+  };
+}
+
+{
+  const excludedSymbolsInput = createListenerTarget();
+  const excludedChainsInput = createListenerTarget();
+  const includedSymbolsInput = createListenerTarget();
+  const twoLegOnlyInput = createListenerTarget();
+  const clearButton = createListenerTarget();
+  const patches = [];
+  const keyEvents = [];
+  const clearEvents = [];
+
+  assert.strictEqual(bindGlobalArbFilterEvents({
+    excludedSymbolsInput,
+    excludedChainsInput,
+    includedSymbolsInput,
+    twoLegOnlyInput,
+    clearButton
+  }, {
+    onPatch: (patch) => patches.push(patch),
+    onKeydown: (event) => keyEvents.push(event.key),
+    onClear: (event) => clearEvents.push(event.type)
+  }), 8);
+
+  excludedSymbolsInput.listeners.input({ target: { value: 'cbBTC' } });
+  excludedChainsInput.listeners.input({ target: { value: 'base' } });
+  includedSymbolsInput.listeners.input({ target: { value: 'WBTC' } });
+  twoLegOnlyInput.listeners.change({ target: { checked: true } });
+  excludedSymbolsInput.listeners.keydown({ key: 'Enter' });
+  excludedChainsInput.listeners.keydown({ key: 'Escape' });
+  includedSymbolsInput.listeners.keydown({ key: 'Enter' });
+  clearButton.listeners.click({ type: 'click' });
+
+  assert.deepStrictEqual(patches, [
+    { excludedSymbolsInput: 'cbBTC' },
+    { excludedChainsInput: 'base' },
+    { includedSymbolsInput: 'WBTC' },
+    { twoLegOnly: true }
+  ]);
+  assert.deepStrictEqual(keyEvents, ['Enter', 'Escape', 'Enter']);
+  assert.deepStrictEqual(clearEvents, ['click']);
+  assert.strictEqual(bindGlobalArbFilterEvents({}, {}), 0);
+}
 
 assert.deepStrictEqual(
   updateGlobalArbFilterState(

@@ -289,6 +289,36 @@
     return {};
   }
 
+  function bindEvent(element, type, handler) {
+    if (!element || typeof element.addEventListener !== 'function') return 0;
+    element.addEventListener(type, handler);
+    return 1;
+  }
+
+  function bindGlobalArbFilterEvents(refs = {}, handlers = {}) {
+    const onPatch = typeof handlers.onPatch === 'function' ? handlers.onPatch : () => {};
+    const onKeydown = typeof handlers.onKeydown === 'function' ? handlers.onKeydown : () => {};
+    const onClear = typeof handlers.onClear === 'function' ? handlers.onClear : () => {};
+    const inputBindings = [
+      [refs.excludedSymbolsInput, 'excludedSymbolsInput'],
+      [refs.excludedChainsInput, 'excludedChainsInput'],
+      [refs.includedSymbolsInput, 'includedSymbolsInput']
+    ];
+
+    let boundCount = 0;
+    inputBindings.forEach(([element, field]) => {
+      boundCount += bindEvent(element, 'input', (event) => {
+        onPatch(buildGlobalArbFilterEventPatch(field, event), event);
+      });
+      boundCount += bindEvent(element, 'keydown', onKeydown);
+    });
+    boundCount += bindEvent(refs.twoLegOnlyInput, 'change', (event) => {
+      onPatch(buildGlobalArbFilterEventPatch('twoLegOnly', event), event);
+    });
+    boundCount += bindEvent(refs.clearButton, 'click', onClear);
+    return boundCount;
+  }
+
   function updateGlobalArbFilterState(currentState, patch = {}) {
     const current = buildGlobalArbFilterState(currentState);
     const next = buildGlobalArbFilterState({
@@ -533,6 +563,7 @@
     buildGlobalArbFilterState,
     buildGlobalArbFilterControlState,
     buildGlobalArbFilterEventPatch,
+    bindGlobalArbFilterEvents,
     buildGlobalArbFilterWritePlan,
     updateGlobalArbFilterState,
     clearGlobalArbFilterState,

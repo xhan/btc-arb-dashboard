@@ -2333,30 +2333,6 @@
         return true;
     }
 
-    function handleArbGlobalFilterInput(event) {
-        updateArbGlobalFilterState(
-            getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedSymbolsInput', event)
-        );
-    }
-
-    function handleArbGlobalChainFilterInput(event) {
-        updateArbGlobalFilterState(
-            getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedChainsInput', event)
-        );
-    }
-
-    function handleArbGlobalIncludeFilterInput(event) {
-        updateArbGlobalFilterState(
-            getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('includedSymbolsInput', event)
-        );
-    }
-
-    function handleArbGlobalTwoLegOnlyChange(event) {
-        updateArbGlobalFilterState(
-            getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('twoLegOnly', event)
-        );
-    }
-
     function handleArbGlobalFilterClear() {
         const result = getArbPanelLayoutUtils().clearGlobalArbFilterState(getArbGlobalFilterState());
         if (!result.changed) return;
@@ -4259,24 +4235,17 @@
                     }
                 });
             }
-            if (arbGlobalFilterInput) {
-                arbGlobalFilterInput.addEventListener('input', handleArbGlobalFilterInput);
-                arbGlobalFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown);
-            }
-            if (arbGlobalChainFilterInput) {
-                arbGlobalChainFilterInput.addEventListener('input', handleArbGlobalChainFilterInput);
-                arbGlobalChainFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown);
-            }
-            if (arbGlobalIncludeFilterInput) {
-                arbGlobalIncludeFilterInput.addEventListener('input', handleArbGlobalIncludeFilterInput);
-                arbGlobalIncludeFilterInput.addEventListener('keydown', handleArbGlobalFilterKeydown);
-            }
-            if (arbGlobalTwoLegOnlyInput) {
-                arbGlobalTwoLegOnlyInput.addEventListener('change', handleArbGlobalTwoLegOnlyChange);
-            }
-            if (arbGlobalFilterClearBtn) {
-                arbGlobalFilterClearBtn.addEventListener('click', handleArbGlobalFilterClear);
-            }
+            getArbPanelLayoutUtils().bindGlobalArbFilterEvents({
+                excludedSymbolsInput: arbGlobalFilterInput,
+                excludedChainsInput: arbGlobalChainFilterInput,
+                includedSymbolsInput: arbGlobalIncludeFilterInput,
+                twoLegOnlyInput: arbGlobalTwoLegOnlyInput,
+                clearButton: arbGlobalFilterClearBtn
+            }, {
+                onPatch: updateArbGlobalFilterState,
+                onKeydown: handleArbGlobalFilterKeydown,
+                onClear: handleArbGlobalFilterClear
+            });
             if (arbPathHeader) {
                 arbPathHeader.addEventListener('click', handleArbPathHeaderClick);
             }
