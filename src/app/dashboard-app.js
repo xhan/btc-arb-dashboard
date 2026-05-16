@@ -55,7 +55,9 @@
         onExpired: () => updateArbPanel()
     });
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
-    let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;
+    const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({
+        baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
+    });
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
     const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;
     const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
@@ -842,9 +844,7 @@
     }
 
     function bringFloatingPanelToFront(panel) {
-        if (!panel) return;
-        floatingPanelZCounter += 1;
-        panel.style.zIndex = String(floatingPanelZCounter);
+        return floatingPanelZIndexRuntime.bringToFront(panel);
     }
 
     function bindFloatingPanelFocus(panel, header) {
@@ -2083,7 +2083,7 @@
         const panel = document.createElement('div');
         panel.id = 'data-terminal-window';
         panel.innerHTML = utils.buildDataTerminalShellHtml();
-        panel.style.zIndex = String(FLOATING_PANEL_BASE_Z_INDEX);
+        floatingPanelZIndexRuntime.resetPanel(panel);
         syncDataTerminalPanelDefaultSize(panel);
         positionDataTerminalWindow(panel);
         document.body.appendChild(panel);
@@ -4901,7 +4901,7 @@
             }
             [alertLogWindow, pathAlertWindow, arbPathWindow].forEach((panel) => {
                 if (panel) {
-                    panel.style.zIndex = String(FLOATING_PANEL_BASE_Z_INDEX);
+                    floatingPanelZIndexRuntime.resetPanel(panel);
                 }
             });
             if (pathAlertWindow && window.getComputedStyle(pathAlertWindow).display !== 'none') {

@@ -59,6 +59,31 @@
     }
   }
 
+  function createFloatingPanelZIndexRuntime(options = {}) {
+    const baseZIndex = Number.isFinite(Number(options.baseZIndex))
+      ? Number(options.baseZIndex)
+      : 2100;
+    let currentZIndex = baseZIndex;
+
+    function resetPanel(panel) {
+      if (!panel || !panel.style) return false;
+      panel.style.zIndex = String(baseZIndex);
+      return true;
+    }
+
+    function bringToFront(panel) {
+      if (!panel || !panel.style) return null;
+      currentZIndex += 1;
+      panel.style.zIndex = String(currentZIndex);
+      return currentZIndex;
+    }
+
+    return {
+      bringToFront,
+      resetPanel
+    };
+  }
+
   function removeClasses(element, classNames = []) {
     if (!element || !element.classList || typeof element.classList.remove !== 'function') return;
     classNames.forEach((className) => {
@@ -360,6 +385,7 @@
     clearQuoteHighlightUi,
     closestEventTarget,
     createElementFromHtml,
+    createFloatingPanelZIndexRuntime,
     createStableHtmlRenderer,
     escapeCssAttributeValue,
     hideTooltip,

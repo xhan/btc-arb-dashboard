@@ -18,6 +18,7 @@ const {
   clearQuoteDataError,
   closestEventTarget,
   createElementFromHtml,
+  createFloatingPanelZIndexRuntime,
   createStableHtmlRenderer,
   escapeCssAttributeValue,
   hideTooltip,
@@ -432,6 +433,17 @@ header.listeners.mousedown();
 header.listeners.click();
 panel.listeners.mousedown();
 assert.deepStrictEqual(focusCalls, [panel, panel, panel]);
+
+const zIndexRuntime = createFloatingPanelZIndexRuntime({ baseZIndex: 2100 });
+const zIndexPanel = { style: {} };
+assert.strictEqual(zIndexRuntime.resetPanel(zIndexPanel), true);
+assert.strictEqual(zIndexPanel.style.zIndex, '2100');
+assert.strictEqual(zIndexRuntime.bringToFront(zIndexPanel), 2101);
+assert.strictEqual(zIndexPanel.style.zIndex, '2101');
+assert.strictEqual(zIndexRuntime.bringToFront(zIndexPanel), 2102);
+assert.strictEqual(zIndexPanel.style.zIndex, '2102');
+assert.strictEqual(zIndexRuntime.resetPanel(null), false);
+assert.strictEqual(zIndexRuntime.bringToFront(null), null);
 
 const dragElement = {
   offsetTop: 50,

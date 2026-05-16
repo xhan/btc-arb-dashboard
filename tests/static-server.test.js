@@ -546,9 +546,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("closestEventTarget(event, 'button, input, textarea, select, [contenteditable=\"true\"]')"));
     assert.ok(appJsResponse.body.includes('function bindDraggableFloatingPanel(element, handle)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindDraggableElement(element, handle, {'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelFocus(panel, header, { bringToFront: bringFloatingPanelToFront })'));
+    assert.ok(appJsResponse.body.includes('const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({'));
+    assert.ok(appJsResponse.body.includes('return floatingPanelZIndexRuntime.bringToFront(panel);'));
+    assert.ok(!appJsResponse.body.includes('let floatingPanelZCounter = FLOATING_PANEL_BASE_Z_INDEX;'));
+    assert.ok(!appJsResponse.body.includes('panel.style.zIndex = String(FLOATING_PANEL_BASE_Z_INDEX);'));
     assert.ok(domRenderUtilsResponse.body.includes('function bindDraggableElement(element, handle, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function bindFloatingPanelFocus(panel, header, options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function createFloatingPanelZIndexRuntime(options = {})'));
     assert.ok(!appJsResponse.body.includes('function makeDraggable(element, handle)'));
     assert.ok(!appJsResponse.body.includes('makeDraggable(arbPathWindow, arbPathHeader)'));
     assert.ok(!appJsResponse.body.includes('if (!arbGlobalFilterBar) return;'));
