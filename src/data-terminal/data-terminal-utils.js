@@ -600,6 +600,15 @@
         `;
   }
 
+  function createDataTerminalPanelElement(options = {}) {
+    const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
+    if (!documentImpl || typeof documentImpl.createElement !== 'function') return null;
+    const panel = documentImpl.createElement('div');
+    panel.id = 'data-terminal-window';
+    panel.innerHTML = buildDataTerminalShellHtml();
+    return panel;
+  }
+
   function createDataTerminalCache() {
     let recordsCacheKey = '';
     let recordsCache = null;
@@ -700,6 +709,7 @@
     buildDataTerminalPanelHtml,
     buildDataTerminalRecords,
     buildDataTerminalShellHtml,
+    createDataTerminalPanelElement,
     applyDataTerminalDefaultSize,
     applyDataTerminalWindowPosition,
     buildDataTerminalSelectionPatch,

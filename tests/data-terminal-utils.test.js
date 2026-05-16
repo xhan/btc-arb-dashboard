@@ -19,6 +19,7 @@ const {
   buildDataTerminalSelectionSummary,
   buildDataTerminalViewModel,
   createDataTerminalCache,
+  createDataTerminalPanelElement,
   createDataTerminalUpdateRuntime,
   getDataTerminalDomRefs,
   parseDataTerminalQuery,
@@ -661,6 +662,20 @@ assert.ok(shellHtml.includes('id="data-terminal-alias-toggle"'));
 assert.ok(shellHtml.includes('id="data-terminal-diff-toggle"'));
 assert.ok(shellHtml.includes('id="data-terminal-profit-bp"'));
 assert.ok(shellHtml.includes('id="data-terminal-content"'));
+
+let createdDataTerminalTag = '';
+const createdDataTerminalPanel = createDataTerminalPanelElement({
+  documentImpl: {
+    createElement(tagName) {
+      createdDataTerminalTag = tagName;
+      return { id: '', innerHTML: '' };
+    }
+  }
+});
+assert.strictEqual(createdDataTerminalTag, 'div');
+assert.strictEqual(createdDataTerminalPanel.id, 'data-terminal-window');
+assert.strictEqual(createdDataTerminalPanel.innerHTML, shellHtml);
+assert.strictEqual(createDataTerminalPanelElement({ documentImpl: {} }), null);
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'src/data-terminal/data-terminal-utils.js'), 'utf8');
 const browserSandbox = { window: {} };

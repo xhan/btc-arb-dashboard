@@ -1552,6 +1552,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
     assert.ok(appJsResponse.body.includes('function mountDataTerminalPanel()'));
     assert.ok(appJsResponse.body.includes('function unmountDataTerminalPanel()'));
+    assert.ok(appJsResponse.body.includes('const panel = utils.createDataTerminalPanelElement({ documentImpl: document });'));
+    assert.ok(!appJsResponse.body.includes("const panel = document.createElement('div');"));
+    assert.ok(!appJsResponse.body.includes("panel.id = 'data-terminal-window';"));
+    assert.ok(!appJsResponse.body.includes('panel.innerHTML = utils.buildDataTerminalShellHtml();'));
     assert.ok(!appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
     assert.ok(!appJsResponse.body.includes('function positionDataTerminalWindow(panel)'));
     assert.ok(!appJsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
@@ -1564,6 +1568,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('utils.buildDataTerminalPanelHtml('));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalShellHtml'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('function createDataTerminalPanelElement(options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function resolveDataTerminalContentClickAction(event, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function resolveDataTerminalHeaderClickAction(event, options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalControlWritePlan(state = {})'));
@@ -1579,7 +1584,6 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalExportBlock);
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalBp'));
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalValue'));
-    assert.ok(appJsResponse.body.includes('utils.buildDataTerminalShellHtml()'));
     assert.ok(appJsResponse.body.includes('const refs = utils.getDataTerminalDomRefs(panel);'));
     assert.ok(!appJsResponse.body.includes("panel.querySelector('#data-terminal-header')"));
     assert.ok(appJsResponse.body.includes('utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs)'));

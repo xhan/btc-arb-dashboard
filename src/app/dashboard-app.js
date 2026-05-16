@@ -1896,9 +1896,8 @@
         }
         const utils = getDataTerminalUtils();
 
-        const panel = document.createElement('div');
-        panel.id = 'data-terminal-window';
-        panel.innerHTML = utils.buildDataTerminalShellHtml();
+        const panel = utils.createDataTerminalPanelElement({ documentImpl: document });
+        if (!panel) return;
         floatingPanelZIndexRuntime.resetPanel(panel);
         utils.applyDataTerminalDefaultSize(panel, {
             anchorPanel: arbPathWindow,
