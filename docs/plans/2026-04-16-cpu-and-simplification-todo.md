@@ -131,6 +131,7 @@
   - `app.js` 仍是超大文件，包含报价轮询、套利、详情、报警、日志、数据终端、保存、主题等多职责
 - 建议拆分：
   - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `quote-queue-runtime-utils.js`，`app.js` 只保留业务依赖注入和入口包装
+  - `quote-request`：source 支持链判断已下沉到 `quote-request-utils.js`，`app.js` 不再维护 Kyber/0x 支持链常量
   - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `quote-display-utils.js` / `quote-state-runtime-utils.js`
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 所有权、全局过滤栏读写计划和面板内容事件动作解析已下沉到 `arb-path-template-cache-utils.js` / `arb-runtime-memory-utils.js` / `arb-panel-layout-utils.js` / `arb-panel-renderer.js`，`app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `arb-detail-utils.js`
@@ -172,6 +173,7 @@
   - `app.js` 的 request channel tag、quote pair label 和 arb detail source HTML 单用途包装已移除，调用点直接委托对应 utils
   - `app.js` 中未调用的 CEX trading pair parser 包装和 `TradingPairUtils` 入口已移除
   - `app.js` 的 single-chain display name 和 paused monitor state 单用途包装已移除，调用点复用现有 helper / utils
+  - `app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `quote-request-utils.js`
   - `app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `data-terminal-utils.js`
   - `app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `arb-runtime-memory-utils.js`
   - `app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `arb-runtime-memory-utils.js`
