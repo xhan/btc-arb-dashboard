@@ -333,6 +333,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(dexLinkUtilsResponse.body.includes('data-dex-link-chain'));
     assert.ok(appJsResponse.body.includes('function getDexLinkUtils()'));
     assert.ok(appJsResponse.body.includes('DexLinkUtils is not loaded'));
+    assert.ok(!appJsResponse.body.includes('function getDexLinkLabel(config = {})'));
+    assert.ok(!appJsResponse.body.includes("function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制')"));
+    assert.ok(appJsResponse.body.includes('getDexLinkUtils().getDexLinkLabel(dexLinkConfig)'));
+    assert.ok(appJsResponse.body.includes('getDexLinkUtils().buildDexLinkCopyButtonHtml({'));
     assert.ok(appJsResponse.body.includes('copyDexLinkFromElement'));
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
     assert.ok(appJsResponse.body.includes('function getDataTerminalUtils()'));

@@ -1696,14 +1696,6 @@
         return window.DexLinkUtils;
     }
 
-    function getDexLinkLabel(config = {}) {
-        return getDexLinkUtils().getDexLinkLabel(config);
-    }
-
-    function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制') {
-        return getDexLinkUtils().buildDexLinkCopyButtonHtml(config, className, buttonText);
-    }
-
     function formatDetailNumber(value, precision = 6) {
         return getArbDetailUtils().formatDetailNumber(value, precision);
     }
@@ -2083,7 +2075,7 @@
                 {
                     formatChainLabel,
                     formatAmount: (amount) => formatDetailNumber(Number(amount), 6),
-                    buildPairLinkHtml: (row, className, label) => buildDexLinkCopyButtonHtml({
+                    buildPairLinkHtml: (row, className, label) => getDexLinkUtils().buildDexLinkCopyButtonHtml({
                         chain: row.chain,
                         fromTokenAddress: row.fromTokenAddress,
                         toTokenAddress: row.toTokenAddress,
@@ -4346,7 +4338,7 @@
             toTokenAddress: quote.toToken,
             inputAmount: quote.amount
         };
-        const dexLinkLabel = isCrossChainQuote(quote) ? null : getDexLinkLabel(dexLinkConfig);
+        const dexLinkLabel = isCrossChainQuote(quote) ? null : getDexLinkUtils().getDexLinkLabel(dexLinkConfig);
         if (labelStackEl && dexLinkLabel) {
             labelStackEl.classList.add('quote-dex-link-target');
             labelStackEl.dataset.dexLinkCopy = '1';
