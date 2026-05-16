@@ -23,6 +23,36 @@
     }
   }
 
+  function applyQuoteSettingsModalWritePlan(refs = {}, plan = {}) {
+    (plan.text || []).forEach((item) => {
+      const element = refs[item.id];
+      if (element) element.textContent = item.text;
+    });
+    (plan.display || []).forEach((item) => {
+      setDisplay(refs[item.id], item.display);
+    });
+    (plan.disabled || []).forEach((item) => {
+      const element = refs[item.id];
+      if (element) element.disabled = item.disabled;
+    });
+    (plan.value || []).forEach((item) => {
+      setElementValue(refs[item.id], item.value);
+    });
+    (plan.checked || []).forEach((item) => {
+      const element = refs[item.id];
+      if (element) element.checked = item.checked;
+    });
+  }
+
+  function readQuoteSettingsFormValues(refs = {}) {
+    return {
+      sourceValue: readElementValue(refs['quote-source-pref']),
+      kyberOnlyDirectPools: Boolean(refs['kyber-only-direct-pools'] && refs['kyber-only-direct-pools'].checked),
+      showInverse: Boolean(refs['show-inverse-quote'] && refs['show-inverse-quote'].checked),
+      requestChannelId: readElementValue(refs['quote-request-channel'])
+    };
+  }
+
   function readAddQuoteFormValues(refs = {}) {
     return {
       chain: readElementValue(refs.chainSelect),
@@ -82,7 +112,9 @@
 
   return {
     applyAddQuoteFormViewState,
+    applyQuoteSettingsModalWritePlan,
     readAddQuoteFormValues,
+    readQuoteSettingsFormValues,
     resetAddQuoteModal,
     syncAddQuoteFormControls
   };

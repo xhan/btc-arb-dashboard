@@ -2,7 +2,9 @@ const assert = require('assert');
 
 const {
   applyAddQuoteFormViewState,
+  applyQuoteSettingsModalWritePlan,
   readAddQuoteFormValues,
+  readQuoteSettingsFormValues,
   resetAddQuoteModal,
   syncAddQuoteFormControls
 } = require('../src/dashboard/dashboard-modal-utils');
@@ -103,3 +105,58 @@ assert.strictEqual(resetRefs.symbolInput.value, '');
 assert.strictEqual(resetRefs.modal.classList.contains('visible'), false);
 assert.deepStrictEqual(resetResult, { currentCategoryIdToAdd: null });
 assert.strictEqual(resetSyncCount, 1);
+
+function createQuoteSettingsRefs() {
+  return {
+    'modal-title': { textContent: '' },
+    'modal-subtitle': { textContent: '' },
+    'quote-token-addresses': { style: { display: '' } },
+    'quote-from-token-line': { textContent: '' },
+    'quote-to-token-line': { textContent: '' },
+    'source-select-group': { style: { display: '' } },
+    'quote-source-pref': { value: '', disabled: false },
+    'kyber-only-direct-pools': { checked: false },
+    'inverse-toggle-group': { style: { display: '' } },
+    'show-inverse-quote': { checked: false },
+    'modal-swap-quote': { style: { display: '' } },
+    'modal-delete-quote': { style: { display: '' } },
+    'quote-request-channel': { value: 'default' }
+  };
+}
+
+const quoteSettingsRefs = createQuoteSettingsRefs();
+applyQuoteSettingsModalWritePlan(quoteSettingsRefs, {
+  text: [
+    { id: 'modal-title', text: '设置 · Base' },
+    { id: 'quote-from-token-line', text: 'GHO 0xaaa' }
+  ],
+  display: [
+    { id: 'quote-token-addresses', display: 'block' },
+    { id: 'modal-swap-quote', display: 'none' }
+  ],
+  disabled: [
+    { id: 'quote-source-pref', disabled: true }
+  ],
+  value: [
+    { id: 'quote-source-pref', value: 'LI.FI' }
+  ],
+  checked: [
+    { id: 'kyber-only-direct-pools', checked: true },
+    { id: 'show-inverse-quote', checked: true }
+  ]
+});
+assert.strictEqual(quoteSettingsRefs['modal-title'].textContent, '设置 · Base');
+assert.strictEqual(quoteSettingsRefs['quote-from-token-line'].textContent, 'GHO 0xaaa');
+assert.strictEqual(quoteSettingsRefs['quote-token-addresses'].style.display, 'block');
+assert.strictEqual(quoteSettingsRefs['modal-swap-quote'].style.display, 'none');
+assert.strictEqual(quoteSettingsRefs['quote-source-pref'].disabled, true);
+assert.strictEqual(quoteSettingsRefs['quote-source-pref'].value, 'LI.FI');
+assert.strictEqual(quoteSettingsRefs['kyber-only-direct-pools'].checked, true);
+assert.strictEqual(quoteSettingsRefs['show-inverse-quote'].checked, true);
+
+assert.deepStrictEqual(readQuoteSettingsFormValues(quoteSettingsRefs), {
+  sourceValue: 'LI.FI',
+  kyberOnlyDirectPools: true,
+  showInverse: true,
+  requestChannelId: 'default'
+});

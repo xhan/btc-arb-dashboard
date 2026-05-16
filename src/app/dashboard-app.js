@@ -280,7 +280,8 @@
         'inverse-toggle-group': inverseToggleGroup,
         'show-inverse-quote': inverseCheckbox,
         'modal-swap-quote': modalSwapQuoteBtn,
-        'modal-delete-quote': modalDeleteQuoteBtn
+        'modal-delete-quote': modalDeleteQuoteBtn,
+        'quote-request-channel': quoteRequestChannelSelect
     };
     const copyToastRuntime = getCopyUtils().createCopyToastRuntime({
         setTimeout,
@@ -4652,26 +4653,7 @@
     }
 
     function applyQuoteSettingsModalWritePlan(plan) {
-        (plan.text || []).forEach((item) => {
-            const element = quoteSettingsModalElements[item.id];
-            if (element) element.textContent = item.text;
-        });
-        (plan.display || []).forEach((item) => {
-            const element = quoteSettingsModalElements[item.id];
-            if (element) element.style.display = item.display;
-        });
-        (plan.disabled || []).forEach((item) => {
-            const element = quoteSettingsModalElements[item.id];
-            if (element) element.disabled = item.disabled;
-        });
-        (plan.value || []).forEach((item) => {
-            const element = quoteSettingsModalElements[item.id];
-            if (element) element.value = item.value;
-        });
-        (plan.checked || []).forEach((item) => {
-            const element = quoteSettingsModalElements[item.id];
-            if (element) element.checked = item.checked;
-        });
+        getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, plan);
     }
 
     function openQuoteSettingsModal(categoryId, quoteId) {
@@ -4706,26 +4688,7 @@
     }
 
     function getQuoteSettingsFormValues(quote) {
-        const values = getDashboardRenderer().readQuoteSettingsFormValues({
-            readValue: (id) => {
-                if (id === 'quote-source-pref') {
-                    return quoteSourceSelect ? quoteSourceSelect.value : '';
-                }
-                if (id === 'quote-request-channel') {
-                    return quoteRequestChannelSelect ? quoteRequestChannelSelect.value : '';
-                }
-                return '';
-            },
-            readChecked: (id) => {
-                if (id === 'kyber-only-direct-pools') {
-                    return Boolean(kyberOnlyDirectPoolsInput && kyberOnlyDirectPoolsInput.checked);
-                }
-                if (id === 'show-inverse-quote') {
-                    return Boolean(inverseCheckbox && inverseCheckbox.checked);
-                }
-                return false;
-            }
-        });
+        const values = getDashboardModalUtils().readQuoteSettingsFormValues(quoteSettingsModalElements);
         return {
             ...values,
             sourceValue: values.sourceValue || (quote ? quote.preferredSource : '')

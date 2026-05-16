@@ -399,7 +399,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalViewState({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalWritePlan(modalState)'));
     assert.ok(appJsResponse.body.includes('function applyQuoteSettingsModalWritePlan(plan)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().readQuoteSettingsFormValues({'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, plan)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readQuoteSettingsFormValues(quoteSettingsModalElements)'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsUpdatePlan({'));
     assert.ok(appJsResponse.body.includes('buildAddQuoteFormViewState: getDashboardRenderer().buildAddQuoteFormViewState'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddQuoteDraft({'));
@@ -408,6 +409,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('DashboardModalUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().syncAddQuoteFormControls(addQuoteModalRefs, {'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function readQuoteSettingsFormValues(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readAddQuoteFormValues(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function syncAddQuoteFormControls(refs = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildSettingsIntervalWritePlan(apiIntervals)'));
