@@ -889,19 +889,16 @@
         const displayName = getQuoteChainDisplayName(quote);
         const direction = getQuoteAlertDirection(alert && alert.target);
         const label = buildQuoteAlertDisplayLabel(quote, quoteMarketState.get(quote.id) || {}, direction);
-        const currentValueText = options.currentValueText || '';
         const actionLink = buildQuoteAlertActionLink(quote);
-        return {
+        return getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntry({
             alert,
             quote,
             displayName,
             label,
             message,
-            currentValueText,
-            actionLink,
-            summaryLines: [[displayName, label].filter(Boolean).join(' '), message].filter(Boolean),
-            mutedTargetCandidate: alert && alert.target && alert.target.type === 'quote' ? alert : null
-        };
+            currentValueText: options.currentValueText || '',
+            actionLink
+        });
     }
 
     function findDashboardQuoteById(quoteId) {

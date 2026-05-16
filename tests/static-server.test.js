@@ -446,10 +446,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('window.TradingPairUtils.splitCompactTradingPairSymbol(symbol)'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertMessage(alert, evaluation, {'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertCurrentValueText(alert, evaluation, {'));
+    assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertTriggeredEntry({'));
     assert.ok(!appJsResponse.body.includes('汇率已达到或超过目标'));
     assert.ok(!appJsResponse.body.includes("telegramHtmlBody: ''"));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertMessage(alert, evaluation, options = {})'));
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertCurrentValueText(alert, evaluation, options = {})'));
+    assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildQuoteAlertTriggeredEntry(options = {})'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({'));
     assert.ok(!appJsResponse.body.includes('PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload({'));
     assert.ok(!pathAlertNotificationUtilsResponse.body.includes('buildLegacyQuoteAlertRemotePayload'));

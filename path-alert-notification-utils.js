@@ -194,6 +194,24 @@
       : '';
   }
 
+  function buildQuoteAlertTriggeredEntry(options = {}) {
+    const alert = options.alert || null;
+    const displayName = String(options.displayName || '').trim();
+    const label = String(options.label || '').trim();
+    const message = String(options.message || '');
+    return {
+      alert,
+      quote: options.quote || null,
+      displayName,
+      label,
+      message,
+      currentValueText: options.currentValueText || '',
+      actionLink: options.actionLink || null,
+      summaryLines: [[displayName, label].filter(Boolean).join(' '), message].filter(Boolean),
+      mutedTargetCandidate: alert && alert.target && alert.target.type === 'quote' ? alert : null
+    };
+  }
+
   function buildQuoteAlertRemotePayload(options = {}) {
     const chainName = String(options.chainName || '').trim() || '未知链';
     const label = String(options.label || '').trim();
@@ -241,6 +259,7 @@
     buildQuoteAlertRuleLine,
     buildQuoteAlertMessage,
     buildQuoteAlertThresholdLine,
+    buildQuoteAlertTriggeredEntry,
     buildQuoteAlertRemotePayload,
     getQuoteAlertDirection
   };

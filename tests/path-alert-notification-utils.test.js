@@ -10,6 +10,7 @@ const {
   buildQuoteAlertRuleLine,
   buildQuoteAlertMessage,
   buildQuoteAlertThresholdLine,
+  buildQuoteAlertTriggeredEntry,
   buildQuoteAlertRemotePayload,
   getQuoteAlertDirection
 } = require('../path-alert-notification-utils');
@@ -179,6 +180,49 @@ assert.strictEqual(
     { basePrice: 1.0001, currentValue: 0.9997 }
   ),
   '基准汇率 1.0001 -> 0.9997'
+);
+
+const quoteAlertEntry = buildQuoteAlertTriggeredEntry({
+  alert: {
+    id: 'quote-1',
+    target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 1.01 }
+  },
+  quote: { id: 101 },
+  displayName: 'Arbitrum',
+  label: 'cbBTC/WBTC',
+  message: '汇率已达到或超过目标 1.01',
+  currentValueText: '当前汇率 1.011',
+  actionLink: {
+    label: '交易链接',
+    url: 'https://example.test/swap'
+  }
+});
+assert.deepStrictEqual(quoteAlertEntry, {
+  alert: {
+    id: 'quote-1',
+    target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 1.01 }
+  },
+  quote: { id: 101 },
+  displayName: 'Arbitrum',
+  label: 'cbBTC/WBTC',
+  message: '汇率已达到或超过目标 1.01',
+  currentValueText: '当前汇率 1.011',
+  actionLink: {
+    label: '交易链接',
+    url: 'https://example.test/swap'
+  },
+  summaryLines: ['Arbitrum cbBTC/WBTC', '汇率已达到或超过目标 1.01'],
+  mutedTargetCandidate: {
+    id: 'quote-1',
+    target: { type: 'quote', quoteId: 101, ruleKind: 'targetAbove', value: 1.01 }
+  }
+});
+assert.deepStrictEqual(
+  buildQuoteAlertTriggeredEntry({
+    alert: { id: 'path-1', target: { type: 'path', legs: [] } },
+    message: '路径命中'
+  }).mutedTargetCandidate,
+  null
 );
 
 assert.deepStrictEqual(

@@ -70,6 +70,7 @@
   - quote 暂停按钮和分区暂停按钮的展示状态模型已下沉到 `quote-pause-utils.js`
   - quote alert display label 已下沉到 `quote-display-utils.js`
   - quote alert 按 quoteId 过滤规则已下沉到 `path-alert-utils.js`，避免 `app.js` 继续直接理解 alert target 结构
+  - quote alert trigger entry 的结构拼装已下沉到 `path-alert-notification-utils.js`
   - 已新增 market-state signature，`setQuoteMarketState()` 只在市场字段变化时推进套利/数据终端 revision
 - 预期收益：
   - 已减少 UI-only 更新导致的不必要套利缓存失效
