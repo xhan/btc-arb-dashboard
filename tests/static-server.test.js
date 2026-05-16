@@ -395,6 +395,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteSwitchingDomState(refs = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteDisplayTextDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuotePairLabelDomState(pairLabelEl, html)'));
+    assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteRunStateTagDomState(tagEl, state = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function getQuoteDomRefs(documentImpl, quoteId)'));
     assert.ok(domRenderUtilsResponse.body.includes('function clearQuoteDataError(quoteDataEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteInverseQueuedDomState(refs = {}, options = {})'));
@@ -420,6 +421,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteDisplayTextDomState({'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuotePairLabelDomState('));
     assert.ok(!appJsResponse.body.includes('pairLabelEl.innerHTML = getQuoteDisplayUtils().buildQuotePairLabelHtml'));
+    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteRunStateTagDomState('));
+    assert.ok(!appJsResponse.body.includes('quoteRunStateTag.textContent = state.text'));
+    assert.ok(!appJsResponse.body.includes("quoteRunStateTag.classList.remove('running', 'paused')"));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteDataError(quoteDataEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseQueuedDomState({'));
     assert.ok(appJsResponse.body.includes('const inverseQueuedText = Number.isFinite(Number(newState.inverseRawPrice))'));

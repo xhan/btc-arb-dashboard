@@ -13,6 +13,7 @@ const {
   applyQuoteMainErrorDomState,
   applyQuoteMainResultDomState,
   applyQuotePairLabelDomState,
+  applyQuoteRunStateTagDomState,
   applyQuoteSwitchingDomState,
   applyFloatingPanelDisplayState,
   bindDraggableElement,
@@ -303,6 +304,19 @@ const quotePairLabelEl = { innerHTML: 'old' };
 assert.strictEqual(applyQuotePairLabelDomState(quotePairLabelEl, 'ETH&lt;USDC&gt;'), true);
 assert.strictEqual(quotePairLabelEl.innerHTML, 'ETH&lt;USDC&gt;');
 assert.strictEqual(applyQuotePairLabelDomState(null, 'x'), false);
+
+const quoteRunStateTagEl = {
+  textContent: '',
+  classList: createClassList(['running'])
+};
+assert.strictEqual(applyQuoteRunStateTagDomState(quoteRunStateTagEl, { text: '暂停中', tone: 'paused' }), true);
+assert.strictEqual(quoteRunStateTagEl.textContent, '暂停中');
+assert.strictEqual(quoteRunStateTagEl.classList.contains('running'), false);
+assert.strictEqual(quoteRunStateTagEl.classList.contains('paused'), true);
+assert.strictEqual(applyQuoteRunStateTagDomState(quoteRunStateTagEl, { text: '报价中' }), true);
+assert.strictEqual(quoteRunStateTagEl.classList.contains('running'), true);
+assert.strictEqual(quoteRunStateTagEl.classList.contains('paused'), false);
+assert.strictEqual(applyQuoteRunStateTagDomState(null, { text: 'x' }), false);
 
 function createDocumentImpl(createdElements) {
   return {

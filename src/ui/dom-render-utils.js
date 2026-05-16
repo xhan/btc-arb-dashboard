@@ -299,6 +299,14 @@
     return true;
   }
 
+  function applyQuoteRunStateTagDomState(tagEl, state = {}) {
+    if (!tagEl || !tagEl.classList) return false;
+    tagEl.textContent = state.text || '';
+    removeClasses(tagEl, ['running', 'paused']);
+    addClass(tagEl, state.tone || 'running');
+    return true;
+  }
+
   function ensureQuoteInverseElement(refs = {}, options = {}) {
     if (refs.inverseEl) return refs.inverseEl;
     if (!refs.quoteDataEl || typeof refs.quoteDataEl.appendChild !== 'function') return null;
@@ -440,6 +448,7 @@
     applyQuoteMainErrorDomState,
     applyQuoteMainResultDomState,
     applyQuotePairLabelDomState,
+    applyQuoteRunStateTagDomState,
     applyQuoteSwitchingDomState,
     applyFloatingPanelDisplayState,
     applyTooltipState,

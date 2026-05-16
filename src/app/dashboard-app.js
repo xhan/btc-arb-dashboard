@@ -1714,11 +1714,10 @@
     }
 
     function updateQuoteRunStateTag() {
-        if (!quoteRunStateTag) return;
-        const state = getArbDetailUtils().getQuoteRunState(arbDetailState.pausedDashboard);
-        quoteRunStateTag.textContent = state.text;
-        quoteRunStateTag.classList.remove('running', 'paused');
-        quoteRunStateTag.classList.add(state.tone || 'running');
+        getDomRenderUtils().applyQuoteRunStateTagDomState(
+            quoteRunStateTag,
+            getArbDetailUtils().getQuoteRunState(arbDetailState.pausedDashboard)
+        );
     }
 
     function findQuoteById(quoteId) {
