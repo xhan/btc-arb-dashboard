@@ -4,11 +4,9 @@ const {
   DEFAULT_INTERVALS,
   appendQuoteQueueTasks,
   buildManagedQueueKeys,
-  buildQueueTasksForQuote,
   buildQueueSummary,
   deferQueueTask,
   formatDurationMs,
-  getQueueTaskKey,
   getQueueTaskStatus,
   removeQuoteTasksFromQueues
 } = require('../queue-stats-utils');
@@ -74,16 +72,6 @@ assert.strictEqual(binance.inverseTasks, 0);
 assert.strictEqual(solana.taskCount, 2);
 assert.strictEqual(formatDurationMs(650), '650ms');
 assert.strictEqual(formatDurationMs(24000), '24.00s');
-
-assert.deepStrictEqual(buildQueueTasksForQuote({ id: 301, chain: 'ethereum', showInverse: true }), [
-  { quoteId: 301, mode: 'main' },
-  { quoteId: 301, mode: 'inverse' }
-]);
-assert.deepStrictEqual(buildQueueTasksForQuote({ id: 302, chain: 'bybit', showInverse: true }), [
-  { quoteId: 302, mode: 'main' }
-]);
-assert.deepStrictEqual(buildQueueTasksForQuote(null), []);
-assert.strictEqual(getQueueTaskKey({ quoteId: 301, mode: 'inverse' }), '301:inverse');
 
 const queue = [{ quoteId: 301, mode: 'main' }];
 assert.strictEqual(appendQuoteQueueTasks(queue, { id: 301, chain: 'ethereum', showInverse: true }), 1);
