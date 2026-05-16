@@ -1707,13 +1707,6 @@
         mountDataTerminalPanel();
     }
 
-    function updateGlobalArbFilterBar() {
-        getArbPanelLayoutUtils().applyGlobalArbFilterWritePlan(
-            arbGlobalFilterElements,
-            getArbPanelLayoutUtils().buildGlobalArbFilterWritePlan(getArbGlobalFilterState())
-        );
-    }
-
     function handleArbPathContentClick(event) {
         if (!arbPathContent) return;
         const action = getArbPanelRenderer().resolveArbPathContentClickAction(event, {
@@ -2291,10 +2284,6 @@
         arbDetailRefreshScheduler.start(refreshToken);
     }
 
-    function getArbGlobalFilterState() {
-        return arbGlobalFilterStateRuntime.get();
-    }
-
     function updateArbGlobalFilterState(patch) {
         const result = arbGlobalFilterStateRuntime.update(patch);
         if (!result.changed) return false;
@@ -2824,10 +2813,14 @@
             .filter(Boolean)
             .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)));
         const layoutUtils = getArbPanelLayoutUtils();
-        const filterCriteria = layoutUtils.buildGlobalArbFilterCriteria(getArbGlobalFilterState(), {
+        const filterState = arbGlobalFilterStateRuntime.get();
+        const filterCriteria = layoutUtils.buildGlobalArbFilterCriteria(filterState, {
             normalizeChainFilterToken: (chainToken) => getChainDefaults().normalizeChainFilterToken(chainToken)
         });
-        updateGlobalArbFilterBar();
+        layoutUtils.applyGlobalArbFilterWritePlan(
+            arbGlobalFilterElements,
+            layoutUtils.buildGlobalArbFilterWritePlan(filterState)
+        );
         return layoutUtils.buildGlobalArbSection({
             sectionKey: globalSectionKey,
             cycles: globalCycles,
