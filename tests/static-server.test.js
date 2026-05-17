@@ -1229,6 +1229,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(audioUtilsResponse.body.includes('function syncLoopingAudio(audioEl, shouldPlay, options = {})'));
     assert.ok(audioUtilsResponse.body.includes('function playAudioOnceFromSource(sourceAudioEl, options = {})'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildTriggeredPathAlertEntry({'));
+    assert.ok(!appJsResponse.body.includes('function buildPathAlertDisplayTitle('));
+    assert.ok(appJsResponse.body.includes('buildDisplayTitle(alertItem) {'));
+    assert.ok(appJsResponse.body.includes("return lines[0] || (alertItem && alertItem.target && alertItem.target.type === 'quote' ? '交易对报警' : '未配置路径');"));
     assert.ok(!appJsResponse.body.includes('function dismissPathAlertById('));
     assert.ok(!appJsResponse.body.includes('function createDismissedTargetEntry('));
     assert.ok(!appJsResponse.body.includes('function removePathAlertById('));

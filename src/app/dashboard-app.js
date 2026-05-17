@@ -2252,13 +2252,6 @@
         });
     }
 
-    function buildPathAlertDisplayTitle(alert) {
-        const name = String(alert && alert.name || '').trim();
-        if (name) return name;
-        const lines = buildPathAlertSummaryLines(alert);
-        return lines[0] || (alert && alert.target && alert.target.type === 'quote' ? '交易对报警' : '未配置路径');
-    }
-
     function getPathAlertPageUtils() {
         return getWindowModule('PathAlertPageUtils', 'PathAlertPageUtils is not loaded');
     }
@@ -2312,7 +2305,12 @@
             alert,
             evaluation,
             changedLegs,
-            buildDisplayTitle: buildPathAlertDisplayTitle,
+            buildDisplayTitle(alertItem) {
+                const name = String(alertItem && alertItem.name || '').trim();
+                if (name) return name;
+                const lines = buildPathAlertSummaryLines(alertItem);
+                return lines[0] || (alertItem && alertItem.target && alertItem.target.type === 'quote' ? '交易对报警' : '未配置路径');
+            },
             buildFallbackSummaryLines: buildPathAlertSummaryLines,
             buildMutedTargetCandidate: buildMutedPathTargetCandidate,
             formatCycleLeg: formatArbPathLegLine,
