@@ -1238,6 +1238,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('buildDisplayTitle(alertItem) {'));
     assert.ok(appJsResponse.body.includes('buildMutedTargetCandidate: (alertItem, alertEvaluation) => ('));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildMutedPathTargetCandidate(alertItem, alertEvaluation, { isRuleLeg })'));
+    assert.ok(!appJsResponse.body.includes('function getPathAlertRealLegCount('));
+    assert.ok(appJsResponse.body.includes('getRealLegCount: (alertItem, alertEvaluation) => ('));
+    assert.ok(appJsResponse.body.includes('getPathAlertUtils().countPathAlertRealLegs(alertItem, alertEvaluation)'));
     assert.ok(appJsResponse.body.includes("return lines[0] || (alertItem && alertItem.target && alertItem.target.type === 'quote' ? '交易对报警' : '未配置路径');"));
     assert.ok(!appJsResponse.body.includes('function dismissPathAlertById('));
     assert.ok(!appJsResponse.body.includes('function createDismissedTargetEntry('));

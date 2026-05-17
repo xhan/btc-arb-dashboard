@@ -2256,10 +2256,6 @@
         return getPathAlertNotificationUtils().buildMutedPathTargetFromCycleLegs(legs, { isRuleLeg });
     }
 
-    function getPathAlertRealLegCount(alert, evaluation) {
-        return getPathAlertUtils().countPathAlertRealLegs(alert, evaluation);
-    }
-
     async function sendPathAlertWebhookPayload(payload, errorMessage) {
         if (!pathAlertConfig.settings || pathAlertConfig.settings.webhookEnabled !== true) return;
         try {
@@ -2303,7 +2299,9 @@
             ),
             formatCycleLeg: formatArbPathLegLine,
             formatChangedLeg: buildPathAlertLegDisplayLine,
-            getRealLegCount: getPathAlertRealLegCount,
+            getRealLegCount: (alertItem, alertEvaluation) => (
+                getPathAlertUtils().countPathAlertRealLegs(alertItem, alertEvaluation)
+            ),
             isRuleLeg
         });
     }
@@ -2311,7 +2309,9 @@
     function sortTriggeredPathAlertEntries(entries) {
         return getPathAlertNotificationUtils().sortTriggeredPathAlertEntries(entries, {
             sortEntries: getPathAlertUtils().sortTriggeredPathAlerts,
-            getRealLegCount: getPathAlertRealLegCount
+            getRealLegCount: (alertItem, alertEvaluation) => (
+                getPathAlertUtils().countPathAlertRealLegs(alertItem, alertEvaluation)
+            )
         });
     }
 
