@@ -1402,7 +1402,7 @@
         if (!card) return;
         const nextValue = getArbDetailUtils().buildNudgedArbDetailInputAmount(card.inputAmount, delta);
         arbDetailState.editingInputIndex = null;
-        updateArbDetailInput(index, nextValue);
+        getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, nextValue);
         renderArbDetailModal();
     }
 
@@ -2030,10 +2030,6 @@
         arbDetailRefreshScheduler.start(arbDetailState.refreshToken);
     }
 
-    function updateArbDetailInput(index, rawValue) {
-        getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, rawValue);
-    }
-
     function restartArbDetailRefresh() {
         if (!arbDetailState.visible) return;
         arbDetailRefreshScheduler.clear();
@@ -2061,7 +2057,7 @@
             return;
         }
 
-        updateArbDetailInput(index, parsed);
+        getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, parsed);
         renderArbDetailModal();
         restartArbDetailRefresh();
     }

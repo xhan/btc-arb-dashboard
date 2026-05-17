@@ -289,6 +289,7 @@
   - `src/app/dashboard-app.js` 的套利详情刷新 scheduler clear/start 单用途包装已移除，详情打开/关闭/重启流程直接委托 refresh scheduler runtime
   - `src/app/dashboard-app.js` 的套利详情 chart auto refresh sync 单用途包装已移除，打开详情和切换自动刷新时直接委托 chart auto refresh runtime
   - `src/app/dashboard-app.js` 的套利详情 input value 同步策略与写入已下沉到 `src/arb/arb-detail-utils.js`
+  - `src/app/dashboard-app.js` 的套利详情 input update 单用途包装已移除，stepper 和 commit 流程直接委托 detail utils
   - `src/app/dashboard-app.js` 的套利详情 card rows/summary DOM 查找与写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 chart href 单用途包装已移除，预览同步流程直接委托 detail/charts utils
   - `src/app/dashboard-app.js` 的套利详情 chart link state 单用途包装已移除，预览/失效/关闭流程直接委托 detail utils

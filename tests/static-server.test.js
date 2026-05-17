@@ -1879,7 +1879,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('inputEl.value = nextValue;'));
     assert.ok(arbDetailUtilsResponse.body.includes('function syncArbDetailInputValues(cards = [], options = {})'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildNudgedArbDetailInputAmount(card.inputAmount, delta)'));
-    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, rawValue)'));
+    assert.ok(!appJsResponse.body.includes('function updateArbDetailInput('));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, nextValue)'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, parsed)'));
     assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailSubtitleText(opportunity, legLines = [])'));
     assert.ok(arbDetailUtilsResponse.body.includes('function applyArbDetailSubtitleText(subtitleEl, text)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailSubtitleText('));
