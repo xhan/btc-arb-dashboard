@@ -1443,10 +1443,6 @@
         return getDashboardRuntimeUtils().buildDataTerminalRecordsCacheKey(dashboardState, quoteStateRuntime.getMarketRevision());
     }
 
-    function clearDataTerminalTimer() {
-        dataTerminalUpdateRuntime.clear();
-    }
-
     function hasDataTerminalActiveQuery() {
         return getDataTerminalUtils().parseDataTerminalQuery(dataTerminalState.query).length > 0;
     }
@@ -1524,7 +1520,7 @@
         );
 
         if (!hasDataTerminalActiveQuery()) {
-            clearDataTerminalTimer();
+            dataTerminalUpdateRuntime.clear();
         }
     }
 
@@ -1606,7 +1602,7 @@
     }
 
     function unmountDataTerminalPanel() {
-        clearDataTerminalTimer();
+        dataTerminalUpdateRuntime.clear();
         const refs = dataTerminalState.domRefs;
         if (refs && refs.window && refs.window.parentNode) {
             refs.window.parentNode.removeChild(refs.window);
