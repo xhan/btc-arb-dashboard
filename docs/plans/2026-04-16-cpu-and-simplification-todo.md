@@ -105,9 +105,9 @@
 - 目标：避免每次刷新都重建 records 和 candidates。
 - 现状：
   - 已用 `dashboardState + quoteMarketState` cache key 缓存生成的 records
-  - records 构建已下沉到 `src/data-terminal/data-terminal-utils.js`，`src/app/dashboard-app.js` 只保留缓存生命周期
+  - records 构建已下沉到 `src/data-terminal/data-terminal-utils.js`，`src/app/dashboard-app.js` 不再直接拼装数据终端 records
   - 已用同一 cache key 缓存 candidates，查询、别名、diff 变化只重跑 view model/filter
-  - records/candidates 缓存生命周期已下沉到 `src/data-terminal/data-terminal-utils.js` 的 `createDataTerminalCache()`，`src/app/dashboard-app.js` 只提供 cache key 和构建函数
+  - records/candidates 缓存生命周期和面板刷新编排已下沉到 `src/data-terminal/data-terminal-controller.js`，`src/app/dashboard-app.js` 只注入 dashboard/quote state getter
 - 预期收益：
   - 已降低数据终端打开后的持续 CPU
 - 后续建议：
@@ -141,8 +141,11 @@
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 与 dirty 状态所有权、全局过滤栏读写计划、错误文案 DOM 写入和面板内容事件动作解析已下沉到 `src/arb/arb-path-template-cache-utils.js` / `src/arb/arb-runtime-memory-utils.js` / `src/arb/arb-panel-layout-utils.js` / `src/arb/arb-panel-renderer.js`，`src/app/dashboard-app.js` 只保留缓存 key 构建、面板数据装配和动作分发
   - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
-  - `data-terminal`：records/candidates cache、刷新 timer、面板 HTML、DOM refs 装配、浮窗定位/默认尺寸、控件状态读写计划、控件事件绑定、selection 更新计划、内容和 header 点击动作解析已下沉到 `src/data-terminal/data-terminal-utils.js`
+  - `data-terminal`：records/candidates cache、刷新 timer、面板状态、挂载/关闭、render 编排和内容/header 点击分发已下沉到 `src/data-terminal/data-terminal-controller.js`；面板 HTML、DOM refs 装配、浮窗定位/默认尺寸、控件状态读写计划、控件事件绑定、selection 更新计划和 action 解析继续由 `src/data-terminal/data-terminal-utils.js` 提供
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、报价卡片和分区模块 shell 创建、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `dashboard-actions`：主看板金额输入、报价/分区暂停、删除、交换、报价设置弹窗打开和确认动作编排已下沉到 `src/dashboard/dashboard-action-controller.js`，`src/app/dashboard-app.js` 只负责注入运行态依赖和绑定事件入口
+  - `dashboard-forms`：报价设置保存、新增分区、新增报价和 add quote 表单控件同步已下沉到 `src/dashboard/dashboard-form-controller.js`，主入口只注入 renderer/modal/runtime 依赖
+  - `dashboard-view`：报价项/分区 DOM 创建、拖拽排序、DEX 链接复制 target 绑定和 dashboard 整体 render 已下沉到 `src/dashboard/dashboard-view-controller.js`，`src/app/dashboard-app.js` 只注入展示依赖和回调
   - `dashboard-api-client`：后端配置刷新、看板配置加载、请求通道加载、price snapshot 配置/保存和配置保存请求已下沉到 `src/dashboard/dashboard-api-utils.js`，`src/app/dashboard-app.js` 只负责状态赋值、UI feedback 和后续调度
   - `dashboard-modal-dom`：add quote、add category、confirm 弹窗的 DOM 读写与显示/关闭适配、modal 当前选择状态、confirm 动作回调 runtime 和全局设置弹窗事件 runtime 已下沉到 `src/dashboard/dashboard-modal-utils.js`，quote settings 弹窗和全局 settings interval 的 DOM 读写适配也已下沉，dashboard modal 的通用 show/hide 也统一走该边界，主入口只保留新增/更新 quote、保存设置和确认动作后的 dashboard 状态更新与刷新调度
   - `snapshot/copy-ui`：价格快照 timer 和保存流程 runtime 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer、价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
@@ -242,10 +245,11 @@
   - `src/app/dashboard-app.js` 的数据终端控件 write plan DOM 应用已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `src/app/dashboard-app.js` 的数据终端 control/selection patch 状态应用和 selection summary DOM 写入已下沉到 `src/data-terminal/data-terminal-utils.js`
   - `src/app/dashboard-app.js` 的数据终端 shell 元素创建、DOM refs 装配、浮窗定位和默认尺寸 DOM 写入已下沉到 `src/data-terminal/data-terminal-utils.js`
+  - `src/app/dashboard-app.js` 的数据终端面板状态、records/candidates cache、render、挂载/关闭、点击分发和刷新 timer 已下沉到 `src/data-terminal/data-terminal-controller.js`
   - `src/app/dashboard-app.js` 的报价运行状态 tag 刷新单用途包装已移除，暂停/初始化流程直接委托 dom/detail utils
   - `src/app/dashboard-app.js` 的数据终端浮窗定位/默认尺寸单用途包装已移除，挂载流程直接委托 `src/data-terminal/data-terminal-utils.js`
-  - `src/app/dashboard-app.js` 的数据终端更新调度单用途包装已移除，报价状态变更后直接调度 data terminal runtime
-  - `src/app/dashboard-app.js` 的数据终端 timer clear 单用途包装已移除，关闭和空查询流程直接委托 data terminal update runtime
+  - `src/app/dashboard-app.js` 的数据终端更新调度单用途包装已移除，报价状态变更后直接调度 data terminal controller
+  - `src/app/dashboard-app.js` 的数据终端 timer clear 单用途包装已移除，关闭和空查询流程直接委托 data terminal controller
   - `src/app/dashboard-app.js` 的套利机会 current map、detail 保留 store、targetKey 索引已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利机会高亮 Map、timer 生命周期、prune / is-highlighted / mark 规则已下沉到 `src/arb/arb-runtime-memory-utils.js`
   - `src/app/dashboard-app.js` 的套利机会高亮 targetKey 构造和注册单层包装已下沉/移除，调用点直接委托 `src/arb/arb-panel-layout-utils.js`
@@ -291,6 +295,7 @@
   - `src/app/dashboard-app.js` 的确认弹窗关闭和 quote highlight dismiss 单用途包装已移除，事件分支直接调用 runtime / DOM utils
   - `src/app/dashboard-app.js` 的 add quote 目标分区和 quote settings 当前报价选择状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createModalSelectionRuntime()`
   - `src/app/dashboard-app.js` 的确认弹窗动作回调状态已下沉到 `src/dashboard/dashboard-modal-utils.js` 的 `createConfirmActionRuntime()`
+  - `src/app/dashboard-app.js` 的报价项/分区 DOM 创建、拖拽排序和 dashboard render 已下沉到 `src/dashboard/dashboard-view-controller.js`
   - `src/app/dashboard-app.js` 的报价设置 modal viewState 写入规则已下沉到 `src/dashboard/dashboard-renderer.js`，主文件只执行 DOM write plan
   - `src/app/dashboard-app.js` 的报价设置 Kyber direct pools 控件显示写入、请求渠道选择器 DOM 写入和 modal write plan 单行包装已收敛到 `src/dashboard/dashboard-modal-utils.js`
   - `src/app/dashboard-app.js` 的报价设置报警管理打开单用途包装已移除，事件分支直接构造管理页 href 并打开新窗口

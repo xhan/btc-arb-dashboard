@@ -25,7 +25,7 @@ assert.strictEqual(defaultAliasRules.USDT0, 'USDT');
 assert.strictEqual(defaultAliasRules.wBTC, 'WBTC');
 assert.strictEqual(defaultAliasRules.USDE, 'USDe');
 assert.strictEqual(defaultAliasRules.USDTB, 'USDtb');
-assert.ok(!Object.prototype.hasOwnProperty.call(defaultAliasRules, 'BTC.B'));
+assert.strictEqual(defaultAliasRules['BTC.B'], 'cbBTC');
 
 const browserCode = fs.readFileSync(path.join(__dirname, '..', 'src/arb/arb-equivalence-utils.js'), 'utf8');
 const browserSandbox = { window: {} };

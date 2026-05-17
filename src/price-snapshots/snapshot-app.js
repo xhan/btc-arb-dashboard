@@ -66,24 +66,13 @@
   ];
 
   const TARGET_CATEGORY_NAMES = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
-  const ASSET_EQUIVALENCE_GROUPS = (window.ArbEquivalenceUtils && window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS)
-    ? window.ArbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
-    : {
-      cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
-      WBTC: ['WBTC', 'wBTC'],
-      tBTC: ['tBTC', 'TBTC'],
-      USDT: ['USDT', 'USD₮0']
-    };
-  const ALIAS_RULES = (window.ArbEquivalenceUtils && typeof window.ArbEquivalenceUtils.buildAliasRulesFromGroups === 'function')
-    ? window.ArbEquivalenceUtils.buildAliasRulesFromGroups(ASSET_EQUIVALENCE_GROUPS)
-    : {
-      xBTC: 'cbBTC',
-      BTCB: 'cbBTC',
-      'BTC.b': 'cbBTC',
-      wBTC: 'WBTC',
-      TBTC: 'tBTC',
-      'USD₮0': 'USDT'
-    };
+  const arbEquivalenceUtils = window.ArbEquivalenceUtils || null;
+  const ASSET_EQUIVALENCE_GROUPS = arbEquivalenceUtils
+    ? arbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
+    : {};
+  const ALIAS_RULES = arbEquivalenceUtils && typeof arbEquivalenceUtils.buildAliasRulesFromGroups === 'function'
+    ? arbEquivalenceUtils.buildAliasRulesFromGroups(ASSET_EQUIVALENCE_GROUPS)
+    : {};
   const DEFAULT_ARB_CYCLE_START_PRIORITY = window.ArbCyclePriorityUtils
     ? window.ArbCyclePriorityUtils.DEFAULT_ARB_CYCLE_START_PRIORITY
     : ['cbBTC', 'WBTC', 'ETH'];

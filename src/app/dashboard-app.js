@@ -93,16 +93,6 @@
         clearTimeout,
         delayMs: AMOUNT_INPUT_DEBOUNCE_MS
     });
-    let dataTerminalState = {
-        visible: false,
-        query: '',
-        allowAliases: true,
-        showDiff: false,
-        selectedLeftKey: '',
-        selectedRightKey: '',
-        domRefs: null,
-        htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()
-    };
     const arbPanelCache = getArbPathTemplateCacheUtils().createArbPanelCache();
     let arbLastPointerOpenedOpportunityId = null;
     let arbDetailState = getArbDetailUtils().buildDefaultArbDetailState();
@@ -557,14 +547,36 @@
     const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
         dashboardRuntimeUtils: getDashboardRuntimeUtils()
     });
-    const dataTerminalCache = getDataTerminalUtils().createDataTerminalCache();
-    const dataTerminalUpdateRuntime = getDataTerminalUtils().createDataTerminalUpdateRuntime({
+    const dataTerminalController = getDataTerminalController().createDataTerminalController({
+        dataTerminalUtils: getDataTerminalUtils(),
+        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        domRenderUtils: getDomRenderUtils(),
+        documentImpl: document,
+        windowImpl: window,
         setTimeout,
         clearTimeout,
-        delayMs: DATA_TERMINAL_UPDATE_DELAY_MS,
-        canUpdate: () => dataTerminalState.visible && dataTerminalState.domRefs && hasDataTerminalActiveQuery(),
-        update: renderDataTerminalPanel
+        updateDelayMs: DATA_TERMINAL_UPDATE_DELAY_MS,
+        getAnchorPanel: () => arbPathWindow,
+        zIndexRuntime: floatingPanelZIndexRuntime,
+        getDashboardState: () => dashboardState,
+        getQuoteMarketStateMap,
+        getMarketRevision: () => quoteStateRuntime.getMarketRevision(),
+        isQuoteActive: (quote) => !isQuotePaused(quote),
+        getAliasRules,
+        closestEventTarget,
+        formatChainLabel,
+        formatAmount: (amount) => formatDetailNumber(Number(amount), 6),
+        buildPairLinkHtml: (row, className, label) => getDexLinkUtils().buildDexLinkCopyButtonHtml({
+            chain: row.chain,
+            fromTokenAddress: row.fromTokenAddress,
+            toTokenAddress: row.toTokenAddress,
+            inputAmount: row.amount
+        }, className, label),
+        copyDexLinkFromElement
     });
+    const renderDataTerminalPanel = dataTerminalController.renderPanel;
+    const toggleDataTerminalPanel = dataTerminalController.togglePanel;
+    const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
     const mutedPathRuntime = getMutedPathRuntimeUtils().createMutedPathRuntime({
         pruneTargets: (entries, nowMs) => getPathAlertUtils().pruneExpiredMutedPathTargets(entries, nowMs),
         pruneLegs: (entries, nowMs) => getMutedPathLegUtils().pruneExpiredMutedPathLegs(entries, nowMs),
@@ -1266,8 +1278,24 @@
         return getWindowModule('DataTerminalUtils', 'DataTerminalUtils is not loaded');
     }
 
+    function getDataTerminalController() {
+        return getWindowModule('DataTerminalController', 'DataTerminalController is not loaded');
+    }
+
     function getDashboardRenderer() {
         return getWindowModule('DashboardRenderer', 'DashboardRenderer is not loaded');
+    }
+
+    function getDashboardActionController() {
+        return getWindowModule('DashboardActionController', 'DashboardActionController is not loaded');
+    }
+
+    function getDashboardFormController() {
+        return getWindowModule('DashboardFormController', 'DashboardFormController is not loaded');
+    }
+
+    function getDashboardViewController() {
+        return getWindowModule('DashboardViewController', 'DashboardViewController is not loaded');
     }
 
     function getQuoteDisplayUtils() {
@@ -1334,15 +1362,6 @@
     function updatePauseButtonState(quote) {
         const pauseBtn = document.querySelector(`[data-toggle-pause-id="${quote.id}"]`);
         getQuotePauseUtils().applyQuotePauseButtonState(pauseBtn, quote);
-    }
-
-    function updateCategoryPauseButtonState(categoryId) {
-        const pauseBtn = document.querySelector(`[data-toggle-category-pause-id="${categoryId}"]`);
-        const category = dashboardState.find((item) => item.id == categoryId);
-        getQuotePauseUtils().applyCategoryPauseButtonState(
-            pauseBtn,
-            category && category.quotes ? category.quotes : []
-        );
     }
 
     function clearQuoteTrendArrow(quoteId) {
@@ -1433,187 +1452,6 @@
 
     function pruneInactiveAlertRuntimeState() {
         pathAlertRuntimeState.pruneInactive(pathAlertConfig && pathAlertConfig.alerts);
-    }
-
-    function resolveDataTerminalRecordsCacheKey() {
-        return getDashboardRuntimeUtils().buildDataTerminalRecordsCacheKey(dashboardState, quoteStateRuntime.getMarketRevision());
-    }
-
-    function hasDataTerminalActiveQuery() {
-        return getDataTerminalUtils().parseDataTerminalQuery(dataTerminalState.query).length > 0;
-    }
-
-    function buildDataTerminalRecords() {
-        const cacheKey = resolveDataTerminalRecordsCacheKey();
-        return dataTerminalCache.getRecords(cacheKey, () => getDataTerminalUtils().buildDataTerminalRecords(dashboardState, getQuoteMarketStateMap(), {
-            isQuoteActive: (quote) => !isQuotePaused(quote)
-        }));
-    }
-
-    function buildDataTerminalCandidates(utils) {
-        const cacheKey = resolveDataTerminalRecordsCacheKey();
-        return dataTerminalCache.getCandidates(cacheKey, () => utils.buildDataTerminalCandidates(buildDataTerminalRecords()));
-    }
-
-    function renderDataTerminalPanel() {
-        if (!dataTerminalState.visible || !dataTerminalState.domRefs) return;
-        const refs = dataTerminalState.domRefs;
-        const utils = getDataTerminalUtils();
-        if (!refs.content) return;
-
-        utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
-
-        const candidates = buildDataTerminalCandidates(utils);
-        const viewModel = utils.buildDataTerminalViewModel(candidates, {
-            query: dataTerminalState.query,
-            aliasRules: getAliasRules(),
-            allowAliases: dataTerminalState.allowAliases,
-            showDiff: dataTerminalState.showDiff
-        });
-
-        const selectionSummary = typeof utils.buildDataTerminalSelectionSummary === 'function'
-            ? utils.buildDataTerminalSelectionSummary(
-                {
-                    leftKey: dataTerminalState.selectedLeftKey,
-                    rightKey: dataTerminalState.selectedRightKey
-                },
-                {
-                    leftRows: viewModel.leftRows || [],
-                    rightRows: viewModel.rightRows || []
-                }
-            )
-            : {
-                leftKey: '',
-                rightKey: '',
-                profitBp: null,
-                text: '--'
-            };
-
-        dataTerminalState.selectedLeftKey = selectionSummary.leftKey;
-        dataTerminalState.selectedRightKey = selectionSummary.rightKey;
-
-        utils.applyDataTerminalSelectionSummaryDomState(refs, selectionSummary);
-
-        dataTerminalState.htmlRenderer.render(
-            refs.content,
-            utils.buildDataTerminalPanelHtml(
-                viewModel,
-                {
-                    selectedLeftKey: dataTerminalState.selectedLeftKey,
-                    selectedRightKey: dataTerminalState.selectedRightKey
-                },
-                {
-                    formatChainLabel,
-                    formatAmount: (amount) => formatDetailNumber(Number(amount), 6),
-                    buildPairLinkHtml: (row, className, label) => getDexLinkUtils().buildDexLinkCopyButtonHtml({
-                        chain: row.chain,
-                        fromTokenAddress: row.fromTokenAddress,
-                        toTokenAddress: row.toTokenAddress,
-                        inputAmount: row.amount
-                    }, className, label)
-                }
-            )
-        );
-
-        if (!hasDataTerminalActiveQuery()) {
-            dataTerminalUpdateRuntime.clear();
-        }
-    }
-
-    function handleDataTerminalContentClick(event) {
-        const action = getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget });
-        if (action.type === 'copy-dex-link') {
-            event.preventDefault();
-            event.stopPropagation();
-            void copyDexLinkFromElement(action.element);
-            return;
-        }
-        if (action.type !== 'toggle-row') {
-            return;
-        }
-
-        getDataTerminalUtils().applyDataTerminalStatePatch(
-            dataTerminalState,
-            getDataTerminalUtils().buildDataTerminalSelectionPatch(dataTerminalState, action)
-        );
-        renderDataTerminalPanel();
-    }
-
-    function handleDataTerminalHeaderClick(event) {
-        const action = getDataTerminalUtils().resolveDataTerminalHeaderClickAction(event, { closestEventTarget });
-        if (action.type !== 'blur-search') return;
-        const refs = dataTerminalState.domRefs;
-        if (refs && refs.searchInput && document.activeElement === refs.searchInput) {
-            refs.searchInput.blur();
-        }
-    }
-
-    function mountDataTerminalPanel() {
-        if (dataTerminalState.visible && dataTerminalState.domRefs && dataTerminalState.domRefs.window) {
-            floatingPanelZIndexRuntime.bringToFront(dataTerminalState.domRefs.window);
-            return;
-        }
-        const utils = getDataTerminalUtils();
-
-        const panel = utils.createDataTerminalPanelElement({ documentImpl: document });
-        if (!panel) return;
-        utils.applyDataTerminalDefaultSize(panel, {
-            anchorPanel: arbPathWindow,
-            getComputedStyle: (element) => window.getComputedStyle(element)
-        });
-        utils.applyDataTerminalWindowPosition(panel, {
-            anchorPanel: arbPathWindow,
-            getComputedStyle: (element) => window.getComputedStyle(element)
-        });
-        document.body.appendChild(panel);
-
-        const refs = utils.getDataTerminalDomRefs(panel);
-
-        dataTerminalState.visible = true;
-        dataTerminalState.domRefs = refs;
-        dataTerminalState.htmlRenderer.reset();
-        utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs);
-
-        utils.bindDataTerminalControlEvents(refs, {
-            onPatch: (patch) => {
-                utils.applyDataTerminalStatePatch(dataTerminalState, patch);
-                renderDataTerminalPanel();
-            },
-            onContentClick: handleDataTerminalContentClick,
-            onHeaderClick: handleDataTerminalHeaderClick,
-            onMinimize: toggleDataTerminalPanel
-        });
-        if (refs.header) {
-            getDomRenderUtils().bindFloatingPanelChrome(panel, refs.header, {
-                documentImpl: document,
-                zIndexRuntime: floatingPanelZIndexRuntime
-            });
-        }
-
-        renderDataTerminalPanel();
-        floatingPanelZIndexRuntime.bringToFront(panel);
-        if (refs.searchInput && !String(dataTerminalState.query || '').trim()) {
-            refs.searchInput.focus();
-        }
-    }
-
-    function unmountDataTerminalPanel() {
-        dataTerminalUpdateRuntime.clear();
-        const refs = dataTerminalState.domRefs;
-        if (refs && refs.window && refs.window.parentNode) {
-            refs.window.parentNode.removeChild(refs.window);
-        }
-        dataTerminalState.visible = false;
-        dataTerminalState.domRefs = null;
-        dataTerminalState.htmlRenderer.reset();
-    }
-
-    function toggleDataTerminalPanel() {
-        if (dataTerminalState.visible) {
-            unmountDataTerminalPanel();
-            return;
-        }
-        mountDataTerminalPanel();
     }
 
     function handleArbPathContentClick(event) {
@@ -2920,7 +2758,7 @@
                 const marketStateChanged = setQuoteMarketState(quote.id, newState);
                 if (marketStateChanged) {
                     arbPanelUpdateRuntime.schedule();
-                    dataTerminalUpdateRuntime.schedule();
+                    scheduleDataTerminalUpdate();
                 }
                 
                 updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
@@ -3184,178 +3022,6 @@
         updateAlertSoundState();
     }
 
-    function addDnDHandlers(itemEl, categoryId) {
-        itemEl.draggable = true;
-        
-        itemEl.addEventListener('dragstart', (e) => {
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', JSON.stringify({
-                quoteId: itemEl.id.replace('quote-item-', ''),
-                categoryId: categoryId
-            }));
-            itemEl.classList.add('dragging');
-        });
-
-        itemEl.addEventListener('dragend', (e) => {
-            itemEl.classList.remove('dragging');
-            document.querySelectorAll('.quote-item').forEach(el => el.classList.remove('drag-over'));
-        });
-        
-        itemEl.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            if (!itemEl.classList.contains('dragging')) {
-                itemEl.classList.add('drag-over');
-            }
-            e.dataTransfer.dropEffect = 'move';
-        });
-
-        itemEl.addEventListener('dragleave', (e) => {
-            itemEl.classList.remove('drag-over');
-        });
-
-        itemEl.addEventListener('drop', async (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            itemEl.classList.remove('drag-over');
-            
-            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-            const draggedId = parseInt(data.quoteId);
-            const sourceCatId = parseInt(data.categoryId);
-            const targetCatId = parseInt(categoryId);
-            const targetQuoteId = parseInt(itemEl.id.replace('quote-item-', ''));
-
-            if (sourceCatId !== targetCatId) return;
-            if (draggedId === targetQuoteId) return;
-
-            const category = dashboardState.find(c => c.id === targetCatId);
-            if (!category) return;
-
-            const fromIndex = category.quotes.findIndex(q => q.id === draggedId);
-            const toIndex = category.quotes.findIndex(q => q.id === targetQuoteId);
-
-            if (fromIndex > -1 && toIndex > -1) {
-                const [movedQuote] = category.quotes.splice(fromIndex, 1);
-                category.quotes.splice(toIndex, 0, movedQuote);
-
-                const listEl = document.getElementById(`quote-list-${targetCatId}`);
-                const draggedNode = document.getElementById(`quote-item-${draggedId}`);
-                const targetNode = document.getElementById(`quote-item-${targetQuoteId}`);
-
-                if (draggedNode && targetNode) {
-                    if (fromIndex < toIndex) {
-                        listEl.insertBefore(draggedNode, targetNode.nextSibling);
-                    } else {
-                        listEl.insertBefore(draggedNode, targetNode);
-                    }
-                }
-                
-                saveData();
-            }
-        });
-    }
-
-    function createQuoteItem(quote, categoryId) {
-        const displayName = getQuoteChainDisplayName(quote);
-        const monitorState = getQuoteMarketState(quote.id) || {};
-        const lastResultText = getQuoteDisplayText(quote, monitorState);
-        const initialAmount = quote.amount || 1;
-        const amountInputHTML = !isCexOrderbookChain(quote.chain) ? `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">` : '';
-        const quoteTextClassName = isCexOrderbookChain(quote.chain) ? 'quote-text cex-orderbook-summary' : 'quote-text';
-        const pairLabelHtml = `<span class="quote-pair-label" id="quote-pair-label-${quote.id}">${getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, monitorState)}</span>`;
-        const requestChannel = getRequestChannelUtils().getRequestChannelDisplayForQuote(quote, requestChannelOptions);
-        const requestChannelTagHtml = getRequestChannelUtils().buildRequestChannelTagHtml(quote, requestChannel);
-        const renderer = getDashboardRenderer();
-
-        const itemEl = renderer.createQuoteItemShellElement({
-            quoteId: quote.id,
-            categoryId,
-            displayName,
-            requestChannelTagHtml,
-            pairLabelHtml,
-            amountInputHtml: amountInputHTML,
-            quoteTextClassName,
-            lastResultText,
-            paused: isQuotePaused(quote)
-        }, { documentImpl: document });
-        if (!itemEl) return null;
-        
-        addDnDHandlers(itemEl, categoryId);
-
-        const labelStackEl = itemEl.querySelector('.quote-label-stack');
-        const dexLinkConfig = {
-            chain: quote.chain,
-            fromTokenAddress: quote.fromToken,
-            toTokenAddress: quote.toToken,
-            inputAmount: quote.amount
-        };
-        const dexLinkLabel = isCrossChainQuote(quote) ? null : getDexLinkUtils().getDexLinkLabel(dexLinkConfig);
-        if (labelStackEl && dexLinkLabel) {
-            labelStackEl.classList.add('quote-dex-link-target');
-            labelStackEl.dataset.dexLinkCopy = '1';
-            labelStackEl.dataset.dexLinkLabel = dexLinkLabel;
-            labelStackEl.dataset.dexLinkChain = quote.chain || '';
-            labelStackEl.dataset.dexLinkFromTokenAddress = quote.fromToken || '';
-            labelStackEl.dataset.dexLinkToTokenAddress = quote.toToken || '';
-            const inputAmount = Number(quote.amount);
-            if (Number.isFinite(inputAmount) && inputAmount > 0) {
-                labelStackEl.dataset.dexLinkInputAmount = String(inputAmount);
-            }
-            labelStackEl.title = `点击复制 ${dexLinkLabel} 链接`;
-            labelStackEl.setAttribute('draggable', 'false');
-            labelStackEl.addEventListener('mousedown', (event) => event.stopPropagation());
-            labelStackEl.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                void copyDexLinkFromElement(labelStackEl);
-            });
-        }
-
-        const textWrapper = itemEl.querySelector('.quote-text-wrapper');
-        if (textWrapper) {
-            textWrapper.addEventListener('mouseenter', (e) => handleQuoteHover(e, quote.id));
-            textWrapper.addEventListener('mousedown', (e) => e.stopPropagation());
-            textWrapper.setAttribute('draggable', 'false'); 
-            const quoteTextEl = itemEl.querySelector(`#quote-text-${quote.id}`);
-            bindCopyHandler(
-                textWrapper,
-                () => (quoteTextEl ? quoteTextEl.textContent : textWrapper.textContent)
-            );
-        }
-        
-        return itemEl;
-    }
-    
-    function createCategoryModule(category) {
-        const categoryPauseAction = getCategoryPauseAction(category.quotes || []);
-        const renderer = getDashboardRenderer();
-        const moduleEl = renderer.createCategoryModuleShellElement({
-            categoryId: category.id,
-            categoryName: category.name,
-            categoryPauseAction
-        }, { documentImpl: document });
-        if (!moduleEl) return null;
-        const quoteListEl = moduleEl.querySelector('.quote-list');
-        if (category.quotes) {
-            category.quotes.forEach(quote => {
-                const quoteItemEl = createQuoteItem(quote, category.id);
-                if (quoteItemEl) quoteListEl.appendChild(quoteItemEl);
-            });
-        }
-        return moduleEl;
-    }
-
-    function renderDashboard() {
-        dashboardEl.innerHTML = '';
-        if (!Array.isArray(dashboardState)) {
-            console.error("Dashboard state is not an array:", dashboardState);
-            return;
-        }
-        dashboardState.forEach(category => {
-            const moduleEl = createCategoryModule(category);
-            if (moduleEl) dashboardEl.appendChild(moduleEl);
-        });
-    }
-
     async function performSave(isManual = false) {
         manualSaveFeedbackRuntime.showSaving({ manual: isManual });
         if (isManual) {
@@ -3403,345 +3069,151 @@
         });
     }
 
-    function syncKyberOnlyDirectPoolsControl(quote, selectedSource) {
-        const shouldShow = Boolean(
-            quote
-            && isEvmChain(quote.chain)
-            && quote.chain.toLowerCase() !== 'plasma'
-            && (selectedSource === 'Kyber' || selectedSource === 'Auto')
-        );
-        getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow);
-    }
-
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
     
     themeToggleBtn.addEventListener('click', () => { themeRuntime.toggle(); });
 
-    function openAddCategoryModal() {
-        getDashboardModalUtils().openAddCategoryModal(addCategoryModalRefs);
-    }
+    const dashboardActionController = getDashboardActionController().createDashboardActionController({
+        activeFetchControllerRuntime,
+        addCategoryModalRefs,
+        addQuoteModal,
+        addQuoteModalSelectionRuntime,
+        amountInputDebounceRuntime,
+        arbDetailUtils: getArbDetailUtils(),
+        closestEventTarget,
+        closeArbDetailModal,
+        confirmActionRuntime,
+        confirmModalRefs,
+        dashboardModalUtils: getDashboardModalUtils(),
+        dashboardRenderer: getDashboardRenderer(),
+        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        deleteQuoteMarketState,
+        deleteQuoteUiRuntimeState,
+        documentImpl: document,
+        domRenderUtils: getDomRenderUtils(),
+        evaluatePathAlertsOnce,
+        formatChainLabel,
+        getArbDetailState: () => arbDetailState,
+        getCategoryPauseAction,
+        getDashboardState: () => dashboardState,
+        getQuoteChainDisplayName,
+        getQuoteMarketState,
+        getRequestChannelOptions: () => requestChannelOptions,
+        isCexOrderbookChain,
+        isCrossChainQuote,
+        isEvmChain,
+        isQuotePaused,
+        quotePauseUtils: getQuotePauseUtils(),
+        quoteSettingsModal,
+        quoteSettingsModalElements,
+        quoteSettingsSelectionRuntime,
+        quoteStateRuntime,
+        queueQuoteRefresh,
+        removeFromQueue,
+        renderDataTerminalPanel,
+        requestChannelUtils: getRequestChannelUtils(),
+        resetQuoteUiRuntimeState,
+        saveData,
+        setQuoteMarketState,
+        updateAlertSoundState,
+        updateArbPanel,
+        updateRequestChannelTagForQuote,
+        updateSchedulers
+    });
 
-    function closeAddCategoryModal() {
-        getDashboardModalUtils().closeAddCategoryModal(addCategoryModalRefs);
-    }
+    const {
+        closeAddCategoryModal,
+        closeQuoteSettingsModal,
+        deleteCategoryFromDashboard,
+        deleteQuoteFromCategory,
+        handleDashboardClick,
+        handleDashboardInput,
+        openAddCategoryModal,
+        setQuotePausedState,
+        showConfirmation,
+        swapQuoteTokens,
+        syncKyberOnlyDirectPoolsControl,
+        toggleCategoryPause,
+        toggleQuotePause,
+        updateCategoryPauseButtonState
+    } = dashboardActionController;
 
     addCategoryBtn.addEventListener('click', openAddCategoryModal);
-
-    function handleDashboardInput(event) {
-        const action = getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget });
-        if (action.type !== 'update-amount') return;
-        const category = dashboardState.find(c => c.id == action.categoryId);
-        if (!category) return;
-        const quote = category.quotes.find(q => q.id == action.quoteId);
-        if (!quote) return;
-
-        amountInputDebounceRuntime.schedule(action.quoteId, () => {
-            quote.amount = action.amount;
-            renderDataTerminalPanel();
-            if (!isQuotePaused(quote)) {
-                queueQuoteRefresh(quote);
-            }
-            saveData();
-        });
-    }
-
     dashboardEl.addEventListener('input', handleDashboardInput);
-
-    function showConfirmation(message, callback) {
-        confirmActionRuntime.show(confirmModalRefs, message, callback);
-    }
-
-    function deleteQuoteFromCategory(categoryId, quoteId) {
-        const category = dashboardState.find(c => c.id == categoryId);
-        const quoteIndex = category ? category.quotes.findIndex(q => q.id == quoteId) : -1;
-        if (quoteIndex === -1) return false;
-
-        const quoteToDelete = category.quotes[quoteIndex];
-        removeFromQueue(quoteToDelete.id);
-        category.quotes.splice(quoteIndex, 1);
-
-        const quoteItem = document.getElementById(`quote-item-${quoteId}`);
-        if (quoteItem) quoteItem.remove();
-
-        deleteQuoteMarketState(quoteId);
-        deleteQuoteUiRuntimeState(quoteId);
-        updateCategoryPauseButtonState(categoryId);
-        updateAlertSoundState();
-        renderDataTerminalPanel();
-        saveData();
-        return true;
-    }
-
-    function syncPauseLinkedViews() {
-        updateArbPanel();
-        renderDataTerminalPanel();
-        evaluatePathAlertsOnce();
-    }
-
-    function setQuotePausedState(categoryId, quote, nextPaused, options = {}) {
-        if (!quote || isQuotePaused(quote) === nextPaused) return false;
-
-        const shouldSync = options.sync !== false;
-        const shouldSave = options.save !== false;
-        const quoteId = quote.id;
-        quote.paused = nextPaused;
-
-        amountInputDebounceRuntime.clear(quoteId);
-
-        if (nextPaused) {
-            const previousState = getQuoteMarketState(quoteId) || {};
-            removeFromQueue(quoteId);
-            activeFetchControllerRuntime.abort(quoteId);
-            setQuoteMarketState(quoteId, getQuotePauseUtils().buildPausedQuoteState(previousState));
-            resetQuoteUiRuntimeState(quoteId);
-            applyPausedQuoteUiState(quote, getQuoteMarketState(quoteId) || {});
-            updateSchedulers();
-            if (getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId)) {
-                closeArbDetailModal();
-            }
-        } else {
-            queueQuoteRefresh(quote);
-        }
-
-        updateCategoryPauseButtonState(categoryId);
-        if (shouldSync) {
-            updateAlertSoundState();
-            syncPauseLinkedViews();
-        }
-        if (shouldSave) {
-            saveData();
-        }
-        return true;
-    }
-
-    function toggleQuotePause(categoryId, quoteId, options = {}) {
-        const category = dashboardState.find((item) => item.id == categoryId);
-        if (!category) return false;
-        const quote = category.quotes.find((item) => item.id == quoteId);
-        if (!quote) return false;
-        return setQuotePausedState(categoryId, quote, !isQuotePaused(quote), options);
-    }
-
-    function toggleCategoryPause(categoryId) {
-        const category = dashboardState.find((item) => item.id == categoryId);
-        if (!category || !Array.isArray(category.quotes) || category.quotes.length === 0) {
-            updateCategoryPauseButtonState(categoryId);
-            return false;
-        }
-
-        const action = getCategoryPauseAction(category.quotes);
-        const nextPaused = action === 'pause';
-        let changed = false;
-
-        category.quotes.forEach((quote) => {
-            if (isQuotePaused(quote) === nextPaused) return;
-            if (setQuotePausedState(categoryId, quote, nextPaused, { sync: false, save: false })) {
-                changed = true;
-            }
-        });
-
-        updateCategoryPauseButtonState(categoryId);
-        if (!changed) return false;
-
-        updateAlertSoundState();
-        syncPauseLinkedViews();
-        saveData();
-        return true;
-    }
-
-    function swapQuoteTokens(categoryId, quoteId) {
-        const category = dashboardState.find(c => c.id == categoryId);
-        if (!category) return false;
-        const quote = category.quotes.find(q => q.id == quoteId);
-        if (!quote || isCexOrderbookChain(quote.chain) || isCrossChainQuote(quote)) return false;
-
-        [quote.fromToken, quote.toToken] = [quote.toToken, quote.fromToken];
-
-        const state = getQuoteMarketState(quoteId);
-        if (state) {
-            const nextState = getDashboardRuntimeUtils().buildSwappedQuoteMarketState(state);
-
-            const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
-            getDomRenderUtils().resetTrendArrow(arrowEl);
-
-            const quoteItemEl = document.getElementById(`quote-item-${quoteId}`);
-            getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl);
-            setQuoteMarketState(quoteId, nextState);
-        }
-        resetQuoteUiRuntimeState(quoteId);
-        updateAlertSoundState();
-
-        getDomRenderUtils().applyQuoteSwitchingDomState({
-            ...getDomRenderUtils().getQuoteDomRefs(document, quoteId),
-            inverseEl: document.getElementById(`inverse-quote-${quoteId}`)
-        });
-
-        saveData();
-        removeFromQueue(quote.id);
-        queueQuoteRefresh(quote);
-        renderDataTerminalPanel();
-        return true;
-    }
-
-    function openQuoteSettingsModal(categoryId, quoteId) {
-        const category = dashboardState.find(c => c.id == categoryId);
-        if (!category) return false;
-        const quote = category.quotes.find(q => q.id == quoteId);
-        if (!quote) return false;
-        quoteSettingsSelectionRuntime.set({ quote, categoryId });
-        const monitorState = getQuoteMarketState(quote.id) || {};
-        const modalState = getDashboardRenderer().buildQuoteSettingsModalViewState({
-            quote,
-            monitorState,
-            isCexOrderbookChain,
-            isCrossChainQuote,
-            isEvmChain,
-            getQuoteChainDisplayName,
-            getSingleChainDisplayName: formatChainLabel
-        });
-        const writePlan = getDashboardRenderer().buildQuoteSettingsModalWritePlan(modalState);
-        getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, writePlan);
-        syncKyberOnlyDirectPoolsControl(quote, writePlan.kyberOnlyDirectPoolsSource);
-
-        if (getRequestChannelUtils().supportsRequestChannelForQuote(quote)) {
-            const currentChannelId = getRequestChannelUtils().resolveRequestChannelIdForQuote(quote, requestChannelOptions);
-            getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {
-                visible: true,
-                optionsHtml: getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || []),
-                value: currentChannelId
-            });
-        } else {
-            getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {
-                visible: false
-            });
-        }
-
-        getDashboardModalUtils().showModal(quoteSettingsModal);
-        return true;
-    }
-
-    function closeQuoteSettingsModal() {
-        getDashboardModalUtils().hideModal(quoteSettingsModal);
-        quoteSettingsSelectionRuntime.clear();
-    }
-
-    function deleteCategoryFromDashboard(categoryId) {
-        const categoryIndex = dashboardState.findIndex(c => c.id == categoryId);
-        if (categoryIndex === -1) return false;
-        showConfirmation(`确定删除分区 "${dashboardState[categoryIndex].name}" 吗？`, () => {
-            (dashboardState[categoryIndex].quotes || []).forEach(q => {
-                removeFromQueue(q.id);
-                deleteQuoteMarketState(q.id);
-                deleteQuoteUiRuntimeState(q.id);
-            });
-            updateAlertSoundState();
-            dashboardState.splice(categoryIndex, 1);
-            const moduleEl = document.getElementById(`module-${categoryId}`);
-            if (moduleEl) moduleEl.remove();
-            renderDataTerminalPanel();
-            saveData();
-        });
-        return true;
-    }
-
-    function handleDashboardClick(event) {
-        const action = getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget });
-        if (action.type === 'dismiss-highlight') {
-            quoteStateRuntime.setUiState(action.quoteId, {
-                hasUnreadAlert: false
-            });
-            const quoteItemEl = document.getElementById(`quote-item-${action.quoteId}`);
-            getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl);
-            return;
-        }
-        if (action.type === 'toggle-category-pause') {
-            toggleCategoryPause(action.categoryId);
-            return;
-        }
-        if (action.type === 'toggle-quote-pause') {
-            toggleQuotePause(action.categoryId, action.quoteId);
-            return;
-        }
-        if (action.type === 'edit-quote') {
-            openQuoteSettingsModal(action.categoryId, action.quoteId);
-            return;
-        }
-        if (action.type === 'delete-quote') {
-            showConfirmation('确定删除此报价吗？', () => {
-                deleteQuoteFromCategory(action.categoryId, action.quoteId);
-            });
-            return;
-        }
-        if (action.type === 'delete-category') {
-            deleteCategoryFromDashboard(action.categoryId);
-            return;
-        }
-        if (action.type === 'add-quote') {
-            addQuoteModalSelectionRuntime.set(action.categoryId);
-            getDashboardModalUtils().showModal(addQuoteModal);
-            return;
-        }
-        if (action.type === 'swap-quote') {
-            swapQuoteTokens(action.categoryId, action.quoteId);
-        }
-    }
-
     dashboardEl.addEventListener('click', handleDashboardClick);
 
-    quoteSettingsModal.addEventListener('click', (e) => {
-        const action = getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: quoteSettingsModal });
-        if (action.type === 'close') {
-            closeQuoteSettingsModal();
-            return;
-        }
-
-        const editingQuote = quoteSettingsSelectionRuntime.get();
-        if (!editingQuote || !editingQuote.quote) return;
-        if (action.type === 'swap') {
-            swapQuoteTokens(editingQuote.categoryId, editingQuote.quote.id);
-        } else if (action.type === 'delete') {
-            const { categoryId, quote } = editingQuote;
-            closeQuoteSettingsModal();
-            showConfirmation('确定删除此报价吗？', () => {
-                deleteQuoteFromCategory(categoryId, quote.id);
-            });
-        } else if (action.type === 'manage-alerts') {
-            const href = getPathAlertPageUtils().buildPathAlertsPageHref({
-                filterQuoteId: editingQuote.quote.id
-            });
-            window.open(href, '_blank', 'noopener');
-        } else if (action.type === 'save') {
-            const { quote } = editingQuote;
-            const values = getDashboardModalUtils().readQuoteSettingsFormValues(quoteSettingsModalElements);
-            const formValues = {
-                ...values,
-                sourceValue: values.sourceValue || (quote ? quote.preferredSource : '')
-            };
-            const updatePlan = getDashboardRenderer().buildQuoteSettingsUpdatePlan({
-                quote,
-                sourceValue: formValues.sourceValue,
-                kyberOnlyDirectPools: formValues.kyberOnlyDirectPools,
-                showInverse: formValues.showInverse,
-                requestChannelEnabled: getRequestChannelUtils().supportsRequestChannelForQuote(quote) && Boolean(quoteRequestChannelSelect),
-                requestChannelId: formValues.requestChannelId,
-                isCrossChainQuote,
-                isEvmChain
-            });
-            Object.assign(quote, updatePlan.updates);
-            updatePlan.deletes.forEach((key) => { delete quote[key]; });
-            if (updatePlan.requestChannelChanged) {
-                updateRequestChannelTagForQuote(quote);
-            }
-
-            if (updatePlan.shouldQueueRefreshQuote) {
-                removeFromQueue(quote.id);
-                queueQuoteRefresh(quote, { clearInverse: quote.showInverse !== true });
-            }
-
-            saveData();
-            closeQuoteSettingsModal();
-        }
+    const dashboardViewController = getDashboardViewController().createDashboardViewController({
+        bindCopyHandler,
+        copyDexLinkFromElement,
+        dashboardEl,
+        dashboardRenderer: getDashboardRenderer(),
+        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        dexLinkUtils: getDexLinkUtils(),
+        documentImpl: document,
+        getCategoryPauseAction,
+        getDashboardState: () => dashboardState,
+        getQuoteChainDisplayName,
+        getQuoteDisplayText,
+        getQuoteMarketState,
+        getRequestChannelOptions: () => requestChannelOptions,
+        handleQuoteHover,
+        isCexOrderbookChain,
+        isCrossChainQuote,
+        isQuotePaused,
+        logger: console,
+        quoteDisplayUtils: getQuoteDisplayUtils(),
+        requestChannelUtils: getRequestChannelUtils(),
+        saveData
     });
+    const {
+        createCategoryModule,
+        createQuoteItem,
+        renderDashboard
+    } = dashboardViewController;
+
+    const dashboardFormController = getDashboardFormController().createDashboardFormController({
+        addCategoryModal,
+        addCategoryModalRefs,
+        addQuoteChainSelect,
+        addQuoteInputs: [addQuoteFromInput, addQuoteToInput, addQuoteSymbolInput],
+        addQuoteModal,
+        addQuoteModalRefs,
+        addQuoteModalSelectionRuntime,
+        addQuoteToChainSelect,
+        closeAddCategoryModal,
+        closeQuoteSettingsModal,
+        createCategoryModule,
+        createQuoteItem,
+        dashboardEl,
+        dashboardModalUtils: getDashboardModalUtils(),
+        dashboardRenderer: getDashboardRenderer(),
+        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        defaultSourceResolver,
+        deleteQuoteFromCategory,
+        documentImpl: document,
+        getDashboardState: () => dashboardState,
+        isCexOrderbookChain,
+        isCrossChainQuote,
+        isEvmChain,
+        normalizeChainKey,
+        pathAlertPageUtils: getPathAlertPageUtils(),
+        queueQuoteRefresh,
+        quoteRequestChannelSelect,
+        quoteSettingsModal,
+        quoteSettingsModalElements,
+        quoteSettingsSelectionRuntime,
+        quoteSourceSelect,
+        removeFromQueue,
+        requestChannelUtils: getRequestChannelUtils(),
+        saveData,
+        showConfirmation,
+        swapQuoteTokens,
+        syncKyberOnlyDirectPoolsControl,
+        updateCategoryPauseButtonState,
+        updateRequestChannelTagForQuote,
+        windowImpl: window
+    });
+    dashboardFormController.bind();
 
     function handleConfirmModalClick(event) {
         const action = getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal });
@@ -3759,93 +3231,6 @@
     if (confirmOkBtn) confirmOkBtn.addEventListener('click', handleConfirmModalClick);
     if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', handleConfirmModalClick);
     confirmModal.addEventListener('click', handleConfirmModalClick);
-
-    if (quoteSourceSelect) {
-        quoteSourceSelect.addEventListener('change', () => {
-            const editingQuote = quoteSettingsSelectionRuntime.get();
-            const currentQuote = editingQuote && editingQuote.quote ? editingQuote.quote : null;
-            syncKyberOnlyDirectPoolsControl(currentQuote, quoteSourceSelect.value);
-        });
-    }
-    
-    addCategoryModal.addEventListener('click', (e) => {
-        const action = getDashboardRenderer().resolveAddCategoryModalClickAction(e, { modal: addCategoryModal });
-        if (action.type === 'close') {
-            closeAddCategoryModal();
-        } else if (action.type === 'save') {
-            const newCategory = getDashboardRenderer().buildAddCategoryDraft({
-                ...getDashboardModalUtils().readAddCategoryFormValues(addCategoryModalRefs, {
-                    readAddCategoryFormValues: getDashboardRenderer().readAddCategoryFormValues
-                }),
-                categoryId: Date.now()
-            });
-            if (!newCategory) return;
-            dashboardState.push(newCategory);
-            const moduleEl = createCategoryModule(newCategory);
-            if (moduleEl) dashboardEl.appendChild(moduleEl);
-            saveData();
-            closeAddCategoryModal();
-        }
-    });
-
-    function resetAndCloseAddQuoteModal() {
-        addQuoteModalSelectionRuntime.clear();
-        getDashboardModalUtils().resetAddQuoteModal(addQuoteModalRefs, {
-            syncControls: syncAddQuoteFormControls
-        });
-    }
-
-    function syncAddQuoteFormControls() {
-        getDashboardModalUtils().syncAddQuoteFormControls(addQuoteModalRefs, {
-            buildAddQuoteFormViewState: getDashboardRenderer().buildAddQuoteFormViewState,
-            normalizeChainKey,
-            isCexOrderbookChain,
-            isEvmChain
-        });
-    }
-
-    addQuoteChainSelect.addEventListener('change', () => {
-        syncAddQuoteFormControls();
-    });
-    if (addQuoteToChainSelect) {
-        addQuoteToChainSelect.addEventListener('change', () => {
-            syncAddQuoteFormControls();
-        });
-    }
-    [addQuoteFromInput, addQuoteToInput, addQuoteSymbolInput].forEach(input => {
-        input.addEventListener('input', syncAddQuoteFormControls);
-    });
-
-    addQuoteModal.addEventListener('click', (e) => {
-        const action = getDashboardRenderer().resolveAddQuoteModalClickAction(e, { modal: addQuoteModal });
-        if (action.type === 'close') {
-            resetAndCloseAddQuoteModal();
-        } else if (action.type === 'save') {
-            const categoryIdToAdd = addQuoteModalSelectionRuntime.get();
-            if (categoryIdToAdd === null) return;
-            const newQuote = getDashboardRenderer().buildAddQuoteDraft({
-                ...getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs),
-                quoteId: Date.now(),
-                normalizeChainKey,
-                isCexOrderbookChain,
-                defaultSourceResolver
-            });
-            if (!newQuote) return;
-            const category = dashboardState.find(c => c.id == categoryIdToAdd);
-            if (!category) return;
-            if (!category.quotes) category.quotes = [];
-            category.quotes.push(newQuote);
-            const quoteListEl = document.getElementById(`quote-list-${category.id}`);
-            if (quoteListEl) {
-                quoteListEl.appendChild(createQuoteItem(newQuote, category.id));
-            }
-            updateCategoryPauseButtonState(category.id);
-            saveData();
-            queueQuoteRefresh(newQuote);
-            
-            resetAndCloseAddQuoteModal();
-        }
-    });
 
     async function init() {
         audioNoticeEl.style.display = 'block';

@@ -84,14 +84,14 @@
 
 ### 2) 别名规则 -> 规则边（1:1 等价币）
 
-当前不再直接手写零散 `aliasRules`，而是先在 `app.js` 里维护 `ASSET_EQUIVALENCE_GROUPS`，再生成别名规则。
+当前不再直接在主看板逻辑里手写零散 `aliasRules`，而是在 `src/arb/arb-equivalence-utils.js` 维护 `DEFAULT_ASSET_EQUIVALENCE_GROUPS`，再生成别名规则。
 
 当前示例：
 
-- `cbBTC` 组：`cbBTC / xBTC / BTCB / BTC.b`
+- `cbBTC` 组：`cbBTC / xBTC / BTCB / BTC.b / BTC.B`
 - `WBTC` 组：`WBTC / wBTC`
 - `tBTC` 组：`tBTC / TBTC`
-- `USDT` 组：`USDT / USD₮0`
+- `USDT` 组：`USDT / USD₮0 / USDT0`
 
 注意：
 

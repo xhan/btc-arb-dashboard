@@ -15,7 +15,10 @@ const {
   createInputDebounceRuntime,
   createSaveButtonFeedbackRuntime,
   deleteQuoteUiRuntimeState,
+  findDashboardCategoryById,
+  findDashboardCategoryIndexById,
   findDashboardQuoteById,
+  findDashboardQuoteMatchByCategoryId,
   findDashboardQuoteMatchById,
   getActivePathAlertEvaluationAlerts,
   getBrowserLocalStorage,
@@ -130,6 +133,23 @@ assert.deepStrictEqual(
   findDashboardQuoteById(dashboardQuoteLookupState, '101'),
   { id: 101, symbol: 'BTCUSDT' }
 );
+assert.deepStrictEqual(
+  findDashboardCategoryById(dashboardQuoteLookupState, 'cat-1'),
+  dashboardQuoteLookupState[0]
+);
+assert.strictEqual(findDashboardCategoryById(dashboardQuoteLookupState, 'missing'), null);
+assert.strictEqual(findDashboardCategoryIndexById(dashboardQuoteLookupState, 'cat-2'), 1);
+assert.strictEqual(findDashboardCategoryIndexById(dashboardQuoteLookupState, 'missing'), -1);
+assert.deepStrictEqual(
+  findDashboardQuoteMatchByCategoryId(dashboardQuoteLookupState, 'cat-1', '102'),
+  {
+    category: dashboardQuoteLookupState[0],
+    quote: { id: 102, symbol: 'ETHUSDT' },
+    quoteIndex: 1
+  }
+);
+assert.strictEqual(findDashboardQuoteMatchByCategoryId(dashboardQuoteLookupState, 'cat-1', 103), null);
+assert.strictEqual(findDashboardQuoteMatchByCategoryId(dashboardQuoteLookupState, 'missing', 101), null);
 assert.deepStrictEqual(
   findDashboardQuoteById(dashboardQuoteLookupState, 103),
   { id: '103', symbol: 'SOLUSDT' }

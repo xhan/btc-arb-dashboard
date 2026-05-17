@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-app.js'), 'utf8');
+const dashboardActionControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/dashboard/dashboard-action-controller.js'), 'utf8');
+const dashboardFormControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/dashboard/dashboard-form-controller.js'), 'utf8');
 const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-queue-runtime-utils.js'), 'utf8');
 
 assert.ok(
@@ -63,8 +65,8 @@ assert.ok(
 assert.ok(
   !appJs.includes('function abortQuoteFetch(')
     && appJs.includes('activeFetchControllerRuntime.abort(quote.id);')
-    && appJs.includes('activeFetchControllerRuntime.abort(quoteId);'),
-  '主看板不应保留 fetch abort 单用途包装'
+    && dashboardActionControllerJs.includes('deps.activeFetchControllerRuntime.abort(quoteId);'),
+  '主看板不应保留 fetch abort 单用途包装，报价暂停由 dashboard action controller 委托 runtime'
 );
 
 assert.ok(
@@ -89,7 +91,7 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('queueQuoteRefresh(quote, { clearInverse: quote.showInverse !== true });'),
+  dashboardFormControllerJs.includes('deps.queueQuoteRefresh(quote, { clearInverse: quote.showInverse !== true });'),
   '关闭反向报价时应明确清理反向报价 DOM'
 );
 

@@ -6,13 +6,12 @@ const {
   normalizeArbCycleStartPriority,
   buildPreferredCycleStartSymbols
 } = require('../arb/arb-cycle-priority-utils');
+const {
+  DEFAULT_ASSET_EQUIVALENCE_GROUPS,
+  buildAliasRulesFromGroups
+} = require('../arb/arb-equivalence-utils');
 
-const ALIAS_RULES = {
-  xBTC: 'cbBTC',
-  BTCB: 'cbBTC',
-  'BTC.b': 'cbBTC',
-  'BTC.B': 'cbBTC'
-};
+const ALIAS_RULES = buildAliasRulesFromGroups(DEFAULT_ASSET_EQUIVALENCE_GROUPS);
 
 const FIXED_PATH_RULES = [
   {

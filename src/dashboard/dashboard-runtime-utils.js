@@ -240,6 +240,41 @@
     return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;
   }
 
+  function idsMatch(left, right) {
+    if (left === undefined || left === null || right === undefined || right === null) return false;
+    const leftNumeric = Number(left);
+    const rightNumeric = Number(right);
+    if (Number.isFinite(leftNumeric) && Number.isFinite(rightNumeric)) {
+      return leftNumeric === rightNumeric;
+    }
+    return String(left) === String(right);
+  }
+
+  function findDashboardCategoryById(dashboardState, categoryId) {
+    const categories = Array.isArray(dashboardState) ? dashboardState : [];
+    return categories.find((category) => idsMatch(category && category.id, categoryId)) || null;
+  }
+
+  function findDashboardCategoryIndexById(dashboardState, categoryId) {
+    const categories = Array.isArray(dashboardState) ? dashboardState : [];
+    return categories.findIndex((category) => idsMatch(category && category.id, categoryId));
+  }
+
+  function findDashboardQuoteMatchByCategoryId(dashboardState, categoryId, quoteId) {
+    const category = findDashboardCategoryById(dashboardState, categoryId);
+    if (!category) return null;
+    const numericQuoteId = Number(quoteId);
+    if (!Number.isFinite(numericQuoteId)) return null;
+    const quotes = Array.isArray(category.quotes) ? category.quotes : [];
+    const quoteIndex = quotes.findIndex((item) => Number(item && item.id) === numericQuoteId);
+    if (quoteIndex === -1) return null;
+    return {
+      category,
+      quote: quotes[quoteIndex],
+      quoteIndex
+    };
+  }
+
   function findDashboardQuoteMatchById(dashboardState, quoteId) {
     const numericQuoteId = Number(quoteId);
     if (!Number.isFinite(numericQuoteId)) return null;
@@ -603,7 +638,10 @@
     createInputDebounceRuntime,
     createSaveButtonFeedbackRuntime,
     deleteQuoteUiRuntimeState,
+    findDashboardCategoryById,
+    findDashboardCategoryIndexById,
     findDashboardQuoteById,
+    findDashboardQuoteMatchByCategoryId,
     findDashboardQuoteMatchById,
     getActivePathAlertEvaluationAlerts,
     getBrowserLocalStorage,

@@ -1,7 +1,7 @@
 function buildApi() {
   const DEFAULT_ASSET_EQUIVALENCE_GROUPS = {
     ETH: ['ETH', 'WETH'],
-    cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b'],
+    cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b', 'BTC.B'],
     WBTC: ['WBTC', 'wBTC'],
     tBTC: ['tBTC', 'TBTC'],
     USDe: ['USDe', 'USDE'],

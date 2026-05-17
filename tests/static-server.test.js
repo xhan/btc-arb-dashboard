@@ -96,6 +96,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
+    assert.ok(response.body.includes('src="src/dashboard/dashboard-view-controller.js"'));
     assert.ok(response.body.includes('src="src/price-snapshots/price-snapshot-payload-utils.js"'));
     assert.ok(response.body.includes('src="src/shared/chain-defaults.js"'));
     assert.ok(response.body.includes('src="src/ui/audio-utils.js"'));
@@ -103,9 +104,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/ui/keyboard-shortcut-utils.js"'));
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(response.body.includes('src="src/data-terminal/data-terminal-utils.js"'));
+    assert.ok(response.body.includes('src="src/data-terminal/data-terminal-controller.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-api-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-modal-utils.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="src/dashboard/dashboard-action-controller.js"'));
+    assert.ok(response.body.includes('src="src/dashboard/dashboard-form-controller.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/muted-path-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
@@ -135,7 +139,31 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/data-terminal/data-terminal-utils.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/dashboard/dashboard-renderer.js"') < response.body.indexOf('src="src/dashboard/dashboard-view-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/dashboard/dashboard-view-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/data-terminal/data-terminal-utils.js"') < response.body.indexOf('src="src/data-terminal/data-terminal-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/data-terminal/data-terminal-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/dashboard/dashboard-runtime-utils.js"') < response.body.indexOf('src="src/dashboard/dashboard-action-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/dashboard/dashboard-action-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/dashboard/dashboard-action-controller.js"') < response.body.indexOf('src="src/dashboard/dashboard-form-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/dashboard/dashboard-form-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/dashboard/dashboard-api-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -316,6 +344,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbEquivalenceUtilsResponse.statusCode, 200);
     const dataTerminalUtilsResponse = await request('/src/data-terminal/data-terminal-utils.js');
     assert.strictEqual(dataTerminalUtilsResponse.statusCode, 200);
+    const dataTerminalControllerResponse = await request('/src/data-terminal/data-terminal-controller.js');
+    assert.strictEqual(dataTerminalControllerResponse.statusCode, 200);
     const arbDetailUtilsResponse = await request('/src/arb/arb-detail-utils.js');
     assert.strictEqual(arbDetailUtilsResponse.statusCode, 200);
     const arbDetailRefreshUtilsResponse = await request('/src/arb/arb-detail-refresh-utils.js');
@@ -340,10 +370,16 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(chainDefaultsResponse.statusCode, 200);
     const dashboardRendererResponse = await request('/src/dashboard/dashboard-renderer.js');
     assert.strictEqual(dashboardRendererResponse.statusCode, 200);
+    const dashboardViewControllerResponse = await request('/src/dashboard/dashboard-view-controller.js');
+    assert.strictEqual(dashboardViewControllerResponse.statusCode, 200);
     const dashboardApiUtilsResponse = await request('/src/dashboard/dashboard-api-utils.js');
     assert.strictEqual(dashboardApiUtilsResponse.statusCode, 200);
     const dashboardModalUtilsResponse = await request('/src/dashboard/dashboard-modal-utils.js');
     assert.strictEqual(dashboardModalUtilsResponse.statusCode, 200);
+    const dashboardActionControllerResponse = await request('/src/dashboard/dashboard-action-controller.js');
+    assert.strictEqual(dashboardActionControllerResponse.statusCode, 200);
+    const dashboardFormControllerResponse = await request('/src/dashboard/dashboard-form-controller.js');
+    assert.strictEqual(dashboardFormControllerResponse.statusCode, 200);
     const pathAlertUtilsResponse = await request('/src/path-alerts/path-alert-utils.js');
     assert.strictEqual(pathAlertUtilsResponse.statusCode, 200);
     const mutedPathStorageUtilsResponse = await request('/src/path-alerts/muted-path-storage-utils.js');
@@ -382,13 +418,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('DexLinkUtils is not loaded'));
     assert.ok(!appJsResponse.body.includes('function getDexLinkLabel(config = {})'));
     assert.ok(!appJsResponse.body.includes("function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制')"));
-    assert.ok(appJsResponse.body.includes('getDexLinkUtils().getDexLinkLabel(dexLinkConfig)'));
+    assert.ok(dashboardViewControllerResponse.body.includes('deps.dexLinkUtils.getDexLinkLabel(dexLinkConfig)'));
     assert.ok(appJsResponse.body.includes('getDexLinkUtils().buildDexLinkCopyButtonHtml({'));
     assert.ok(appJsResponse.body.includes('getCopyUtils().copyDexLinkFromElement(targetEl, {'));
     assert.ok(!appJsResponse.body.includes('const dexLink = utils.buildDexLink({'));
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
     assert.ok(appJsResponse.body.includes('function getDataTerminalUtils()'));
     assert.ok(appJsResponse.body.includes('DataTerminalUtils is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getDataTerminalController()'));
+    assert.ok(appJsResponse.body.includes('DataTerminalController is not loaded'));
+    assert.ok(dataTerminalControllerResponse.body.includes('function createDataTerminalController(deps = {})'));
     assert.ok(appJsResponse.body.includes('function getWindowModule(globalName, missingMessage)'));
     assert.ok(!appJsResponse.body.includes('if (!window.ChainDefaults)'));
     assert.ok(!appJsResponse.body.includes('数据终端模块未加载'));
@@ -423,7 +462,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes("getDomRenderUtils().applyTrendArrowState(arrowEl, { action: 'hide' })"));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().resetTrendArrow(arrowEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(itemEl)'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(quoteItemEl)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.domRenderUtils.clearQuoteHighlightUi(quoteItemEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteAlertHighlightUi(itemEl, uiUpdate)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteAlertDismissButtonState(resultDiv, uiUpdate.nextState, quote.id, { documentImpl: document })'));
     assert.ok(!appJsResponse.body.includes('function syncQuoteAlertDismissButton('));
@@ -434,8 +473,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyPausedQuoteDomState('));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyActiveQuoteDomState('));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().getQuoteDomRefs(document, quote.id)'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteSwitchingDomState({'));
-    assert.ok(appJsResponse.body.includes('...getDomRenderUtils().getQuoteDomRefs(document, quoteId),'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.domRenderUtils.applyQuoteSwitchingDomState({'));
+    assert.ok(dashboardActionControllerResponse.body.includes('...deps.domRenderUtils.getQuoteDomRefs(deps.documentImpl, quoteId),'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteDisplayTextDomState({'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuotePairLabelDomState('));
     assert.ok(!appJsResponse.body.includes('pairLabelEl.innerHTML = getQuoteDisplayUtils().buildQuotePairLabelHtml'));
@@ -478,8 +517,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("quoteDataEl.classList.remove('error')"));
     assert.ok(!appJsResponse.body.includes("quoteDataEl.classList.add('error')"));
     assert.ok(!appJsResponse.body.includes('quoteDataEl.title = errorTitle'));
-    assert.ok(appJsResponse.body.includes('labelStackEl.classList.add(\'quote-dex-link-target\')'));
-    assert.ok(appJsResponse.body.includes('void copyDexLinkFromElement(labelStackEl)'));
+    assert.ok(dashboardViewControllerResponse.body.includes("labelStackEl.classList.add('quote-dex-link-target')"));
+    assert.ok(dashboardViewControllerResponse.body.includes('void deps.copyDexLinkFromElement(labelStackEl)'));
     assert.ok(dashboardRendererResponse.body.includes('class="icon-btn add-quote-btn"'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveDashboardAmountInputAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveDashboardButtonClickAction(event, options = {})'));
@@ -498,21 +537,21 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function resolveConfirmModalClickAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsUpdatePlan(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function readQuoteSettingsFormValues(options = {})'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardAmountInputAction(event, { closestEventTarget })'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget })'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalViewState({'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsModalWritePlan(modalState)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.resolveDashboardAmountInputAction(event, {'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.resolveDashboardButtonClickAction(event, {'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsModalViewState({'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsModalWritePlan(modalState)'));
     assert.ok(!appJsResponse.body.includes('function applyQuoteSettingsModalWritePlan(plan)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyQuoteSettingsModalWritePlan(quoteSettingsModalElements, writePlan)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readQuoteSettingsFormValues(quoteSettingsModalElements)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildQuoteSettingsUpdatePlan({'));
-    assert.ok(appJsResponse.body.includes('buildAddQuoteFormViewState: getDashboardRenderer().buildAddQuoteFormViewState'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddQuoteDraft({'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveAddQuoteModalClickAction(e, { modal: addQuoteModal })'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyQuoteSettingsModalWritePlan(deps.quoteSettingsModalElements, writePlan)'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readQuoteSettingsFormValues(deps.quoteSettingsModalElements)'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsUpdatePlan({'));
+    assert.ok(dashboardFormControllerResponse.body.includes('buildAddQuoteFormViewState: deps.dashboardRenderer.buildAddQuoteFormViewState'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildAddQuoteDraft({'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.resolveAddQuoteModalClickAction(event, {'));
     assert.ok(appJsResponse.body.includes('function getDashboardModalUtils()'));
     assert.ok(appJsResponse.body.includes('DashboardModalUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readAddQuoteFormValues(addQuoteModalRefs)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().syncAddQuoteFormControls(addQuoteModalRefs, {'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readAddQuoteFormValues(deps.addQuoteModalRefs)'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.syncAddQuoteFormControls(deps.addQuoteModalRefs, {'));
     assert.ok(appJsResponse.body.includes('const addQuoteModalSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();'));
     assert.ok(appJsResponse.body.includes('const quoteSettingsSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function showModal(modal)'));
@@ -544,21 +583,23 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function readSettingsIntervalInputs()'));
     assert.ok(!appJsResponse.body.includes("settingsBtn.addEventListener('click'"));
     assert.ok(!appJsResponse.body.includes("settingsSaveBtn.addEventListener('click'"));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().openAddCategoryModal(addCategoryModalRefs)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().closeAddCategoryModal(addCategoryModalRefs)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().readAddCategoryFormValues(addCategoryModalRefs, {'));
-    assert.ok(appJsResponse.body.includes('readAddCategoryFormValues: getDashboardRenderer().readAddCategoryFormValues'));
+    assert.ok(appJsResponse.body.includes('getDashboardActionController().createDashboardActionController({'));
+    assert.ok(appJsResponse.body.includes('getDashboardFormController().createDashboardFormController({'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.openAddCategoryModal(deps.addCategoryModalRefs)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.closeAddCategoryModal(deps.addCategoryModalRefs)'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readAddCategoryFormValues(deps.addCategoryModalRefs, {'));
+    assert.ok(dashboardFormControllerResponse.body.includes('readAddCategoryFormValues: deps.dashboardRenderer.readAddCategoryFormValues'));
     assert.ok(appJsResponse.body.includes('const confirmActionRuntime = getDashboardModalUtils().createConfirmActionRuntime();'));
-    assert.ok(appJsResponse.body.includes('confirmActionRuntime.show(confirmModalRefs, message, callback)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.confirmActionRuntime.show(deps.confirmModalRefs, message, callback)'));
     assert.ok(appJsResponse.body.includes('confirmActionRuntime.close(confirmModalRefs)'));
     assert.ok(!appJsResponse.body.includes('getDashboardModalUtils().showModal(settingsModal)'));
     assert.ok(!appJsResponse.body.includes('getDashboardModalUtils().hideModal(settingsModal)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(quoteSettingsModal)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().hideModal(quoteSettingsModal)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(addQuoteModal)'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddCategoryDraft({'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveAddCategoryModalClickAction(e, { modal: addCategoryModal })'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: quoteSettingsModal })'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.showModal(deps.quoteSettingsModal)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.hideModal(deps.quoteSettingsModal)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.showModal(deps.addQuoteModal)'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildAddCategoryDraft({'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.resolveAddCategoryModalClickAction(event, {'));
+    assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.resolveQuoteSettingsModalClickAction(event, {'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal })'));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('input', handleDashboardInput)"));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('click', handleDashboardClick)"));
@@ -599,7 +640,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getQuoteSettingsFormValues('));
     assert.ok(!appJsResponse.body.includes('function getAddQuoteFormValues('));
     assert.ok(!appJsResponse.body.includes('function renderQuoteRequestChannelOptions('));
-    assert.ok(appJsResponse.body.includes('const currentChannelId = getRequestChannelUtils().resolveRequestChannelIdForQuote(quote, requestChannelOptions);'));
+    assert.ok(dashboardActionControllerResponse.body.includes('const currentChannelId = deps.requestChannelUtils.resolveRequestChannelIdForQuote(quote, requestChannelOptions);'));
     assert.ok(!appJsResponse.body.includes("sourceValue: quoteSourceSelect ? quoteSourceSelect.value : quote.preferredSource"));
     assert.ok(!appJsResponse.body.includes("showInverse: document.getElementById('show-inverse-quote').checked"));
     assert.ok(!appJsResponse.body.includes("document.getElementById('modal-title').textContent = modalState.title"));
@@ -705,13 +746,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getSingleChainDisplayName(chain)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().getChainDisplayName(chain)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteChainDisplayName(quote)'));
-    assert.ok(appJsResponse.body.includes('getSingleChainDisplayName: formatChainLabel'));
+    assert.ok(dashboardActionControllerResponse.body.includes('getSingleChainDisplayName: deps.formatChainLabel'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().normalizeChainFilterToken(chainToken)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteStrategy(quote)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().isCrossChainQuote(quote)'));
     assert.ok(!appJsResponse.body.includes("const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];"));
     assert.ok(/buildQuoteResultMarketState\(\s*previousState,\s*data,/.test(appJsResponse.body));
-    assert.ok(appJsResponse.body.includes('buildSwappedQuoteMarketState(state)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRuntimeUtils.buildSwappedQuoteMarketState(state)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteResultMarketState(previousState, quoteResult, options = {})'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildSwappedQuoteMarketState(previousState)'));
     assert.ok(!appJsResponse.body.includes('function buildQuoteStrategy(quote)'));
@@ -757,7 +798,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('formatMultiChannelEnabledStorageValue(multiChannelEnabled)'));
     assert.ok(!appJsResponse.body.includes("raw !== 'false'"));
     assert.ok(!appJsResponse.body.includes("multiChannelEnabled ? 'true' : 'false'"));
-    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().shouldQueueInverseFetch(quote)'));
     assert.ok(!appJsResponse.body.includes('function getRequestChannelDisplayForQuote(quote)'));
@@ -771,10 +812,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!queueStatsExportBlock[0].includes('getQueueTaskKey'));
     assert.ok(appJsResponse.body.includes('function getQuotePauseUtils()'));
     assert.ok(appJsResponse.body.includes('QuotePauseUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().buildPausedQuoteState(previousState)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.quotePauseUtils.buildPausedQuoteState(previousState)'));
     assert.ok(!appJsResponse.body.includes('function buildPausedMonitorState(previousState)'));
     assert.ok(appJsResponse.body.includes('getQuotePauseUtils().applyQuotePauseButtonState(pauseBtn, quote)'));
-    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().applyCategoryPauseButtonState('));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.quotePauseUtils.applyCategoryPauseButtonState('));
     assert.ok(!appJsResponse.body.includes('pauseBtn.innerHTML = state.icon'));
     assert.ok(!appJsResponse.body.includes("pauseBtn.setAttribute('aria-label'"));
     assert.ok(!appJsResponse.body.includes("pauseBtn.setAttribute('aria-pressed'"));
@@ -786,10 +827,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("channels: [{ id: 'default', name: '默认通道'"));
     assert.ok(!appJsResponse.body.includes('function requestBackendConfigRefresh('));
     assert.ok(appJsResponse.body.includes('await dashboardApiClient.requestBackendConfigRefresh();'));
-    assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyKyberDirectPoolsControlVisibility(deps.quoteSettingsModalElements, shouldShow)'));
     assert.ok(!appJsResponse.body.includes("kyberDirectPoolsGroup.style.display = shouldShow ? 'flex' : 'none'"));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyQuoteRequestChannelOptionsState(quoteSettingsModalElements, {'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyQuoteRequestChannelOptionsState(deps.quoteSettingsModalElements, {'));
     assert.ok(!appJsResponse.body.includes('requestChannelSelectGroup.style.display'));
     assert.ok(!appJsResponse.body.includes('quoteRequestChannelSelect.innerHTML'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
@@ -834,8 +875,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function buildRequestChannelTagHtml(quote)'));
     assert.ok(!appJsResponse.body.includes('function buildQuotePairLabelHtml(quote, state)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, monitorState)'));
-    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().buildRequestChannelTagHtml(quote, requestChannel)'));
+    assert.ok(dashboardViewControllerResponse.body.includes('deps.quoteDisplayUtils.buildQuotePairLabelHtml(quote, monitorState)'));
+    assert.ok(dashboardViewControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelTagHtml(quote, requestChannel)'));
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagForQuote(quote, requestChannelOptions, {'));
     assert.ok(!appJsResponse.body.includes('showRequestChannelTags'));
     assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body'));
@@ -882,8 +923,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function createCategoryModuleShellElement(config = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('function getDashboardRenderer()'));
     assert.ok(appJsResponse.body.includes('DashboardRenderer is not loaded'));
-    assert.ok(appJsResponse.body.includes('renderer.createQuoteItemShellElement({'));
-    assert.ok(appJsResponse.body.includes('renderer.createCategoryModuleShellElement({'));
+    assert.ok(appJsResponse.body.includes('function getDashboardViewController()'));
+    assert.ok(appJsResponse.body.includes('DashboardViewController is not loaded'));
+    assert.ok(appJsResponse.body.includes('const dashboardViewController = getDashboardViewController().createDashboardViewController({'));
+    assert.ok(dashboardViewControllerResponse.body.includes('deps.dashboardRenderer.createQuoteItemShellElement({'));
+    assert.ok(dashboardViewControllerResponse.body.includes('deps.dashboardRenderer.createCategoryModuleShellElement({'));
+    assert.ok(!appJsResponse.body.includes('function addDnDHandlers('));
+    assert.ok(!appJsResponse.body.includes('function createQuoteItem('));
+    assert.ok(!appJsResponse.body.includes('function createCategoryModule('));
+    assert.ok(!appJsResponse.body.includes('function renderDashboard()'));
     assert.ok(!appJsResponse.body.includes("const itemEl = document.createElement('li');"));
     assert.ok(!appJsResponse.body.includes('itemEl.innerHTML = renderer.renderQuoteItemShell({'));
     assert.ok(!appJsResponse.body.includes("const moduleEl = document.createElement('div');"));
@@ -1070,8 +1118,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createButtonFeedbackRuntime(options = {})'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createSaveButtonFeedbackRuntime(options = {})'));
     assert.ok(appJsResponse.body.includes('const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({'));
-    assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.schedule(action.quoteId, () => {'));
-    assert.ok(appJsResponse.body.includes('amountInputDebounceRuntime.clear(quoteId);'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.amountInputDebounceRuntime.schedule(action.quoteId, () => {'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.amountInputDebounceRuntime.clear(quoteId);'));
     assert.ok(!appJsResponse.body.includes('let inputDebounceMap = new Map();'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createInputDebounceRuntime(options = {})'));
     assert.ok(!appJsResponse.body.includes('function sanitizeQuoteMarketState(state)'));
@@ -1091,7 +1139,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('return previousState !== nextState;'));
     assert.ok(!appJsResponse.body.includes('function setQuoteUiState('));
     assert.ok(appJsResponse.body.includes('quoteStateRuntime.setUiState(quote.id, uiUpdate.nextState)'));
-    assert.ok(appJsResponse.body.includes('quoteStateRuntime.setUiState(action.quoteId, {'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.quoteStateRuntime.setUiState(action.quoteId, {'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().buildQuoteAlertUiUpdate(uiState, hasTriggeredThisTick)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteAlertUiUpdate(currentState, hasTriggered)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState.getState())'));
@@ -1130,7 +1178,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pathAlertPageUtilsResponse.body.includes('buildPathAlertPanelRenderOptions'));
     assert.ok(!appJsResponse.body.includes("return { text: '监控中', className: 'path-alert-status-monitoring' };"));
     assert.ok(appJsResponse.body.includes('const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();'));
-    assert.ok(appJsResponse.body.includes('htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()'));
+    assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.createStableHtmlRenderer()'));
+    assert.ok(!appJsResponse.body.includes('htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()'));
     assert.ok(!appJsResponse.body.includes('window.DomRenderUtils.'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {})'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta = {}, options = {})'));
@@ -1223,7 +1272,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getDefaultArbDisplayMinProfitBp('));
     assert.ok(!appJsResponse.body.includes('function buildArbSectionToggleHtml('));
     assert.ok(!appJsResponse.body.includes('function buildArbSectionKey('));
-    assert.ok(/dataTerminalState\.htmlRenderer\.render\(\s*refs\.content,/.test(appJsResponse.body));
+    assert.ok(/state\.htmlRenderer\.render\(\s*refs\.content,/.test(dataTerminalControllerResponse.body));
+    assert.ok(!appJsResponse.body.includes('dataTerminalState.htmlRenderer.render'));
     assert.ok(!appJsResponse.body.includes('refs.content.innerHTML = buildDataTerminalPanelHtml'));
     assert.ok(appJsResponse.body.includes('evaluatePathAlert(alert, { quoteStateById: getQuoteMarketStateMap() })'));
     assert.ok(!appJsResponse.body.includes('const alertSound = document.getElementById(\'alert-sound\');'));
@@ -1515,8 +1565,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("pathAlertWindow.style.display = isVisible ? 'flex' : 'none';"));
     assert.ok(!appJsResponse.body.includes('renderPathAlertPanel();'));
     assert.ok(!appJsResponse.body.includes('function openPathAlertsManagementPage('));
-    assert.ok(appJsResponse.body.includes('const href = getPathAlertPageUtils().buildPathAlertsPageHref({\n                filterQuoteId: editingQuote.quote.id\n            });'));
-    assert.ok(appJsResponse.body.includes("window.open(href, '_blank', 'noopener');"));
+    assert.ok(dashboardFormControllerResponse.body.includes('const href = deps.pathAlertPageUtils.buildPathAlertsPageHref({\n          filterQuoteId: editingQuote.quote.id\n        });'));
+    assert.ok(dashboardFormControllerResponse.body.includes("deps.windowImpl.open(href, '_blank', 'noopener');"));
     assert.ok(!pathAlertPageUtilsResponse.body.includes('function renderPathAlertPanelHtml(options = {})'));
     assert.ok(!pathAlertPageUtilsResponse.body.includes('function renderPathAlertItemHtml(item = {})'));
     assert.ok(!pathAlertPageUtilsResponse.body.includes('function renderPathAlertSummaryLinesHtml(lines)'));
@@ -1551,7 +1601,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('window.PriceSnapshotPayloadUtils\n            ?'));
     assert.ok(!appJsResponse.body.includes('clientCapturedAt: new Date().toISOString(),\n                quotes: []'));
     assert.ok(appJsResponse.body.includes('data-toggle-pause-id'));
-    assert.ok(appJsResponse.body.includes('data-toggle-category-pause-id'));
+    assert.ok(dashboardRendererResponse.body.includes('data-toggle-category-pause-id'));
+    assert.ok(dashboardActionControllerResponse.body.includes('data-toggle-category-pause-id'));
     assert.ok(quotePauseUtilsResponse.body.includes('暂停分区'));
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(appJsResponse.body.includes('const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({'));
@@ -1722,22 +1773,28 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-profit-card'));
     assert.ok(!appJsResponse.body.includes('resolveEventTargetElement(event)'));
     assert.ok(!appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
-    assert.ok(appJsResponse.body.includes('function mountDataTerminalPanel()'));
-    assert.ok(appJsResponse.body.includes('function unmountDataTerminalPanel()'));
-    assert.ok(appJsResponse.body.includes('const panel = utils.createDataTerminalPanelElement({ documentImpl: document });'));
+    assert.ok(appJsResponse.body.includes('const dataTerminalController = getDataTerminalController().createDataTerminalController({'));
+    assert.ok(appJsResponse.body.includes('const renderDataTerminalPanel = dataTerminalController.renderPanel;'));
+    assert.ok(appJsResponse.body.includes('const toggleDataTerminalPanel = dataTerminalController.togglePanel;'));
+    assert.ok(appJsResponse.body.includes('const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;'));
+    assert.ok(!appJsResponse.body.includes('function mountDataTerminalPanel()'));
+    assert.ok(!appJsResponse.body.includes('function unmountDataTerminalPanel()'));
+    assert.ok(dataTerminalControllerResponse.body.includes('function mountPanel()'));
+    assert.ok(dataTerminalControllerResponse.body.includes('function unmountPanel()'));
+    assert.ok(dataTerminalControllerResponse.body.includes('const panel = utils.createDataTerminalPanelElement({ documentImpl });'));
     assert.ok(!appJsResponse.body.includes("const panel = document.createElement('div');"));
     assert.ok(!appJsResponse.body.includes("panel.id = 'data-terminal-window';"));
     assert.ok(!appJsResponse.body.includes('panel.innerHTML = utils.buildDataTerminalShellHtml();'));
     assert.ok(!appJsResponse.body.includes('function syncDataTerminalPanelDefaultSize(panel)'));
     assert.ok(!appJsResponse.body.includes('function positionDataTerminalWindow(panel)'));
     assert.ok(!appJsResponse.body.includes('const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;'));
-    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalDefaultSize(panel, {'));
-    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalWindowPosition(panel, {'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.applyDataTerminalDefaultSize(panel, {'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.applyDataTerminalWindowPosition(panel, {'));
     assert.ok(dataTerminalUtilsResponse.body.includes('id="data-terminal-profit-bp"'));
-    assert.ok(appJsResponse.body.includes('selectedLeftKey'));
-    assert.ok(appJsResponse.body.includes('selectedRightKey'));
-    assert.ok(appJsResponse.body.includes('buildDataTerminalSelectionSummary'));
-    assert.ok(appJsResponse.body.includes('utils.buildDataTerminalPanelHtml('));
+    assert.ok(dataTerminalControllerResponse.body.includes('selectedLeftKey'));
+    assert.ok(dataTerminalControllerResponse.body.includes('selectedRightKey'));
+    assert.ok(dataTerminalControllerResponse.body.includes('buildDataTerminalSelectionSummary'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.buildDataTerminalPanelHtml('));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function buildDataTerminalShellHtml'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function createDataTerminalPanelElement(options = {})'));
@@ -1757,16 +1814,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalExportBlock);
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalBp'));
     assert.ok(!dataTerminalExportBlock[0].includes('formatDataTerminalValue'));
-    assert.ok(appJsResponse.body.includes('const refs = utils.getDataTerminalDomRefs(panel);'));
+    assert.ok(dataTerminalControllerResponse.body.includes('const refs = utils.getDataTerminalDomRefs(panel);'));
     assert.ok(!appJsResponse.body.includes("panel.querySelector('#data-terminal-header')"));
-    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(dataTerminalState), refs)'));
-    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalSelectionSummaryDomState(refs, selectionSummary)'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(state), refs)'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.applyDataTerminalSelectionSummaryDomState(refs, selectionSummary)'));
     assert.ok(!appJsResponse.body.includes('function getDataTerminalControlElements(refs)'));
     assert.ok(!appJsResponse.body.includes('function applyDataTerminalControlWritePlan(plan, refs)'));
     assert.ok(!appJsResponse.body.includes('refs.profitBp.textContent = selectionSummary.text'));
     assert.ok(!appJsResponse.body.includes("refs.profitBp.classList.toggle('data-terminal-profit-bp-empty'"));
-    assert.ok(appJsResponse.body.includes('utils.bindDataTerminalControlEvents(refs, {'));
-    assert.ok(appJsResponse.body.includes('utils.applyDataTerminalStatePatch(dataTerminalState, patch);'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.bindDataTerminalControlEvents(refs, {'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.applyDataTerminalStatePatch(state, patch);'));
     assert.ok(!appJsResponse.body.includes("refs.searchInput.addEventListener('input'"));
     assert.ok(!appJsResponse.body.includes("refs.searchInput.addEventListener('keydown'"));
     assert.ok(!appJsResponse.body.includes("refs.aliasToggle.addEventListener('change'"));
@@ -1774,22 +1831,22 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("refs.content.addEventListener('click'"));
     assert.ok(!appJsResponse.body.includes("refs.minBtn.addEventListener('click'"));
     assert.ok(!appJsResponse.body.includes("refs.header.addEventListener('click'"));
-    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().applyDataTerminalStatePatch('));
-    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalContentClickAction(event, { closestEventTarget })'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.applyDataTerminalStatePatch('));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.resolveDataTerminalContentClickAction(event, {'));
     assert.ok(!appJsResponse.body.includes('function applyDataTerminalControlPatch(patch)'));
     assert.ok(!appJsResponse.body.includes('function applyDataTerminalSelectionPatch(patch)'));
-    assert.ok(appJsResponse.body.includes('getDataTerminalUtils().resolveDataTerminalHeaderClickAction(event, { closestEventTarget })'));
+    assert.ok(dataTerminalControllerResponse.body.includes('utils.resolveDataTerminalHeaderClickAction(event, {'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalPanelHtml'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalRowHtml'));
     assert.ok(!appJsResponse.body.includes('function buildDataTerminalColumnHtml'));
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-data-terminal-row-key]')"));
     assert.ok(!appJsResponse.body.includes('<div id="data-terminal-header">'));
-    assert.ok(appJsResponse.body.includes('const dataTerminalUpdateRuntime = getDataTerminalUtils().createDataTerminalUpdateRuntime({'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(panel, refs.header, {'));
-    assert.ok(appJsResponse.body.includes('dataTerminalUpdateRuntime.clear();'));
+    assert.ok(dataTerminalControllerResponse.body.includes('const updateRuntime = deps.updateRuntime || utils.createDataTerminalUpdateRuntime({'));
+    assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.bindFloatingPanelChrome(panel, refs.header, {'));
+    assert.ok(dataTerminalControllerResponse.body.includes('updateRuntime.clear();'));
     assert.ok(!appJsResponse.body.includes('function clearDataTerminalTimer()'));
-    assert.ok(appJsResponse.body.includes('dataTerminalUpdateRuntime.schedule();'));
-    assert.ok(!appJsResponse.body.includes('function scheduleDataTerminalUpdate('));
+    assert.ok(appJsResponse.body.includes('scheduleDataTerminalUpdate();'));
+    assert.ok(dataTerminalControllerResponse.body.includes('scheduleUpdate: () => updateRuntime.schedule(),'));
     assert.ok(!appJsResponse.body.includes('timer: null,'));
     assert.ok(!appJsResponse.body.includes('dataTerminalState.timer'));
     assert.ok(!appJsResponse.body.includes('refs.searchInput.value = dataTerminalState.query;'));
@@ -1799,14 +1856,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("closestEventTarget(event, 'button')"));
     assert.ok(!appJsResponse.body.includes('let dataTerminalRecordsCacheKey = \'\';'));
     assert.ok(!appJsResponse.body.includes('let dataTerminalCandidatesCacheKey = \'\';'));
-    assert.ok(appJsResponse.body.includes('const dataTerminalCache = getDataTerminalUtils().createDataTerminalCache();'));
-    assert.ok(appJsResponse.body.includes('dataTerminalCache.getRecords(cacheKey, () => getDataTerminalUtils().buildDataTerminalRecords('));
-    assert.ok(appJsResponse.body.includes('dataTerminalCache.getCandidates(cacheKey, () => utils.buildDataTerminalCandidates(buildDataTerminalRecords()))'));
+    assert.ok(!appJsResponse.body.includes('const dataTerminalCache = getDataTerminalUtils().createDataTerminalCache();'));
+    assert.ok(dataTerminalControllerResponse.body.includes('const cache = deps.cache || utils.createDataTerminalCache();'));
+    assert.ok(dataTerminalControllerResponse.body.includes('cache.getRecords(cacheKey, () => utils.buildDataTerminalRecords('));
+    assert.ok(dataTerminalControllerResponse.body.includes('cache.getCandidates(cacheKey, () => utils.buildDataTerminalCandidates(buildRecords()))'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function createDataTerminalCache()'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function createDataTerminalUpdateRuntime(options = {})'));
     assert.ok(dataTerminalUtilsResponse.body.includes('function getDataTerminalDomRefs(panel)'));
-    assert.ok(appJsResponse.body.includes('function buildDataTerminalCandidates(utils)'));
-    assert.ok(appJsResponse.body.includes('dataTerminalState.domRefs = null;'));
+    assert.ok(!appJsResponse.body.includes('function buildDataTerminalCandidates(utils)'));
+    assert.ok(dataTerminalControllerResponse.body.includes('state.domRefs = null;'));
     assert.ok(dataTerminalUtilsResponse.body.includes('Token -&gt; Token'));
     assert.ok(appJsResponse.body.includes('function getCopyUtils()'));
     assert.ok(appJsResponse.body.includes('CopyUtils is not loaded'));
@@ -1889,7 +1947,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getChartsRenderer('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs)'));
     assert.ok(appJsResponse.body.includes('return getArbDetailUtils().isArbRuleLeg(leg);'));
-    assert.ok(appJsResponse.body.includes('getArbDetailUtils().doesArbDetailUseQuote(arbDetailState.selectedOpportunity, quoteId)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.arbDetailUtils.doesArbDetailUseQuote(getArbDetailState().selectedOpportunity, quoteId)'));
     assert.ok(appJsResponse.body.includes('const chartHref = chartsUtils && typeof chartsUtils.buildChartsPageHref === \'function\''));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildArbOpportunityChartHref('));
     assert.ok(/getArbDetailUtils\(\)\.resolveArbOpportunityBaseAmount\(\s*current\.cycle,\s*findQuoteById,\s*isRuleLeg\s*\)/.test(appJsResponse.body));
@@ -1997,6 +2055,9 @@ async function waitForServer(attempts = 12) {
     const snapshotAppResponse = await request('/src/price-snapshots/snapshot-app.js');
     assert.strictEqual(snapshotAppResponse.statusCode, 200);
     assert.ok(snapshotAppResponse.body.includes('buildAliasRulesFromGroups'));
+    assert.ok(snapshotAppResponse.body.includes('const arbEquivalenceUtils = window.ArbEquivalenceUtils || null;'));
+    assert.ok(!snapshotAppResponse.body.includes("USDT: ['USDT'"));
+    assert.ok(!snapshotAppResponse.body.includes("'USD₮0': 'USDT'"));
     assert.ok(snapshotAppResponse.body.includes('buildOpportunityChartHref'));
     assert.ok(snapshotAppResponse.body.includes('/path-alerts'));
 
