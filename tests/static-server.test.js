@@ -1662,7 +1662,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function cycleContainsAnySymbols'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function filterGlobalArbCycles(cycles, options = {})'));
     assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
-    assert.ok(appJsResponse.body.includes('syncArbDetailChartAutoRefreshTimer'));
+    assert.ok(!appJsResponse.body.includes('function syncArbDetailChartAutoRefreshTimer('));
+    assert.ok(appJsResponse.body.includes('arbDetailChartAutoRefreshRuntime.sync();'));
     assert.ok(appJsResponse.body.includes('syncArbDetailProfitPreview'));
     assert.ok(appJsResponse.body.includes('function getArbDetailRefreshUtils()'));
     assert.ok(appJsResponse.body.includes('ArbDetailRefreshUtils is not loaded'));

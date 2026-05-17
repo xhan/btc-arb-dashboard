@@ -1807,10 +1807,6 @@
         });
     }
 
-    function syncArbDetailChartAutoRefreshTimer() {
-        arbDetailChartAutoRefreshRuntime.sync();
-    }
-
     function syncArbDetailProfitPreview(seriesList, renderer) {
         const cardEl = getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);
         if (!cardEl) return;
@@ -2034,7 +2030,7 @@
         }
         setArbDetailDashboardPause(true);
         renderArbDetailModal(true);
-        syncArbDetailChartAutoRefreshTimer();
+        arbDetailChartAutoRefreshRuntime.sync();
         arbDetailRefreshScheduler.start(arbDetailState.refreshToken);
     }
 
@@ -4080,7 +4076,7 @@
             }
             if (arbDetailChartAutoRefreshToggle) {
                 arbDetailChartAutoRefreshToggle.addEventListener('change', () => {
-                    syncArbDetailChartAutoRefreshTimer();
+                    arbDetailChartAutoRefreshRuntime.sync();
                 });
             }
             if (arbDetailModal) {
