@@ -1996,7 +1996,7 @@
     }
 
     function closeArbDetailModal() {
-        clearArbDetailRefreshTimer();
+        arbDetailRefreshScheduler.clear();
         if (arbDetailFetchController) {
             arbDetailFetchController.abort();
             arbDetailFetchController = null;
@@ -2011,7 +2011,7 @@
     }
 
     function openArbDetailModal(opportunityId) {
-        clearArbDetailRefreshTimer();
+        arbDetailRefreshScheduler.clear();
         let current = arbOpportunityRuntime.getOpportunity(opportunityId);
         if (!current) {
             updateArbPanel();
@@ -2040,7 +2040,7 @@
         setArbDetailDashboardPause(true);
         renderArbDetailModal(true);
         syncArbDetailChartAutoRefreshTimer();
-        startArbDetailRefresh(arbDetailState.refreshToken);
+        arbDetailRefreshScheduler.start(arbDetailState.refreshToken);
     }
 
     function updateArbDetailInput(index, rawValue) {
@@ -2049,14 +2049,14 @@
 
     function restartArbDetailRefresh() {
         if (!arbDetailState.visible) return;
-        clearArbDetailRefreshTimer();
+        arbDetailRefreshScheduler.clear();
         if (arbDetailFetchController) {
             arbDetailFetchController.abort();
             arbDetailFetchController = null;
         }
         arbDetailState.refreshToken += 1;
         arbDetailState.isRefreshing = false;
-        startArbDetailRefresh(arbDetailState.refreshToken);
+        arbDetailRefreshScheduler.start(arbDetailState.refreshToken);
     }
 
     function commitArbDetailInput(index, rawValue) {
@@ -2203,14 +2203,6 @@
 
     function logArbDetailRefreshError(error) {
         console.error('[arb-detail] refresh failed', error);
-    }
-
-    function clearArbDetailRefreshTimer() {
-        arbDetailRefreshScheduler.clear();
-    }
-
-    function startArbDetailRefresh(refreshToken) {
-        arbDetailRefreshScheduler.start(refreshToken);
     }
 
     function updateArbGlobalFilterState(patch) {

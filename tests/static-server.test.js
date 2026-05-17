@@ -1669,7 +1669,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailRefreshUtils().createArbDetailRefreshScheduler({'));
     assert.ok(appJsResponse.body.includes('getArbDetailRefreshUtils().createArbDetailChartAutoRefreshRuntime({'));
     assert.ok(!appJsResponse.body.includes('let arbDetailChartAutoRefreshTimer = null;'));
-    assert.ok(appJsResponse.body.includes('clearArbDetailRefreshTimer'));
+    assert.ok(!appJsResponse.body.includes('function clearArbDetailRefreshTimer('));
+    assert.ok(!appJsResponse.body.includes('function startArbDetailRefresh('));
+    assert.ok(appJsResponse.body.includes('arbDetailRefreshScheduler.clear();'));
+    assert.ok(appJsResponse.body.includes('arbDetailRefreshScheduler.start(arbDetailState.refreshToken);'));
     assert.ok(!appJsResponse.body.includes('arbDetailRefreshTimer = setTimeout'));
     assert.ok(arbDetailRefreshUtilsResponse.body.includes('function createArbDetailChartAutoRefreshRuntime(options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('refreshToken: 0'));
