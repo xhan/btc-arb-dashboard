@@ -1811,21 +1811,8 @@
         arbDetailChartAutoRefreshRuntime.sync();
     }
 
-    function renderArbDetailChartPreviewMessage(message) {
-        getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview, message);
-    }
-
-    function getArbDetailProfitCardEl() {
-        return getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);
-    }
-
-    function renderArbDetailProfitPreviewMessage(message) {
-        const cardEl = getArbDetailProfitCardEl();
-        getArbDetailUtils().applyArbDetailProfitPreviewMessage(cardEl, message);
-    }
-
     function syncArbDetailProfitPreview(seriesList, renderer) {
-        const cardEl = getArbDetailProfitCardEl();
+        const cardEl = getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);
         if (!cardEl) return;
 
         const utils = getChartsUtils();
@@ -1834,7 +1821,7 @@
             canMountProfitHistoryChart: Boolean(renderer && typeof renderer.mountProfitHistoryChart === 'function')
         });
         if (!previewState.ready) {
-            renderArbDetailProfitPreviewMessage(previewState.message);
+            getArbDetailUtils().applyArbDetailProfitPreviewMessage(cardEl, previewState.message);
             return;
         }
 
@@ -1874,8 +1861,12 @@
         if (!pairs.length) {
             arbDetailState.chartPreviewSignature = '';
             destroyArbDetailChartPreview();
-            renderArbDetailChartPreviewMessage('当前路径暂无可用历史图表。');
-            renderArbDetailProfitPreviewMessage('当前路径暂无可用历史图表。');
+            const message = '当前路径暂无可用历史图表。';
+            getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview, message);
+            getArbDetailUtils().applyArbDetailProfitPreviewMessage(
+                getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview),
+                message
+            );
             return;
         }
 
@@ -1893,8 +1884,12 @@
 
         const renderer = window.ChartsRenderer || null;
         if (!renderer || typeof renderer.mountPriceHistoryChart !== 'function') {
-            renderArbDetailChartPreviewMessage('图表模块未就绪，请刷新页面后重试。');
-            renderArbDetailProfitPreviewMessage('图表模块未就绪，请刷新页面后重试。');
+            const message = '图表模块未就绪，请刷新页面后重试。';
+            getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview, message);
+            getArbDetailUtils().applyArbDetailProfitPreviewMessage(
+                getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview),
+                message
+            );
             return;
         }
 

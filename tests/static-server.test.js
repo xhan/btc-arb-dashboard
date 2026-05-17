@@ -1677,6 +1677,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailRefreshUtilsResponse.body.includes('function createArbDetailChartAutoRefreshRuntime(options = {})'));
     assert.ok(arbDetailUtilsResponse.body.includes('refreshToken: 0'));
     assert.ok(!appJsResponse.body.includes('loopToken'));
+    assert.ok(!appJsResponse.body.includes('function renderArbDetailChartPreviewMessage('));
+    assert.ok(!appJsResponse.body.includes('function renderArbDetailProfitPreviewMessage('));
+    assert.ok(!appJsResponse.body.includes('function getArbDetailProfitCardEl('));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview,'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewMessage('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);'));
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-profit-card'));
     assert.ok(!appJsResponse.body.includes('resolveEventTargetElement(event)'));
@@ -1886,11 +1891,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartPreviewStrip(arbDetailChartPreview, pairs, {'));
     assert.ok(appJsResponse.body.includes('buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().clearArbDetailPreviewContainers({'));
-    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview, message);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview,'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, chartHref);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().hasArbDetailChartPreviewContent(arbDetailChartPreview)'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);'));
-    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewMessage(cardEl, message);'));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewMessage('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewReady(cardEl, previewState.seriesCount);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().getArbDetailProfitPreviewElements(cardEl);'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewMeta(profitRefs.metaEl, previewState.metaText);'));
