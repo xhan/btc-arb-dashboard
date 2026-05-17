@@ -1,4 +1,59 @@
     const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
+    const {
+        getAlertDebugUtils,
+        getAlertLogUiUtils,
+        getAlertRuntimeController,
+        getArbCyclePriorityUtils,
+        getArbDetailController,
+        getArbDetailRefreshUtils,
+        getArbDetailUtils,
+        getArbEquivalenceUtils,
+        getArbFixedUtils,
+        getArbPanelLayoutUtils,
+        getArbPanelRenderer,
+        getArbPathConfig,
+        getArbPathConfigUtils,
+        getArbPathTemplateCacheUtils,
+        getArbPaths,
+        getArbRuleSnapshotUtils,
+        getArbRuntimeMemoryUtils,
+        getArbSpecialUtils,
+        getAudioUtils,
+        getChainDefaults,
+        getChartsUtils,
+        getCopyUtils,
+        getDashboardActionController,
+        getDashboardApiUtils,
+        getDashboardFormController,
+        getDashboardModalUtils,
+        getDashboardRenderer,
+        getDashboardRuntimeUtils,
+        getDashboardViewController,
+        getDataTerminalController,
+        getDataTerminalUtils,
+        getDexLinkUtils,
+        getDomRenderUtils,
+        getKeyboardShortcutUtils,
+        getMutedPathLegUtils,
+        getMutedPathRuntimeUtils,
+        getMutedPathStorageUtils,
+        getPathAlertNotificationUtils,
+        getPathAlertPageUtils,
+        getPathAlertRuleDefinitionsUtils,
+        getPathAlertUtils,
+        getPriceSnapshotPayloadUtils,
+        getQueueStatsUtils,
+        getQuoteDisplayUtils,
+        getQuoteFetchController,
+        getQuotePauseUtils,
+        getQuoteQueueRuntimeUtils,
+        getQuoteRequestUtils,
+        getQuoteStateRuntimeUtils,
+        getQuoteUiController,
+        getRequestChannelUtils,
+        getSpecialRuleAlertConfigUtils,
+        getThemeUtils
+    } = window.DashboardModuleRegistry.createDashboardModuleRegistry(window);
     let dashboardState = [];
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
@@ -278,134 +333,6 @@
         clearTimeout
     });
 
-    function getWindowModule(globalName, missingMessage) {
-        const loadedModule = window[globalName];
-        if (!loadedModule) {
-            throw new Error(missingMessage);
-        }
-        return loadedModule;
-    }
-
-    function getChainDefaults() {
-        return getWindowModule('ChainDefaults', 'ChainDefaults is not loaded');
-    }
-
-    function getPathAlertUtils() {
-        return getWindowModule('PathAlertUtils', 'PathAlertUtils is not loaded');
-    }
-
-    function getMutedPathLegUtils() {
-        return getWindowModule('MutedPathLegUtils', 'MutedPathLegUtils is not loaded');
-    }
-
-    function getMutedPathRuntimeUtils() {
-        return getWindowModule('MutedPathRuntimeUtils', 'MutedPathRuntimeUtils is not loaded');
-    }
-
-    function getMutedPathStorageUtils() {
-        return getWindowModule('MutedPathStorageUtils', 'MutedPathStorageUtils is not loaded');
-    }
-
-    function getArbRuntimeMemoryUtils() {
-        return getWindowModule('ArbRuntimeMemoryUtils', 'ArbRuntimeMemoryUtils is not loaded');
-    }
-
-    function getArbPanelLayoutUtils() {
-        return getWindowModule('ArbPanelLayoutUtils', 'ArbPanelLayoutUtils is not loaded');
-    }
-
-    function getPathAlertRuleDefinitionsUtils() {
-        return getWindowModule('PathAlertRuleDefinitions', 'PathAlertRuleDefinitions is not loaded');
-    }
-
-    function getArbRuleSnapshotUtils() {
-        return getWindowModule('ArbRuleSnapshotUtils', 'ArbRuleSnapshotUtils is not loaded');
-    }
-
-    function getArbFixedUtils() {
-        return getWindowModule('ArbFixedUtils', 'ArbFixedUtils is not loaded');
-    }
-
-    function getArbSpecialUtils() {
-        return getWindowModule('ArbSpecialUtils', 'ArbSpecialUtils is not loaded');
-    }
-
-    function getArbCyclePriorityUtils() {
-        return getWindowModule('ArbCyclePriorityUtils', 'ArbCyclePriorityUtils is not loaded');
-    }
-
-    function getArbEquivalenceUtils() {
-        return getWindowModule('ArbEquivalenceUtils', 'ArbEquivalenceUtils is not loaded');
-    }
-
-    function getPriceSnapshotPayloadUtils() {
-        return getWindowModule('PriceSnapshotPayloadUtils', 'PriceSnapshotPayloadUtils is not loaded');
-    }
-
-    function getDashboardApiUtils() {
-        return getWindowModule('DashboardApiUtils', 'DashboardApiUtils is not loaded');
-    }
-
-    function getDashboardModalUtils() {
-        return getWindowModule('DashboardModalUtils', 'DashboardModalUtils is not loaded');
-    }
-
-    function getAlertLogUiUtils() {
-        return getWindowModule('AlertLogUiUtils', 'AlertLogUiUtils is not loaded');
-    }
-
-    function getAlertRuntimeController() {
-        return getWindowModule('AlertRuntimeController', 'AlertRuntimeController is not loaded');
-    }
-
-    function getSpecialRuleAlertConfigUtils() {
-        return getWindowModule('SpecialRuleAlertConfigUtils', 'SpecialRuleAlertConfigUtils is not loaded');
-    }
-
-    function getArbPathConfigUtils() {
-        return getWindowModule('ArbPathConfigUtils', 'ArbPathConfigUtils is not loaded');
-    }
-
-    function getArbPaths() {
-        return getWindowModule('ArbPaths', 'ArbPaths is not loaded');
-    }
-
-    function getArbPanelRenderer() {
-        return getWindowModule('ArbPanelRenderer', 'ArbPanelRenderer is not loaded');
-    }
-
-    function getArbPathConfig() {
-        return getWindowModule('ArbPathConfig', 'ArbPathConfig is not loaded');
-    }
-
-    function getDomRenderUtils() {
-        return getWindowModule('DomRenderUtils', 'DomRenderUtils is not loaded');
-    }
-
-    function getAudioUtils() {
-        return getWindowModule('AudioUtils', 'AudioUtils is not loaded');
-    }
-
-    function getThemeUtils() {
-        return getWindowModule('ThemeUtils', 'ThemeUtils is not loaded');
-    }
-
-    function getKeyboardShortcutUtils() {
-        return getWindowModule('KeyboardShortcutUtils', 'KeyboardShortcutUtils is not loaded');
-    }
-
-    function getArbDetailRefreshUtils() {
-        return getWindowModule('ArbDetailRefreshUtils', 'ArbDetailRefreshUtils is not loaded');
-    }
-
-    function getArbDetailController() {
-        return getWindowModule('ArbDetailController', 'ArbDetailController is not loaded');
-    }
-
-    function getAlertDebugUtils() {
-        return getWindowModule('AlertDebugUtils', 'AlertDebugUtils is not loaded');
-    }
-
     function isCrossChainQuote(quote) {
         return getChainDefaults().isCrossChainQuote(quote);
     }
@@ -428,10 +355,6 @@
         return getQueueStatsUtils().shouldQueueInverseFetch(quote);
     }
 
-    function getQuotePauseUtils() {
-        return getWindowModule('QuotePauseUtils', 'QuotePauseUtils is not loaded');
-    }
-
     function isQuotePaused(quote) {
         return getQuotePauseUtils().isQuotePaused(quote);
     }
@@ -442,30 +365,6 @@
 
     function getCategoryPauseAction(quotes) {
         return getQuotePauseUtils().getCategoryPauseAction(quotes);
-    }
-
-    function getRequestChannelUtils() {
-        return getWindowModule('RequestChannelUtils', 'RequestChannelUtils is not loaded');
-    }
-
-    function getQueueStatsUtils() {
-        return getWindowModule('QueueStatsUtils', 'QueueStatsUtils is not loaded');
-    }
-
-    function getQuoteQueueRuntimeUtils() {
-        return getWindowModule('QuoteQueueRuntimeUtils', 'QuoteQueueRuntimeUtils is not loaded');
-    }
-
-    function getQuoteStateRuntimeUtils() {
-        return getWindowModule('QuoteStateRuntimeUtils', 'QuoteStateRuntimeUtils is not loaded');
-    }
-
-    function getQuoteFetchController() {
-        return getWindowModule('QuoteFetchController', 'QuoteFetchController is not loaded');
-    }
-
-    function getQuoteUiController() {
-        return getWindowModule('QuoteUiController', 'QuoteUiController is not loaded');
     }
 
     const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
@@ -914,10 +813,6 @@
         });
     }
 
-    function getArbPathTemplateCacheUtils() {
-        return getWindowModule('ArbPathTemplateCacheUtils', 'ArbPathTemplateCacheUtils is not loaded');
-    }
-
     function getArbPathTopologyCache() {
         const utils = getArbPathTemplateCacheUtils();
 
@@ -988,46 +883,6 @@
         return getArbDetailUtils().isArbRuleLeg(leg);
     }
 
-    function getArbDetailUtils() {
-        return getWindowModule('ArbDetailUtils', 'ArbDetailUtils is not loaded');
-    }
-
-    function getChartsUtils() {
-        return getWindowModule('ChartsUtils', 'ChartsUtils is not loaded');
-    }
-
-    function getDataTerminalUtils() {
-        return getWindowModule('DataTerminalUtils', 'DataTerminalUtils is not loaded');
-    }
-
-    function getDataTerminalController() {
-        return getWindowModule('DataTerminalController', 'DataTerminalController is not loaded');
-    }
-
-    function getDashboardRenderer() {
-        return getWindowModule('DashboardRenderer', 'DashboardRenderer is not loaded');
-    }
-
-    function getDashboardActionController() {
-        return getWindowModule('DashboardActionController', 'DashboardActionController is not loaded');
-    }
-
-    function getDashboardFormController() {
-        return getWindowModule('DashboardFormController', 'DashboardFormController is not loaded');
-    }
-
-    function getDashboardViewController() {
-        return getWindowModule('DashboardViewController', 'DashboardViewController is not loaded');
-    }
-
-    function getQuoteDisplayUtils() {
-        return getWindowModule('QuoteDisplayUtils', 'QuoteDisplayUtils is not loaded');
-    }
-
-    function getDexLinkUtils() {
-        return getWindowModule('DexLinkUtils', 'DexLinkUtils is not loaded');
-    }
-
     function formatDetailNumber(value, precision = 6) {
         return getArbDetailUtils().formatDetailNumber(value, precision);
     }
@@ -1061,10 +916,6 @@
             suffix,
             formatChainLabel
         });
-    }
-
-    function getDashboardRuntimeUtils() {
-        return getWindowModule('DashboardRuntimeUtils', 'DashboardRuntimeUtils is not loaded');
     }
 
     function handleArbPathContentClick(event) {
@@ -1136,14 +987,6 @@
         );
 
         arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);
-    }
-
-    function getPathAlertNotificationUtils() {
-        return getWindowModule('PathAlertNotificationUtils', 'PathAlertNotificationUtils is not loaded');
-    }
-
-    function getPathAlertPageUtils() {
-        return getWindowModule('PathAlertPageUtils', 'PathAlertPageUtils is not loaded');
     }
 
     function buildMutedPathTargetFromCycleLegs(legs) {
@@ -1331,14 +1174,6 @@
             formatProfit: profitRate => arbPaths.formatProfitWanfen(profitRate)
         });
         arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);
-    }
-
-    function getQuoteRequestUtils() {
-        return getWindowModule('QuoteRequestUtils', 'QuoteRequestUtils is not loaded');
-    }
-
-    function getCopyUtils() {
-        return getWindowModule('CopyUtils', 'CopyUtils is not loaded');
     }
 
     function closestEventTarget(event, selector) {
