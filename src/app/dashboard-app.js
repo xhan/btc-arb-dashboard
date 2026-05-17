@@ -2306,11 +2306,6 @@
         }
     }
 
-    async function sendPathAlertWebhookNotification(triggeredEntries) {
-        const payload = getPathAlertNotificationUtils().buildPathAlertWebhookPayload(triggeredEntries);
-        await sendPathAlertWebhookPayload(payload, '路径报警 webhook 发送失败:');
-    }
-
     function recordAlertDebug(kind, id, snapshot) {
         if (!alertDebugController || typeof alertDebugController.record !== 'function') return;
         alertDebugController.record(kind, id, snapshot);
@@ -2418,7 +2413,8 @@
         }
         const aggregatedEntries = sortTriggeredPathAlertEntries(remoteTriggeredEntries).slice(0, 3);
         if (aggregatedEntries.length) {
-            sendPathAlertWebhookNotification(aggregatedEntries);
+            const payload = getPathAlertNotificationUtils().buildPathAlertWebhookPayload(aggregatedEntries);
+            sendPathAlertWebhookPayload(payload, '路径报警 webhook 发送失败:');
         }
 
         updateAlertSoundState();

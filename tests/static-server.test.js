@@ -991,7 +991,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertNotificationUtilsResponse.body.includes('function buildPathAlertWebhookPayload(triggeredEntries)'));
     assert.ok(!appJsResponse.body.includes('title: getPathAlertNotificationUtils().buildPathAlertNotificationTitle(triggeredEntries),'));
     assert.ok(!appJsResponse.body.includes('body: getPathAlertNotificationUtils().buildPathAlertNotificationBody(triggeredEntries)'));
-    assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildPathAlertWebhookPayload(triggeredEntries)'));
+    assert.ok(!appJsResponse.body.includes('async function sendPathAlertWebhookNotification('));
+    assert.ok(appJsResponse.body.includes('const payload = getPathAlertNotificationUtils().buildPathAlertWebhookPayload(aggregatedEntries);'));
     assert.ok(appJsResponse.body.includes('async function sendPathAlertWebhookPayload(payload, errorMessage)'));
     assert.ok(appJsResponse.body.includes("sendPathAlertWebhookPayload(payload, '路径报警 webhook 发送失败:')"));
     assert.ok(appJsResponse.body.includes("sendPathAlertWebhookPayload(payload, '报价提醒远程推送失败:')"));

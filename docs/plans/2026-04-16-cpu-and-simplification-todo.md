@@ -263,6 +263,7 @@
   - `src/app/dashboard-app.js` 的路径腿 live quote label 格式化已委托给 `src/path-alerts/path-alert-page-utils.js`
   - `src/app/dashboard-app.js` 的 path alert 配置加载降级/严格加载语义已下沉到 `src/path-alerts/path-alert-utils.js` 的 `createPathAlertConfigClient()`
   - `src/app/dashboard-app.js` 的 path alert rule definitions、special rule config 和 evaluation context 单用途包装已移除，调用点直接委托对应 utils
+  - `src/app/dashboard-app.js` 的 path alert webhook 发送单用途包装已移除，路径报警聚合触发点直接构造 payload 并委托通用 webhook 发送入口
   - `src/app/dashboard-app.js` 中只定义未调用的 `resolveEventTargetElement()` 包装函数已移除，事件解析继续统一走各模块 action resolver
   - `src/app/dashboard-app.js` 的 quote alert 触发消息和当前值文案包装已移除，触发条目构造统一由 `src/path-alerts/path-alert-notification-utils.js` 根据 evaluation 生成
   - `src/app/dashboard-app.js` 的 quote webhook 发送单用途包装已移除，报价报警触发点直接构造 payload 并委托通用 path alert webhook 发送入口
