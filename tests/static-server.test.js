@@ -1079,6 +1079,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function findDashboardQuoteById(dashboardState, quoteId)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function getActivePathAlertEvaluationAlerts(alertConfig)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;'));
+    assert.ok(!appJsResponse.body.includes('function buildArbRuleSnapshotCacheKey()'));
+    assert.ok(!appJsResponse.body.includes('function buildQuotesByCategoryName()'));
+    assert.ok(appJsResponse.body.includes('const cacheKey = getDashboardRuntimeUtils().buildArbRuleSnapshotCacheKey('));
+    assert.ok(appJsResponse.body.includes('const quotesByCategoryName = getDashboardRuntimeUtils().buildQuotesByCategoryName('));
     assert.ok(!appJsResponse.body.includes('return previousState !== nextState;'));
     assert.ok(appJsResponse.body.includes('function setQuoteUiState(quoteId, nextState)'));
     assert.ok(appJsResponse.body.includes('return quoteStateRuntime.setUiState(quoteId, nextState)'));

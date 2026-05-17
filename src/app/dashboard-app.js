@@ -1124,17 +1124,12 @@
         quoteStateRuntime.deleteUiRuntimeState(quoteId, clearTimeout);
     }
 
-    function buildArbRuleSnapshotCacheKey() {
-        return getDashboardRuntimeUtils().buildArbRuleSnapshotCacheKey(dashboardState, quoteStateRuntime.getMarketRevision());
-    }
-
-    function buildQuotesByCategoryName() {
-        return getDashboardRuntimeUtils().buildQuotesByCategoryName(dashboardState, getActiveQuotes);
-    }
-
     function getSharedArbRuleSnapshot() {
         const topologyCacheForFixed = getArbPathTopologyCache();
-        const cacheKey = buildArbRuleSnapshotCacheKey();
+        const cacheKey = getDashboardRuntimeUtils().buildArbRuleSnapshotCacheKey(
+            dashboardState,
+            quoteStateRuntime.getMarketRevision()
+        );
         const cachedSnapshot = arbPanelCache.getRuleSnapshot(cacheKey);
         if (cachedSnapshot) {
             return cachedSnapshot;
@@ -1153,7 +1148,10 @@
         const ruleEdges = arbPaths.buildRuleEdges(aliasRules);
         const allEdgesWithRules = allEdges.concat(ruleEdges);
         const quoteMetaById = buildQuoteMetaById();
-        const quotesByCategoryName = buildQuotesByCategoryName();
+        const quotesByCategoryName = getDashboardRuntimeUtils().buildQuotesByCategoryName(
+            dashboardState,
+            getActiveQuotes
+        );
         const baseSnapshot = getArbRuleSnapshotUtils().buildArbRuleSnapshot({
             fixedRules: FIXED_PATH_RULES,
             specialRules: SPECIAL_ARB_RULES,
