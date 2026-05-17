@@ -6,6 +6,7 @@ const appJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-app.
 const chainDefaultsJs = fs.readFileSync(path.join(__dirname, '..', 'src/shared/chain-defaults.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'public/index.html'), 'utf8');
 const quoteDisplayUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-display-utils.js'), 'utf8');
+const quoteUiControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-ui-controller.js'), 'utf8');
 
 assert.ok(
   quoteDisplayUtilsJs.includes('function buildCexOrderbookSummary(symbol, orderbook)'),
@@ -28,7 +29,7 @@ assert.ok(
   'quote display 工具应声明 CEX tooltip 独立样式类'
 );
 assert.ok(
-  appJs.includes('buildQuoteHoverTooltipState(quote, state, { isEvmChain })'),
+  quoteUiControllerJs.includes('buildQuoteHoverTooltipState(quote, state, { isEvmChain })'),
   '前端 hover 应消费 quote display 工具生成的 tooltip 状态'
 );
 assert.ok(

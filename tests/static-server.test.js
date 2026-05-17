@@ -95,6 +95,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-ui-controller.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-fetch-controller.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-view-controller.js"'));
@@ -125,7 +126,10 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/quote/quote-request-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
-      response.body.indexOf('src="src/quote/quote-display-utils.js"') < response.body.indexOf('src="src/quote/quote-fetch-controller.js"')
+      response.body.indexOf('src="src/quote/quote-display-utils.js"') < response.body.indexOf('src="src/quote/quote-ui-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/quote/quote-ui-controller.js"') < response.body.indexOf('src="src/quote/quote-fetch-controller.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-fetch-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -361,6 +365,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
     const quoteRequestUtilsResponse = await request('/src/quote/quote-request-utils.js');
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
+    const quoteUiControllerResponse = await request('/src/quote/quote-ui-controller.js');
+    assert.strictEqual(quoteUiControllerResponse.statusCode, 200);
     const quoteFetchControllerResponse = await request('/src/quote/quote-fetch-controller.js');
     assert.strictEqual(quoteFetchControllerResponse.statusCode, 200);
     const quotePauseUtilsResponse = await request('/src/quote/quote-pause-utils.js');
@@ -429,7 +435,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制')"));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.dexLinkUtils.getDexLinkLabel(dexLinkConfig)'));
     assert.ok(appJsResponse.body.includes('getDexLinkUtils().buildDexLinkCopyButtonHtml({'));
-    assert.ok(appJsResponse.body.includes('getCopyUtils().copyDexLinkFromElement(targetEl, {'));
+    assert.ok(quoteUiControllerResponse.body.includes('copyUtils.copyDexLinkFromElement(targetEl, {'));
     assert.ok(!appJsResponse.body.includes('const dexLink = utils.buildDexLink({'));
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
     assert.ok(appJsResponse.body.includes('function getDataTerminalUtils()'));
@@ -462,15 +468,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function removeQuoteInverseElement(inverseEl)'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainResultDomState(refs = {}, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyQuoteMainErrorDomState(refs = {}, options = {})'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().showTooltip(globalTooltip, textWrapper, tooltipState.html, {'));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.showTooltip(deps.globalTooltip, textWrapper, tooltipState.html, {'));
     assert.ok(!appJsResponse.body.includes('getDomRenderUtils().applyTooltipState(globalTooltip, targetEl, {'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().hideTooltip(globalTooltip)'));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.hideTooltip(deps.globalTooltip)'));
     assert.ok(!appJsResponse.body.includes('function showGlobalTooltip('));
     assert.ok(!appJsResponse.body.includes('function hideGlobalTooltip('));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyTrendArrowState(arrowEl, trendState)'));
-    assert.ok(appJsResponse.body.includes("getDomRenderUtils().applyTrendArrowState(arrowEl, { action: 'hide' })"));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().resetTrendArrow(arrowEl)'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteHighlightUi(itemEl)'));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.applyTrendArrowState(arrowEl, trendState)'));
+    assert.ok(quoteUiControllerResponse.body.includes("domRenderUtils.applyTrendArrowState(arrowEl, { action: 'hide' })"));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.resetTrendArrow(arrowEl)'));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.clearQuoteHighlightUi(itemEl)'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.domRenderUtils.clearQuoteHighlightUi(quoteItemEl)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteAlertHighlightUi(itemEl, uiUpdate)'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteAlertDismissButtonState(resultDiv, uiUpdate.nextState, quote.id, { documentImpl: document })'));
@@ -479,13 +485,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("dismissBtn.dataset.dismissHighlightId = quoteId"));
     assert.ok(!appJsResponse.body.includes('function getQuoteDomRefs('));
     assert.ok(!appJsResponse.body.includes('itemEl: document.getElementById(`quote-item-${quoteId}`)'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyPausedQuoteDomState('));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyActiveQuoteDomState('));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().getQuoteDomRefs(document, quote.id)'));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.applyPausedQuoteDomState('));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.applyActiveQuoteDomState('));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.getQuoteDomRefs(documentImpl, quote.id)'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.domRenderUtils.applyQuoteSwitchingDomState({'));
     assert.ok(dashboardActionControllerResponse.body.includes('...deps.domRenderUtils.getQuoteDomRefs(deps.documentImpl, quoteId),'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteDisplayTextDomState({'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuotePairLabelDomState('));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.applyQuoteDisplayTextDomState({'));
+    assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.applyQuotePairLabelDomState('));
     assert.ok(!appJsResponse.body.includes('pairLabelEl.innerHTML = getQuoteDisplayUtils().buildQuotePairLabelHtml'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteRunStateTagDomState('));
     assert.ok(!appJsResponse.body.includes('function updateQuoteRunStateTag('));
@@ -719,6 +725,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('QuoteRequestUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('function getQuoteFetchController()'));
     assert.ok(appJsResponse.body.includes('QuoteFetchController is not loaded'));
+    assert.ok(appJsResponse.body.includes('function getQuoteUiController()'));
+    assert.ok(appJsResponse.body.includes('QuoteUiController is not loaded'));
+    assert.ok(appJsResponse.body.includes('const quoteUiController = getQuoteUiController().createQuoteUiController({'));
+    assert.ok(quoteUiControllerResponse.body.includes('function createQuoteUiController(deps = {})'));
     assert.ok(appJsResponse.body.includes('const quoteFetchController = getQuoteFetchController().createQuoteFetchController({'));
     assert.ok(quoteFetchControllerResponse.body.includes('function createQuoteFetchController(deps = {})'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote)'));
@@ -827,7 +837,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('QuotePauseUtils is not loaded'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.quotePauseUtils.buildPausedQuoteState(previousState)'));
     assert.ok(!appJsResponse.body.includes('function buildPausedMonitorState(previousState)'));
-    assert.ok(appJsResponse.body.includes('getQuotePauseUtils().applyQuotePauseButtonState(pauseBtn, quote)'));
+    assert.ok(quoteUiControllerResponse.body.includes('quotePauseUtils.applyQuotePauseButtonState(pauseBtn, quote)'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.quotePauseUtils.applyCategoryPauseButtonState('));
     assert.ok(!appJsResponse.body.includes('pauseBtn.innerHTML = state.icon'));
     assert.ok(!appJsResponse.body.includes("pauseBtn.setAttribute('aria-label'"));
@@ -876,18 +886,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('formatCexBookValue: (value, maxDecimals) => getQuoteDisplayUtils().formatCexBookValue(value, maxDecimals)'));
     assert.ok(quoteFetchControllerResponse.body.includes('buildCexSummary: (symbol, orderbook) => deps.quoteDisplayUtils.buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(!appJsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.buildQuotePairLabelHtml(quote, state)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction)'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildInverseQuoteDisplayTextForState(quote, state'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.buildQuoteDisplayTextForState(quote, state'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.buildInverseQuoteDisplayTextForState(quote, state'));
     assert.ok(!appJsResponse.body.includes('function renderQuoteDisplayToggle('));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode)'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.applyQuoteDisplayToggleButtonState(deps.toggleQuoteDisplayBtn, quoteDisplayMode)'));
     assert.ok(!appJsResponse.body.includes('toggleQuoteDisplayBtn.textContent = state.text'));
     assert.ok(!appJsResponse.body.includes('toggleQuoteDisplayBtn.title = state.title'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode)'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.getNextQuoteDisplayMode(quoteDisplayMode)'));
     assert.ok(!appJsResponse.body.includes('function buildRequestChannelTagHtml(quote)'));
     assert.ok(!appJsResponse.body.includes('function buildQuotePairLabelHtml(quote, state)'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.buildQuotePairLabelHtml(quote, state)'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.quoteDisplayUtils.buildQuotePairLabelHtml(quote, monitorState)'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelTagHtml(quote, requestChannel)'));
     assert.ok(appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagForQuote(quote, requestChannelOptions, {'));
@@ -897,11 +907,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagPatch'));
     assert.ok(!appJsResponse.body.includes("itemEl.querySelector(`#quote-channel-tag-${quote.id}`)"));
     assert.ok(!appJsResponse.body.includes("document.body.classList.toggle('show-request-channel-tags'"));
-    assert.ok(appJsResponse.body.includes('const quoteHoverRuntime = getQuoteDisplayUtils().createQuoteHoverRuntime({'));
-    assert.ok(appJsResponse.body.includes('quoteHoverRuntime.schedule(quoteId, () => {'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteHoverTooltipState(quote, state, { isEvmChain })'));
-    assert.ok(appJsResponse.body.includes('quoteHoverRuntime.hide(quoteId, () => {'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource)'));
+    assert.ok(quoteUiControllerResponse.body.includes('const quoteHoverRuntime = deps.quoteHoverRuntime || quoteDisplayUtils.createQuoteHoverRuntime({'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteHoverRuntime.schedule(quoteId, () => {'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.buildQuoteHoverTooltipState(quote, state, { isEvmChain })'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteHoverRuntime.hide(quoteId, () => {'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource)'));
     assert.ok(!appJsResponse.body.includes('const changeRatio = Math.abs((currentPrice - oldPrice) / oldPrice);'));
     assert.ok(!appJsResponse.body.includes('let hoverTimeout = null;'));
     assert.ok(!appJsResponse.body.includes('let currentHoveredQuoteId = null;'));
@@ -1158,7 +1168,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteAlertUiUpdate(currentState, hasTriggered)'));
     assert.ok(appJsResponse.body.includes('getDashboardRuntimeUtils().hasActivePathAlertSound(pathAlertRuntimeState.getState())'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function hasActivePathAlertSound(runtimeState)'));
-    assert.ok(appJsResponse.body.includes('quoteStateRuntime.clearTrendTimer(quoteId, clearTimeout)'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteStateRuntime.clearTrendTimer(quoteId, deps.clearTimeout)'));
     assert.ok(appJsResponse.body.includes('quoteStateRuntime.getUiState(quote.id)'));
     assert.ok(!appJsResponse.body.includes('function clearQuoteTrendTimer('));
     assert.ok(!appJsResponse.body.includes('function getQuoteUiState('));
@@ -1175,7 +1185,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(defaultQuoteUiStateMatch[1].includes('trendTimer: null'));
     assert.ok(!defaultQuoteUiStateMatch[1].includes('logShown:'));
     assert.ok(!defaultQuoteUiStateMatch[1].includes('isSoundActive:'));
-    assert.ok(appJsResponse.body.includes('quoteStateRuntime.scheduleTrendTimer(quoteId, () => {'));
+    assert.ok(quoteUiControllerResponse.body.includes('quoteStateRuntime.scheduleTrendTimer(quoteId, () => {'));
     assert.ok(!appJsResponse.body.includes('const trendTimer = setTimeout(() => {'));
     assert.ok(quoteStateRuntimeUtilsResponse.body.includes('function scheduleTrendTimer(quoteId, onElapsed, options = {})'));
     assert.ok(!appJsResponse.body.includes('function getPathAlertStatusInfo(alert, runtime)'));
@@ -1614,7 +1624,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('savePayload: (payload) => dashboardApiClient.savePriceSnapshot(payload)'));
     assert.ok(!appJsResponse.body.includes('window.PriceSnapshotPayloadUtils\n            ?'));
     assert.ok(!appJsResponse.body.includes('clientCapturedAt: new Date().toISOString(),\n                quotes: []'));
-    assert.ok(appJsResponse.body.includes('data-toggle-pause-id'));
+    assert.ok(dashboardRendererResponse.body.includes('data-toggle-pause-id'));
+    assert.ok(quoteUiControllerResponse.body.includes('data-toggle-pause-id'));
     assert.ok(dashboardRendererResponse.body.includes('data-toggle-category-pause-id'));
     assert.ok(dashboardActionControllerResponse.body.includes('data-toggle-category-pause-id'));
     assert.ok(quotePauseUtilsResponse.body.includes('暂停分区'));
@@ -1885,8 +1896,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getCopyUtils()'));
     assert.ok(appJsResponse.body.includes('CopyUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('const copyToastRuntime = getCopyUtils().createCopyToastRuntime({'));
-    assert.ok(appJsResponse.body.includes('getCopyUtils().bindCopyPriceHandler(targetEl, {'));
-    assert.ok(appJsResponse.body.includes('copyToastRuntime.show(copyToast, message);'));
+    assert.ok(quoteUiControllerResponse.body.includes('copyUtils.bindCopyPriceHandler(targetEl, {'));
+    assert.ok(quoteUiControllerResponse.body.includes('copyToastRuntime.show(deps.copyToast, message);'));
     assert.ok(!appJsResponse.body.includes('let copyToastTimer = null;'));
     assert.ok(!appJsResponse.body.includes('function copyPriceFromText(text)'));
     assert.ok(!appJsResponse.body.includes("targetEl.addEventListener('click', (event) => {"));

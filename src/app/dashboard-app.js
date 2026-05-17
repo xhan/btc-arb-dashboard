@@ -68,7 +68,6 @@
         isVisible: () => getDashboardRuntimeUtils().isPanelVisible(arbPathWindow),
         update: updateArbPanel
     });
-    let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
     const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({
         setInterval,
         clearInterval
@@ -122,12 +121,6 @@
             });
         }
     });
-    const quoteHoverRuntime = getQuoteDisplayUtils().createQuoteHoverRuntime({
-        setTimeout,
-        clearTimeout,
-        delayMs: 100
-    });
-
     const MAX_ALERT_LOG_ENTRIES = 300;
     const PATH_ALERT_MUTE_EXTEND_DURATION_MS = getPathAlertUtils().PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000);
     const PATH_ALERT_MUTE_DURATION_MS = Number(getPathAlertUtils().PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
@@ -548,9 +541,50 @@
         return getWindowModule('QuoteFetchController', 'QuoteFetchController is not loaded');
     }
 
+    function getQuoteUiController() {
+        return getWindowModule('QuoteUiController', 'QuoteUiController is not loaded');
+    }
+
     const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
         dashboardRuntimeUtils: getDashboardRuntimeUtils()
     });
+    const quoteUiController = getQuoteUiController().createQuoteUiController({
+        copyToast,
+        copyToastRuntime,
+        copyUtils: getCopyUtils(),
+        dexLinkUtils: getDexLinkUtils(),
+        documentImpl: document,
+        domRenderUtils: getDomRenderUtils(),
+        getDashboardState: () => dashboardState,
+        getQuoteMarketState,
+        globalTooltip,
+        initialQuoteDisplayMode: DEFAULT_QUOTE_DISPLAY_MODE,
+        isEvmChain,
+        isQuotePaused,
+        logger: console,
+        quoteDisplayUtils: getQuoteDisplayUtils(),
+        quotePauseUtils: getQuotePauseUtils(),
+        quoteStateRuntime,
+        toggleQuoteDisplayBtn,
+        setTimeout,
+        clearTimeout
+    });
+    const {
+        applyActiveQuoteUiState,
+        applyPausedQuoteUiState,
+        applyQuoteDisplayToggleButtonState,
+        bindCopyHandler,
+        copyDexLinkFromElement,
+        copyTextToClipboard,
+        getInverseQuoteDisplayText,
+        getQuoteDisplayMode,
+        getQuoteDisplayText,
+        handleQuoteHover,
+        showCopyToast,
+        toggleQuoteDisplayMode,
+        updateQuotePairLabel,
+        updateTrendArrow
+    } = quoteUiController;
     const dataTerminalController = getDataTerminalController().createDataTerminalController({
         dataTerminalUtils: getDataTerminalUtils(),
         dashboardRuntimeUtils: getDashboardRuntimeUtils(),
@@ -593,7 +627,7 @@
         fetchImpl: fetch,
         getEffectiveRequestChannelIdForQuote,
         getInverseQuoteDisplayText,
-        getQuoteDisplayMode: () => quoteDisplayMode,
+        getQuoteDisplayMode,
         getQuoteDisplayText,
         getQuoteMarketState,
         isQuotePaused,
@@ -1342,102 +1376,6 @@
 
     function formatDetailNumber(value, precision = 6) {
         return getArbDetailUtils().formatDetailNumber(value, precision);
-    }
-
-    function getQuoteDisplayText(quote, state) {
-        return getQuoteDisplayUtils().buildQuoteDisplayTextForState(quote, state, {
-            mode: quoteDisplayMode,
-            paused: isQuotePaused(quote)
-        });
-    }
-
-    function getInverseQuoteDisplayText(quote, state, fallbackText = '反向报价排队中...') {
-        return getQuoteDisplayUtils().buildInverseQuoteDisplayTextForState(quote, state, {
-            mode: quoteDisplayMode,
-            fallbackText
-        });
-    }
-
-    function updateQuotePairLabel(quote, state) {
-        const pairLabelEl = document.getElementById(`quote-pair-label-${quote.id}`);
-        getDomRenderUtils().applyQuotePairLabelDomState(
-            pairLabelEl,
-            getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)
-        );
-    }
-
-    function rerenderQuoteDisplayTexts() {
-        for (const category of dashboardState) {
-            const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
-            for (const quote of quotes) {
-                const state = getQuoteMarketState(quote.id) || {};
-                const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
-                const inverseEl = document.getElementById(`inverse-quote-${quote.id}`);
-                const inverseText = inverseEl && Number.isFinite(Number(state.inverseRawPrice))
-                    ? getInverseQuoteDisplayText(quote, state, inverseEl.textContent || '...')
-                    : null;
-                getDomRenderUtils().applyQuoteDisplayTextDomState({
-                    quoteTextEl,
-                    inverseEl
-                }, {
-                    text: getQuoteDisplayText(quote, state),
-                    inverseText
-                });
-            }
-        }
-    }
-
-    function toggleQuoteDisplayMode() {
-        quoteDisplayMode = getQuoteDisplayUtils().getNextQuoteDisplayMode(quoteDisplayMode);
-        getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode);
-        rerenderQuoteDisplayTexts();
-    }
-
-    function updatePauseButtonState(quote) {
-        const pauseBtn = document.querySelector(`[data-toggle-pause-id="${quote.id}"]`);
-        getQuotePauseUtils().applyQuotePauseButtonState(pauseBtn, quote);
-    }
-
-    function clearQuoteTrendArrow(quoteId) {
-        const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
-        getDomRenderUtils().resetTrendArrow(arrowEl);
-        quoteStateRuntime.clearTrendTimer(quoteId, clearTimeout);
-    }
-
-    function clearQuoteAlertUi(quoteId) {
-        const itemEl = document.getElementById(`quote-item-${quoteId}`);
-        getDomRenderUtils().clearQuoteHighlightUi(itemEl);
-    }
-
-    function removeInverseQuoteElement(quoteId) {
-        const inverseEl = document.getElementById(`inverse-quote-${quoteId}`);
-        getDomRenderUtils().removeQuoteInverseElement(inverseEl);
-    }
-
-    function applyPausedQuoteUiState(quote, state) {
-        getDomRenderUtils().applyPausedQuoteDomState(
-            getDomRenderUtils().getQuoteDomRefs(document, quote.id)
-        );
-        updateQuotePairLabel(quote, state);
-        updatePauseButtonState(quote);
-        removeInverseQuoteElement(quote.id);
-        clearQuoteAlertUi(quote.id);
-        clearQuoteTrendArrow(quote.id);
-    }
-
-    function applyActiveQuoteUiState(quote, options = {}) {
-        const state = getQuoteMarketState(quote.id) || {};
-        getDomRenderUtils().applyActiveQuoteDomState(
-            getDomRenderUtils().getQuoteDomRefs(document, quote.id),
-            options
-        );
-        updateQuotePairLabel(quote, state);
-        updatePauseButtonState(quote);
-        clearQuoteAlertUi(quote.id);
-        clearQuoteTrendArrow(quote.id);
-        if (options.clearInverse) {
-            removeInverseQuoteElement(quote.id);
-        }
     }
 
     function nudgeArbDetailInput(index, delta) {
@@ -2627,80 +2565,8 @@
         return getWindowModule('CopyUtils', 'CopyUtils is not loaded');
     }
 
-    async function copyTextToClipboard(text) {
-        try {
-            await getCopyUtils().copyTextToClipboard(text);
-        } catch (error) {
-            console.warn('Clipboard write failed', error);
-            throw error;
-        }
-    }
-
-    async function copyDexLinkFromElement(targetEl) {
-        return getCopyUtils().copyDexLinkFromElement(targetEl, {
-            buildDexLink: (config) => getDexLinkUtils().buildDexLink(config),
-            copyText: (text) => copyTextToClipboard(text),
-            showToast: (message) => showCopyToast(message)
-        });
-    }
-
     function closestEventTarget(event, selector) {
         return getDomRenderUtils().closestEventTarget(event, selector);
-    }
-
-    function bindCopyHandler(targetEl, getText) {
-        getCopyUtils().bindCopyPriceHandler(targetEl, {
-            getText,
-            extractPrice: (text) => getQuoteDisplayUtils().extractPriceFromText(text),
-            copyText: (text) => copyTextToClipboard(text),
-            showToast: (message) => showCopyToast(message)
-        });
-    }
-
-    function showCopyToast(message) {
-        copyToastRuntime.show(copyToast, message);
-    }
-
-    function handleQuoteHover(event, quoteId) {
-        const textWrapper = event.currentTarget;
-        const state = getQuoteMarketState(quoteId);
-        const category = dashboardState.find(c => c.quotes && c.quotes.some(q => q.id === quoteId));
-        const quote = category ? category.quotes.find(q => q.id === quoteId) : null;
-        
-        if (!quote) return; 
-
-        textWrapper.onmouseleave = () => {
-            quoteHoverRuntime.hide(quoteId, () => {
-                getDomRenderUtils().hideTooltip(globalTooltip);
-            });
-        };
-        
-        quoteHoverRuntime.schedule(quoteId, () => {
-            const tooltipState = getQuoteDisplayUtils().buildQuoteHoverTooltipState(quote, state, { isEvmChain });
-            if (!tooltipState) return;
-            getDomRenderUtils().showTooltip(globalTooltip, textWrapper, tooltipState.html, {
-                className: tooltipState.className
-            });
-        });
-    }
-
-    function updateTrendArrow(quoteId, currentPrice, oldPrice, currentSource, oldSource) {
-        const arrowEl = document.getElementById(`trend-arrow-${quoteId}`);
-        if (!arrowEl) return;
-
-        const trendState = getQuoteDisplayUtils().buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource);
-        if (!trendState) return;
-
-        getDomRenderUtils().applyTrendArrowState(arrowEl, trendState);
-        if (trendState.action === 'hide') return;
-
-        quoteStateRuntime.scheduleTrendTimer(quoteId, () => {
-            getDomRenderUtils().applyTrendArrowState(arrowEl, { action: 'hide' });
-        }, {
-            setTimeout,
-            clearTimeout,
-            delayMs: 30000
-        });
     }
 
     function toggleArbPanel() {
@@ -3116,7 +2982,7 @@
                 });
             }
 
-            getQuoteDisplayUtils().applyQuoteDisplayToggleButtonState(toggleQuoteDisplayBtn, quoteDisplayMode);
+            applyQuoteDisplayToggleButtonState();
             if (toggleArbBtn) {
                 toggleArbBtn.addEventListener('click', toggleArbPanel);
             }
