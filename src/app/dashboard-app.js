@@ -24,6 +24,7 @@
         getCopyUtils,
         getDashboardActionController,
         getDashboardApiUtils,
+        getDashboardDomRefs,
         getDashboardFormController,
         getDashboardModalUtils,
         getDashboardRenderer,
@@ -130,64 +131,81 @@
     });
     const arbPanelCache = getArbPathTemplateCacheUtils().createArbPanelCache();
     let arbLastPointerOpenedOpportunityId = null;
+    const {
+        dashboardEl,
+        addCategoryBtn,
+        alertLogWindow,
+        alertLogHeader,
+        alertLogMinBtn,
+        alertLogLogTab,
+        alertLogMutedLogTab,
+        alertLogMutedTab,
+        alertLogSettingsTab,
+        alertLogContent,
+        alertLogMutedLogContent,
+        alertLogMutedContent,
+        alertLogSettingsContent,
+        pathAlertSound,
+        themeToggleBtn,
+        audioNoticeEl,
+        quoteSettingsModal,
+        quoteSourceSelect,
+        manualSaveBtn,
+        manualSaveText,
+        quoteRunStateTag,
+        settingsBtn,
+        settingsSaveBtn,
+        settingsCancelBtn,
+        settingsModal,
+        settingsIntervalInputRefs,
+        addQuoteModal,
+        addQuoteChainSelect,
+        addQuoteToChainSelect,
+        addQuoteFromInput,
+        addQuoteToInput,
+        addQuoteSymbolInput,
+        addQuoteModalRefs,
+        confirmModal,
+        confirmOkBtn,
+        confirmCancelBtn,
+        addCategoryModal,
+        addCategoryModalRefs,
+        confirmModalRefs,
+        globalTooltip,
+        copyToast,
+        arbPathWindow,
+        arbPathContent,
+        arbGlobalFilterInput,
+        arbGlobalChainFilterInput,
+        arbGlobalIncludeFilterInput,
+        arbGlobalTwoLegOnlyInput,
+        arbGlobalFilterClearBtn,
+        arbGlobalFilterElements,
+        arbPathHeader,
+        arbPathMinBtn,
+        toggleQuoteDisplayBtn,
+        toggleDataTerminalBtn,
+        toggleArbBtn,
+        toggleAlertLogBtn,
+        toggleMultiChannelBtn,
+        arbDetailModal,
+        arbDetailCloseBtn,
+        arbDetailChartLink,
+        arbDetailChartAutoRefreshToggle,
+        arbDetailSubtitle,
+        arbDetailChartPreview,
+        arbDetailProfitPreview,
+        arbDetailGrid,
+        quoteRequestChannelSelect,
+        quoteSettingsModalElements
+    } = getDashboardDomRefs().createDashboardDomRefs(document);
 
-    const dashboardEl = document.getElementById('dashboard');
-    const addCategoryBtn = document.getElementById('add-category-btn');
-    const alertLogWindow = document.getElementById('alert-log-window');
-    const alertLogHeader = document.getElementById('alert-log-header');
-    const alertLogMinBtn = document.getElementById('alert-log-min-btn');
-    const alertLogLogTab = document.getElementById('alert-log-log-tab');
-    const alertLogMutedLogTab = document.getElementById('alert-log-muted-log-tab');
-    const alertLogMutedTab = document.getElementById('alert-log-muted-tab');
-    const alertLogSettingsTab = document.getElementById('alert-log-settings-tab');
-    const alertLogContent = document.getElementById('alert-log-content');
-    const alertLogMutedLogContent = document.getElementById('alert-log-muted-log-content');
-    const alertLogMutedContent = document.getElementById('alert-log-muted-content');
-    const alertLogSettingsContent = document.getElementById('alert-log-settings-content');
-    const pathAlertSound = document.getElementById('path-alert-sound');
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const themeRuntime = getThemeUtils().createThemeRuntime({
         body: document.body,
         button: themeToggleBtn,
         getStorage: getDashboardLocalStorage,
         onLoadError: (error) => console.warn('读取主题本地缓存失败:', error)
     });
-    const audioNoticeEl = document.getElementById('audio-notice');
-    const quoteSettingsModal = document.getElementById('quote-settings-modal');
-    const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
-    const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
-    const modalTitleEl = document.getElementById('modal-title');
-    const modalSubtitleEl = document.getElementById('modal-subtitle');
-    const quoteTokenAddressesEl = document.getElementById('quote-token-addresses');
-    const quoteFromTokenLineEl = document.getElementById('quote-from-token-line');
-    const quoteToTokenLineEl = document.getElementById('quote-to-token-line');
-    const quoteSourceSelect = document.getElementById('quote-source-pref');
-    const quoteSourceGroup = document.getElementById('source-select-group');
-    const kyberDirectPoolsGroup = document.getElementById('kyber-direct-pools-group');
-    const kyberDirectPoolsNote = document.getElementById('kyber-direct-pools-note');
-    const kyberOnlyDirectPoolsInput = document.getElementById('kyber-only-direct-pools');
-    const inverseToggleGroup = document.getElementById('inverse-toggle-group');
-    const inverseCheckbox = document.getElementById('show-inverse-quote');
-    
-    const manualSaveBtn = document.getElementById('manual-save-btn');
-    const manualSaveText = document.getElementById('manual-save-text');
-    const quoteRunStateTag = document.getElementById('quote-run-state-tag');
-
-    const settingsBtn = document.getElementById('global-settings-btn');
-    const settingsSaveBtn = document.getElementById('settings-save');
-    const settingsCancelBtn = document.getElementById('settings-cancel');
-    const settingsModal = document.getElementById('settings-modal');
-    const settingsIntervalInputRefs = {
-        'setting-kyber-interval': document.getElementById('setting-kyber-interval'),
-        'setting-zerox-interval': document.getElementById('setting-zerox-interval'),
-        'setting-velora-interval': document.getElementById('setting-velora-interval'),
-        'setting-lifi-interval': document.getElementById('setting-lifi-interval'),
-        'setting-bybit-interval': document.getElementById('setting-bybit-interval'),
-        'setting-binance-interval': document.getElementById('setting-binance-interval'),
-        'setting-solana-interval': document.getElementById('setting-solana-interval'),
-        'setting-sui-interval': document.getElementById('setting-sui-interval'),
-        'setting-starknet-interval': document.getElementById('setting-starknet-interval')
-    };
     const settingsSaveFeedbackRuntime = getDashboardRuntimeUtils().createButtonFeedbackRuntime({
         setTimeout,
         clearTimeout,
@@ -227,69 +245,9 @@
         setTimeout,
         clearTimeout
     });
-    
-    const addQuoteModal = document.getElementById('add-quote-modal');
-    const addQuoteChainSelect = document.getElementById('add-quote-chain');
-    const addQuoteToChainSelect = document.getElementById('add-quote-to-chain');
-    const addQuoteToChainGroup = document.getElementById('add-quote-to-chain-group');
-    const addQuotePairFields = document.getElementById('add-quote-pair-fields');
-    const addQuoteSymbolField = document.getElementById('add-quote-symbol-field');
-    const addQuoteFromInput = document.getElementById('add-quote-from');
-    const addQuoteToInput = document.getElementById('add-quote-to');
-    const addQuoteSymbolInput = document.getElementById('add-quote-symbol');
-    const addQuoteSaveBtn = document.getElementById('add-quote-save');
-    const addQuoteModalRefs = {
-        modal: addQuoteModal,
-        chainSelect: addQuoteChainSelect,
-        toChainSelect: addQuoteToChainSelect,
-        fromInput: addQuoteFromInput,
-        toInput: addQuoteToInput,
-        symbolInput: addQuoteSymbolInput,
-        toChainGroup: addQuoteToChainGroup,
-        pairFields: addQuotePairFields,
-        symbolField: addQuoteSymbolField,
-        saveButton: addQuoteSaveBtn
-    };
     const addQuoteModalSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();
     const quoteSettingsSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();
-    const confirmModal = document.getElementById('confirm-modal');
-    const confirmMessageEl = document.getElementById('confirm-message');
-    const confirmOkBtn = document.getElementById('confirm-ok');
-    const confirmCancelBtn = document.getElementById('confirm-cancel');
-    const addCategoryModal = document.getElementById('add-category-modal');
-    const addCategoryNameInput = document.getElementById('add-category-name');
-    const addCategoryModalRefs = {
-        modal: addCategoryModal,
-        'add-category-name': addCategoryNameInput
-    };
-    const confirmModalRefs = {
-        modal: confirmModal,
-        message: confirmMessageEl
-    };
     const confirmActionRuntime = getDashboardModalUtils().createConfirmActionRuntime();
-    const globalTooltip = document.getElementById('global-tooltip');
-    const copyToast = document.getElementById('copy-toast');
-    const arbPathWindow = document.getElementById('arb-path-window');
-    const arbPathContent = document.getElementById('arb-path-content');
-    const arbGlobalFilterInput = document.getElementById('arb-global-filter-input');
-    const arbGlobalChainFilterInput = document.getElementById('arb-global-chain-filter-input');
-    const arbGlobalIncludeFilterInput = document.getElementById('arb-global-include-filter-input');
-    const arbGlobalTwoLegOnlyInput = document.getElementById('arb-global-two-leg-only');
-    const arbGlobalFilterClearBtn = document.getElementById('arb-global-filter-clear-btn');
-    const arbGlobalFilterElements = {
-        'arb-global-filter-input': arbGlobalFilterInput,
-        'arb-global-chain-filter-input': arbGlobalChainFilterInput,
-        'arb-global-include-filter-input': arbGlobalIncludeFilterInput,
-        'arb-global-two-leg-only': arbGlobalTwoLegOnlyInput,
-        'arb-global-filter-clear-btn': arbGlobalFilterClearBtn
-    };
-    const arbPathHeader = document.getElementById('arb-path-header');
-    const arbPathMinBtn = document.getElementById('arb-path-min-btn');
-    const toggleQuoteDisplayBtn = document.getElementById('toggle-quote-display-btn');
-    const toggleDataTerminalBtn = document.getElementById('toggle-data-terminal-btn');
-    const toggleArbBtn = document.getElementById('toggle-arb-btn');
-    const toggleAlertLogBtn = document.getElementById('toggle-alert-log-btn');
-    const toggleMultiChannelBtn = document.getElementById('toggle-multi-channel-btn');
     const multiChannelToggleRuntime = getRequestChannelUtils().createMultiChannelToggleRuntime({
         button: toggleMultiChannelBtn,
         getStorage: getDashboardLocalStorage,
@@ -300,34 +258,6 @@
         getBody: () => document.body,
         visible: true
     });
-    const arbDetailModal = document.getElementById('arb-detail-modal');
-    const arbDetailCloseBtn = document.getElementById('arb-detail-close-btn');
-    const arbDetailChartLink = document.getElementById('arb-detail-chart-link');
-    const arbDetailChartAutoRefreshToggle = document.getElementById('arb-detail-chart-auto-refresh');
-    const arbDetailSubtitle = document.getElementById('arb-detail-subtitle');
-    const arbDetailChartPreview = document.getElementById('arb-detail-chart-preview');
-    const arbDetailProfitPreview = document.getElementById('arb-detail-profit-preview');
-    const arbDetailGrid = document.getElementById('arb-detail-grid');
-    const requestChannelSelectGroup = document.getElementById('request-channel-select-group');
-    const quoteRequestChannelSelect = document.getElementById('quote-request-channel');
-    const quoteSettingsModalElements = {
-        'modal-title': modalTitleEl,
-        'modal-subtitle': modalSubtitleEl,
-        'quote-token-addresses': quoteTokenAddressesEl,
-        'quote-from-token-line': quoteFromTokenLineEl,
-        'quote-to-token-line': quoteToTokenLineEl,
-        'source-select-group': quoteSourceGroup,
-        'quote-source-pref': quoteSourceSelect,
-        'kyber-direct-pools-group': kyberDirectPoolsGroup,
-        'kyber-direct-pools-note': kyberDirectPoolsNote,
-        'kyber-only-direct-pools': kyberOnlyDirectPoolsInput,
-        'inverse-toggle-group': inverseToggleGroup,
-        'show-inverse-quote': inverseCheckbox,
-        'modal-swap-quote': modalSwapQuoteBtn,
-        'modal-delete-quote': modalDeleteQuoteBtn,
-        'request-channel-select-group': requestChannelSelectGroup,
-        'quote-request-channel': quoteRequestChannelSelect
-    };
     const copyToastRuntime = getCopyUtils().createCopyToastRuntime({
         setTimeout,
         clearTimeout

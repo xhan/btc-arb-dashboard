@@ -33,6 +33,7 @@
     getCopyUtils: ['CopyUtils', 'CopyUtils is not loaded'],
     getDashboardActionController: ['DashboardActionController', 'DashboardActionController is not loaded'],
     getDashboardApiUtils: ['DashboardApiUtils', 'DashboardApiUtils is not loaded'],
+    getDashboardDomRefs: ['DashboardDomRefs', 'DashboardDomRefs is not loaded'],
     getDashboardFormController: ['DashboardFormController', 'DashboardFormController is not loaded'],
     getDashboardModalUtils: ['DashboardModalUtils', 'DashboardModalUtils is not loaded'],
     getDashboardRenderer: ['DashboardRenderer', 'DashboardRenderer is not loaded'],

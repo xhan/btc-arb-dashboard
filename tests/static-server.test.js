@@ -119,6 +119,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/path-alerts/muted-path-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-dom-refs.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
@@ -204,6 +205,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-queue-runtime-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-dom-refs.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -362,6 +366,8 @@ async function waitForServer(attempts = 12) {
 
     const appJsResponse = await request('/src/app/dashboard-app.js');
     assert.strictEqual(appJsResponse.statusCode, 200);
+    const domRefsResponse = await request('/src/app/dashboard-dom-refs.js');
+    assert.strictEqual(domRefsResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const alertLogUiResponse = await request('/src/alerts/alert-log-ui-utils.js');
@@ -592,6 +598,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardFormControllerResponse.body.includes('buildAddQuoteFormViewState: deps.dashboardRenderer.buildAddQuoteFormViewState'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildAddQuoteDraft({'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.resolveAddQuoteModalClickAction(event, {'));
+    assert.ok(domRefsResponse.body.includes('function createDashboardDomRefs(documentImpl)'));
+    assert.ok(domRefsResponse.body.includes('settingsIntervalInputRefs: {'));
+    assert.ok(domRefsResponse.body.includes('quoteSettingsModalElements: {'));
+    assert.ok(domRefsResponse.body.includes('arbGlobalFilterElements: {'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardDomRefs: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardDomRefs is not loaded'));
+    assert.ok(appJsResponse.body.includes('} = getDashboardDomRefs().createDashboardDomRefs(document);'));
+    assert.ok(!appJsResponse.body.includes("document.getElementById('dashboard')"));
+    assert.ok(!appJsResponse.body.includes("document.getElementById('quote-settings-modal')"));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardModalUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardModalUtils is not loaded'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readAddQuoteFormValues(deps.addQuoteModalRefs)'));
