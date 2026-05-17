@@ -49,7 +49,7 @@
 - 现状：
   - 已移除 `startArbDetailLoop()` 内的长期 `while (...)` 循环
   - 详情刷新改为单次刷新完成后用 `setTimeout` 调度下一轮，并在关闭/重启时清理 timer
-  - 调度状态机已下沉到 `src/arb/arb-detail-refresh-utils.js`，`src/app/dashboard-app.js` 只保留业务回调和生命周期入口
+  - 调度状态机已下沉到 `src/arb/arb-detail-refresh-utils.js`，详情状态、弹窗生命周期、图表预览和 grid 事件编排已下沉到 `src/arb/arb-detail-controller.js`
   - 每轮仍会对每张卡片、每条腿串行请求；详情仍可能同步更新主报价状态
 - 预期收益：
   - 同时降低前端和后端 CPU
@@ -139,7 +139,7 @@
   - `quote-ui-runtime`：报价显示模式状态/切换、display-mode text rerender、paused/active quote DOM 编排、复制、hover tooltip 编排和 trend arrow timer 编排已下沉到 `src/quote/quote-ui-controller.js`；hover 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 状态仍分别由 `src/quote/quote-display-utils.js` / `src/quote/quote-state-runtime-utils.js` 提供；低层 DOM 写入继续统一走 `src/ui/dom-render-utils.js`
   - 反向报价刷新排队时不再默认清掉已有反向价格，queued 文案选择下沉到 `src/quote/quote-display-utils.js`，避免主报价刷新把可用反向价格刷成“反向报价排队中...”
   - `arb-panel`：snapshot / topology 缓存、面板刷新 debounce 与 dirty 状态所有权、全局过滤栏读写计划、错误文案 DOM 写入和面板内容事件动作解析已下沉到 `src/arb/arb-path-template-cache-utils.js` / `src/arb/arb-runtime-memory-utils.js` / `src/arb/arb-panel-layout-utils.js` / `src/arb/arb-panel-renderer.js`，`src/app/dashboard-app.js` 只保留缓存 key 构建、面板数据装配和动作分发
-  - `arb-detail`：详情刷新调度器、图表自动刷新 runtime 已下沉到 `src/arb/arb-detail-refresh-utils.js`，source budget Map、详情网格事件动作解析已下沉到 `src/arb/arb-detail-utils.js`
+  - `arb-detail`：详情状态、弹窗生命周期、刷新调度、图表预览、source budget 和 grid 事件编排已下沉到 `src/arb/arb-detail-controller.js`；详情刷新调度器/图表自动刷新 runtime 仍由 `src/arb/arb-detail-refresh-utils.js` 提供，详情网格事件动作解析和 DOM 写入模型仍由 `src/arb/arb-detail-utils.js` 提供
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板状态、挂载/关闭、render 编排和内容/header 点击分发已下沉到 `src/data-terminal/data-terminal-controller.js`；面板 HTML、DOM refs 装配、浮窗定位/默认尺寸、控件状态读写计划、控件事件绑定、selection 更新计划和 action 解析继续由 `src/data-terminal/data-terminal-utils.js` 提供
   - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、报价卡片和分区模块 shell 创建、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
@@ -316,6 +316,7 @@
   - `src/app/dashboard-app.js` 的套利详情 chart/profit preview message 和 profit card lookup 单用途包装已移除，预览同步流程直接委托 detail utils
   - `src/app/dashboard-app.js` 的套利详情 chart/profit preview 清空、消息、strip、链接状态、已有内容检查、收益卡片 HTML、canvas/meta 查询、meta 文案和图表错误 DOM 写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 source interval ms 解析单层包装已移除，调用点直接委托 `src/arb/arb-detail-utils.js`
+  - `src/app/dashboard-app.js` 的套利详情状态、打开/关闭/刷新、source budget、图表预览、grid 点击/输入事件和 quote run state 同步已下沉到 `src/arb/arb-detail-controller.js`
   - `src/app/dashboard-app.js` 的音频 unlock 状态、循环报警音同步和 quote alert 一次性播放实现已下沉到 `src/ui/audio-utils.js`
   - `src/app/dashboard-app.js` 的价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
   - `src/app/dashboard-app.js` 的 price snapshot timer 启动单用途包装已移除，初始化流程直接委托 timer runtime

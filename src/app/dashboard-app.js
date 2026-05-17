@@ -94,33 +94,6 @@
     });
     const arbPanelCache = getArbPathTemplateCacheUtils().createArbPanelCache();
     let arbLastPointerOpenedOpportunityId = null;
-    let arbDetailState = getArbDetailUtils().buildDefaultArbDetailState();
-    let arbDetailFetchController = null;
-    const arbDetailSourceBudgetRuntime = getArbDetailUtils().createArbDetailSourceBudgetRuntime();
-    let arbDetailChartPreviewCharts = [];
-    let arbDetailChartPreviewRunId = 0;
-    const arbDetailRefreshScheduler = getArbDetailRefreshUtils().createArbDetailRefreshScheduler({
-        intervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
-        isActive: (refreshToken) => arbDetailState.visible && arbDetailState.refreshToken === refreshToken,
-        isRefreshing: () => arbDetailState.isRefreshing,
-        setRefreshing: (refreshing, refreshToken) => {
-            if (refreshing || arbDetailState.refreshToken === refreshToken) {
-                arbDetailState.isRefreshing = Boolean(refreshing);
-            }
-        },
-        refresh: refreshArbDetailCards,
-        logError: (error) => console.error('[arb-detail] refresh failed', error)
-    });
-    const arbDetailChartAutoRefreshRuntime = getArbDetailRefreshUtils().createArbDetailChartAutoRefreshRuntime({
-        intervalMs: CHART_AUTO_REFRESH_INTERVAL_MS,
-        isVisible: () => arbDetailState.visible,
-        isEnabled: () => Boolean(arbDetailChartAutoRefreshToggle && arbDetailChartAutoRefreshToggle.checked),
-        refresh: () => {
-            void syncArbDetailChartPreview(arbDetailState.selectedOpportunity, {
-                forceReload: true
-            });
-        }
-    });
     const MAX_ALERT_LOG_ENTRIES = 300;
     const PATH_ALERT_MUTE_EXTEND_DURATION_MS = getPathAlertUtils().PATH_ALERT_MUTE_EXTEND_DURATION_MS || (2 * 60 * 60 * 1000);
     const PATH_ALERT_MUTE_DURATION_MS = Number(getPathAlertUtils().PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
@@ -479,6 +452,10 @@
         return getWindowModule('ArbDetailRefreshUtils', 'ArbDetailRefreshUtils is not loaded');
     }
 
+    function getArbDetailController() {
+        return getWindowModule('ArbDetailController', 'ArbDetailController is not loaded');
+    }
+
     function getAlertDebugUtils() {
         return getWindowModule('AlertDebugUtils', 'AlertDebugUtils is not loaded');
     }
@@ -585,6 +562,56 @@
         updateQuotePairLabel,
         updateTrendArrow
     } = quoteUiController;
+    const arbDetailController = getArbDetailController().createArbDetailController({
+        arbDetailRefreshUtils: getArbDetailRefreshUtils(),
+        arbDetailUtils: getArbDetailUtils(),
+        arbPanelLayoutUtils: getArbPanelLayoutUtils(),
+        abortActiveFetchControllers: () => activeFetchControllerRuntime.abortAll(),
+        buildArbPathLegLineOptions,
+        chartAutoRefreshIntervalMs: CHART_AUTO_REFRESH_INTERVAL_MS,
+        closestEventTarget,
+        copyDexLinkFromElement,
+        copyTextToClipboard,
+        detailRefreshIntervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
+        documentImpl: document,
+        domRenderUtils: getDomRenderUtils(),
+        fetchImpl: fetch,
+        fetchQuoteByStrategy: (quote, options) => fetchQuoteByStrategy(quote, options),
+        findQuoteById,
+        formatChainLabel,
+        formatDetailNumber,
+        getApiIntervals: () => apiIntervals,
+        getChartsRenderer: () => window.ChartsRenderer || null,
+        getChartsUtils,
+        getOpportunity: (opportunityId) => arbOpportunityRuntime.getOpportunity(opportunityId),
+        getQuoteMarketState,
+        isRuleLeg,
+        logRefreshError: (error) => console.error('[arb-detail] refresh failed', error),
+        muteLeg: (row, durationHours, nowMs) => muteArbDetailLeg(row, durationHours, nowMs),
+        promptImpl: window.prompt ? window.prompt.bind(window) : null,
+        promptMutedPathLegDurationHours: (promptImpl) => getMutedPathLegUtils().promptMutedPathLegDurationHours(promptImpl),
+        refs: {
+            modal: arbDetailModal,
+            closeButton: arbDetailCloseBtn,
+            chartLink: arbDetailChartLink,
+            chartAutoRefreshToggle: arbDetailChartAutoRefreshToggle,
+            subtitle: arbDetailSubtitle,
+            chartPreview: arbDetailChartPreview,
+            profitPreview: arbDetailProfitPreview,
+            grid: arbDetailGrid,
+            quoteRunStateTag
+        },
+        refreshOpportunities: () => updateArbPanel(),
+        setQuoteMarketState,
+        showCopyToast,
+        updateSchedulers,
+        windowImpl: window,
+        setTimeout,
+        clearTimeout
+    });
+    const closeArbDetailModal = arbDetailController.close;
+    const openArbDetailModal = arbDetailController.open;
+    const renderArbDetailModal = arbDetailController.render;
     const dataTerminalController = getDataTerminalController().createDataTerminalController({
         dataTerminalUtils: getDataTerminalUtils(),
         dashboardRuntimeUtils: getDashboardRuntimeUtils(),
@@ -634,7 +661,7 @@
         logWarning: (...args) => console.warn(...args),
         quoteDisplayUtils: getQuoteDisplayUtils(),
         quoteRequestUtils: getQuoteRequestUtils(),
-        recordSourceAttempt: (source) => arbDetailSourceBudgetRuntime.recordTimestamp(source),
+        recordSourceAttempt: (source) => arbDetailController.recordSourceAttempt(source),
         resetQuoteUiRuntimeState,
         scheduleArbPanelUpdate: () => arbPanelUpdateRuntime.schedule(),
         scheduleDataTerminalUpdate,
@@ -706,7 +733,7 @@
             requestChannelOptions,
             { multiChannelEnabled }
         ),
-        isSchedulerPaused: () => arbDetailState.pausedDashboard,
+        isSchedulerPaused: () => arbDetailController.isDashboardPaused(),
         hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId),
         fetchQuote: (quote, mode) => fetchSingleQuote(quote, mode)
     });
@@ -925,7 +952,7 @@
             closeArbDetailModal();
             return;
         }
-        if (arbDetailState.visible) {
+        if (arbDetailController.isVisible()) {
             renderArbDetailModal();
         }
     }
@@ -1378,15 +1405,6 @@
         return getArbDetailUtils().formatDetailNumber(value, precision);
     }
 
-    function nudgeArbDetailInput(index, delta) {
-        const card = arbDetailState.cards[index];
-        if (!card) return;
-        const nextValue = getArbDetailUtils().buildNudgedArbDetailInputAmount(card.inputAmount, delta);
-        arbDetailState.editingInputIndex = null;
-        getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, nextValue);
-        renderArbDetailModal();
-    }
-
     function findQuoteById(quoteId) {
         return getDashboardRuntimeUtils().findDashboardQuoteMatchById(dashboardState, quoteId);
     }
@@ -1490,468 +1508,11 @@
     }
 
     function refreshArbOpportunityRuntime(nextOpportunityMap, nextOpportunityIdsByTargetKey) {
-        const retainedEntries = [];
-        if (arbDetailState && arbDetailState.selectedOpportunity && arbDetailState.selectedOpportunity.id) {
-            retainedEntries.push(arbDetailState.selectedOpportunity);
-        }
-        const activeOpportunity = arbDetailState && arbDetailState.opportunityId
-            ? arbOpportunityRuntime.getOpportunity(arbDetailState.opportunityId)
-            : null;
-        if (activeOpportunity) {
-            retainedEntries.push(activeOpportunity);
-        }
+        const retainedEntries = arbDetailController.getRetainedOpportunities(
+            (opportunityId) => arbOpportunityRuntime.getOpportunity(opportunityId)
+        );
 
         arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);
-    }
-
-    function buildArbDetailRowsHtml(card, cardIndex) {
-        return getArbDetailUtils().buildArbDetailRowsHtml(card, {
-            cardIndex,
-            buildSourceHtml: (row, options) => getArbDetailUtils().buildArbDetailSourceHtml(row, options)
-        });
-    }
-
-    function buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices) {
-        return getArbDetailUtils().buildArbDetailSummaryHtml(card, {
-            index,
-            bestProfitIndices,
-            bestProfitRateIndices,
-            formatNumber: formatDetailNumber
-        });
-    }
-
-    function syncArbDetailInputValues() {
-        getArbDetailUtils().syncArbDetailInputValues(arbDetailState.cards, {
-            editingInputIndex: arbDetailState.editingInputIndex,
-            getElementById: (id) => document.getElementById(id)
-        });
-    }
-
-    function renderArbDetailCardContents() {
-        const { bestProfitIndices, bestProfitRateIndices } = getArbDetailUtils().findBestSummaryIndices(arbDetailState.cards);
-        getArbDetailUtils().applyArbDetailCardContents(arbDetailState.cards, {
-            getElementById: (id) => document.getElementById(id),
-            buildRowsHtml: (card, index) => buildArbDetailRowsHtml(card, index),
-            buildSummaryHtml: (card, index) => buildArbDetailSummaryHtml(card, index, bestProfitIndices, bestProfitRateIndices)
-        });
-    }
-
-    function syncArbDetailPrimaryCardQuoteState(quote, data, successSource, isInverseFetch) {
-        if (!quote) return;
-        const previousState = getQuoteMarketState(quote.id) || {};
-        const nextState = getArbDetailUtils().buildArbDetailSnapshotMonitorState(previousState, data, {
-            successSource,
-            isInverseFetch
-        });
-        setQuoteMarketState(quote.id, nextState);
-    }
-
-    async function waitForArbDetailSourceBudget(source, signal) {
-        const intervalKey = getArbDetailUtils().getArbDetailIntervalKey(source);
-        if (!intervalKey) return;
-        if (signal && signal.aborted) {
-            const aborted = new Error('Aborted');
-            aborted.name = 'AbortError';
-            throw aborted;
-        }
-
-        const waitMs = getArbDetailUtils().getArbDetailRateLimitDelay(
-            arbDetailSourceBudgetRuntime.getTimestamp(source),
-            getArbDetailUtils().resolveArbDetailIntervalMs(source, apiIntervals)
-        );
-
-        if (waitMs > 0) {
-            await sleep(waitMs);
-            if (signal && signal.aborted) {
-                const aborted = new Error('Aborted');
-                aborted.name = 'AbortError';
-                throw aborted;
-            }
-        }
-    }
-
-    function destroyArbDetailChartPreview() {
-        arbDetailChartPreviewCharts.forEach((chart) => {
-            if (chart && typeof chart.destroy === 'function') {
-                chart.destroy();
-            }
-        });
-        arbDetailChartPreviewCharts = [];
-        getArbDetailUtils().clearArbDetailPreviewContainers({
-            chartPreview: arbDetailChartPreview,
-            profitPreview: arbDetailProfitPreview
-        });
-    }
-
-    function syncArbDetailProfitPreview(seriesList, renderer) {
-        const cardEl = getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);
-        if (!cardEl) return;
-
-        const utils = getChartsUtils();
-        const previewState = getArbDetailUtils().buildArbDetailProfitPreviewState(seriesList, {
-            buildProfitChartPoints: utils && utils.buildProfitChartPoints,
-            canMountProfitHistoryChart: Boolean(renderer && typeof renderer.mountProfitHistoryChart === 'function')
-        });
-        if (!previewState.ready) {
-            getArbDetailUtils().applyArbDetailProfitPreviewMessage(cardEl, previewState.message);
-            return;
-        }
-
-        getArbDetailUtils().applyArbDetailProfitPreviewReady(cardEl, previewState.seriesCount);
-        const profitRefs = getArbDetailUtils().getArbDetailProfitPreviewElements(cardEl);
-        if (!profitRefs.canvasEl) return;
-
-        const chartInstance = renderer.mountProfitHistoryChart(profitRefs.canvasEl, {
-            mini: true,
-            height: 104,
-            showRightPriceScale: true
-        });
-        chartInstance.update(previewState.points);
-        arbDetailChartPreviewCharts.push(chartInstance);
-
-        getArbDetailUtils().applyArbDetailProfitPreviewMeta(profitRefs.metaEl, previewState.metaText);
-    }
-
-    async function syncArbDetailChartPreview(current, options = {}) {
-        if (!arbDetailChartPreview) return;
-        const forceReload = options.forceReload === true;
-
-        const pairs = current && current.cycle
-            ? getArbDetailUtils().buildArbDetailChartPairs(current.cycle)
-            : [];
-        const signature = getArbDetailUtils().buildArbDetailChartPreviewSignature(pairs);
-        const chartsUtils = getChartsUtils();
-        const chartHref = chartsUtils && typeof chartsUtils.buildChartsPageHref === 'function'
-            ? getArbDetailUtils().buildArbOpportunityChartHref(
-                current,
-                (chartPairs) => chartsUtils.buildChartsPageHref(chartPairs)
-            )
-            : '';
-
-        getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, chartHref);
-
-        if (!pairs.length) {
-            arbDetailState.chartPreviewSignature = '';
-            destroyArbDetailChartPreview();
-            const message = '当前路径暂无可用历史图表。';
-            getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview, message);
-            getArbDetailUtils().applyArbDetailProfitPreviewMessage(
-                getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview),
-                message
-            );
-            return;
-        }
-
-        if (!forceReload && arbDetailState.chartPreviewSignature === signature && getArbDetailUtils().hasArbDetailChartPreviewContent(arbDetailChartPreview)) {
-            return;
-        }
-
-        arbDetailChartPreviewRunId += 1;
-        const runId = arbDetailChartPreviewRunId;
-        arbDetailState.chartPreviewSignature = signature;
-        destroyArbDetailChartPreview();
-        getArbDetailUtils().applyArbDetailChartPreviewStrip(arbDetailChartPreview, pairs, {
-            buildChartPairLabel: (pair) => getChartsUtils().buildChartPairLabel(pair)
-        });
-
-        const renderer = window.ChartsRenderer || null;
-        if (!renderer || typeof renderer.mountPriceHistoryChart !== 'function') {
-            const message = '图表模块未就绪，请刷新页面后重试。';
-            getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview, message);
-            getArbDetailUtils().applyArbDetailProfitPreviewMessage(
-                getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview),
-                message
-            );
-            return;
-        }
-
-        const loadedSeries = new Array(pairs.length).fill(null);
-        await Promise.all(pairs.map(async (pair, index) => {
-            const chartRefs = getArbDetailUtils().getArbDetailChartCardElements(arbDetailChartPreview, index);
-            if (!chartRefs.cardEl) return;
-
-            try {
-                const params = new URLSearchParams({
-                    quoteId: String(pair.quoteId),
-                    direction: pair.direction,
-                    windowSec: '3600'
-                });
-                const response = await fetch(`/api/chart-series?${params.toString()}`);
-                if (!response.ok) {
-                    const body = await response.text();
-                    throw new Error(body || '图表加载失败');
-                }
-
-                const series = await response.json();
-                if (!arbDetailState.visible || arbDetailChartPreviewRunId !== runId) {
-                    return;
-                }
-
-                const chartInstance = renderer.mountPriceHistoryChart(chartRefs.canvasEl, {
-                    mini: true,
-                    height: 104,
-                    showRightPriceScale: true,
-                    color: '#0f766e'
-                });
-                chartInstance.update(series.points || []);
-                loadedSeries[index] = Array.isArray(series.points) ? series.points : [];
-                arbDetailChartPreviewCharts.push(chartInstance);
-
-                getArbDetailUtils().applyArbDetailChartLoadedMeta(chartRefs.metaEl, series.source);
-            } catch (error) {
-                if (arbDetailChartPreviewRunId !== runId) return;
-                getArbDetailUtils().applyArbDetailChartCardError(chartRefs.canvasEl, chartRefs.metaEl, error.message || '图表加载失败');
-            }
-        }));
-
-        if (!arbDetailState.visible || arbDetailChartPreviewRunId !== runId) {
-            return;
-        }
-        syncArbDetailProfitPreview(loadedSeries, renderer);
-    }
-
-    function renderArbDetailModal(forceShellRebuild = false) {
-        if (!arbDetailGrid || !arbDetailModal) return;
-        if (!arbDetailState.visible) {
-            getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, false);
-            return;
-        }
-
-        const current = arbDetailState.selectedOpportunity;
-        if (!current || !current.cycle) {
-            getArbDetailUtils().applyArbDetailSubtitleText(
-                arbDetailSubtitle,
-                getArbDetailUtils().buildArbDetailSubtitleText(current)
-            );
-            getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, '');
-            destroyArbDetailChartPreview();
-            getArbDetailUtils().applyArbDetailErrorHtml(arbDetailGrid, '当前套利机会已失效，请关闭后重新选择。');
-            getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, true);
-            return;
-        }
-
-        const visibleLegs = (current.cycle.legs || []).filter((leg) => !isRuleLeg(leg));
-        const legLines = getArbPanelLayoutUtils().buildArbPathLegLines(visibleLegs, buildArbPathLegLineOptions());
-        getArbDetailUtils().applyArbDetailSubtitleText(
-            arbDetailSubtitle,
-            getArbDetailUtils().buildArbDetailSubtitleText(current, legLines)
-        );
-        void syncArbDetailChartPreview(current);
-        if (forceShellRebuild || getArbDetailUtils().shouldRebuildArbDetailShellDom(arbDetailState.cards, {
-            gridEl: arbDetailGrid,
-            getElementById: (id) => document.getElementById(id)
-        })) {
-            getArbDetailUtils().applyArbDetailShellHtml(arbDetailGrid, arbDetailState.cards);
-        }
-        syncArbDetailInputValues();
-        renderArbDetailCardContents();
-        getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, true);
-    }
-
-    function setArbDetailDashboardPause(paused) {
-        const nextPaused = Boolean(paused);
-        if (arbDetailState.pausedDashboard === nextPaused) return;
-        arbDetailState.pausedDashboard = nextPaused;
-        if (nextPaused) {
-            activeFetchControllerRuntime.abortAll();
-        }
-        updateSchedulers();
-        getDomRenderUtils().applyQuoteRunStateTagDomState(
-            quoteRunStateTag,
-            getArbDetailUtils().getQuoteRunState(arbDetailState.pausedDashboard)
-        );
-    }
-
-    function closeArbDetailModal() {
-        arbDetailRefreshScheduler.clear();
-        if (arbDetailFetchController) {
-            arbDetailFetchController.abort();
-            arbDetailFetchController = null;
-        }
-        arbDetailState = getArbDetailUtils().buildClosedArbDetailState(arbDetailState);
-        arbDetailChartPreviewRunId += 1;
-        destroyArbDetailChartPreview();
-        arbDetailChartAutoRefreshRuntime.clear();
-        getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, '');
-        getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, false);
-        setArbDetailDashboardPause(false);
-    }
-
-    function openArbDetailModal(opportunityId) {
-        arbDetailRefreshScheduler.clear();
-        let current = arbOpportunityRuntime.getOpportunity(opportunityId);
-        if (!current) {
-            updateArbPanel();
-            current = arbOpportunityRuntime.getOpportunity(opportunityId);
-        }
-        if (!current || !current.cycle) return;
-
-        if (arbDetailFetchController) {
-            arbDetailFetchController.abort();
-            arbDetailFetchController = null;
-        }
-
-        const baseAmount = getArbDetailUtils().resolveArbOpportunityBaseAmount(
-            current.cycle,
-            findQuoteById,
-            isRuleLeg
-        );
-        arbDetailState = getArbDetailUtils().buildOpenArbDetailState(arbDetailState, {
-            opportunityId,
-            opportunity: current,
-            baseAmount
-        });
-        if (arbDetailChartAutoRefreshToggle) {
-            arbDetailChartAutoRefreshToggle.checked = true;
-        }
-        setArbDetailDashboardPause(true);
-        renderArbDetailModal(true);
-        arbDetailChartAutoRefreshRuntime.sync();
-        arbDetailRefreshScheduler.start(arbDetailState.refreshToken);
-    }
-
-    function restartArbDetailRefresh() {
-        if (!arbDetailState.visible) return;
-        arbDetailRefreshScheduler.clear();
-        if (arbDetailFetchController) {
-            arbDetailFetchController.abort();
-            arbDetailFetchController = null;
-        }
-        arbDetailState.refreshToken += 1;
-        arbDetailState.isRefreshing = false;
-        arbDetailRefreshScheduler.start(arbDetailState.refreshToken);
-    }
-
-    function commitArbDetailInput(index, rawValue) {
-        const card = arbDetailState.cards[index];
-        if (!card) return;
-
-        const parsed = getArbDetailUtils().parseCommittedArbDetailInput(rawValue);
-        if (parsed === null) {
-            renderArbDetailModal();
-            return;
-        }
-
-        if (parsed === card.inputAmount) {
-            renderArbDetailModal();
-            return;
-        }
-
-        getArbDetailUtils().applyArbDetailInputUpdate(arbDetailState.cards, index, parsed);
-        renderArbDetailModal();
-        restartArbDetailRefresh();
-    }
-
-    async function refreshArbDetailCards(refreshToken) {
-        const current = arbDetailState.selectedOpportunity;
-        if (!current || !current.cycle) return false;
-
-        const executableLegs = (current.cycle.legs || []).filter(leg => !isRuleLeg(leg));
-        if (!executableLegs.length) return false;
-
-        const controller = new AbortController();
-        arbDetailFetchController = controller;
-
-        try {
-            for (const [cardIndex, card] of arbDetailState.cards.entries()) {
-                if (!arbDetailState.visible || arbDetailState.refreshToken !== refreshToken) return;
-
-                const requestVersion = Number(card.requestVersion) || 0;
-
-                try {
-                    const startAmount = Number(card.inputAmount);
-                    let rollingAmount = startAmount;
-                    let rows = [];
-                    let finalSymbol = '';
-                    let shouldSkipApply = false;
-
-                    for (const leg of executableLegs) {
-                        const match = findQuoteById(leg.quoteId);
-                        if (!match || !match.quote) {
-                            throw new Error('报价配置不存在');
-                        }
-                        const legInputAmount = rollingAmount;
-
-                        const { data, successSource } = await fetchQuoteByStrategy(match.quote, {
-                            signal: controller.signal,
-                            isInverseFetch: Boolean(leg.inverse),
-                            amount: legInputAmount,
-                            requestChannelId: 'default',
-                            skipDelay: true,
-                            beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)
-                        });
-
-                        if (!arbDetailState.visible || arbDetailState.refreshToken !== refreshToken) {
-                            return;
-                        }
-                        if (!getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
-                            shouldSkipApply = true;
-                            break;
-                        }
-
-                        if (getArbDetailUtils().shouldSyncArbDetailSnapshotForCard(cardIndex)) {
-                            syncArbDetailPrimaryCardQuoteState(
-                                match.quote,
-                                data,
-                                successSource,
-                                Boolean(leg.inverse)
-                            );
-                        }
-
-                        rollingAmount = data.finalAmountOut;
-                        finalSymbol = data.symbols.to || finalSymbol;
-                        rows.push(getArbDetailUtils().buildArbDetailRow(match.quote, data, {
-                            inputAmount: legInputAmount,
-                            isInverseFetch: Boolean(leg.inverse),
-                            formatChainLabel,
-                            formatAmount: (value) => `${formatDetailNumber(value)}`
-                        }));
-                    }
-
-                    if (shouldSkipApply || !getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
-                        continue;
-                    }
-
-                    const summary = getArbDetailUtils().summarizeDetailResult(startAmount, rollingAmount);
-                    if (cardIndex === 3) {
-                        const baseRows = Array.isArray(arbDetailState.cards[0]?.rows) ? arbDetailState.cards[0].rows : [];
-                        rows = getArbDetailUtils().applyArbDetailRateDeltas(rows, baseRows);
-                    }
-                    card.rows = rows;
-                    card.summary = {
-                        ...summary,
-                        symbol: finalSymbol
-                    };
-                    card.error = '';
-                    renderArbDetailCardContents();
-                } catch (error) {
-                    if (error.name === 'AbortError') {
-                        throw error;
-                    }
-                    if (!getArbDetailUtils().shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
-                        continue;
-                    }
-                    getArbDetailUtils().applyArbDetailCardError(
-                        arbDetailState.cards,
-                        cardIndex,
-                        error.message || '详情报价失败'
-                    );
-                    renderArbDetailCardContents();
-                }
-            }
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                return false;
-            }
-            throw error;
-        } finally {
-            if (arbDetailFetchController === controller) {
-                arbDetailFetchController = null;
-            }
-            renderArbDetailCardContents();
-        }
-
-        return true;
     }
 
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
@@ -2581,7 +2142,7 @@
 
     function handleGlobalShortcuts(event) {
         const action = getKeyboardShortcutUtils().resolveGlobalShortcutAction(event, {
-            arbDetailVisible: arbDetailState.visible
+            arbDetailVisible: arbDetailController.isVisible()
         });
         if (!action) return;
         event.preventDefault();
@@ -2784,7 +2345,7 @@
         domRenderUtils: getDomRenderUtils(),
         evaluatePathAlertsOnce,
         formatChainLabel,
-        getArbDetailState: () => arbDetailState,
+        getArbDetailState: () => arbDetailController.getState(),
         getCategoryPauseAction,
         getDashboardState: () => dashboardState,
         getQuoteChainDisplayName,
@@ -2957,10 +2518,7 @@
                 addToQueue(quote);
             });
 
-            getDomRenderUtils().applyQuoteRunStateTagDomState(
-                quoteRunStateTag,
-                getArbDetailUtils().getQuoteRunState(arbDetailState.pausedDashboard)
-            );
+            arbDetailController.syncQuoteRunStateTag();
             updateSchedulers();
             priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => {
                 void priceSnapshotSaveRuntime.saveIfNeeded();
@@ -3015,72 +2573,8 @@
                 arbPathContent.addEventListener('click', handleArbPathContentClick);
                 arbPathContent.addEventListener('keydown', handleArbPathContentKeydown);
             }
-            if (arbDetailGrid) {
-                arbDetailGrid.addEventListener('mousedown', (event) => {
-                    const action = getArbDetailUtils().resolveArbDetailGridMouseDownAction(event, { closestEventTarget });
-                    if (action.type === 'prevent-step-default') {
-                        event.preventDefault();
-                    }
-                });
-                arbDetailGrid.addEventListener('click', (event) => {
-                    const action = getArbDetailUtils().resolveArbDetailGridClickAction(event, { closestEventTarget });
-                    if (action.type === 'copy-token-address') {
-                        copyTextToClipboard(action.tokenAddress)
-                            .then(() => showCopyToast(`已复制 ${action.tokenSymbol} 地址`))
-                            .catch(() => showCopyToast('复制失败'));
-                        return;
-                    }
-                    if (action.type === 'copy-dex-link') {
-                        void copyDexLinkFromElement(action.element);
-                        return;
-                    }
-                    if (action.type === 'mute-leg') {
-                        const row = arbDetailState.cards[action.cardIndex] && Array.isArray(arbDetailState.cards[action.cardIndex].rows)
-                            ? arbDetailState.cards[action.cardIndex].rows[action.rowIndex]
-                            : null;
-                        if (!row) return;
-                        const durationHours = getMutedPathLegUtils().promptMutedPathLegDurationHours(window.prompt.bind(window));
-                        if (!durationHours) return;
-                        muteArbDetailLeg(row, durationHours, Date.now());
-                        return;
-                    }
-                    if (action.type === 'nudge-input') {
-                        nudgeArbDetailInput(action.index, action.step);
-                    }
-                });
-                arbDetailGrid.addEventListener('focusin', (event) => {
-                    const action = getArbDetailUtils().resolveArbDetailGridInputAction(event, { closestEventTarget });
-                    if (action.type !== 'input') return;
-                    arbDetailState.editingInputIndex = action.index;
-                });
-                arbDetailGrid.addEventListener('focusout', (event) => {
-                    const action = getArbDetailUtils().resolveArbDetailGridInputAction(event, { closestEventTarget });
-                    if (action.type !== 'input') return;
-                    arbDetailState.editingInputIndex = null;
-                    commitArbDetailInput(action.index, action.value);
-                });
-                arbDetailGrid.addEventListener('keydown', (event) => {
-                    const action = getArbDetailUtils().resolveArbDetailGridKeydownAction(event, { closestEventTarget });
-                    if (action.type !== 'commit-input') return;
-                    event.preventDefault();
-                    action.input.blur();
-                });
-            }
-            if (arbDetailCloseBtn) {
-                arbDetailCloseBtn.addEventListener('click', closeArbDetailModal);
-            }
-            if (arbDetailChartAutoRefreshToggle) {
-                arbDetailChartAutoRefreshToggle.addEventListener('change', () => {
-                    arbDetailChartAutoRefreshRuntime.sync();
-                });
-            }
-            if (arbDetailModal) {
-                arbDetailModal.addEventListener('click', (event) => {
-                    if (event.target === arbDetailModal) {
-                        closeArbDetailModal();
-                    }
-                });
-            }
+            arbDetailController.bindGridEvents();
+            arbDetailController.bindChromeEvents();
             getArbPanelLayoutUtils().bindGlobalArbFilterEvents({
                 excludedSymbolsInput: arbGlobalFilterInput,
                 excludedChainsInput: arbGlobalChainFilterInput,

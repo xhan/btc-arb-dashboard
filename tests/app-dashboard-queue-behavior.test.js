@@ -5,6 +5,7 @@ const path = require('path');
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-app.js'), 'utf8');
 const dashboardActionControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/dashboard/dashboard-action-controller.js'), 'utf8');
 const dashboardFormControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/dashboard/dashboard-form-controller.js'), 'utf8');
+const arbDetailControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/arb/arb-detail-controller.js'), 'utf8');
 const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-queue-runtime-utils.js'), 'utf8');
 const quoteFetchControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-fetch-controller.js'), 'utf8');
 
@@ -72,7 +73,7 @@ assert.ok(
 
 assert.ok(
   !appJs.includes('function abortActiveQuoteFetches(')
-    && appJs.includes('activeFetchControllerRuntime.abortAll();'),
+    && appJs.includes('abortActiveFetchControllers: () => activeFetchControllerRuntime.abortAll()'),
   '主看板不应保留 active fetch 批量 abort 单用途包装'
 );
 
@@ -162,11 +163,11 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes("requestChannelId: 'default'"),
+  arbDetailControllerJs.includes("requestChannelId: 'default'"),
   '套利详情应继续强制走默认通道'
 );
 
 assert.ok(
-  appJs.includes('beforeSourceAttempt: (source) => waitForArbDetailSourceBudget(source, controller.signal)'),
+  arbDetailControllerJs.includes('beforeSourceAttempt: (source) => waitForSourceBudget(source, controller.signal)'),
   '套利详情应继续保留独立的 source budget 控制'
 );
