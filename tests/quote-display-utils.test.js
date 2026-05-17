@@ -5,6 +5,7 @@ const {
   buildCexOrderbookSummary,
   buildCexOrderbookTooltipHtml,
   buildInverseQuoteDisplayTextForState,
+  buildInverseQuoteQueuedDisplayText,
   buildQuoteAlertDisplayLabel,
   buildQuotePairLabelHtml,
   buildQuoteDisplayTextForState,
@@ -128,6 +129,36 @@ assert.strictEqual(
     { mode: 'amount' }
   ),
   '3 USDC ≈ 1.500000 ETH'
+);
+
+assert.strictEqual(
+  buildInverseQuoteQueuedDisplayText(
+    { chain: 'ethereum', amount: 3 },
+    { inverseFromSymbol: 'USDC', inverseToSymbol: 'ETH', inverseTotalAmountOut: 1.5, inverseRawPrice: 0.5 },
+    '1 USDC ≈ 0.490000 ETH',
+    { mode: 'rate' }
+  ),
+  '1 USDC ≈ 0.500000 ETH'
+);
+
+assert.strictEqual(
+  buildInverseQuoteQueuedDisplayText(
+    { chain: 'ethereum', amount: 3 },
+    {},
+    '1 USDC ≈ 0.490000 ETH',
+    { mode: 'rate' }
+  ),
+  '1 USDC ≈ 0.490000 ETH'
+);
+
+assert.strictEqual(
+  buildInverseQuoteQueuedDisplayText(
+    { chain: 'ethereum', amount: 3 },
+    {},
+    '反向报价失败',
+    { mode: 'rate' }
+  ),
+  '反向报价排队中...'
 );
 
 assert.strictEqual(formatCexBookValue(1234.56789), '1234.57');

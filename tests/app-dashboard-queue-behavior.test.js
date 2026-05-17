@@ -84,6 +84,16 @@ assert.ok(
 );
 
 assert.ok(
+  appJs.includes('clearInverse: options.clearInverse === true'),
+  '普通入队刷新不应默认清掉已有反向报价'
+);
+
+assert.ok(
+  appJs.includes('queueQuoteRefresh(quote, { clearInverse: quote.showInverse !== true });'),
+  '关闭反向报价时应明确清理反向报价 DOM'
+);
+
+assert.ok(
   !appJs.includes('let touched = false;') && !appJs.includes('if (!touched)'),
   '多渠道队列重排不应保留无实际分支差异的 touched 状态'
 );

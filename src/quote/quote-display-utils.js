@@ -16,6 +16,9 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults, tradingPairUtils) {
   const QUOTE_DISPLAY_MODE_RATE = 'rate';
   const QUOTE_DISPLAY_MODE_AMOUNT = 'amount';
+  const INVERSE_QUOTE_QUEUED_TEXT = '反向报价排队中...';
+  const INVERSE_QUOTE_ERROR_TEXT = '反向报价失败';
+  const QUOTE_REFRESHING_TEXT = '刷新中...';
 
   function normalizeQuoteDisplayMode(mode) {
     return mode === QUOTE_DISPLAY_MODE_AMOUNT
@@ -198,8 +201,28 @@
       toSymbol: state && state.inverseToSymbol,
       totalAmountOut: state && state.inverseTotalAmountOut,
       rate: state && state.inverseRawPrice,
-      fallbackText: options.fallbackText || '反向报价排队中...'
+      fallbackText: options.fallbackText || INVERSE_QUOTE_QUEUED_TEXT
     });
+  }
+
+  function isPreservableInverseQuoteText(text) {
+    const normalized = String(text || '').trim();
+    if (!normalized) return false;
+    return normalized !== INVERSE_QUOTE_QUEUED_TEXT
+      && normalized !== INVERSE_QUOTE_ERROR_TEXT
+      && normalized !== QUOTE_REFRESHING_TEXT
+      && normalized !== '...';
+  }
+
+  function buildInverseQuoteQueuedDisplayText(quote, state, previousText, options = {}) {
+    const fallbackText = options.fallbackText || INVERSE_QUOTE_QUEUED_TEXT;
+    if (Number.isFinite(Number(state && state.inverseRawPrice))) {
+      return buildInverseQuoteDisplayTextForState(quote, state, {
+        mode: options.mode,
+        fallbackText: isPreservableInverseQuoteText(previousText) ? previousText : fallbackText
+      });
+    }
+    return isPreservableInverseQuoteText(previousText) ? String(previousText).trim() : fallbackText;
   }
 
   function getCexPairLabel(quote, state) {
@@ -380,6 +403,7 @@
     buildCexOrderbookTooltipHtml,
     createQuoteHoverRuntime,
     buildInverseQuoteDisplayTextForState,
+    buildInverseQuoteQueuedDisplayText,
     buildQuoteAlertDisplayLabel,
     buildQuotePairLabelHtml,
     buildQuoteDisplayTextForState,

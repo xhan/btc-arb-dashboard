@@ -644,7 +644,7 @@
         applyActiveQuoteUiState(quote, {
             text: options.text || '排队中...',
             loading: options.loading !== false,
-            clearInverse: options.clearInverse !== false
+            clearInverse: options.clearInverse === true
         });
         addToQueue(quote);
         if (options.updateSchedulers !== false) {
@@ -2895,9 +2895,12 @@
                 updateQuotePairLabel(quote, newState);
 
                 if (shouldQueueInverseFetch(quote)) {
-                    const inverseQueuedText = Number.isFinite(Number(newState.inverseRawPrice))
-                        ? getInverseQuoteDisplayText(quote, newState, inverseEl && inverseEl.textContent || '反向报价排队中...')
-                        : '反向报价排队中...';
+                    const inverseQueuedText = getQuoteDisplayUtils().buildInverseQuoteQueuedDisplayText(
+                        quote,
+                        newState,
+                        inverseEl && inverseEl.textContent,
+                        { mode: quoteDisplayMode }
+                    );
                     inverseEl = getDomRenderUtils().applyQuoteInverseQueuedDomState({
                         quoteDataEl,
                         inverseEl
@@ -3732,7 +3735,7 @@
 
             if (updatePlan.shouldQueueRefreshQuote) {
                 removeFromQueue(quote.id);
-                queueQuoteRefresh(quote);
+                queueQuoteRefresh(quote, { clearInverse: quote.showInverse !== true });
             }
 
             saveData();
