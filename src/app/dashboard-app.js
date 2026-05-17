@@ -1790,10 +1790,6 @@
         }
     }
 
-    function setArbDetailChartLinkState(chartHref) {
-        getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, chartHref);
-    }
-
     function destroyArbDetailChartPreview() {
         arbDetailChartPreviewCharts.forEach((chart) => {
             if (chart && typeof chart.destroy === 'function') {
@@ -1852,7 +1848,7 @@
             )
             : '';
 
-        setArbDetailChartLinkState(chartHref);
+        getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, chartHref);
 
         if (!pairs.length) {
             arbDetailState.chartPreviewSignature = '';
@@ -1947,7 +1943,7 @@
                 arbDetailSubtitle,
                 getArbDetailUtils().buildArbDetailSubtitleText(current)
             );
-            setArbDetailChartLinkState('');
+            getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, '');
             destroyArbDetailChartPreview();
             getArbDetailUtils().applyArbDetailErrorHtml(arbDetailGrid, '当前套利机会已失效，请关闭后重新选择。');
             getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, true);
@@ -1996,7 +1992,7 @@
         arbDetailChartPreviewRunId += 1;
         destroyArbDetailChartPreview();
         arbDetailChartAutoRefreshRuntime.clear();
-        setArbDetailChartLinkState('');
+        getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, '');
         getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, false);
         setArbDetailDashboardPause(false);
     }

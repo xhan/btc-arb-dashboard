@@ -1683,6 +1683,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getArbDetailProfitCardEl('));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartPreviewMessage(arbDetailChartPreview,'));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailProfitPreviewMessage('));
+    assert.ok(!appJsResponse.body.includes('function setArbDetailChartLinkState('));
+    assert.ok(appJsResponse.body.includes('getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, chartHref);'));
+    assert.ok(appJsResponse.body.includes("getArbDetailUtils().applyArbDetailChartLinkState(arbDetailChartLink, '');"));
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().getArbDetailProfitCardElement(arbDetailChartPreview);'));
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-profit-card'));
     assert.ok(!appJsResponse.body.includes('resolveEventTargetElement(event)'));

@@ -291,6 +291,7 @@
   - `src/app/dashboard-app.js` 的套利详情 input value 同步策略与写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 card rows/summary DOM 查找与写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 chart href 单用途包装已移除，预览同步流程直接委托 detail/charts utils
+  - `src/app/dashboard-app.js` 的套利详情 chart link state 单用途包装已移除，预览/失效/关闭流程直接委托 detail utils
   - `src/app/dashboard-app.js` 的套利详情 chart/profit preview message 和 profit card lookup 单用途包装已移除，预览同步流程直接委托 detail utils
   - `src/app/dashboard-app.js` 的套利详情 chart/profit preview 清空、消息、strip、链接状态、已有内容检查、收益卡片 HTML、canvas/meta 查询、meta 文案和图表错误 DOM 写入已下沉到 `src/arb/arb-detail-utils.js`
   - `src/app/dashboard-app.js` 的套利详情 source interval ms 解析单层包装已移除，调用点直接委托 `src/arb/arb-detail-utils.js`
