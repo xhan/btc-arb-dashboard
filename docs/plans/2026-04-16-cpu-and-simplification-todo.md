@@ -313,6 +313,7 @@
   - `src/app/dashboard-app.js` 的 price snapshot timer 启动单用途包装已移除，初始化流程直接委托 timer runtime
   - `src/app/dashboard-app.js` 的提醒日志设置 tab 快捷键单用途包装已移除，`A` 快捷键分支直接设置 active tab 并打开面板
   - `src/app/dashboard-app.js` 的 path alert 配置 load/loadStrict 单用途包装已移除，调用点直接赋值配置 client 返回值
+  - `src/app/dashboard-app.js` 的后端配置刷新单用途包装已移除，初始化流程直接委托 dashboard API client
   - `src/app/dashboard-app.js` 的浮窗拖拽实现、浮窗 focus 事件绑定和通用显示切换状态已下沉到 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的浮窗 z-index 计数和默认 z-index 写入已下沉到 `src/ui/dom-render-utils.js` 的 `createFloatingPanelZIndexRuntime()`
   - `src/app/dashboard-app.js` 的套利面板/提醒日志可见性单用途包装已移除，调度和刷新点直接委托 dashboard runtime utils

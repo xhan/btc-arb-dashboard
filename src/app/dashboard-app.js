@@ -3844,15 +3844,11 @@
         }
     });
 
-    async function requestBackendConfigRefresh() {
-        await dashboardApiClient.requestBackendConfigRefresh();
-    }
-
     async function init() {
         audioNoticeEl.style.display = 'block';
         multiChannelEnabled = multiChannelToggleRuntime.load();
         requestChannelTagVisibilityRuntime.apply();
-        await requestBackendConfigRefresh();
+        await dashboardApiClient.requestBackendConfigRefresh();
         await loadPriceSnapshotConfig();
         await loadArbSettings();
         themeRuntime.load();

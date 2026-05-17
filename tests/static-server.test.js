@@ -784,7 +784,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quotePauseUtilsResponse.body.includes('function buildCategoryPauseButtonState(quotes)'));
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(!appJsResponse.body.includes("channels: [{ id: 'default', name: '默认通道'"));
-    assert.ok(appJsResponse.body.includes('await requestBackendConfigRefresh();'));
+    assert.ok(!appJsResponse.body.includes('function requestBackendConfigRefresh('));
+    assert.ok(appJsResponse.body.includes('await dashboardApiClient.requestBackendConfigRefresh();'));
     assert.ok(appJsResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().applyKyberDirectPoolsControlVisibility(quoteSettingsModalElements, shouldShow)'));
     assert.ok(!appJsResponse.body.includes("kyberDirectPoolsGroup.style.display = shouldShow ? 'flex' : 'none'"));
