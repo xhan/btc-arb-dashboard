@@ -1981,16 +1981,12 @@
         getArbDetailUtils().applyArbDetailModalVisibility(arbDetailModal, true);
     }
 
-    function abortActiveQuoteFetches() {
-        activeFetchControllerRuntime.abortAll();
-    }
-
     function setArbDetailDashboardPause(paused) {
         const nextPaused = Boolean(paused);
         if (arbDetailState.pausedDashboard === nextPaused) return;
         arbDetailState.pausedDashboard = nextPaused;
         if (nextPaused) {
-            abortActiveQuoteFetches();
+            activeFetchControllerRuntime.abortAll();
         }
         updateSchedulers();
         getDomRenderUtils().applyQuoteRunStateTagDomState(
