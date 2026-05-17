@@ -611,22 +611,22 @@
             overflow-y: hidden;
             padding-bottom: 2px;
         }
-        .alert-modal-footer {
+        .quote-settings-modal-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
             margin-top: 20px;
         }
-        .alert-modal-footer .modal-buttons {
+        .quote-settings-modal-footer .modal-buttons {
             margin-top: 0;
             flex-shrink: 0;
         }
-        .alert-modal-footer .quote-settings-actions {
+        .quote-settings-modal-footer .quote-settings-actions {
             margin: 0;
             flex: 1;
         }
-        .alert-modal-footer .quote-settings-actions button {
+        .quote-settings-modal-footer .quote-settings-actions button {
             padding: 10px 12px;
         }
         @media (max-width: 560px) {
@@ -1775,7 +1775,7 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="alert-modal">
+    <div class="modal-overlay" id="quote-settings-modal">
         <div class="modal-box">
             <h3 id="modal-title">设置</h3>
             <div id="modal-subtitle" class="quote-settings-subtitle"></div>
@@ -1828,7 +1828,7 @@
             <div class="quote-settings-manage-row">
                 <button id="open-quote-alerts-manage" type="button">打开这个交易对的报警管理</button>
             </div>
-            <div class="alert-modal-footer">
+            <div class="quote-settings-modal-footer">
                 <div class="quote-settings-actions">
                     <button id="modal-swap-quote" type="button">反转价格对</button>
                     <button id="modal-delete-quote" type="button">删除价格对</button>

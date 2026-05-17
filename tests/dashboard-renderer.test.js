@@ -299,7 +299,7 @@ assert.deepStrictEqual(
   resolveQuoteSettingsModalClickAction({ target: { id: 'other' } }),
   { type: 'none' }
 );
-const quoteSettingsOverlay = { id: 'alert-modal', closest: () => null };
+const quoteSettingsOverlay = { id: 'quote-settings-modal', closest: () => null };
 assert.deepStrictEqual(
   resolveQuoteSettingsModalClickAction({ target: quoteSettingsOverlay }, { modal: quoteSettingsOverlay }),
   { type: 'close' }

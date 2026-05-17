@@ -189,6 +189,7 @@
   - `PathAlertNotificationUtils.buildLegacyQuoteAlertRemotePayload` 兼容导出已移除
   - 未使用的 generic alert log 渲染路径已移除
   - 旧的报警状态/快速设置浮窗已移除，音效、远程推送和全部立即设置统一归入提醒日志的「设置」tab，快捷键 `A` 直接打开该 tab
+  - 报价设置弹窗的 DOM/代码命名已从旧 `alert-modal` 收敛为 `quote-settings-modal`，避免继续暴露旧报警 pop UI 语义
   - `request-channel`：请求通道标签 HTML/patch、DOM 插入/删除、标签显隐 runtime 和多渠道开关本地缓存/按钮状态 runtime 已收敛到 `src/request-channel/request-channel-utils.js`，主入口只负责调度当前报价
   - `quote-pause`：单报价/分区暂停按钮的 aria/title/icon DOM 应用已下沉到 `src/quote/quote-pause-utils.js`
   - `dom-render`：报价 pair label HTML 写入、quote run state tag 的 text/class 写入和 quote alert 确认按钮 DOM 写入已下沉到 `src/ui/dom-render-utils.js`
@@ -227,6 +228,7 @@
   - `src/app/dashboard-app.js` 的多渠道开关 storage 值解析/序列化已下沉到 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的多渠道开关 localStorage 读写容错和按钮 DOM 写入已下沉到 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的多渠道队列重排无效 `touched` 分支已移除，重排后统一刷新 scheduler 一次
+  - `src/app/dashboard-app.js` 的 quote fetch abort 单用途包装已移除，排队刷新和暂停流程直接委托 active fetch controller runtime
   - `src/app/dashboard-app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
   - `src/app/dashboard-app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`

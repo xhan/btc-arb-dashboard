@@ -61,6 +61,13 @@ assert.ok(
 );
 
 assert.ok(
+  !appJs.includes('function abortQuoteFetch(')
+    && appJs.includes('activeFetchControllerRuntime.abort(quote.id);')
+    && appJs.includes('activeFetchControllerRuntime.abort(quoteId);'),
+  '主看板不应保留 fetch abort 单用途包装'
+);
+
+assert.ok(
   appJs.includes('function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled)'),
   '多渠道开关应通过统一的批量重排队列逻辑切换'
 );

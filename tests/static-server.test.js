@@ -241,6 +241,10 @@ async function waitForServer(attempts = 12) {
         response.body.indexOf('id="alert-log-settings-tab"') > response.body.indexOf('id="alert-log-muted-tab"')
     );
     assert.ok(response.body.includes('id="open-quote-alerts-manage"'));
+    assert.ok(response.body.includes('id="quote-settings-modal"'));
+    assert.ok(!response.body.includes('id="alert-modal"'));
+    assert.ok(response.body.includes('class="quote-settings-modal-footer"'));
+    assert.ok(!response.body.includes('class="alert-modal-footer"'));
     assert.ok(!response.body.includes('class="quote-alert-inline-grid"'));
     assert.ok(response.body.includes('id="modal-subtitle"'));
     assert.ok(response.body.includes('交易对报警已统一迁到「报警管理」页'));
@@ -549,12 +553,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('confirmActionRuntime.close(confirmModalRefs)'));
     assert.ok(!appJsResponse.body.includes('getDashboardModalUtils().showModal(settingsModal)'));
     assert.ok(!appJsResponse.body.includes('getDashboardModalUtils().hideModal(settingsModal)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(alertModal)'));
-    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().hideModal(alertModal)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(quoteSettingsModal)'));
+    assert.ok(appJsResponse.body.includes('getDashboardModalUtils().hideModal(quoteSettingsModal)'));
     assert.ok(appJsResponse.body.includes('getDashboardModalUtils().showModal(addQuoteModal)'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().buildAddCategoryDraft({'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveAddCategoryModalClickAction(e, { modal: addCategoryModal })'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: alertModal })'));
+    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: quoteSettingsModal })'));
     assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal })'));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('input', handleDashboardInput)"));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('click', handleDashboardClick)"));
@@ -568,8 +572,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function syncAddQuoteCrossChainControls()'));
     assert.ok(!appJsResponse.body.includes("settingsModal.classList.add('visible')"));
     assert.ok(!appJsResponse.body.includes("settingsModal.classList.remove('visible')"));
-    assert.ok(!appJsResponse.body.includes("alertModal.classList.add('visible')"));
-    assert.ok(!appJsResponse.body.includes("alertModal.classList.remove('visible')"));
+    assert.ok(!appJsResponse.body.includes('alertModal'));
+    assert.ok(!appJsResponse.body.includes("quoteSettingsModal.classList.add('visible')"));
+    assert.ok(!appJsResponse.body.includes("quoteSettingsModal.classList.remove('visible')"));
     assert.ok(!appJsResponse.body.includes("addQuoteModal.classList.add('visible')"));
     assert.ok(!appJsResponse.body.includes("addQuoteChainSelect.value = '';"));
     assert.ok(!appJsResponse.body.includes('addQuoteFromInput.placeholder = viewState.fromPlaceholder'));
@@ -1414,6 +1419,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function openAlertLogSettingsTab('));
     assert.ok(!appJsResponse.body.includes('function openAlertLogTab('));
     assert.ok(!appJsResponse.body.includes('alertSettingsBtn'));
+    assert.ok(!appJsResponse.body.includes("document.getElementById('alert-modal')"));
     assert.ok(!appJsResponse.body.includes("togglePathAlertBtn.addEventListener('click'"));
     assert.ok(!keyboardShortcutUtilsResponse.body.includes("d: '"));
     assert.ok(!keyboardShortcutUtilsResponse.body.includes("r: '"));

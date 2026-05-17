@@ -196,7 +196,7 @@
         logWarning: (...args) => console.warn(...args),
         onUnlocked: updateAlertSoundState
     });
-    const alertModal = document.getElementById('alert-modal');
+    const quoteSettingsModal = document.getElementById('quote-settings-modal');
     const modalSwapQuoteBtn = document.getElementById('modal-swap-quote');
     const modalDeleteQuoteBtn = document.getElementById('modal-delete-quote');
     const modalTitleEl = document.getElementById('modal-title');
@@ -635,7 +635,7 @@
     function queueQuoteRefresh(quote, options = {}) {
         if (!quote || isQuotePaused(quote)) return false;
         if (options.abortActive !== false) {
-            abortQuoteFetch(quote.id);
+            activeFetchControllerRuntime.abort(quote.id);
         }
         applyActiveQuoteUiState(quote, {
             text: options.text || '排队中...',
@@ -1369,10 +1369,6 @@
     function removeInverseQuoteElement(quoteId) {
         const inverseEl = document.getElementById(`inverse-quote-${quoteId}`);
         getDomRenderUtils().removeQuoteInverseElement(inverseEl);
-    }
-
-    function abortQuoteFetch(quoteId) {
-        activeFetchControllerRuntime.abort(quoteId);
     }
 
     function applyPausedQuoteUiState(quote, state) {
@@ -3593,7 +3589,7 @@
         if (nextPaused) {
             const previousState = getQuoteMarketState(quoteId) || {};
             removeFromQueue(quoteId);
-            abortQuoteFetch(quoteId);
+            activeFetchControllerRuntime.abort(quoteId);
             setQuoteMarketState(quoteId, getQuotePauseUtils().buildPausedQuoteState(previousState));
             resetQuoteUiRuntimeState(quoteId);
             applyPausedQuoteUiState(quote, getQuoteMarketState(quoteId) || {});
@@ -3718,12 +3714,12 @@
             });
         }
 
-        getDashboardModalUtils().showModal(alertModal);
+        getDashboardModalUtils().showModal(quoteSettingsModal);
         return true;
     }
 
     function closeQuoteSettingsModal() {
-        getDashboardModalUtils().hideModal(alertModal);
+        getDashboardModalUtils().hideModal(quoteSettingsModal);
         quoteSettingsSelectionRuntime.clear();
     }
 
@@ -3790,8 +3786,8 @@
 
     dashboardEl.addEventListener('click', handleDashboardClick);
 
-    alertModal.addEventListener('click', (e) => {
-        const action = getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: alertModal });
+    quoteSettingsModal.addEventListener('click', (e) => {
+        const action = getDashboardRenderer().resolveQuoteSettingsModalClickAction(e, { modal: quoteSettingsModal });
         if (action.type === 'close') {
             closeQuoteSettingsModal();
             return;
