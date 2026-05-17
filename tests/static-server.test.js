@@ -1313,7 +1313,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("const buttonEl = card.querySelector('[data-path-alert-log-mute], [data-quote-alert-log-mute]')"));
     assert.ok(!appJsResponse.body.includes('statusEl.textContent = statusState.statusText'));
     assert.ok(!appJsResponse.body.includes('buttonEl.textContent = statusState.buttonText'));
-    assert.ok(appJsResponse.body.includes('function getActivePathAlertEvaluationAlerts()'));
+    assert.ok(!appJsResponse.body.includes('function getActivePathAlertEvaluationAlerts()'));
+    assert.ok(!appJsResponse.body.includes('function hasActivePathAlertEvaluationTarget()'));
+    assert.ok(appJsResponse.body.includes('hasActiveTarget: () => getDashboardRuntimeUtils().hasActivePathAlertEvaluationTarget(pathAlertConfig)'));
     assert.ok(appJsResponse.body.includes('function pruneInactiveAlertRuntimeState()'));
     assert.ok(appJsResponse.body.includes('function getPathAlertUtils()'));
     assert.ok(appJsResponse.body.includes('PathAlertUtils is not loaded'));
@@ -1397,7 +1399,7 @@ async function waitForServer(attempts = 12) {
     const pruneMutedPathTargetsMatch = appJsResponse.body.match(/function pruneMutedPathTargetsInPlace\([\s\S]*?\n    \}/);
     assert.ok(pruneMutedPathTargetsMatch);
     assert.ok(!pruneMutedPathTargetsMatch[0].includes('window.PathAlertUtils'));
-    assert.ok(appJsResponse.body.includes('const evaluationAlerts = getActivePathAlertEvaluationAlerts();'));
+    assert.ok(appJsResponse.body.includes('const evaluationAlerts = getDashboardRuntimeUtils().getActivePathAlertEvaluationAlerts(pathAlertConfig);'));
     assert.ok(appJsResponse.body.includes('if (!evaluationAlerts.length) {'));
     assert.ok(!appJsResponse.body.includes('extendMutedPathTargetFromLogButton'));
     assert.ok(alertLogUiResponse.body.includes("buttonEl.closest('.log-entry[data-muted-target-key]')"));

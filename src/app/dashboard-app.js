@@ -1445,14 +1445,6 @@
         return getDashboardRuntimeUtils().isPanelVisible(alertLogWindow);
     }
 
-    function hasActivePathAlertEvaluationTarget() {
-        return getDashboardRuntimeUtils().hasActivePathAlertEvaluationTarget(pathAlertConfig);
-    }
-
-    function getActivePathAlertEvaluationAlerts() {
-        return getDashboardRuntimeUtils().getActivePathAlertEvaluationAlerts(pathAlertConfig);
-    }
-
     function pruneInactiveAlertRuntimeState() {
         pathAlertRuntimeState.pruneInactive(pathAlertConfig && pathAlertConfig.alerts);
     }
@@ -2326,7 +2318,7 @@
     }
 
     function evaluatePathAlertsOnce() {
-        const evaluationAlerts = getActivePathAlertEvaluationAlerts();
+        const evaluationAlerts = getDashboardRuntimeUtils().getActivePathAlertEvaluationAlerts(pathAlertConfig);
         if (!evaluationAlerts.length) {
             pruneInactiveAlertRuntimeState();
             updateAlertSoundState();
@@ -2414,7 +2406,7 @@
 
     function restartPathAlertScheduler() {
         pathAlertSchedulerRuntime.restartEvaluation({
-            hasActiveTarget: hasActivePathAlertEvaluationTarget,
+            hasActiveTarget: () => getDashboardRuntimeUtils().hasActivePathAlertEvaluationTarget(pathAlertConfig),
             intervalMs: pathAlertConfig && pathAlertConfig.settings
                 ? pathAlertConfig.settings.pathAlertEvalIntervalMs
                 : 0,
