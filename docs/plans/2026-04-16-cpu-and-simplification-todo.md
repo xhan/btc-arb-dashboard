@@ -313,6 +313,7 @@
   - `src/app/dashboard-app.js` 的 path alert 配置 load/loadStrict 单用途包装已移除，调用点直接赋值配置 client 返回值
   - `src/app/dashboard-app.js` 的浮窗拖拽实现、浮窗 focus 事件绑定和通用显示切换状态已下沉到 `src/ui/dom-render-utils.js`
   - `src/app/dashboard-app.js` 的浮窗 z-index 计数和默认 z-index 写入已下沉到 `src/ui/dom-render-utils.js` 的 `createFloatingPanelZIndexRuntime()`
+  - `src/app/dashboard-app.js` 的套利面板/提醒日志可见性单用途包装已移除，调度和刷新点直接委托 dashboard runtime utils
   - `src/app/dashboard-app.js` 的 alert log active tab 状态、tab DOM 状态和浮窗显示状态已下沉到 `src/alerts/alert-log-ui-utils.js`
   - `src/app/dashboard-app.js` 的 alert log 卡片插入 placement、restored 卡片清理和插入后 trimming 编排已下沉到 `src/alerts/alert-log-ui-utils.js`
   - `src/app/dashboard-app.js` 的主题 metadata、循环顺序、storage 读取、主题写入计划、计划执行和 runtime 编排已下沉到 `src/ui/theme-utils.js`

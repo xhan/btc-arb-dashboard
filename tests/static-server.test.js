@@ -903,7 +903,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function clearDirty()'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('isDirty: () => dirty'));
     assert.ok(!appJsResponse.body.includes('function scheduleArbUpdate()'));
+    assert.ok(!appJsResponse.body.includes('function isArbPanelVisible()'));
+    assert.ok(!appJsResponse.body.includes('function isAlertLogPanelVisible()'));
+    assert.ok(appJsResponse.body.includes('isVisible: () => getDashboardRuntimeUtils().isPanelVisible(arbPathWindow)'));
     assert.ok(!appJsResponse.body.includes('if (!isArbPanelVisible())'));
+    assert.ok(appJsResponse.body.includes('if (!options.force && !getDashboardRuntimeUtils().isPanelVisible(arbPathWindow))'));
     assert.ok(appJsResponse.body.includes('/api/save-alert-config'));
     assert.ok(appJsResponse.body.includes('/api/send-path-alert-webhook'));
     assert.ok(!appJsResponse.body.includes('function isPathAlertPanelVisible()'));

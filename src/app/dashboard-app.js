@@ -65,7 +65,7 @@
         setTimer: setTimeout,
         clearTimer: clearTimeout,
         delayMs: ARB_PANEL_UPDATE_DELAY_MS,
-        isVisible: isArbPanelVisible,
+        isVisible: () => getDashboardRuntimeUtils().isPanelVisible(arbPathWindow),
         update: updateArbPanel
     });
     let quoteDisplayMode = DEFAULT_QUOTE_DISPLAY_MODE;
@@ -572,7 +572,7 @@
             mutedPathTargets,
             mutedPathLegs,
             nowMs,
-            visible: isAlertLogPanelVisible(),
+            visible: getDashboardRuntimeUtils().isPanelVisible(alertLogWindow),
             visibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS,
             hiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS
         }),
@@ -999,7 +999,7 @@
         pruneMutedPathLegsInPlace(nowMs);
         persistMutedPathTargets();
         persistMutedPathLegs();
-        if (isAlertLogPanelVisible()) {
+        if (getDashboardRuntimeUtils().isPanelVisible(alertLogWindow)) {
             updateMutedPathAlertLogCards('', nowMs);
             if (alertLogTabRuntime.isActive('muted')) {
                 renderMutedAlertStatePanel(nowMs);
@@ -1433,14 +1433,6 @@
 
     function getDashboardRuntimeUtils() {
         return getWindowModule('DashboardRuntimeUtils', 'DashboardRuntimeUtils is not loaded');
-    }
-
-    function isArbPanelVisible() {
-        return getDashboardRuntimeUtils().isPanelVisible(arbPathWindow);
-    }
-
-    function isAlertLogPanelVisible() {
-        return getDashboardRuntimeUtils().isPanelVisible(alertLogWindow);
     }
 
     function pruneInactiveAlertRuntimeState() {
@@ -2734,7 +2726,7 @@
 
     function updateArbPanel(options = {}) {
         if (!arbPathContent) return;
-        if (!options.force && !isArbPanelVisible()) {
+        if (!options.force && !getDashboardRuntimeUtils().isPanelVisible(arbPathWindow)) {
             arbPanelUpdateRuntime.markDirty();
             return;
         }
