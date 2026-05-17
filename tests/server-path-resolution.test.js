@@ -59,7 +59,7 @@ async function waitForServer(attempts = 12) {
     const configResponse = await request('GET', '/api/get-config');
     assert.strictEqual(configResponse.statusCode, 200);
     const config = JSON.parse(configResponse.body);
-    assert.ok(Array.isArray(config.dashboard), '应读取到项目根目录下的 config.json');
+    assert.ok(Array.isArray(config.dashboard), '应读取到 config/config.js');
     assert.ok(config.dashboard.length > 0, 'dashboard 不应为空');
   } finally {
     serverProcess.kill();

@@ -1,8 +1,8 @@
 const assert = require('assert');
 
-const fs = require('fs');
 const path = require('path');
 
+const { readJsonFileSync } = require('../src/server/json-file-utils');
 const { DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP, FIXED_PATH_RULES, SPECIAL_ARB_RULES } = require('../src/path-alerts/path-alert-rule-definitions');
 
 const specialRuleIds = ['special:wbtc-bybit', 'special:usde-bybit', 'special:usdtb-bybit'];
@@ -32,7 +32,7 @@ for (const ruleId of specialRuleIds) {
   assert.strictEqual(typeof rule.displayTargets !== 'undefined', true, `${ruleId} should keep displayTargets`);
 }
 
-const alertConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'alert.json'), 'utf8'));
+const alertConfig = readJsonFileSync(path.join(__dirname, '..', 'config', 'alert.js'));
 const usdeUsdAlert = alertConfig.alerts.find((entry) => entry && entry.target && entry.target.ruleId === 'fixed:usde-usdt');
 const susdeUsdAlert = alertConfig.alerts.find((entry) => entry && entry.target && entry.target.ruleId === 'fixed:susde-usdt');
 

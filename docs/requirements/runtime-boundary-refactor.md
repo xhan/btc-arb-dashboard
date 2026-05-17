@@ -18,8 +18,8 @@ The current project is a local realtime arbitrage workstation. It combines quote
    - Detail quote refresh should run on a controlled interval, not a continuous loop.
 
 3. Configuration must keep a single source of truth per concern.
-   - `config.json` owns quote/category configuration.
-   - `alert.json` owns alert runtime configuration.
+   - `config/config.js` owns quote/category configuration.
+   - `config/alert.js` owns alert runtime configuration.
    - `arb-path-config.js` owns explicit watchlist display configuration unless a later migration changes that contract.
 
 4. Extraction should follow runtime boundaries.
@@ -42,6 +42,6 @@ It should:
 ## Acceptance Criteria
 
 - Existing dashboard behavior remains compatible.
-- `alert.json` runtime changes are not included in code commits by default.
+- Runtime config changes are not included in code commits by default unless the change explicitly migrates config ownership or format.
 - New helper logic has unit tests.
 - Existing full test suite passes.

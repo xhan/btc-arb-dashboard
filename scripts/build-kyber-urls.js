@@ -4,7 +4,7 @@
  * 生成当前 Kyber 压测 URL 列表（包含 reverse）
  *
  * 默认输入:
- * - config.json
+ * - config/config.js
  * - db/metadata-cache.json
  *
  * 默认输出:
@@ -22,6 +22,7 @@ const {
   isKyberQuote,
   normalizeUrlList
 } = require('./kyber-url-list');
+const { readJsonFileSync } = require('../src/server/json-file-utils');
 
 const RPC_URLS = {
   ethereum: 'https://ethereum-rpc.publicnode.com',
@@ -169,11 +170,11 @@ async function buildUrlsFromConfig(quotes, metadataCache) {
 
 async function main() {
   const args = parseArgs(process.argv);
-  const configPath = path.resolve(args.config || 'config.json');
+  const configPath = path.resolve(args.config || path.join('config', 'config.js'));
   const metadataPath = path.resolve(args.metadata || path.join('db', 'metadata-cache.json'));
   const outputPath = path.resolve(args.output || 'scripts/urls.json');
 
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  const config = readJsonFileSync(configPath);
   const metadataCache = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
   const quotes = (config.dashboard || []).flatMap((c) => (Array.isArray(c.quotes) ? c.quotes : []));
 

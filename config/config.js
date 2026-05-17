@@ -1,4 +1,7 @@
-{
+// Main dashboard configuration.
+// JavaScript comments are allowed here; export a plain object.
+
+module.exports = {
   "dashboard": [
     {
       "name": "WBTC监控",
@@ -964,8 +967,8 @@
     "lifi": 650,
     "bybit": 2000,
     "binance": 3000,
-    "solana": 1300,
+    "solana": 1400,
     "sui": 500,
     "starknet": 1000
   }
-}
+};

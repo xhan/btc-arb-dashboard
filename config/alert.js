@@ -1,11 +1,14 @@
-{
+// Path and quote alert configuration.
+// JavaScript comments are allowed here; export a plain object.
+
+module.exports = {
   "version": 1,
   "settings": {
     "pathAlertEvalIntervalMs": 1000,
     "defaultCooldownSec": 180,
     "changedLegMinBp": 0.1,
     "localSoundEnabled": true,
-    "webhookEnabled": false,
+    "webhookEnabled": true,
     "dayAppEnabled": false,
     "telegramEnabled": true,
     "webhookUrl": "https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder",
@@ -348,4 +351,4 @@
     }
   ],
   "dismissedTargets": []
-}
+};

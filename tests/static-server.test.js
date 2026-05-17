@@ -42,6 +42,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(rootAppResponse.statusCode, 404);
     const rootConfigResponse = await request('/config.json');
     assert.strictEqual(rootConfigResponse.statusCode, 404);
+    const configDirectoryResponse = await request('/config/config.js');
+    assert.strictEqual(configDirectoryResponse.statusCode, 404);
     const pathAlertSoundResponse = await request('/assets/alert_path.mp3');
     assert.strictEqual(pathAlertSoundResponse.statusCode, 200);
     assert.ok(response.body.includes('聚合报价看板'));

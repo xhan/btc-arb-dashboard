@@ -9,7 +9,7 @@
 - 现状：
   - 运行时配置默认值、容错读取和缓存刷新已下沉到 `src/server/runtime-config-utils.js`
   - `server.js` 通过 `createRuntimeConfigStore()` 持有缓存，`buildQuoteRequestInput()` 通过缓存读取 request-channel 配置
-  - `config.json`、`config/config_more.json`、`config/request_channels.json` 只在启动、`/api/request-update-config`、`/api/save-config` 后重读并归一化
+  - `config/config.js`、`config/config_more.json`、`config/request_channels.json` 只在启动、`/api/request-update-config`、`/api/save-config` 后重读并归一化
   - `tests/runtime-config-utils.test.js` 覆盖默认值、归一化、缺失/坏 JSON fallback 和 Cetus 启动配置；`tests/request-channels-api.test.js` 覆盖 `/api/save-config` 后缓存刷新
 - 预期收益：
   - 已降低高频报价接口的 Node CPU 和磁盘 IO
@@ -181,7 +181,7 @@
     - 已启动第二十七步：用户使用说明和补充说明迁入 `docs/user/`，根目录只保留运行配置、入口和包管理文件
     - 已启动第二十八步：token metadata 运行态缓存默认迁入 `db/metadata-cache.json`，`src/market-clients/token-meta.js` 写入前确保缓存目录存在，根目录不再作为 metadata cache 默认落点
     - 已启动第二十九步：Express app 构建和服务端依赖装配迁入 `src/server/server-app.js`，根目录 `server.js` 只保留兼容启动入口
-    - 已启动第三十步：补充运行配置迁入 `config/`，根目录当前只保留 `alert.json`、`config.json`、`package*` 和兼容启动入口 `server.js`
+    - 已启动第三十步：补充运行配置迁入 `config/`，根目录当前只保留 `package*` 和兼容启动入口 `server.js`
     - 已补充 `tests/project-layout.test.js` 根目录文件白名单，防止业务脚本、文档或配置在后续改动中重新堆回项目根目录
 
 ### 10. 清理历史命名和过渡兼容层
