@@ -2266,10 +2266,6 @@
         return getPathAlertNotificationUtils().buildMutedPathTargetFromCycleLegs(legs, { isRuleLeg });
     }
 
-    function buildMutedPathTargetCandidate(alert, evaluation) {
-        return getPathAlertNotificationUtils().buildMutedPathTargetCandidate(alert, evaluation, { isRuleLeg });
-    }
-
     function getPathAlertRealLegCount(alert, evaluation) {
         return getPathAlertUtils().countPathAlertRealLegs(alert, evaluation);
     }
@@ -2312,7 +2308,9 @@
                 return lines[0] || (alertItem && alertItem.target && alertItem.target.type === 'quote' ? '交易对报警' : '未配置路径');
             },
             buildFallbackSummaryLines: buildPathAlertSummaryLines,
-            buildMutedTargetCandidate: buildMutedPathTargetCandidate,
+            buildMutedTargetCandidate: (alertItem, alertEvaluation) => (
+                getPathAlertNotificationUtils().buildMutedPathTargetCandidate(alertItem, alertEvaluation, { isRuleLeg })
+            ),
             formatCycleLeg: formatArbPathLegLine,
             formatChangedLeg: buildPathAlertLegDisplayLine,
             getRealLegCount: getPathAlertRealLegCount,
