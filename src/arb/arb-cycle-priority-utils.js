@@ -1,10 +1,10 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(require('./arb-equivalence-utils'));
     return;
   }
-  root.ArbCyclePriorityUtils = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  root.ArbCyclePriorityUtils = factory(root.ArbEquivalenceUtils);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbEquivalenceUtils) {
   const DEFAULT_ARB_CYCLE_START_PRIORITY = Object.freeze(['cbBTC', 'WBTC', 'ETH']);
 
   function normalizeArbCycleStartPriority(priorityList, fallback = DEFAULT_ARB_CYCLE_START_PRIORITY) {
@@ -22,27 +22,7 @@
 
   function buildPreferredCycleStartSymbols(aliasRules, priorityList = DEFAULT_ARB_CYCLE_START_PRIORITY) {
     const normalizedPriority = normalizeArbCycleStartPriority(priorityList);
-    const symbols = [];
-    const seen = new Set();
-
-    function pushSymbol(symbol) {
-      const normalized = String(symbol || '').trim();
-      if (!normalized || seen.has(normalized)) return;
-      seen.add(normalized);
-      symbols.push(normalized);
-    }
-
-    for (const canonicalSymbol of normalizedPriority) {
-      pushSymbol(canonicalSymbol);
-      for (const [alias, mapped] of Object.entries(aliasRules || {})) {
-        if (String(mapped || '').trim() === canonicalSymbol) {
-          pushSymbol(alias);
-          pushSymbol(mapped);
-        }
-      }
-    }
-
-    return symbols;
+    return arbEquivalenceUtils.expandAliasSymbols(aliasRules, normalizedPriority);
   }
 
   return {

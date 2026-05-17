@@ -1,10 +1,10 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./arb-paths'));
+    module.exports = factory(require('./arb-paths'), require('./arb-equivalence-utils'));
     return;
   }
-  root.ArbSpecialUtils = factory(root.ArbPaths);
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi) {
+  root.ArbSpecialUtils = factory(root.ArbPaths, root.ArbEquivalenceUtils);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi, arbEquivalenceUtils) {
   const DEFAULT_BYBIT_PAIR_RULE_CONFIG = Object.freeze({
     withdrawFee: 0.0001,
     maxBookLevels: 10,
@@ -21,16 +21,8 @@
     return String(chain || '').trim().toLowerCase() === 'ethereum';
   }
 
-  function resolveAlias(symbol, aliasRules) {
-    if (!aliasRules) return symbol;
-    for (const [alias, target] of Object.entries(aliasRules)) {
-      if (alias === symbol) return target;
-    }
-    return symbol;
-  }
-
   function symbolsMatch(left, right, aliasRules) {
-    return resolveAlias(left, aliasRules) === resolveAlias(right, aliasRules);
+    return arbEquivalenceUtils.symbolsMatch(left, right, aliasRules);
   }
 
   function toPositiveNumber(value, fallback) {

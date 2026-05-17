@@ -241,7 +241,16 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/arb/arb-path-config-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="src/arb/arb-paths.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/arb/arb-paths.js"') < response.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="src/arb/arb-special-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/arb/arb-rule-snapshot-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -1554,6 +1563,19 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("USDE: 'USDe'"));
     assert.ok(arbEquivalenceUtilsResponse.body.includes("USDe: ['USDe', 'USDE']"));
     assert.ok(arbEquivalenceUtilsResponse.body.includes('aliasRules[symbol] = canonicalSymbol;'));
+    assert.ok(arbEquivalenceUtilsResponse.body.includes('function buildAliasLookup(aliasRules)'));
+    assert.ok(arbEquivalenceUtilsResponse.body.includes('function buildAliasGroups(aliasRules)'));
+    assert.ok(arbEquivalenceUtilsResponse.body.includes('function resolveAliasTarget(symbol, aliasRulesOrLookup, options = {})'));
+    assert.ok(arbEquivalenceUtilsResponse.body.includes('function resolveAliasSymbol(symbol, aliasRulesOrLookup, options = {})'));
+    assert.ok(arbEquivalenceUtilsResponse.body.includes('function expandAliasSymbols(aliasRules, canonicalSymbols)'));
+    assert.ok(arbPathsResponse.body.includes('arbEquivalenceUtils.buildAliasGroups(aliases)'));
+    assert.ok(arbPathsResponse.body.includes('arbEquivalenceUtils.resolveAliasTarget(symbol, aliases)'));
+    assert.ok(arbPathTemplateCacheUtilsResponse.body.includes('arbEquivalenceUtils.resolveAliasTarget(symbol, aliases)'));
+    assert.ok(!arbPathsResponse.body.includes('for (const [alias, target] of Object.entries(aliases))'));
+    assert.ok(!arbPathTemplateCacheUtilsResponse.body.includes('for (const [alias, target] of Object.entries(aliases))'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('arbEquivalenceUtils.buildAliasLookup(options.aliasRules || {})'));
+    assert.ok(dataTerminalUtilsResponse.body.includes('arbEquivalenceUtils.symbolsMatch(symbol, token, aliasLookup, { allowAliases })'));
+    assert.ok(!dataTerminalUtilsResponse.body.includes('for (const [alias, canonical] of Object.entries(aliasRules || {}))'));
     assert.ok(alertLogUiResponse.body.includes('音效'));
     assert.ok(alertLogUiResponse.body.includes('远程推送'));
     assert.ok(!appJsResponse.body.includes('path-alert-reload-btn'));
@@ -2090,6 +2112,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-paths.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-equivalence-utils.js"'));
+    assert.ok(
+      snapshotResponse.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < snapshotResponse.body.indexOf('src="src/arb/arb-paths.js"')
+    );
+    assert.ok(
+      snapshotResponse.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < snapshotResponse.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"')
+    );
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-panel-renderer.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/charts/charts-utils.js"'));
     assert.ok(snapshotResponse.body.includes('.arb-opportunity-head {'));
@@ -2099,6 +2127,7 @@ async function waitForServer(attempts = 12) {
     const snapshotAppResponse = await request('/src/price-snapshots/snapshot-app.js');
     assert.strictEqual(snapshotAppResponse.statusCode, 200);
     assert.ok(snapshotAppResponse.body.includes('buildAliasRulesFromGroups'));
+    assert.ok(snapshotAppResponse.body.includes('arbEquivalenceUtils.expandAliasSymbols(aliasRules, configuredPriority)'));
     assert.ok(snapshotAppResponse.body.includes('const arbEquivalenceUtils = window.ArbEquivalenceUtils || null;'));
     assert.ok(!snapshotAppResponse.body.includes("USDT: ['USDT'"));
     assert.ok(!snapshotAppResponse.body.includes("'USD₮0': 'USDT'"));

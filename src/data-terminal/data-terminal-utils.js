@@ -5,7 +5,10 @@
   const chainDefaults = typeof module !== 'undefined' && module.exports
     ? require('../shared/chain-defaults')
     : root.ChainDefaults;
-  const api = factory(quotePauseUtils, chainDefaults);
+  const arbEquivalenceUtils = typeof module !== 'undefined' && module.exports
+    ? require('../arb/arb-equivalence-utils')
+    : root.ArbEquivalenceUtils;
+  const api = factory(quotePauseUtils, chainDefaults, arbEquivalenceUtils);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
@@ -13,16 +16,12 @@
   if (root && root.window && root.window !== root) {
     root.window.DataTerminalUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils, chainDefaults) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (quotePauseUtils, chainDefaults, arbEquivalenceUtils) {
   const DATA_TERMINAL_DEFAULT_WIDTH_SCALE = 0.65;
 
   const isQuotePaused = quotePauseUtils && typeof quotePauseUtils.isQuotePaused === 'function'
     ? quotePauseUtils.isQuotePaused
     : (quote) => !!quote && quote.paused === true;
-
-  function normalizeSymbol(value) {
-    return String(value || '').trim().toUpperCase();
-  }
 
   function escapeHtml(value) {
     return String(value == null ? '' : value)
@@ -47,26 +46,6 @@
       .map((token) => token.trim())
       .filter(Boolean)
       .slice(0, 2);
-  }
-
-  function buildAliasLookup(aliasRules) {
-    const lookup = new Map();
-    for (const [alias, canonical] of Object.entries(aliasRules || {})) {
-      const aliasKey = normalizeSymbol(alias);
-      const canonicalKey = normalizeSymbol(canonical);
-      if (!aliasKey || !canonicalKey) continue;
-      lookup.set(aliasKey, canonicalKey);
-      if (!lookup.has(canonicalKey)) {
-        lookup.set(canonicalKey, canonicalKey);
-      }
-    }
-    return lookup;
-  }
-
-  function resolveSymbolKey(symbol, aliasLookup, allowAliases) {
-    const normalized = normalizeSymbol(symbol);
-    if (!allowAliases) return normalized;
-    return aliasLookup.get(normalized) || normalized;
   }
 
   function buildCandidate(record, overrides) {
@@ -242,12 +221,12 @@
 
     const allowAliases = options.allowAliases !== false;
     const showDiff = options.showDiff === true;
-    const aliasLookup = buildAliasLookup(options.aliasRules || {});
+    const aliasLookup = arbEquivalenceUtils.buildAliasLookup(options.aliasRules || {});
     const firstToken = tokens[0];
     const secondToken = tokens[1] || '';
 
     const matchesToken = (symbol, token) => (
-      resolveSymbolKey(symbol, aliasLookup, allowAliases) === resolveSymbolKey(token, aliasLookup, allowAliases)
+      arbEquivalenceUtils.symbolsMatch(symbol, token, aliasLookup, { allowAliases })
     );
 
     let mode = 'single';

@@ -53,27 +53,13 @@ function isRuleEdge(edge) {
   return Boolean(edge && (edge.rule || edge.chain === '规则'));
 }
 
-function buildRuleEdges(aliases) {
+function buildRuleEdges(aliases, arbEquivalenceUtils) {
   if (!aliases) return [];
 
-  const groups = new Map();
-  for (const [alias, target] of Object.entries(aliases)) {
-    if (!alias || !target) continue;
-    const key = String(target);
-    const group = groups.get(key) || [];
-
-    if (!group.includes(target)) {
-      group.push(target);
-    }
-    if (!group.includes(alias)) {
-      group.push(alias);
-    }
-
-    groups.set(key, group);
-  }
+  const groups = arbEquivalenceUtils.buildAliasGroups(aliases).map((group) => group.symbols);
 
   const edges = [];
-  for (const group of groups.values()) {
+  for (const group of groups) {
     for (let i = 0; i < group.length; i += 1) {
       for (let j = 0; j < group.length; j += 1) {
         if (i === j) continue;
@@ -204,26 +190,21 @@ function findTopCycles(edges, options = {}) {
   return results.slice(0, Math.max(0, limit));
 }
 
-function resolveAlias(symbol, aliases) {
+function resolveAlias(symbol, aliases, arbEquivalenceUtils) {
   if (!aliases) return symbol;
-  for (const [alias, target] of Object.entries(aliases)) {
-    if (alias === symbol) {
-      return target;
-    }
-  }
-  return symbol;
+  return arbEquivalenceUtils.resolveAliasTarget(symbol, aliases);
 }
 
-function selectBestEdgeByChain(edges, from, to, chain, aliases) {
+function selectBestEdgeByChain(edges, from, to, chain, aliases, arbEquivalenceUtils) {
   if (!chain) return null;
-  const targetFrom = resolveAlias(from, aliases);
-  const targetTo = resolveAlias(to, aliases);
+  const targetFrom = resolveAlias(from, aliases, arbEquivalenceUtils);
+  const targetTo = resolveAlias(to, aliases, arbEquivalenceUtils);
   let best = null;
 
   for (const edge of edges || []) {
     if (edge.chain !== chain) continue;
-    const edgeFrom = resolveAlias(edge.from, aliases);
-    const edgeTo = resolveAlias(edge.to, aliases);
+    const edgeFrom = resolveAlias(edge.from, aliases, arbEquivalenceUtils);
+    const edgeTo = resolveAlias(edge.to, aliases, arbEquivalenceUtils);
     if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
     if (!best || edge.rate > best.rate) {
       best = {
@@ -239,9 +220,9 @@ function selectBestEdgeByChain(edges, from, to, chain, aliases) {
   return best;
 }
 
-function buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases) {
-  const legA = selectBestEdgeByChain(edges, rule.base, rule.quote, chainA, aliases);
-  const legB = selectBestEdgeByChain(edges, rule.quote, rule.base, chainB, aliases);
+function buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases, arbEquivalenceUtils) {
+  const legA = selectBestEdgeByChain(edges, rule.base, rule.quote, chainA, aliases, arbEquivalenceUtils);
+  const legB = selectBestEdgeByChain(edges, rule.quote, rule.base, chainB, aliases, arbEquivalenceUtils);
   if (!legA || !legB) return null;
   return { legs: [legA, legB], profitRate: (legA.rate * legB.rate) - 1 };
 }
@@ -265,7 +246,7 @@ function collectQuoteChains(edges) {
   return chains;
 }
 
-function buildFixedCycleCandidate(cycle, rule, aliases, options = {}) {
+function buildFixedCycleCandidate(cycle, rule, aliases, options = {}, arbEquivalenceUtils) {
   if (!cycle || !Array.isArray(cycle.legs) || !cycle.legs.length) return null;
   const excludeChains = new Set(
     Array.isArray(rule && rule.excludeChains)
@@ -275,7 +256,7 @@ function buildFixedCycleCandidate(cycle, rule, aliases, options = {}) {
   const excludedSymbols = Array.isArray(rule && rule.excludeSymbols)
     ? rule.excludeSymbols.map((symbol) => String(symbol || '')).filter(Boolean)
     : [];
-  const excludedCanonicalSymbols = new Set(excludedSymbols.map((symbol) => resolveAlias(symbol, aliases)));
+  const excludedCanonicalSymbols = new Set(excludedSymbols.map((symbol) => resolveAlias(symbol, aliases, arbEquivalenceUtils)));
 
   const realLegs = cycle.legs.filter((leg) => leg && !leg.rule && leg.chain !== '规则');
   if (!realLegs.length) return null;
@@ -291,7 +272,7 @@ function buildFixedCycleCandidate(cycle, rule, aliases, options = {}) {
         String(leg.to || '')
       ].filter(Boolean);
       return symbols.some((symbol) => (
-        excludedCanonicalSymbols.has(resolveAlias(symbol, aliases)) ||
+        excludedCanonicalSymbols.has(resolveAlias(symbol, aliases, arbEquivalenceUtils)) ||
         excludedSymbols.includes(symbol)
       ));
     });
@@ -317,7 +298,7 @@ function sortFixedCycleCandidates(left, right) {
   return String(left && left.key || '').localeCompare(String(right && right.key || ''));
 }
 
-function findFixedPaths(edges, rule, aliases, options = {}) {
+function findFixedPaths(edges, rule, aliases, options = {}, arbEquivalenceUtils) {
   if (!rule || rule.steps !== 2) return null;
   if (!rule.base || !rule.quote) return null;
   const limit = Number(options.limit ?? rule.resultLimit);
@@ -326,7 +307,7 @@ function findFixedPaths(edges, rule, aliases, options = {}) {
   const seen = new Set();
 
   function pushCycle(cycle) {
-    const candidate = buildFixedCycleCandidate(cycle, rule, aliases, options);
+    const candidate = buildFixedCycleCandidate(cycle, rule, aliases, options, arbEquivalenceUtils);
     if (!candidate || seen.has(candidate.key)) return;
     seen.add(candidate.key);
     candidates.push(candidate);
@@ -335,8 +316,8 @@ function findFixedPaths(edges, rule, aliases, options = {}) {
   const chains = Array.isArray(rule.chains) ? rule.chains.filter(Boolean) : [];
   if (chains.length >= 2) {
     const [chainA, chainB] = chains;
-    pushCycle(buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases));
-    pushCycle(buildTwoStepFixedPath(edges, rule, chainB, chainA, aliases));
+    pushCycle(buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases, arbEquivalenceUtils));
+    pushCycle(buildTwoStepFixedPath(edges, rule, chainB, chainA, aliases, arbEquivalenceUtils));
     return candidates.sort(sortFixedCycleCandidates).slice(0, resultLimit);
   }
 
@@ -353,17 +334,17 @@ function findFixedPaths(edges, rule, aliases, options = {}) {
       if (i === j) continue;
       const chainA = candidateChains[i];
       const chainB = candidateChains[j];
-      pushCycle(buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases));
+      pushCycle(buildTwoStepFixedPath(edges, rule, chainA, chainB, aliases, arbEquivalenceUtils));
     }
   }
   return candidates.sort(sortFixedCycleCandidates).slice(0, resultLimit);
 }
 
-function findBestFixedPath(edges, rule, aliases, options = {}) {
+function findBestFixedPath(edges, rule, aliases, options = {}, arbEquivalenceUtils) {
   const list = findFixedPaths(edges, rule, aliases, {
     ...options,
     limit: 1
-  });
+  }, arbEquivalenceUtils);
   return Array.isArray(list) && list.length ? list[0] : null;
 }
 
@@ -372,16 +353,16 @@ function isMeaningfulPath(legs) {
   return legs.some((leg) => leg && !leg.rule && leg.chain !== '规则');
 }
 
-function buildApi() {
+function buildApi(arbEquivalenceUtils) {
   return {
     buildEdges,
     isCrossChainQuote,
     formatLegLine,
     formatProfitWanfen,
-    buildRuleEdges,
+    buildRuleEdges: (aliases) => buildRuleEdges(aliases, arbEquivalenceUtils),
     findTopCycles,
-    findFixedPaths,
-    findBestFixedPath,
+    findFixedPaths: (edges, rule, aliases, options) => findFixedPaths(edges, rule, aliases, options, arbEquivalenceUtils),
+    findBestFixedPath: (edges, rule, aliases, options) => findBestFixedPath(edges, rule, aliases, options, arbEquivalenceUtils),
     canonicalizeCycleRotation,
     isMeaningfulPath
   };
@@ -389,8 +370,8 @@ function buildApi() {
 
 (function attachApi(root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(require('./arb-equivalence-utils'));
   } else {
-    root.ArbPaths = factory();
+    root.ArbPaths = factory(root.ArbEquivalenceUtils);
   }
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this), buildApi);

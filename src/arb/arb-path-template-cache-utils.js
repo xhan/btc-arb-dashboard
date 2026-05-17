@@ -1,16 +1,13 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./arb-paths'));
+    module.exports = factory(require('./arb-paths'), require('./arb-equivalence-utils'));
     return;
   }
-  root.ArbPathTemplateCacheUtils = factory(root.ArbPaths);
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi) {
+  root.ArbPathTemplateCacheUtils = factory(root.ArbPaths, root.ArbEquivalenceUtils);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi, arbEquivalenceUtils) {
   function resolveAlias(symbol, aliases) {
     if (!aliases) return symbol;
-    for (const [alias, target] of Object.entries(aliases)) {
-      if (alias === symbol) return target;
-    }
-    return symbol;
+    return arbEquivalenceUtils.resolveAliasTarget(symbol, aliases);
   }
 
   function isQuotePaused(quote) {

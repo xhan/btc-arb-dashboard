@@ -89,14 +89,10 @@
     if (window.ArbCyclePriorityUtils && typeof window.ArbCyclePriorityUtils.buildPreferredCycleStartSymbols === 'function') {
       return window.ArbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
     }
-    const symbols = new Set([canonicalSymbol]);
-    for (const [alias, mapped] of Object.entries(aliasRules || {})) {
-      if (mapped === canonicalSymbol) {
-        symbols.add(alias);
-        symbols.add(mapped);
-      }
+    if (arbEquivalenceUtils && typeof arbEquivalenceUtils.expandAliasSymbols === 'function') {
+      return arbEquivalenceUtils.expandAliasSymbols(aliasRules, configuredPriority);
     }
-    return Array.from(symbols);
+    return configuredPriority;
   }
 
   async function loadArbSettings() {
