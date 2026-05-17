@@ -230,6 +230,7 @@
   - `src/app/dashboard-app.js` 的多渠道队列重排无效 `touched` 分支已移除，重排后统一刷新 scheduler 一次
   - `src/app/dashboard-app.js` 的 quote fetch abort 单用途包装已移除，排队刷新和暂停流程直接委托 active fetch controller runtime
   - `src/app/dashboard-app.js` 的 active fetch 批量 abort 单用途包装已移除，套利详情暂停主看板时直接委托 active fetch controller runtime
+  - `src/app/dashboard-app.js` 的套利详情 refresh scheduler 单用途回调包装已移除，active/refreshing/error 回调直接内联在 scheduler 配置里
   - `src/app/dashboard-app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
   - `src/app/dashboard-app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`

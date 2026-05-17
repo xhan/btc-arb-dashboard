@@ -1668,6 +1668,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('function getArbDetailRefreshUtils()'));
     assert.ok(appJsResponse.body.includes('ArbDetailRefreshUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('getArbDetailRefreshUtils().createArbDetailRefreshScheduler({'));
+    assert.ok(!appJsResponse.body.includes('function isArbDetailRefreshActive('));
+    assert.ok(!appJsResponse.body.includes('function setArbDetailRefreshing('));
+    assert.ok(!appJsResponse.body.includes('function logArbDetailRefreshError('));
+    assert.ok(appJsResponse.body.includes('isActive: (refreshToken) => arbDetailState.visible && arbDetailState.refreshToken === refreshToken'));
+    assert.ok(appJsResponse.body.includes('setRefreshing: (refreshing, refreshToken) => {'));
+    assert.ok(appJsResponse.body.includes("logError: (error) => console.error('[arb-detail] refresh failed', error)"));
     assert.ok(appJsResponse.body.includes('getArbDetailRefreshUtils().createArbDetailChartAutoRefreshRuntime({'));
     assert.ok(!appJsResponse.body.includes('let arbDetailChartAutoRefreshTimer = null;'));
     assert.ok(!appJsResponse.body.includes('function clearArbDetailRefreshTimer('));

@@ -112,11 +112,15 @@
     let arbDetailChartPreviewRunId = 0;
     const arbDetailRefreshScheduler = getArbDetailRefreshUtils().createArbDetailRefreshScheduler({
         intervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
-        isActive: isArbDetailRefreshActive,
+        isActive: (refreshToken) => arbDetailState.visible && arbDetailState.refreshToken === refreshToken,
         isRefreshing: () => arbDetailState.isRefreshing,
-        setRefreshing: setArbDetailRefreshing,
+        setRefreshing: (refreshing, refreshToken) => {
+            if (refreshing || arbDetailState.refreshToken === refreshToken) {
+                arbDetailState.isRefreshing = Boolean(refreshing);
+            }
+        },
         refresh: refreshArbDetailCards,
-        logError: logArbDetailRefreshError
+        logError: (error) => console.error('[arb-detail] refresh failed', error)
     });
     const arbDetailChartAutoRefreshRuntime = getArbDetailRefreshUtils().createArbDetailChartAutoRefreshRuntime({
         intervalMs: CHART_AUTO_REFRESH_INTERVAL_MS,
@@ -2172,20 +2176,6 @@
         }
 
         return true;
-    }
-
-    function isArbDetailRefreshActive(refreshToken) {
-        return arbDetailState.visible && arbDetailState.refreshToken === refreshToken;
-    }
-
-    function setArbDetailRefreshing(refreshing, refreshToken) {
-        if (refreshing || arbDetailState.refreshToken === refreshToken) {
-            arbDetailState.isRefreshing = Boolean(refreshing);
-        }
-    }
-
-    function logArbDetailRefreshError(error) {
-        console.error('[arb-detail] refresh failed', error);
     }
 
     function updateArbGlobalFilterState(patch) {
