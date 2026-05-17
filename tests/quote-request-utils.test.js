@@ -12,6 +12,7 @@ const {
   formatQuoteErrorMessage,
   isKyberSupportedChain,
   isZeroxSupportedChain,
+  normalizeChainKey,
   requestCexOrderbookQuote,
   requestMarketQuote,
   requestResolvedQuote,
@@ -20,6 +21,8 @@ const {
   shouldDelayQuoteSource,
   shouldSkipQuoteSource
 } = require('../src/quote/quote-request-utils');
+
+assert.strictEqual(normalizeChainKey(' Arbitrum '), 'arbitrum');
 
 assert.strictEqual(resolveMarketQuoteRequestConfig('Velora'), MARKET_QUOTE_REQUESTS.Velora);
 assert.strictEqual(resolveMarketQuoteRequestConfig('Unknown'), null);

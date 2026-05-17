@@ -321,6 +321,7 @@
     formatQuoteErrorMessage,
     isKyberSupportedChain,
     isZeroxSupportedChain,
+    normalizeChainKey,
     requestCexOrderbookQuote,
     requestMarketQuote,
     requestResolvedQuote,
