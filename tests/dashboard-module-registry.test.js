@@ -8,6 +8,7 @@ const {
 
 assert.ok(MODULES.getDashboardRuntimeUtils, 'expected dashboard runtime module definition');
 assert.ok(MODULES.getDashboardDomRefs, 'expected dashboard DOM refs module definition');
+assert.ok(MODULES.getArbPanelController, 'expected arb panel controller module definition');
 assert.ok(MODULES.getAlertRuntimeController, 'expected alert runtime controller definition');
 
 const windowImpl = {

@@ -19,6 +19,7 @@
     getArbEquivalenceUtils: ['ArbEquivalenceUtils', 'ArbEquivalenceUtils is not loaded'],
     getArbFixedUtils: ['ArbFixedUtils', 'ArbFixedUtils is not loaded'],
     getArbPanelLayoutUtils: ['ArbPanelLayoutUtils', 'ArbPanelLayoutUtils is not loaded'],
+    getArbPanelController: ['ArbPanelController', 'ArbPanelController is not loaded'],
     getArbPanelRenderer: ['ArbPanelRenderer', 'ArbPanelRenderer is not loaded'],
     getArbPathConfig: ['ArbPathConfig', 'ArbPathConfig is not loaded'],
     getArbPathConfigUtils: ['ArbPathConfigUtils', 'ArbPathConfigUtils is not loaded'],

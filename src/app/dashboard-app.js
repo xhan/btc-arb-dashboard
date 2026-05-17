@@ -10,6 +10,7 @@
         getArbEquivalenceUtils,
         getArbFixedUtils,
         getArbPanelLayoutUtils,
+        getArbPanelController,
         getArbPanelRenderer,
         getArbPathConfig,
         getArbPathConfigUtils,
@@ -95,16 +96,6 @@
     const ARB_DETAIL_REFRESH_INTERVAL_MS = 2500;
     const MUTED_STATE_VISIBLE_REFRESH_MS = 1000;
     const MUTED_STATE_HIDDEN_MAX_REFRESH_MS = 60 * 1000;
-    let arbExpandedSections = new Set();
-    const arbGlobalFilterStateRuntime = getArbPanelLayoutUtils().createGlobalArbFilterStateRuntime();
-    const arbPanelHtmlRenderer = getDomRenderUtils().createStableHtmlRenderer();
-    const arbPanelUpdateRuntime = getArbRuntimeMemoryUtils().createArbPanelUpdateRuntime({
-        setTimer: setTimeout,
-        clearTimer: clearTimeout,
-        delayMs: ARB_PANEL_UPDATE_DELAY_MS,
-        isVisible: () => getDashboardRuntimeUtils().isPanelVisible(arbPathWindow),
-        update: updateArbPanel
-    });
     const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({
         setInterval,
         clearInterval
@@ -129,8 +120,6 @@
         clearTimeout,
         delayMs: AMOUNT_INPUT_DEBOUNCE_MS
     });
-    const arbPanelCache = getArbPathTemplateCacheUtils().createArbPanelCache();
-    let arbLastPointerOpenedOpportunityId = null;
     const {
         dashboardEl,
         addCategoryBtn,
@@ -337,12 +326,89 @@
         updateQuotePairLabel,
         updateTrendArrow
     } = quoteUiController;
+    let alertRuntimeController = null;
     let arbDetailController = null;
     const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;
     const SPECIAL_ARB_RULES = getPathAlertRuleDefinitionsUtils().SPECIAL_ARB_RULES;
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
     const ARB_PATH_CONFIG = getArbPathConfig();
-    const alertRuntimeController = getAlertRuntimeController().createAlertRuntimeController({
+    const arbPanelController = getArbPanelController().createArbPanelController({
+        arbCyclePriorityUtils: getArbCyclePriorityUtils(),
+        arbDetailUtils: getArbDetailUtils(),
+        arbEquivalenceUtils: getArbEquivalenceUtils(),
+        arbFixedUtils: getArbFixedUtils(),
+        arbOpportunityHighlightRuntime,
+        arbOpportunityRuntime,
+        arbPanelLayoutUtils: getArbPanelLayoutUtils(),
+        arbPanelRenderer: getArbPanelRenderer(),
+        arbPathConfig: ARB_PATH_CONFIG,
+        arbPathConfigUtils: getArbPathConfigUtils(),
+        arbPaths: getArbPaths(),
+        arbPathTemplateCacheUtils: getArbPathTemplateCacheUtils(),
+        arbRuleSnapshotUtils: getArbRuleSnapshotUtils(),
+        arbRuntimeMemoryUtils: getArbRuntimeMemoryUtils(),
+        arbSpecialUtils: getArbSpecialUtils(),
+        chainDefaults: getChainDefaults(),
+        closestEventTarget,
+        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        documentImpl: document,
+        domRenderUtils: getDomRenderUtils(),
+        fixedPathRules: FIXED_PATH_RULES,
+        getActiveQuotes,
+        getAlertRuntimeController: () => alertRuntimeController,
+        getArbCycleStartPriority: () => arbCycleStartPriority,
+        getArbDetailController: () => arbDetailController,
+        getDashboardState: () => dashboardState,
+        getQuoteMarketState,
+        getQuoteMarketStateMap,
+        globalPathSourceSelectors: GLOBAL_PATH_SOURCE_SELECTORS,
+        isQuotePaused,
+        mutedPathLegUtils: getMutedPathLegUtils(),
+        openArbDetailModal: (opportunityId) => {
+            if (arbDetailController) arbDetailController.open(opportunityId);
+        },
+        pathAlertPageUtils: getPathAlertPageUtils(),
+        pathAlertRuleDefinitions: getPathAlertRuleDefinitionsUtils(),
+        quoteDisplayUtils: getQuoteDisplayUtils(),
+        quoteStateRuntime,
+        refs: {
+            arbPathWindow,
+            arbPathContent,
+            arbPathHeader,
+            arbGlobalFilterInput,
+            arbGlobalChainFilterInput,
+            arbGlobalIncludeFilterInput,
+            arbGlobalTwoLegOnlyInput,
+            arbGlobalFilterClearBtn,
+            arbGlobalFilterElements
+        },
+        setTimeout,
+        clearTimeout,
+        specialArbRules: SPECIAL_ARB_RULES,
+        updateDelayMs: ARB_PANEL_UPDATE_DELAY_MS,
+        windowImpl: window,
+        zIndexRuntime: floatingPanelZIndexRuntime,
+        buildQuoteAlertDisplayLabel: (quote, state, direction) => buildQuoteAlertDisplayLabel(quote, state, direction)
+    });
+    const {
+        applyFloatingPanelDisplay,
+        buildArbPathLegLineOptions,
+        buildLiveQuoteLabel,
+        clearTopologyCache,
+        findQuoteById,
+        formatArbPathLegLine,
+        formatChainLabel,
+        formatDetailNumber,
+        getAliasRules,
+        getSharedRuleSnapshot: getSharedArbRuleSnapshot,
+        invalidateRuleSnapshotCache: invalidateArbRuleSnapshotCache,
+        isRuleLeg,
+        scheduleUpdate: scheduleArbPanelUpdate,
+        setMaxHeight: setArbPanelMaxHeight,
+        togglePanel: toggleArbPanel,
+        update: updateArbPanel
+    } = arbPanelController;
+    alertRuntimeController = getAlertRuntimeController().createAlertRuntimeController({
         alertDebugUtils: getAlertDebugUtils(),
         alertLogUiUtils: getAlertLogUiUtils(),
         applyFloatingPanelDisplay,
@@ -522,7 +588,7 @@
         quoteRequestUtils: getQuoteRequestUtils(),
         recordSourceAttempt: (source) => arbDetailController.recordSourceAttempt(source),
         resetQuoteUiRuntimeState,
-        scheduleArbPanelUpdate: () => arbPanelUpdateRuntime.schedule(),
+        scheduleArbPanelUpdate,
         scheduleDataTerminalUpdate,
         setQuoteMarketState,
         shouldQueueInverseFetch,
@@ -641,21 +707,6 @@
 
     settingsModalRuntime.bind();
 
-    function buildMutedPathTargetKey(alertOrTarget) {
-        return alertRuntimeController.buildMutedPathTargetKey(alertOrTarget);
-    }
-
-    function buildMutedPathLegKey(legOrEntry) {
-        return alertRuntimeController.buildMutedPathLegKey(legOrEntry);
-    }
-
-    function invalidateArbRuleSnapshotCache(options = {}) {
-        if (options.bumpRevision !== false) {
-            quoteStateRuntime.bumpMarketRevision();
-        }
-        arbPanelCache.clearRuleSnapshot();
-    }
-
     function getQuoteMarketState(quoteId, fallback = null) {
         return quoteStateRuntime.getMarketState(quoteId, fallback);
     }
@@ -684,440 +735,12 @@
         quoteStateRuntime.deleteUiRuntimeState(quoteId, clearTimeout);
     }
 
-    function getSharedArbRuleSnapshot() {
-        const topologyCacheForFixed = getArbPathTopologyCache();
-        const cacheKey = getDashboardRuntimeUtils().buildArbRuleSnapshotCacheKey(
-            dashboardState,
-            quoteStateRuntime.getMarketRevision()
-        );
-        const cachedSnapshot = arbPanelCache.getRuleSnapshot(cacheKey);
-        if (cachedSnapshot) {
-            return cachedSnapshot;
-        }
-
-        const aliasRules = getAliasRules();
-        const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
-        const arbPaths = getArbPaths();
-        const nowMs = Date.now();
-        alertRuntimeController.pruneMutedPathLegsInPlace(nowMs);
-        const allEdges = getMutedPathLegUtils().filterMutedPathLegs(
-            arbPaths.buildEdges(allQuotes, getQuoteMarketStateMap(), null),
-            alertRuntimeController.getMutedPathLegs(),
-            nowMs
-        );
-        const ruleEdges = arbPaths.buildRuleEdges(aliasRules);
-        const allEdgesWithRules = allEdges.concat(ruleEdges);
-        const quoteMetaById = buildQuoteMetaById();
-        const quotesByCategoryName = getDashboardRuntimeUtils().buildQuotesByCategoryName(
-            dashboardState,
-            getActiveQuotes
-        );
-        const baseSnapshot = getArbRuleSnapshotUtils().buildArbRuleSnapshot({
-            fixedRules: FIXED_PATH_RULES,
-            specialRules: SPECIAL_ARB_RULES,
-            allEdgesWithRules,
-            fixedTemplatesByRuleId: topologyCacheForFixed && topologyCacheForFixed.fixedTemplatesByRuleId
-                ? topologyCacheForFixed.fixedTemplatesByRuleId
-                : null,
-            quoteMetaById,
-            quotesByCategoryName,
-            quoteStateById: getQuoteMarketStateMap(),
-            aliasRules,
-            mutedPathLegs: alertRuntimeController.getMutedPathLegs(),
-            mutedPathLegUtils: getMutedPathLegUtils(),
-            preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
-            arbPathsApi: arbPaths,
-            arbFixedUtils: getArbFixedUtils(),
-            arbSpecialUtils: getArbSpecialUtils()
-        });
-
-        return arbPanelCache.setRuleSnapshot(cacheKey, {
-            ...baseSnapshot,
-            aliasRules,
-            allQuotes,
-            allEdges,
-            ruleEdges,
-            allEdgesWithRules,
-            quoteMetaById,
-            quotesByCategoryName
-        });
-    }
-
-    function getArbPathTopologyCache() {
-        const utils = getArbPathTemplateCacheUtils();
-
-        const cacheKey = `${utils.buildArbPathTopologyCacheKey(dashboardState, getQuoteMarketStateMap())}|${arbCycleStartPriority.join(',')}`;
-        const cachedTopology = arbPanelCache.getTopology(cacheKey);
-        if (cachedTopology) {
-            return cachedTopology;
-        }
-
-        const aliasRules = getAliasRules();
-        const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
-        const arbPaths = getArbPaths();
-        const ruleEdges = arbPaths.buildRuleEdges(aliasRules);
-        const quoteMetaById = buildQuoteMetaById();
-        const allQuotes = getActiveQuotes(dashboardState.flatMap((category) => category.quotes || []));
-        const allTopologyEdges = utils.buildTopologyEdges(allQuotes, getQuoteMarketStateMap(), null);
-        const allTopologyEdgesWithRules = allTopologyEdges.concat(ruleEdges);
-        const fixedTemplatesByRuleId = {};
-
-        const globalSourceCategories = getArbPanelLayoutUtils().resolveItemsBySelectors(dashboardState, GLOBAL_PATH_SOURCE_SELECTORS);
-        const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
-        const globalEdges = utils.buildTopologyEdges(globalSourceQuotes, getQuoteMarketStateMap(), null);
-        const globalTemplates = utils.buildCycleTemplates(globalEdges.concat(ruleEdges), {
-            maxDepth: 3,
-            limit: Number.MAX_SAFE_INTEGER,
-            acceptCycle: arbPaths.isMeaningfulPath,
-            preferredStartSymbols: preferredCycleStartSymbols
-        });
-
-        const arbFixedUtils = getArbFixedUtils();
-        for (const rule of FIXED_PATH_RULES) {
-            if (!rule) continue;
-            const filteredEdges = arbFixedUtils.filterEdgesForFixedRule(rule, allTopologyEdgesWithRules, quoteMetaById);
-            fixedTemplatesByRuleId[rule.id] = utils.buildFixedPathTemplates(filteredEdges, rule, aliasRules, {
-                limit: Number(rule.resultLimit) || 1,
-                preferredStartSymbols: preferredCycleStartSymbols
-            });
-        }
-
-        return arbPanelCache.setTopology(cacheKey, {
-            ruleEdges,
-            globalTemplates,
-            fixedTemplatesByRuleId
-        });
-    }
-
-    function formatChainLabel(chain) {
-        return getChainDefaults().getChainDisplayName(chain);
-    }
-
     function normalizeChainKey(chain) {
         return getQuoteRequestUtils().normalizeChainKey(chain);
     }
 
-    function buildArbPathLegLineOptions() {
-        return {
-            formatLegLine: (line) => getArbPaths().formatLegLine(line),
-            formatChainLabel,
-            formatCexBookValue: (value, maxDecimals) => getQuoteDisplayUtils().formatCexBookValue(value, maxDecimals)
-        };
-    }
-
-    function formatArbPathLegLine(leg) {
-        return getArbPanelLayoutUtils().buildArbPathLegLine(leg, buildArbPathLegLineOptions());
-    }
-
-    function isRuleLeg(leg) {
-        return getArbDetailUtils().isArbRuleLeg(leg);
-    }
-
-    function formatDetailNumber(value, precision = 6) {
-        return getArbDetailUtils().formatDetailNumber(value, precision);
-    }
-
-    function findQuoteById(quoteId) {
-        return getDashboardRuntimeUtils().findDashboardQuoteMatchById(dashboardState, quoteId);
-    }
-
-    function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
-        const configuredPriority = Array.isArray(arbCycleStartPriority) && arbCycleStartPriority.length
-            ? arbCycleStartPriority
-            : [canonicalSymbol];
-        return getArbCyclePriorityUtils().buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
-    }
-
-    function getAliasRules() {
-        return getArbEquivalenceUtils().buildAliasRulesFromGroups(
-            getArbEquivalenceUtils().DEFAULT_ASSET_EQUIVALENCE_GROUPS
-        );
-    }
-
-    function buildQuoteMetaById() {
-        return getDashboardRuntimeUtils().buildQuoteMetaById(dashboardState);
-    }
-
-    function buildLiveQuoteLabel(chain, fromSymbol, toSymbol, suffix = '') {
-        return getPathAlertPageUtils().buildPathAlertQuoteLabel({
-            chain,
-            fromSymbol,
-            toSymbol,
-            suffix,
-            formatChainLabel
-        });
-    }
-
-    function handleArbPathContentClick(event) {
-        if (!arbPathContent) return;
-        const action = getArbPanelRenderer().resolveArbPathContentClickAction(event, {
-            closestEventTarget,
-            containsElement: (element) => arbPathContent.contains(element)
-        });
-        if (action.type === 'toggle-section') {
-            if (arbExpandedSections.has(action.sectionKey)) {
-                arbExpandedSections.delete(action.sectionKey);
-            } else {
-                arbExpandedSections.add(action.sectionKey);
-            }
-            updateArbPanel();
-            return;
-        }
-        if (action.type !== 'open-opportunity') return;
-        if (arbLastPointerOpenedOpportunityId === action.opportunityId) {
-            arbLastPointerOpenedOpportunityId = null;
-            return;
-        }
-        openArbDetailModal(action.opportunityId);
-    }
-
-    function handleArbPathContentKeydown(event) {
-        if (!arbPathContent) return;
-        const action = getArbPanelRenderer().resolveArbPathContentKeydownAction(event, { closestEventTarget });
-        if (action.type !== 'open-opportunity') return;
-        event.preventDefault();
-        openArbDetailModal(action.opportunityId);
-    }
-
-    function handleArbPathContentPointerDown(event) {
-        if (!arbPathContent) return;
-        const action = getArbPanelRenderer().resolveArbPathContentPointerDownAction(event, { closestEventTarget });
-        if (action.type !== 'open-opportunity') return;
-        arbLastPointerOpenedOpportunityId = action.opportunityId;
-        openArbDetailModal(action.opportunityId);
-    }
-
-    function createArbOpportunityEntry(targetMap, highlightTargetMap, cycle, label, meta = {}) {
-        if (!cycle) return null;
-        const opportunityId = getArbDetailUtils().buildUniqueArbOpportunityId(
-            new Set(targetMap.keys()),
-            meta.section || '',
-            label || '',
-            cycle
-        );
-        const entry = getArbPanelLayoutUtils().buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta);
-        targetMap.set(opportunityId, entry);
-        getArbPanelLayoutUtils().registerArbOpportunityHighlightTarget(
-            highlightTargetMap,
-            getArbPanelLayoutUtils().buildArbOpportunityHighlightTargetKeyFromCycle(cycle, {
-                buildMutedPathTargetFromCycleLegs,
-                buildTargetKey: buildMutedPathTargetKey
-            }),
-            opportunityId
-        );
-
-        return getArbPanelLayoutUtils().buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {
-            isAlertHighlighted: arbOpportunityHighlightRuntime.isHighlighted(opportunityId),
-        });
-    }
-
-    function refreshArbOpportunityRuntime(nextOpportunityMap, nextOpportunityIdsByTargetKey) {
-        const retainedEntries = arbDetailController.getRetainedOpportunities(
-            (opportunityId) => arbOpportunityRuntime.getOpportunity(opportunityId)
-        );
-
-        arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);
-    }
-
-    function buildMutedPathTargetFromCycleLegs(legs) {
-        return alertRuntimeController.buildMutedPathTargetFromCycleLegs(legs);
-    }
-
-    function applyFloatingPanelDisplay(panel, action, options = {}) {
-        const result = getDomRenderUtils().applyFloatingPanelDisplayState(panel, action, {
-            getComputedStyle: (element) => window.getComputedStyle(element),
-            displayValue: options.displayValue
-        });
-        if (!result.panelFound) return result;
-        if (result.shouldBringToFront) {
-            floatingPanelZIndexRuntime.bringToFront(panel);
-        }
-        if (result.shouldRender && typeof options.render === 'function') {
-            options.render(result);
-        }
-        if (typeof options.afterApply === 'function') {
-            options.afterApply(result);
-        }
-        return result;
-    }
-
-    function buildQuotePriceWatchSection() {
-        return getArbPanelLayoutUtils().buildQuotePriceWatchSection({
-            watchItems: getArbPathConfigUtils().getQuotePriceWatchItems(ARB_PATH_CONFIG),
-            findQuote: (item) => getDashboardRuntimeUtils().findDashboardQuoteById(dashboardState, item.quoteId),
-            getQuoteState: (quote) => getQuoteMarketState(Number(quote.id)) || {},
-            resolveValue: (item, state) => getArbPathConfigUtils().resolveQuotePriceValue(item, state),
-            isQuotePaused,
-            buildPairLabel: (quote, state, item) => buildQuoteAlertDisplayLabel(quote, state, item.direction),
-            formatChainLabel,
-            formatPrice: (value) => String(formatDetailNumber(value, 8))
-        });
-    }
-
-    function buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
-        return getArbPanelLayoutUtils().buildFixedArbSections({
-            fixedResults: sharedRuleSnapshot.fixedResults,
-            getDisplayMinProfitBp: (rule) => getArbPanelLayoutUtils().normalizeDisplayMinProfitBp(
-                rule && rule.displayMinProfitBp,
-                getArbPanelLayoutUtils().resolveDefaultDisplayMinProfitBp(getPathAlertRuleDefinitionsUtils())
-            ),
-            buildEntry: (cycle, index, items, rule) => createArbOpportunityEntry(
-                nextOpportunityMap,
-                nextOpportunityIdsByTargetKey,
-                cycle,
-                items.length > 1 ? `机会 ${index + 1}` : '',
-                { section: `fixed:${rule?.id || ''}`, alertPreset: { type: 'path' } }
-            )
-        });
-    }
-
-    function buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
-        return getArbPanelLayoutUtils().buildSpecialArbSections({
-            specialResults: sharedRuleSnapshot.specialResults,
-            specialRules: SPECIAL_ARB_RULES,
-            buildEntry: (opportunity) => createArbOpportunityEntry(
-                nextOpportunityMap,
-                nextOpportunityIdsByTargetKey,
-                opportunity.cycle,
-                opportunity.label,
-                {
-                    section: 'special',
-                    entryType: 'special-rule',
-                    clickable: false,
-                    displayMessage: String(opportunity.display_message || ''),
-                    hideLegs: true,
-                    alertPreset: {
-                        type: 'rule',
-                        ruleKind: 'special',
-                        ruleId: opportunity.ruleId
-                    }
-                }
-            )
-        });
-    }
-
-    function buildGlobalArbSection(topologyCache, templateUtils, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
-        const globalSectionKey = 'global:all';
-        const nowMs = Date.now();
-        alertRuntimeController.pruneMutedPathLegsInPlace(nowMs);
-        const globalCycles = getMutedPathLegUtils().filterMutedCycles(
-            topologyCache.globalTemplates
-                .map((template) => templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap()))
-                .filter(Boolean)
-                .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)),
-            alertRuntimeController.getMutedPathLegs(),
-            nowMs
-        );
-        const layoutUtils = getArbPanelLayoutUtils();
-        const filterState = arbGlobalFilterStateRuntime.get();
-        const filterCriteria = layoutUtils.buildGlobalArbFilterCriteria(filterState, {
-            normalizeChainFilterToken: (chainToken) => getChainDefaults().normalizeChainFilterToken(chainToken)
-        });
-        layoutUtils.applyGlobalArbFilterWritePlan(
-            arbGlobalFilterElements,
-            layoutUtils.buildGlobalArbFilterWritePlan(filterState)
-        );
-        return layoutUtils.buildGlobalArbSection({
-            sectionKey: globalSectionKey,
-            cycles: globalCycles,
-            ...filterCriteria,
-            expanded: arbExpandedSections.has(globalSectionKey),
-            isRuleLeg,
-            buildEntry: (cycle, index) => createArbOpportunityEntry(
-                nextOpportunityMap,
-                nextOpportunityIdsByTargetKey,
-                cycle,
-                `机会 ${index + 1}`,
-                { section: '全局路径', alertPreset: { type: 'path' } }
-            ),
-            buildFooterHtml: (cycleDisplayState) => {
-                if (!cycleDisplayState || !cycleDisplayState.canToggleExpand) return '';
-                return getArbPanelRenderer().renderArbSectionToggleHtml(globalSectionKey, {
-                    ...cycleDisplayState,
-                    displayMinProfitBp: layoutUtils.normalizeDisplayMinProfitBp(cycleDisplayState.displayMinProfitBp)
-                });
-            }
-        });
-    }
-
-    function buildArbPanelData() {
-        const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
-        const targetCategories = dashboardState.filter(c => targetNames.includes(c.name));
-        if (!targetCategories.length) {
-            return { error: '暂无可用路径' };
-        }
-
-        const sharedRuleSnapshot = getSharedArbRuleSnapshot();
-        const topologyCache = getArbPathTopologyCache();
-        const templateUtils = getArbPathTemplateCacheUtils();
-        const nextOpportunityMap = new Map();
-        const nextOpportunityIdsByTargetKey = new Map();
-
-        const fixedSections = buildFixedArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
-        const specialSections = buildSpecialArbSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
-        const globalSection = buildGlobalArbSection(
-            topologyCache,
-            templateUtils,
-            nextOpportunityMap,
-            nextOpportunityIdsByTargetKey
-        );
-        const columns = getArbPanelLayoutUtils().buildArbPanelColumns({
-            fixedSections,
-            specialSections,
-            quoteSection: buildQuotePriceWatchSection(),
-            globalSection
-        });
-
-        return {
-            columns,
-            nextOpportunityMap,
-            nextOpportunityIdsByTargetKey
-        };
-    }
-
-    function updateArbPanel(options = {}) {
-        if (!arbPathContent) return;
-        if (!options.force && !getDashboardRuntimeUtils().isPanelVisible(arbPathWindow)) {
-            arbPanelUpdateRuntime.markDirty();
-            return;
-        }
-        arbPanelUpdateRuntime.clearDirty();
-
-        const panelData = buildArbPanelData();
-        if (panelData.error) {
-            arbPanelHtmlRenderer.reset();
-            getArbPanelRenderer().applyArbPanelErrorText(arbPathContent, panelData.error);
-            return;
-        }
-
-        const { columns, nextOpportunityMap, nextOpportunityIdsByTargetKey } = panelData;
-
-        refreshArbOpportunityRuntime(nextOpportunityMap, nextOpportunityIdsByTargetKey);
-
-        const arbPaths = getArbPaths();
-        const nextArbPanelHtml = getArbPanelRenderer().renderArbGrid({
-            columns,
-            isMeaningfulPath: cycle => cycle && arbPaths.isMeaningfulPath(cycle.legs),
-            shouldIncludeLeg: leg => !isRuleLeg(leg),
-            formatChainLabel,
-            formatLegLine: formatArbPathLegLine,
-            formatProfit: profitRate => arbPaths.formatProfitWanfen(profitRate)
-        });
-        arbPanelHtmlRenderer.render(arbPathContent, nextArbPanelHtml);
-    }
-
     function closestEventTarget(event, selector) {
         return getDomRenderUtils().closestEventTarget(event, selector);
-    }
-
-    function toggleArbPanel() {
-        applyFloatingPanelDisplay(arbPathWindow, 'toggle', {
-            render: () => {
-                if (arbPanelUpdateRuntime.isDirty()) {
-                    updateArbPanel({ force: true });
-                }
-            }
-        });
     }
 
     function handleGlobalShortcuts(event) {
@@ -1150,10 +773,6 @@
                 requestChannelTagVisibilityRuntime.toggle();
                 break;
         }
-    }
-
-    function setArbPanelMaxHeight() {
-        getDomRenderUtils().applyFloatingPanelViewportHeight(arbPathWindow, window.innerHeight, { minHeight: 200 });
     }
 
     function buildQuoteAlertDisplayLabel(quote, monitorState = getQuoteMarketState(quote.id) || {}, direction = 'forward') {
@@ -1200,7 +819,7 @@
             defaultPriority: DEFAULT_ARB_CYCLE_START_PRIORITY
         });
         invalidateArbRuleSnapshotCache();
-        arbPanelCache.clearTopology();
+        clearTopologyCache();
     }
 
     async function loadRequestChannels() {
@@ -1457,38 +1076,10 @@
             alertRuntimeController.renderMutedAlertStatePanel(Date.now());
             alertRuntimeController.renderAlertLogTabState();
             alertRuntimeController.syncMutedPathLogTimer();
-            if (arbPathContent) {
-                arbPathContent.addEventListener('pointerdown', handleArbPathContentPointerDown);
-                arbPathContent.addEventListener('click', handleArbPathContentClick);
-                arbPathContent.addEventListener('keydown', handleArbPathContentKeydown);
-            }
+            arbPanelController.bindContentEvents();
             arbDetailController.bindGridEvents();
             arbDetailController.bindChromeEvents();
-            getArbPanelLayoutUtils().bindGlobalArbFilterEvents({
-                excludedSymbolsInput: arbGlobalFilterInput,
-                excludedChainsInput: arbGlobalChainFilterInput,
-                includedSymbolsInput: arbGlobalIncludeFilterInput,
-                twoLegOnlyInput: arbGlobalTwoLegOnlyInput,
-                clearButton: arbGlobalFilterClearBtn,
-                header: arbPathHeader
-            }, {
-                onPatch: (patch) => {
-                    const result = arbGlobalFilterStateRuntime.update(patch);
-                    if (!result.changed) return false;
-                    updateArbPanel();
-                    return true;
-                },
-                onClear: () => {
-                    const result = arbGlobalFilterStateRuntime.clear();
-                    if (!result.changed) return;
-                    updateArbPanel();
-                    if (arbGlobalFilterInput) {
-                        arbGlobalFilterInput.focus();
-                    }
-                },
-                getActiveElement: () => document.activeElement,
-                closestEventTarget
-            });
+            arbPanelController.bindGlobalFilterEvents();
             document.addEventListener('keydown', handleGlobalShortcuts);
             if (arbPathMinBtn) {
                 arbPathMinBtn.addEventListener('click', (e) => {
