@@ -1410,13 +1410,6 @@
         renderArbDetailModal();
     }
 
-    function updateQuoteRunStateTag() {
-        getDomRenderUtils().applyQuoteRunStateTagDomState(
-            quoteRunStateTag,
-            getArbDetailUtils().getQuoteRunState(arbDetailState.pausedDashboard)
-        );
-    }
-
     function findQuoteById(quoteId) {
         return getDashboardRuntimeUtils().findDashboardQuoteMatchById(dashboardState, quoteId);
     }
@@ -2004,7 +1997,10 @@
             abortActiveQuoteFetches();
         }
         updateSchedulers();
-        updateQuoteRunStateTag();
+        getDomRenderUtils().applyQuoteRunStateTagDomState(
+            quoteRunStateTag,
+            getArbDetailUtils().getQuoteRunState(arbDetailState.pausedDashboard)
+        );
     }
 
     function closeArbDetailModal() {
@@ -3991,7 +3987,10 @@
                 addToQueue(quote);
             });
 
-            updateQuoteRunStateTag();
+            getDomRenderUtils().applyQuoteRunStateTagDomState(
+                quoteRunStateTag,
+                getArbDetailUtils().getQuoteRunState(arbDetailState.pausedDashboard)
+            );
             updateSchedulers();
             priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => {
                 void priceSnapshotSaveRuntime.saveIfNeeded();

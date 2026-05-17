@@ -436,6 +436,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuotePairLabelDomState('));
     assert.ok(!appJsResponse.body.includes('pairLabelEl.innerHTML = getQuoteDisplayUtils().buildQuotePairLabelHtml'));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteRunStateTagDomState('));
+    assert.ok(!appJsResponse.body.includes('function updateQuoteRunStateTag('));
     assert.ok(!appJsResponse.body.includes('quoteRunStateTag.textContent = state.text'));
     assert.ok(!appJsResponse.body.includes("quoteRunStateTag.classList.remove('running', 'paused')"));
     assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteDataError(quoteDataEl)'));
