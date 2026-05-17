@@ -544,6 +544,10 @@
         return getWindowModule('QuoteStateRuntimeUtils', 'QuoteStateRuntimeUtils is not loaded');
     }
 
+    function getQuoteFetchController() {
+        return getWindowModule('QuoteFetchController', 'QuoteFetchController is not loaded');
+    }
+
     const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
         dashboardRuntimeUtils: getDashboardRuntimeUtils()
     });
@@ -577,6 +581,36 @@
     const renderDataTerminalPanel = dataTerminalController.renderPanel;
     const toggleDataTerminalPanel = dataTerminalController.togglePanel;
     const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
+    const quoteFetchController = getQuoteFetchController().createQuoteFetchController({
+        activeFetchControllerRuntime,
+        backendUrl: BACKEND_URL,
+        bindCopyHandler,
+        chainDefaults: getChainDefaults(),
+        checkPriceForAlerts,
+        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        documentImpl: document,
+        domRenderUtils: getDomRenderUtils(),
+        fetchImpl: fetch,
+        getEffectiveRequestChannelIdForQuote,
+        getInverseQuoteDisplayText,
+        getQuoteDisplayMode: () => quoteDisplayMode,
+        getQuoteDisplayText,
+        getQuoteMarketState,
+        isQuotePaused,
+        logWarning: (...args) => console.warn(...args),
+        quoteDisplayUtils: getQuoteDisplayUtils(),
+        quoteRequestUtils: getQuoteRequestUtils(),
+        recordSourceAttempt: (source) => arbDetailSourceBudgetRuntime.recordTimestamp(source),
+        resetQuoteUiRuntimeState,
+        scheduleArbPanelUpdate: () => arbPanelUpdateRuntime.schedule(),
+        scheduleDataTerminalUpdate,
+        setQuoteMarketState,
+        shouldQueueInverseFetch,
+        updateQuotePairLabel,
+        updateTrendArrow
+    });
+    const fetchQuoteByStrategy = quoteFetchController.fetchByStrategy;
+    const fetchSingleQuote = quoteFetchController.fetchSingle;
     const mutedPathRuntime = getMutedPathRuntimeUtils().createMutedPathRuntime({
         pruneTargets: (entries, nowMs) => getPathAlertUtils().pruneExpiredMutedPathTargets(entries, nowMs),
         pruneLegs: (entries, nowMs) => getMutedPathLegUtils().pruneExpiredMutedPathLegs(entries, nowMs),
@@ -2587,215 +2621,6 @@
 
     function getQuoteRequestUtils() {
         return getWindowModule('QuoteRequestUtils', 'QuoteRequestUtils is not loaded');
-    }
-
-    async function apiGetQuote(quote, signal, targetSource) {
-        const quoteRequestUtils = getQuoteRequestUtils();
-        const resolvedConfig = quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote);
-        return quoteRequestUtils.requestResolvedQuote({
-            backendUrl: BACKEND_URL,
-            fetchImpl: fetch,
-            quote,
-            signal,
-            resolvedConfig,
-            buildCexSummary: (symbol, orderbook) => getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook)
-        });
-    }
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function fetchQuoteByStrategy(quote, options = {}) {
-        const signal = options.signal;
-        const beforeSourceAttempt = typeof options.beforeSourceAttempt === 'function'
-            ? options.beforeSourceAttempt
-            : null;
-        const quoteRequestUtils = getQuoteRequestUtils();
-        const requestInput = quoteRequestUtils.buildQuoteRequestInput(quote, {
-            amount: options.amount,
-            requestChannelId: options.requestChannelId,
-            defaultRequestChannelId: getEffectiveRequestChannelIdForQuote(quote),
-            isInverseFetch: options.isInverseFetch
-        });
-        const { requestQuote, isInverseFetch } = requestInput;
-        const strategy = getChainDefaults().buildQuoteStrategy(quote);
-        let fetchError = null;
-        let successSource = null;
-        let data = null;
-
-        for (const source of strategy) {
-            try {
-                if (quoteRequestUtils.shouldSkipQuoteSource(source, quote)) continue;
-
-                if (beforeSourceAttempt) {
-                    await beforeSourceAttempt(source, requestQuote);
-                }
-
-                if (quoteRequestUtils.shouldDelayQuoteSource(source, strategy, {
-                    skipDelay: options.skipDelay
-                })) {
-                    await sleep(600);
-                }
-
-                arbDetailSourceBudgetRuntime.recordTimestamp(source);
-                data = await apiGetQuote(requestQuote, signal, source);
-                if (data) {
-                    successSource = source;
-                    data = quoteRequestUtils.applyAutoFallbackSourceLabel(data, quote, source, { isInverseFetch });
-                    break;
-                }
-            } catch (error) {
-                if (error.name === 'AbortError') throw error;
-                fetchError = error;
-                console.warn(`${quote.chain} Quote Fetch Failed [${source}]:`, error.message);
-            }
-        }
-
-        if (!data) {
-            throw fetchError || new Error('All strategies failed');
-        }
-
-        return { data, successSource };
-    }
-
-    async function fetchSingleQuote(quote, fetchMode = 'main') {
-        const quoteDataEl = document.getElementById(`quote-data-${quote.id}`);
-        const quoteTextWrapperEl = document.getElementById(`quote-text-wrapper-${quote.id}`);
-        const quoteTextEl = document.getElementById(`quote-text-${quote.id}`);
-        if (!quoteDataEl || !quoteTextEl) return;
-        if (isQuotePaused(quote)) {
-            const previousState = getQuoteMarketState(quote.id) || {};
-            resetQuoteUiRuntimeState(quote.id);
-            applyPausedQuoteUiState(quote, previousState);
-            return;
-        }
-        const isInverseFetch = fetchMode === 'inverse' && shouldQueueInverseFetch(quote);
-
-        const controller = activeFetchControllerRuntime.create(quote.id);
-        const signal = controller ? controller.signal : null;
-
-        if (!isInverseFetch) {
-            getDomRenderUtils().clearQuoteDataError(quoteDataEl);
-        }
-
-        try {
-            const { data, successSource } = await fetchQuoteByStrategy(quote, {
-                signal,
-                isInverseFetch
-            });
-
-            const previousState = getQuoteMarketState(quote.id) || {};
-            const inverseContainerId = `inverse-quote-${quote.id}`;
-            let inverseEl = document.getElementById(inverseContainerId);
-
-            if (isInverseFetch) {
-                if (shouldQueueInverseFetch(quote)) {
-                    const inverseFallbackText = `${quote.amount || 1} ${data.symbols.from} ≈ ${data.finalAmountOut.toFixed(6)} ${data.symbols.to}`;
-                    const inverseState = getDashboardRuntimeUtils().buildQuoteResultMarketState(
-                        previousState,
-                        data,
-                        { isInverseFetch: true }
-                    );
-                    setQuoteMarketState(quote.id, inverseState);
-                    inverseEl = getDomRenderUtils().applyQuoteInverseResultDomState({
-                        quoteDataEl,
-                        inverseEl
-                    }, {
-                        id: inverseContainerId,
-                        documentImpl: document,
-                        text: getInverseQuoteDisplayText(quote, inverseState, inverseFallbackText)
-                    });
-                    if (inverseEl) {
-                        bindCopyHandler(
-                            inverseEl,
-                            () => inverseEl.textContent
-                        );
-                    }
-                }
-            } else {
-                const oldPrice = previousState.lastRawPrice;
-                const oldSource = previousState.usedSourceReal;
-
-                const newState = getDashboardRuntimeUtils().buildQuoteResultMarketState(
-                    previousState,
-                    data,
-                    { successSource }
-                );
-
-                const quoteDisplayText = getQuoteDisplayText(quote, newState);
-                getDomRenderUtils().applyQuoteMainResultDomState({
-                    quoteTextEl,
-                    quoteTextWrapperEl
-                }, {
-                    text: quoteDisplayText
-                });
-                updateQuotePairLabel(quote, newState);
-
-                if (shouldQueueInverseFetch(quote)) {
-                    const inverseQueuedText = getQuoteDisplayUtils().buildInverseQuoteQueuedDisplayText(
-                        quote,
-                        newState,
-                        inverseEl && inverseEl.textContent,
-                        { mode: quoteDisplayMode }
-                    );
-                    inverseEl = getDomRenderUtils().applyQuoteInverseQueuedDomState({
-                        quoteDataEl,
-                        inverseEl
-                    }, {
-                        id: inverseContainerId,
-                        documentImpl: document,
-                        text: inverseQueuedText
-                    });
-                } else {
-                    getDomRenderUtils().removeQuoteInverseElement(inverseEl);
-                    newState.inverseRawPrice = null;
-                    newState.inverseTotalAmountOut = null;
-                    newState.inverseFromSymbol = null;
-                    newState.inverseToSymbol = null;
-                }
-
-                const marketStateChanged = setQuoteMarketState(quote.id, newState);
-                if (marketStateChanged) {
-                    arbPanelUpdateRuntime.schedule();
-                    scheduleDataTerminalUpdate();
-                }
-                
-                updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
-                checkPriceForAlerts(quote);
-            }
-            
-        } catch (error) {
-            if (error.name === 'AbortError') return; 
-            const quoteRequestUtils = getQuoteRequestUtils();
-            const errorTitle = quoteRequestUtils.buildQuoteErrorTitle(error);
-
-            if (isInverseFetch) {
-                let inverseEl = document.getElementById(`inverse-quote-${quote.id}`);
-                if (shouldQueueInverseFetch(quote)) {
-                    getDomRenderUtils().applyQuoteInverseErrorDomState({
-                        quoteDataEl,
-                        inverseEl
-                    }, {
-                        id: `inverse-quote-${quote.id}`,
-                        documentImpl: document,
-                        title: errorTitle
-                    });
-                }
-            } else {
-                const displayMsg = quoteRequestUtils.formatQuoteErrorMessage(error);
-                getDomRenderUtils().applyQuoteMainErrorDomState({
-                    quoteDataEl,
-                    quoteTextEl,
-                    quoteTextWrapperEl
-                }, {
-                    message: displayMsg,
-                    title: errorTitle
-                });
-            }
-        } finally {
-            activeFetchControllerRuntime.deleteIfCurrent(quote.id, controller);
-        }
     }
 
     function getCopyUtils() {

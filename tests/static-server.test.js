@@ -95,6 +95,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-fetch-controller.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-view-controller.js"'));
     assert.ok(response.body.includes('src="src/price-snapshots/price-snapshot-payload-utils.js"'));
@@ -122,6 +123,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-request-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/quote/quote-display-utils.js"') < response.body.indexOf('src="src/quote/quote-fetch-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/quote/quote-fetch-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/shared/trading-pair-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -354,6 +361,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
     const quoteRequestUtilsResponse = await request('/src/quote/quote-request-utils.js');
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
+    const quoteFetchControllerResponse = await request('/src/quote/quote-fetch-controller.js');
+    assert.strictEqual(quoteFetchControllerResponse.statusCode, 200);
     const quotePauseUtilsResponse = await request('/src/quote/quote-pause-utils.js');
     assert.strictEqual(quotePauseUtilsResponse.statusCode, 200);
     const priceSnapshotPayloadUtilsResponse = await request('/src/price-snapshots/price-snapshot-payload-utils.js');
@@ -482,15 +491,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function updateQuoteRunStateTag('));
     assert.ok(!appJsResponse.body.includes('quoteRunStateTag.textContent = state.text'));
     assert.ok(!appJsResponse.body.includes("quoteRunStateTag.classList.remove('running', 'paused')"));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().clearQuoteDataError(quoteDataEl)'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseQueuedDomState({'));
-    assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildInverseQuoteQueuedDisplayText('));
-    assert.ok(appJsResponse.body.includes('text: inverseQueuedText'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseResultDomState({'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteInverseErrorDomState({'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().removeQuoteInverseElement(inverseEl)'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteMainResultDomState({'));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().applyQuoteMainErrorDomState({'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.clearQuoteDataError(refs.quoteDataEl)'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteInverseQueuedDomState({'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteDisplayUtils.buildInverseQuoteQueuedDisplayText('));
+    assert.ok(quoteFetchControllerResponse.body.includes('text: inverseQueuedText'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteInverseResultDomState({'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteInverseErrorDomState({'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.removeQuoteInverseElement(inverseEl)'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteMainResultDomState({'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteMainErrorDomState({'));
     assert.ok(!appJsResponse.body.includes('globalTooltip.innerHTML = htmlContent'));
     assert.ok(!appJsResponse.body.includes("globalTooltip.classList.add('visible')"));
     assert.ok(!appJsResponse.body.includes('globalTooltip.style.top'));
@@ -708,14 +717,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getEvmMetadata'));
     assert.ok(!appJsResponse.body.includes('const MARKET_QUOTE_REQUESTS = {'));
     assert.ok(appJsResponse.body.includes('QuoteRequestUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote)'));
-    assert.ok(appJsResponse.body.includes('quoteRequestUtils.requestResolvedQuote({'));
+    assert.ok(appJsResponse.body.includes('function getQuoteFetchController()'));
+    assert.ok(appJsResponse.body.includes('QuoteFetchController is not loaded'));
+    assert.ok(appJsResponse.body.includes('const quoteFetchController = getQuoteFetchController().createQuoteFetchController({'));
+    assert.ok(quoteFetchControllerResponse.body.includes('function createQuoteFetchController(deps = {})'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote)'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteRequestUtils.requestResolvedQuote({'));
     assert.ok(!appJsResponse.body.includes('function getMarketQuote(quote, signal, config)'));
     assert.ok(!appJsResponse.body.includes('function getCexOrderbookQuote(quote, signal, options)'));
     assert.ok(appJsResponse.body.includes('const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({'));
     assert.ok(appJsResponse.body.includes('hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId)'));
-    assert.ok(appJsResponse.body.includes('const controller = activeFetchControllerRuntime.create(quote.id);'));
-    assert.ok(appJsResponse.body.includes('activeFetchControllerRuntime.deleteIfCurrent(quote.id, controller);'));
+    assert.ok(quoteFetchControllerResponse.body.includes('const controller = deps.activeFetchControllerRuntime.create(quote.id);'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.activeFetchControllerRuntime.deleteIfCurrent(quote.id, controller);'));
     assert.ok(!appJsResponse.body.includes('let activeFetchControllers = new Map();'));
     assert.ok(quoteQueueRuntimeUtilsResponse.body.includes('function createActiveFetchControllerRuntime(options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('const MARKET_QUOTE_REQUESTS = Object.freeze({'));
@@ -728,7 +741,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const ZEROX_CHAIN_IDS = {'));
     assert.ok(!appJsResponse.body.includes('function is0xSupported(chain)'));
     assert.ok(!appJsResponse.body.includes('function isKyberSupported(chain)'));
-    assert.ok(appJsResponse.body.includes('quoteRequestUtils.shouldSkipQuoteSource(source, quote)'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteRequestUtils.shouldSkipQuoteSource(source, quote)'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function formatQuoteErrorMessage(error, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));
@@ -748,10 +761,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteChainDisplayName(quote)'));
     assert.ok(dashboardActionControllerResponse.body.includes('getSingleChainDisplayName: deps.formatChainLabel'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().normalizeChainFilterToken(chainToken)'));
-    assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteStrategy(quote)'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.chainDefaults.buildQuoteStrategy(quote)'));
     assert.ok(appJsResponse.body.includes('getChainDefaults().isCrossChainQuote(quote)'));
     assert.ok(!appJsResponse.body.includes("const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];"));
-    assert.ok(/buildQuoteResultMarketState\(\s*previousState,\s*data,/.test(appJsResponse.body));
+    assert.ok(/buildQuoteResultMarketState\(\s*previousState,\s*data,/.test(quoteFetchControllerResponse.body));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRuntimeUtils.buildSwappedQuoteMarketState(state)'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildQuoteResultMarketState(previousState, quoteResult, options = {})'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function buildSwappedQuoteMarketState(previousState)'));
@@ -861,7 +874,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function formatCexBookValue(value, maxDecimals = 10)'));
     assert.ok(!appJsResponse.body.includes('function buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(appJsResponse.body.includes('formatCexBookValue: (value, maxDecimals) => getQuoteDisplayUtils().formatCexBookValue(value, maxDecimals)'));
-    assert.ok(appJsResponse.body.includes('buildCexSummary: (symbol, orderbook) => getQuoteDisplayUtils().buildCexOrderbookSummary(symbol, orderbook)'));
+    assert.ok(quoteFetchControllerResponse.body.includes('buildCexSummary: (symbol, orderbook) => deps.quoteDisplayUtils.buildCexOrderbookSummary(symbol, orderbook)'));
     assert.ok(!appJsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuotePairLabelHtml(quote, state)'));
     assert.ok(appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteAlertDisplayLabel(quote, monitorState, direction)'));
@@ -941,7 +954,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(dashboardRendererResponse.body.includes('updates.kyberOnlyDirectPools = true;'));
     assert.ok(appJsResponse.body.includes('const arbPanelUpdateRuntime = getArbRuntimeMemoryUtils().createArbPanelUpdateRuntime({'));
-    assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.schedule();'));
+    assert.ok(appJsResponse.body.includes('scheduleArbPanelUpdate: () => arbPanelUpdateRuntime.schedule(),'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.scheduleArbPanelUpdate();'));
     assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.markDirty();'));
     assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.clearDirty();'));
     assert.ok(appJsResponse.body.includes('arbPanelUpdateRuntime.isDirty()'));
@@ -1646,7 +1660,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbDetailUtils().buildClosedArbDetailState(arbDetailState)'));
     assert.ok(appJsResponse.body.includes('const arbDetailSourceBudgetRuntime = getArbDetailUtils().createArbDetailSourceBudgetRuntime();'));
     assert.ok(appJsResponse.body.includes('arbDetailSourceBudgetRuntime.getTimestamp(source)'));
-    assert.ok(appJsResponse.body.includes('arbDetailSourceBudgetRuntime.recordTimestamp(source);'));
+    assert.ok(appJsResponse.body.includes('recordSourceAttempt: (source) => arbDetailSourceBudgetRuntime.recordTimestamp(source),'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.recordSourceAttempt(source);'));
     assert.ok(!appJsResponse.body.includes('function getQuoteSourceBudgetTimestamp(source)'));
     assert.ok(!appJsResponse.body.includes('function recordQuoteSourceBudgetTimestamp(source'));
     assert.ok(!appJsResponse.body.includes('quoteSourceLastRequestAtByIntervalKey'));
@@ -1845,7 +1860,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.bindFloatingPanelChrome(panel, refs.header, {'));
     assert.ok(dataTerminalControllerResponse.body.includes('updateRuntime.clear();'));
     assert.ok(!appJsResponse.body.includes('function clearDataTerminalTimer()'));
-    assert.ok(appJsResponse.body.includes('scheduleDataTerminalUpdate();'));
+    assert.ok(appJsResponse.body.includes('const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.scheduleDataTerminalUpdate();'));
     assert.ok(dataTerminalControllerResponse.body.includes('scheduleUpdate: () => updateRuntime.schedule(),'));
     assert.ok(!appJsResponse.body.includes('timer: null,'));
     assert.ok(!appJsResponse.body.includes('dataTerminalState.timer'));

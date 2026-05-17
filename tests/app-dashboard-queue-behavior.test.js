@@ -6,6 +6,7 @@ const appJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-app.
 const dashboardActionControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/dashboard/dashboard-action-controller.js'), 'utf8');
 const dashboardFormControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/dashboard/dashboard-form-controller.js'), 'utf8');
 const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-queue-runtime-utils.js'), 'utf8');
+const quoteFetchControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-fetch-controller.js'), 'utf8');
 
 assert.ok(
   appJs.includes('const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({'),
@@ -141,7 +142,7 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('getEffectiveRequestChannelIdForQuote(quote)'),
+  quoteFetchControllerJs.includes('deps.getEffectiveRequestChannelIdForQuote(quote)'),
   '主看板请求与队列归类都应走生效渠道，而不是直接读原始 requestChannelId'
 );
 

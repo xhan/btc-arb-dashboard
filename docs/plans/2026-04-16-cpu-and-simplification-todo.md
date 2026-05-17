@@ -134,7 +134,7 @@
 - 现状：
   - `src/app/dashboard-app.js` 仍是超大文件，包含报价轮询、套利、详情、报警、日志、数据终端、保存、主题等多职责
 - 建议拆分：
-  - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `src/quote/quote-queue-runtime-utils.js`，`src/app/dashboard-app.js` 只保留业务依赖注入和入口包装
+  - `quote-polling`：队列运行态、scheduler、消费状态机和 active fetch controller Map 已下沉到 `src/quote/quote-queue-runtime-utils.js`，报价请求策略、主/反向报价成功失败 DOM 分支和 active fetch controller 生命周期已下沉到 `src/quote/quote-fetch-controller.js`，`src/app/dashboard-app.js` 只保留业务依赖注入和入口包装
   - `quote-request`：source 支持链判断已下沉到 `src/quote/quote-request-utils.js`，`src/app/dashboard-app.js` 不再维护 Kyber/0x 支持链常量
   - `quote-ui-runtime`：hover 延迟显示、tooltip 展示模型、request channel tag DOM patch、trend arrow 展示模型和 trend timer 已分别下沉到 `src/quote/quote-display-utils.js` / `src/quote/quote-state-runtime-utils.js`，display-mode text rerender、paused/active/switching quote DOM state、主报价 result/error DOM state、反向报价 queued/result/error/remove DOM state、quote DOM refs 装配、tooltip 定位/显示/隐藏编排、trend arrow DOM patch/reset 和 quote alert highlight 应用/清理已下沉到 `src/ui/dom-render-utils.js`
   - 反向报价刷新排队时不再默认清掉已有反向价格，queued 文案选择下沉到 `src/quote/quote-display-utils.js`，避免主报价刷新把可用反向价格刷成“反向报价排队中...”
@@ -234,6 +234,7 @@
   - `src/app/dashboard-app.js` 的多渠道开关 localStorage 读写容错和按钮 DOM 写入已下沉到 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的多渠道队列重排无效 `touched` 分支已移除，重排后统一刷新 scheduler 一次
   - `src/app/dashboard-app.js` 的 quote fetch abort 单用途包装已移除，排队刷新和暂停流程直接委托 active fetch controller runtime
+  - `src/app/dashboard-app.js` 的报价 fetch strategy、主报价成功/失败、反向报价成功/失败和 active fetch controller create/delete 生命周期已下沉到 `src/quote/quote-fetch-controller.js`
   - `src/app/dashboard-app.js` 的 active fetch 批量 abort 单用途包装已移除，套利详情暂停主看板时直接委托 active fetch controller runtime
   - `src/app/dashboard-app.js` 的套利详情 refresh scheduler 单用途回调包装已移除，active/refreshing/error 回调直接内联在 scheduler 配置里
   - `src/app/dashboard-app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
