@@ -930,14 +930,6 @@
         triggerMutedPathLegRefresh({ closeDetail: false });
     }
 
-    function extendMutedPathTargetFromLogButton(buttonEl, nowMs = Date.now()) {
-        if (!buttonEl || typeof buttonEl.closest !== 'function') return false;
-        const card = buttonEl.closest('.log-entry[data-muted-target-key]');
-        const targetKey = String(card && card.dataset && card.dataset.mutedTargetKey || '').trim();
-        if (!targetKey) return false;
-        return Boolean(extendMutedPathTargetByKey(targetKey, nowMs));
-    }
-
     function updateMutedPathAlertLogCards(targetKey = '', nowMs = Date.now()) {
         const containers = [alertLogContent, alertLogMutedLogContent].filter(Boolean);
         if (!containers.length) return;
@@ -2546,7 +2538,7 @@
             return;
         }
         if (action.type === 'mute-alert-target') {
-            if (extendMutedPathTargetFromLogButton(action.buttonEl, Date.now())) {
+            if (action.mutedTargetKey && extendMutedPathTargetByKey(action.mutedTargetKey, Date.now())) {
                 return;
             }
             const alertId = action.alertId;

@@ -417,7 +417,23 @@ assert.deepStrictEqual(
 const muteButton = { dataset: { pathAlertLogMute: 'path-alert-1' } };
 assert.deepStrictEqual(
   resolveActionFor({ '[data-path-alert-log-mute]': muteButton }),
-  { type: 'mute-alert-target', alertId: 'path-alert-1', buttonEl: muteButton }
+  { type: 'mute-alert-target', alertId: 'path-alert-1' }
+);
+const restoredMuteButton = {
+  dataset: { pathAlertLogMute: 'path-alert-2' },
+  closest: (selector) => (
+    selector === '.log-entry[data-muted-target-key]'
+      ? { dataset: { mutedTargetKey: 'target-2' } }
+      : null
+  )
+};
+assert.deepStrictEqual(
+  resolveActionFor({ '[data-path-alert-log-mute]': restoredMuteButton }),
+  {
+    type: 'mute-alert-target',
+    alertId: 'path-alert-2',
+    mutedTargetKey: 'target-2'
+  }
 );
 assert.deepStrictEqual(
   resolveActionFor({ '[data-quote-alert-log-mute]': { disabled: true, dataset: { quoteAlertLogMute: 'quote-alert-1' } } }),

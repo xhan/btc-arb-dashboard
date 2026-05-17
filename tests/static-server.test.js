@@ -1393,8 +1393,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pruneMutedPathTargetsMatch[0].includes('window.PathAlertUtils'));
     assert.ok(appJsResponse.body.includes('const evaluationAlerts = getActivePathAlertEvaluationAlerts();'));
     assert.ok(appJsResponse.body.includes('if (!evaluationAlerts.length) {'));
-    assert.ok(appJsResponse.body.includes('extendMutedPathTargetFromLogButton'));
-    assert.ok(appJsResponse.body.includes('if (extendMutedPathTargetFromLogButton(action.buttonEl, Date.now()))'));
+    assert.ok(!appJsResponse.body.includes('extendMutedPathTargetFromLogButton'));
+    assert.ok(alertLogUiResponse.body.includes("buttonEl.closest('.log-entry[data-muted-target-key]')"));
+    assert.ok(appJsResponse.body.includes('if (action.mutedTargetKey && extendMutedPathTargetByKey(action.mutedTargetKey, Date.now()))'));
     assert.ok(appJsResponse.body.includes("if (action.type === 'set-tab')"));
     assert.ok(appJsResponse.body.includes('alertLogTabRuntime.set(action.tab);'));
     assert.ok(!appJsResponse.body.includes("let alertLogActiveTab = 'log';"));

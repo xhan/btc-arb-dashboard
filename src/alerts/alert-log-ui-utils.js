@@ -368,11 +368,18 @@
     const buttonEl = muteBtn || quoteMuteBtn;
     if (buttonEl) {
       if (buttonEl.disabled) return { type: 'ignore' };
-      return {
+      const mutedTargetCard = typeof buttonEl.closest === 'function'
+        ? buttonEl.closest('.log-entry[data-muted-target-key]')
+        : null;
+      const mutedTargetKey = readDatasetValue(mutedTargetCard, 'mutedTargetKey');
+      const action = {
         type: 'mute-alert-target',
-        alertId: readDatasetValue(muteBtn, 'pathAlertLogMute') || readDatasetValue(quoteMuteBtn, 'quoteAlertLogMute'),
-        buttonEl
+        alertId: readDatasetValue(muteBtn, 'pathAlertLogMute') || readDatasetValue(quoteMuteBtn, 'quoteAlertLogMute')
       };
+      if (mutedTargetKey) {
+        action.mutedTargetKey = mutedTargetKey;
+      }
+      return action;
     }
 
     if (closest('a, button')) return { type: 'ignore' };
