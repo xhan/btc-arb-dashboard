@@ -1112,10 +1112,6 @@
         return quoteStateRuntime.deleteMarketState(quoteId);
     }
 
-    function setQuoteUiState(quoteId, nextState) {
-        return quoteStateRuntime.setUiState(quoteId, nextState);
-    }
-
     function resetQuoteUiRuntimeState(quoteId) {
         quoteStateRuntime.resetUiRuntimeState(quoteId, clearTimeout);
     }
@@ -3180,7 +3176,7 @@
         const uiUpdate = getDashboardRuntimeUtils().buildQuoteAlertUiUpdate(uiState, hasTriggeredThisTick);
         getDomRenderUtils().applyQuoteAlertHighlightUi(itemEl, uiUpdate);
 
-        setQuoteUiState(quote.id, uiUpdate.nextState);
+        quoteStateRuntime.setUiState(quote.id, uiUpdate.nextState);
         getDomRenderUtils().applyQuoteAlertDismissButtonState(resultDiv, uiUpdate.nextState, quote.id, { documentImpl: document });
         updateAlertSoundState();
     }
@@ -3648,7 +3644,7 @@
     function handleDashboardClick(event) {
         const action = getDashboardRenderer().resolveDashboardButtonClickAction(event, { closestEventTarget });
         if (action.type === 'dismiss-highlight') {
-            setQuoteUiState(action.quoteId, {
+            quoteStateRuntime.setUiState(action.quoteId, {
                 hasUnreadAlert: false
             });
             const quoteItemEl = document.getElementById(`quote-item-${action.quoteId}`);
