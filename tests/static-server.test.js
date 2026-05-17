@@ -606,7 +606,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("quoteTokenAddressesEl.style.display = 'block';"));
     assert.ok(!dashboardRendererResponse.body.includes('>+ 添加报价</button>'));
     assert.ok(appJsResponse.body.includes('getArbPanelLayoutUtils().bindGlobalArbFilterEvents({'));
-    assert.ok(appJsResponse.body.includes('onPatch: updateArbGlobalFilterState'));
+    assert.ok(!appJsResponse.body.includes('function updateArbGlobalFilterState('));
+    assert.ok(!appJsResponse.body.includes('function handleArbGlobalFilterClear('));
+    assert.ok(appJsResponse.body.includes('onPatch: (patch) => {'));
+    assert.ok(appJsResponse.body.includes('onClear: () => {'));
     assert.ok(appJsResponse.body.includes('header: arbPathHeader'));
     assert.ok(appJsResponse.body.includes('getActiveElement: () => document.activeElement'));
     assert.ok(appJsResponse.body.includes('closestEventTarget'));
@@ -1619,7 +1622,6 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('categoryTemplatesBySectionKey'));
     assert.ok(!appJsResponse.body.includes('let lbtcSection = null'));
     assert.ok(!appJsResponse.body.includes('const wbtcSection = categorySections.find'));
-    assert.ok(appJsResponse.body.includes('function updateArbGlobalFilterState(patch)'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function createGlobalArbFilterStateRuntime(initialState = {})'));
     assert.ok(appJsResponse.body.includes('const filterState = arbGlobalFilterStateRuntime.get();'));
     assert.ok(appJsResponse.body.includes('layoutUtils.buildGlobalArbFilterWritePlan(filterState)'));

@@ -2178,22 +2178,6 @@
         return true;
     }
 
-    function updateArbGlobalFilterState(patch) {
-        const result = arbGlobalFilterStateRuntime.update(patch);
-        if (!result.changed) return false;
-        updateArbPanel();
-        return true;
-    }
-
-    function handleArbGlobalFilterClear() {
-        const result = arbGlobalFilterStateRuntime.clear();
-        if (!result.changed) return;
-        updateArbPanel();
-        if (arbGlobalFilterInput) {
-            arbGlobalFilterInput.focus();
-        }
-    }
-
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
         if (target.ruleKind === 'fixed') {
             const rule = FIXED_PATH_RULES.find((item) => item.id === target.ruleId) || null;
@@ -4076,8 +4060,20 @@
                 clearButton: arbGlobalFilterClearBtn,
                 header: arbPathHeader
             }, {
-                onPatch: updateArbGlobalFilterState,
-                onClear: handleArbGlobalFilterClear,
+                onPatch: (patch) => {
+                    const result = arbGlobalFilterStateRuntime.update(patch);
+                    if (!result.changed) return false;
+                    updateArbPanel();
+                    return true;
+                },
+                onClear: () => {
+                    const result = arbGlobalFilterStateRuntime.clear();
+                    if (!result.changed) return;
+                    updateArbPanel();
+                    if (arbGlobalFilterInput) {
+                        arbGlobalFilterInput.focus();
+                    }
+                },
                 getActiveElement: () => document.activeElement,
                 closestEventTarget
             });
