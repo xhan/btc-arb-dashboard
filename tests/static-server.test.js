@@ -1029,7 +1029,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pathAlertNotificationExportBlock[0].includes('buildQuoteAlertRemotePayload,'));
     assert.ok(!appJsResponse.body.includes('function buildQuoteAlertRemotePayload(displayName, label, message, currentValueText, actionLink = null)'));
     assert.ok(!appJsResponse.body.includes('async function sendQuoteWebhookNotification(displayName, label, message, currentValueText, actionLink = null)'));
-    assert.ok(appJsResponse.body.includes('async function sendQuoteWebhookNotification(entry)'));
+    assert.ok(!appJsResponse.body.includes('async function sendQuoteWebhookNotification(entry)'));
+    assert.ok(appJsResponse.body.includes('const payload = getPathAlertNotificationUtils().buildQuoteAlertRemotePayloadForEntry(entry);'));
     assert.ok(appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayloadForEntry(entry)'));
     assert.ok(!appJsResponse.body.includes('getPathAlertNotificationUtils().buildQuoteAlertRemotePayload({'));
     assert.ok(appJsResponse.body.includes('getPathAlertPageUtils().buildQuoteAlertSummaryLabel(target, quote, monitorState || {}, {'));

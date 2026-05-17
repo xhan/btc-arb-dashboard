@@ -3182,7 +3182,8 @@
             return;
         }
         playPathAlertSoundOnce();
-        sendQuoteWebhookNotification(entry);
+        const payload = getPathAlertNotificationUtils().buildQuoteAlertRemotePayloadForEntry(entry);
+        sendPathAlertWebhookPayload(payload, '报价提醒远程推送失败:');
     }
 
     function checkPriceForAlerts(quote) {
@@ -3220,11 +3221,6 @@
         setQuoteUiState(quote.id, uiUpdate.nextState);
         getDomRenderUtils().applyQuoteAlertDismissButtonState(resultDiv, uiUpdate.nextState, quote.id, { documentImpl: document });
         updateAlertSoundState();
-    }
-
-    async function sendQuoteWebhookNotification(entry) {
-        const payload = getPathAlertNotificationUtils().buildQuoteAlertRemotePayloadForEntry(entry);
-        await sendPathAlertWebhookPayload(payload, '报价提醒远程推送失败:');
     }
 
     function addDnDHandlers(itemEl, categoryId) {
