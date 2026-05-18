@@ -2,7 +2,7 @@ const assert = require('assert');
 
 const {
   applyAddQuoteFormViewState,
-  applyKyberDirectPoolsControlVisibility,
+  applyKyberExcludedSourcesControlState,
   applyQuoteRequestChannelOptionsState,
   applyQuoteSettingsModalWritePlan,
   applySettingsIntervalWritePlan,
@@ -155,9 +155,8 @@ function createQuoteSettingsRefs() {
     'quote-to-token-line': { textContent: '' },
     'source-select-group': { style: { display: '' } },
     'quote-source-pref': { value: '', disabled: false },
-    'kyber-direct-pools-group': { style: { display: '' } },
-    'kyber-direct-pools-note': { style: { display: '' } },
-    'kyber-only-direct-pools': { checked: false },
+    'kyber-excluded-sources-group': { style: { display: '' } },
+    'kyber-excluded-sources': { value: '' },
     'inverse-toggle-group': { style: { display: '' } },
     'show-inverse-quote': { checked: false },
     'modal-swap-quote': { style: { display: '' } },
@@ -181,10 +180,10 @@ applyQuoteSettingsModalWritePlan(quoteSettingsRefs, {
     { id: 'quote-source-pref', disabled: true }
   ],
   value: [
-    { id: 'quote-source-pref', value: 'LI.FI' }
+    { id: 'quote-source-pref', value: 'LI.FI' },
+    { id: 'kyber-excluded-sources', value: 'uniswap-v3 balancer-v3' }
   ],
   checked: [
-    { id: 'kyber-only-direct-pools', checked: true },
     { id: 'show-inverse-quote', checked: true }
   ]
 });
@@ -194,14 +193,17 @@ assert.strictEqual(quoteSettingsRefs['quote-token-addresses'].style.display, 'bl
 assert.strictEqual(quoteSettingsRefs['modal-swap-quote'].style.display, 'none');
 assert.strictEqual(quoteSettingsRefs['quote-source-pref'].disabled, true);
 assert.strictEqual(quoteSettingsRefs['quote-source-pref'].value, 'LI.FI');
-assert.strictEqual(quoteSettingsRefs['kyber-only-direct-pools'].checked, true);
+assert.strictEqual(quoteSettingsRefs['kyber-excluded-sources'].value, 'uniswap-v3 balancer-v3');
 assert.strictEqual(quoteSettingsRefs['show-inverse-quote'].checked, true);
-assert.strictEqual(applyKyberDirectPoolsControlVisibility(quoteSettingsRefs, true), true);
-assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-group'].style.display, 'flex');
-assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-note'].style.display, 'block');
-assert.strictEqual(applyKyberDirectPoolsControlVisibility(quoteSettingsRefs, false), false);
-assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-group'].style.display, 'none');
-assert.strictEqual(quoteSettingsRefs['kyber-direct-pools-note'].style.display, 'none');
+assert.strictEqual(applyKyberExcludedSourcesControlState(quoteSettingsRefs, {
+  visible: true,
+  value: 'curve,uniswap-v3'
+}), true);
+assert.strictEqual(quoteSettingsRefs['kyber-excluded-sources-group'].style.display, 'block');
+assert.strictEqual(quoteSettingsRefs['kyber-excluded-sources'].value, 'curve,uniswap-v3');
+assert.strictEqual(applyKyberExcludedSourcesControlState(quoteSettingsRefs, { visible: false, value: '' }), false);
+assert.strictEqual(quoteSettingsRefs['kyber-excluded-sources-group'].style.display, 'none');
+assert.strictEqual(quoteSettingsRefs['kyber-excluded-sources'].value, '');
 assert.strictEqual(applyQuoteRequestChannelOptionsState(quoteSettingsRefs, {
   visible: true,
   optionsHtml: '<option value="default">默认通道</option><option value="fast">fast</option>',
@@ -217,7 +219,7 @@ assert.strictEqual(quoteSettingsRefs['quote-request-channel'].value, '');
 
 assert.deepStrictEqual(readQuoteSettingsFormValues(quoteSettingsRefs), {
   sourceValue: 'LI.FI',
-  kyberOnlyDirectPools: true,
+  kyberExcludedSourcesInput: '',
   showInverse: true,
   requestChannelId: ''
 });

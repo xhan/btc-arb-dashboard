@@ -7,6 +7,8 @@ const {
   buildQuoteSettingsModalViewState,
   buildQuoteSettingsModalWritePlan,
   buildQuoteSettingsUpdatePlan,
+  formatKyberExcludedSourcesInput,
+  parseKyberExcludedSourcesInput,
   buildSettingsIntervalWritePlan,
   buildSettingsIntervalsFromFormValues,
   readAddCategoryFormValues,
@@ -327,16 +329,26 @@ assert.deepStrictEqual(
   readQuoteSettingsFormValues({
     readValue: (id) => ({
       'quote-source-pref': '0x',
+      'kyber-excluded-sources': 'curve, uniswap-v3 balancer-v3',
       'quote-request-channel': 'fast'
     }[id] || ''),
-    readChecked: (id) => id === 'kyber-only-direct-pools'
+    readChecked: (id) => id === 'show-inverse-quote'
   }),
   {
     sourceValue: '0x',
-    kyberOnlyDirectPools: true,
-    showInverse: false,
+    kyberExcludedSourcesInput: 'curve, uniswap-v3 balancer-v3',
+    showInverse: true,
     requestChannelId: 'fast'
   }
+);
+
+assert.deepStrictEqual(
+  parseKyberExcludedSourcesInput(' curve, uniswap-v3   balancer-v3,curve '),
+  ['curve', 'uniswap-v3', 'balancer-v3']
+);
+assert.strictEqual(
+  formatKyberExcludedSourcesInput([' curve ', 'uniswap-v3', 'curve']),
+  'curve uniswap-v3'
 );
 
 assert.deepStrictEqual(
@@ -448,7 +460,7 @@ const modalViewState = buildQuoteSettingsModalViewState({
     toToken: '0xto',
     preferredSource: '0x',
     showInverse: true,
-    kyberOnlyDirectPools: true
+    kyberExcludedSources: ['curve', 'uniswap-v3']
   },
   monitorState: {
     fromSymbol: 'WETH',
@@ -469,10 +481,12 @@ assert.deepStrictEqual(modalViewState, {
   sourceSelect: {
     visible: true,
     value: '0x',
-    disabled: false,
-    kyberOnlyDirectPoolsSource: '0x'
+    disabled: false
   },
-  kyberOnlyDirectPoolsChecked: true,
+  kyberExcludedSources: {
+    visible: false,
+    value: 'curve uniswap-v3'
+  },
   inverse: {
     visible: true,
     checked: true
@@ -490,6 +504,7 @@ assert.deepStrictEqual(buildQuoteSettingsModalWritePlan(modalViewState), {
   display: [
     { id: 'quote-token-addresses', display: 'block' },
     { id: 'source-select-group', display: 'block' },
+    { id: 'kyber-excluded-sources-group', display: 'none' },
     { id: 'inverse-toggle-group', display: 'flex' },
     { id: 'modal-swap-quote', display: 'block' },
     { id: 'modal-delete-quote', display: 'block' }
@@ -498,13 +513,12 @@ assert.deepStrictEqual(buildQuoteSettingsModalWritePlan(modalViewState), {
     { id: 'quote-source-pref', disabled: false }
   ],
   value: [
-    { id: 'quote-source-pref', value: '0x' }
+    { id: 'quote-source-pref', value: '0x' },
+    { id: 'kyber-excluded-sources', value: 'curve uniswap-v3' }
   ],
   checked: [
-    { id: 'kyber-only-direct-pools', checked: true },
     { id: 'show-inverse-quote', checked: true }
-  ],
-  kyberOnlyDirectPoolsSource: '0x'
+  ]
 });
 
 assert.deepStrictEqual(
@@ -517,8 +531,7 @@ assert.deepStrictEqual(
   {
     visible: true,
     value: 'LI.FI',
-    disabled: true,
-    kyberOnlyDirectPoolsSource: ''
+    disabled: true
   }
 );
 assert.strictEqual(
@@ -535,11 +548,12 @@ assert.deepStrictEqual(
       chain: 'ethereum',
       preferredSource: 'Kyber',
       kyberOnlyDirectPools: true,
+      kyberExcludedSources: ['curve'],
       showInverse: true,
       requestChannelId: 'fast'
     },
-    sourceValue: '0x',
-    kyberOnlyDirectPools: false,
+    sourceValue: 'Auto',
+    kyberExcludedSourcesInput: 'uniswap-v3, balancer-v3 uniswap-v3',
     showInverse: false,
     requestChannelEnabled: true,
     requestChannelId: 'default',
@@ -548,7 +562,8 @@ assert.deepStrictEqual(
   }),
   {
     updates: {
-      preferredSource: '0x',
+      preferredSource: 'Auto',
+      kyberExcludedSources: ['uniswap-v3', 'balancer-v3'],
       showInverse: false
     },
     deletes: ['kyberOnlyDirectPools', 'requestChannelId'],
@@ -561,10 +576,11 @@ assert.deepStrictEqual(
     quote: {
       chain: 'ethereum',
       preferredSource: 'Kyber',
+      kyberExcludedSources: ['curve'],
       showInverse: true
     },
     sourceValue: 'Kyber',
-    kyberOnlyDirectPools: true,
+    kyberExcludedSourcesInput: 'curve',
     showInverse: true,
     requestChannelEnabled: false,
     requestChannelId: '',
@@ -576,7 +592,7 @@ assert.deepStrictEqual(
       preferredSource: 'LI.FI',
       showInverse: false
     },
-    deletes: ['kyberOnlyDirectPools'],
+    deletes: ['kyberExcludedSources'],
     shouldQueueRefreshQuote: true,
     requestChannelChanged: false
   }
@@ -587,10 +603,11 @@ assert.deepStrictEqual(
       chain: 'plasma',
       preferredSource: 'Kyber',
       kyberOnlyDirectPools: false,
+      kyberExcludedSources: ['curve'],
       showInverse: false
     },
     sourceValue: '0x',
-    kyberOnlyDirectPools: false,
+    kyberExcludedSourcesInput: '',
     showInverse: false,
     requestChannelEnabled: false,
     isCrossChainQuote: () => false,
@@ -598,8 +615,8 @@ assert.deepStrictEqual(
   }),
   {
     updates: {},
-    deletes: [],
-    shouldQueueRefreshQuote: false,
+    deletes: ['kyberOnlyDirectPools', 'kyberExcludedSources'],
+    shouldQueueRefreshQuote: true,
     requestChannelChanged: false
   }
 );

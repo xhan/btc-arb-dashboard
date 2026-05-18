@@ -301,9 +301,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('class="settings-grid"'));
     assert.ok(response.body.includes('id="quote-request-channel"'));
     assert.ok(response.body.includes('请求通道'));
-    assert.ok(response.body.includes('id="kyber-only-direct-pools"'));
-    assert.ok(response.body.includes('Kyber 仅直连池'));
-    assert.ok(response.body.includes('.quote-direct-badge'));
+    assert.ok(response.body.includes('id="kyber-excluded-sources"'));
+    assert.ok(response.body.includes('ExcludedSources'));
+    assert.ok(!response.body.includes('Kyber 仅直连池'));
+    assert.ok(!response.body.includes('.quote-direct-badge'));
     assert.ok(response.body.includes('quote-channel-tag'));
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
     assert.ok(!response.body.includes('id="path-alert-window"'));
@@ -625,7 +626,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardModalUtilsResponse.body.includes('function showModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function hideModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
-    assert.ok(dashboardModalUtilsResponse.body.includes('function applyKyberDirectPoolsControlVisibility(refs = {}, visible = false)'));
+    assert.ok(dashboardModalUtilsResponse.body.includes('function applyKyberExcludedSourcesControlState(refs = {}, state = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteRequestChannelOptionsState(refs = {}, state = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function readQuoteSettingsFormValues(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applySettingsIntervalWritePlan(refs = {}, writePlan = [])'));
@@ -905,13 +906,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("channels: [{ id: 'default', name: '默认通道'"));
     assert.ok(!appJsResponse.body.includes('function requestBackendConfigRefresh('));
     assert.ok(appJsResponse.body.includes('await dashboardApiClient.requestBackendConfigRefresh();'));
-    assert.ok(dashboardActionControllerResponse.body.includes('function syncKyberOnlyDirectPoolsControl(quote, selectedSource)'));
-    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyKyberDirectPoolsControlVisibility(deps.quoteSettingsModalElements, shouldShow)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('function syncKyberExcludedSourcesControl(quote, selectedSource)'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyKyberExcludedSourcesControlState(deps.quoteSettingsModalElements, {'));
     assert.ok(!appJsResponse.body.includes("kyberDirectPoolsGroup.style.display = shouldShow ? 'flex' : 'none'"));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyQuoteRequestChannelOptionsState(deps.quoteSettingsModalElements, {'));
     assert.ok(!appJsResponse.body.includes('requestChannelSelectGroup.style.display'));
     assert.ok(!appJsResponse.body.includes('quoteRequestChannelSelect.innerHTML'));
-    assert.ok(quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
+    assert.ok(!quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes("function buildQuoteAlertDisplayLabel(quote, state = {}, direction = 'forward')"));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildInverseQuoteDisplayTextForState(quote, state, options = {})'));
@@ -924,7 +925,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildCexOrderbookTooltipHtml(orderbook)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteHoverTooltipState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource)'));
-    assert.ok(quoteDisplayUtilsResponse.body.includes('quote-direct-badge'));
+    assert.ok(!quoteDisplayUtilsResponse.body.includes('quote-direct-badge'));
     const quoteDisplayExportBlock = quoteDisplayUtilsResponse.body.match(/return \{\n    buildCexOrderbookSummary,[\s\S]*?\n  \};/);
     assert.ok(quoteDisplayExportBlock);
     assert.ok(!quoteDisplayExportBlock[0].includes('QUOTE_DISPLAY_MODE_AMOUNT'));
@@ -1017,7 +1018,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('moduleEl.innerHTML = renderer.renderCategoryModuleShell({'));
     assert.ok(!appJsResponse.body.includes('function getCexPairLabel(quote, state)'));
     assert.ok(!appJsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
-    assert.ok(dashboardRendererResponse.body.includes('updates.kyberOnlyDirectPools = true;'));
+    assert.ok(!dashboardRendererResponse.body.includes('updates.kyberOnlyDirectPools = true;'));
+    assert.ok(dashboardRendererResponse.body.includes('updates.kyberExcludedSources = nextKyberExcludedSources;'));
     assert.ok(arbPanelControllerResponse.body.includes('const arbPanelUpdateRuntime = arbRuntimeMemoryUtils.createArbPanelUpdateRuntime({'));
     assert.ok(appJsResponse.body.includes('scheduleArbPanelUpdate,'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.scheduleArbPanelUpdate();'));

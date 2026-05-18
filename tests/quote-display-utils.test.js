@@ -218,14 +218,6 @@ assert.strictEqual(
     { chain: 'ethereum', kyberOnlyDirectPools: true, preferredSource: 'Auto' },
     { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }
   ),
-  'cb&lt;BTC&gt;/WBTC<span class="quote-direct-badge" title="Kyber 仅直连池"></span>'
-);
-
-assert.strictEqual(
-  buildQuotePairLabelHtml(
-    { chain: 'ethereum', kyberOnlyDirectPools: true, preferredSource: '0x' },
-    { fromSymbol: 'cb<BTC>', toSymbol: 'WBTC' }
-  ),
   'cb&lt;BTC&gt;/WBTC'
 );
 

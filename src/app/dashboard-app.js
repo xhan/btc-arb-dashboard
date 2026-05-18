@@ -893,7 +893,7 @@
         setQuotePausedState,
         showConfirmation,
         swapQuoteTokens,
-        syncKyberOnlyDirectPoolsControl,
+        syncKyberExcludedSourcesControl,
         toggleCategoryPause,
         toggleQuotePause,
         updateCategoryPauseButtonState
@@ -969,7 +969,7 @@
         saveData,
         showConfirmation,
         swapQuoteTokens,
-        syncKyberOnlyDirectPoolsControl,
+        syncKyberExcludedSourcesControl,
         updateCategoryPauseButtonState,
         updateRequestChannelTagForQuote,
         windowImpl: window

@@ -41,9 +41,8 @@
     const quoteToTokenLineEl = getById(documentImpl, 'quote-to-token-line');
     const quoteSourceSelect = getById(documentImpl, 'quote-source-pref');
     const quoteSourceGroup = getById(documentImpl, 'source-select-group');
-    const kyberDirectPoolsGroup = getById(documentImpl, 'kyber-direct-pools-group');
-    const kyberDirectPoolsNote = getById(documentImpl, 'kyber-direct-pools-note');
-    const kyberOnlyDirectPoolsInput = getById(documentImpl, 'kyber-only-direct-pools');
+    const kyberExcludedSourcesGroup = getById(documentImpl, 'kyber-excluded-sources-group');
+    const kyberExcludedSourcesInput = getById(documentImpl, 'kyber-excluded-sources');
     const inverseToggleGroup = getById(documentImpl, 'inverse-toggle-group');
     const inverseCheckbox = getById(documentImpl, 'show-inverse-quote');
     const manualSaveBtn = getById(documentImpl, 'manual-save-btn');
@@ -123,9 +122,8 @@
       quoteToTokenLineEl,
       quoteSourceSelect,
       quoteSourceGroup,
-      kyberDirectPoolsGroup,
-      kyberDirectPoolsNote,
-      kyberOnlyDirectPoolsInput,
+      kyberExcludedSourcesGroup,
+      kyberExcludedSourcesInput,
       inverseToggleGroup,
       inverseCheckbox,
       manualSaveBtn,
@@ -223,9 +221,8 @@
         'quote-to-token-line': quoteToTokenLineEl,
         'source-select-group': quoteSourceGroup,
         'quote-source-pref': quoteSourceSelect,
-        'kyber-direct-pools-group': kyberDirectPoolsGroup,
-        'kyber-direct-pools-note': kyberDirectPoolsNote,
-        'kyber-only-direct-pools': kyberOnlyDirectPoolsInput,
+        'kyber-excluded-sources-group': kyberExcludedSourcesGroup,
+        'kyber-excluded-sources': kyberExcludedSourcesInput,
         'inverse-toggle-group': inverseToggleGroup,
         'show-inverse-quote': inverseCheckbox,
         'modal-swap-quote': modalSwapQuoteBtn,

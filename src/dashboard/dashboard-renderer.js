@@ -49,6 +49,32 @@
     Object.freeze({ key: 'starknet', id: 'setting-starknet-interval' })
   ]);
 
+  function parseKyberExcludedSourcesInput(value) {
+    const rawItems = Array.isArray(value)
+      ? value
+      : String(value || '').split(/[\s,]+/);
+    const seen = new Set();
+    const sources = [];
+
+    rawItems.forEach((item) => {
+      const source = String(item || '').trim();
+      if (!source || seen.has(source)) return;
+      seen.add(source);
+      sources.push(source);
+    });
+
+    return sources;
+  }
+
+  function formatKyberExcludedSourcesInput(value) {
+    return parseKyberExcludedSourcesInput(value).join(' ');
+  }
+
+  function areStringArraysEqual(left, right) {
+    if (left.length !== right.length) return false;
+    return left.every((item, index) => item === right[index]);
+  }
+
   function renderQuoteItemShell(config = {}) {
     const quoteId = escapeAttr(config.quoteId);
     const categoryId = escapeAttr(config.categoryId);
@@ -325,8 +351,7 @@
     const sourceSelect = {
       visible: false,
       value: '',
-      disabled: false,
-      kyberOnlyDirectPoolsSource: ''
+      disabled: false
     };
     if (isCrossChain) {
       sourceSelect.visible = true;
@@ -335,8 +360,10 @@
     } else if (isEvmChain(quote.chain) && String(quote.chain || '').toLowerCase() !== 'plasma') {
       sourceSelect.visible = true;
       sourceSelect.value = quote.preferredSource || 'Kyber';
-      sourceSelect.kyberOnlyDirectPoolsSource = sourceSelect.value;
     }
+    const kyberExcludedSourcesVisible = sourceSelect.visible
+      && !sourceSelect.disabled
+      && (sourceSelect.value === 'Kyber' || sourceSelect.value === 'Auto');
 
     const showInverse = !(isCex || isCrossChain);
     return {
@@ -344,7 +371,10 @@
       subtitle: subtitle || '...',
       tokenAddresses,
       sourceSelect,
-      kyberOnlyDirectPoolsChecked: quote.kyberOnlyDirectPools === true,
+      kyberExcludedSources: {
+        visible: kyberExcludedSourcesVisible,
+        value: formatKyberExcludedSourcesInput(quote.kyberExcludedSources)
+      },
       inverse: {
         visible: showInverse,
         checked: !!quote.showInverse
@@ -357,6 +387,7 @@
   function buildQuoteSettingsModalWritePlan(viewState = {}) {
     const tokenAddresses = viewState.tokenAddresses || {};
     const sourceSelect = viewState.sourceSelect || {};
+    const kyberExcludedSources = viewState.kyberExcludedSources || {};
     const inverse = viewState.inverse || {};
     const text = [
       { id: 'modal-title', text: viewState.title || '' },
@@ -369,9 +400,7 @@
       );
     }
 
-    const checked = [
-      { id: 'kyber-only-direct-pools', checked: viewState.kyberOnlyDirectPoolsChecked === true }
-    ];
+    const checked = [];
     if (inverse.visible) {
       checked.push({ id: 'show-inverse-quote', checked: inverse.checked === true });
     }
@@ -381,6 +410,7 @@
       display: [
         { id: 'quote-token-addresses', display: tokenAddresses.visible ? 'block' : 'none' },
         { id: 'source-select-group', display: sourceSelect.visible ? 'block' : 'none' },
+        { id: 'kyber-excluded-sources-group', display: kyberExcludedSources.visible ? 'block' : 'none' },
         { id: 'inverse-toggle-group', display: inverse.visible ? 'flex' : 'none' },
         { id: 'modal-swap-quote', display: viewState.swapVisible ? 'block' : 'none' },
         { id: 'modal-delete-quote', display: viewState.deleteVisible ? 'block' : 'none' }
@@ -388,11 +418,11 @@
       disabled: [
         { id: 'quote-source-pref', disabled: sourceSelect.disabled === true }
       ],
-      value: sourceSelect.value
-        ? [{ id: 'quote-source-pref', value: sourceSelect.value }]
-        : [],
-      checked,
-      kyberOnlyDirectPoolsSource: sourceSelect.kyberOnlyDirectPoolsSource || ''
+      value: [
+        ...(sourceSelect.value ? [{ id: 'quote-source-pref', value: sourceSelect.value }] : []),
+        { id: 'kyber-excluded-sources', value: kyberExcludedSources.value || '' }
+      ],
+      checked
     };
   }
 
@@ -416,19 +446,38 @@
       shouldQueueRefreshQuote = true;
     }
 
+    function deleteIfPresent(key) {
+      if (!Object.prototype.hasOwnProperty.call(quote, key)) return;
+      deletes.push(key);
+      shouldQueueRefreshQuote = true;
+    }
+
     if (isCrossChain) {
       setIfChanged('preferredSource', 'LI.FI');
     } else if (isEvmChain(quote.chain) && String(quote.chain || '').toLowerCase() !== 'plasma') {
-      setIfChanged('preferredSource', config.sourceValue);
+      setIfChanged('preferredSource', config.sourceValue || quote.preferredSource || 'Kyber');
     }
 
-    const kyberOnlyDirectPools = !isCrossChain && config.kyberOnlyDirectPools === true;
-    if (quote.kyberOnlyDirectPools !== kyberOnlyDirectPools) {
-      if (kyberOnlyDirectPools) {
-        updates.kyberOnlyDirectPools = true;
-      } else {
-        deletes.push('kyberOnlyDirectPools');
+    deleteIfPresent('kyberOnlyDirectPools');
+
+    const selectedSource = String(config.sourceValue || quote.preferredSource || 'Kyber').trim();
+    const supportsKyberSourceFilter = !isCrossChain
+      && isEvmChain(quote.chain)
+      && String(quote.chain || '').toLowerCase() !== 'plasma'
+      && (selectedSource === 'Kyber' || selectedSource === 'Auto');
+    const previousKyberExcludedSources = parseKyberExcludedSourcesInput(quote.kyberExcludedSources);
+    const nextKyberExcludedSources = supportsKyberSourceFilter
+      ? parseKyberExcludedSourcesInput(config.kyberExcludedSourcesInput)
+      : [];
+    const hasKyberExcludedSources = Object.prototype.hasOwnProperty.call(quote, 'kyberExcludedSources');
+
+    if (nextKyberExcludedSources.length > 0) {
+      if (!areStringArraysEqual(previousKyberExcludedSources, nextKyberExcludedSources)) {
+        updates.kyberExcludedSources = nextKyberExcludedSources;
+        shouldQueueRefreshQuote = true;
       }
+    } else if (hasKyberExcludedSources) {
+      deletes.push('kyberExcludedSources');
       shouldQueueRefreshQuote = true;
     }
 
@@ -470,7 +519,7 @@
       : () => false;
     return {
       sourceValue: readValue('quote-source-pref'),
-      kyberOnlyDirectPools: readChecked('kyber-only-direct-pools'),
+      kyberExcludedSourcesInput: readValue('kyber-excluded-sources'),
       showInverse: readChecked('show-inverse-quote'),
       requestChannelId: readValue('quote-request-channel')
     };
@@ -613,6 +662,8 @@
     buildQuoteSettingsUpdatePlan,
     buildSettingsIntervalWritePlan,
     buildSettingsIntervalsFromFormValues,
+    formatKyberExcludedSourcesInput,
+    parseKyberExcludedSourcesInput,
     readAddCategoryFormValues,
     readQuoteSettingsFormValues,
     readSettingsIntervalFormValues,

@@ -20,14 +20,16 @@
       return typeof deps.getArbDetailState === 'function' ? deps.getArbDetailState() : {};
     }
 
-    function syncKyberOnlyDirectPoolsControl(quote, selectedSource) {
+    function syncKyberExcludedSourcesControl(quote, selectedSource) {
       const shouldShow = Boolean(
         quote
         && deps.isEvmChain(quote.chain)
-        && quote.chain.toLowerCase() !== 'plasma'
+        && String(quote.chain || '').toLowerCase() !== 'plasma'
         && (selectedSource === 'Kyber' || selectedSource === 'Auto')
       );
-      deps.dashboardModalUtils.applyKyberDirectPoolsControlVisibility(deps.quoteSettingsModalElements, shouldShow);
+      deps.dashboardModalUtils.applyKyberExcludedSourcesControlState(deps.quoteSettingsModalElements, {
+        visible: shouldShow
+      });
     }
 
     function updateCategoryPauseButtonState(categoryId) {
@@ -221,7 +223,7 @@
       });
       const writePlan = deps.dashboardRenderer.buildQuoteSettingsModalWritePlan(modalState);
       deps.dashboardModalUtils.applyQuoteSettingsModalWritePlan(deps.quoteSettingsModalElements, writePlan);
-      syncKyberOnlyDirectPoolsControl(quote, writePlan.kyberOnlyDirectPoolsSource);
+      syncKyberExcludedSourcesControl(quote, modalState.sourceSelect ? modalState.sourceSelect.value : '');
 
       if (deps.requestChannelUtils.supportsRequestChannelForQuote(quote)) {
         const requestChannelOptions = getRequestChannelOptions();
@@ -322,7 +324,7 @@
       setQuotePausedState,
       showConfirmation,
       swapQuoteTokens,
-      syncKyberOnlyDirectPoolsControl,
+      syncKyberExcludedSourcesControl,
       toggleCategoryPause,
       toggleQuotePause,
       updateCategoryPauseButtonState

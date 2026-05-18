@@ -241,19 +241,10 @@
     return getCexPairLabel(quote, state);
   }
 
-  function shouldShowKyberDirectPoolsBadge(quote) {
-    if (!quote || quote.kyberOnlyDirectPools !== true) return false;
-    const preferredSource = String(quote.preferredSource || 'Kyber').trim();
-    return preferredSource === 'Kyber' || preferredSource === 'Auto';
-  }
-
   function buildQuotePairLabelHtml(quote, state) {
     const label = getQuotePairLabel(quote, state);
     if (!label) return '';
-    const badgeHtml = shouldShowKyberDirectPoolsBadge(quote)
-      ? '<span class="quote-direct-badge" title="Kyber 仅直连池"></span>'
-      : '';
-    return `${escapeHtml(label)}${badgeHtml}`;
+    return escapeHtml(label);
   }
 
   function buildQuoteAlertDisplayLabel(quote, state = {}, direction = 'forward') {

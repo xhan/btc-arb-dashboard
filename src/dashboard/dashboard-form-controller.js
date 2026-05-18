@@ -74,7 +74,7 @@
       const updatePlan = deps.dashboardRenderer.buildQuoteSettingsUpdatePlan({
         quote,
         sourceValue: formValues.sourceValue,
-        kyberOnlyDirectPools: formValues.kyberOnlyDirectPools,
+        kyberExcludedSourcesInput: formValues.kyberExcludedSourcesInput,
         showInverse: formValues.showInverse,
         requestChannelEnabled: deps.requestChannelUtils.supportsRequestChannelForQuote(quote) && Boolean(deps.quoteRequestChannelSelect),
         requestChannelId: formValues.requestChannelId,
@@ -99,7 +99,7 @@
     function handleQuoteSourceChange() {
       const editingQuote = deps.quoteSettingsSelectionRuntime.get();
       const currentQuote = editingQuote && editingQuote.quote ? editingQuote.quote : null;
-      deps.syncKyberOnlyDirectPoolsControl(currentQuote, deps.quoteSourceSelect ? deps.quoteSourceSelect.value : '');
+      deps.syncKyberExcludedSourcesControl(currentQuote, deps.quoteSourceSelect ? deps.quoteSourceSelect.value : '');
     }
 
     function handleAddCategoryModalClick(event) {

@@ -64,10 +64,13 @@
     });
   }
 
-  function applyKyberDirectPoolsControlVisibility(refs = {}, visible = false) {
-    setDisplay(refs['kyber-direct-pools-group'], visible ? 'flex' : 'none');
-    setDisplay(refs['kyber-direct-pools-note'], visible ? 'block' : 'none');
-    return visible === true;
+  function applyKyberExcludedSourcesControlState(refs = {}, state = {}) {
+    const visible = state.visible === true;
+    setDisplay(refs['kyber-excluded-sources-group'], visible ? 'block' : 'none');
+    if (Object.prototype.hasOwnProperty.call(state, 'value')) {
+      setElementValue(refs['kyber-excluded-sources'], state.value);
+    }
+    return visible;
   }
 
   function applyQuoteRequestChannelOptionsState(refs = {}, state = {}) {
@@ -173,7 +176,7 @@
   function readQuoteSettingsFormValues(refs = {}) {
     return {
       sourceValue: readElementValue(refs['quote-source-pref']),
-      kyberOnlyDirectPools: Boolean(refs['kyber-only-direct-pools'] && refs['kyber-only-direct-pools'].checked),
+      kyberExcludedSourcesInput: readElementValue(refs['kyber-excluded-sources']),
       showInverse: Boolean(refs['show-inverse-quote'] && refs['show-inverse-quote'].checked),
       requestChannelId: readElementValue(refs['quote-request-channel'])
     };
@@ -308,7 +311,7 @@
 
   return {
     applyAddQuoteFormViewState,
-    applyKyberDirectPoolsControlVisibility,
+    applyKyberExcludedSourcesControlState,
     applyQuoteRequestChannelOptionsState,
     applyQuoteSettingsModalWritePlan,
     applySettingsIntervalWritePlan,

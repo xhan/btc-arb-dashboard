@@ -288,17 +288,6 @@
             background: rgba(245, 158, 11, 0.12);
             color: var(--text-color);
         }
-        .quote-direct-badge {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            margin-left: 5px;
-            border-radius: 999px;
-            background: #38a169;
-            box-shadow: 0 0 0 1px rgba(56, 161, 105, 0.14);
-            vertical-align: middle;
-            opacity: 0.8;
-        }
         .quote-pair-label:empty { display: none; }
         
         .trend-arrow {
@@ -1806,12 +1795,12 @@
                 </div>
             </div>
 
-            <div class="checkbox-group" id="kyber-direct-pools-group" style="display:none;">
-                <input type="checkbox" id="kyber-only-direct-pools">
-                <label for="kyber-only-direct-pools">Kyber 仅直连池</label>
-            </div>
-            <div id="kyber-direct-pools-note" class="quote-settings-note" style="display:none; margin-top:-8px; margin-bottom:12px;">
-                仅对 Kyber 生效。开启后会加上 `onlyDirectPools=true`，重启后端后生效。
+            <div class="form-group" id="kyber-excluded-sources-group" style="display:none;">
+                <label for="kyber-excluded-sources">ExcludedSources</label>
+                <input type="text" id="kyber-excluded-sources" placeholder="例如: uniswap-v3, balancer-v3">
+                <div class="quote-settings-note" style="margin-top:4px;">
+                    仅对 Kyber / Auto 中的 Kyber 生效。多个 source 可用空格或逗号分割，保存后下一次请求立即生效。
+                </div>
             </div>
 
             <div class="checkbox-group" id="inverse-toggle-group">

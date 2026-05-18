@@ -26,7 +26,7 @@ function createDashboardRenderer(overrides = {}) {
     resolveAddQuoteModalClickAction: () => ({ type: 'none' }),
     buildQuoteSettingsUpdatePlan: () => ({
       updates: { preferredSource: 'Auto', showInverse: false },
-      deletes: ['kyberOnlyDirectPools'],
+      deletes: ['kyberOnlyDirectPools', 'kyberExcludedSources'],
       requestChannelChanged: true,
       shouldQueueRefreshQuote: true
     }),
@@ -67,7 +67,7 @@ function createBaseDeps(overrides = {}) {
     dashboardModalUtils: {
       readQuoteSettingsFormValues: () => ({
         sourceValue: 'Auto',
-        kyberOnlyDirectPools: true,
+        kyberExcludedSourcesInput: 'curve uniswap-v3',
         showInverse: false,
         requestChannelId: 'fast'
       }),
@@ -116,7 +116,7 @@ function createBaseDeps(overrides = {}) {
       callback();
     },
     swapQuoteTokens: (categoryId, quoteId) => calls.push(['swapQuoteTokens', categoryId, quoteId]),
-    syncKyberOnlyDirectPoolsControl: (quote, source) => calls.push(['syncKyberOnlyDirectPoolsControl', quote && quote.id, source]),
+    syncKyberExcludedSourcesControl: (quote, source) => calls.push(['syncKyberExcludedSourcesControl', quote && quote.id, source]),
     updateCategoryPauseButtonState: (categoryId) => calls.push(['updateCategoryPauseButtonState', categoryId]),
     updateRequestChannelTagForQuote: (quote) => calls.push(['updateRequestChannelTagForQuote', quote.id]),
     windowImpl: {
@@ -129,7 +129,7 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
-  const quote = { id: 101, preferredSource: 'Kyber', showInverse: true, kyberOnlyDirectPools: true };
+  const quote = { id: 101, preferredSource: 'Kyber', showInverse: true, kyberOnlyDirectPools: true, kyberExcludedSources: ['curve'] };
   const { calls, deps } = createBaseDeps({
     deps: {
       dashboardRenderer: {

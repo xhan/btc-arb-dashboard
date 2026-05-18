@@ -72,7 +72,7 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
     fromToken: '0xfrom',
     toToken: '0xto',
     amount: 1,
-    kyberOnlyDirectPools: true,
+    kyberExcludedSources: ['uniswap-v3', ' balancer-v3 ', 'uniswap-v3'],
     requestContext: {
       channelId: 'hk-1',
       httpProxy: 'http://127.0.0.1:18001',
@@ -85,7 +85,7 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
   assert.strictEqual(kyberChannelResult.source, 'Kyber');
   assert.strictEqual(
     kyberChannelRequests[0].url,
-    'https://aggregator-api.kyberswap.com/ethereum/api/v1/routes?tokenIn=0xfrom&tokenOut=0xto&amountIn=100000000&onlyDirectPools=true'
+    'https://aggregator-api.kyberswap.com/ethereum/api/v1/routes?tokenIn=0xfrom&tokenOut=0xto&amountIn=100000000&excludedSources=uniswap-v3%2Cbalancer-v3'
   );
   assert.deepStrictEqual(kyberChannelRequests[0].options, {
     headers: { 'X-Client-Id': 'hk-client' }

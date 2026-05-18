@@ -25,7 +25,6 @@ module.exports = {
           "toToken": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
           "preferredSource": "Kyber",
           "showInverse": true,
-          "kyberOnlyDirectPools": true,
           "requestChannelId": "ch1"
         },
         {
@@ -426,8 +425,7 @@ module.exports = {
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x9BE89D2a4cd102D8Fecc6BF9dA793be995C22541",
           "showInverse": true,
-          "requestChannelId": "ch2",
-          "kyberOnlyDirectPools": true
+          "requestChannelId": "ch2"
         },
         {
           "id": 1766413543985,
@@ -549,8 +547,7 @@ module.exports = {
           "preferredSource": "Kyber",
           "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "toToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
-          "showInverse": true,
-          "kyberOnlyDirectPools": true
+          "showInverse": true
         },
         {
           "id": 1778105611291,
@@ -605,7 +602,6 @@ module.exports = {
           "toToken": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           "showInverse": true,
           "requestChannelId": "ch1",
-          "kyberOnlyDirectPools": true,
           "paused": false
         },
         {
@@ -628,7 +624,6 @@ module.exports = {
           "toToken": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
           "showInverse": true,
           "requestChannelId": "ch1",
-          "kyberOnlyDirectPools": true,
           "paused": false
         },
         {

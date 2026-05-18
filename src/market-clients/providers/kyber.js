@@ -1,13 +1,31 @@
 function createKyberClient(deps) {
+  function parseExcludedSources(value) {
+    const rawItems = Array.isArray(value)
+      ? value
+      : String(value || '').split(/[\s,]+/);
+    const seen = new Set();
+    const sources = [];
+
+    rawItems.forEach((item) => {
+      const source = String(item || '').trim();
+      if (!source || seen.has(source)) return;
+      seen.add(source);
+      sources.push(source);
+    });
+
+    return sources;
+  }
+
   function buildKyberRouteUrl(input) {
     const params = new URLSearchParams({
       tokenIn: input.fromToken,
       tokenOut: input.toToken,
       amountIn: input.amountInRaw
     });
+    const excludedSources = parseExcludedSources(input.excludedSources);
 
-    if (input.onlyDirectPools === true) {
-      params.set('onlyDirectPools', 'true');
+    if (excludedSources.length > 0) {
+      params.set('excludedSources', excludedSources.join(','));
     }
 
     return `https://aggregator-api.kyberswap.com/${input.chain}/api/v1/routes?${params.toString()}`;
@@ -37,7 +55,7 @@ function createKyberClient(deps) {
         fromToken,
         toToken,
         amountInRaw,
-        onlyDirectPools: input && input.kyberOnlyDirectPools === true
+        excludedSources: input && input.kyberExcludedSources
       });
       const configMore = requestContext && requestContext.configMore
         ? requestContext.configMore
