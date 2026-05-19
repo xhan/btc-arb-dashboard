@@ -24,7 +24,7 @@ function normalizeAddress(value, fallback) {
 }
 
 function normalizeBrowserProxyOptions(options = {}) {
-  const intervalMs = toPositiveInt(options.intervalMs, 500);
+  const intervalMs = toPositiveInt(options.intervalMs, 800);
   const durationMs = toPositiveInt(options.durationMs, 30 * 60 * 1000);
   return {
     intervalMs,

@@ -20,6 +20,7 @@
       kyber: 170,
       zerox: 110,
       velora: 700,
+      llamaparaswap: 800,
       lifi: 170,
       bybit: 1000,
       binance: 1000,
@@ -184,6 +185,8 @@
     if (isEvmChain(chain)) {
       if (quote.preferredSource === 'Velora') {
         type = 'velora';
+      } else if (quote.preferredSource === 'Llama-ParaSwap') {
+        type = 'llamaparaswap';
       } else if (quote.preferredSource === '0x') {
         type = 'zerox';
       } else if (quote.preferredSource === 'LI.FI') {

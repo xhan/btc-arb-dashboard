@@ -7,6 +7,7 @@ const { createEkuboClient } = require('../src/market-clients/providers/ekubo');
 const { createKyberClient } = require('../src/market-clients/providers/kyber');
 const { createLifiClient } = require('../src/market-clients/providers/lifi');
 const { createVeloraClient } = require('../src/market-clients/providers/velora');
+const { createDefiLlamaProxyClient } = require('../src/market-clients/providers/defillama-proxy');
 const { createZeroXClient } = require('../src/market-clients/providers/zerox');
 const { createCetusClient } = require('../src/market-clients/providers/cetus');
 
@@ -648,6 +649,78 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
   assert.strictEqual(veloraChannelUrl.searchParams.get('includeDEXS'), 'UniswapV3');
   assert.strictEqual(veloraChannelUrl.searchParams.get('otherExchangePrices'), 'true');
   assert.strictEqual(veloraChannelRequests[0].requestContext.channelId, 'hk-1');
+
+  const defillamaRequests = [];
+  const defillama = createDefiLlamaProxyClient({
+    fetchOnce: async (url, options, requestContext) => {
+      defillamaRequests.push({ url, options, requestContext });
+      return {
+        json: async () => ({
+          ok: true,
+          amountReturned: '1995000000',
+          estimatedGas: '123456',
+          ms: 650
+        })
+      };
+    },
+    fromRawAmount: (raw, decimals) => {
+      if (raw === '1995000000' && decimals === 6) return 1995;
+      throw new Error('unexpected defillama fromRawAmount input');
+    },
+    getConfigMore: async () => ({
+      providerSettings: {
+        llamaParaSwapProxyUrl: 'http://127.0.0.1:18081',
+        llamaParaSwapSlippage: '0.5'
+      }
+    }),
+    getEvmProvider: () => ({}),
+    getEvmTokenMeta: async (chain, tokenAddress) => {
+      if (tokenAddress === '0xeth') return { symbol: 'ETH', decimals: 18 };
+      return { symbol: 'USDC', decimals: 6 };
+    },
+    logQuoteRequest: () => {},
+    logQuoteResult: () => {},
+    toRawAmount: () => '1000000000000000000'
+  });
+  const defillamaResult = await defillama.getQuote({
+    chain: 'ethereum',
+    fromToken: '0xeth',
+    toToken: '0xusdc',
+    amount: 1,
+    requestContext: {
+      channelId: 'local-defillama',
+      httpProxy: 'http://127.0.0.1:18001',
+      configMore: {
+        providerSettings: {
+          llamaParaSwapProxyUrl: 'http://127.0.0.1:18082',
+          llamaParaSwapSlippage: '0.3'
+        }
+      }
+    }
+  });
+  assert.deepStrictEqual(defillamaResult, {
+    fromSymbol: 'ETH',
+    toSymbol: 'USDC',
+    amountOut: 1995,
+    raw_price: 1995,
+    source: 'Llama-ParaSwap',
+    estimatedGas: '123456',
+    latencyMs: 650
+  });
+  assert.strictEqual(defillamaRequests[0].url, 'http://127.0.0.1:18082/quote');
+  assert.strictEqual(defillamaRequests[0].requestContext, undefined);
+  assert.deepStrictEqual(JSON.parse(defillamaRequests[0].options.body), {
+    protocol: 'ParaSwap',
+    chain: 'ethereum',
+    fromToken: '0xeth',
+    fromDecimals: 18,
+    fromSymbol: 'ETH',
+    toToken: '0xusdc',
+    toDecimals: 6,
+    toSymbol: 'USDC',
+    amountRaw: '1000000000000000000',
+    slippage: '0.3'
+  });
 
   const lifiRequests = [];
   const lifi = createLifiClient({

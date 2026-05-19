@@ -54,6 +54,12 @@ const MARKET_QUOTE_ROUTES = [
     logSource: 'VELORA'
   },
   {
+    routePath: '/api/get-llama-paraswap-quote',
+    providerKey: 'llamaParaSwap',
+    sourceKey: 'llamaparaswap',
+    logSource: 'LLAMA_PARASWAP'
+  },
+  {
     routePath: '/api/get-cetus-quote',
     providerKey: 'cetus',
     sourceKey: 'sui',

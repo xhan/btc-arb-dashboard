@@ -18,6 +18,7 @@ const summary = buildQueueSummary({
       quotes: [
         { id: 101, chain: 'ethereum', preferredSource: 'Kyber', showInverse: true },
         { id: 102, chain: 'ethereum', preferredSource: 'Velora', showInverse: false },
+        { id: 108, chain: 'ethereum', preferredSource: 'Llama-ParaSwap', showInverse: false },
         { id: 103, chain: 'Bybit', preferredSource: 'Bybit', showInverse: true },
         { id: 105, chain: 'Binance', preferredSource: 'Binance', showInverse: true },
         { id: 104, chain: 'solana', preferredSource: 'Jupiter', showInverse: true },
@@ -33,12 +34,14 @@ const summary = buildQueueSummary({
 });
 
 assert.strictEqual(DEFAULT_INTERVALS.velora, 700);
+assert.strictEqual(DEFAULT_INTERVALS.llamaparaswap, 800);
 assert.strictEqual(DEFAULT_INTERVALS.binance, 1000);
-assert.strictEqual(summary.totalQuoteCount, 6);
-assert.strictEqual(summary.totalTaskCount, 8);
+assert.strictEqual(summary.totalQuoteCount, 7);
+assert.strictEqual(summary.totalTaskCount, 9);
 
 const kyber = summary.queues.find((item) => item.key === 'kyber');
 const velora = summary.queues.find((item) => item.key === 'velora');
+const llamaParaSwap = summary.queues.find((item) => item.key === 'llamaparaswap');
 const lifi = summary.queues.find((item) => item.key === 'lifi');
 const bybit = summary.queues.find((item) => item.key === 'bybit');
 const binance = summary.queues.find((item) => item.key === 'binance');
@@ -62,6 +65,8 @@ assert.deepStrictEqual(
 );
 assert.strictEqual(velora.intervalMs, 300);
 assert.strictEqual(velora.taskCount, 1);
+assert.strictEqual(llamaParaSwap.intervalMs, 800);
+assert.strictEqual(llamaParaSwap.taskCount, 1);
 assert.strictEqual(lifi.quoteCount, 1);
 assert.strictEqual(lifi.taskCount, 1);
 assert.strictEqual(lifi.inverseTasks, 0);

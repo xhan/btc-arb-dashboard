@@ -10,35 +10,58 @@ const {
 function normalizeConfigMore(rawConfigMore, defaultConfigMore) {
   const base = defaultConfigMore && typeof defaultConfigMore === 'object' ? defaultConfigMore : {};
   const overrides = rawConfigMore && typeof rawConfigMore === 'object' ? rawConfigMore : {};
+  const overrideSettings = overrides.providerSettings && typeof overrides.providerSettings === 'object'
+    ? overrides.providerSettings
+    : overrides;
   const next = {
     ...base
   };
 
-  if ('kyberClientId' in overrides) {
-    next.kyberClientId = String(overrides.kyberClientId || '').trim();
+  if ('kyberClientId' in overrideSettings) {
+    next.kyberClientId = String(overrideSettings.kyberClientId || '').trim();
   }
-  if ('lifiApiKey' in overrides || 'LIFIApiKey' in overrides) {
-    next.lifiApiKey = String(overrides.lifiApiKey || overrides.LIFIApiKey || '').trim();
+  if ('lifiApiKey' in overrideSettings || 'LIFIApiKey' in overrideSettings) {
+    next.lifiApiKey = String(overrideSettings.lifiApiKey || overrideSettings.LIFIApiKey || '').trim();
   }
-  if ('lifiIntegrator' in overrides || 'LIFIIntegrator' in overrides) {
-    next.lifiIntegrator = String(overrides.lifiIntegrator || overrides.LIFIIntegrator || '').trim();
+  if ('lifiIntegrator' in overrideSettings || 'LIFIIntegrator' in overrideSettings) {
+    next.lifiIntegrator = String(overrideSettings.lifiIntegrator || overrideSettings.LIFIIntegrator || '').trim();
   }
-  if ('jupiterApiKey' in overrides) {
-    next.jupiterApiKey = String(overrides.jupiterApiKey || '').trim();
+  if ('jupiterApiKey' in overrideSettings) {
+    next.jupiterApiKey = String(overrideSettings.jupiterApiKey || '').trim();
   }
-  if ('veloraPartner' in overrides) {
-    next.veloraPartner = String(overrides.veloraPartner || '').trim();
+  if ('veloraPartner' in overrideSettings) {
+    next.veloraPartner = String(overrideSettings.veloraPartner || '').trim();
   }
-  if ('veloraIncludeDEXS' in overrides) {
-    next.veloraIncludeDEXS = Array.isArray(overrides.veloraIncludeDEXS)
-      ? overrides.veloraIncludeDEXS.map((item) => String(item || '').trim()).filter(Boolean)
+  if ('veloraIncludeDEXS' in overrideSettings) {
+    next.veloraIncludeDEXS = Array.isArray(overrideSettings.veloraIncludeDEXS)
+      ? overrideSettings.veloraIncludeDEXS.map((item) => String(item || '').trim()).filter(Boolean)
       : [];
   }
-  if ('veloraOtherExchangePrices' in overrides) {
-    next.veloraOtherExchangePrices = overrides.veloraOtherExchangePrices === true;
+  if ('veloraOtherExchangePrices' in overrideSettings) {
+    next.veloraOtherExchangePrices = overrideSettings.veloraOtherExchangePrices === true;
+  }
+  if ('llamaParaSwapProxyUrl' in overrideSettings || 'defillamaProxyUrl' in overrideSettings) {
+    next.llamaParaSwapProxyUrl = String(overrideSettings.llamaParaSwapProxyUrl || overrideSettings.defillamaProxyUrl || '').trim();
+  }
+  if ('llamaParaSwapSlippage' in overrideSettings || 'defillamaProxySlippage' in overrideSettings) {
+    next.llamaParaSwapSlippage = String(overrideSettings.llamaParaSwapSlippage || overrideSettings.defillamaProxySlippage || '').trim();
   }
 
-  return next;
+  return {
+    ...next,
+    providerSettings: {
+      ...(base.providerSettings && typeof base.providerSettings === 'object' ? base.providerSettings : {}),
+      kyberClientId: next.kyberClientId,
+      lifiApiKey: next.lifiApiKey,
+      lifiIntegrator: next.lifiIntegrator,
+      jupiterApiKey: next.jupiterApiKey,
+      veloraPartner: next.veloraPartner,
+      veloraIncludeDEXS: next.veloraIncludeDEXS,
+      veloraOtherExchangePrices: next.veloraOtherExchangePrices,
+      llamaParaSwapProxyUrl: next.llamaParaSwapProxyUrl,
+      llamaParaSwapSlippage: next.llamaParaSwapSlippage
+    }
+  };
 }
 
 function normalizeRequestChannelsConfig(rawData, defaultIntervals = DEFAULT_INTERVALS, defaultConfigMore = {}) {
@@ -47,7 +70,10 @@ function normalizeRequestChannelsConfig(rawData, defaultIntervals = DEFAULT_INTE
     ...channel,
     configMore: normalizeConfigMore(
       channel.id === DEFAULT_REQUEST_CHANNEL_ID ? defaultConfigMore : (rawData && Array.isArray(rawData.channels)
-        ? (rawData.channels.find((item) => item && item.id === channel.id) || {}).configMore
+        ? (() => {
+            const rawChannel = rawData.channels.find((item) => item && item.id === channel.id) || {};
+            return rawChannel.providerSettings || rawChannel.configMore;
+          })()
         : {}),
       defaultConfigMore
     )

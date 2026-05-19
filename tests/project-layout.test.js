@@ -8,6 +8,7 @@ const serverAppJs = fs.readFileSync(path.join(projectRoot, 'src', 'server', 'ser
 const rootAllowedFiles = new Set([
   '.gitignore',
   'LICENSE',
+  'README.md',
   'package-lock.json',
   'package.json',
   'server.js'

@@ -247,20 +247,41 @@ async function runOnce(cdp, httpRequest, timeoutMs) {
     : { ok: false, status: 0, ms: 0, errorMessage: 'empty Runtime.evaluate result' };
 }
 
-function printProgress(result, index, startedAt, options) {
-  const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
+function formatSuccessRate(stats) {
+  const total = (stats.successCount || 0) + (stats.failCount || 0);
+  if (!total) return '0.00%';
+  return `${((stats.successCount || 0) / total * 100).toFixed(2)}%`;
+}
+
+function buildProgressStats(results) {
+  const list = Array.isArray(results) ? results : [];
+  return {
+    successCount: list.filter((item) => item && item.ok).length,
+    failCount: list.filter((item) => !item || !item.ok).length
+  };
+}
+
+function formatProgressLine(result, index, elapsedSec, options, stats = {}) {
   const status = result.ok ? 'OK' : 'FAIL';
   const detail = result.ok
     ? `amountReturned=${result.amountReturned || '-'} gas=${result.estimatedGas || '-'}`
     : result.errorMessage || '-';
-  console.log([
+  return [
     `[${index}/${options.total}]`,
     `elapsed=${elapsedSec}s`,
+    `success=${stats.successCount || 0}`,
+    `fail=${stats.failCount || 0}`,
+    `rate=${formatSuccessRate(stats)}`,
     status,
     `status=${result.status}`,
     `ms=${result.ms}`,
     detail
-  ].join(' | '));
+  ].join(' | ');
+}
+
+function printProgress(result, index, startedAt, options, stats) {
+  const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
+  console.log(formatProgressLine(result, index, elapsedSec, options, stats));
 }
 
 async function main() {
@@ -319,7 +340,7 @@ async function main() {
           fs.appendFileSync(outputPath, `${JSON.stringify(result)}\n`);
 
           if (!result.ok || index % logEvery === 0 || index === 1) {
-            printProgress(result, index, startedAt, options);
+            printProgress(result, index, startedAt, options, buildProgressStats(results));
           }
         })
         .catch((error) => {
@@ -333,7 +354,7 @@ async function main() {
           };
           results.push(result);
           fs.appendFileSync(outputPath, `${JSON.stringify(result)}\n`);
-          printProgress(result, index, startedAt, options);
+          printProgress(result, index, startedAt, options, buildProgressStats(results));
         })
         .finally(() => {
           inFlight.delete(task);
@@ -359,6 +380,7 @@ if (require.main === module) {
 
 module.exports = {
   buildBrowserFetchExpression,
+  formatProgressLine,
   launchChrome,
   parseArgs,
   runOnce

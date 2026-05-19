@@ -18,6 +18,7 @@ const { createJupiterClient } = require('./providers/jupiter');
 const { createKyberClient } = require('./providers/kyber');
 const { createLifiClient } = require('./providers/lifi');
 const { createVeloraClient } = require('./providers/velora');
+const { createDefiLlamaProxyClient } = require('./providers/defillama-proxy');
 const { createZeroXClient } = require('./providers/zerox');
 
 const ERC20_ABI = ['function decimals() view returns (uint8)', 'function symbol() view returns (string)'];
@@ -329,6 +330,19 @@ function createMarketClients(options) {
       zerox: createZeroXClient(providerDeps),
       velora: createVeloraClient({
         apiBaseUrl: 'https://api.paraswap.io/prices/',
+        fetchOnce: options.fetchOnce,
+        fromRawAmount,
+        getConfigMore: options.getConfigMore,
+        getEvmProvider,
+        getEvmTokenMeta,
+        logQuoteRequest: options.logQuoteRequest,
+        logQuoteResult: options.logQuoteResult,
+        toRawAmount
+      }),
+      llamaParaSwap: createDefiLlamaProxyClient({
+        defaultProtocol: 'ParaSwap',
+        defaultProxyUrl: 'http://127.0.0.1:18081',
+        defaultSlippage: '0.5',
         fetchOnce: options.fetchOnce,
         fromRawAmount,
         getConfigMore: options.getConfigMore,

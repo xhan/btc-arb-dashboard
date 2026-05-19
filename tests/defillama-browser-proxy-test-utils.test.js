@@ -5,12 +5,13 @@ const {
   normalizeBrowserProxyOptions,
   summarizeBrowserProxyResults
 } = require('../scripts/defillama-browser-proxy-test-utils');
+const { formatProgressLine } = require('../scripts/defillama-browser-proxy-test');
 
 const defaults = normalizeBrowserProxyOptions({});
 
-assert.strictEqual(defaults.intervalMs, 500);
+assert.strictEqual(defaults.intervalMs, 800);
 assert.strictEqual(defaults.durationMs, 30 * 60 * 1000);
-assert.strictEqual(defaults.total, 3600);
+assert.strictEqual(defaults.total, 2250);
 assert.strictEqual(defaults.timeoutMs, 10000);
 assert.strictEqual(defaults.protocol, 'ParaSwap');
 assert.strictEqual(defaults.chain, 'ethereum');
@@ -86,3 +87,15 @@ assert.strictEqual(summary.failCount, 1);
 assert.strictEqual(summary.successRate, 0.6667);
 assert.strictEqual(summary.avgMs, 200);
 assert.strictEqual(summary.p95Ms, 300);
+
+const progressLine = formatProgressLine(
+  { ok: true, status: 200, ms: 447, amountReturned: '999', estimatedGas: '725802' },
+  700,
+  560,
+  { total: 22500 },
+  { successCount: 698, failCount: 2 }
+);
+assert.ok(progressLine.includes('[700/22500]'));
+assert.ok(progressLine.includes('success=698'));
+assert.ok(progressLine.includes('fail=2'));
+assert.ok(progressLine.includes('rate=99.71%'));

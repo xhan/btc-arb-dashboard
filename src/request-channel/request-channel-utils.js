@@ -15,6 +15,7 @@
     kyber: 170,
     zerox: 110,
     velora: 700,
+    llamaparaswap: 800,
     lifi: 170,
     bybit: 1000,
     binance: 1000,
@@ -22,7 +23,7 @@
     sui: 500,
     starknet: 1000
   };
-  const CHANNEL_AWARE_SOURCE_KEYS = ['kyber', 'zerox', 'velora', 'lifi', 'solana', 'starknet'];
+  const CHANNEL_AWARE_SOURCE_KEYS = ['kyber', 'zerox', 'velora', 'llamaparaswap', 'lifi', 'solana', 'starknet'];
 
   function normalizeString(value) {
     return typeof value === 'string' ? value.trim() : '';
@@ -86,6 +87,8 @@
     if (isEvmChain(chain)) {
       if (quote && quote.preferredSource === 'Velora') {
         sourceKey = 'velora';
+      } else if (quote && quote.preferredSource === 'Llama-ParaSwap') {
+        sourceKey = 'llamaparaswap';
       } else if (quote && quote.preferredSource === '0x') {
         sourceKey = 'zerox';
       } else if (quote && quote.preferredSource === 'LI.FI') {

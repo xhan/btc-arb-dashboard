@@ -51,6 +51,7 @@ assert.deepStrictEqual(buildQuoteStrategy({ chain: 'ethereum', preferredSource: 
 assert.deepStrictEqual(buildQuoteStrategy({ chain: 'ethereum', preferredSource: '0x' }), ['0x', '0x']);
 assert.deepStrictEqual(buildQuoteStrategy({ chain: 'ethereum', preferredSource: 'Velora' }), ['Velora', 'Velora']);
 assert.deepStrictEqual(buildQuoteStrategy({ chain: 'ethereum', preferredSource: 'LI.FI' }), ['LI.FI', 'LI.FI']);
+assert.deepStrictEqual(buildQuoteStrategy({ chain: 'ethereum', preferredSource: 'Llama-ParaSwap' }), ['Llama-ParaSwap', 'Llama-ParaSwap']);
 assert.deepStrictEqual(buildQuoteStrategy({ chain: 'ethereum' }), ['Kyber', 'Kyber']);
 assert.deepStrictEqual(buildQuoteStrategy({ chain: 'sui' }), ['Cetus']);
 assert.deepStrictEqual(buildQuoteStrategy({ chain: 'solana' }), ['Jupiter']);

@@ -17,6 +17,8 @@ assert.deepStrictEqual(normalizeStringArray(null), []);
 const defaultConfigMore = buildDefaultConfigMore();
 assert.strictEqual(defaultConfigMore.kyberClientId, 'xh-quote-dashboard');
 assert.strictEqual(defaultConfigMore.lifiSlippage, '0.0001');
+assert.strictEqual(defaultConfigMore.providerSettings.llamaParaSwapProxyUrl, 'http://127.0.0.1:18081');
+assert.strictEqual(defaultConfigMore.llamaParaSwapProxyUrl, 'http://127.0.0.1:18081');
 assert.strictEqual(defaultConfigMore.telegramBotApiBaseUrl, 'https://api.telegram.org');
 assert.ok(Array.isArray(defaultConfigMore.arbCycleStartPriority));
 
@@ -26,16 +28,20 @@ assert.deepStrictEqual(getConfigSettings([]), {});
 assert.deepStrictEqual(getConfigSettings({}), {});
 
 const normalizedConfigMore = normalizeConfigMoreData({
-  kyberClientId: ' custom-client ',
-  LIFIApiKey: ' lifi-key ',
-  LIFIIntegrator: ' integrator ',
-  LIFISlippage: '',
-  jupiterApiKey: ' jup-key ',
-  cetusAggregatorEndpoint: ' https://cetus.example ',
-  cetusAggregatorApiKey: ' cetus-key ',
-  veloraPartner: ' partner ',
-  veloraIncludeDEXS: 'a, b,',
-  veloraOtherExchangePrices: true,
+  providerSettings: {
+    kyberClientId: ' custom-client ',
+    lifiApiKey: ' lifi-key ',
+    lifiIntegrator: ' integrator ',
+    lifiSlippage: '',
+    jupiterApiKey: ' jup-key ',
+    cetusAggregatorEndpoint: ' https://cetus.example ',
+    cetusAggregatorApiKey: ' cetus-key ',
+    veloraPartner: ' partner ',
+    veloraIncludeDEXS: 'a, b,',
+    veloraOtherExchangePrices: true,
+    llamaParaSwapProxyUrl: ' http://127.0.0.1:18082 ',
+    llamaParaSwapSlippage: ' 0.3 '
+  },
   enablePriceSnapshot: true,
   priceSnapshotIntervalSec: '15',
   arbCycleStartPriority: [' USDC ', '', 'WBTC'],
@@ -53,6 +59,9 @@ assert.strictEqual(normalizedConfigMore.cetusAggregatorApiKey, 'cetus-key');
 assert.strictEqual(normalizedConfigMore.veloraPartner, 'partner');
 assert.deepStrictEqual(normalizedConfigMore.veloraIncludeDEXS, ['a', 'b']);
 assert.strictEqual(normalizedConfigMore.veloraOtherExchangePrices, true);
+assert.strictEqual(normalizedConfigMore.llamaParaSwapProxyUrl, 'http://127.0.0.1:18082');
+assert.strictEqual(normalizedConfigMore.llamaParaSwapSlippage, '0.3');
+assert.strictEqual(normalizedConfigMore.providerSettings.llamaParaSwapProxyUrl, 'http://127.0.0.1:18082');
 assert.strictEqual(normalizedConfigMore.enablePriceSnapshot, true);
 assert.strictEqual(normalizedConfigMore.priceSnapshotIntervalSec, 15);
 assert.deepStrictEqual(normalizedConfigMore.arbCycleStartPriority, ['USDC', 'WBTC']);
@@ -63,7 +72,7 @@ assert.strictEqual(normalizedConfigMore.telegramBotApiBaseUrl, 'http://telegram.
 async function runStoreTest() {
   const reads = {
     '/config.json': { dashboard: [{ id: 1 }], settings: { kyber: 230 } },
-    '/config_more.json': { kyberClientId: ' runtime-client ', LIFISlippage: '0.002' },
+    '/config_more.json': { providerSettings: { kyberClientId: ' runtime-client ', lifiSlippage: '0.002' } },
     '/request_channels.json': {
       channels: [
         {
@@ -71,7 +80,7 @@ async function runStoreTest() {
           name: '香港 1',
           sourceKeys: ['kyber'],
           intervals: { kyber: 321 },
-          configMore: { kyberClientId: 'hk-client' }
+          providerSettings: { kyberClientId: 'hk-client' }
         }
       ]
     }

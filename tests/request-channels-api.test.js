@@ -7,12 +7,17 @@ const { spawn } = require('child_process');
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'request-channels-api-'));
 const configPath = path.join(tempDir, 'config.json');
-const configMorePath = path.join(tempDir, 'config_more.json');
+const providerSettingsPath = path.join(tempDir, 'config_more.json');
 const requestChannelsPath = path.join(tempDir, 'request_channels.json');
 const port = 3461;
 
-fs.writeFileSync(configPath, JSON.stringify({ dashboard: [], settings: { kyber: 170, zerox: 110, solana: 3500, sui: 500, starknet: 1000, bybit: 1000, binance: 1000, velora: 700, lifi: 170 } }, null, 2));
-fs.writeFileSync(configMorePath, JSON.stringify({ kyberClientId: 'default-client', jupiterApiKey: 'default-jupiter' }, null, 2));
+fs.writeFileSync(configPath, JSON.stringify({ dashboard: [], settings: { kyber: 170, zerox: 110, solana: 3500, sui: 500, starknet: 1000, bybit: 1000, binance: 1000, velora: 700, llamaparaswap: 800, lifi: 170 } }, null, 2));
+fs.writeFileSync(providerSettingsPath, JSON.stringify({
+  providerSettings: {
+    kyberClientId: 'default-client',
+    jupiterApiKey: 'default-jupiter'
+  }
+}, null, 2));
 fs.writeFileSync(
   requestChannelsPath,
   JSON.stringify({
@@ -24,7 +29,7 @@ fs.writeFileSync(
         intervals: {
           kyber: 90
         },
-        configMore: {
+        providerSettings: {
           kyberClientId: 'hk-client'
         }
       }
@@ -38,7 +43,7 @@ const serverProcess = spawn('node', ['server.js'], {
     ...process.env,
     PORT: String(port),
     CONFIG_PATH: configPath,
-    CONFIG_MORE_PATH: configMorePath,
+    CONFIG_MORE_PATH: providerSettingsPath,
     REQUEST_CHANNELS_PATH: requestChannelsPath
   },
   stdio: 'ignore'
@@ -110,6 +115,7 @@ async function waitForServer(attempts = 15) {
           kyber: 170,
           zerox: 110,
           velora: 700,
+          llamaparaswap: 800,
           lifi: 170,
           bybit: 1000,
           binance: 1000,
@@ -127,6 +133,7 @@ async function waitForServer(attempts = 15) {
           kyber: 90,
           zerox: 110,
           velora: 700,
+          llamaparaswap: 800,
           lifi: 170,
           bybit: 1000,
           binance: 1000,
@@ -148,6 +155,7 @@ async function waitForServer(attempts = 15) {
         bybit: 1200,
         binance: 1200,
         velora: 750,
+        llamaparaswap: 820,
         lifi: 190
       }
     }));
@@ -160,6 +168,7 @@ async function waitForServer(attempts = 15) {
       kyber: 210,
       zerox: 120,
       velora: 750,
+      llamaparaswap: 820,
       lifi: 190,
       bybit: 1200,
       binance: 1200,
@@ -171,6 +180,7 @@ async function waitForServer(attempts = 15) {
       kyber: 90,
       zerox: 120,
       velora: 750,
+      llamaparaswap: 820,
       lifi: 190,
       bybit: 1200,
       binance: 1200,
@@ -179,8 +189,13 @@ async function waitForServer(attempts = 15) {
       starknet: 1100
     });
 
-    fs.writeFileSync(configPath, JSON.stringify({ dashboard: [], settings: { kyber: 230, zerox: 110, solana: 3500, sui: 500, starknet: 1000, bybit: 1000, binance: 1000, velora: 700, lifi: 170 } }, null, 2));
-    fs.writeFileSync(configMorePath, JSON.stringify({ kyberClientId: 'updated-default-client', jupiterApiKey: 'default-jupiter' }, null, 2));
+    fs.writeFileSync(configPath, JSON.stringify({ dashboard: [], settings: { kyber: 230, zerox: 110, solana: 3500, sui: 500, starknet: 1000, bybit: 1000, binance: 1000, velora: 700, llamaparaswap: 800, lifi: 170 } }, null, 2));
+    fs.writeFileSync(providerSettingsPath, JSON.stringify({
+      providerSettings: {
+        kyberClientId: 'updated-default-client',
+        jupiterApiKey: 'default-jupiter'
+      }
+    }, null, 2));
     fs.writeFileSync(
       requestChannelsPath,
       JSON.stringify({
@@ -192,7 +207,7 @@ async function waitForServer(attempts = 15) {
             intervals: {
               kyber: 130
             },
-            configMore: {
+            providerSettings: {
               kyberClientId: 'hk-reloaded-client'
             }
           }
@@ -217,6 +232,7 @@ async function waitForServer(attempts = 15) {
           kyber: 230,
           zerox: 110,
           velora: 700,
+          llamaparaswap: 800,
           lifi: 170,
           bybit: 1000,
           binance: 1000,
@@ -234,6 +250,7 @@ async function waitForServer(attempts = 15) {
           kyber: 130,
           zerox: 110,
           velora: 700,
+          llamaparaswap: 800,
           lifi: 170,
           bybit: 1000,
           binance: 1000,

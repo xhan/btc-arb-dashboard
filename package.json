@@ -9,7 +9,9 @@
     "clean:price-snapshots": "node scripts/clean-price-snapshots.js",
     "test": "node tests/run-all.js",
     "velora:compare": "node scripts/velora-market-compare.js",
-    "velora:rate": "node scripts/velora-market-rate-test.js"
+    "velora:rate": "node scripts/velora-market-rate-test.js",
+    "defillama:browser-rate": "node scripts/defillama-browser-proxy-test.js",
+    "defillama:proxy": "node scripts/defillama-browser-proxy-daemon.js"
   },
   "dependencies": {
     "@cetusprotocol/aggregator-sdk": "^1.4.4",

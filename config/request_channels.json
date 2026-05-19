@@ -5,14 +5,12 @@
       "name": "JP1",
       "httpProxy": "http://127.0.0.1:18001",
       "intervals": {
-        "kyber": 400,        
+        "kyber": 400,
         "velora": 1350
-
       },
-      "configMore": {
-        "kyberClientId": "DexMasterKingOOO",        
+      "providerSettings": {
+        "kyberClientId": "DexMasterKingOOO",
         "veloraPartner": "llamaswap"
-
       }
     },
     {
@@ -23,10 +21,10 @@
         "kyber": 400,
         "velora": 1350
       },
-      "configMore": {
-        "kyberClientId": "DogCanWinYou",
+      "providerSettings": {
+        "kyberClientId": "kingswap-trade-bot",
         "veloraPartner": "llamaswap"
       }
-    }    
+    }
   ]
 }

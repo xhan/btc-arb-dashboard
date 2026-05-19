@@ -297,6 +297,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="assets/alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
     assert.ok(response.body.includes('Velora (默认 700ms)'));
+    assert.ok(response.body.includes('Llama-ParaSwap (默认 800ms)'));
     assert.ok(response.body.includes('.arb-opportunity.is-alert-highlight {'));
     assert.ok(response.body.includes('class="settings-grid"'));
     assert.ok(response.body.includes('id="quote-request-channel"'));
@@ -307,6 +308,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('.quote-direct-badge'));
     assert.ok(response.body.includes('quote-channel-tag'));
     assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
+    assert.ok(response.body.includes('<option value="Llama-ParaSwap">Llama-ParaSwap</option>'));
     assert.ok(!response.body.includes('id="path-alert-window"'));
     assert.ok(!response.body.includes('#path-alert-window {'));
     assert.ok(response.body.includes('id="alert-log-settings-tab"'));

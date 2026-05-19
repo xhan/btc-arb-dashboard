@@ -16,6 +16,20 @@ function normalizeStringArray(value) {
 
 function buildDefaultConfigMore() {
   return {
+    providerSettings: {
+      kyberClientId: 'xh-quote-dashboard',
+      lifiApiKey: '',
+      lifiIntegrator: '',
+      lifiSlippage: '0.0001',
+      jupiterApiKey: '',
+      cetusAggregatorEndpoint: normalizeCetusAggregatorConfig().endpoint,
+      cetusAggregatorApiKey: '',
+      veloraPartner: '',
+      veloraIncludeDEXS: [],
+      veloraOtherExchangePrices: false,
+      llamaParaSwapProxyUrl: 'http://127.0.0.1:18081',
+      llamaParaSwapSlippage: '0.5'
+    },
     kyberClientId: 'xh-quote-dashboard',
     lifiApiKey: '',
     lifiIntegrator: '',
@@ -26,6 +40,8 @@ function buildDefaultConfigMore() {
     veloraPartner: '',
     veloraIncludeDEXS: [],
     veloraOtherExchangePrices: false,
+    llamaParaSwapProxyUrl: 'http://127.0.0.1:18081',
+    llamaParaSwapSlippage: '0.5',
     enablePriceSnapshot: false,
     priceSnapshotIntervalSec: 10,
     arbCycleStartPriority: Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY),
@@ -36,22 +52,56 @@ function buildDefaultConfigMore() {
 }
 
 function normalizeConfigMoreData(configMore = {}) {
-  const rawClientId = typeof configMore.kyberClientId === 'string' ? configMore.kyberClientId.trim() : '';
-  const rawLifiApiKey = typeof configMore.LIFIApiKey === 'string' ? configMore.LIFIApiKey.trim() : '';
-  const rawLifiIntegrator = typeof configMore.LIFIIntegrator === 'string' ? configMore.LIFIIntegrator.trim() : '';
-  const rawLifiSlippage = typeof configMore.LIFISlippage === 'string' ? configMore.LIFISlippage.trim() : '';
-  const rawJupiterApiKey = typeof configMore.jupiterApiKey === 'string' ? configMore.jupiterApiKey.trim() : '';
-  const rawVeloraPartner = typeof configMore.veloraPartner === 'string' ? configMore.veloraPartner.trim() : '';
-  const rawVeloraIncludeDEXS = normalizeStringArray(configMore.veloraIncludeDEXS);
+  const providerSettings = configMore.providerSettings && typeof configMore.providerSettings === 'object'
+    ? configMore.providerSettings
+    : {};
+  const pickString = (...values) => {
+    for (const value of values) {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
+  };
+  const pickArray = (...values) => {
+    for (const value of values) {
+      const normalized = normalizeStringArray(value);
+      if (normalized.length > 0) return normalized;
+    }
+    return [];
+  };
+  const rawClientId = pickString(providerSettings.kyberClientId, configMore.kyberClientId);
+  const rawLifiApiKey = pickString(providerSettings.lifiApiKey, configMore.lifiApiKey, configMore.LIFIApiKey);
+  const rawLifiIntegrator = pickString(providerSettings.lifiIntegrator, configMore.lifiIntegrator, configMore.LIFIIntegrator);
+  const rawLifiSlippage = pickString(providerSettings.lifiSlippage, configMore.lifiSlippage, configMore.LIFISlippage);
+  const rawJupiterApiKey = pickString(providerSettings.jupiterApiKey, configMore.jupiterApiKey);
+  const rawCetusAggregatorEndpoint = pickString(providerSettings.cetusAggregatorEndpoint, configMore.cetusAggregatorEndpoint);
+  const rawCetusAggregatorApiKey = pickString(providerSettings.cetusAggregatorApiKey, configMore.cetusAggregatorApiKey);
+  const rawVeloraPartner = pickString(providerSettings.veloraPartner, configMore.veloraPartner);
+  const rawVeloraIncludeDEXS = pickArray(providerSettings.veloraIncludeDEXS, configMore.veloraIncludeDEXS);
+  const rawLlamaParaSwapProxyUrl = pickString(
+    providerSettings.llamaParaSwapProxyUrl,
+    configMore.llamaParaSwapProxyUrl,
+    configMore.defillamaProxyUrl
+  );
+  const rawLlamaParaSwapSlippage = pickString(
+    providerSettings.llamaParaSwapSlippage,
+    configMore.llamaParaSwapSlippage,
+    configMore.defillamaProxySlippage
+  );
   const rawTelegramBotToken = typeof configMore.telegramBotToken === 'string' ? configMore.telegramBotToken.trim() : '';
   const rawTelegramChatId = typeof configMore.telegramChatId === 'string' ? configMore.telegramChatId.trim() : '';
   const rawTelegramBotApiBaseUrl = typeof configMore.telegramBotApiBaseUrl === 'string'
     ? configMore.telegramBotApiBaseUrl.trim()
     : '';
-  const cetusAggregatorConfig = normalizeCetusAggregatorConfig(configMore);
+  const cetusAggregatorConfig = normalizeCetusAggregatorConfig({
+    ...configMore,
+    cetusAggregatorEndpoint: rawCetusAggregatorEndpoint,
+    cetusAggregatorApiKey: rawCetusAggregatorApiKey
+  });
   const arbCycleStartPriority = normalizeArbCycleStartPriority(configMore.arbCycleStartPriority);
 
-  return {
+  const normalized = {
     kyberClientId: rawClientId || 'xh-quote-dashboard',
     lifiApiKey: rawLifiApiKey,
     lifiIntegrator: rawLifiIntegrator,
@@ -61,13 +111,32 @@ function normalizeConfigMoreData(configMore = {}) {
     cetusAggregatorApiKey: cetusAggregatorConfig.apiKey,
     veloraPartner: rawVeloraPartner,
     veloraIncludeDEXS: rawVeloraIncludeDEXS,
-    veloraOtherExchangePrices: configMore.veloraOtherExchangePrices === true,
+    veloraOtherExchangePrices: providerSettings.veloraOtherExchangePrices === true || configMore.veloraOtherExchangePrices === true,
+    llamaParaSwapProxyUrl: rawLlamaParaSwapProxyUrl || 'http://127.0.0.1:18081',
+    llamaParaSwapSlippage: rawLlamaParaSwapSlippage || '0.5',
     enablePriceSnapshot: configMore.enablePriceSnapshot === true,
     priceSnapshotIntervalSec: Number.parseInt(configMore.priceSnapshotIntervalSec, 10) || 10,
     arbCycleStartPriority,
     telegramBotToken: rawTelegramBotToken,
     telegramChatId: rawTelegramChatId,
     telegramBotApiBaseUrl: rawTelegramBotApiBaseUrl || DEFAULT_TELEGRAM_BOT_API_BASE_URL
+  };
+  return {
+    ...normalized,
+    providerSettings: {
+      kyberClientId: normalized.kyberClientId,
+      lifiApiKey: normalized.lifiApiKey,
+      lifiIntegrator: normalized.lifiIntegrator,
+      lifiSlippage: normalized.lifiSlippage,
+      jupiterApiKey: normalized.jupiterApiKey,
+      cetusAggregatorEndpoint: normalized.cetusAggregatorEndpoint,
+      cetusAggregatorApiKey: normalized.cetusAggregatorApiKey,
+      veloraPartner: normalized.veloraPartner,
+      veloraIncludeDEXS: normalized.veloraIncludeDEXS,
+      veloraOtherExchangePrices: normalized.veloraOtherExchangePrices,
+      llamaParaSwapProxyUrl: normalized.llamaParaSwapProxyUrl,
+      llamaParaSwapSlippage: normalized.llamaParaSwapSlippage
+    }
   };
 }
 
@@ -202,7 +271,15 @@ function loadStartupCetusAggregatorConfig(configMorePath, options = {}) {
   const readJsonFileSync = options.readJsonFileSync;
   const logger = options.logger || console;
   try {
-    return normalizeCetusAggregatorConfig(readJsonFileSync(configMorePath));
+    const rawConfigMore = readJsonFileSync(configMorePath);
+    const providerSettings = rawConfigMore && rawConfigMore.providerSettings && typeof rawConfigMore.providerSettings === 'object'
+      ? rawConfigMore.providerSettings
+      : {};
+    return normalizeCetusAggregatorConfig({
+      ...rawConfigMore,
+      cetusAggregatorEndpoint: providerSettings.cetusAggregatorEndpoint || rawConfigMore.cetusAggregatorEndpoint,
+      cetusAggregatorApiKey: providerSettings.cetusAggregatorApiKey || rawConfigMore.cetusAggregatorApiKey
+    });
   } catch (error) {
     if (error.code !== 'ENOENT' && logger && typeof logger.warn === 'function') {
       logger.warn(`⚠️ 读取 Cetus Aggregator 配置失败，使用默认值: ${error.message}`);

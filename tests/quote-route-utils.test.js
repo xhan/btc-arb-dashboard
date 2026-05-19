@@ -46,6 +46,7 @@ assert.deepStrictEqual(
     '/api/get-jupiter-quote',
     '/api/get-kyber-quote',
     '/api/get-velora-quote',
+    '/api/get-llama-paraswap-quote',
     '/api/get-cetus-quote'
   ]
 );

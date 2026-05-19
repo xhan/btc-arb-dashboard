@@ -511,6 +511,8 @@
         return 'zerox';
       case 'Velora':
         return 'velora';
+      case 'Llama-ParaSwap':
+        return 'llamaparaswap';
       case 'LI.FI':
         return 'lifi';
       case 'Bybit':

@@ -41,6 +41,7 @@
     Object.freeze({ key: 'kyber', id: 'setting-kyber-interval' }),
     Object.freeze({ key: 'zerox', id: 'setting-zerox-interval' }),
     Object.freeze({ key: 'velora', id: 'setting-velora-interval' }),
+    Object.freeze({ key: 'llamaparaswap', id: 'setting-llama-paraswap-interval' }),
     Object.freeze({ key: 'lifi', id: 'setting-lifi-interval' }),
     Object.freeze({ key: 'bybit', id: 'setting-bybit-interval' }),
     Object.freeze({ key: 'binance', id: 'setting-binance-interval' }),

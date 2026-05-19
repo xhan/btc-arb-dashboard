@@ -266,7 +266,7 @@ GET https://aggregator-api.kyberswap.com/{chain}/api/v1/routes?tokenIn=...&token
 
 当前实现特点：
 
-- 显式带 `X-Client-Id: <configMore.kyberClientId>`
+- 显式带 `X-Client-Id: <providerSettings.kyberClientId>`
 - 不带 `gasInclude=true`
 - 不调用 `POST /route/build`
 
@@ -457,3 +457,119 @@ node scripts/defillama-rate-test.js --cnt 60 --interval-ms 300 --provider parasw
 node scripts/defillama-rate-test.js -cnt 60 --interval-ms 300 --provider kyberswap
 node scripts/defillama-rate-test.js --cnt 120 --interval-ms 200 --provider all
 ```
+
+## 浏览器代理 Daemon
+
+2026-05-18 的连续测试结论是：服务端直连 `swap-api.defillama.com/dexAggregatorQuote` 仍会被 Cloudflare 拦截，但在真实 Chrome 页面上下文里执行 `fetch` 可以稳定拿到 Hide IP 中转报价。
+
+这条链路已经接入看板，新增来源名为 `Llama-ParaSwap`：
+
+- 看板请求 `/api/get-llama-paraswap-quote`
+- 后端 provider 调本机 daemon：`POST http://127.0.0.1:18081/quote`
+- daemon 通过 CDP 控制 Chrome，在 `swap.defillama.com` 页面上下文里请求 `swap-api.defillama.com`
+- 请求间隔和并发由请求方控制，daemon 不做节流或并发上限
+
+### 启动
+
+默认监听 `127.0.0.1:18081`，默认打开普通 Chrome 窗口：
+
+```bash
+npm run defillama:proxy
+```
+
+如果临时要压后台环境，可以显式尝试 headless，但当前实测 headless 更容易触发 `Failed to fetch`，不建议作为长期默认：
+
+```bash
+npm run defillama:proxy -- --headless true --verbose true
+```
+
+常用参数：
+
+- `--host 127.0.0.1`
+- `--port 18081`
+- `--timeout-ms 10000`
+- `--headless true`
+- `--verbose true`
+
+健康检查：
+
+```bash
+curl http://127.0.0.1:18081/health
+```
+
+### daemon 请求格式
+
+```bash
+curl -X POST http://127.0.0.1:18081/quote \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "protocol": "ParaSwap",
+    "chain": "ethereum",
+    "fromToken": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    "fromDecimals": 6,
+    "fromSymbol": "USDT",
+    "toToken": "0xc139190f447e929f090edeb554d95abb8b18ac1c",
+    "toDecimals": 18,
+    "toSymbol": "USDtb",
+    "amountRaw": "1000000",
+    "slippage": "0.5"
+  }'
+```
+
+成功返回的核心字段：
+
+- `amountReturned`
+- `estimatedGas`
+- `ms`
+- `protocol`
+- `chain`
+
+### 看板配置
+
+默认配置在 `config/config_more.json` 的 `providerSettings` 里：
+
+```json
+{
+  "providerSettings": {
+    "llamaParaSwapProxyUrl": "http://127.0.0.1:18081",
+    "llamaParaSwapSlippage": "0.5"
+  }
+}
+```
+
+如果要多开 daemon，给不同请求通道配置不同端口即可：
+
+```json
+{
+  "channels": [
+    {
+      "id": "hk-1",
+      "name": "HK-1",
+      "intervals": {
+        "llamaparaswap": 800
+      },
+      "providerSettings": {
+        "llamaParaSwapProxyUrl": "http://127.0.0.1:18082"
+      }
+    }
+  ]
+}
+```
+
+每个 daemon 实例应使用不同的监听端口；Chrome debug port 由脚本自动分配，不需要手工指定。
+
+### 压测入口
+
+浏览器代理压测脚本：
+
+```bash
+npm run defillama:browser-rate -- --interval-ms 800 --duration-min 30
+```
+
+已记录的结果：
+
+- `500ms`：1852 次里 1500 成功，成功率约 81%，有明显 `Failed to fetch`
+- `900ms`：30 分钟 2000/2000 成功，p50 555ms，p95 1237ms，p99 2936ms
+- `800ms`：30 分钟 2250/2250 成功，p50 762ms，p95 1917ms，p99 3862ms
+
+当前默认看板间隔设为 `800ms`；如果长期运行更看重尾延迟和余量，可以改成 `900ms`。

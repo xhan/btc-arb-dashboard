@@ -155,6 +155,7 @@
       if (preferredSource === 'Auto') return ['Kyber', '0x', 'Kyber'];
       if (preferredSource === '0x') return ['0x', '0x'];
       if (preferredSource === 'Velora') return ['Velora', 'Velora'];
+      if (preferredSource === 'Llama-ParaSwap') return ['Llama-ParaSwap', 'Llama-ParaSwap'];
       if (preferredSource === 'LI.FI') return ['LI.FI', 'LI.FI'];
       return ['Kyber', 'Kyber'];
     }

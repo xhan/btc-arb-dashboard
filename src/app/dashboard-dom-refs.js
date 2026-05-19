@@ -137,6 +137,7 @@
         'setting-kyber-interval': getById(documentImpl, 'setting-kyber-interval'),
         'setting-zerox-interval': getById(documentImpl, 'setting-zerox-interval'),
         'setting-velora-interval': getById(documentImpl, 'setting-velora-interval'),
+        'setting-llama-paraswap-interval': getById(documentImpl, 'setting-llama-paraswap-interval'),
         'setting-lifi-interval': getById(documentImpl, 'setting-lifi-interval'),
         'setting-bybit-interval': getById(documentImpl, 'setting-bybit-interval'),
         'setting-binance-interval': getById(documentImpl, 'setting-binance-interval'),

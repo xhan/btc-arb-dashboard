@@ -11,6 +11,7 @@
   const MARKET_QUOTE_REQUESTS = Object.freeze({
     '0x': Object.freeze({ endpoint: '/api/get-0x-quote', source: '0x', errorMessage: '0x API Request Failed' }),
     Velora: Object.freeze({ endpoint: '/api/get-velora-quote', source: 'Velora', errorMessage: 'Velora API Request Failed' }),
+    'Llama-ParaSwap': Object.freeze({ endpoint: '/api/get-llama-paraswap-quote', source: 'Llama-ParaSwap', errorMessage: 'Llama-ParaSwap API Request Failed' }),
     'LI.FI': Object.freeze({ endpoint: '/api/get-lifi-quote', source: 'LI.FI', errorMessage: 'LI.FI API Request Failed', includeRouteMeta: true }),
     Ekubo: Object.freeze({ endpoint: '/api/get-ekubo-quote', source: 'Ekubo', errorMessage: 'Ekubo API Request Failed' }),
     Jupiter: Object.freeze({ endpoint: '/api/get-jupiter-quote', source: 'Jupiter', errorMessage: 'Jupiter API Request Failed' })

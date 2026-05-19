@@ -32,6 +32,11 @@ assert.deepStrictEqual(resolveMarketQuoteRequestConfig('LI.FI'), {
   errorMessage: 'LI.FI API Request Failed',
   includeRouteMeta: true
 });
+assert.deepStrictEqual(resolveMarketQuoteRequestConfig('Llama-ParaSwap'), {
+  endpoint: '/api/get-llama-paraswap-quote',
+  source: 'Llama-ParaSwap',
+  errorMessage: 'Llama-ParaSwap API Request Failed'
+});
 
 assert.deepStrictEqual(resolveQuoteRequestConfig('Velora', { chain: 'ethereum' }), {
   type: 'market',
