@@ -742,7 +742,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardModalUtilsResponse.body.includes('function createConfirmActionRuntime(options = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function syncAddQuoteFormControls(refs = {}, options = {})'));
     assert.ok(appJsResponse.body.includes('const settingsModalRuntime = getDashboardModalUtils().createSettingsModalRuntime({'));
-    assert.ok(appJsResponse.body.includes('settingsModalRuntime.bind();'));
+    assert.ok(lifecycleControllerResponse.body.includes("if (deps.settingsModalRuntime && typeof deps.settingsModalRuntime.bind === 'function')"));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.settingsModalRuntime.bind();'));
+    assert.ok(lifecycleControllerResponse.body.includes("if (deps.dashboardFormController && typeof deps.dashboardFormController.bind === 'function')"));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardFormController.bind();'));
+    assert.ok(!appJsResponse.body.includes('settingsModalRuntime.bind();'));
+    assert.ok(!appJsResponse.body.includes('dashboardFormController.bind();'));
     assert.ok(appJsResponse.body.includes('getIntervals: () => apiIntervals'));
     assert.ok(appJsResponse.body.includes('setIntervals: (nextIntervals) => { apiIntervals = nextIntervals; }'));
     assert.ok(appJsResponse.body.includes('buildSettingsIntervalWritePlan: getDashboardRenderer().buildSettingsIntervalWritePlan'));

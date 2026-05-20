@@ -80,6 +80,11 @@ const staticController = createDashboardLifecycleController({
       staticCalls.push(['bindKeyboard']);
     }
   },
+  dashboardFormController: {
+    bind() {
+      staticCalls.push(['bindDashboardForm']);
+    }
+  },
   openAddCategoryModal() {
     staticCalls.push(['openAddCategory']);
   },
@@ -92,6 +97,11 @@ const staticController = createDashboardLifecycleController({
     confirmOkBtn,
     confirmCancelBtn,
     confirmModalRefs: { id: 'confirm-refs' }
+  },
+  settingsModalRuntime: {
+    bind() {
+      staticCalls.push(['bindSettingsModal']);
+    }
   },
   themeRuntime: {
     toggle() {
@@ -120,6 +130,8 @@ confirmCancelBtn.dispatch('click', {
 confirmModal.dispatch('click', { actionType: 'none' });
 assert.deepStrictEqual(staticCalls, [
   ['bindKeyboard'],
+  ['bindSettingsModal'],
+  ['bindDashboardForm'],
   ['performSave', true],
   ['themeToggle'],
   ['openAddCategory'],

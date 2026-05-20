@@ -104,6 +104,12 @@
       if (deps.keyboardShortcutController && typeof deps.keyboardShortcutController.bind === 'function') {
         deps.keyboardShortcutController.bind();
       }
+      if (deps.settingsModalRuntime && typeof deps.settingsModalRuntime.bind === 'function') {
+        deps.settingsModalRuntime.bind();
+      }
+      if (deps.dashboardFormController && typeof deps.dashboardFormController.bind === 'function') {
+        deps.dashboardFormController.bind();
+      }
     }
 
     function bindFloatingPanels() {

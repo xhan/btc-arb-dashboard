@@ -743,8 +743,6 @@
         requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks());
     }
 
-    settingsModalRuntime.bind();
-
     function normalizeChainKey(chain) {
         return getQuoteRequestUtils().normalizeChainKey(chain);
     }
@@ -897,8 +895,6 @@
         updateRequestChannelTagForQuote,
         windowImpl: window
     });
-    dashboardFormController.bind();
-
     const dashboardLifecycleController = getDashboardLifecycleController().createDashboardLifecycleController({
         addToQueue,
         alertRuntimeController,
@@ -908,6 +904,7 @@
         clearTopologyCache,
         confirmActionRuntime,
         dashboardApiClient,
+        dashboardFormController,
         dashboardRenderer: getDashboardRenderer(),
         dashboardViewModeController,
         defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
@@ -959,6 +956,7 @@
         setArbPanelMaxHeight,
         setDashboardState: (nextState) => { dashboardState = nextState; },
         setPriceSnapshotConfig: (nextConfig) => { priceSnapshotConfig = nextConfig; },
+        settingsModalRuntime,
         themeRuntime,
         toggleArbPanel: dashboardViewModeController.toggleArbView,
         toggleDataTerminalPanel,
