@@ -52,6 +52,7 @@
         getDashboardQuoteDomainAdapter,
         getDashboardQuoteRuntime,
         getDashboardRenderer,
+        getDashboardRuntimeRefUtils,
         getDashboardRuntimeUtils,
         getDashboardViewModeController,
         getDashboardViewController,
@@ -109,42 +110,30 @@
         logger: console
     });
 
-    let quoteRuntime = null;
-    let arbAlertRuntime = null;
+    const quoteRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: 'Dashboard quote runtime' });
+    const arbAlertRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: 'Dashboard arb alert runtime' });
+    const dashboardViewRenderRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: 'Dashboard view render runtime' });
     let dashboardViewModeController = null;
-    let dashboardViewRenderRuntime = null;
-    function getQuoteRuntime() {
-        if (!quoteRuntime) {
-            throw new Error('Dashboard quote runtime is not initialized');
-        }
-        return quoteRuntime;
-    }
     function abortActiveFetchControllers() {
-        return getQuoteRuntime().abortActiveFetchControllers();
+        return quoteRuntimeRef.call('abortActiveFetchControllers');
     }
     function fetchQuoteByStrategy(quote, options) {
-        return getQuoteRuntime().fetchQuoteByStrategy(quote, options);
+        return quoteRuntimeRef.call('fetchQuoteByStrategy', quote, options);
     }
     function updateSchedulers() {
-        return getQuoteRuntime().updateSchedulers();
-    }
-    function getArbAlertRuntime() {
-        if (!arbAlertRuntime) {
-            throw new Error('Dashboard arb alert runtime is not initialized');
-        }
-        return arbAlertRuntime;
+        return quoteRuntimeRef.call('updateSchedulers');
     }
     function invalidateArbRuleSnapshotCache(options) {
-        return getArbAlertRuntime().invalidateArbRuleSnapshotCache(options);
+        return arbAlertRuntimeRef.call('invalidateArbRuleSnapshotCache', options);
     }
     function updateArbPanel(options) {
-        return getArbAlertRuntime().updateArbPanel(options);
+        return arbAlertRuntimeRef.call('updateArbPanel', options);
     }
     function isDashboardViewActive() {
-        return Boolean(dashboardViewRenderRuntime && dashboardViewRenderRuntime.isActive());
+        return Boolean(dashboardViewRenderRuntimeRef.callOr(false, 'isActive'));
     }
     function markDashboardViewDirty() {
-        return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.markDirty() : false;
+        return dashboardViewRenderRuntimeRef.callOr(false, 'markDirty');
     }
     const floatingPanelZIndexRuntime = domRenderUtils.createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
@@ -400,7 +389,7 @@
         updateTrendArrow
     } = quoteUiController;
     let arbDetailController = null;
-    arbAlertRuntime = getDashboardArbAlertRuntime().createDashboardArbAlertRuntime({
+    const arbAlertRuntime = arbAlertRuntimeRef.set(getDashboardArbAlertRuntime().createDashboardArbAlertRuntime({
         AudioCtor: Audio,
         alertDebugUtils: getAlertDebugUtils(),
         alertLogUiUtils: getAlertLogUiUtils(),
@@ -488,7 +477,7 @@
         updateDelayMs: ARB_PANEL_UPDATE_DELAY_MS,
         windowImpl: window,
         zIndexRuntime: floatingPanelZIndexRuntime
-    });
+    }));
     const {
         alertRuntimeController,
         arbPanelController,
@@ -507,11 +496,11 @@
         setArbPanelMaxHeight
     } = arbAlertRuntime;
     function renderDashboardForCurrentState() {
-        return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.renderNow() : false;
+        return dashboardViewRenderRuntimeRef.callOr(false, 'renderNow');
     }
 
     function ensureDashboardRendered() {
-        return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.ensureRendered() : false;
+        return dashboardViewRenderRuntimeRef.callOr(false, 'ensureRendered');
     }
 
     dashboardViewModeController = getDashboardViewModeController().createDashboardViewModeController({
@@ -643,7 +632,7 @@
         }
     });
     const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;
-    quoteRuntime = getDashboardQuoteRuntime().createDashboardQuoteRuntime({
+    const quoteRuntime = quoteRuntimeRef.set(getDashboardQuoteRuntime().createDashboardQuoteRuntime({
         AbortController,
         backendUrl: BACKEND_URL,
         chainDefaults: getChainDefaults(),
@@ -681,7 +670,7 @@
         shouldQueueInverseFetch,
         updateQuotePairLabel,
         updateTrendArrow
-    });
+    }));
     const {
         activeFetchControllerRuntime,
         addToQueue,
@@ -789,11 +778,11 @@
         createQuoteItem,
         renderDashboard
     } = dashboardViewController;
-    dashboardViewRenderRuntime = getDashboardViewModeController().createDashboardViewRenderRuntime({
+    dashboardViewRenderRuntimeRef.set(getDashboardViewModeController().createDashboardViewRenderRuntime({
         activeMode: getDashboardViewModeController().APP_VIEW_DASHBOARD,
         getMode: () => dashboardViewModeController && dashboardViewModeController.getMode(),
         render: renderDashboard
-    });
+    }));
 
     const dashboardFormController = getDashboardFormController().createDashboardFormController({
         addCategoryModal,
