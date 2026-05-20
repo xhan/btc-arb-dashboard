@@ -17,6 +17,7 @@ const opportunityRuntime = {
   }
 };
 const highlighted = [];
+const sideEffects = [];
 const highlightRuntime = {
   mark(opportunityIds, nowMs) {
     highlighted.push([opportunityIds, nowMs]);
@@ -33,7 +34,12 @@ assert.strictEqual(markOpportunityHighlights(null, ['opp-1'], 1234), false);
 
 const bridgeRuntime = createArbAlertBridgeRuntime({
   opportunityRuntime,
-  highlightRuntime
+  highlightRuntime,
+  closeArbDetailModal: () => sideEffects.push(['closeDetail']),
+  invalidateArbRuleSnapshotCache: () => sideEffects.push(['invalidate']),
+  isArbDetailVisible: () => true,
+  renderArbDetailModal: () => sideEffects.push(['renderDetail']),
+  updateArbPanel: () => sideEffects.push(['updatePanel'])
 });
 
 assert.deepStrictEqual(bridgeRuntime.getOpportunityIdsForTarget('target-a'), ['opp-1', 'opp-2']);
@@ -43,3 +49,29 @@ assert.deepStrictEqual(highlighted, [
   [['opp-1'], 1234],
   [['opp-1', 'opp-2'], 5678]
 ]);
+assert.strictEqual(bridgeRuntime.invalidateRuleSnapshot(), true);
+assert.strictEqual(bridgeRuntime.refreshArbPanel(), true);
+assert.deepStrictEqual(
+  bridgeRuntime.refreshArbViewsAfterMutedPathLegChange({ closeDetail: true }),
+  { closedDetail: true, renderedDetail: false, updatedPanel: true }
+);
+assert.deepStrictEqual(
+  bridgeRuntime.refreshArbViewsAfterMutedPathLegChange({ closeDetail: false }),
+  { closedDetail: false, renderedDetail: true, updatedPanel: true }
+);
+assert.deepStrictEqual(sideEffects, [
+  ['invalidate'],
+  ['updatePanel'],
+  ['updatePanel'],
+  ['closeDetail'],
+  ['updatePanel'],
+  ['renderDetail']
+]);
+
+const emptyBridgeRuntime = createArbAlertBridgeRuntime();
+assert.strictEqual(emptyBridgeRuntime.invalidateRuleSnapshot(), false);
+assert.strictEqual(emptyBridgeRuntime.refreshArbPanel(), false);
+assert.deepStrictEqual(
+  emptyBridgeRuntime.refreshArbViewsAfterMutedPathLegChange(),
+  { closedDetail: false, renderedDetail: false, updatedPanel: false }
+);

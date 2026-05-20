@@ -323,22 +323,37 @@
       return mutedPathRuntime.pruneLegs(nowMs);
     }
 
-    function triggerMutedPathLegRefresh(options = {}) {
-      if (typeof deps.invalidateArbRuleSnapshotCache === 'function') {
-        deps.invalidateArbRuleSnapshotCache();
+    function invalidateArbRuleSnapshotCache() {
+      if (!deps.arbAlertBridgeRuntime || typeof deps.arbAlertBridgeRuntime.invalidateRuleSnapshot !== 'function') {
+        return false;
       }
+      return deps.arbAlertBridgeRuntime.invalidateRuleSnapshot();
+    }
+
+    function refreshArbViewsAfterMutedPathLegChange(options = {}) {
+      if (
+        !deps.arbAlertBridgeRuntime
+        || typeof deps.arbAlertBridgeRuntime.refreshArbViewsAfterMutedPathLegChange !== 'function'
+      ) {
+        return null;
+      }
+      return deps.arbAlertBridgeRuntime.refreshArbViewsAfterMutedPathLegChange(options);
+    }
+
+    function refreshArbPanel() {
+      if (!deps.arbAlertBridgeRuntime || typeof deps.arbAlertBridgeRuntime.refreshArbPanel !== 'function') {
+        return false;
+      }
+      return deps.arbAlertBridgeRuntime.refreshArbPanel();
+    }
+
+    function triggerMutedPathLegRefresh(options = {}) {
+      invalidateArbRuleSnapshotCache();
       evaluatePathAlertsOnce();
       renderMutedAlertStatePanel(getNow());
       renderAlertSettingsPanel();
       updateAlertSoundState();
-      if (typeof deps.updateArbPanel === 'function') deps.updateArbPanel();
-      if (options.closeDetail !== false) {
-        if (typeof deps.closeArbDetailModal === 'function') deps.closeArbDetailModal();
-        return;
-      }
-      if (typeof deps.isArbDetailVisible === 'function' && deps.isArbDetailVisible()) {
-        if (typeof deps.renderArbDetailModal === 'function') deps.renderArbDetailModal();
-      }
+      refreshArbViewsAfterMutedPathLegChange(options);
     }
 
     function muteArbDetailLeg(leg, durationHours, nowMs = getNow()) {
@@ -809,8 +824,8 @@
       }
 
       updateAlertSoundState();
-      if (shouldRefreshArbPanelHighlights && typeof deps.updateArbPanel === 'function') {
-        deps.updateArbPanel();
+      if (shouldRefreshArbPanelHighlights) {
+        refreshArbPanel();
       }
       renderAlertSettingsPanel();
     }

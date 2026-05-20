@@ -89,10 +89,6 @@
         clearTimer: clearTimeout,
         onExpired: () => updateArbPanel()
     });
-    const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({
-        arbOpportunityRuntime,
-        arbOpportunityHighlightRuntime
-    });
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
@@ -447,6 +443,19 @@
         setMaxHeight: setArbPanelMaxHeight,
         update: updateArbPanel
     } = arbPanelController;
+    const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({
+        arbOpportunityRuntime,
+        arbOpportunityHighlightRuntime,
+        closeArbDetailModal: () => {
+            if (arbDetailController) arbDetailController.close();
+        },
+        invalidateArbRuleSnapshotCache,
+        isArbDetailVisible: () => Boolean(arbDetailController && arbDetailController.isVisible()),
+        renderArbDetailModal: () => {
+            if (arbDetailController) arbDetailController.render();
+        },
+        updateArbPanel
+    });
     let dashboardRendered = false;
 
     function renderDashboardForCurrentState() {
@@ -506,9 +515,6 @@
         bodyEl: document.body,
         AudioCtor: Audio,
         buildLiveQuoteLabel,
-        closeArbDetailModal: () => {
-            if (arbDetailController) arbDetailController.close();
-        },
         closestEventTarget,
         copyDexLinkFromElement,
         dashboardRuntimeUtils: getDashboardRuntimeUtils(),
@@ -525,8 +531,6 @@
         getQuoteMarketState,
         getQuoteMarketStateMap,
         getSharedArbRuleSnapshot,
-        invalidateArbRuleSnapshotCache,
-        isArbDetailVisible: () => Boolean(arbDetailController && arbDetailController.isVisible()),
         isCrossChainQuote,
         isQuotePaused,
         isRuleLeg,
@@ -557,16 +561,12 @@
             audioNoticeEl,
             pathAlertSound
         },
-        renderArbDetailModal: () => {
-            if (arbDetailController) arbDetailController.render();
-        },
         setInterval,
         clearInterval,
         setTimeout,
         clearTimeout,
         specialArbRules: SPECIAL_ARB_RULES,
         specialRuleAlertConfigUtils: getSpecialRuleAlertConfigUtils(),
-        updateArbPanel,
         windowImpl: window
     });
     alertRuntimeController.bindAudioUnlockEvents();

@@ -30,14 +30,66 @@
   function createArbAlertBridgeRuntime(options = {}) {
     const opportunityRuntime = options.opportunityRuntime || options.arbOpportunityRuntime || null;
     const highlightRuntime = options.highlightRuntime || options.arbOpportunityHighlightRuntime || null;
+    const invalidateArbRuleSnapshotCache = typeof options.invalidateArbRuleSnapshotCache === 'function'
+      ? options.invalidateArbRuleSnapshotCache
+      : null;
+    const updateArbPanel = typeof options.updateArbPanel === 'function'
+      ? options.updateArbPanel
+      : null;
+    const closeArbDetailModal = typeof options.closeArbDetailModal === 'function'
+      ? options.closeArbDetailModal
+      : null;
+    const renderArbDetailModal = typeof options.renderArbDetailModal === 'function'
+      ? options.renderArbDetailModal
+      : null;
+    const isArbDetailVisible = typeof options.isArbDetailVisible === 'function'
+      ? options.isArbDetailVisible
+      : () => false;
 
     function markTriggeredOpportunities(targetKey, nowMs) {
       const opportunityIds = getOpportunityIdsForTarget(opportunityRuntime, targetKey);
       return markOpportunityHighlights(highlightRuntime, opportunityIds, nowMs);
     }
 
+    function invalidateRuleSnapshot() {
+      if (!invalidateArbRuleSnapshotCache) return false;
+      invalidateArbRuleSnapshotCache();
+      return true;
+    }
+
+    function refreshArbPanel() {
+      if (!updateArbPanel) return false;
+      updateArbPanel();
+      return true;
+    }
+
+    function refreshArbViewsAfterMutedPathLegChange(options = {}) {
+      const result = {
+        closedDetail: false,
+        renderedDetail: false,
+        updatedPanel: false
+      };
+
+      result.updatedPanel = refreshArbPanel();
+      if (options.closeDetail !== false) {
+        if (closeArbDetailModal) {
+          closeArbDetailModal();
+          result.closedDetail = true;
+        }
+        return result;
+      }
+      if (isArbDetailVisible() && renderArbDetailModal) {
+        renderArbDetailModal();
+        result.renderedDetail = true;
+      }
+      return result;
+    }
+
     return {
       getOpportunityIdsForTarget: (targetKey) => getOpportunityIdsForTarget(opportunityRuntime, targetKey),
+      invalidateRuleSnapshot,
+      refreshArbViewsAfterMutedPathLegChange,
+      refreshArbPanel,
       markTriggeredOpportunities
     };
   }
