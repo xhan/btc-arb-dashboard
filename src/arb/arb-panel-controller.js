@@ -58,10 +58,11 @@
     const arbPanelCache = arbPathTemplateCacheUtils.createArbPanelCache();
     const arbGlobalFilterStateRuntime = arbPanelLayoutUtils.createGlobalArbFilterStateRuntime();
     let arbPanelHtmlRenderer = null;
-    const arbPanelInteractionHoldRuntime = (
-      domRenderUtils && typeof domRenderUtils.createRenderInteractionHoldRuntime === 'function'
+    const arbPanelInteractionDeferralRuntime = (
+      domRenderUtils && typeof domRenderUtils.createRenderInteractionDeferralRuntime === 'function'
     )
-      ? domRenderUtils.createRenderInteractionHoldRuntime({
+      ? domRenderUtils.createRenderInteractionDeferralRuntime({
+        getTarget: () => refs.arbPathContent,
         setTimeout: setTimer,
         clearTimeout: clearTimer,
         onIdle: () => {
@@ -74,9 +75,9 @@
     arbPanelHtmlRenderer = domRenderUtils.createStableHtmlRenderer({
       shouldDeferRender: (element) => (
         Boolean(
-          arbPanelInteractionHoldRuntime
-          && typeof arbPanelInteractionHoldRuntime.shouldDeferRender === 'function'
-          && arbPanelInteractionHoldRuntime.shouldDeferRender(element)
+          arbPanelInteractionDeferralRuntime
+          && typeof arbPanelInteractionDeferralRuntime.shouldDeferRender === 'function'
+          && arbPanelInteractionDeferralRuntime.shouldDeferRender(element)
         )
         || domRenderUtils.shouldDeferRenderWhileFocused(element, { documentImpl })
       )
@@ -588,8 +589,8 @@
 
     function bindContentEvents() {
       if (!refs.arbPathContent) return;
-      if (arbPanelInteractionHoldRuntime && typeof arbPanelInteractionHoldRuntime.bind === 'function') {
-        arbPanelInteractionHoldRuntime.bind(refs.arbPathContent);
+      if (arbPanelInteractionDeferralRuntime && typeof arbPanelInteractionDeferralRuntime.bind === 'function') {
+        arbPanelInteractionDeferralRuntime.bind(refs.arbPathContent);
       }
       refs.arbPathContent.addEventListener('pointerdown', handleContentPointerDown);
       refs.arbPathContent.addEventListener('click', handleContentClick);

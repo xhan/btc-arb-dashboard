@@ -54,20 +54,23 @@
     let pathAlertConfig = pathAlertUtils.normalizeAlertConfig();
     let pathAlertReloading = false;
 
+    function flushAlertContentRenderer(getRenderer, getElement) {
+      const renderer = typeof getRenderer === 'function' ? getRenderer() : null;
+      const element = typeof getElement === 'function' ? getElement() : null;
+      if (renderer && element && typeof renderer.flush === 'function') {
+        renderer.flush(element);
+      }
+    }
+
     function createAlertContentInteractionRuntime(getRenderer, getElement) {
-      if (!domRenderUtils || typeof domRenderUtils.createRenderInteractionHoldRuntime !== 'function') {
+      if (!domRenderUtils || typeof domRenderUtils.createRenderInteractionDeferralRuntime !== 'function') {
         return null;
       }
-      return domRenderUtils.createRenderInteractionHoldRuntime({
+      return domRenderUtils.createRenderInteractionDeferralRuntime({
+        getTarget: getElement,
         setTimeout: deps.setTimeout,
         clearTimeout: deps.clearTimeout,
-        onIdle: () => {
-          const renderer = typeof getRenderer === 'function' ? getRenderer() : null;
-          const element = typeof getElement === 'function' ? getElement() : null;
-          if (renderer && element && typeof renderer.flush === 'function') {
-            renderer.flush(element);
-          }
-        }
+        onIdle: () => flushAlertContentRenderer(getRenderer, getElement)
       });
     }
 

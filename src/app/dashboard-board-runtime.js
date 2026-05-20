@@ -19,10 +19,11 @@
       ? options.getRequestChannelOptions
       : () => ({});
     let viewRenderRuntime = null;
-    const dashboardInteractionHoldRuntime = (
-      domRenderUtils && typeof domRenderUtils.createRenderInteractionHoldRuntime === 'function'
+    const dashboardInteractionDeferralRuntime = (
+      domRenderUtils && typeof domRenderUtils.createRenderInteractionDeferralRuntime === 'function'
     )
-      ? domRenderUtils.createRenderInteractionHoldRuntime({
+      ? domRenderUtils.createRenderInteractionDeferralRuntime({
+        getTarget: () => refs.dashboardEl,
         setTimeout: options.setTimeout,
         clearTimeout: options.clearTimeout,
         onIdle: () => {
@@ -35,19 +36,18 @@
 
     function shouldDeferDashboardRender() {
       return Boolean(
-        dashboardInteractionHoldRuntime
-        && typeof dashboardInteractionHoldRuntime.shouldDeferRender === 'function'
-        && dashboardInteractionHoldRuntime.shouldDeferRender(refs.dashboardEl)
+        dashboardInteractionDeferralRuntime
+        && typeof dashboardInteractionDeferralRuntime.shouldDeferRender === 'function'
+        && dashboardInteractionDeferralRuntime.shouldDeferRender()
       );
     }
 
-    function bindDashboardInteractionHold() {
+    function bindDashboardInteractionDeferral() {
       if (
-        dashboardInteractionHoldRuntime
-        && refs.dashboardEl
-        && typeof dashboardInteractionHoldRuntime.bind === 'function'
+        dashboardInteractionDeferralRuntime
+        && typeof dashboardInteractionDeferralRuntime.bind === 'function'
       ) {
-        dashboardInteractionHoldRuntime.bind(refs.dashboardEl);
+        dashboardInteractionDeferralRuntime.bind();
       }
     }
 
@@ -99,7 +99,7 @@
       render: renderDashboard,
       shouldDeferRender: shouldDeferDashboardRender
     });
-    bindDashboardInteractionHold();
+    bindDashboardInteractionDeferral();
     if (options.dashboardViewRenderRuntimeRef && typeof options.dashboardViewRenderRuntimeRef.set === 'function') {
       options.dashboardViewRenderRuntimeRef.set(viewRenderRuntime);
     }

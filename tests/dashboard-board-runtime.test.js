@@ -82,17 +82,18 @@ const runtime = createDashboardBoardRuntime({
     documentImpl: { id: 'document' },
     dashboardRuntimeUtils: { id: 'runtime-utils' },
     domRenderUtils: {
-      createRenderInteractionHoldRuntime(options = {}) {
+      createRenderInteractionDeferralRuntime(options = {}) {
         dashboardInteractionOptions = options;
         return {
-          bind(target) {
+          bind(target = options.getTarget()) {
             calls.push(['bindDashboardInteraction', target && target.id]);
             if (target && typeof target.addEventListener === 'function') {
               target.addEventListener('pointerdown', () => {});
             }
             return true;
           },
-          shouldDeferRender() {
+          shouldDeferRender(target = options.getTarget()) {
+            calls.push(['shouldDeferDashboardInteraction', target && target.id]);
             return dashboardInteractionHolding;
           }
         };
@@ -142,6 +143,7 @@ dashboardInteractionHolding = true;
 assert.strictEqual(renderOptions.shouldDeferRender(), true);
 dashboardInteractionHolding = false;
 assert.strictEqual(renderOptions.shouldDeferRender(), false);
+assert.ok(calls.some((call) => call[0] === 'shouldDeferDashboardInteraction' && call[1] === 'dashboard'));
 assert.deepStrictEqual(formOptions.addQuoteInputs.map((item) => item.id), ['from', 'to']);
 assert.strictEqual(formOptions.createCategoryModule, viewController.createCategoryModule);
 assert.strictEqual(formOptions.createQuoteItem, viewController.createQuoteItem);

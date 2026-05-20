@@ -34,10 +34,11 @@
     const dashboardRuntimeUtils = deps.dashboardRuntimeUtils || {};
     const domRenderUtils = deps.domRenderUtils || {};
     let state = null;
-    const interactionHoldRuntime = (
-      domRenderUtils && typeof domRenderUtils.createRenderInteractionHoldRuntime === 'function'
+    const interactionDeferralRuntime = (
+      domRenderUtils && typeof domRenderUtils.createRenderInteractionDeferralRuntime === 'function'
     )
-      ? domRenderUtils.createRenderInteractionHoldRuntime({
+      ? domRenderUtils.createRenderInteractionDeferralRuntime({
+        getTarget: () => (state && state.domRefs ? state.domRefs.content : null),
         setTimeout: deps.setTimeout,
         clearTimeout: deps.clearTimeout,
         onIdle: () => {
@@ -56,9 +57,9 @@
 
     function shouldDeferContentRender(element) {
       return Boolean(
-        interactionHoldRuntime
-        && typeof interactionHoldRuntime.shouldDeferRender === 'function'
-        && interactionHoldRuntime.shouldDeferRender(element)
+        interactionDeferralRuntime
+        && typeof interactionDeferralRuntime.shouldDeferRender === 'function'
+        && interactionDeferralRuntime.shouldDeferRender(element)
       );
     }
 
@@ -292,8 +293,8 @@
         onHeaderClick: handleHeaderClick,
         onMinimize: togglePanel
       });
-      if (interactionHoldRuntime && refs.content && typeof interactionHoldRuntime.bind === 'function') {
-        interactionHoldRuntime.bind(refs.content);
+      if (interactionDeferralRuntime && typeof interactionDeferralRuntime.bind === 'function') {
+        interactionDeferralRuntime.bind(refs.content);
       }
 
       if (refs.header && typeof domRenderUtils.bindFloatingPanelChrome === 'function') {

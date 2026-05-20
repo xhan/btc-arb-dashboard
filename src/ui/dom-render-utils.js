@@ -652,6 +652,34 @@
     };
   }
 
+  function createRenderInteractionDeferralRuntime(options = {}) {
+    const getTarget = typeof options.getTarget === 'function'
+      ? options.getTarget
+      : () => options.target || null;
+    const interactionRuntime = createRenderInteractionHoldRuntime({
+      setTimeout: options.setTimeout,
+      clearTimeout: options.clearTimeout,
+      idleDelayMs: options.idleDelayMs,
+      onIdle: options.onIdle
+    });
+
+    function bind(target = getTarget()) {
+      return interactionRuntime.bind(target);
+    }
+
+    function shouldDeferRender(target = getTarget()) {
+      return interactionRuntime.shouldDeferRender(target);
+    }
+
+    return {
+      bind,
+      hold: interactionRuntime.hold,
+      isHolding: interactionRuntime.isHolding,
+      release: interactionRuntime.release,
+      shouldDeferRender
+    };
+  }
+
   function shouldDeferRenderWhileFocused(element, options = {}) {
     if (!element || typeof element.contains !== 'function') return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -685,6 +713,7 @@
     closestEventTarget,
     createElementFromHtml,
     createFloatingPanelZIndexRuntime,
+    createRenderInteractionDeferralRuntime,
     createRenderInteractionHoldRuntime,
     createStableHtmlRenderer,
     shouldDeferRenderWhileFocused,

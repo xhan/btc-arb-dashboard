@@ -23,6 +23,7 @@ const {
   bindFloatingPanelChrome,
   clearQuoteDataError,
   closestEventTarget,
+  createRenderInteractionDeferralRuntime,
   createRenderInteractionHoldRuntime,
   createElementFromHtml,
   createFloatingPanelZIndexRuntime,
@@ -233,6 +234,46 @@ assert.strictEqual(holdDeferredTarget.innerHTML, '');
 holdFlushRuntime.release();
 assert.strictEqual(holdDeferredTarget.innerHTML, '<div>latest</div>');
 assert.deepStrictEqual(holdDeferredWrites, ['<div>latest</div>']);
+
+const deferralCalls = [];
+const deferralTimers = new Map();
+let nextDeferralTimerId = 1;
+const deferralListeners = {};
+const deferralTarget = {
+  addEventListener(type, handler) {
+    deferralListeners[type] = handler;
+  }
+};
+const deferralRuntime = createRenderInteractionDeferralRuntime({
+  getTarget: () => deferralTarget,
+  idleDelayMs: 11,
+  setTimeout(callback, delayMs) {
+    const id = nextDeferralTimerId;
+    nextDeferralTimerId += 1;
+    deferralCalls.push(['setTimeout', delayMs, id]);
+    deferralTimers.set(id, callback);
+    return id;
+  },
+  clearTimeout(id) {
+    deferralCalls.push(['clearTimeout', id]);
+    deferralTimers.delete(id);
+  },
+  onIdle() {
+    deferralCalls.push(['idle']);
+  }
+});
+assert.strictEqual(deferralRuntime.bind(), true);
+assert.strictEqual(deferralRuntime.bind(), false);
+deferralListeners.pointerdown({});
+assert.strictEqual(deferralRuntime.shouldDeferRender(), true);
+deferralListeners.pointerup({});
+const deferralTimerId = nextDeferralTimerId - 1;
+assert.deepStrictEqual(deferralCalls, [['setTimeout', 11, deferralTimerId]]);
+deferralTimers.get(deferralTimerId)();
+assert.deepStrictEqual(deferralCalls, [
+  ['setTimeout', 11, deferralTimerId],
+  ['idle']
+]);
 
 const quoteDomLookups = [];
 const quoteDomRefs = getQuoteDomRefs({
