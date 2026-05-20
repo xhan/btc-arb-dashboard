@@ -23,6 +23,7 @@ const {
   bindFloatingPanelChrome,
   clearQuoteDataError,
   closestEventTarget,
+  createRenderInteractionHoldRuntime,
   createElementFromHtml,
   createFloatingPanelZIndexRuntime,
   createStableHtmlRenderer,
@@ -130,6 +131,108 @@ assert.strictEqual(
   false
 );
 assert.strictEqual(shouldDeferRenderWhileFocused({}), false);
+
+const holdCalls = [];
+const holdTimers = new Map();
+let nextHoldTimerId = 1;
+const holdRuntime = createRenderInteractionHoldRuntime({
+  idleDelayMs: 25,
+  setTimeout(callback, delayMs) {
+    const id = nextHoldTimerId;
+    nextHoldTimerId += 1;
+    holdCalls.push(['setTimeout', delayMs, id]);
+    holdTimers.set(id, callback);
+    return id;
+  },
+  clearTimeout(id) {
+    holdCalls.push(['clearTimeout', id]);
+    holdTimers.delete(id);
+  },
+  onIdle() {
+    holdCalls.push(['idle']);
+  }
+});
+const holdListeners = {};
+const holdTarget = {
+  contains(element) {
+    return element && element.inside === true;
+  },
+  addEventListener(type, handler) {
+    holdListeners[type] = handler;
+  }
+};
+assert.strictEqual(holdRuntime.bind(holdTarget), true);
+assert.strictEqual(holdRuntime.bind(holdTarget), false);
+assert.ok(['pointerdown', 'pointerup', 'pointercancel', 'focusin', 'focusout', 'keydown', 'keyup'].every((type) => typeof holdListeners[type] === 'function'));
+
+holdListeners.pointerdown({});
+assert.strictEqual(holdRuntime.isHolding(), true);
+assert.strictEqual(holdRuntime.shouldDeferRender(holdTarget), true);
+holdListeners.pointerup({});
+assert.strictEqual(holdRuntime.isHolding(), false);
+const pointerIdleTimerId = nextHoldTimerId - 1;
+assert.ok(holdTimers.has(pointerIdleTimerId));
+holdTimers.get(pointerIdleTimerId)();
+assert.ok(holdCalls.some((call) => call[0] === 'idle'));
+
+holdCalls.length = 0;
+holdRuntime.hold();
+holdListeners.pointerdown({});
+holdListeners.pointerup({});
+assert.strictEqual(holdRuntime.isHolding(), true);
+assert.strictEqual(holdCalls.length, 0);
+holdRuntime.release();
+assert.strictEqual(holdRuntime.isHolding(), false);
+const manualIdleTimerId = nextHoldTimerId - 1;
+assert.ok(holdTimers.has(manualIdleTimerId));
+holdTimers.get(manualIdleTimerId)();
+assert.deepStrictEqual(holdCalls, [
+  ['setTimeout', 25, manualIdleTimerId],
+  ['idle']
+]);
+
+holdCalls.length = 0;
+holdListeners.focusin({});
+holdListeners.focusout({ relatedTarget: { inside: true } });
+assert.strictEqual(holdRuntime.isHolding(), true);
+holdListeners.focusout({ relatedTarget: null });
+assert.strictEqual(holdRuntime.isHolding(), false);
+const focusIdleTimerId = nextHoldTimerId - 1;
+holdTimers.get(focusIdleTimerId)();
+assert.deepStrictEqual(holdCalls.slice(-2), [
+  ['setTimeout', 25, focusIdleTimerId],
+  ['idle']
+]);
+
+const holdDeferredWrites = [];
+const holdDeferredTarget = { innerHTML: '' };
+const holdFlushRuntime = createRenderInteractionHoldRuntime({
+  idleDelayMs: 1,
+  setTimeout(callback) {
+    callback();
+    return 1;
+  },
+  clearTimeout() {},
+  onIdle() {
+    holdDeferredRenderer.flush(holdDeferredTarget);
+  }
+});
+const holdDeferredRenderer = createStableHtmlRenderer({
+  setHtml(element, html) {
+    holdDeferredWrites.push(html);
+    element.innerHTML = html;
+  },
+  shouldDeferRender(element) {
+    return holdFlushRuntime.shouldDeferRender(element);
+  }
+});
+holdFlushRuntime.hold();
+assert.strictEqual(holdDeferredRenderer.render(holdDeferredTarget, '<div>old</div>'), false);
+assert.strictEqual(holdDeferredRenderer.render(holdDeferredTarget, '<div>latest</div>'), false);
+assert.strictEqual(holdDeferredTarget.innerHTML, '');
+holdFlushRuntime.release();
+assert.strictEqual(holdDeferredTarget.innerHTML, '<div>latest</div>');
+assert.deepStrictEqual(holdDeferredWrites, ['<div>latest</div>']);
 
 const quoteDomLookups = [];
 const quoteDomRefs = getQuoteDomRefs({

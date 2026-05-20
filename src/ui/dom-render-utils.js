@@ -532,6 +532,126 @@
     };
   }
 
+  function createRenderInteractionHoldRuntime(options = {}) {
+    const setTimer = typeof options.setTimeout === 'function'
+      ? options.setTimeout
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimer = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const idleDelayMs = Number.isFinite(Number(options.idleDelayMs)) && Number(options.idleDelayMs) >= 0
+      ? Number(options.idleDelayMs)
+      : 80;
+    const onIdle = typeof options.onIdle === 'function' ? options.onIdle : () => {};
+    let boundTarget = null;
+    let idleTimer = null;
+    let manualHolding = false;
+    let pointerDepth = 0;
+    let keyActive = false;
+    let focusInside = false;
+
+    function clearIdleTimer() {
+      if (idleTimer === null) return false;
+      if (clearTimer) {
+        clearTimer(idleTimer);
+      }
+      idleTimer = null;
+      return true;
+    }
+
+    function isHolding() {
+      return manualHolding || pointerDepth > 0 || keyActive || focusInside;
+    }
+
+    function scheduleIdle() {
+      if (isHolding() || !setTimer) return false;
+      clearIdleTimer();
+      idleTimer = setTimer(() => {
+        idleTimer = null;
+        if (!isHolding()) {
+          onIdle();
+        }
+      }, idleDelayMs);
+      return true;
+    }
+
+    function hold() {
+      manualHolding = true;
+      clearIdleTimer();
+      return true;
+    }
+
+    function release() {
+      manualHolding = false;
+      return scheduleIdle();
+    }
+
+    function pointerDown() {
+      pointerDepth += 1;
+      clearIdleTimer();
+    }
+
+    function pointerUp() {
+      pointerDepth = Math.max(0, pointerDepth - 1);
+      scheduleIdle();
+    }
+
+    function keyDown() {
+      keyActive = true;
+      clearIdleTimer();
+    }
+
+    function keyUp() {
+      keyActive = false;
+      scheduleIdle();
+    }
+
+    function focusIn() {
+      focusInside = true;
+      clearIdleTimer();
+    }
+
+    function focusOut(event) {
+      const nextTarget = event && event.relatedTarget;
+      if (
+        nextTarget
+        && boundTarget
+        && typeof boundTarget.contains === 'function'
+        && boundTarget.contains(nextTarget)
+      ) {
+        return;
+      }
+      focusInside = false;
+      scheduleIdle();
+    }
+
+    function shouldDeferRender() {
+      return isHolding();
+    }
+
+    function bind(target) {
+      if (!target || typeof target.addEventListener !== 'function') return false;
+      if (boundTarget) return false;
+      boundTarget = target;
+      target.addEventListener('pointerdown', pointerDown);
+      target.addEventListener('pointerup', pointerUp);
+      target.addEventListener('pointercancel', pointerUp);
+      target.addEventListener('focusin', focusIn);
+      target.addEventListener('focusout', focusOut);
+      target.addEventListener('keydown', keyDown);
+      target.addEventListener('keyup', keyUp);
+      return true;
+    }
+
+    return {
+      bind,
+      hold,
+      isHolding,
+      release,
+      shouldDeferRender
+    };
+  }
+
   function shouldDeferRenderWhileFocused(element, options = {}) {
     if (!element || typeof element.contains !== 'function') return false;
     const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
@@ -565,6 +685,7 @@
     closestEventTarget,
     createElementFromHtml,
     createFloatingPanelZIndexRuntime,
+    createRenderInteractionHoldRuntime,
     createStableHtmlRenderer,
     shouldDeferRenderWhileFocused,
     escapeCssAttributeValue,

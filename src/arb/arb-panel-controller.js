@@ -57,8 +57,29 @@
     const updateDelayMs = Number.isFinite(Number(options.updateDelayMs)) ? Number(options.updateDelayMs) : 0;
     const arbPanelCache = arbPathTemplateCacheUtils.createArbPanelCache();
     const arbGlobalFilterStateRuntime = arbPanelLayoutUtils.createGlobalArbFilterStateRuntime();
-    const arbPanelHtmlRenderer = domRenderUtils.createStableHtmlRenderer({
-      shouldDeferRender: (element) => domRenderUtils.shouldDeferRenderWhileFocused(element, { documentImpl })
+    let arbPanelHtmlRenderer = null;
+    const arbPanelInteractionHoldRuntime = (
+      domRenderUtils && typeof domRenderUtils.createRenderInteractionHoldRuntime === 'function'
+    )
+      ? domRenderUtils.createRenderInteractionHoldRuntime({
+        setTimeout: setTimer,
+        clearTimeout: clearTimer,
+        onIdle: () => {
+          if (arbPanelHtmlRenderer && typeof arbPanelHtmlRenderer.flush === 'function') {
+            arbPanelHtmlRenderer.flush(refs.arbPathContent);
+          }
+        }
+      })
+      : null;
+    arbPanelHtmlRenderer = domRenderUtils.createStableHtmlRenderer({
+      shouldDeferRender: (element) => (
+        Boolean(
+          arbPanelInteractionHoldRuntime
+          && typeof arbPanelInteractionHoldRuntime.shouldDeferRender === 'function'
+          && arbPanelInteractionHoldRuntime.shouldDeferRender(element)
+        )
+        || domRenderUtils.shouldDeferRenderWhileFocused(element, { documentImpl })
+      )
     });
     const arbExpandedSections = new Set();
     let arbLastPointerOpenedOpportunityId = null;
@@ -563,6 +584,9 @@
 
     function bindContentEvents() {
       if (!refs.arbPathContent) return;
+      if (arbPanelInteractionHoldRuntime && typeof arbPanelInteractionHoldRuntime.bind === 'function') {
+        arbPanelInteractionHoldRuntime.bind(refs.arbPathContent);
+      }
       refs.arbPathContent.addEventListener('pointerdown', handleContentPointerDown);
       refs.arbPathContent.addEventListener('click', handleContentClick);
       refs.arbPathContent.addEventListener('keydown', handleContentKeydown);
