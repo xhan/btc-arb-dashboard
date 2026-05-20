@@ -997,7 +997,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.buildQuotePairLabelHtml(quote, state)'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.quoteDisplayUtils.buildQuotePairLabelHtml(quote, monitorState)'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelTagHtml(quote, requestChannel)'));
-    assert.ok(appJsResponse.body.includes('requestChannelRuntime.updateTagForQuote(quote, {'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function updateTagsForDashboard(dashboardState, tagOptions = {})'));
+    assert.ok(appJsResponse.body.includes('tagOptions: {'));
+    assert.ok(appJsResponse.body.includes('const updateRequestChannelTagForQuote = requestChannelRuntime.updateTagForQuote;'));
+    assert.ok(appJsResponse.body.includes('requestChannelRuntime.updateTagsForDashboard(dashboardState);'));
+    assert.ok(!appJsResponse.body.includes('function updateRequestChannelTagForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('showRequestChannelTags'));
     assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body'));
     assert.ok(!appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml'));

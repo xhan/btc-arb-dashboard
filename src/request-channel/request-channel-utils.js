@@ -462,6 +462,9 @@
     let defaultIntervals = normalizeIntervals(options.defaultIntervals);
     let requestChannels = getRequestChannelOptions(requestChannelPayload, defaultIntervals);
     const multiChannelToggleRuntime = options.multiChannelToggleRuntime || createMultiChannelToggleRuntime(options.multiChannelToggleOptions || {});
+    const defaultTagOptions = options.tagOptions && typeof options.tagOptions === 'object'
+      ? options.tagOptions
+      : {};
 
     function refreshOptions() {
       requestChannels = getRequestChannelOptions(requestChannelPayload, defaultIntervals);
@@ -494,8 +497,28 @@
       });
     }
 
+    function resolveTagOptions(tagOptions) {
+      return tagOptions && typeof tagOptions === 'object'
+        ? { ...defaultTagOptions, ...tagOptions }
+        : defaultTagOptions;
+    }
+
     function updateTagForQuote(quote, tagOptions = {}) {
-      return applyRequestChannelTagForQuote(quote, requestChannels, tagOptions);
+      return applyRequestChannelTagForQuote(quote, requestChannels, resolveTagOptions(tagOptions));
+    }
+
+    function updateTagsForQuotes(quotes, tagOptions = {}) {
+      let updatedCount = 0;
+      (Array.isArray(quotes) ? quotes : []).forEach((quote) => {
+        if (updateTagForQuote(quote, tagOptions)) {
+          updatedCount += 1;
+        }
+      });
+      return updatedCount;
+    }
+
+    function updateTagsForDashboard(dashboardState, tagOptions = {}) {
+      return updateTagsForQuotes(flattenDashboardQuotes(dashboardState), tagOptions);
     }
 
     function getChangedQuotesForMultiChannelToggle(previousEnabled, nextEnabled, dashboardState) {
@@ -560,7 +583,9 @@
       setMultiChannelEnabled,
       setPayload,
       toggleMultiChannel,
-      updateTagForQuote
+      updateTagForQuote,
+      updateTagsForDashboard,
+      updateTagsForQuotes
     };
   }
 

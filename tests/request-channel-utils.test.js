@@ -468,6 +468,50 @@ assert.strictEqual(
 requestChannelRuntime.setDefaultIntervals({ ...DEFAULT_INTERVALS, kyber: 321 });
 assert.strictEqual(requestChannelRuntime.getOptions().channels[0].intervals.kyber, 321);
 
+const runtimeTagFixture = createRequestChannelTagFixture();
+const runtimeWithTagOptions = createRequestChannelRuntime({
+  payload: {
+    channels: [{ id: 'HK-1', name: 'HK-1' }]
+  },
+  defaultIntervals: DEFAULT_INTERVALS,
+  tagOptions: {
+    getElementById: (id) => (id === 'quote-item-quote-1' ? runtimeTagFixture.itemEl : null)
+  }
+});
+assert.strictEqual(
+  runtimeWithTagOptions.updateTagForQuote({
+    id: 'quote-1',
+    chain: 'ethereum',
+    preferredSource: 'Kyber',
+    requestChannelId: 'HK-1'
+  }),
+  true
+);
+assert.deepStrictEqual(runtimeTagFixture.calls, [
+  ['insertAdjacentHTML', 'afterend', '<span class="quote-channel-tag" id="quote-channel-tag-quote-1">HK-1</span>']
+]);
+assert.strictEqual(
+  runtimeWithTagOptions.updateTagsForDashboard([
+    {
+      quotes: [
+        {
+          id: 'quote-1',
+          chain: 'ethereum',
+          preferredSource: 'Kyber',
+          requestChannelId: 'HK-1'
+        },
+        {
+          id: 'missing-dom',
+          chain: 'ethereum',
+          preferredSource: 'Kyber',
+          requestChannelId: 'HK-1'
+        }
+      ]
+    }
+  ]),
+  1
+);
+
 assert.strictEqual(
   getRequestChannelDisplayForQuote(
     { chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' },

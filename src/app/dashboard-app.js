@@ -230,7 +230,7 @@
         readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues,
         buildSettingsIntervalsFromFormValues: getDashboardRenderer().buildSettingsIntervalsFromFormValues,
         onSave: () => {
-            refreshRequestChannelOptions();
+            requestChannelRuntime.setDefaultIntervals(apiIntervals);
             updateSchedulers();
             saveData();
         },
@@ -263,8 +263,13 @@
     const requestChannelRuntime = getRequestChannelUtils().createRequestChannelRuntime({
         payload: requestChannelPayload,
         defaultIntervals: apiIntervals,
-        multiChannelToggleRuntime
+        multiChannelToggleRuntime,
+        tagOptions: {
+            getElementById: (id) => document.getElementById(id)
+        }
     });
+    const getEffectiveRequestChannelIdForQuote = requestChannelRuntime.getEffectiveChannelIdForQuote;
+    const updateRequestChannelTagForQuote = requestChannelRuntime.updateTagForQuote;
     const requestChannelTagVisibilityRuntime = getRequestChannelUtils().createRequestChannelTagVisibilityRuntime({
         getBody: () => document.body,
         visible: true
@@ -650,23 +655,9 @@
     const fetchQuoteByStrategy = quoteFetchController.fetchByStrategy;
     const fetchSingleQuote = quoteFetchController.fetchSingle;
 
-    function refreshRequestChannelOptions() {
-        requestChannelRuntime.setDefaultIntervals(apiIntervals);
-    }
-
     function getDashboardLocalStorage() {
         return getDashboardRuntimeUtils().getBrowserLocalStorage({ window }, {
             onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
-        });
-    }
-
-    function getEffectiveRequestChannelIdForQuote(quote, options = {}) {
-        return requestChannelRuntime.getEffectiveChannelIdForQuote(quote, options);
-    }
-
-    function updateRequestChannelTagForQuote(quote) {
-        requestChannelRuntime.updateTagForQuote(quote, {
-            getElementById: (id) => document.getElementById(id)
         });
     }
 
@@ -771,9 +762,7 @@
     async function loadRequestChannels() {
         requestChannelPayload = await dashboardApiClient.loadRequestChannels();
         requestChannelRuntime.setPayload(requestChannelPayload);
-        dashboardState.forEach((category) => {
-            (category.quotes || []).forEach((quote) => updateRequestChannelTagForQuote(quote));
-        });
+        requestChannelRuntime.updateTagsForDashboard(dashboardState);
     }
 
     manualSaveBtn.addEventListener('click', () => { performSave(true); });
@@ -956,7 +945,7 @@
             if (loadedConfig.migratedSolanaInterval) {
                 saveData();
             }
-            refreshRequestChannelOptions();
+            requestChannelRuntime.setDefaultIntervals(apiIntervals);
             await loadRequestChannels();
 
             await alertRuntimeController.loadPathAlertConfig();
