@@ -100,6 +100,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-spread-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-spread-controller.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-ui-controller.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-fetch-controller.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
@@ -110,6 +111,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/ui/audio-utils.js"'));
     assert.ok(response.body.includes('src="src/ui/theme-utils.js"'));
     assert.ok(response.body.includes('src="src/ui/keyboard-shortcut-utils.js"'));
+    assert.ok(response.body.includes('src="src/ui/keyboard-shortcut-controller.js"'));
     assert.ok(response.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(response.body.includes('src="src/data-terminal/data-terminal-utils.js"'));
     assert.ok(response.body.includes('src="src/data-terminal/data-terminal-controller.js"'));
@@ -135,6 +137,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-display-utils.js"') < response.body.indexOf('src="src/quote/quote-ui-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/quote/quote-spread-utils.js"') < response.body.indexOf('src="src/quote/quote-spread-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/quote/quote-spread-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-ui-controller.js"') < response.body.indexOf('src="src/quote/quote-fetch-controller.js"')
@@ -240,6 +248,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/ui/keyboard-shortcut-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/ui/keyboard-shortcut-utils.js"') < response.body.indexOf('src="src/ui/keyboard-shortcut-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/ui/keyboard-shortcut-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/price-snapshots/price-snapshot-payload-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -428,6 +442,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
     const quoteSpreadUtilsResponse = await request('/src/quote/quote-spread-utils.js');
     assert.strictEqual(quoteSpreadUtilsResponse.statusCode, 200);
+    const quoteSpreadControllerResponse = await request('/src/quote/quote-spread-controller.js');
+    assert.strictEqual(quoteSpreadControllerResponse.statusCode, 200);
     const requestChannelUtilsResponse = await request('/src/request-channel/request-channel-utils.js');
     assert.strictEqual(requestChannelUtilsResponse.statusCode, 200);
     const queueStatsUtilsResponse = await request('/src/queue-stats/queue-stats-utils.js');
@@ -476,6 +492,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(themeUtilsResponse.statusCode, 200);
     const keyboardShortcutUtilsResponse = await request('/src/ui/keyboard-shortcut-utils.js');
     assert.strictEqual(keyboardShortcutUtilsResponse.statusCode, 200);
+    const keyboardShortcutControllerResponse = await request('/src/ui/keyboard-shortcut-controller.js');
+    assert.strictEqual(keyboardShortcutControllerResponse.statusCode, 200);
     assert.ok(arbDetailUtilsResponse.body.includes('inputmode="decimal"'));
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-token-address'));
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-dex-link-copy]')"));
@@ -498,9 +516,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalControllerResponse.body.includes('function createDataTerminalController(deps = {})'));
     assert.ok(moduleRegistryResponse.body.includes('function getWindowModule(windowImpl, globalName, missingMessage)'));
     assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadUtils: ['));
-    assert.ok(appJsResponse.body.includes('QUOTE_SPREAD_UPDATE_INTERVAL_MS = 1000'));
-    assert.ok(appJsResponse.body.includes('function renderQuoteSpreadPanel()'));
-    assert.ok(appJsResponse.body.includes('function toggleQuoteSpreadPanel()'));
+    assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadController: ['));
+    assert.ok(quoteSpreadControllerResponse.body.includes('function createQuoteSpreadController(deps = {})'));
+    assert.ok(quoteSpreadControllerResponse.body.includes('DEFAULT_UPDATE_INTERVAL_MS = 1000'));
+    assert.ok(appJsResponse.body.includes('const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({'));
+    assert.ok(appJsResponse.body.includes('quoteSpreadController.bindPanelChrome();'));
+    assert.ok(appJsResponse.body.includes('quoteSpreadController.bindEvents();'));
+    assert.ok(!appJsResponse.body.includes('QUOTE_SPREAD_UPDATE_INTERVAL_MS = 1000'));
+    assert.ok(!appJsResponse.body.includes('function renderQuoteSpreadPanel()'));
+    assert.ok(!appJsResponse.body.includes('function toggleQuoteSpreadPanel()'));
     assert.ok(!appJsResponse.body.includes('if (!window.ChainDefaults)'));
     assert.ok(!appJsResponse.body.includes('数据终端模块未加载'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyTooltipState(tooltipEl, targetEl, tooltipState = {})'));
@@ -866,17 +890,21 @@ async function waitForServer(attempts = 12) {
     assert.ok(requestChannelUtilsResponse.body.includes('function loadMultiChannelEnabledFromStorage(storage, options = {})'));
     assert.ok(requestChannelUtilsResponse.body.includes('function persistMultiChannelEnabledToStorage(storage, enabled, options = {})'));
     assert.ok(requestChannelUtilsResponse.body.includes('function createMultiChannelToggleRuntime(options = {})'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function createRequestChannelRuntime(options = {})'));
+    assert.ok(requestChannelUtilsResponse.body.includes('function buildMultiChannelChangedQuotes(dashboardState, requestChannels, previousEnabled, nextEnabled)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function getBrowserLocalStorage(env = {}, options = {})'));
     const requestChannelExportBlock = requestChannelUtilsResponse.body.match(/return \{\n    CHANNEL_AWARE_SOURCE_KEYS,[\s\S]*?\n  \};/);
     assert.ok(requestChannelExportBlock);
     assert.ok(!requestChannelExportBlock[0].includes('getQueueSourceKeyForQuote'));
     assert.ok(!requestChannelExportBlock[0].includes('normalizeRequestChannelId'));
     assert.ok(appJsResponse.body.includes('const multiChannelToggleRuntime = getRequestChannelUtils().createMultiChannelToggleRuntime({'));
+    assert.ok(appJsResponse.body.includes('const requestChannelRuntime = getRequestChannelUtils().createRequestChannelRuntime({'));
     assert.ok(appJsResponse.body.includes('const requestChannelTagVisibilityRuntime = getRequestChannelUtils().createRequestChannelTagVisibilityRuntime({'));
-    assert.ok(appJsResponse.body.includes('multiChannelEnabled = multiChannelToggleRuntime.load();'));
+    assert.ok(appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
     assert.ok(appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
-    assert.ok(appJsResponse.body.includes('requestChannelTagVisibilityRuntime.toggle();'));
-    assert.ok(appJsResponse.body.includes('const result = multiChannelToggleRuntime.set(nextValue);'));
+    assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
+    assert.ok(appJsResponse.body.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, {'));
+    assert.ok(!appJsResponse.body.includes('const result = multiChannelToggleRuntime.set(nextValue);'));
     assert.ok(!appJsResponse.body.includes('utils.loadMultiChannelEnabledFromStorage(getDashboardLocalStorage(), {'));
     assert.ok(!appJsResponse.body.includes('utils.persistMultiChannelEnabledToStorage(getDashboardLocalStorage(), multiChannelEnabled, {'));
     assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().applyMultiChannelToggleButtonState(toggleMultiChannelBtn, multiChannelEnabled)'));
@@ -890,13 +918,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("raw !== 'false'"));
     assert.ok(!appJsResponse.body.includes("multiChannelEnabled ? 'true' : 'false'"));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
-    assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'));
+    assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelRuntime.getOptions(), {'));
+    assert.ok(appJsResponse.body.includes('multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled()'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().shouldQueueInverseFetch(quote)'));
     assert.ok(!appJsResponse.body.includes('function getRequestChannelDisplayForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('function getQueueTypeForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('function getQueueIntervalMs(type)'));
     assert.ok(!appJsResponse.body.includes('function shouldShowRequestChannelForQuote(quote)'));
-    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().supportsRequestChannelForQuote(quote)'));
+    assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().supportsRequestChannelForQuote(quote)'));
     const queueStatsExportBlock = queueStatsUtilsResponse.body.match(/return \{\n    DEFAULT_INTERVALS,[\s\S]*?\n  \};/);
     assert.ok(queueStatsExportBlock);
     assert.ok(!queueStatsExportBlock[0].includes('buildQueueTasksForQuote'));
@@ -968,7 +997,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteUiControllerResponse.body.includes('quoteDisplayUtils.buildQuotePairLabelHtml(quote, state)'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.quoteDisplayUtils.buildQuotePairLabelHtml(quote, monitorState)'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelTagHtml(quote, requestChannel)'));
-    assert.ok(appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagForQuote(quote, requestChannelOptions, {'));
+    assert.ok(appJsResponse.body.includes('requestChannelRuntime.updateTagForQuote(quote, {'));
     assert.ok(!appJsResponse.body.includes('showRequestChannelTags'));
     assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body'));
     assert.ok(!appJsResponse.body.includes('getQuoteDisplayUtils().buildQuoteRequestChannelTagHtml'));
@@ -1004,9 +1033,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const THEME_META ='));
     assert.ok(keyboardShortcutUtilsResponse.body.includes('function resolveGlobalShortcutAction(event, state = {})'));
     assert.ok(keyboardShortcutUtilsResponse.body.includes('function isTypingShortcutTarget(target)'));
+    assert.ok(keyboardShortcutControllerResponse.body.includes('function createKeyboardShortcutController(deps = {})'));
+    assert.ok(keyboardShortcutControllerResponse.body.includes('keyboardShortcutUtils.resolveGlobalShortcutAction(event, {'));
     assert.ok(moduleRegistryResponse.body.includes('getKeyboardShortcutUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('KeyboardShortcutUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('getKeyboardShortcutUtils().resolveGlobalShortcutAction(event, {'));
+    assert.ok(moduleRegistryResponse.body.includes('getKeyboardShortcutController: ['));
+    assert.ok(moduleRegistryResponse.body.includes('KeyboardShortcutController is not loaded'));
+    assert.ok(appJsResponse.body.includes('const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({'));
+    assert.ok(appJsResponse.body.includes('keyboardShortcutController.bind();'));
+    assert.ok(!appJsResponse.body.includes('function handleGlobalShortcuts(event)'));
     assert.ok(!appJsResponse.body.includes('function isTypingTarget(target)'));
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function createQuoteItemShellElement(config = {}, options = {})'));
@@ -1589,8 +1624,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(keyboardShortcutUtilsResponse.body.includes("l: 'toggle-alert-log'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("p: 'toggle-quote-display'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("s: 'toggle-data-terminal'"));
-    assert.ok(appJsResponse.body.includes("case 'open-alert-log-settings':"));
-    assert.ok(appJsResponse.body.includes('alertRuntimeController.openAlertLogSettingsPanel();'));
+    assert.ok(appJsResponse.body.includes("'open-alert-log-settings': alertRuntimeController.openAlertLogSettingsPanel"));
+    assert.ok(keyboardShortcutControllerResponse.body.includes('function dispatch(action)'));
     assert.ok(alertRuntimeControllerResponse.body.includes("alertLogTabRuntime.set('settings');"));
     assert.ok(!appJsResponse.body.includes('function openAlertLogSettingsTab('));
     assert.ok(!appJsResponse.body.includes('function openAlertLogTab('));
@@ -1604,9 +1639,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('calculatorEntries'));
     assert.ok(!appJsResponse.body.includes('addToCalculator('));
     assert.ok(appJsResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
-    assert.ok(appJsResponse.body.includes('toggleQuoteDisplayMode()'));
-    assert.ok(appJsResponse.body.includes('toggleDataTerminalPanel()'));
-    assert.ok(appJsResponse.body.includes('requestChannelTagVisibilityRuntime.toggle();'));
+    assert.ok(appJsResponse.body.includes("'toggle-quote-display': toggleQuoteDisplayMode"));
+    assert.ok(appJsResponse.body.includes("'toggle-data-terminal': toggleDataTerminalPanel"));
+    assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(!appJsResponse.body.includes('toggleRequestChannelTags()'));
     assert.ok(!appJsResponse.body.includes('let showRequestChannelTags = true;'));
     assert.ok(!appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));

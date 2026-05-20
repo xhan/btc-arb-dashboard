@@ -437,6 +437,133 @@
     };
   }
 
+  function flattenDashboardQuotes(dashboardState) {
+    return (Array.isArray(dashboardState) ? dashboardState : [])
+      .flatMap((category) => (Array.isArray(category && category.quotes) ? category.quotes : []));
+  }
+
+  function buildMultiChannelChangedQuotes(dashboardState, requestChannels, previousEnabled, nextEnabled) {
+    return flattenDashboardQuotes(dashboardState).filter((quote) => {
+      if (!supportsRequestChannelForQuote(quote)) return false;
+      const previousChannelId = getEffectiveRequestChannelIdForQuote(quote, requestChannels, {
+        multiChannelEnabled: previousEnabled
+      });
+      const nextChannelId = getEffectiveRequestChannelIdForQuote(quote, requestChannels, {
+        multiChannelEnabled: nextEnabled
+      });
+      return previousChannelId !== nextChannelId;
+    });
+  }
+
+  function createRequestChannelRuntime(options = {}) {
+    let requestChannelPayload = options.payload && typeof options.payload === 'object'
+      ? options.payload
+      : { channels: [] };
+    let defaultIntervals = normalizeIntervals(options.defaultIntervals);
+    let requestChannels = getRequestChannelOptions(requestChannelPayload, defaultIntervals);
+    const multiChannelToggleRuntime = options.multiChannelToggleRuntime || createMultiChannelToggleRuntime(options.multiChannelToggleOptions || {});
+
+    function refreshOptions() {
+      requestChannels = getRequestChannelOptions(requestChannelPayload, defaultIntervals);
+      return requestChannels;
+    }
+
+    function setPayload(nextPayload) {
+      requestChannelPayload = nextPayload && typeof nextPayload === 'object'
+        ? nextPayload
+        : { channels: [] };
+      return refreshOptions();
+    }
+
+    function setDefaultIntervals(nextIntervals) {
+      defaultIntervals = normalizeIntervals(nextIntervals);
+      return refreshOptions();
+    }
+
+    function isMultiChannelEnabled() {
+      return multiChannelToggleRuntime.get();
+    }
+
+    function getEffectiveChannelIdForQuote(quote, options = {}) {
+      const overrideOptions = options && typeof options === 'object' ? options : {};
+      const enabled = Object.prototype.hasOwnProperty.call(overrideOptions, 'multiChannelEnabled')
+        ? overrideOptions.multiChannelEnabled
+        : isMultiChannelEnabled();
+      return getEffectiveRequestChannelIdForQuote(quote, requestChannels, {
+        multiChannelEnabled: enabled
+      });
+    }
+
+    function updateTagForQuote(quote, tagOptions = {}) {
+      return applyRequestChannelTagForQuote(quote, requestChannels, tagOptions);
+    }
+
+    function getChangedQuotesForMultiChannelToggle(previousEnabled, nextEnabled, dashboardState) {
+      return buildMultiChannelChangedQuotes(dashboardState, requestChannels, previousEnabled, nextEnabled);
+    }
+
+    function applyMultiChannelToggleResult(result, dashboardState, callbacks = {}) {
+      if (!result || result.changed !== true) {
+        return {
+          ...(result || {
+            previousEnabled: isMultiChannelEnabled(),
+            nextEnabled: isMultiChannelEnabled(),
+            changed: false
+          }),
+          changedQuotes: []
+        };
+      }
+      const changedQuotes = getChangedQuotesForMultiChannelToggle(
+        result.previousEnabled,
+        result.nextEnabled,
+        dashboardState
+      );
+      changedQuotes.forEach((quote) => {
+        if (typeof callbacks.removeFromQueue === 'function') {
+          callbacks.removeFromQueue(quote.id);
+        }
+        if (typeof callbacks.queueQuoteRefresh === 'function') {
+          callbacks.queueQuoteRefresh(quote, { updateSchedulers: false });
+        }
+      });
+      if (changedQuotes.length && typeof callbacks.updateSchedulers === 'function') {
+        callbacks.updateSchedulers();
+      }
+      return {
+        ...result,
+        changedQuotes
+      };
+    }
+
+    function setMultiChannelEnabled(nextValue, dashboardState, callbacks = {}) {
+      return applyMultiChannelToggleResult(
+        multiChannelToggleRuntime.set(nextValue),
+        dashboardState,
+        callbacks
+      );
+    }
+
+    function toggleMultiChannel(dashboardState, callbacks = {}) {
+      return setMultiChannelEnabled(!isMultiChannelEnabled(), dashboardState, callbacks);
+    }
+
+    return {
+      getDefaultIntervals: () => ({ ...defaultIntervals }),
+      getEffectiveChannelIdForQuote,
+      getOptions: () => requestChannels,
+      getPayload: () => requestChannelPayload,
+      getChangedQuotesForMultiChannelToggle,
+      isMultiChannelEnabled,
+      loadMultiChannelEnabled: () => multiChannelToggleRuntime.load(),
+      renderMultiChannelToggle: () => multiChannelToggleRuntime.render(),
+      setDefaultIntervals,
+      setMultiChannelEnabled,
+      setPayload,
+      toggleMultiChannel,
+      updateTagForQuote
+    };
+  }
+
   function getBrowserLocalStorage(env = {}, options = {}) {
     const runtimeWindow = env.window || (typeof window !== 'undefined' ? window : null);
     if (!runtimeWindow) return null;
@@ -521,10 +648,12 @@
     applyRequestChannelTagsVisibility,
     buildQueueKey,
     buildMultiChannelToggleState,
+    buildMultiChannelChangedQuotes,
     buildRequestChannelTagHtml,
     buildRequestChannelTagPatch,
     buildRequestChannelOptionsHtml,
     createMultiChannelToggleRuntime,
+    createRequestChannelRuntime,
     createRequestChannelTagVisibilityRuntime,
     formatMultiChannelEnabledStorageValue,
     getBrowserLocalStorage,

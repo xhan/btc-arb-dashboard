@@ -240,6 +240,9 @@
   - `src/app/dashboard-app.js` 的套利详情 refresh scheduler 单用途回调包装已移除，active/refreshing/error 回调直接内联在 scheduler 配置里
   - `src/app/dashboard-app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
   - `src/app/dashboard-app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js`
+  - `src/app/dashboard-app.js` 的多渠道开关状态、生效 channel 解析和切换后受影响 quote 计算已下沉到 `src/request-channel/request-channel-utils.js` 的 `createRequestChannelRuntime()`
+  - `src/app/dashboard-app.js` 的 quote spread 浮窗渲染、开关、拖拽和刷新 timer 已下沉到 `src/quote/quote-spread-controller.js`
+  - `src/app/dashboard-app.js` 的全局快捷键解析与 action 分发已下沉到 `src/ui/keyboard-shortcut-controller.js`
   - `src/app/dashboard-app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`
   - `src/app/dashboard-app.js` 中已无事件入口的 path alert dismiss/remove 旧实现已删除，忽略项维护只保留在 `src/path-alerts/path-alerts-app.js`
   - `src/app/dashboard-app.js` 的数据终端搜索框/alias/diff toggle DOM 写入计划、事件 patch 构造、row selection patch 和 header click action 已下沉到 `src/data-terminal/data-terminal-utils.js`

@@ -12,7 +12,11 @@ const { DEFAULT_INTERVALS, getQueueTypeForQuote } = require('../src/queue-stats/
 
 assert.strictEqual(DEFAULT_INTERVALS.velora, 700, 'DEFAULT_INTERVALS 应包含 velora 默认 700ms');
 assert.strictEqual(DEFAULT_INTERVALS.llamaparaswap, 800, 'DEFAULT_INTERVALS 应包含 Llama-ParaSwap 默认 800ms');
-assert.ok(appJs.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled })'), '报价应通过共享请求通道工具决定队列');
+assert.ok(
+  appJs.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelRuntime.getOptions(), {')
+    && appJs.includes('multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled()'),
+  '报价应通过共享请求通道工具决定队列'
+);
 assert.strictEqual(
   getQueueTypeForQuote({ chain: 'ethereum', preferredSource: 'Velora' }),
   'velora',

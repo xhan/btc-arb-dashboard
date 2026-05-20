@@ -35,6 +35,7 @@
         getDataTerminalUtils,
         getDexLinkUtils,
         getDomRenderUtils,
+        getKeyboardShortcutController,
         getKeyboardShortcutUtils,
         getMutedPathLegUtils,
         getMutedPathRuntimeUtils,
@@ -50,6 +51,7 @@
         getQuotePauseUtils,
         getQuoteQueueRuntimeUtils,
         getQuoteRequestUtils,
+        getQuoteSpreadController,
         getQuoteSpreadUtils,
         getQuoteStateRuntimeUtils,
         getQuoteUiController,
@@ -67,8 +69,6 @@
     let apiIntervals = { ...DEFAULT_INTERVALS };
     let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
     let requestChannelPayload = { channels: [] };
-    let multiChannelEnabled = true;
-    let requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
     const dashboardApiClient = getDashboardApiUtils().createDashboardApiClient({
         backendUrl: BACKEND_URL,
         fetchImpl: fetch,
@@ -79,7 +79,6 @@
         AbortController
     });
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
-    let quoteSpreadTimer = null;
     const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
     const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
     const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
@@ -93,7 +92,6 @@
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
     });
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
-    const QUOTE_SPREAD_UPDATE_INTERVAL_MS = 1000;
     const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
     const ARB_DETAIL_REFRESH_INTERVAL_MS = 2500;
@@ -250,6 +248,11 @@
         getStorage: getDashboardLocalStorage,
         onLoadError: (error) => console.warn('读取多渠道开关本地缓存失败:', error),
         onPersistError: (error) => console.warn('保存多渠道开关本地缓存失败:', error)
+    });
+    const requestChannelRuntime = getRequestChannelUtils().createRequestChannelRuntime({
+        payload: requestChannelPayload,
+        defaultIntervals: apiIntervals,
+        multiChannelToggleRuntime
     });
     const requestChannelTagVisibilityRuntime = getRequestChannelUtils().createRequestChannelTagVisibilityRuntime({
         getBody: () => document.body,
@@ -416,6 +419,25 @@
         togglePanel: toggleArbPanel,
         update: updateArbPanel
     } = arbPanelController;
+    const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({
+        applyFloatingPanelDisplay,
+        documentImpl: document,
+        domRenderUtils: getDomRenderUtils(),
+        formatChainLabel,
+        getDashboardState: () => dashboardState,
+        getQuoteMarketStateMap,
+        quoteSpreadUtils: getQuoteSpreadUtils(),
+        refs: {
+            window: quoteSpreadWindow,
+            header: quoteSpreadHeader,
+            minButton: quoteSpreadMinBtn,
+            toggleButton: toggleSpreadBtn,
+            content: quoteSpreadContent
+        },
+        setInterval,
+        clearInterval,
+        zIndexRuntime: floatingPanelZIndexRuntime
+    });
     alertRuntimeController = getAlertRuntimeController().createAlertRuntimeController({
         alertDebugUtils: getAlertDebugUtils(),
         alertLogUiUtils: getAlertLogUiUtils(),
@@ -575,6 +597,20 @@
     const renderDataTerminalPanel = dataTerminalController.renderPanel;
     const toggleDataTerminalPanel = dataTerminalController.togglePanel;
     const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
+    const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({
+        documentImpl: document,
+        keyboardShortcutUtils: getKeyboardShortcutUtils(),
+        isArbDetailVisible: () => arbDetailController.isVisible(),
+        actions: {
+            'close-arb-detail': closeArbDetailModal,
+            'toggle-arb-panel': toggleArbPanel,
+            'toggle-data-terminal': toggleDataTerminalPanel,
+            'toggle-quote-display': toggleQuoteDisplayMode,
+            'open-alert-log-settings': alertRuntimeController.openAlertLogSettingsPanel,
+            'toggle-alert-log': alertRuntimeController.toggleAlertLogPanel,
+            'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle
+        }
+    });
     const quoteFetchController = getQuoteFetchController().createQuoteFetchController({
         activeFetchControllerRuntime,
         backendUrl: BACKEND_URL,
@@ -607,7 +643,7 @@
     const fetchSingleQuote = quoteFetchController.fetchSingle;
 
     function refreshRequestChannelOptions() {
-        requestChannelOptions = getRequestChannelUtils().getRequestChannelOptions(requestChannelPayload, apiIntervals);
+        requestChannelRuntime.setDefaultIntervals(apiIntervals);
     }
 
     function getDashboardLocalStorage() {
@@ -617,28 +653,25 @@
     }
 
     function getEffectiveRequestChannelIdForQuote(quote, options = {}) {
-        const nextMultiChannelEnabled = typeof options.multiChannelEnabled === 'boolean'
-            ? options.multiChannelEnabled
-            : multiChannelEnabled;
-        return getRequestChannelUtils().getEffectiveRequestChannelIdForQuote(quote, requestChannelOptions, {
-            multiChannelEnabled: nextMultiChannelEnabled
-        });
+        return requestChannelRuntime.getEffectiveChannelIdForQuote(quote, options);
     }
 
     function updateRequestChannelTagForQuote(quote) {
-        getRequestChannelUtils().applyRequestChannelTagForQuote(quote, requestChannelOptions, {
+        requestChannelRuntime.updateTagForQuote(quote, {
             getElementById: (id) => document.getElementById(id)
         });
     }
 
     const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({
         getDashboardState: () => dashboardState,
-        getQueueTypeForQuote: (quote) => getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelOptions, { multiChannelEnabled }),
-        getQueueIntervalMs: (type) => getRequestChannelUtils().getEffectiveIntervalForQueue(type, apiIntervals, requestChannelOptions),
+        getQueueTypeForQuote: (quote) => getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelRuntime.getOptions(), {
+            multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled()
+        }),
+        getQueueIntervalMs: (type) => getRequestChannelUtils().getEffectiveIntervalForQueue(type, apiIntervals, requestChannelRuntime.getOptions()),
         getManagedQueueKeys: () => getQueueStatsUtils().buildManagedQueueKeys({
             defaultIntervals: DEFAULT_INTERVALS,
-            requestChannels: requestChannelOptions,
-            multiChannelEnabled,
+            requestChannels: requestChannelRuntime.getOptions(),
+            multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled(),
             quotes: dashboardState.flatMap((category) => category.quotes || [])
         }),
         appendQuoteQueueTasks: (queue, quote) => getQueueStatsUtils().appendQuoteQueueTasks(queue, quote),
@@ -648,8 +681,8 @@
             task,
             type,
             quote,
-            requestChannelOptions,
-            { multiChannelEnabled }
+            requestChannelRuntime.getOptions(),
+            { multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled() }
         ),
         isSchedulerPaused: () => arbDetailController.isDashboardPaused(),
         hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId),
@@ -678,31 +711,12 @@
         return true;
     }
 
-    function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled) {
-        dashboardState.forEach((category) => {
-            (category.quotes || []).forEach((quote) => {
-                if (!getRequestChannelUtils().supportsRequestChannelForQuote(quote)) {
-                    return;
-                }
-                const previousChannelId = getEffectiveRequestChannelIdForQuote(quote, { multiChannelEnabled: previousEnabled });
-                const nextChannelId = getEffectiveRequestChannelIdForQuote(quote, { multiChannelEnabled: nextEnabled });
-                if (previousChannelId === nextChannelId) {
-                    return;
-                }
-                removeFromQueue(quote.id);
-                queueQuoteRefresh(quote, { updateSchedulers: false });
-            });
+    function toggleMultiChannel() {
+        requestChannelRuntime.toggleMultiChannel(dashboardState, {
+            removeFromQueue,
+            queueQuoteRefresh,
+            updateSchedulers
         });
-        updateSchedulers();
-    }
-
-    function setMultiChannelEnabled(nextValue) {
-        const result = multiChannelToggleRuntime.set(nextValue);
-        multiChannelEnabled = result.nextEnabled;
-        if (!result.changed) {
-            return;
-        }
-        rebuildQueuesForMultiChannelToggle(result.previousEnabled, result.nextEnabled);
     }
 
     function removeFromQueue(quoteId) {
@@ -721,52 +735,6 @@
 
     function getQuoteMarketStateMap() {
         return quoteStateRuntime.getMarketStateMap();
-    }
-
-    function clearQuoteSpreadTimer() {
-        if (!quoteSpreadTimer) return;
-        clearInterval(quoteSpreadTimer);
-        quoteSpreadTimer = null;
-    }
-
-    function clearQuoteSpreadPanel() {
-        if (quoteSpreadContent) {
-            quoteSpreadContent.innerHTML = '';
-        }
-    }
-
-    function renderQuoteSpreadPanel() {
-        if (!quoteSpreadContent) return;
-        const rows = getQuoteSpreadUtils().buildQuoteSpreadRows(dashboardState, getQuoteMarketStateMap(), {
-            limit: 20,
-            formatChainLabel
-        });
-        quoteSpreadContent.innerHTML = getQuoteSpreadUtils().buildQuoteSpreadPanelHtml(rows);
-    }
-
-    function startQuoteSpreadUpdates() {
-        clearQuoteSpreadTimer();
-        renderQuoteSpreadPanel();
-        quoteSpreadTimer = setInterval(renderQuoteSpreadPanel, QUOTE_SPREAD_UPDATE_INTERVAL_MS);
-    }
-
-    function stopQuoteSpreadUpdates() {
-        clearQuoteSpreadTimer();
-        clearQuoteSpreadPanel();
-    }
-
-    function toggleQuoteSpreadPanel() {
-        const result = applyFloatingPanelDisplay(quoteSpreadWindow, 'toggle', {
-            render: startQuoteSpreadUpdates,
-            afterApply: (state) => {
-                if (!state.visible) {
-                    stopQuoteSpreadUpdates();
-                }
-            }
-        });
-        if (!result.panelFound) {
-            stopQuoteSpreadUpdates();
-        }
     }
 
     function setQuoteMarketState(quoteId, nextState) {
@@ -795,38 +763,6 @@
 
     function closestEventTarget(event, selector) {
         return getDomRenderUtils().closestEventTarget(event, selector);
-    }
-
-    function handleGlobalShortcuts(event) {
-        const action = getKeyboardShortcutUtils().resolveGlobalShortcutAction(event, {
-            arbDetailVisible: arbDetailController.isVisible()
-        });
-        if (!action) return;
-        event.preventDefault();
-
-        switch (action) {
-            case 'close-arb-detail':
-                closeArbDetailModal();
-                break;
-            case 'toggle-arb-panel':
-                toggleArbPanel();
-                break;
-            case 'toggle-data-terminal':
-                toggleDataTerminalPanel();
-                break;
-            case 'toggle-quote-display':
-                toggleQuoteDisplayMode();
-                break;
-            case 'open-alert-log-settings':
-                alertRuntimeController.openAlertLogSettingsPanel();
-                break;
-            case 'toggle-alert-log':
-                alertRuntimeController.toggleAlertLogPanel();
-                break;
-            case 'toggle-request-channel-tags':
-                requestChannelTagVisibilityRuntime.toggle();
-                break;
-        }
     }
 
     function buildQuoteAlertDisplayLabel(quote, monitorState = getQuoteMarketState(quote.id) || {}, direction = 'forward') {
@@ -878,7 +814,7 @@
 
     async function loadRequestChannels() {
         requestChannelPayload = await dashboardApiClient.loadRequestChannels();
-        refreshRequestChannelOptions();
+        requestChannelRuntime.setPayload(requestChannelPayload);
         dashboardState.forEach((category) => {
             (category.quotes || []).forEach((quote) => updateRequestChannelTagForQuote(quote));
         });
@@ -913,7 +849,7 @@
         getDashboardState: () => dashboardState,
         getQuoteChainDisplayName,
         getQuoteMarketState,
-        getRequestChannelOptions: () => requestChannelOptions,
+        getRequestChannelOptions: () => requestChannelRuntime.getOptions(),
         isCexOrderbookChain,
         isCrossChainQuote,
         isEvmChain,
@@ -970,7 +906,7 @@
         getQuoteChainDisplayName,
         getQuoteDisplayText,
         getQuoteMarketState,
-        getRequestChannelOptions: () => requestChannelOptions,
+        getRequestChannelOptions: () => requestChannelRuntime.getOptions(),
         handleQuoteHover,
         isCexOrderbookChain,
         isCrossChainQuote,
@@ -1049,7 +985,7 @@
 
     async function init() {
         audioNoticeEl.style.display = 'block';
-        multiChannelEnabled = multiChannelToggleRuntime.load();
+        requestChannelRuntime.loadMultiChannelEnabled();
         requestChannelTagVisibilityRuntime.apply();
         await dashboardApiClient.requestBackendConfigRefresh();
         await loadPriceSnapshotConfig();
@@ -1101,12 +1037,7 @@
                     draggable: false
                 });
             }
-            if (quoteSpreadWindow && quoteSpreadHeader) {
-                getDomRenderUtils().bindFloatingPanelChrome(quoteSpreadWindow, quoteSpreadHeader, {
-                    documentImpl: document,
-                    zIndexRuntime: floatingPanelZIndexRuntime
-                });
-            }
+            quoteSpreadController.bindPanelChrome();
 
             applyQuoteDisplayToggleButtonState();
             if (toggleArbBtn) {
@@ -1118,22 +1049,12 @@
             if (toggleDataTerminalBtn) {
                 toggleDataTerminalBtn.addEventListener('click', toggleDataTerminalPanel);
             }
-            if (toggleSpreadBtn) {
-                toggleSpreadBtn.addEventListener('click', toggleQuoteSpreadPanel);
-            }
-            if (quoteSpreadMinBtn) {
-                quoteSpreadMinBtn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    toggleQuoteSpreadPanel();
-                });
-            }
+            quoteSpreadController.bindEvents();
             if (toggleAlertLogBtn) {
                 toggleAlertLogBtn.addEventListener('click', alertRuntimeController.toggleAlertLogPanel);
             }
             if (toggleMultiChannelBtn) {
-                toggleMultiChannelBtn.addEventListener('click', () => {
-                    setMultiChannelEnabled(!multiChannelEnabled);
-                });
+                toggleMultiChannelBtn.addEventListener('click', toggleMultiChannel);
             }
             if (alertLogWindow) {
                 alertLogWindow.addEventListener('click', alertRuntimeController.handleAlertLogClick);
@@ -1149,7 +1070,7 @@
             arbDetailController.bindGridEvents();
             arbDetailController.bindChromeEvents();
             arbPanelController.bindGlobalFilterEvents();
-            document.addEventListener('keydown', handleGlobalShortcuts);
+            keyboardShortcutController.bind();
             if (arbPathMinBtn) {
                 arbPathMinBtn.addEventListener('click', (e) => {
                     e.stopPropagation();

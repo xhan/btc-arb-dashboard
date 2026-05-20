@@ -7,11 +7,13 @@ const {
   applyRequestChannelTagForQuote,
   applyRequestChannelTagsVisibility,
   buildMultiChannelToggleState,
+  buildMultiChannelChangedQuotes,
   buildQueueKey,
   buildRequestChannelTagHtml,
   buildRequestChannelTagPatch,
   buildRequestChannelOptionsHtml,
   createMultiChannelToggleRuntime,
+  createRequestChannelRuntime,
   createRequestChannelTagVisibilityRuntime,
   formatMultiChannelEnabledStorageValue,
   getBrowserLocalStorage,
@@ -395,6 +397,76 @@ assert.strictEqual(
   ),
   'kyber:default'
 );
+const multiChannelDashboard = [
+  {
+    name: 'Main',
+    quotes: [
+      { id: 1, chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' },
+      { id: 2, chain: 'ethereum', preferredSource: '0x', requestChannelId: 'default' },
+      { id: 3, chain: 'sui', preferredSource: 'Cetus', requestChannelId: 'HK-1' }
+    ]
+  }
+];
+assert.deepStrictEqual(
+  buildMultiChannelChangedQuotes(multiChannelDashboard, channels, true, false).map((quote) => quote.id),
+  [1],
+  'only channel-aware quotes whose effective channel changes should be requeued'
+);
+
+const requestChannelRuntimeCalls = [];
+const requestChannelRuntime = createRequestChannelRuntime({
+  payload: {
+    channels: [{ id: 'HK-1', name: 'HK-1' }]
+  },
+  defaultIntervals: DEFAULT_INTERVALS,
+  multiChannelToggleRuntime: {
+    enabled: true,
+    get() {
+      return this.enabled;
+    },
+    load() {
+      return this.enabled;
+    },
+    render() {
+      requestChannelRuntimeCalls.push(['render']);
+      return true;
+    },
+    set(nextValue) {
+      const previousEnabled = this.enabled;
+      this.enabled = nextValue !== false;
+      return {
+        previousEnabled,
+        nextEnabled: this.enabled,
+        changed: previousEnabled !== this.enabled
+      };
+    }
+  }
+});
+assert.strictEqual(
+  requestChannelRuntime.getEffectiveChannelIdForQuote(
+    { chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' }
+  ),
+  'HK-1'
+);
+const toggleResult = requestChannelRuntime.setMultiChannelEnabled(false, multiChannelDashboard, {
+  removeFromQueue: (quoteId) => requestChannelRuntimeCalls.push(['remove', quoteId]),
+  queueQuoteRefresh: (quote, options) => requestChannelRuntimeCalls.push(['queue', quote.id, options]),
+  updateSchedulers: () => requestChannelRuntimeCalls.push(['updateSchedulers'])
+});
+assert.deepStrictEqual(toggleResult.changedQuotes.map((quote) => quote.id), [1]);
+assert.deepStrictEqual(requestChannelRuntimeCalls, [
+  ['remove', 1],
+  ['queue', 1, { updateSchedulers: false }],
+  ['updateSchedulers']
+]);
+assert.strictEqual(
+  requestChannelRuntime.getEffectiveChannelIdForQuote(
+    { chain: 'ethereum', preferredSource: 'Kyber', requestChannelId: 'HK-1' }
+  ),
+  'default'
+);
+requestChannelRuntime.setDefaultIntervals({ ...DEFAULT_INTERVALS, kyber: 321 });
+assert.strictEqual(requestChannelRuntime.getOptions().channels[0].intervals.kyber, 321);
 
 assert.strictEqual(
   getRequestChannelDisplayForQuote(

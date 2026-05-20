@@ -8,6 +8,7 @@ const dashboardFormControllerJs = fs.readFileSync(path.join(__dirname, '..', 'sr
 const arbDetailControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/arb/arb-detail-controller.js'), 'utf8');
 const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-queue-runtime-utils.js'), 'utf8');
 const quoteFetchControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-fetch-controller.js'), 'utf8');
+const requestChannelUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'src/request-channel/request-channel-utils.js'), 'utf8');
 
 assert.ok(
   appJs.includes('const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({'),
@@ -78,12 +79,15 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled)'),
-  '多渠道开关应通过统一的批量重排队列逻辑切换'
+  !appJs.includes('function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled)')
+    && appJs.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, {')
+    && requestChannelUtilsJs.includes('function buildMultiChannelChangedQuotes(dashboardState, requestChannels, previousEnabled, nextEnabled)'),
+  '多渠道开关影响范围应由 request-channel runtime 统一计算'
 );
 
 assert.ok(
-  appJs.includes('queueQuoteRefresh(quote, { updateSchedulers: false });'),
+  requestChannelUtilsJs.includes('callbacks.queueQuoteRefresh(quote, { updateSchedulers: false });')
+    && requestChannelUtilsJs.includes("typeof callbacks.updateSchedulers === 'function'"),
   '多渠道开关切换后应批量回收到队列，并只在最后统一刷新 scheduler'
 );
 

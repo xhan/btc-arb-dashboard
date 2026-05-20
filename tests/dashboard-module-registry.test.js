@@ -10,6 +10,8 @@ assert.ok(MODULES.getDashboardRuntimeUtils, 'expected dashboard runtime module d
 assert.ok(MODULES.getDashboardDomRefs, 'expected dashboard DOM refs module definition');
 assert.ok(MODULES.getArbPanelController, 'expected arb panel controller module definition');
 assert.ok(MODULES.getAlertRuntimeController, 'expected alert runtime controller definition');
+assert.ok(MODULES.getKeyboardShortcutController, 'expected keyboard shortcut controller definition');
+assert.ok(MODULES.getQuoteSpreadController, 'expected quote spread controller definition');
 assert.ok(MODULES.getQuoteSpreadUtils, 'expected quote spread utils definition');
 
 const windowImpl = {
