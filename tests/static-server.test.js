@@ -135,6 +135,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-dom-refs.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-arb-alert-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-arb-workspace-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-quote-domain-adapter.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-quote-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-app-state-runtime.js"'));
@@ -243,6 +244,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-arb-alert-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-arb-alert-runtime.js"') < response.body.indexOf('src="src/app/dashboard-arb-workspace-runtime.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-arb-workspace-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-quote-domain-adapter.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
@@ -471,6 +478,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(domRefsResponse.statusCode, 200);
     const arbAlertRuntimeResponse = await request('/src/app/dashboard-arb-alert-runtime.js');
     assert.strictEqual(arbAlertRuntimeResponse.statusCode, 200);
+    const arbWorkspaceRuntimeResponse = await request('/src/app/dashboard-arb-workspace-runtime.js');
+    assert.strictEqual(arbWorkspaceRuntimeResponse.statusCode, 200);
     const quoteDomainAdapterResponse = await request('/src/app/dashboard-quote-domain-adapter.js');
     assert.strictEqual(quoteDomainAdapterResponse.statusCode, 200);
     const quoteRuntimeResponse = await request('/src/app/dashboard-quote-runtime.js');
@@ -615,6 +624,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getDashboardArbAlertRuntime: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardArbAlertRuntime is not loaded'));
     assert.ok(arbAlertRuntimeResponse.body.includes('function createDashboardArbAlertRuntime(options = {})'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardArbWorkspaceRuntime: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardArbWorkspaceRuntime is not loaded'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('function createDashboardArbWorkspaceRuntime(options = {})'));
     assert.ok(moduleRegistryResponse.body.includes('getArbAlertBridgeUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('ArbAlertBridgeUtils is not loaded'));
     assert.ok(dataTerminalControllerResponse.body.includes('function createDataTerminalController(deps = {})'));
@@ -641,7 +653,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(viewModeControllerResponse.body.includes("const APP_VIEW_ARB = 'arb'"));
     assert.ok(viewModeControllerResponse.body.includes('function toggleArbView(options = {})'));
     assert.ok(viewModeControllerResponse.body.includes('deps.onShowDashboard'));
-    assert.ok(appJsResponse.body.includes('getDashboardViewModeController().createDashboardViewModeController({'));
+    assert.ok(appJsResponse.body.includes('modules: dashboardModules'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('dashboardViewModeControllerUtils.createDashboardViewModeController({'));
     assert.ok(appJsResponse.body.includes('const dashboardViewRenderRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: \'Dashboard view render runtime\' });'));
     assert.ok(boardRuntimeResponse.body.includes('options.dashboardViewRenderRuntimeRef.set(viewRenderRuntime);'));
     assert.ok(boardRuntimeResponse.body.includes('options.dashboardViewModeControllerUtils.createDashboardViewRenderRuntime({'));
@@ -1628,7 +1641,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('ArbPanelController is not loaded'));
     assert.ok(arbPanelControllerResponse.body.includes('function createArbPanelController(options = {})'));
     assert.ok(appJsResponse.body.includes('const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;'));
-    assert.ok(appJsResponse.body.includes('const arbAlertRuntime = arbAlertRuntimeRef.set(getDashboardArbAlertRuntime().createDashboardArbAlertRuntime({'));
+    assert.ok(appJsResponse.body.includes('const arbWorkspaceRuntime = getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('dashboardArbAlertRuntimeUtils.createDashboardArbAlertRuntime({'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('options.arbAlertRuntimeRef.set(createdArbAlertRuntime)'));
     assert.ok(arbAlertRuntimeResponse.body.includes('options.arbPanelControllerUtils.createArbPanelController({'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const fixedPathRules = pathAlertRuleDefinitions.FIXED_PATH_RULES || [];'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const specialArbRules = pathAlertRuleDefinitions.SPECIAL_ARB_RULES || [];'));
@@ -1749,7 +1764,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelControllerResponse.body.includes('arbAlertBridgeRuntime.getActiveMutedPathLegs(nowMs)'));
     assert.ok(!arbPanelControllerResponse.body.includes('getAlertRuntimeController'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);'));
-    assert.ok(appJsResponse.body.includes('getOpportunity: (opportunityId) => arbAlertRuntime.getOpportunity(opportunityId)'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('getOpportunity: (opportunityId) => arbAlertRuntime.getOpportunity(opportunityId)'));
+    assert.ok(!appJsResponse.body.includes('getArbDetailController().createArbDetailController({'));
     assert.ok(arbDetailControllerResponse.body.includes('let current = deps.getOpportunity(opportunityId);'));
     assert.ok(!appJsResponse.body.includes('let arbOpportunityIdsByTargetKey = new Map();'));
     assert.ok(!appJsResponse.body.includes('let arbOpportunityMap = new Map();'));
@@ -2192,7 +2208,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('ArbPathConfigUtils is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getArbPathConfig: ['));
     assert.ok(moduleRegistryResponse.body.includes('ArbPathConfig is not loaded'));
-    assert.ok(appJsResponse.body.includes('arbPathConfig: getArbPathConfig(),'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('arbPathConfig: modules.getArbPathConfig(),'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getQuotePriceWatchItems(arbPathConfig)'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.resolveQuotePriceValue(item, state)'));
     assert.ok(!appJsResponse.body.includes('window.ArbPathConfigUtils &&'));
@@ -2229,7 +2245,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function logArbDetailRefreshError('));
     assert.ok(arbDetailControllerResponse.body.includes('isActive: (refreshToken) => state.visible && state.refreshToken === refreshToken'));
     assert.ok(arbDetailControllerResponse.body.includes('setRefreshing: (refreshing, refreshToken) => {'));
-    assert.ok(appJsResponse.body.includes("logRefreshError: (error) => console.error('[arb-detail] refresh failed', error)"));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes("logRefreshError: (error) => deps.logError('[arb-detail] refresh failed', error)"));
     assert.ok(arbDetailControllerResponse.body.includes('arbDetailRefreshUtils.createArbDetailChartAutoRefreshRuntime({'));
     assert.ok(!appJsResponse.body.includes('let arbDetailChartAutoRefreshTimer = null;'));
     assert.ok(!appJsResponse.body.includes('function clearArbDetailRefreshTimer('));
@@ -2426,7 +2442,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!arbDetailExportBlock[0].includes('getNextArbDetailRequestVersion'));
     assert.ok(moduleRegistryResponse.body.includes('getChartsUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('ChartsUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('getChartsRenderer: () => window.ChartsRenderer || null'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('getChartsRenderer: () => windowImpl.ChartsRenderer || null'));
     assert.ok(arbDetailControllerResponse.body.includes('const renderer = typeof deps.getChartsRenderer === \'function\''));
     assert.ok(!appJsResponse.body.includes('function getChartsRenderer('));
     assert.ok(arbDetailControllerResponse.body.includes('arbDetailUtils.buildArbDetailChartPreviewSignature(pairs)'));
