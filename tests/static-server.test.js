@@ -948,7 +948,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(lifecycleControllerResponse.body.includes('deps.domRenderUtils.bindFloatingPanelChrome(refs.alertLogWindow, refs.alertLogHeader, {'));
     assert.ok(!appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(alertLogWindow, alertLogHeader, {'));
     assert.ok(!appJsResponse.body.includes('function bindFloatingPanelChrome(panel, header, options = {})'));
-    assert.ok(appJsResponse.body.includes('const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({'));
+    assert.ok(appJsResponse.body.includes('const domRenderUtils = getDomRenderUtils();'));
+    assert.ok(appJsResponse.body.includes('const closestEventTarget = domRenderUtils.closestEventTarget;'));
+    assert.ok(appJsResponse.body.includes('const floatingPanelZIndexRuntime = domRenderUtils.createFloatingPanelZIndexRuntime({'));
+    assert.ok(!appJsResponse.body.includes('function closestEventTarget(event, selector)'));
     assert.ok(arbPanelControllerResponse.body.includes('options.zIndexRuntime.bringToFront(panel);'));
     assert.ok(!appJsResponse.body.includes('function bringFloatingPanelToFront(panel)'));
     assert.ok(arbPanelControllerResponse.body.includes('domRenderUtils.applyFloatingPanelDisplayState(panel, action, {'));
@@ -1083,8 +1086,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().applyMultiChannelToggleButtonState(toggleMultiChannelBtn, multiChannelEnabled)'));
     assert.ok(!appJsResponse.body.includes('function getLocalStorageSafe()'));
     assert.ok(!appJsResponse.body.includes('getLocalStorageSafe()'));
+    assert.ok(appJsResponse.body.includes('const dashboardRuntimeUtils = getDashboardRuntimeUtils();'));
     assert.ok(appJsResponse.body.includes('function getDashboardLocalStorage()'));
-    assert.ok(appJsResponse.body.includes('return getDashboardRuntimeUtils().getBrowserLocalStorage({ window }, {'));
+    assert.ok(appJsResponse.body.includes('return dashboardRuntimeUtils.getBrowserLocalStorage({ window }, {'));
     assert.ok(!appJsResponse.body.includes('return getRequestChannelUtils().getBrowserLocalStorage({ window }, {'));
     assert.ok(!appJsResponse.body.includes('parseMultiChannelEnabledStorageValue(raw)'));
     assert.ok(!appJsResponse.body.includes('formatMultiChannelEnabledStorageValue(multiChannelEnabled)'));
@@ -1130,6 +1134,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('quoteRequestChannelSelect.innerHTML'));
     assert.ok(!quoteDisplayUtilsResponse.body.includes('function shouldShowKyberDirectPoolsBadge(quote)'));
     assert.ok(quoteDisplayUtilsResponse.body.includes("function buildQuoteAlertDisplayLabel(quote, state = {}, direction = 'forward')"));
+    assert.ok(!appJsResponse.body.includes('function buildQuoteAlertDisplayLabel('));
+    assert.ok(!appJsResponse.body.includes('function evaluateQuoteAlertsOnce('));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildInverseQuoteDisplayTextForState(quote, state, options = {})'));
     assert.ok(quoteDisplayUtilsResponse.body.includes('function buildQuoteDisplayToggleState(mode)'));
@@ -1418,7 +1424,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('QuoteStateRuntimeUtils is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardRuntimeUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardRuntimeUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('const dashboardPersistenceRuntime = getDashboardRuntimeUtils().createDashboardPersistenceRuntime({'));
+    assert.ok(appJsResponse.body.includes('const dashboardPersistenceRuntime = dashboardRuntimeUtils.createDashboardPersistenceRuntime({'));
     assert.ok(appJsResponse.body.includes('saveRuntimeOptions: {'));
     assert.ok(appJsResponse.body.includes('feedbackOptions: {'));
     assert.ok(appJsResponse.body.includes('saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload)'));
@@ -1433,7 +1439,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let saveTimeout = null;'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createDashboardPersistenceRuntime(options = {})'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createDashboardSaveRuntime(options = {})'));
-    assert.ok(appJsResponse.body.includes('const settingsSaveFeedbackRuntime = getDashboardRuntimeUtils().createButtonFeedbackRuntime({'));
+    assert.ok(appJsResponse.body.includes('const settingsSaveFeedbackRuntime = dashboardRuntimeUtils.createButtonFeedbackRuntime({'));
     assert.ok(!appJsResponse.body.includes('manualSaveFeedbackRuntime.showSaving({ manual: isManual });'));
     assert.ok(!appJsResponse.body.includes('manualSaveFeedbackRuntime.showSuccess();'));
     assert.ok(!appJsResponse.body.includes('manualSaveFeedbackRuntime.showError();'));
@@ -1442,7 +1448,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("manualSaveBtn.classList.add('success');"));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createButtonFeedbackRuntime(options = {})'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createSaveButtonFeedbackRuntime(options = {})'));
-    assert.ok(appJsResponse.body.includes('const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({'));
+    assert.ok(appJsResponse.body.includes('const amountInputDebounceRuntime = dashboardRuntimeUtils.createInputDebounceRuntime({'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.amountInputDebounceRuntime.schedule(action.quoteId, () => {'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.amountInputDebounceRuntime.clear(quoteId);'));
     assert.ok(!appJsResponse.body.includes('let inputDebounceMap = new Map();'));

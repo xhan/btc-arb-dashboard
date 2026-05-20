@@ -82,6 +82,9 @@
         getSpecialRuleAlertConfigUtils,
         getThemeUtils
     } = window.DashboardModuleRegistry.createDashboardModuleRegistry(window);
+    const dashboardRuntimeUtils = getDashboardRuntimeUtils();
+    const domRenderUtils = getDomRenderUtils();
+    const closestEventTarget = domRenderUtils.closestEventTarget;
     let dashboardState = [];
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
@@ -133,11 +136,11 @@
     function markDashboardViewDirty() {
         return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.markDirty() : false;
     }
-    const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({
+    const floatingPanelZIndexRuntime = domRenderUtils.createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
     });
     const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
-        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        dashboardRuntimeUtils,
         clearTimeout,
         onMarketStateChanged: () => invalidateArbRuleSnapshotCache({ bumpRevision: false })
     });
@@ -161,7 +164,7 @@
         savePayload: (payload) => dashboardApiClient.savePriceSnapshot(payload),
         logWarning: (...args) => console.warn(...args)
     });
-    const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({
+    const amountInputDebounceRuntime = dashboardRuntimeUtils.createInputDebounceRuntime({
         setTimeout,
         clearTimeout,
         delayMs: AMOUNT_INPUT_DEBOUNCE_MS
@@ -248,12 +251,12 @@
         getStorage: getDashboardLocalStorage,
         onLoadError: (error) => console.warn('读取主题本地缓存失败:', error)
     });
-    const settingsSaveFeedbackRuntime = getDashboardRuntimeUtils().createButtonFeedbackRuntime({
+    const settingsSaveFeedbackRuntime = dashboardRuntimeUtils.createButtonFeedbackRuntime({
         setTimeout,
         clearTimeout,
         durationMs: 1500
     });
-    const dashboardPersistenceRuntime = getDashboardRuntimeUtils().createDashboardPersistenceRuntime({
+    const dashboardPersistenceRuntime = dashboardRuntimeUtils.createDashboardPersistenceRuntime({
         saveRuntimeOptions: {
             setTimeout,
             clearTimeout,
@@ -353,7 +356,7 @@
         copyUtils: getCopyUtils(),
         dexLinkUtils: getDexLinkUtils(),
         documentImpl: document,
-        domRenderUtils: getDomRenderUtils(),
+        domRenderUtils,
         getDashboardState: () => dashboardState,
         getQuoteMarketState,
         globalTooltip,
@@ -413,9 +416,9 @@
         chainDefaults: getChainDefaults(),
         closestEventTarget,
         copyDexLinkFromElement,
-        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        dashboardRuntimeUtils,
         documentImpl: document,
-        domRenderUtils: getDomRenderUtils(),
+        domRenderUtils,
         fetchImpl: fetch,
         getActiveQuotes,
         getArbCycleStartPriority: () => arbCycleStartPriority,
@@ -517,7 +520,7 @@
     const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({
         applyFloatingPanelDisplay,
         documentImpl: document,
-        domRenderUtils: getDomRenderUtils(),
+        domRenderUtils,
         formatChainLabel,
         getDashboardState: () => dashboardState,
         getQuoteMarketStateMap,
@@ -545,7 +548,7 @@
         copyTextToClipboard,
         detailRefreshIntervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
         documentImpl: document,
-        domRenderUtils: getDomRenderUtils(),
+        domRenderUtils,
         fetchImpl: fetch,
         fetchQuoteByStrategy,
         findQuoteById,
@@ -585,8 +588,8 @@
     const renderArbDetailModal = arbDetailController.render;
     const dataTerminalController = getDataTerminalController().createDataTerminalController({
         dataTerminalUtils: getDataTerminalUtils(),
-        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
-        domRenderUtils: getDomRenderUtils(),
+        dashboardRuntimeUtils,
+        domRenderUtils,
         documentImpl: document,
         windowImpl: window,
         setTimeout,
@@ -635,10 +638,10 @@
         backendUrl: BACKEND_URL,
         chainDefaults: getChainDefaults(),
         checkPriceForAlerts: alertRuntimeController.checkPriceForAlerts,
-        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        dashboardRuntimeUtils,
         defaultIntervals: DEFAULT_INTERVALS,
         documentImpl: document,
-        domRenderUtils: getDomRenderUtils(),
+        domRenderUtils,
         fetchImpl: fetch,
         getApiIntervals: () => apiIntervals,
         getDashboardState: () => dashboardState,
@@ -678,21 +681,9 @@
     } = quoteRuntime;
 
     function getDashboardLocalStorage() {
-        return getDashboardRuntimeUtils().getBrowserLocalStorage({ window }, {
+        return dashboardRuntimeUtils.getBrowserLocalStorage({ window }, {
             onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
         });
-    }
-
-    function closestEventTarget(event, selector) {
-        return getDomRenderUtils().closestEventTarget(event, selector);
-    }
-
-    function buildQuoteAlertDisplayLabel(quote, monitorState = getQuoteMarketState(quote.id) || {}, direction = 'forward') {
-        return alertRuntimeController.buildQuoteAlertDisplayLabel(quote, monitorState, direction);
-    }
-
-    function evaluateQuoteAlertsOnce() {
-        alertRuntimeController.evaluateQuoteAlertsOnce();
     }
 
     const dashboardActionController = getDashboardActionController().createDashboardActionController({
@@ -708,11 +699,11 @@
         confirmModalRefs,
         dashboardModalUtils: getDashboardModalUtils(),
         dashboardRenderer: getDashboardRenderer(),
-        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        dashboardRuntimeUtils,
         deleteQuoteMarketState,
         deleteQuoteUiRuntimeState,
         documentImpl: document,
-        domRenderUtils: getDomRenderUtils(),
+        domRenderUtils,
         evaluatePathAlertsOnce: alertRuntimeController.evaluatePathAlertsOnce,
         formatChainLabel,
         getArbDetailState: () => arbDetailController.getState(),
@@ -765,7 +756,7 @@
     const dashboardViewController = getDashboardViewController().createDashboardViewController({
         dashboardEl,
         dashboardRenderer: getDashboardRenderer(),
-        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        dashboardRuntimeUtils,
         dexLinkUtils: getDexLinkUtils(),
         documentImpl: document,
         getCategoryPauseAction,
@@ -810,7 +801,7 @@
         dashboardEl,
         dashboardModalUtils: getDashboardModalUtils(),
         dashboardRenderer: getDashboardRenderer(),
-        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        dashboardRuntimeUtils,
         defaultSourceResolver,
         deleteQuoteFromCategory,
         documentImpl: document,
@@ -852,7 +843,7 @@
         defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
         defaultIntervals: DEFAULT_INTERVALS,
         documentImpl: document,
-        domRenderUtils: getDomRenderUtils(),
+        domRenderUtils,
         floatingPanelZIndexRuntime,
         getDashboardState: () => dashboardState,
         getPriceSnapshotConfig: () => priceSnapshotConfig,
