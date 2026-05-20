@@ -157,6 +157,16 @@
       bindPanelMinimizeEvents();
     }
 
+    function shouldRenderDashboardOnInit() {
+      if (
+        deps.dashboardViewModeController
+        && typeof deps.dashboardViewModeController.getMode === 'function'
+      ) {
+        return deps.dashboardViewModeController.getMode() === 'dashboard';
+      }
+      return true;
+    }
+
     function renderLoadError(error) {
       if (!refs.dashboardEl) return;
       refs.dashboardEl.innerHTML = `<div class="module"><h2 style="color: var(--error-color);">加载配置失败</h2><p>${error.message}。请确保后端服务已启动并刷新页面。</p></div>`;
@@ -185,7 +195,9 @@
         await loadRequestChannels();
         await deps.alertRuntimeController.loadPathAlertConfig();
 
-        deps.renderDashboard();
+        if (shouldRenderDashboardOnInit()) {
+          deps.renderDashboard();
+        }
         deps.updateArbPanel();
         deps.setArbPanelMaxHeight();
         deps.alertRuntimeController.renderAlertSettingsPanel();

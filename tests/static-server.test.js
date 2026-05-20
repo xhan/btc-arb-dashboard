@@ -549,9 +549,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(viewModeControllerResponse.body.includes('function createDashboardViewModeController(deps = {})'));
     assert.ok(viewModeControllerResponse.body.includes("const APP_VIEW_ARB = 'arb'"));
     assert.ok(viewModeControllerResponse.body.includes('function toggleArbView(options = {})'));
+    assert.ok(viewModeControllerResponse.body.includes('deps.onShowDashboard'));
     assert.ok(appJsResponse.body.includes('getDashboardViewModeController().createDashboardViewModeController({'));
+    assert.ok(appJsResponse.body.includes('let dashboardRendered = false;'));
+    assert.ok(appJsResponse.body.includes('onShowDashboard: ensureDashboardRendered'));
     assert.ok(appJsResponse.body.includes("'toggle-arb-panel': dashboardViewModeController.toggleArbView"));
     assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardViewModeController.bind();'));
+    assert.ok(lifecycleControllerResponse.body.includes('function shouldRenderDashboardOnInit()'));
     assert.ok(lifecycleControllerResponse.body.includes('function createDashboardLifecycleController(deps = {})'));
     assert.ok(lifecycleControllerResponse.body.includes('function bindStaticEvents()'));
     assert.ok(lifecycleControllerResponse.body.includes('function bindLoadedEvents()'));
@@ -630,6 +634,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.removeQuoteInverseElement(inverseEl)'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteMainResultDomState({'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteMainErrorDomState({'));
+    assert.ok(!quoteFetchControllerResponse.body.includes('if (!refs.quoteDataEl || !refs.quoteTextEl) return;'));
     assert.ok(!appJsResponse.body.includes('globalTooltip.innerHTML = htmlContent'));
     assert.ok(!appJsResponse.body.includes("globalTooltip.classList.add('visible')"));
     assert.ok(!appJsResponse.body.includes('globalTooltip.style.top'));

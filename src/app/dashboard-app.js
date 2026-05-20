@@ -442,8 +442,23 @@
         setMaxHeight: setArbPanelMaxHeight,
         update: updateArbPanel
     } = arbPanelController;
+    let dashboardRendered = false;
+
+    function renderDashboardForCurrentState() {
+        renderDashboard();
+        dashboardRendered = true;
+    }
+
+    function ensureDashboardRendered() {
+        if (!dashboardRendered) {
+            renderDashboardForCurrentState();
+        }
+        return dashboardRendered;
+    }
+
     const dashboardViewModeController = getDashboardViewModeController().createDashboardViewModeController({
         bodyEl: document.body,
+        onShowDashboard: ensureDashboardRendered,
         refs: {
             dashboardEl,
             addCategoryBtn,
@@ -909,7 +924,7 @@
         priceSnapshotSaveRuntime,
         priceSnapshotTimerRuntime,
         quoteSpreadController,
-        renderDashboard,
+        renderDashboard: renderDashboardForCurrentState,
         requestChannelRuntime,
         requestChannelTagVisibilityRuntime,
         refs: {

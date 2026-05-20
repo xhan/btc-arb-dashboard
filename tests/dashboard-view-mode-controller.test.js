@@ -77,6 +77,7 @@ const controller = createDashboardViewModeController({
     viewArbBtn,
     viewDashboardBtn
   },
+  onShowDashboard: () => calls.push(['showDashboard']),
   setArbPanelMaxHeight: () => calls.push(['setArbPanelMaxHeight']),
   updateArbPanel: (options) => calls.push(['updateArbPanel', options && options.force])
 });
@@ -108,7 +109,8 @@ assert.strictEqual(controller.getMode(), APP_VIEW_DASHBOARD);
 assert.strictEqual(bodyEl.classList.contains('app-view-dashboard'), true);
 assert.deepStrictEqual(calls, [
   ['updateArbPanel', true],
-  ['setArbPanelMaxHeight']
+  ['setArbPanelMaxHeight'],
+  ['showDashboard']
 ]);
 
 controller.toggleArbView();
@@ -116,6 +118,7 @@ assert.strictEqual(controller.getMode(), APP_VIEW_ARB);
 assert.deepStrictEqual(calls, [
   ['updateArbPanel', true],
   ['setArbPanelMaxHeight'],
+  ['showDashboard'],
   ['updateArbPanel', true],
   ['setArbPanelMaxHeight']
 ]);

@@ -199,7 +199,6 @@
 
     async function fetchSingle(quote, fetchMode = 'main') {
       const refs = getQuoteDomRefs(quote);
-      if (!refs.quoteDataEl || !refs.quoteTextEl) return;
       if (deps.isQuotePaused(quote)) {
         const previousState = deps.getQuoteMarketState(quote.id) || {};
         deps.resetQuoteUiRuntimeState(quote.id);

@@ -62,7 +62,14 @@
       setButtonActive(refs.viewArbBtn, currentMode === APP_VIEW_ARB);
       setButtonActive(refs.viewDashboardBtn, currentMode === APP_VIEW_DASHBOARD);
 
-      const shouldRefreshArb = currentMode === APP_VIEW_ARB && (changed || options.force);
+      const shouldRunViewCallback = changed || options.force;
+      if (!options.skipCallbacks && currentMode === APP_VIEW_DASHBOARD && shouldRunViewCallback) {
+        if (typeof deps.onShowDashboard === 'function') {
+          deps.onShowDashboard();
+        }
+      }
+
+      const shouldRefreshArb = currentMode === APP_VIEW_ARB && shouldRunViewCallback;
       if (!options.skipCallbacks && shouldRefreshArb) {
         if (typeof deps.updateArbPanel === 'function') {
           deps.updateArbPanel({ force: true });

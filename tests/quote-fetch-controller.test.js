@@ -199,6 +199,38 @@ function createBaseDeps(overrides = {}) {
 
   {
     const { calls, controller, quote } = createBaseDeps({
+      documentImpl: {
+        getElementById: () => null
+      },
+      domRenderUtils: {
+        clearQuoteDataError: (element) => calls.push(['clearError', Boolean(element)]),
+        applyQuoteMainResultDomState: (refs, options) => calls.push(['mainResult', Boolean(refs.quoteTextEl), options.text]),
+        applyQuoteInverseQueuedDomState: (refs, options) => {
+          calls.push(['inverseQueued', Boolean(refs.quoteDataEl), options.id, options.text]);
+          return null;
+        },
+        applyQuoteInverseResultDomState: () => null,
+        applyQuoteInverseErrorDomState: () => null,
+        applyQuoteMainErrorDomState: () => false,
+        removeQuoteInverseElement: () => false
+      }
+    });
+    await controller.fetchSingle(quote);
+    assert.deepStrictEqual(
+      calls.filter((call) => ['request', 'setMarketState', 'scheduleArb', 'scheduleDataTerminal', 'checkAlerts', 'deleteController'].includes(call[0])),
+      [
+        ['request', 101, 'signal-101', 'Kyber'],
+        ['setMarketState', 101, 1.01, false],
+        ['scheduleArb'],
+        ['scheduleDataTerminal'],
+        ['checkAlerts', 101],
+        ['deleteController', 101, 'signal-101']
+      ]
+    );
+  }
+
+  {
+    const { calls, controller, quote } = createBaseDeps({
       quoteRequestUtils: {
         ...createBaseDeps().deps.quoteRequestUtils,
         requestResolvedQuote: async () => {
