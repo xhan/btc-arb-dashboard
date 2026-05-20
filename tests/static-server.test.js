@@ -139,6 +139,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-quote-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-app-state-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-runtime-ref-utils.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-shell-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
@@ -253,6 +254,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-runtime-ref-utils.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-shell-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -471,6 +475,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(appStateRuntimeResponse.statusCode, 200);
     const runtimeRefUtilsResponse = await request('/src/app/dashboard-runtime-ref-utils.js');
     assert.strictEqual(runtimeRefUtilsResponse.statusCode, 200);
+    const shellRuntimeResponse = await request('/src/app/dashboard-shell-runtime.js');
+    assert.strictEqual(shellRuntimeResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
@@ -824,8 +830,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DashboardModalUtils is not loaded'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readAddQuoteFormValues(deps.addQuoteModalRefs)'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.syncAddQuoteFormControls(deps.addQuoteModalRefs, {'));
-    assert.ok(appJsResponse.body.includes('const addQuoteModalSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();'));
-    assert.ok(appJsResponse.body.includes('const quoteSettingsSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();'));
+    assert.ok(appJsResponse.body.includes('const dashboardShellRuntime = getDashboardShellRuntime().createDashboardShellRuntime({'));
+    assert.ok(appJsResponse.body.includes('const addQuoteModalSelectionRuntime = dashboardShellRuntime.addQuoteModalSelectionRuntime;'));
+    assert.ok(appJsResponse.body.includes('const quoteSettingsSelectionRuntime = dashboardShellRuntime.quoteSettingsSelectionRuntime;'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function showModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function hideModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
@@ -844,18 +851,22 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardModalUtilsResponse.body.includes('function closeConfirmModal(refs = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function createConfirmActionRuntime(options = {})'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function syncAddQuoteFormControls(refs = {}, options = {})'));
-    assert.ok(appJsResponse.body.includes('const settingsModalRuntime = getDashboardModalUtils().createSettingsModalRuntime({'));
+    assert.ok(shellRuntimeResponse.body.includes('function createDashboardShellRuntime(options = {})'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardShellRuntime: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardShellRuntime is not loaded'));
+    assert.ok(shellRuntimeResponse.body.includes('const settingsModalRuntime = dashboardModalUtils.createSettingsModalRuntime({'));
+    assert.ok(!appJsResponse.body.includes('getDashboardModalUtils().createSettingsModalRuntime({'));
     assert.ok(lifecycleControllerResponse.body.includes("if (deps.settingsModalRuntime && typeof deps.settingsModalRuntime.bind === 'function')"));
     assert.ok(lifecycleControllerResponse.body.includes('deps.settingsModalRuntime.bind();'));
     assert.ok(lifecycleControllerResponse.body.includes("if (deps.dashboardFormController && typeof deps.dashboardFormController.bind === 'function')"));
     assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardFormController.bind();'));
     assert.ok(!appJsResponse.body.includes('settingsModalRuntime.bind();'));
     assert.ok(!appJsResponse.body.includes('dashboardFormController.bind();'));
-    assert.ok(appJsResponse.body.includes('getIntervals: getApiIntervals'));
-    assert.ok(appJsResponse.body.includes('setIntervals: setApiIntervals'));
-    assert.ok(appJsResponse.body.includes('buildSettingsIntervalWritePlan: getDashboardRenderer().buildSettingsIntervalWritePlan'));
-    assert.ok(appJsResponse.body.includes('buildSettingsIntervalsFromFormValues: getDashboardRenderer().buildSettingsIntervalsFromFormValues'));
-    assert.ok(appJsResponse.body.includes('readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues'));
+    assert.ok(shellRuntimeResponse.body.includes('getIntervals: getApiIntervals'));
+    assert.ok(shellRuntimeResponse.body.includes('setIntervals: setApiIntervals'));
+    assert.ok(shellRuntimeResponse.body.includes('buildSettingsIntervalWritePlan: dashboardRenderer.buildSettingsIntervalWritePlan'));
+    assert.ok(shellRuntimeResponse.body.includes('buildSettingsIntervalsFromFormValues: dashboardRenderer.buildSettingsIntervalsFromFormValues'));
+    assert.ok(shellRuntimeResponse.body.includes('readSettingsIntervalFormValues: dashboardRenderer.readSettingsIntervalFormValues'));
     assert.ok(!appJsResponse.body.includes('function syncSettingsIntervalInputs()'));
     assert.ok(!appJsResponse.body.includes('function readSettingsIntervalInputs()'));
     assert.ok(!appJsResponse.body.includes("settingsBtn.addEventListener('click'"));
@@ -866,7 +877,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.closeAddCategoryModal(deps.addCategoryModalRefs)'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readAddCategoryFormValues(deps.addCategoryModalRefs, {'));
     assert.ok(dashboardFormControllerResponse.body.includes('readAddCategoryFormValues: deps.dashboardRenderer.readAddCategoryFormValues'));
-    assert.ok(appJsResponse.body.includes('const confirmActionRuntime = getDashboardModalUtils().createConfirmActionRuntime();'));
+    assert.ok(appJsResponse.body.includes('const confirmActionRuntime = dashboardShellRuntime.confirmActionRuntime;'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.confirmActionRuntime.show(deps.confirmModalRefs, message, callback)'));
     assert.ok(lifecycleControllerResponse.body.includes('deps.confirmActionRuntime.close(refs.confirmModalRefs)'));
     assert.ok(!appJsResponse.body.includes('confirmActionRuntime.close(confirmModalRefs)'));
@@ -1082,9 +1093,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(requestChannelExportBlock);
     assert.ok(!requestChannelExportBlock[0].includes('getQueueSourceKeyForQuote'));
     assert.ok(!requestChannelExportBlock[0].includes('normalizeRequestChannelId'));
-    assert.ok(appJsResponse.body.includes('const multiChannelToggleRuntime = getRequestChannelUtils().createMultiChannelToggleRuntime({'));
-    assert.ok(appJsResponse.body.includes('const requestChannelRuntime = getRequestChannelUtils().createRequestChannelRuntime({'));
-    assert.ok(appJsResponse.body.includes('const requestChannelTagVisibilityRuntime = getRequestChannelUtils().createRequestChannelTagVisibilityRuntime({'));
+    assert.ok(shellRuntimeResponse.body.includes('const multiChannelToggleRuntime = requestChannelUtils.createMultiChannelToggleRuntime({'));
+    assert.ok(shellRuntimeResponse.body.includes('const requestChannelRuntime = requestChannelUtils.createRequestChannelRuntime({'));
+    assert.ok(shellRuntimeResponse.body.includes('const requestChannelTagVisibilityRuntime = requestChannelUtils.createRequestChannelTagVisibilityRuntime({'));
+    assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().createRequestChannelRuntime({'));
     assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelRuntime.loadMultiChannelEnabled();'));
     assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelTagVisibilityRuntime.apply();'));
     assert.ok(!appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
@@ -1191,8 +1203,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardViewControllerResponse.body.includes('deps.quoteDisplayUtils.buildQuotePairLabelHtml(quote, monitorState)'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelTagHtml(quote, requestChannel)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function updateTagsForDashboard(dashboardState, tagOptions = {})'));
-    assert.ok(appJsResponse.body.includes('tagOptions: {'));
-    assert.ok(appJsResponse.body.includes('const updateRequestChannelTagForQuote = requestChannelRuntime.updateTagForQuote;'));
+    assert.ok(shellRuntimeResponse.body.includes('tagOptions: {'));
+    assert.ok(appJsResponse.body.includes('const updateRequestChannelTagForQuote = dashboardShellRuntime.updateRequestChannelTagForQuote;'));
     assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelRuntime.updateTagsForDashboard(getDashboardState());'));
     assert.ok(!appJsResponse.body.includes('requestChannelRuntime.updateTagsForDashboard(dashboardState);'));
     assert.ok(!appJsResponse.body.includes('function updateRequestChannelTagForQuote(quote)'));
@@ -1219,7 +1231,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(themeUtilsResponse.body.includes('function getNextTheme(currentTheme)'));
     assert.ok(moduleRegistryResponse.body.includes('getThemeUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('ThemeUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('const themeRuntime = getThemeUtils().createThemeRuntime({'));
+    assert.ok(shellRuntimeResponse.body.includes('const themeRuntime = themeUtils.createThemeRuntime({'));
+    assert.ok(!appJsResponse.body.includes('getThemeUtils().createThemeRuntime({'));
     assert.ok(lifecycleControllerResponse.body.includes('deps.themeRuntime.load();'));
     assert.ok(lifecycleControllerResponse.body.includes("addClickListener(refs.themeToggleBtn, () => { deps.themeRuntime.toggle(); });"));
     assert.ok(!appJsResponse.body.includes('themeRuntime.load();'));
@@ -1459,12 +1472,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let apiIntervals = { ...DEFAULT_INTERVALS };'));
     assert.ok(!appJsResponse.body.includes('let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);'));
     assert.ok(!appJsResponse.body.includes('let priceSnapshotConfig = { enabled: false, intervalSec: 10 };'));
-    assert.ok(appJsResponse.body.includes('const dashboardPersistenceRuntime = dashboardRuntimeUtils.createDashboardPersistenceRuntime({'));
-    assert.ok(appJsResponse.body.includes('saveRuntimeOptions: {'));
-    assert.ok(appJsResponse.body.includes('feedbackOptions: {'));
+    assert.ok(shellRuntimeResponse.body.includes('const dashboardPersistenceRuntime = dashboardRuntimeUtils.createDashboardPersistenceRuntime({'));
+    assert.ok(shellRuntimeResponse.body.includes('saveRuntimeOptions: {'));
+    assert.ok(shellRuntimeResponse.body.includes('feedbackOptions: {'));
     assert.ok(appJsResponse.body.includes('saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload)'));
-    assert.ok(appJsResponse.body.includes('const performSave = dashboardPersistenceRuntime.performSave;'));
-    assert.ok(appJsResponse.body.includes('const saveData = dashboardPersistenceRuntime.scheduleSave;'));
+    assert.ok(appJsResponse.body.includes('const performSave = dashboardShellRuntime.performSave;'));
+    assert.ok(appJsResponse.body.includes('const saveData = dashboardShellRuntime.saveData;'));
     assert.ok(lifecycleControllerResponse.body.includes("addClickListener(refs.manualSaveBtn, () => { void deps.performSave({ manual: true }); });"));
     assert.ok(!appJsResponse.body.includes("manualSaveBtn.addEventListener('click', () => { void performSave({ manual: true }); });"));
     assert.ok(!appJsResponse.body.includes('const dashboardSaveRuntime ='));
@@ -1474,11 +1487,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let saveTimeout = null;'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createDashboardPersistenceRuntime(options = {})'));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createDashboardSaveRuntime(options = {})'));
-    assert.ok(appJsResponse.body.includes('const settingsSaveFeedbackRuntime = dashboardRuntimeUtils.createButtonFeedbackRuntime({'));
+    assert.ok(shellRuntimeResponse.body.includes('const settingsSaveFeedbackRuntime = dashboardRuntimeUtils.createButtonFeedbackRuntime({'));
     assert.ok(!appJsResponse.body.includes('manualSaveFeedbackRuntime.showSaving({ manual: isManual });'));
     assert.ok(!appJsResponse.body.includes('manualSaveFeedbackRuntime.showSuccess();'));
     assert.ok(!appJsResponse.body.includes('manualSaveFeedbackRuntime.showError();'));
-    assert.ok(appJsResponse.body.includes('settingsSaveFeedbackRuntime.show({'));
+    assert.ok(shellRuntimeResponse.body.includes('settingsSaveFeedbackRuntime.show({'));
     assert.ok(!appJsResponse.body.includes('setTimeout(() => btn.textContent = originalText, 1500);'));
     assert.ok(!appJsResponse.body.includes("manualSaveBtn.classList.add('success');"));
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('function createButtonFeedbackRuntime(options = {})'));
@@ -2321,7 +2334,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('Token -&gt; Token'));
     assert.ok(moduleRegistryResponse.body.includes('getCopyUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('CopyUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('const copyToastRuntime = getCopyUtils().createCopyToastRuntime({'));
+    assert.ok(appJsResponse.body.includes('const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;'));
+    assert.ok(shellRuntimeResponse.body.includes('const copyToastRuntime = copyUtils.createCopyToastRuntime({'));
     assert.ok(quoteUiControllerResponse.body.includes('copyUtils.bindCopyPriceHandler(targetEl, {'));
     assert.ok(quoteUiControllerResponse.body.includes('function copyPriceText(text)'));
     assert.ok(quoteUiControllerResponse.body.includes('return copyUtils.copyPriceFromText(text, {'));

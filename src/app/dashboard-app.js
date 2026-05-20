@@ -54,6 +54,7 @@
         getDashboardRenderer,
         getDashboardRuntimeRefUtils,
         getDashboardRuntimeUtils,
+        getDashboardShellRuntime,
         getDashboardViewModeController,
         getDashboardViewController,
         getDataTerminalController,
@@ -244,91 +245,51 @@
         quoteSettingsModalElements
     } = getDashboardDomRefs().createDashboardDomRefs(document);
 
-    const themeRuntime = getThemeUtils().createThemeRuntime({
-        body: document.body,
-        button: themeToggleBtn,
-        getStorage: getDashboardLocalStorage,
-        onLoadError: (error) => console.warn('读取主题本地缓存失败:', error)
-    });
-    const settingsSaveFeedbackRuntime = dashboardRuntimeUtils.createButtonFeedbackRuntime({
-        setTimeout,
+    const dashboardShellRuntime = getDashboardShellRuntime().createDashboardShellRuntime({
         clearTimeout,
-        durationMs: 1500
-    });
-    const dashboardPersistenceRuntime = dashboardRuntimeUtils.createDashboardPersistenceRuntime({
-        saveRuntimeOptions: {
-            setTimeout,
-            clearTimeout,
-            delayMs: DASHBOARD_SAVE_DEBOUNCE_MS
-        },
-        feedbackOptions: {
-            button: manualSaveBtn,
-            textEl: manualSaveText,
-            setTimeout,
-            clearTimeout
-        },
-        getDashboardState,
-        getApiIntervals,
-        saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload),
-        logger: console
-    });
-    const performSave = dashboardPersistenceRuntime.performSave;
-    const saveData = dashboardPersistenceRuntime.scheduleSave;
-    const settingsModalRuntime = getDashboardModalUtils().createSettingsModalRuntime({
-        openButton: settingsBtn,
-        cancelButton: settingsCancelBtn,
-        saveButton: settingsSaveBtn,
-        modal: settingsModal,
-        intervalInputRefs: settingsIntervalInputRefs,
+        copyUtils: getCopyUtils(),
+        dashboardModalUtils: getDashboardModalUtils(),
+        dashboardRenderer: getDashboardRenderer(),
+        dashboardRuntimeUtils,
+        dashboardSaveDebounceMs: DASHBOARD_SAVE_DEBOUNCE_MS,
         defaultIntervals: DEFAULT_INTERVALS,
-        getIntervals: getApiIntervals,
-        setIntervals: setApiIntervals,
-        buildSettingsIntervalWritePlan: getDashboardRenderer().buildSettingsIntervalWritePlan,
-        readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues,
-        buildSettingsIntervalsFromFormValues: getDashboardRenderer().buildSettingsIntervalsFromFormValues,
-        onSave: () => {
-            requestChannelRuntime.setDefaultIntervals(getApiIntervals());
-            updateSchedulers();
-            saveData();
+        documentImpl: document,
+        getApiIntervals,
+        getDashboardLocalStorage,
+        getDashboardState,
+        logger: console,
+        refs: {
+            bodyEl: document.body,
+            themeToggleBtn,
+            manualSaveBtn,
+            manualSaveText,
+            settingsBtn,
+            settingsCancelBtn,
+            settingsSaveBtn,
+            settingsModal,
+            settingsIntervalInputRefs,
+            toggleMultiChannelBtn,
+            copyToast
         },
-        showSaveFeedback: () => {
-            settingsSaveFeedbackRuntime.show({
-                button: settingsSaveBtn,
-                text: '已保存!',
-                resetState: {
-                    button: settingsSaveBtn,
-                    text: '保存'
-                }
-            });
-        }
-    });
-    const addQuoteModalSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();
-    const quoteSettingsSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();
-    const confirmActionRuntime = getDashboardModalUtils().createConfirmActionRuntime();
-    const multiChannelToggleRuntime = getRequestChannelUtils().createMultiChannelToggleRuntime({
-        button: toggleMultiChannelBtn,
-        getStorage: getDashboardLocalStorage,
-        onLoadError: (error) => console.warn('读取多渠道开关本地缓存失败:', error),
-        onPersistError: (error) => console.warn('保存多渠道开关本地缓存失败:', error)
-    });
-    const requestChannelRuntime = getRequestChannelUtils().createRequestChannelRuntime({
-        payload: { channels: [] },
-        defaultIntervals: getApiIntervals(),
-        multiChannelToggleRuntime,
-        tagOptions: {
-            getElementById: (id) => document.getElementById(id)
-        }
-    });
-    const getEffectiveRequestChannelIdForQuote = requestChannelRuntime.getEffectiveChannelIdForQuote;
-    const updateRequestChannelTagForQuote = requestChannelRuntime.updateTagForQuote;
-    const requestChannelTagVisibilityRuntime = getRequestChannelUtils().createRequestChannelTagVisibilityRuntime({
-        getBody: () => document.body,
-        visible: true
-    });
-    const copyToastRuntime = getCopyUtils().createCopyToastRuntime({
+        requestChannelUtils: getRequestChannelUtils(),
+        saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload),
+        setApiIntervals,
         setTimeout,
-        clearTimeout
+        themeUtils: getThemeUtils(),
+        updateSchedulers
     });
+    const themeRuntime = dashboardShellRuntime.themeRuntime;
+    const performSave = dashboardShellRuntime.performSave;
+    const saveData = dashboardShellRuntime.saveData;
+    const settingsModalRuntime = dashboardShellRuntime.settingsModalRuntime;
+    const addQuoteModalSelectionRuntime = dashboardShellRuntime.addQuoteModalSelectionRuntime;
+    const quoteSettingsSelectionRuntime = dashboardShellRuntime.quoteSettingsSelectionRuntime;
+    const confirmActionRuntime = dashboardShellRuntime.confirmActionRuntime;
+    const requestChannelRuntime = dashboardShellRuntime.requestChannelRuntime;
+    const getEffectiveRequestChannelIdForQuote = dashboardShellRuntime.getEffectiveRequestChannelIdForQuote;
+    const updateRequestChannelTagForQuote = dashboardShellRuntime.updateRequestChannelTagForQuote;
+    const requestChannelTagVisibilityRuntime = dashboardShellRuntime.requestChannelTagVisibilityRuntime;
+    const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;
 
     const quoteDomainAdapter = getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({
         chainDefaults: getChainDefaults(),

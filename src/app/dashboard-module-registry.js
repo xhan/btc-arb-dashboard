@@ -48,6 +48,7 @@
     getDashboardRenderer: ['DashboardRenderer', 'DashboardRenderer is not loaded'],
     getDashboardRuntimeRefUtils: ['DashboardRuntimeRefUtils', 'DashboardRuntimeRefUtils is not loaded'],
     getDashboardRuntimeUtils: ['DashboardRuntimeUtils', 'DashboardRuntimeUtils is not loaded'],
+    getDashboardShellRuntime: ['DashboardShellRuntime', 'DashboardShellRuntime is not loaded'],
     getDashboardViewModeController: ['DashboardViewModeController', 'DashboardViewModeController is not loaded'],
     getDashboardViewController: ['DashboardViewController', 'DashboardViewController is not loaded'],
     getDataTerminalController: ['DataTerminalController', 'DataTerminalController is not loaded'],

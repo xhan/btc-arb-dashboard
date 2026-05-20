@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const appJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-app.js'), 'utf8');
+const shellRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-shell-runtime.js'), 'utf8');
 const quoteRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-quote-runtime.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'public/index.html'), 'utf8');
 const {
@@ -29,11 +30,12 @@ assert.strictEqual(
   'Llama-ParaSwap 应映射到独立 source 队列'
 );
 assert.ok(
-  appJs.includes('buildSettingsIntervalWritePlan: getDashboardRenderer().buildSettingsIntervalWritePlan'),
+  appJs.includes('getDashboardShellRuntime().createDashboardShellRuntime({')
+    && shellRuntimeJs.includes('buildSettingsIntervalWritePlan: dashboardRenderer.buildSettingsIntervalWritePlan'),
   '设置弹窗应通过 dashboard renderer 回填间隔'
 );
 assert.ok(
-  appJs.includes('buildSettingsIntervalsFromFormValues: getDashboardRenderer().buildSettingsIntervalsFromFormValues'),
+  shellRuntimeJs.includes('buildSettingsIntervalsFromFormValues: dashboardRenderer.buildSettingsIntervalsFromFormValues'),
   '保存设置时应通过 dashboard renderer 构造间隔配置'
 );
 assert.ok(
