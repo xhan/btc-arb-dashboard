@@ -110,7 +110,7 @@ module.exports = {
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
           "showInverse": true,
-          "paused": true
+          "paused": false
         },
         {
           "id": 1771637092856,
@@ -257,11 +257,12 @@ module.exports = {
         {
           "id": 1772368416152,
           "chain": "starknet",
-          "amount": 0.8,
+          "amount": 0.1,
           "preferredSource": "Ekubo",
           "fromToken": "0x036834a40984312f7f7de8d31e3f6305b325389eaeea5b1c0664b2fb936461a4",
           "toToken": "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
-          "showInverse": true
+          "showInverse": true,
+          "paused": false
         }
       ]
     },
@@ -409,7 +410,7 @@ module.exports = {
         {
           "id": 1766413527443,
           "chain": "ethereum",
-          "amount": 0.5,
+          "amount": 0.1,
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0xC96dE26018A54D51c097160568752c4E3BD6C364",
@@ -420,7 +421,7 @@ module.exports = {
         {
           "id": 1766413984286,
           "chain": "ethereum",
-          "amount": 0.2,
+          "amount": 0.1,
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x9BE89D2a4cd102D8Fecc6BF9dA793be995C22541",
@@ -959,7 +960,8 @@ module.exports = {
     "kyber": 210,
     "zerox": 500,
     "velora": 3000,
-    "lifi": 650,
+    "llamaparaswap": 800,
+    "lifi": 500,
     "bybit": 2000,
     "binance": 3000,
     "solana": 1400,
