@@ -220,8 +220,71 @@
     };
   }
 
+  function createQuoteRefreshRuntime(options = {}) {
+    const quoteQueueRuntime = options.quoteQueueRuntime || {};
+    const activeFetchControllerRuntime = options.activeFetchControllerRuntime || {};
+
+    function isQuotePaused(quote) {
+      return typeof options.isQuotePaused === 'function' && options.isQuotePaused(quote);
+    }
+
+    function addToQueue(quote) {
+      if (!quote || isQuotePaused(quote)) return false;
+      if (typeof quoteQueueRuntime.addToQueue !== 'function') return false;
+      quoteQueueRuntime.addToQueue(quote);
+      return true;
+    }
+
+    function removeFromQueue(quoteId) {
+      if (typeof quoteQueueRuntime.removeFromQueue !== 'function') return 0;
+      return quoteQueueRuntime.removeFromQueue(quoteId);
+    }
+
+    function updateSchedulers() {
+      if (typeof quoteQueueRuntime.updateSchedulers !== 'function') return false;
+      quoteQueueRuntime.updateSchedulers();
+      return true;
+    }
+
+    function queueQuoteRefresh(quote, refreshOptions = {}) {
+      if (!quote || isQuotePaused(quote)) return false;
+      if (refreshOptions.abortActive !== false && typeof activeFetchControllerRuntime.abort === 'function') {
+        activeFetchControllerRuntime.abort(quote.id);
+      }
+      if (typeof options.applyActiveQuoteUiState === 'function') {
+        options.applyActiveQuoteUiState(quote, {
+          text: refreshOptions.text || '排队中...',
+          loading: refreshOptions.loading !== false,
+          clearInverse: refreshOptions.clearInverse === true
+        });
+      }
+      addToQueue(quote);
+      if (refreshOptions.updateSchedulers !== false) {
+        updateSchedulers();
+      }
+      return true;
+    }
+
+    function getQueueMutationCallbacks() {
+      return {
+        removeFromQueue,
+        queueQuoteRefresh,
+        updateSchedulers
+      };
+    }
+
+    return {
+      addToQueue,
+      getQueueMutationCallbacks,
+      queueQuoteRefresh,
+      removeFromQueue,
+      updateSchedulers
+    };
+  }
+
   return {
     createActiveFetchControllerRuntime,
-    createQuoteQueueRuntime
+    createQuoteQueueRuntime,
+    createQuoteRefreshRuntime
   };
 });

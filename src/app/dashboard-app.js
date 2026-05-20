@@ -559,7 +559,7 @@
         refreshOpportunities: () => updateArbPanel(),
         setQuoteMarketState,
         showCopyToast,
-        updateSchedulers,
+        updateSchedulers: () => updateSchedulers(),
         windowImpl: window,
         setTimeout,
         clearTimeout
@@ -688,43 +688,19 @@
         hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId),
         fetchQuote: (quote, mode) => fetchSingleQuote(quote, mode)
     });
-
-    function addToQueue(quote) {
-        if (!quote || isQuotePaused(quote)) return;
-        quoteQueueRuntime.addToQueue(quote);
-    }
-
-    function queueQuoteRefresh(quote, options = {}) {
-        if (!quote || isQuotePaused(quote)) return false;
-        if (options.abortActive !== false) {
-            activeFetchControllerRuntime.abort(quote.id);
-        }
-        applyActiveQuoteUiState(quote, {
-            text: options.text || '排队中...',
-            loading: options.loading !== false,
-            clearInverse: options.clearInverse === true
-        });
-        addToQueue(quote);
-        if (options.updateSchedulers !== false) {
-            updateSchedulers();
-        }
-        return true;
-    }
+    const quoteRefreshRuntime = getQuoteQueueRuntimeUtils().createQuoteRefreshRuntime({
+        activeFetchControllerRuntime,
+        applyActiveQuoteUiState,
+        isQuotePaused,
+        quoteQueueRuntime
+    });
+    const addToQueue = quoteRefreshRuntime.addToQueue;
+    const queueQuoteRefresh = quoteRefreshRuntime.queueQuoteRefresh;
+    const removeFromQueue = quoteRefreshRuntime.removeFromQueue;
+    const updateSchedulers = quoteRefreshRuntime.updateSchedulers;
 
     function toggleMultiChannel() {
-        requestChannelRuntime.toggleMultiChannel(dashboardState, {
-            removeFromQueue,
-            queueQuoteRefresh,
-            updateSchedulers
-        });
-    }
-
-    function removeFromQueue(quoteId) {
-        quoteQueueRuntime.removeFromQueue(quoteId);
-    }
-
-    function updateSchedulers() {
-        quoteQueueRuntime.updateSchedulers();
+        requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks());
     }
 
     settingsModalRuntime.bind();

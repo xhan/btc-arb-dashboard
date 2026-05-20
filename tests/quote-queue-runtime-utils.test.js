@@ -2,7 +2,8 @@ const assert = require('assert');
 
 const {
   createActiveFetchControllerRuntime,
-  createQuoteQueueRuntime
+  createQuoteQueueRuntime,
+  createQuoteRefreshRuntime
 } = require('../src/quote/quote-queue-runtime-utils');
 
 class FakeAbortController {
@@ -33,6 +34,55 @@ FakeAbortController.instances = [];
   fetchRuntime.create(202);
   assert.strictEqual(fetchRuntime.abortAll(), 2);
   assert.strictEqual(fetchRuntime.getControllers().size, 0);
+}
+
+{
+  const calls = [];
+  const quoteQueueRuntime = {
+    addToQueue: (quote) => calls.push(['add', quote.id]),
+    removeFromQueue: (quoteId) => {
+      calls.push(['remove', quoteId]);
+      return 1;
+    },
+    updateSchedulers: () => calls.push(['updateSchedulers'])
+  };
+  const refreshRuntime = createQuoteRefreshRuntime({
+    activeFetchControllerRuntime: {
+      abort: (quoteId) => calls.push(['abort', quoteId])
+    },
+    applyActiveQuoteUiState: (quote, state) => calls.push(['activeUi', quote.id, state]),
+    isQuotePaused: (quote) => quote.paused === true,
+    quoteQueueRuntime
+  });
+
+  assert.strictEqual(refreshRuntime.addToQueue({ id: 101, paused: true }), false);
+  assert.strictEqual(refreshRuntime.queueQuoteRefresh({ id: 102 }), true);
+  assert.deepStrictEqual(calls, [
+    ['abort', 102],
+    ['activeUi', 102, { text: '排队中...', loading: true, clearInverse: false }],
+    ['add', 102],
+    ['updateSchedulers']
+  ]);
+
+  calls.length = 0;
+  assert.strictEqual(refreshRuntime.queueQuoteRefresh({ id: 103 }, {
+    abortActive: false,
+    clearInverse: true,
+    loading: false,
+    text: '等待下一轮',
+    updateSchedulers: false
+  }), true);
+  assert.deepStrictEqual(calls, [
+    ['activeUi', 103, { text: '等待下一轮', loading: false, clearInverse: true }],
+    ['add', 103]
+  ]);
+  assert.strictEqual(refreshRuntime.removeFromQueue(103), 1);
+  assert.strictEqual(refreshRuntime.updateSchedulers(), true);
+  assert.deepStrictEqual(refreshRuntime.getQueueMutationCallbacks(), {
+    removeFromQueue: refreshRuntime.removeFromQueue,
+    queueQuoteRefresh: refreshRuntime.queueQuoteRefresh,
+    updateSchedulers: refreshRuntime.updateSchedulers
+  });
 }
 
 function createRuntimeHarness(overrides = {}) {

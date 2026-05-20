@@ -16,6 +16,11 @@ assert.ok(
 );
 
 assert.ok(
+  appJs.includes('const quoteRefreshRuntime = getQuoteQueueRuntimeUtils().createQuoteRefreshRuntime({'),
+  '主看板应通过 QuoteQueueRuntimeUtils 创建报价刷新运行时'
+);
+
+assert.ok(
   appJs.includes('const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({'),
   '主看板应通过 QuoteQueueRuntimeUtils 创建 fetch controller 运行时'
 );
@@ -26,18 +31,18 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('quoteQueueRuntime.addToQueue(quote);'),
-  '主看板添加报价时应委托队列运行时'
+  appJs.includes('const addToQueue = quoteRefreshRuntime.addToQueue;'),
+  '主看板添加报价时应委托报价刷新运行时'
 );
 
 assert.ok(
-  appJs.includes('quoteQueueRuntime.removeFromQueue(quoteId);'),
-  '主看板删除报价任务时应委托队列运行时'
+  appJs.includes('const removeFromQueue = quoteRefreshRuntime.removeFromQueue;'),
+  '主看板删除报价任务时应委托报价刷新运行时'
 );
 
 assert.ok(
-  appJs.includes('quoteQueueRuntime.updateSchedulers();'),
-  '主看板刷新 scheduler 时应委托队列运行时'
+  appJs.includes('const updateSchedulers = quoteRefreshRuntime.updateSchedulers;'),
+  '主看板刷新 scheduler 时应委托报价刷新运行时'
 );
 
 assert.ok(
@@ -66,8 +71,17 @@ assert.ok(
 );
 
 assert.ok(
+  queueRuntimeJs.includes('function createQuoteRefreshRuntime(options = {})')
+    && queueRuntimeJs.includes('quoteQueueRuntime.addToQueue(quote);')
+    && queueRuntimeJs.includes('quoteQueueRuntime.removeFromQueue(quoteId)')
+    && queueRuntimeJs.includes('quoteQueueRuntime.updateSchedulers();'),
+  '报价刷新入队、删除和 scheduler 刷新应集中在 QuoteQueueRuntimeUtils'
+);
+
+assert.ok(
   !appJs.includes('function abortQuoteFetch(')
-    && appJs.includes('activeFetchControllerRuntime.abort(quote.id);')
+    && appJs.includes('activeFetchControllerRuntime,')
+    && queueRuntimeJs.includes('activeFetchControllerRuntime.abort(quote.id);')
     && dashboardActionControllerJs.includes('deps.activeFetchControllerRuntime.abort(quoteId);'),
   '主看板不应保留 fetch abort 单用途包装，报价暂停由 dashboard action controller 委托 runtime'
 );
@@ -80,7 +94,7 @@ assert.ok(
 
 assert.ok(
   !appJs.includes('function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled)')
-    && appJs.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, {')
+    && appJs.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks())')
     && requestChannelUtilsJs.includes('function buildMultiChannelChangedQuotes(dashboardState, requestChannels, previousEnabled, nextEnabled)'),
   '多渠道开关影响范围应由 request-channel runtime 统一计算'
 );
@@ -92,7 +106,7 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('clearInverse: options.clearInverse === true'),
+  queueRuntimeJs.includes('clearInverse: refreshOptions.clearInverse === true'),
   '普通入队刷新不应默认清掉已有反向报价'
 );
 

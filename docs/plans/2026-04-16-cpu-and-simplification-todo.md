@@ -241,6 +241,7 @@
   - `src/app/dashboard-app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`
   - `src/app/dashboard-app.js` 的 request channel 支持性单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js`
   - `src/app/dashboard-app.js` 的多渠道开关状态、生效 channel 解析和切换后受影响 quote 计算已下沉到 `src/request-channel/request-channel-utils.js` 的 `createRequestChannelRuntime()`
+  - `src/app/dashboard-app.js` 的报价刷新入队、active fetch abort、排队中 UI 状态和 scheduler 刷新编排已下沉到 `src/quote/quote-queue-runtime-utils.js` 的 `createQuoteRefreshRuntime()`
   - `src/app/dashboard-app.js` 的 quote spread 浮窗渲染、开关、拖拽和刷新 timer 已下沉到 `src/quote/quote-spread-controller.js`
   - `src/app/dashboard-app.js` 的全局快捷键解析与 action 分发已下沉到 `src/ui/keyboard-shortcut-controller.js`
   - `src/app/dashboard-app.js` 的 Kyber/0x 支持链常量和 source skip 判断注入已下沉到 `src/quote/quote-request-utils.js`

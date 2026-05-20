@@ -903,7 +903,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
     assert.ok(appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
     assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
-    assert.ok(appJsResponse.body.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, {'));
+    assert.ok(appJsResponse.body.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks())'));
     assert.ok(!appJsResponse.body.includes('const result = multiChannelToggleRuntime.set(nextValue);'));
     assert.ok(!appJsResponse.body.includes('utils.loadMultiChannelEnabledFromStorage(getDashboardLocalStorage(), {'));
     assert.ok(!appJsResponse.body.includes('utils.persistMultiChannelEnabledToStorage(getDashboardLocalStorage(), multiChannelEnabled, {'));
