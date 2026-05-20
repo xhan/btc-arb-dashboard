@@ -1,4 +1,18 @@
-    const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
+    const {
+        AMOUNT_INPUT_DEBOUNCE_MS,
+        DASHBOARD_SAVE_DEBOUNCE_MS,
+        CHART_AUTO_REFRESH_INTERVAL_MS,
+        FLOATING_PANEL_BASE_Z_INDEX,
+        DATA_TERMINAL_UPDATE_DELAY_MS,
+        DEFAULT_QUOTE_DISPLAY_MODE,
+        ARB_PANEL_UPDATE_DELAY_MS,
+        ARB_DETAIL_REFRESH_INTERVAL_MS,
+        MUTED_STATE_VISIBLE_REFRESH_MS,
+        MUTED_STATE_HIDDEN_MAX_REFRESH_MS,
+        GLOBAL_PATH_SOURCE_SELECTORS,
+        buildBackendUrl
+    } = window.DashboardAppConfig;
+    const BACKEND_URL = buildBackendUrl(location);
     const {
         getAlertDebugUtils,
         getAlertLogUiUtils,
@@ -67,8 +81,6 @@
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
     const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
-    const AMOUNT_INPUT_DEBOUNCE_MS = 600;
-    const DASHBOARD_SAVE_DEBOUNCE_MS = 1500;
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
     let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
@@ -82,7 +94,6 @@
         AbortController
     });
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
-    const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
     const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
     const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
         durationMs: 8000,
@@ -90,16 +101,9 @@
         clearTimer: clearTimeout,
         onExpired: () => updateArbPanel()
     });
-    const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
     });
-    const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
-    const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
-    const ARB_PANEL_UPDATE_DELAY_MS = 1000;
-    const ARB_DETAIL_REFRESH_INTERVAL_MS = 2500;
-    const MUTED_STATE_VISIBLE_REFRESH_MS = 1000;
-    const MUTED_STATE_HIDDEN_MAX_REFRESH_MS = 60 * 1000;
     const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
         dashboardRuntimeUtils: getDashboardRuntimeUtils(),
         clearTimeout,
@@ -367,7 +371,6 @@
     let arbDetailController = null;
     const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;
     const SPECIAL_ARB_RULES = getPathAlertRuleDefinitionsUtils().SPECIAL_ARB_RULES;
-    const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
     const ARB_PATH_CONFIG = getArbPathConfig();
     const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({
         arbOpportunityRuntime,

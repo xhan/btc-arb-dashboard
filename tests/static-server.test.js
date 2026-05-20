@@ -138,6 +138,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-view-mode-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-lifecycle-controller.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-app-config.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
       response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="src/queue-stats/queue-stats-utils.js"')
@@ -243,6 +244,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-app-config.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -438,6 +442,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(viewModeControllerResponse.statusCode, 200);
     const lifecycleControllerResponse = await request('/src/app/dashboard-lifecycle-controller.js');
     assert.strictEqual(lifecycleControllerResponse.statusCode, 200);
+    const appConfigResponse = await request('/src/app/dashboard-app-config.js');
+    assert.strictEqual(appConfigResponse.statusCode, 200);
     const alertLogUiResponse = await request('/src/alerts/alert-log-ui-utils.js');
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
     const alertRuntimeControllerResponse = await request('/src/alerts/alert-runtime-controller.js');
@@ -1804,7 +1810,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('resetCalculator()'));
     assert.ok(!appJsResponse.body.includes('calculatorEntries'));
     assert.ok(!appJsResponse.body.includes('addToCalculator('));
-    assert.ok(appJsResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
+    assert.ok(appConfigResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
     assert.ok(appJsResponse.body.includes("'toggle-quote-display': toggleQuoteDisplayMode"));
     assert.ok(appJsResponse.body.includes("'toggle-data-terminal': toggleDataTerminalPanel"));
     assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
@@ -2056,7 +2062,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function parseArbFilterInput'));
     assert.ok(!appJsResponse.body.includes('function cycleContainsAnySymbols'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function filterGlobalArbCycles(cycles, options = {})'));
-    assert.ok(appJsResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
+    assert.ok(appConfigResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
+    assert.ok(appConfigResponse.body.includes('GLOBAL_PATH_SOURCE_SELECTORS = Object.freeze([0, 1, 2, 3])'));
+    assert.ok(appConfigResponse.body.includes('function buildBackendUrl(locationImpl)'));
+    assert.ok(appJsResponse.body.includes('} = window.DashboardAppConfig;'));
+    assert.ok(appJsResponse.body.includes('const BACKEND_URL = buildBackendUrl(location);'));
+    assert.ok(!appJsResponse.body.includes('const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;'));
     assert.ok(!appJsResponse.body.includes('function syncArbDetailChartAutoRefreshTimer('));
     assert.ok(arbDetailControllerResponse.body.includes('chartAutoRefreshRuntime.sync();'));
     assert.ok(arbDetailControllerResponse.body.includes('syncProfitPreview'));
