@@ -40,6 +40,7 @@
     getDashboardFormController: ['DashboardFormController', 'DashboardFormController is not loaded'],
     getDashboardLifecycleController: ['DashboardLifecycleController', 'DashboardLifecycleController is not loaded'],
     getDashboardModalUtils: ['DashboardModalUtils', 'DashboardModalUtils is not loaded'],
+    getDashboardQuoteDomainAdapter: ['DashboardQuoteDomainAdapter', 'DashboardQuoteDomainAdapter is not loaded'],
     getDashboardRenderer: ['DashboardRenderer', 'DashboardRenderer is not loaded'],
     getDashboardRuntimeUtils: ['DashboardRuntimeUtils', 'DashboardRuntimeUtils is not loaded'],
     getDashboardViewModeController: ['DashboardViewModeController', 'DashboardViewModeController is not loaded'],

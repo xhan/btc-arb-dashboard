@@ -45,6 +45,7 @@
         getDashboardFormController,
         getDashboardLifecycleController,
         getDashboardModalUtils,
+        getDashboardQuoteDomainAdapter,
         getDashboardRenderer,
         getDashboardRuntimeUtils,
         getDashboardViewModeController,
@@ -296,39 +297,24 @@
         clearTimeout
     });
 
-    function isCrossChainQuote(quote) {
-        return getChainDefaults().isCrossChainQuote(quote);
-    }
-
-    function getQuoteChainDisplayName(quote) {
-        return getChainDefaults().buildQuoteChainDisplayName(quote);
-    }
-
-    function isCexOrderbookChain(chain) {
-        return getChainDefaults().isCexOrderbookChain(chain);
-    }
-
-    const defaultSourceResolver = (chain) => getChainDefaults().getDefaultSourceForChain(chain);
-
-    function isEvmChain(chain) {
-        return getChainDefaults().isEvmChain(chain);
-    }
-
-    function shouldQueueInverseFetch(quote) {
-        return getQueueStatsUtils().shouldQueueInverseFetch(quote);
-    }
-
-    function isQuotePaused(quote) {
-        return getQuotePauseUtils().isQuotePaused(quote);
-    }
-
-    function getActiveQuotes(quotes) {
-        return getQuotePauseUtils().getActiveQuotes(quotes);
-    }
-
-    function getCategoryPauseAction(quotes) {
-        return getQuotePauseUtils().getCategoryPauseAction(quotes);
-    }
+    const quoteDomainAdapter = getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({
+        chainDefaults: getChainDefaults(),
+        queueStatsUtils: getQueueStatsUtils(),
+        quotePauseUtils: getQuotePauseUtils(),
+        quoteRequestUtils: getQuoteRequestUtils()
+    });
+    const {
+        getActiveQuotes,
+        getCategoryPauseAction,
+        getDefaultSourceForChain: defaultSourceResolver,
+        getQuoteChainDisplayName,
+        isCexOrderbookChain,
+        isCrossChainQuote,
+        isEvmChain,
+        isQuotePaused,
+        normalizeChainKey,
+        shouldQueueInverseFetch
+    } = quoteDomainAdapter;
 
     const quoteUiController = getQuoteUiController().createQuoteUiController({
         copyToast,
@@ -756,10 +742,6 @@
 
     function toggleMultiChannel() {
         requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks());
-    }
-
-    function normalizeChainKey(chain) {
-        return getQuoteRequestUtils().normalizeChainKey(chain);
     }
 
     function closestEventTarget(event, selector) {

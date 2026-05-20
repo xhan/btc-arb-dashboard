@@ -134,6 +134,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-state-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-dom-refs.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-quote-domain-adapter.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-view-mode-controller.js"'));
@@ -232,6 +233,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-dom-refs.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-quote-domain-adapter.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -434,6 +438,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(appJsResponse.statusCode, 200);
     const domRefsResponse = await request('/src/app/dashboard-dom-refs.js');
     assert.strictEqual(domRefsResponse.statusCode, 200);
+    const quoteDomainAdapterResponse = await request('/src/app/dashboard-quote-domain-adapter.js');
+    assert.strictEqual(quoteDomainAdapterResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
@@ -735,6 +741,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRefsResponse.body.includes('arbGlobalFilterElements: {'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardDomRefs: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardDomRefs is not loaded'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardQuoteDomainAdapter: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardQuoteDomainAdapter is not loaded'));
+    assert.ok(quoteDomainAdapterResponse.body.includes('function createDashboardQuoteDomainAdapter(options = {})'));
+    assert.ok(quoteDomainAdapterResponse.body.includes('return chainDefaults.buildQuoteChainDisplayName(quote);'));
+    assert.ok(quoteDomainAdapterResponse.body.includes('return chainDefaults.isCrossChainQuote(quote);'));
+    assert.ok(appJsResponse.body.includes('const quoteDomainAdapter = getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({'));
+    assert.ok(appJsResponse.body.includes('getDefaultSourceForChain: defaultSourceResolver,'));
+    assert.ok(!appJsResponse.body.includes('function getQuoteChainDisplayName(quote)'));
+    assert.ok(!appJsResponse.body.includes('function isCrossChainQuote(quote)'));
     assert.ok(appJsResponse.body.includes('} = getDashboardDomRefs().createDashboardDomRefs(document);'));
     assert.ok(!appJsResponse.body.includes("document.getElementById('dashboard')"));
     assert.ok(!appJsResponse.body.includes("document.getElementById('quote-settings-modal')"));
@@ -960,11 +975,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const CHAIN_FILTER_ALIASES = {'));
     assert.ok(!appJsResponse.body.includes('function getSingleChainDisplayName(chain)'));
     assert.ok(arbPanelControllerResponse.body.includes('options.chainDefaults.getChainDisplayName(chain)'));
-    assert.ok(appJsResponse.body.includes('getChainDefaults().buildQuoteChainDisplayName(quote)'));
+    assert.ok(quoteDomainAdapterResponse.body.includes('chainDefaults.buildQuoteChainDisplayName(quote)'));
     assert.ok(dashboardActionControllerResponse.body.includes('getSingleChainDisplayName: deps.formatChainLabel'));
     assert.ok(arbPanelControllerResponse.body.includes('options.chainDefaults.normalizeChainFilterToken(chainToken)'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.chainDefaults.buildQuoteStrategy(quote)'));
-    assert.ok(appJsResponse.body.includes('getChainDefaults().isCrossChainQuote(quote)'));
+    assert.ok(quoteDomainAdapterResponse.body.includes('chainDefaults.isCrossChainQuote(quote)'));
     assert.ok(!appJsResponse.body.includes("const nonEvm = ['solana', 'sui', 'starknet', 'bybit', 'binance'];"));
     assert.ok(/buildQuoteResultMarketState\(\s*previousState,\s*data,/.test(quoteFetchControllerResponse.body));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRuntimeUtils.buildSwappedQuoteMarketState(state)'));
@@ -1022,7 +1037,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardActionControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
     assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelRuntime.getOptions(), {'));
     assert.ok(appJsResponse.body.includes('multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled()'));
-    assert.ok(appJsResponse.body.includes('getQueueStatsUtils().shouldQueueInverseFetch(quote)'));
+    assert.ok(quoteDomainAdapterResponse.body.includes('queueStatsUtils.shouldQueueInverseFetch(quote)'));
+    assert.ok(!appJsResponse.body.includes('function shouldQueueInverseFetch(quote)'));
     assert.ok(!appJsResponse.body.includes('function getRequestChannelDisplayForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('function getQueueTypeForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('function getQueueIntervalMs(type)'));

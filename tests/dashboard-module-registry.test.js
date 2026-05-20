@@ -8,6 +8,7 @@ const {
 
 assert.ok(MODULES.getDashboardRuntimeUtils, 'expected dashboard runtime module definition');
 assert.ok(MODULES.getDashboardDomRefs, 'expected dashboard DOM refs module definition');
+assert.ok(MODULES.getDashboardQuoteDomainAdapter, 'expected dashboard quote domain adapter definition');
 assert.ok(MODULES.getDashboardCommandController, 'expected dashboard command controller definition');
 assert.ok(MODULES.getDashboardLifecycleController, 'expected dashboard lifecycle controller definition');
 assert.ok(MODULES.getDashboardViewModeController, 'expected dashboard view mode controller definition');
@@ -22,6 +23,7 @@ const windowImpl = {
   ChainDefaults: { id: 'chain-defaults' },
   ArbAlertBridgeUtils: { id: 'arb-alert-bridge' },
   DashboardCommandController: { id: 'dashboard-command' },
+  DashboardQuoteDomainAdapter: { id: 'dashboard-quote-domain' },
   DashboardViewModeController: { id: 'dashboard-view-mode' },
   DashboardRuntimeUtils: { id: 'dashboard-runtime' }
 };
@@ -30,6 +32,7 @@ const registry = createDashboardModuleRegistry(windowImpl);
 assert.strictEqual(registry.getChainDefaults(), windowImpl.ChainDefaults);
 assert.strictEqual(registry.getArbAlertBridgeUtils(), windowImpl.ArbAlertBridgeUtils);
 assert.strictEqual(registry.getDashboardCommandController(), windowImpl.DashboardCommandController);
+assert.strictEqual(registry.getDashboardQuoteDomainAdapter(), windowImpl.DashboardQuoteDomainAdapter);
 assert.strictEqual(registry.getDashboardRuntimeUtils(), windowImpl.DashboardRuntimeUtils);
 assert.strictEqual(registry.getDashboardViewModeController(), windowImpl.DashboardViewModeController);
 assert.strictEqual(getWindowModule(windowImpl, 'ChainDefaults', 'missing'), windowImpl.ChainDefaults);
