@@ -136,9 +136,11 @@ const runtime = createDashboardQuoteRuntime({
   getQuoteDisplayMode: () => 'rate',
   getQuoteDisplayText: () => '',
   getQuoteMarketState: () => ({}),
+  isDashboardUiActive: () => true,
   isQuotePaused: () => false,
   isSchedulerPaused: () => false,
   logWarning: () => {},
+  markDashboardUiDirty: () => {},
   applyActiveQuoteUiState: () => {},
   queueStatsUtils,
   quoteDisplayUtils: { id: 'quoteDisplay' },
@@ -166,6 +168,8 @@ assert.strictEqual(runtime.activeFetchControllerRuntime, activeFetchControllerRu
 assert.strictEqual(runtime.quoteFetchController, fetchOptions && runtime.quoteFetchController);
 assert.strictEqual(fetchOptions.backendUrl, 'http://127.0.0.1:3000');
 assert.strictEqual(fetchOptions.chainDefaults.id, 'chainDefaults');
+assert.strictEqual(fetchOptions.isDashboardUiActive(), true);
+assert.strictEqual(typeof fetchOptions.markDashboardUiDirty, 'function');
 refreshOptions.quoteQueueRuntime.addToQueue({ id: 9 });
 assert.deepStrictEqual(runtime.fetchQuoteByStrategy({ id: 3 }, { mode: 'main' }), {
   quote: { id: 3 },

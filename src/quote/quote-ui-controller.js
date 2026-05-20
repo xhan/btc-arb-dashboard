@@ -40,6 +40,25 @@
       return typeof deps.isEvmChain === 'function' ? deps.isEvmChain(chain) : false;
     }
 
+    function isDashboardUiActive() {
+      return typeof deps.isDashboardUiActive === 'function' ? deps.isDashboardUiActive() : true;
+    }
+
+    function markDashboardUiDirty() {
+      if (typeof deps.markDashboardUiDirty === 'function') {
+        deps.markDashboardUiDirty();
+      }
+      return false;
+    }
+
+    function runDashboardUiPatch(callback) {
+      if (!isDashboardUiActive()) {
+        return markDashboardUiDirty();
+      }
+      if (typeof callback !== 'function') return true;
+      return callback();
+    }
+
     function getQuoteDisplayMode() {
       return quoteDisplayMode;
     }
@@ -59,32 +78,37 @@
     }
 
     function updateQuotePairLabel(quote, state) {
-      const pairLabelEl = documentImpl.getElementById(`quote-pair-label-${quote.id}`);
-      domRenderUtils.applyQuotePairLabelDomState(
-        pairLabelEl,
-        quoteDisplayUtils.buildQuotePairLabelHtml(quote, state)
-      );
+      return runDashboardUiPatch(() => {
+        const pairLabelEl = documentImpl.getElementById(`quote-pair-label-${quote.id}`);
+        return domRenderUtils.applyQuotePairLabelDomState(
+          pairLabelEl,
+          quoteDisplayUtils.buildQuotePairLabelHtml(quote, state)
+        );
+      });
     }
 
     function rerenderQuoteDisplayTexts() {
-      for (const category of getDashboardState()) {
-        const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
-        for (const quote of quotes) {
-          const state = getQuoteMarketState(quote.id) || {};
-          const quoteTextEl = documentImpl.getElementById(`quote-text-${quote.id}`);
-          const inverseEl = documentImpl.getElementById(`inverse-quote-${quote.id}`);
-          const inverseText = inverseEl && Number.isFinite(Number(state.inverseRawPrice))
-            ? getInverseQuoteDisplayText(quote, state, inverseEl.textContent || '...')
-            : null;
-          domRenderUtils.applyQuoteDisplayTextDomState({
-            quoteTextEl,
-            inverseEl
-          }, {
-            text: getQuoteDisplayText(quote, state),
-            inverseText
-          });
+      return runDashboardUiPatch(() => {
+        for (const category of getDashboardState()) {
+          const quotes = Array.isArray(category && category.quotes) ? category.quotes : [];
+          for (const quote of quotes) {
+            const state = getQuoteMarketState(quote.id) || {};
+            const quoteTextEl = documentImpl.getElementById(`quote-text-${quote.id}`);
+            const inverseEl = documentImpl.getElementById(`inverse-quote-${quote.id}`);
+            const inverseText = inverseEl && Number.isFinite(Number(state.inverseRawPrice))
+              ? getInverseQuoteDisplayText(quote, state, inverseEl.textContent || '...')
+              : null;
+            domRenderUtils.applyQuoteDisplayTextDomState({
+              quoteTextEl,
+              inverseEl
+            }, {
+              text: getQuoteDisplayText(quote, state),
+              inverseText
+            });
+          }
         }
-      }
+        return true;
+      });
     }
 
     function applyQuoteDisplayToggleButtonState() {
@@ -119,6 +143,9 @@
     }
 
     function applyPausedQuoteUiState(quote, state) {
+      if (!isDashboardUiActive()) {
+        return markDashboardUiDirty();
+      }
       domRenderUtils.applyPausedQuoteDomState(
         domRenderUtils.getQuoteDomRefs(documentImpl, quote.id)
       );
@@ -127,9 +154,13 @@
       removeInverseQuoteElement(quote.id);
       clearQuoteAlertUi(quote.id);
       clearQuoteTrendArrow(quote.id);
+      return true;
     }
 
     function applyActiveQuoteUiState(quote, options = {}) {
+      if (!isDashboardUiActive()) {
+        return markDashboardUiDirty();
+      }
       const state = getQuoteMarketState(quote.id) || {};
       domRenderUtils.applyActiveQuoteDomState(
         domRenderUtils.getQuoteDomRefs(documentImpl, quote.id),
@@ -142,6 +173,7 @@
       if (options.clearInverse) {
         removeInverseQuoteElement(quote.id);
       }
+      return true;
     }
 
     async function copyTextToClipboard(text) {
@@ -206,14 +238,17 @@
     }
 
     function updateTrendArrow(quoteId, currentPrice, oldPrice, currentSource, oldSource) {
+      if (!isDashboardUiActive()) {
+        return markDashboardUiDirty();
+      }
       const arrowEl = documentImpl.getElementById(`trend-arrow-${quoteId}`);
-      if (!arrowEl) return;
+      if (!arrowEl) return false;
 
       const trendState = quoteDisplayUtils.buildQuoteTrendArrowState(currentPrice, oldPrice, currentSource, oldSource);
-      if (!trendState) return;
+      if (!trendState) return false;
 
       domRenderUtils.applyTrendArrowState(arrowEl, trendState);
-      if (trendState.action === 'hide') return;
+      if (trendState.action === 'hide') return true;
 
       quoteStateRuntime.scheduleTrendTimer(quoteId, () => {
         domRenderUtils.applyTrendArrowState(arrowEl, { action: 'hide' });
@@ -222,6 +257,7 @@
         clearTimeout: deps.clearTimeout,
         delayMs: 30000
       });
+      return true;
     }
 
     return {

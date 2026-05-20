@@ -190,6 +190,30 @@ function createBaseDeps(overrides = {}) {
   }
 
   {
+    const { calls, controller, quote, state } = createBaseDeps({
+      isDashboardUiActive: () => false,
+      markDashboardUiDirty: () => calls.push(['markDirty'])
+    });
+    controller.toggleQuoteDisplayMode();
+    controller.applyPausedQuoteUiState(quote, state);
+    controller.applyActiveQuoteUiState(quote, { text: '排队中...', clearInverse: true });
+    controller.updateQuotePairLabel(quote, state);
+    controller.updateTrendArrow(quote.id, 2, 1, 'Kyber', '0x');
+
+    assert.deepStrictEqual(
+      calls.filter((call) => ['toggleState', 'markDirty', 'displayText', 'pausedDom', 'activeDom', 'pairLabel', 'trend'].includes(call[0])),
+      [
+        ['toggleState', 'toggle-quote-display-btn', 'amount'],
+        ['markDirty'],
+        ['markDirty'],
+        ['markDirty'],
+        ['markDirty'],
+        ['markDirty']
+      ]
+    );
+  }
+
+  {
     const { calls, controller } = createBaseDeps();
     const textWrapper = createElement('text-wrapper-101');
     controller.bindCopyHandler(textWrapper, () => '1 TOKEN ≈ 1.230000 USDC');

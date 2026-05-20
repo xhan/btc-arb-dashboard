@@ -91,6 +91,17 @@
       };
     }
 
+    function isDashboardUiActive() {
+      return typeof deps.isDashboardUiActive === 'function' ? deps.isDashboardUiActive() : true;
+    }
+
+    function markDashboardUiDirty() {
+      if (typeof deps.markDashboardUiDirty === 'function') {
+        deps.markDashboardUiDirty();
+      }
+      return false;
+    }
+
     function handleInverseSuccess(quote, data, previousState, inverseEl, inverseContainerId, quoteDataEl) {
       if (!deps.shouldQueueInverseFetch(quote)) return;
 
@@ -101,14 +112,21 @@
         { isInverseFetch: true }
       );
       deps.setQuoteMarketState(quote.id, inverseState);
-      deps.domRenderUtils.applyQuoteInverseResultDomState({
-        quoteDataEl,
-        inverseEl
-      }, {
-        id: inverseContainerId,
-        documentImpl: deps.documentImpl,
-        text: deps.getInverseQuoteDisplayText(quote, inverseState, inverseFallbackText)
-      });
+      if (!isDashboardUiActive()) {
+        markDashboardUiDirty();
+        return;
+      }
+      deps.domRenderUtils.applyQuoteInverseResultDomState(
+        {
+          quoteDataEl,
+          inverseEl
+        },
+        {
+          id: inverseContainerId,
+          documentImpl: deps.documentImpl,
+          text: deps.getInverseQuoteDisplayText(quote, inverseState, inverseFallbackText)
+        }
+      );
     }
 
     function handleMainSuccess(quote, data, successSource, refs, previousState, inverseEl, inverseContainerId) {
@@ -119,32 +137,38 @@
         data,
         { successSource }
       );
+      const dashboardUiActive = isDashboardUiActive();
 
-      deps.domRenderUtils.applyQuoteMainResultDomState({
-        quoteTextEl: refs.quoteTextEl,
-        quoteTextWrapperEl: refs.quoteTextWrapperEl
-      }, {
-        text: deps.getQuoteDisplayText(quote, newState)
-      });
-      deps.updateQuotePairLabel(quote, newState);
-
-      if (deps.shouldQueueInverseFetch(quote)) {
-        const inverseQueuedText = deps.quoteDisplayUtils.buildInverseQuoteQueuedDisplayText(
-          quote,
-          newState,
-          inverseEl && inverseEl.textContent,
-          { mode: deps.getQuoteDisplayMode() }
-        );
-        deps.domRenderUtils.applyQuoteInverseQueuedDomState({
-          quoteDataEl: refs.quoteDataEl,
-          inverseEl
+      if (dashboardUiActive) {
+        deps.domRenderUtils.applyQuoteMainResultDomState({
+          quoteTextEl: refs.quoteTextEl,
+          quoteTextWrapperEl: refs.quoteTextWrapperEl
         }, {
-          id: inverseContainerId,
-          documentImpl: deps.documentImpl,
-          text: inverseQueuedText
+          text: deps.getQuoteDisplayText(quote, newState)
         });
-      } else {
-        deps.domRenderUtils.removeQuoteInverseElement(inverseEl);
+        deps.updateQuotePairLabel(quote, newState);
+
+        if (deps.shouldQueueInverseFetch(quote)) {
+          const inverseQueuedText = deps.quoteDisplayUtils.buildInverseQuoteQueuedDisplayText(
+            quote,
+            newState,
+            inverseEl && inverseEl.textContent,
+            { mode: deps.getQuoteDisplayMode() }
+          );
+          deps.domRenderUtils.applyQuoteInverseQueuedDomState({
+            quoteDataEl: refs.quoteDataEl,
+            inverseEl
+          }, {
+            id: inverseContainerId,
+            documentImpl: deps.documentImpl,
+            text: inverseQueuedText
+          });
+        } else {
+          deps.domRenderUtils.removeQuoteInverseElement(inverseEl);
+        }
+      }
+
+      if (!deps.shouldQueueInverseFetch(quote)) {
         newState.inverseRawPrice = null;
         newState.inverseTotalAmountOut = null;
         newState.inverseFromSymbol = null;
@@ -157,13 +181,20 @@
         deps.scheduleDataTerminalUpdate();
       }
 
-      deps.updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
+      if (dashboardUiActive) {
+        deps.updateTrendArrow(quote.id, data.rawPrice, oldPrice, successSource, oldSource);
+      } else {
+        markDashboardUiDirty();
+      }
       deps.checkPriceForAlerts(quote);
     }
 
     function handleFetchError(quote, error, isInverseFetch, refs) {
       if (error.name === 'AbortError') return false;
       const errorTitle = deps.quoteRequestUtils.buildQuoteErrorTitle(error);
+      if (!isDashboardUiActive()) {
+        return markDashboardUiDirty();
+      }
 
       if (isInverseFetch) {
         const inverseEl = deps.documentImpl.getElementById(`inverse-quote-${quote.id}`);
@@ -196,7 +227,11 @@
       if (deps.isQuotePaused(quote)) {
         const previousState = deps.getQuoteMarketState(quote.id) || {};
         deps.resetQuoteUiRuntimeState(quote.id);
-        deps.applyPausedQuoteUiState(quote, previousState);
+        if (isDashboardUiActive()) {
+          deps.applyPausedQuoteUiState(quote, previousState);
+        } else {
+          markDashboardUiDirty();
+        }
         return;
       }
 
@@ -204,7 +239,7 @@
       const controller = deps.activeFetchControllerRuntime.create(quote.id);
       const signal = controller ? controller.signal : null;
 
-      if (!isInverseFetch) {
+      if (!isInverseFetch && isDashboardUiActive()) {
         deps.domRenderUtils.clearQuoteDataError(refs.quoteDataEl);
       }
 

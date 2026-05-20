@@ -171,6 +171,25 @@ function createBaseDeps(overrides = {}) {
   }
 
   {
+    const { calls, controller, quote } = createBaseDeps({
+      isDashboardUiActive: () => false,
+      markDashboardUiDirty: () => calls.push(['markDirty'])
+    });
+    await controller.fetchSingle(quote);
+    assert.deepStrictEqual(
+      calls.filter((call) => ['clearError', 'mainResult', 'inverseQueued', 'setMarketState', 'scheduleArb', 'scheduleDataTerminal', 'trend', 'checkAlerts', 'markDirty', 'deleteController'].includes(call[0])),
+      [
+        ['setMarketState', 101, 1.01, false],
+        ['scheduleArb'],
+        ['scheduleDataTerminal'],
+        ['markDirty'],
+        ['checkAlerts', 101],
+        ['deleteController', 101, 'signal-101']
+      ]
+    );
+  }
+
+  {
     const { calls, controller, elements, quote } = createBaseDeps();
     elements['inverse-quote-101'].textContent = 'inverse text';
     await controller.fetchSingle(quote, 'inverse');

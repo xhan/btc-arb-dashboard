@@ -681,6 +681,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("dismissBtn.dataset.dismissHighlightId = quoteId"));
     assert.ok(!appJsResponse.body.includes('function getQuoteDomRefs('));
     assert.ok(!appJsResponse.body.includes('itemEl: document.getElementById(`quote-item-${quoteId}`)'));
+    assert.ok(quoteUiControllerResponse.body.includes('function isDashboardUiActive()'));
+    assert.ok(quoteUiControllerResponse.body.includes('function markDashboardUiDirty()'));
+    assert.ok(quoteUiControllerResponse.body.includes('return runDashboardUiPatch(() => {'));
     assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.applyPausedQuoteDomState('));
     assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.applyActiveQuoteDomState('));
     assert.ok(quoteUiControllerResponse.body.includes('domRenderUtils.getQuoteDomRefs(documentImpl, quote.id)'));
@@ -697,7 +700,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteInverseQueuedDomState({'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteDisplayUtils.buildInverseQuoteQueuedDisplayText('));
     assert.ok(quoteFetchControllerResponse.body.includes('text: inverseQueuedText'));
-    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteInverseResultDomState({'));
+    assert.ok(quoteFetchControllerResponse.body.includes('function isDashboardUiActive()'));
+    assert.ok(quoteFetchControllerResponse.body.includes('function markDashboardUiDirty()'));
+    assert.ok(quoteFetchControllerResponse.body.includes('const dashboardUiActive = isDashboardUiActive();'));
+    assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteInverseResultDomState('));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteInverseErrorDomState({'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.removeQuoteInverseElement(inverseEl)'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.domRenderUtils.applyQuoteMainResultDomState({'));
@@ -781,8 +787,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRuntimeResponse.body.includes('function createDashboardQuoteRuntime(options = {})'));
     assert.ok(quoteRuntimeResponse.body.includes('const activeFetchControllerRuntime = options.quoteQueueRuntimeUtils.createActiveFetchControllerRuntime({'));
     assert.ok(quoteRuntimeResponse.body.includes('const quoteFetchController = options.quoteFetchControllerUtils.createQuoteFetchController({'));
+    assert.ok(quoteRuntimeResponse.body.includes('isDashboardUiActive: options.isDashboardUiActive'));
+    assert.ok(quoteRuntimeResponse.body.includes('markDashboardUiDirty: options.markDashboardUiDirty'));
     assert.ok(quoteRuntimeResponse.body.includes('const quoteQueueRuntime = options.quoteQueueRuntimeUtils.createQuoteQueueRuntime({'));
     assert.ok(quoteRuntimeResponse.body.includes('const quoteRefreshRuntime = options.quoteQueueRuntimeUtils.createQuoteRefreshRuntime({'));
+    assert.ok(appJsResponse.body.trimStart().startsWith('(function () {'));
+    assert.ok(appJsResponse.body.trimEnd().endsWith('}());'));
+    assert.ok(appJsResponse.body.includes('let dashboardDirty = false;'));
+    assert.ok(appJsResponse.body.includes('function markDashboardViewDirty()'));
+    assert.ok(appJsResponse.body.includes('if (!dashboardRendered || dashboardDirty)'));
     assert.ok(appJsResponse.body.includes('const quoteDomainAdapter = getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({'));
     assert.ok(appJsResponse.body.includes('quoteRuntime = getDashboardQuoteRuntime().createDashboardQuoteRuntime({'));
     assert.ok(appJsResponse.body.includes('getDefaultSourceForChain: defaultSourceResolver,'));

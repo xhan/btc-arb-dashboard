@@ -1,3 +1,4 @@
+(function () {
     const {
         AMOUNT_INPUT_DEBOUNCE_MS,
         DASHBOARD_SAVE_DEBOUNCE_MS,
@@ -97,6 +98,9 @@
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     let quoteRuntime = null;
     let arbAlertRuntime = null;
+    let dashboardViewModeController = null;
+    let dashboardRendered = false;
+    let dashboardDirty = false;
     function getQuoteRuntime() {
         if (!quoteRuntime) {
             throw new Error('Dashboard quote runtime is not initialized');
@@ -123,6 +127,16 @@
     }
     function updateArbPanel(options) {
         return getArbAlertRuntime().updateArbPanel(options);
+    }
+    function isDashboardViewActive() {
+        return Boolean(
+            dashboardViewModeController
+            && dashboardViewModeController.getMode() === getDashboardViewModeController().APP_VIEW_DASHBOARD
+        );
+    }
+    function markDashboardViewDirty() {
+        dashboardDirty = true;
+        return false;
     }
     const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
@@ -350,8 +364,10 @@
         globalTooltip,
         initialQuoteDisplayMode: DEFAULT_QUOTE_DISPLAY_MODE,
         isEvmChain,
+        isDashboardUiActive: isDashboardViewActive,
         isQuotePaused,
         logger: console,
+        markDashboardUiDirty: markDashboardViewDirty,
         quoteDisplayUtils: getQuoteDisplayUtils(),
         quotePauseUtils: getQuotePauseUtils(),
         quoteStateRuntime,
@@ -482,21 +498,20 @@
         scheduleArbPanelUpdate,
         setArbPanelMaxHeight
     } = arbAlertRuntime;
-    let dashboardRendered = false;
-
     function renderDashboardForCurrentState() {
         renderDashboard();
         dashboardRendered = true;
+        dashboardDirty = false;
     }
 
     function ensureDashboardRendered() {
-        if (!dashboardRendered) {
+        if (!dashboardRendered || dashboardDirty) {
             renderDashboardForCurrentState();
         }
         return dashboardRendered;
     }
 
-    const dashboardViewModeController = getDashboardViewModeController().createDashboardViewModeController({
+    dashboardViewModeController = getDashboardViewModeController().createDashboardViewModeController({
         bodyEl: document.body,
         onShowDashboard: ensureDashboardRendered,
         refs: {
@@ -642,9 +657,11 @@
         getQuoteDisplayMode,
         getQuoteDisplayText,
         getQuoteMarketState,
+        isDashboardUiActive: isDashboardViewActive,
         isQuotePaused,
         isSchedulerPaused: () => arbDetailController.isDashboardPaused(),
         logWarning: (...args) => console.warn(...args),
+        markDashboardUiDirty: markDashboardViewDirty,
         applyActiveQuoteUiState,
         queueStatsUtils: getQueueStatsUtils(),
         quoteDisplayUtils: getQuoteDisplayUtils(),
@@ -895,3 +912,4 @@
     dashboardLifecycleController.bindStaticEvents();
     
     dashboardLifecycleController.init();
+}());
