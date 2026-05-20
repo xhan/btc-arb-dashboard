@@ -57,7 +57,17 @@
     const updateDelayMs = Number.isFinite(Number(options.updateDelayMs)) ? Number(options.updateDelayMs) : 0;
     const arbPanelCache = arbPathTemplateCacheUtils.createArbPanelCache();
     const arbGlobalFilterStateRuntime = arbPanelLayoutUtils.createGlobalArbFilterStateRuntime();
-    const arbPanelHtmlRenderer = domRenderUtils.createStableHtmlRenderer();
+    const arbPanelHtmlRenderer = domRenderUtils.createStableHtmlRenderer({
+      shouldDeferRender: (element) => {
+        const activeElement = documentImpl.activeElement;
+        return Boolean(
+          activeElement
+          && element
+          && typeof element.contains === 'function'
+          && element.contains(activeElement)
+        );
+      }
+    });
     const arbExpandedSections = new Set();
     let arbLastPointerOpenedOpportunityId = null;
 
@@ -540,11 +550,18 @@
       openArbDetailModal(action.opportunityId);
     }
 
+    function flushContentRender() {
+      if (arbPanelHtmlRenderer && typeof arbPanelHtmlRenderer.flush === 'function') {
+        arbPanelHtmlRenderer.flush(refs.arbPathContent);
+      }
+    }
+
     function bindContentEvents() {
       if (!refs.arbPathContent) return;
       refs.arbPathContent.addEventListener('pointerdown', handleContentPointerDown);
       refs.arbPathContent.addEventListener('click', handleContentClick);
       refs.arbPathContent.addEventListener('keydown', handleContentKeydown);
+      refs.arbPathContent.addEventListener('focusout', flushContentRender);
     }
 
     function bindGlobalFilterEvents() {

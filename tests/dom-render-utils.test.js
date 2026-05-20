@@ -77,6 +77,49 @@ assert.deepStrictEqual(writes, ['<div>A</div>', '<div>B</div>', '<div>B</div>'])
 
 assert.strictEqual(renderer.render(null, '<div>C</div>'), false);
 
+const deferredWrites = [];
+const deferredTarget = {
+  innerHTML: '',
+  contains(element) {
+    return element && element.inside === true;
+  }
+};
+let activeElement = { inside: true };
+const deferredRenderer = createStableHtmlRenderer({
+  setHtml(element, html) {
+    deferredWrites.push(html);
+    element.innerHTML = html;
+  },
+  shouldDeferRender(element) {
+    return element.contains(activeElement);
+  }
+});
+assert.strictEqual(deferredRenderer.render(deferredTarget, '<div>first</div>'), false);
+assert.strictEqual(deferredRenderer.getHtml(), '');
+assert.strictEqual(deferredTarget.innerHTML, '');
+assert.strictEqual(deferredRenderer.hasPending(), true);
+assert.deepStrictEqual(deferredWrites, []);
+
+assert.strictEqual(deferredRenderer.render(deferredTarget, '<div>latest</div>'), false);
+activeElement = null;
+assert.strictEqual(deferredRenderer.flush(deferredTarget), true);
+assert.strictEqual(deferredRenderer.getHtml(), '<div>latest</div>');
+assert.strictEqual(deferredTarget.innerHTML, '<div>latest</div>');
+assert.deepStrictEqual(deferredWrites, ['<div>latest</div>']);
+assert.strictEqual(deferredRenderer.hasPending(), false);
+assert.strictEqual(deferredRenderer.flush(deferredTarget), false);
+
+activeElement = { inside: true };
+deferredRenderer.render(deferredTarget, '<div>pending</div>');
+assert.strictEqual(deferredRenderer.hasPending(), true);
+deferredRenderer.render(deferredTarget, '<div>latest</div>');
+assert.strictEqual(deferredRenderer.hasPending(), false);
+deferredRenderer.render(deferredTarget, '<div>pending</div>');
+assert.strictEqual(deferredRenderer.hasPending(), true);
+deferredRenderer.reset();
+assert.strictEqual(deferredRenderer.hasPending(), false);
+assert.strictEqual(deferredRenderer.flush(deferredTarget), false);
+
 const quoteDomLookups = [];
 const quoteDomRefs = getQuoteDomRefs({
   getElementById(id) {

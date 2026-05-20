@@ -478,27 +478,55 @@
       : (element, html) => {
         element.innerHTML = html;
       };
+    const shouldDeferRender = typeof options.shouldDeferRender === 'function'
+      ? options.shouldDeferRender
+      : () => false;
     let renderedHtml = '';
+    let pendingHtml = null;
 
     function reset() {
       renderedHtml = '';
+      pendingHtml = null;
+    }
+
+    function write(element, html) {
+      setHtml(element, html);
+      renderedHtml = html;
+      pendingHtml = null;
+      return true;
     }
 
     function render(element, nextHtml) {
       if (!element) return false;
       const html = String(nextHtml || '');
-      if (html === renderedHtml) return false;
-      setHtml(element, html);
-      renderedHtml = html;
-      return true;
+      if (html === renderedHtml) {
+        pendingHtml = null;
+        return false;
+      }
+      if (shouldDeferRender(element, html)) {
+        pendingHtml = html;
+        return false;
+      }
+      return write(element, html);
     }
 
     function getHtml() {
       return renderedHtml;
     }
 
+    function hasPending() {
+      return pendingHtml !== null && pendingHtml !== renderedHtml;
+    }
+
+    function flush(element) {
+      if (!element || !hasPending()) return false;
+      return write(element, pendingHtml);
+    }
+
     return {
+      flush,
       getHtml,
+      hasPending,
       render,
       reset
     };
