@@ -19,6 +19,7 @@ const {
   resolveConfirmModalClickAction,
   resolveDashboardAmountInputAction,
   resolveDashboardButtonClickAction,
+  resolveDashboardClickAction,
   resolveQuoteSettingsModalClickAction,
   createCategoryModuleShellElement,
   createQuoteItemShellElement,
@@ -62,6 +63,36 @@ assert.deepStrictEqual(
   { type: 'none' }
 );
 
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardClickAction, {
+    '[data-dex-link-copy="1"]': {
+      dataset: {
+        dexLinkCopy: '1'
+      }
+    }
+  }),
+  {
+    type: 'copy-dex-link',
+    element: {
+      dataset: {
+        dexLinkCopy: '1'
+      }
+    }
+  }
+);
+assert.deepStrictEqual(
+  resolveDashboardActionFor(resolveDashboardClickAction, {
+    '.quote-text-wrapper, .inverse-quote-text': {
+      textContent: '1 TOKEN ≈ 1.23 USDC'
+    }
+  }),
+  {
+    type: 'copy-price',
+    element: {
+      textContent: '1 TOKEN ≈ 1.23 USDC'
+    }
+  }
+);
 assert.deepStrictEqual(
   resolveDashboardActionFor(resolveDashboardButtonClickAction, {
     button: {

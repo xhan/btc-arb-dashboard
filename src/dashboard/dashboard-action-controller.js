@@ -268,10 +268,33 @@
       return true;
     }
 
+    function stopDashboardClick(event) {
+      if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+      }
+      if (event && typeof event.stopPropagation === 'function') {
+        event.stopPropagation();
+      }
+    }
+
     function handleDashboardClick(event) {
-      const action = deps.dashboardRenderer.resolveDashboardButtonClickAction(event, {
+      const action = deps.dashboardRenderer.resolveDashboardClickAction(event, {
         closestEventTarget: deps.closestEventTarget
       });
+      if (action.type === 'copy-dex-link') {
+        stopDashboardClick(event);
+        if (typeof deps.copyDexLinkFromElement === 'function') {
+          void deps.copyDexLinkFromElement(action.element);
+        }
+        return;
+      }
+      if (action.type === 'copy-price') {
+        stopDashboardClick(event);
+        if (typeof deps.copyPriceText === 'function') {
+          deps.copyPriceText(action.element && action.element.textContent);
+        }
+        return;
+      }
       if (action.type === 'dismiss-highlight') {
         deps.quoteStateRuntime.setUiState(action.quoteId, {
           hasUnreadAlert: false

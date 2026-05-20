@@ -45,7 +45,6 @@ function createBaseDeps(overrides = {}) {
       deleteIfCurrent: (quoteId, controller) => calls.push(['deleteController', quoteId, controller && controller.signal])
     },
     backendUrl: 'http://127.0.0.1:3000',
-    bindCopyHandler: (element, getText) => calls.push(['bindCopy', element.id, getText()]),
     chainDefaults: {
       buildQuoteStrategy: () => ['Kyber']
     },
@@ -176,11 +175,10 @@ function createBaseDeps(overrides = {}) {
     elements['inverse-quote-101'].textContent = 'inverse text';
     await controller.fetchSingle(quote, 'inverse');
     assert.deepStrictEqual(
-      calls.filter((call) => ['inverseResult', 'setMarketState', 'bindCopy', 'deleteController'].includes(call[0])),
+      calls.filter((call) => ['inverseResult', 'setMarketState', 'deleteController'].includes(call[0])),
       [
         ['setMarketState', 101, 1.01, true],
         ['inverseResult', 'quote-data-101', 'inverse-quote-101', '2 USDC ≈ 2.020000 USDT'],
-        ['bindCopy', 'inverse-quote-101', '2 USDC ≈ 2.020000 USDT'],
         ['deleteController', 101, 'signal-101']
       ]
     );

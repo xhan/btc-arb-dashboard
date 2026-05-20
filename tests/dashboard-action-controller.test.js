@@ -39,7 +39,8 @@ function createBaseDeps(overrides = {}) {
       documentImpl,
       dashboardRuntimeUtils,
       dashboardRenderer: {
-        resolveDashboardAmountInputAction: () => ({ type: 'none' })
+        resolveDashboardAmountInputAction: () => ({ type: 'none' }),
+        resolveDashboardClickAction: () => ({ type: 'none' })
       },
       quotePauseUtils: {
         applyCategoryPauseButtonState: (button, quotes) => calls.push(['categoryPauseButton', button && button.selector, quotes.length]),
@@ -91,6 +92,8 @@ function createBaseDeps(overrides = {}) {
       getQuoteChainDisplayName: () => '',
       formatChainLabel: () => '',
       closestEventTarget: () => null,
+      copyDexLinkFromElement: (element) => calls.push(['copyDexLink', element && element.name]),
+      copyPriceText: (text) => calls.push(['copyPrice', text]),
       ...overrides.deps
     }
   };
@@ -105,7 +108,8 @@ function createBaseDeps(overrides = {}) {
           categoryId: '1',
           quoteId: '101',
           amount: 3
-        })
+        }),
+        resolveDashboardClickAction: () => ({ type: 'none' })
       }
     }
   });
@@ -119,6 +123,60 @@ function createBaseDeps(overrides = {}) {
       ['renderDataTerminal'],
       ['queueQuoteRefresh', 101],
       ['saveData']
+    ]
+  );
+}
+
+{
+  const { calls, deps } = createBaseDeps({
+    deps: {
+      dashboardRenderer: {
+        resolveDashboardAmountInputAction: () => ({ type: 'none' }),
+        resolveDashboardClickAction: () => ({
+          type: 'copy-dex-link',
+          element: { name: 'dex-target' }
+        })
+      }
+    }
+  });
+  const controller = createDashboardActionController(deps);
+  controller.handleDashboardClick({
+    preventDefault: () => calls.push(['preventDefault']),
+    stopPropagation: () => calls.push(['stopPropagation'])
+  });
+  assert.deepStrictEqual(
+    calls.filter((call) => ['preventDefault', 'stopPropagation', 'copyDexLink'].includes(call[0])),
+    [
+      ['preventDefault'],
+      ['stopPropagation'],
+      ['copyDexLink', 'dex-target']
+    ]
+  );
+}
+
+{
+  const { calls, deps } = createBaseDeps({
+    deps: {
+      dashboardRenderer: {
+        resolveDashboardAmountInputAction: () => ({ type: 'none' }),
+        resolveDashboardClickAction: () => ({
+          type: 'copy-price',
+          element: { textContent: '1 TOKEN ≈ 1.23 USDC' }
+        })
+      }
+    }
+  });
+  const controller = createDashboardActionController(deps);
+  controller.handleDashboardClick({
+    preventDefault: () => calls.push(['preventDefault']),
+    stopPropagation: () => calls.push(['stopPropagation'])
+  });
+  assert.deepStrictEqual(
+    calls.filter((call) => ['preventDefault', 'stopPropagation', 'copyPrice'].includes(call[0])),
+    [
+      ['preventDefault'],
+      ['stopPropagation'],
+      ['copyPrice', '1 TOKEN ≈ 1.23 USDC']
     ]
   );
 }

@@ -89,8 +89,6 @@ function createBaseDeps(overrides = {}) {
   };
 
   const deps = {
-    bindCopyHandler: (element, getText) => calls.push(['bindCopy', element.name, getText()]),
-    copyDexLinkFromElement: (element) => calls.push(['copyDexLink', element.name]),
     dashboardEl,
     dashboardRenderer: {
       createQuoteItemShellElement: (config) => {
@@ -152,17 +150,14 @@ function createBaseDeps(overrides = {}) {
   assert.strictEqual(labelStackEl.draggable, 'false');
   assert.ok(labelStackEl.classList.has('quote-dex-link-target'));
   assert.deepStrictEqual(calls[0], ['createQuoteShell', 101, '<input type="number" class="amount-input" value="2" step="any" min="0" data-category-id="1" data-quote-id="101">', 'quote-text', '显示-101']);
-  assert.ok(calls.some((call) => call[0] === 'bindCopy' && call[1] === 'text-wrapper-101' && call[2] === 'price-101'));
+  assert.strictEqual(labelStackEl.listeners.click, undefined);
+  assert.strictEqual(textWrapperEl.listeners.click, undefined);
 
-  let copiedPrevented = false;
-  let copiedStopped = false;
-  labelStackEl.listeners.click({
-    preventDefault: () => { copiedPrevented = true; },
-    stopPropagation: () => { copiedStopped = true; }
+  let labelMouseDownStopped = false;
+  labelStackEl.listeners.mousedown({
+    stopPropagation: () => { labelMouseDownStopped = true; }
   });
-  assert.strictEqual(copiedPrevented, true);
-  assert.strictEqual(copiedStopped, true);
-  assert.ok(calls.some((call) => call[0] === 'copyDexLink' && call[1] === 'label-101'));
+  assert.strictEqual(labelMouseDownStopped, true);
 
   textWrapperEl.listeners.mouseenter({});
   assert.ok(calls.some((call) => call[0] === 'hover' && call[1] === 101));

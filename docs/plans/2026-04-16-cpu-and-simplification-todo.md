@@ -146,7 +146,7 @@
   - `dashboard-persistence`：配置保存 payload、手动/自动保存反馈、保存 debounce 编排、金额输入 debounce 和保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、报价卡片和分区模块 shell 创建、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `dashboard-actions`：主看板金额输入、报价/分区暂停、删除、交换、报价设置弹窗打开和确认动作编排已下沉到 `src/dashboard/dashboard-action-controller.js`，`src/app/dashboard-app.js` 只负责注入运行态依赖和绑定事件入口
   - `dashboard-forms`：报价设置保存、新增分区、新增报价和 add quote 表单控件同步已下沉到 `src/dashboard/dashboard-form-controller.js`，主入口只注入 renderer/modal/runtime 依赖
-  - `dashboard-view`：报价项/分区 DOM 创建、拖拽排序、DEX 链接复制 target 绑定和 dashboard 整体 render 已下沉到 `src/dashboard/dashboard-view-controller.js`，`src/app/dashboard-app.js` 只注入展示依赖和回调
+  - `dashboard-view`：报价项/分区 DOM 创建、拖拽排序、DEX 链接复制 target 标记和 dashboard 整体 render 已下沉到 `src/dashboard/dashboard-view-controller.js`，主看板价格/DEX 复制点击改为 `dashboard-action-controller` 根节点委托，减少 render 后新节点单独绑定 click 导致首次点击丢失的风险
   - `app-view-mode`：套利路径和默认交易对看板的主视图切换已下沉到 `src/app/dashboard-view-mode-controller.js`，默认进入套利路径视图；二者通过 body class 互斥显示，不再把套利路径作为覆盖默认看板的常驻浮层
   - `dashboard-api-client`：后端配置刷新、看板配置加载、请求通道加载、price snapshot 配置/保存和配置保存请求已下沉到 `src/dashboard/dashboard-api-utils.js`，`src/app/dashboard-app.js` 只负责状态赋值、UI feedback 和后续调度
   - `app-lifecycle`：启动加载、配置预加载、一次性全局事件绑定、浮窗 chrome 绑定和快捷键绑定已下沉到 `src/app/dashboard-lifecycle-controller.js`，为后续统一 command/view lifecycle、解决首次点击/快捷键不稳定提供单一入口

@@ -51,6 +51,13 @@ function createBaseDeps(overrides = {}) {
         options.copyText('1.23');
         options.showToast('copied');
       },
+      copyPriceFromText: (text, options) => {
+        const price = options.extractPrice(text);
+        calls.push(['copyPriceFromText', price]);
+        options.copyText(String(price));
+        options.showToast('copied price');
+        return true;
+      },
       copyDexLinkFromElement: async (element, options) => {
         const link = options.buildDexLink({ chain: element.dataset.dexLinkChain });
         await options.copyText(link.url);
@@ -186,15 +193,19 @@ function createBaseDeps(overrides = {}) {
     const { calls, controller } = createBaseDeps();
     const textWrapper = createElement('text-wrapper-101');
     controller.bindCopyHandler(textWrapper, () => '1 TOKEN ≈ 1.230000 USDC');
+    assert.strictEqual(controller.copyPriceText('1 TOKEN ≈ 1.230000 USDC'), true);
     const dexTarget = createElement('dex-target');
     dexTarget.dataset.dexLinkChain = 'ethereum';
     assert.strictEqual(await controller.copyDexLinkFromElement(dexTarget), true);
     assert.deepStrictEqual(
-      calls.filter((call) => ['bindCopy', 'copyText', 'toast'].includes(call[0])),
+      calls.filter((call) => ['bindCopy', 'copyPriceFromText', 'copyText', 'toast'].includes(call[0])),
       [
         ['bindCopy', 'text-wrapper-101', 1.23],
         ['copyText', '1.23'],
         ['toast', 'copy-toast', 'copied'],
+        ['copyPriceFromText', 1.23],
+        ['copyText', '1.23'],
+        ['toast', 'copy-toast', 'copied price'],
         ['copyText', 'https://dex/ethereum'],
         ['toast', 'copy-toast', 'copied DexLink']
       ]

@@ -250,7 +250,17 @@
     };
   }
 
-  function resolveDashboardButtonClickAction(event, options = {}) {
+  function resolveDashboardClickAction(event, options = {}) {
+    const dexLinkTarget = resolveClosest(event, '[data-dex-link-copy="1"]', options);
+    if (dexLinkTarget) {
+      return { type: 'copy-dex-link', element: dexLinkTarget };
+    }
+
+    const priceTarget = resolveClosest(event, '.quote-text-wrapper, .inverse-quote-text', options);
+    if (priceTarget) {
+      return { type: 'copy-price', element: priceTarget };
+    }
+
     const button = resolveClosest(event, 'button', options);
     if (!button) return { type: 'none' };
 
@@ -306,6 +316,10 @@
     }
 
     return { type: 'none' };
+  }
+
+  function resolveDashboardButtonClickAction(event, options = {}) {
+    return resolveDashboardClickAction(event, options);
   }
 
   function buildQuoteSettingsModalViewState(config = {}) {
@@ -673,6 +687,7 @@
     resolveConfirmModalClickAction,
     resolveDashboardAmountInputAction,
     resolveDashboardButtonClickAction,
+    resolveDashboardClickAction,
     resolveQuoteSettingsModalClickAction,
     createCategoryModuleShellElement,
     createQuoteItemShellElement,

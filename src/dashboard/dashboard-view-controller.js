@@ -111,11 +111,6 @@
       labelStackEl.title = `点击复制 ${dexLinkLabel} 链接`;
       labelStackEl.setAttribute('draggable', 'false');
       labelStackEl.addEventListener('mousedown', (event) => event.stopPropagation());
-      labelStackEl.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        void deps.copyDexLinkFromElement(labelStackEl);
-      });
     }
 
     function bindQuoteTextInteractions(itemEl, quote) {
@@ -125,11 +120,6 @@
       textWrapper.addEventListener('mouseenter', (event) => deps.handleQuoteHover(event, quote.id));
       textWrapper.addEventListener('mousedown', (event) => event.stopPropagation());
       textWrapper.setAttribute('draggable', 'false');
-      const quoteTextEl = itemEl.querySelector(`#quote-text-${quote.id}`);
-      deps.bindCopyHandler(
-        textWrapper,
-        () => (quoteTextEl ? quoteTextEl.textContent : textWrapper.textContent)
-      );
     }
 
     function createQuoteItem(quote, categoryId) {

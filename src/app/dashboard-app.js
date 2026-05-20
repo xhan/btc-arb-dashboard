@@ -350,8 +350,8 @@
         applyActiveQuoteUiState,
         applyPausedQuoteUiState,
         applyQuoteDisplayToggleButtonState,
-        bindCopyHandler,
         copyDexLinkFromElement,
+        copyPriceText,
         copyTextToClipboard,
         getInverseQuoteDisplayText,
         getQuoteDisplayMode,
@@ -669,7 +669,6 @@
     const quoteFetchController = getQuoteFetchController().createQuoteFetchController({
         activeFetchControllerRuntime,
         backendUrl: BACKEND_URL,
-        bindCopyHandler,
         chainDefaults: getChainDefaults(),
         checkPriceForAlerts: alertRuntimeController.checkPriceForAlerts,
         dashboardRuntimeUtils: getDashboardRuntimeUtils(),
@@ -797,6 +796,8 @@
         quoteSettingsModalElements,
         quoteSettingsSelectionRuntime,
         quoteStateRuntime,
+        copyDexLinkFromElement,
+        copyPriceText,
         queueQuoteRefresh,
         removeFromQueue,
         renderDataTerminalPanel,
@@ -832,8 +833,6 @@
     dashboardEl.addEventListener('click', handleDashboardClick);
 
     const dashboardViewController = getDashboardViewController().createDashboardViewController({
-        bindCopyHandler,
-        copyDexLinkFromElement,
         dashboardEl,
         dashboardRenderer: getDashboardRenderer(),
         dashboardRuntimeUtils: getDashboardRuntimeUtils(),

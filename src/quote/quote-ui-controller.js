@@ -161,6 +161,14 @@
       });
     }
 
+    function copyPriceText(text) {
+      return copyUtils.copyPriceFromText(text, {
+        extractPrice: (value) => quoteDisplayUtils.extractPriceFromText(value),
+        copyText: (value) => copyTextToClipboard(value),
+        showToast: (message) => showCopyToast(message)
+      });
+    }
+
     function bindCopyHandler(targetEl, getText) {
       copyUtils.bindCopyPriceHandler(targetEl, {
         getText,
@@ -224,6 +232,7 @@
       clearQuoteAlertUi,
       clearQuoteTrendArrow,
       copyDexLinkFromElement,
+      copyPriceText,
       copyTextToClipboard,
       getInverseQuoteDisplayText,
       getQuoteDisplayMode,

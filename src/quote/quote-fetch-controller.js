@@ -101,7 +101,7 @@
         { isInverseFetch: true }
       );
       deps.setQuoteMarketState(quote.id, inverseState);
-      const nextInverseEl = deps.domRenderUtils.applyQuoteInverseResultDomState({
+      deps.domRenderUtils.applyQuoteInverseResultDomState({
         quoteDataEl,
         inverseEl
       }, {
@@ -109,12 +109,6 @@
         documentImpl: deps.documentImpl,
         text: deps.getInverseQuoteDisplayText(quote, inverseState, inverseFallbackText)
       });
-      if (nextInverseEl) {
-        deps.bindCopyHandler(
-          nextInverseEl,
-          () => nextInverseEl.textContent
-        );
-      }
     }
 
     function handleMainSuccess(quote, data, successSource, refs, previousState, inverseEl, inverseContainerId) {

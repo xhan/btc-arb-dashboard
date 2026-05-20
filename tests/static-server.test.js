@@ -673,9 +673,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("quoteDataEl.classList.add('error')"));
     assert.ok(!appJsResponse.body.includes('quoteDataEl.title = errorTitle'));
     assert.ok(dashboardViewControllerResponse.body.includes("labelStackEl.classList.add('quote-dex-link-target')"));
-    assert.ok(dashboardViewControllerResponse.body.includes('void deps.copyDexLinkFromElement(labelStackEl)'));
+    assert.ok(!dashboardViewControllerResponse.body.includes('void deps.copyDexLinkFromElement(labelStackEl)'));
     assert.ok(dashboardRendererResponse.body.includes('class="icon-btn add-quote-btn"'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveDashboardAmountInputAction(event, options = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function resolveDashboardClickAction(event, options = {})'));
+    assert.ok(dashboardRendererResponse.body.includes("resolveClosest(event, '[data-dex-link-copy=\"1\"]', options)"));
+    assert.ok(dashboardRendererResponse.body.includes("resolveClosest(event, '.quote-text-wrapper, .inverse-quote-text', options)"));
     assert.ok(dashboardRendererResponse.body.includes('function resolveDashboardButtonClickAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsModalViewState(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsModalWritePlan(viewState = {})'));
@@ -693,7 +696,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsUpdatePlan(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function readQuoteSettingsFormValues(options = {})'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.resolveDashboardAmountInputAction(event, {'));
-    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.resolveDashboardButtonClickAction(event, {'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.resolveDashboardClickAction(event, {'));
+    assert.ok(dashboardActionControllerResponse.body.includes('void deps.copyDexLinkFromElement(action.element);'));
+    assert.ok(dashboardActionControllerResponse.body.includes('deps.copyPriceText(action.element && action.element.textContent);'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsModalViewState({'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsModalWritePlan(modalState)'));
     assert.ok(!appJsResponse.body.includes('function applyQuoteSettingsModalWritePlan(plan)'));
@@ -2137,6 +2142,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('CopyUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('const copyToastRuntime = getCopyUtils().createCopyToastRuntime({'));
     assert.ok(quoteUiControllerResponse.body.includes('copyUtils.bindCopyPriceHandler(targetEl, {'));
+    assert.ok(quoteUiControllerResponse.body.includes('function copyPriceText(text)'));
+    assert.ok(quoteUiControllerResponse.body.includes('return copyUtils.copyPriceFromText(text, {'));
     assert.ok(quoteUiControllerResponse.body.includes('copyToastRuntime.show(deps.copyToast, message);'));
     assert.ok(!appJsResponse.body.includes('let copyToastTimer = null;'));
     assert.ok(!appJsResponse.body.includes('function copyPriceFromText(text)'));
