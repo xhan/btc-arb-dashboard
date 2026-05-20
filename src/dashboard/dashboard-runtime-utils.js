@@ -463,6 +463,63 @@
     };
   }
 
+  function createDashboardPersistenceRuntime(options = {}) {
+    const saveRuntime = options.saveRuntime || createDashboardSaveRuntime(options.saveRuntimeOptions || {});
+    const feedbackRuntime = options.feedbackRuntime || createSaveButtonFeedbackRuntime(options.feedbackOptions || {});
+    const getDashboardState = typeof options.getDashboardState === 'function'
+      ? options.getDashboardState
+      : () => [];
+    const getApiIntervals = typeof options.getApiIntervals === 'function'
+      ? options.getApiIntervals
+      : () => ({});
+    const saveDashboardConfig = typeof options.saveDashboardConfig === 'function'
+      ? options.saveDashboardConfig
+      : () => Promise.reject(new Error('saveDashboardConfig is not configured'));
+    const logger = options.logger || console;
+
+    function isManualSaveRequest(saveOptions) {
+      return saveOptions === true || Boolean(saveOptions && saveOptions.manual === true);
+    }
+
+    function buildPayload() {
+      return {
+        dashboard: getDashboardState(),
+        settings: getApiIntervals()
+      };
+    }
+
+    async function performSave(saveOptions = {}) {
+      const isManual = isManualSaveRequest(saveOptions);
+      feedbackRuntime.showSaving({ manual: isManual });
+      if (isManual) {
+        saveRuntime.clear();
+      }
+
+      try {
+        await saveDashboardConfig(buildPayload());
+        feedbackRuntime.showSuccess();
+        return true;
+      } catch (error) {
+        if (logger && typeof logger.error === 'function') {
+          logger.error('配置保存失败:', error);
+        }
+        feedbackRuntime.showError();
+        return false;
+      }
+    }
+
+    function scheduleSave() {
+      return saveRuntime.schedule(() => { void performSave({ manual: false }); });
+    }
+
+    return {
+      clearScheduledSave: saveRuntime.clear,
+      getScheduledSaveTimer: saveRuntime.getTimer,
+      performSave,
+      scheduleSave
+    };
+  }
+
   function createButtonFeedbackRuntime(options = {}) {
     const setTimer = typeof options.setTimeout === 'function'
       ? options.setTimeout
@@ -634,6 +691,7 @@
     buildSwappedQuoteMarketState,
     clearQuoteTrendTimer,
     createButtonFeedbackRuntime,
+    createDashboardPersistenceRuntime,
     createDashboardSaveRuntime,
     createInputDebounceRuntime,
     createSaveButtonFeedbackRuntime,

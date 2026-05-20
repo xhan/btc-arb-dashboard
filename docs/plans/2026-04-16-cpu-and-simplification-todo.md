@@ -142,7 +142,7 @@
   - `arb-detail`：详情状态、弹窗生命周期、刷新调度、图表预览、source budget 和 grid 事件编排已下沉到 `src/arb/arb-detail-controller.js`；详情刷新调度器/图表自动刷新 runtime 仍由 `src/arb/arb-detail-refresh-utils.js` 提供，详情网格事件动作解析和 DOM 写入模型仍由 `src/arb/arb-detail-utils.js` 提供
   - `path-alerts`：runtime Map、force-immediate flag、配置同步 payload/storage event 和保存/评估/reload timer 生命周期已下沉到 `src/path-alerts/path-alert-utils.js`，面板 change/click action 解析已下沉到 `src/path-alerts/path-alert-page-utils.js`
   - `data-terminal`：records/candidates cache、刷新 timer、面板状态、挂载/关闭、render 编排和内容/header 点击分发已下沉到 `src/data-terminal/data-terminal-controller.js`；面板 HTML、DOM refs 装配、浮窗定位/默认尺寸、控件状态读写计划、控件事件绑定、selection 更新计划和 action 解析继续由 `src/data-terminal/data-terminal-utils.js` 提供
-  - `dashboard-persistence`：配置保存 debounce timer、金额输入 debounce、保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、报价卡片和分区模块 shell 创建、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
+  - `dashboard-persistence`：配置保存 payload、手动/自动保存反馈、保存 debounce 编排、金额输入 debounce 和保存按钮反馈 runtime 已下沉到 `src/dashboard/dashboard-runtime-utils.js`，dashboard 输入/按钮动作解析、报价卡片和分区模块 shell 创建、添加报价/新增分区/报价设置/确认弹窗表单状态、报价设置 modal 写入计划、报价设置表单读取、报价设置保存更新计划和全局设置 interval 表单读写/解析已下沉到 `src/dashboard/dashboard-renderer.js`
   - `dashboard-actions`：主看板金额输入、报价/分区暂停、删除、交换、报价设置弹窗打开和确认动作编排已下沉到 `src/dashboard/dashboard-action-controller.js`，`src/app/dashboard-app.js` 只负责注入运行态依赖和绑定事件入口
   - `dashboard-forms`：报价设置保存、新增分区、新增报价和 add quote 表单控件同步已下沉到 `src/dashboard/dashboard-form-controller.js`，主入口只注入 renderer/modal/runtime 依赖
   - `dashboard-view`：报价项/分区 DOM 创建、拖拽排序、DEX 链接复制 target 绑定和 dashboard 整体 render 已下沉到 `src/dashboard/dashboard-view-controller.js`，`src/app/dashboard-app.js` 只注入展示依赖和回调
@@ -335,6 +335,7 @@
   - `src/app/dashboard-app.js` 的 alert log active tab 状态、tab DOM 状态和浮窗显示状态已下沉到 `src/alerts/alert-log-ui-utils.js`
   - `src/app/dashboard-app.js` 的 alert log 卡片插入 placement、restored 卡片清理和插入后 trimming 编排已下沉到 `src/alerts/alert-log-ui-utils.js`
   - `src/app/dashboard-app.js` 的主题 metadata、循环顺序、storage 读取、主题写入计划、计划执行和 runtime 编排已下沉到 `src/ui/theme-utils.js`
+  - `src/app/dashboard-app.js` 的 dashboard 配置保存 payload、手动/自动保存反馈和 debounce 编排已下沉到 `src/dashboard/dashboard-runtime-utils.js` 的 `createDashboardPersistenceRuntime()`
 - 建议改法：
   - 先删死代码和无生产调用 API
   - 继续统一剩余兼容边界命名

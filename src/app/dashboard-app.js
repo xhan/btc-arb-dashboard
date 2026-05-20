@@ -122,11 +122,6 @@
         savePayload: (payload) => dashboardApiClient.savePriceSnapshot(payload),
         logWarning: (...args) => console.warn(...args)
     });
-    const dashboardSaveRuntime = getDashboardRuntimeUtils().createDashboardSaveRuntime({
-        setTimeout,
-        clearTimeout,
-        delayMs: DASHBOARD_SAVE_DEBOUNCE_MS
-    });
     const amountInputDebounceRuntime = getDashboardRuntimeUtils().createInputDebounceRuntime({
         setTimeout,
         clearTimeout,
@@ -217,6 +212,25 @@
         clearTimeout,
         durationMs: 1500
     });
+    const dashboardPersistenceRuntime = getDashboardRuntimeUtils().createDashboardPersistenceRuntime({
+        saveRuntimeOptions: {
+            setTimeout,
+            clearTimeout,
+            delayMs: DASHBOARD_SAVE_DEBOUNCE_MS
+        },
+        feedbackOptions: {
+            button: manualSaveBtn,
+            textEl: manualSaveText,
+            setTimeout,
+            clearTimeout
+        },
+        getDashboardState: () => dashboardState,
+        getApiIntervals: () => apiIntervals,
+        saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload),
+        logger: console
+    });
+    const performSave = dashboardPersistenceRuntime.performSave;
+    const saveData = dashboardPersistenceRuntime.scheduleSave;
     const settingsModalRuntime = getDashboardModalUtils().createSettingsModalRuntime({
         openButton: settingsBtn,
         cancelButton: settingsCancelBtn,
@@ -244,12 +258,6 @@
                 }
             });
         }
-    });
-    const manualSaveFeedbackRuntime = getDashboardRuntimeUtils().createSaveButtonFeedbackRuntime({
-        button: manualSaveBtn,
-        textEl: manualSaveText,
-        setTimeout,
-        clearTimeout
     });
     const addQuoteModalSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();
     const quoteSettingsSelectionRuntime = getDashboardModalUtils().createModalSelectionRuntime();
@@ -720,32 +728,6 @@
         alertRuntimeController.evaluateQuoteAlertsOnce();
     }
 
-    async function performSave(isManual = false) {
-        manualSaveFeedbackRuntime.showSaving({ manual: isManual });
-        if (isManual) {
-            dashboardSaveRuntime.clear();
-        }
-
-        try {
-            const payload = {
-                dashboard: dashboardState,
-                settings: apiIntervals
-            };
-
-            await dashboardApiClient.saveDashboardConfig(payload);
-            
-            manualSaveFeedbackRuntime.showSuccess();
-
-        } catch (error) { 
-            console.error('配置保存失败:', error);
-            manualSaveFeedbackRuntime.showError();
-        }
-    }
-
-    async function saveData() {
-        dashboardSaveRuntime.schedule(() => { void performSave(false); });
-    }
-
     async function loadPriceSnapshotConfig() {
         priceSnapshotConfig = await dashboardApiClient.loadPriceSnapshotConfig();
     }
@@ -765,7 +747,7 @@
         requestChannelRuntime.updateTagsForDashboard(dashboardState);
     }
 
-    manualSaveBtn.addEventListener('click', () => { performSave(true); });
+    manualSaveBtn.addEventListener('click', () => { void performSave({ manual: true }); });
     
     themeToggleBtn.addEventListener('click', () => { themeRuntime.toggle(); });
 

@@ -11,6 +11,7 @@ const {
   buildSwappedQuoteMarketState,
   clearQuoteTrendTimer,
   createButtonFeedbackRuntime,
+  createDashboardPersistenceRuntime,
   createDashboardSaveRuntime,
   createInputDebounceRuntime,
   createSaveButtonFeedbackRuntime,
@@ -672,3 +673,87 @@ assert.deepStrictEqual(
     usedSource: 'Kyber'
   }
 );
+
+(async () => {
+  const persistenceCalls = [];
+  const savedPayloads = [];
+  const loggedErrors = [];
+  let scheduledSaveCallback = null;
+  let shouldFailSave = false;
+  const persistenceRuntime = createDashboardPersistenceRuntime({
+    saveRuntime: {
+      clear() {
+        persistenceCalls.push(['clearScheduledSave']);
+        return true;
+      },
+      getTimer() {
+        return 'save-timer';
+      },
+      schedule(callback) {
+        scheduledSaveCallback = callback;
+        persistenceCalls.push(['scheduleSave']);
+        return 'scheduled-save';
+      }
+    },
+    feedbackRuntime: {
+      showSaving(config) {
+        persistenceCalls.push(['showSaving', config.manual]);
+      },
+      showSuccess() {
+        persistenceCalls.push(['showSuccess']);
+      },
+      showError() {
+        persistenceCalls.push(['showError']);
+      }
+    },
+    getDashboardState: () => [{ id: 1, name: 'WBTC监控' }],
+    getApiIntervals: () => ({ kyber: 3000 }),
+    saveDashboardConfig(payload) {
+      if (shouldFailSave) {
+        throw new Error('save failed');
+      }
+      savedPayloads.push(payload);
+    },
+    logger: {
+      error(...args) {
+        loggedErrors.push(args);
+      }
+    }
+  });
+
+  assert.strictEqual(persistenceRuntime.scheduleSave(), 'scheduled-save');
+  assert.strictEqual(typeof scheduledSaveCallback, 'function');
+  scheduledSaveCallback();
+  await Promise.resolve();
+  assert.deepStrictEqual(savedPayloads, [
+    {
+      dashboard: [{ id: 1, name: 'WBTC监控' }],
+      settings: { kyber: 3000 }
+    }
+  ]);
+  assert.deepStrictEqual(persistenceCalls.slice(0, 3), [
+    ['scheduleSave'],
+    ['showSaving', false],
+    ['showSuccess']
+  ]);
+
+  assert.strictEqual(await persistenceRuntime.performSave(true), true);
+  assert.deepStrictEqual(persistenceCalls.slice(3, 6), [
+    ['showSaving', true],
+    ['clearScheduledSave'],
+    ['showSuccess']
+  ]);
+
+  shouldFailSave = true;
+  assert.strictEqual(await persistenceRuntime.performSave({ manual: true }), false);
+  assert.deepStrictEqual(persistenceCalls.slice(6), [
+    ['showSaving', true],
+    ['clearScheduledSave'],
+    ['showError']
+  ]);
+  assert.strictEqual(loggedErrors.length, 1);
+  assert.strictEqual(loggedErrors[0][0], '配置保存失败:');
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
