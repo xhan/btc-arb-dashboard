@@ -309,3 +309,5 @@ const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
 assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));
 assert.ok(browserSandbox.window.ArbPaths, 'expected ArbPaths to attach to window');
+assert.strictEqual(browserSandbox.buildEdges, undefined, 'arb-path helpers should not leak to global scope');
+assert.strictEqual(browserSandbox.isCrossChainQuote, undefined, 'arb-path helpers should not leak to global scope');

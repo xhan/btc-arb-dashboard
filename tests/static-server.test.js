@@ -1580,6 +1580,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('typeof window.ArbPanelLayoutUtils'));
     assert.ok(moduleRegistryResponse.body.includes('getArbPaths: ['));
     assert.ok(moduleRegistryResponse.body.includes('ArbPaths is not loaded'));
+    assert.ok(arbEquivalenceUtilsResponse.body.trimStart().startsWith('(function () {'));
+    assert.ok(arbEquivalenceUtilsResponse.body.trimEnd().endsWith('}());'));
+    assert.ok(arbPathsResponse.body.trimStart().startsWith('(function () {'));
+    assert.ok(arbPathsResponse.body.trimEnd().endsWith('}());'));
     assert.ok(moduleRegistryResponse.body.includes('getArbPanelRenderer: ['));
     assert.ok(moduleRegistryResponse.body.includes('ArbPanelRenderer is not loaded'));
     assert.ok(arbPanelControllerResponse.body.includes('arbPanelRenderer.renderArbSectionToggleHtml(globalSectionKey, {'));

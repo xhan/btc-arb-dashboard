@@ -1,3 +1,4 @@
+(function () {
 function buildApi() {
   const DEFAULT_ASSET_EQUIVALENCE_GROUPS = {
     ETH: ['ETH', 'WETH'],
@@ -164,3 +165,4 @@ function buildApi() {
     root.ArbEquivalenceUtils = factory();
   }
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this), buildApi);
+}());

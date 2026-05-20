@@ -64,3 +64,4 @@ const browserSandbox = { window: {} };
 vm.createContext(browserSandbox);
 assert.doesNotThrow(() => vm.runInContext(browserCode, browserSandbox));
 assert.ok(browserSandbox.window.ArbEquivalenceUtils, 'expected ArbEquivalenceUtils to attach to window');
+assert.strictEqual(browserSandbox.buildApi, undefined, 'arb equivalence factory should not leak to global scope');

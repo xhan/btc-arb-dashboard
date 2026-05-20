@@ -1,3 +1,4 @@
+(function () {
 function buildEdges(quotes, quoteStateById, allowedSymbols) {
   const allowSet = Array.isArray(allowedSymbols)
     ? new Set(allowedSymbols.filter(Boolean))
@@ -375,3 +376,4 @@ function buildApi(arbEquivalenceUtils) {
     root.ArbPaths = factory(root.ArbEquivalenceUtils);
   }
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this), buildApi);
+}());
