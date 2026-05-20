@@ -8,10 +8,15 @@
     root.window.DashboardLifecycleController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  function addClickListener(element, handler) {
+  function addEventListener(element, type, handler) {
     if (!element || typeof element.addEventListener !== 'function') return false;
-    element.addEventListener('click', handler);
+    if (typeof handler !== 'function') return false;
+    element.addEventListener(type, handler);
     return true;
+  }
+
+  function addClickListener(element, handler) {
+    return addEventListener(element, 'click', handler);
   }
 
   function stopEventPropagation(event) {
@@ -93,6 +98,9 @@
       addClickListener(refs.confirmOkBtn, handleConfirmModalClick);
       addClickListener(refs.confirmCancelBtn, handleConfirmModalClick);
       addClickListener(refs.confirmModal, handleConfirmModalClick);
+      addClickListener(refs.addCategoryBtn, deps.openAddCategoryModal);
+      addEventListener(refs.dashboardEl, 'input', deps.handleDashboardInput);
+      addEventListener(refs.dashboardEl, 'click', deps.handleDashboardClick);
     }
 
     function bindFloatingPanels() {
@@ -236,6 +244,7 @@
   }
 
   return {
+    addEventListener,
     addClickListener,
     createDashboardLifecycleController,
     getDashboardQuotes

@@ -772,8 +772,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.resolveQuoteSettingsModalClickAction(event, {'));
     assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardRenderer.resolveConfirmModalClickAction(event, {'));
     assert.ok(!appJsResponse.body.includes('getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal })'));
-    assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('input', handleDashboardInput)"));
-    assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('click', handleDashboardClick)"));
+    assert.ok(lifecycleControllerResponse.body.includes("addClickListener(refs.addCategoryBtn, deps.openAddCategoryModal);"));
+    assert.ok(lifecycleControllerResponse.body.includes("addEventListener(refs.dashboardEl, 'input', deps.handleDashboardInput);"));
+    assert.ok(lifecycleControllerResponse.body.includes("addEventListener(refs.dashboardEl, 'click', deps.handleDashboardClick);"));
+    assert.ok(!appJsResponse.body.includes("addCategoryBtn.addEventListener('click', openAddCategoryModal)"));
+    assert.ok(!appJsResponse.body.includes("dashboardEl.addEventListener('input', handleDashboardInput)"));
+    assert.ok(!appJsResponse.body.includes("dashboardEl.addEventListener('click', handleDashboardClick)"));
     assert.ok(!appJsResponse.body.includes("const target = e.target.closest('button')"));
     assert.ok(!appJsResponse.body.includes("e.target.matches('.amount-input')"));
     assert.ok(!appJsResponse.body.includes("target.matches('.delete-btn')"));

@@ -828,10 +828,6 @@
         updateCategoryPauseButtonState
     } = dashboardActionController;
 
-    addCategoryBtn.addEventListener('click', openAddCategoryModal);
-    dashboardEl.addEventListener('input', handleDashboardInput);
-    dashboardEl.addEventListener('click', handleDashboardClick);
-
     const dashboardViewController = getDashboardViewController().createDashboardViewController({
         dashboardEl,
         dashboardRenderer: getDashboardRenderer(),
@@ -921,9 +917,12 @@
         floatingPanelZIndexRuntime,
         getDashboardState: () => dashboardState,
         getPriceSnapshotConfig: () => priceSnapshotConfig,
+        handleDashboardClick,
+        handleDashboardInput,
         invalidateArbRuleSnapshotCache,
         keyboardShortcutController,
         normalizeArbCycleStartPriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority,
+        openAddCategoryModal,
         performSave,
         priceSnapshotSaveRuntime,
         priceSnapshotTimerRuntime,
@@ -933,6 +932,7 @@
         requestChannelTagVisibilityRuntime,
         refs: {
             dashboardEl,
+            addCategoryBtn,
             audioNoticeEl,
             manualSaveBtn,
             themeToggleBtn,

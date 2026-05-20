@@ -49,6 +49,8 @@ const themeToggleBtn = createFakeElement();
 const confirmModal = createFakeElement();
 const confirmOkBtn = createFakeElement();
 const confirmCancelBtn = createFakeElement();
+const addCategoryBtn = createFakeElement();
+const staticDashboardEl = createFakeElement();
 const staticCalls = [];
 const staticController = createDashboardLifecycleController({
   confirmActionRuntime: {
@@ -67,7 +69,18 @@ const staticController = createDashboardLifecycleController({
   performSave(options) {
     staticCalls.push(['performSave', options.manual]);
   },
+  handleDashboardClick() {
+    staticCalls.push(['dashboardClick']);
+  },
+  handleDashboardInput() {
+    staticCalls.push(['dashboardInput']);
+  },
+  openAddCategoryModal() {
+    staticCalls.push(['openAddCategory']);
+  },
   refs: {
+    addCategoryBtn,
+    dashboardEl: staticDashboardEl,
     manualSaveBtn,
     themeToggleBtn,
     confirmModal,
@@ -84,6 +97,9 @@ const staticController = createDashboardLifecycleController({
 staticController.bindStaticEvents();
 manualSaveBtn.dispatch('click');
 themeToggleBtn.dispatch('click');
+addCategoryBtn.dispatch('click');
+staticDashboardEl.dispatch('input');
+staticDashboardEl.dispatch('click');
 confirmOkBtn.dispatch('click', {
   actionType: 'confirm',
   stopPropagation() {
@@ -100,6 +116,9 @@ confirmModal.dispatch('click', { actionType: 'none' });
 assert.deepStrictEqual(staticCalls, [
   ['performSave', true],
   ['themeToggle'],
+  ['openAddCategory'],
+  ['dashboardInput'],
+  ['dashboardClick'],
   ['stopConfirm'],
   ['confirm'],
   ['confirmClose', 'confirm-refs'],
