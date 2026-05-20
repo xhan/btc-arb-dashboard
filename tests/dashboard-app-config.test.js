@@ -18,6 +18,14 @@ assert.strictEqual(config.MUTED_STATE_HIDDEN_MAX_REFRESH_MS, 60000);
 assert.deepStrictEqual(config.GLOBAL_PATH_SOURCE_SELECTORS, [0, 1, 2, 3]);
 assert.strictEqual(Object.isFrozen(config.GLOBAL_PATH_SOURCE_SELECTORS), true);
 assert.strictEqual(
+  config.buildBackendUrl({ origin: 'http://127.0.0.1:3003', protocol: 'http:', hostname: '127.0.0.1', port: '3003' }),
+  'http://127.0.0.1:3003'
+);
+assert.strictEqual(
+  config.buildBackendUrl({ protocol: 'http:', host: 'localhost:3010', hostname: 'localhost', port: '3010' }),
+  'http://localhost:3010'
+);
+assert.strictEqual(
   config.buildBackendUrl({ protocol: 'http:', hostname: '127.0.0.1' }),
   'http://127.0.0.1:3000'
 );
@@ -31,6 +39,6 @@ const sandbox = {};
 vm.runInNewContext(source, sandbox);
 assert.strictEqual(sandbox.DashboardAppConfig.DEFAULT_QUOTE_DISPLAY_MODE, 'rate');
 assert.strictEqual(
-  sandbox.DashboardAppConfig.buildBackendUrl({ protocol: 'http:', hostname: 'localhost' }),
-  'http://localhost:3000'
+  sandbox.DashboardAppConfig.buildBackendUrl({ origin: 'http://localhost:3004', protocol: 'http:', hostname: 'localhost', port: '3004' }),
+  'http://localhost:3004'
 );

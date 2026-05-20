@@ -18,7 +18,15 @@
   const GLOBAL_PATH_SOURCE_SELECTORS = Object.freeze([0, 1, 2, 3]);
 
   function buildBackendUrl(locationImpl) {
-    return `${locationImpl.protocol}//${locationImpl.hostname}:3000`;
+    const origin = String(locationImpl && locationImpl.origin || '').trim();
+    if (origin && origin !== 'null') return origin;
+
+    const protocol = String(locationImpl && locationImpl.protocol || 'http:').trim() || 'http:';
+    const host = String(locationImpl && locationImpl.host || '').trim();
+    if (host) return `${protocol}//${host}`;
+
+    const hostname = String(locationImpl && locationImpl.hostname || 'localhost').trim() || 'localhost';
+    return `${protocol}//${hostname}:3000`;
   }
 
   return {

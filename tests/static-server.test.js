@@ -2144,6 +2144,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appConfigResponse.body.includes('CHART_AUTO_REFRESH_INTERVAL_MS = 5000'));
     assert.ok(appConfigResponse.body.includes('GLOBAL_PATH_SOURCE_SELECTORS = Object.freeze([0, 1, 2, 3])'));
     assert.ok(appConfigResponse.body.includes('function buildBackendUrl(locationImpl)'));
+    assert.ok(appConfigResponse.body.includes("origin && origin !== 'null'"));
+    assert.ok(appConfigResponse.body.includes('return `${protocol}//${host}`;'));
+    assert.ok(appConfigResponse.body.includes('return `${protocol}//${hostname}:3000`;'));
     assert.ok(appJsResponse.body.includes('} = window.DashboardAppConfig;'));
     assert.ok(appJsResponse.body.includes('const BACKEND_URL = buildBackendUrl(location);'));
     assert.ok(!appJsResponse.body.includes('const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;'));
