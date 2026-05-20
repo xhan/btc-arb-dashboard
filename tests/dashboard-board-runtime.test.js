@@ -29,6 +29,15 @@ const viewController = {
 };
 const formController = { id: 'form-controller' };
 let renderRefValue = null;
+let dashboardInteractionHolding = false;
+let dashboardInteractionOptions = null;
+const dashboardEl = {
+  id: 'dashboard',
+  listeners: {},
+  addEventListener(type, handler) {
+    this.listeners[type] = handler;
+  }
+};
 
 const runtime = createDashboardBoardRuntime({
   dashboardActionControllerUtils: {
@@ -64,14 +73,31 @@ const runtime = createDashboardBoardRuntime({
     }
   },
   refs: {
-    dashboardEl: { id: 'dashboard' },
+    dashboardEl,
     addQuoteInputs: [{ id: 'from' }, { id: 'to' }]
   },
   dashboardViewModeController: { getMode: () => 'dashboard' },
   getRequestChannelOptions: () => ({ channels: [] }),
   shared: {
     documentImpl: { id: 'document' },
-    dashboardRuntimeUtils: { id: 'runtime-utils' }
+    dashboardRuntimeUtils: { id: 'runtime-utils' },
+    domRenderUtils: {
+      createRenderInteractionHoldRuntime(options = {}) {
+        dashboardInteractionOptions = options;
+        return {
+          bind(target) {
+            calls.push(['bindDashboardInteraction', target && target.id]);
+            if (target && typeof target.addEventListener === 'function') {
+              target.addEventListener('pointerdown', () => {});
+            }
+            return true;
+          },
+          shouldDeferRender() {
+            return dashboardInteractionHolding;
+          }
+        };
+      }
+    }
   },
   actionOptions: {
     closeArbDetailModal: () => {},
@@ -109,6 +135,13 @@ assert.deepStrictEqual(viewOptions.getRequestChannelOptions(), { channels: [] })
 assert.strictEqual(renderOptions.activeMode, 'dashboard');
 assert.strictEqual(renderOptions.getMode(), 'dashboard');
 assert.strictEqual(renderOptions.render(), 'render-dashboard');
+assert.strictEqual(typeof renderOptions.shouldDeferRender, 'function');
+assert.ok(calls.some((call) => call[0] === 'bindDashboardInteraction' && call[1] === 'dashboard'));
+assert.strictEqual(typeof dashboardInteractionOptions.onIdle, 'function');
+dashboardInteractionHolding = true;
+assert.strictEqual(renderOptions.shouldDeferRender(), true);
+dashboardInteractionHolding = false;
+assert.strictEqual(renderOptions.shouldDeferRender(), false);
 assert.deepStrictEqual(formOptions.addQuoteInputs.map((item) => item.id), ['from', 'to']);
 assert.strictEqual(formOptions.createCategoryModule, viewController.createCategoryModule);
 assert.strictEqual(formOptions.createQuoteItem, viewController.createQuoteItem);

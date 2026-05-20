@@ -14,9 +14,42 @@
     const actionOptions = options.actionOptions || {};
     const viewOptions = options.viewOptions || {};
     const formOptions = options.formOptions || {};
+    const domRenderUtils = shared.domRenderUtils || actionOptions.domRenderUtils || null;
     const getRequestChannelOptions = typeof options.getRequestChannelOptions === 'function'
       ? options.getRequestChannelOptions
       : () => ({});
+    let viewRenderRuntime = null;
+    const dashboardInteractionHoldRuntime = (
+      domRenderUtils && typeof domRenderUtils.createRenderInteractionHoldRuntime === 'function'
+    )
+      ? domRenderUtils.createRenderInteractionHoldRuntime({
+        setTimeout: options.setTimeout,
+        clearTimeout: options.clearTimeout,
+        onIdle: () => {
+          if (viewRenderRuntime && typeof viewRenderRuntime.ensureRendered === 'function') {
+            viewRenderRuntime.ensureRendered();
+          }
+        }
+      })
+      : null;
+
+    function shouldDeferDashboardRender() {
+      return Boolean(
+        dashboardInteractionHoldRuntime
+        && typeof dashboardInteractionHoldRuntime.shouldDeferRender === 'function'
+        && dashboardInteractionHoldRuntime.shouldDeferRender(refs.dashboardEl)
+      );
+    }
+
+    function bindDashboardInteractionHold() {
+      if (
+        dashboardInteractionHoldRuntime
+        && refs.dashboardEl
+        && typeof dashboardInteractionHoldRuntime.bind === 'function'
+      ) {
+        dashboardInteractionHoldRuntime.bind(refs.dashboardEl);
+      }
+    }
 
     const dashboardActionController = options.dashboardActionControllerUtils.createDashboardActionController({
       ...shared,
@@ -60,11 +93,13 @@
       renderDashboard
     } = dashboardViewController;
 
-    const viewRenderRuntime = options.dashboardViewModeControllerUtils.createDashboardViewRenderRuntime({
+    viewRenderRuntime = options.dashboardViewModeControllerUtils.createDashboardViewRenderRuntime({
       activeMode: options.dashboardViewModeControllerUtils.APP_VIEW_DASHBOARD,
       getMode: () => options.dashboardViewModeController && options.dashboardViewModeController.getMode(),
-      render: renderDashboard
+      render: renderDashboard,
+      shouldDeferRender: shouldDeferDashboardRender
     });
+    bindDashboardInteractionHold();
     if (options.dashboardViewRenderRuntimeRef && typeof options.dashboardViewRenderRuntimeRef.set === 'function') {
       options.dashboardViewRenderRuntimeRef.set(viewRenderRuntime);
     }

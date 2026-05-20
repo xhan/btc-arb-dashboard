@@ -650,6 +650,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DashboardViewModeController is not loaded'));
     assert.ok(viewModeControllerResponse.body.includes('function createDashboardViewModeController(deps = {})'));
     assert.ok(viewModeControllerResponse.body.includes('function createDashboardViewRenderRuntime(options = {})'));
+    assert.ok(viewModeControllerResponse.body.includes('const shouldDeferRender = typeof options.shouldDeferRender === \'function\''));
+    assert.ok(viewModeControllerResponse.body.includes('hasDeferredRender: () => deferredRender'));
     assert.ok(viewModeControllerResponse.body.includes("const APP_VIEW_ARB = 'arb'"));
     assert.ok(viewModeControllerResponse.body.includes('function toggleArbView(options = {})'));
     assert.ok(viewModeControllerResponse.body.includes('deps.onShowDashboard'));
@@ -658,6 +660,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const dashboardViewRenderRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: \'Dashboard view render runtime\' });'));
     assert.ok(boardRuntimeResponse.body.includes('options.dashboardViewRenderRuntimeRef.set(viewRenderRuntime);'));
     assert.ok(boardRuntimeResponse.body.includes('options.dashboardViewModeControllerUtils.createDashboardViewRenderRuntime({'));
+    assert.ok(boardRuntimeResponse.body.includes('domRenderUtils.createRenderInteractionHoldRuntime({'));
+    assert.ok(boardRuntimeResponse.body.includes('shouldDeferRender: shouldDeferDashboardRender'));
+    assert.ok(boardRuntimeResponse.body.includes('dashboardInteractionHoldRuntime.bind(refs.dashboardEl);'));
     assert.ok(appJsResponse.body.includes('onShowDashboard: ensureDashboardRendered'));
     assert.ok(appJsResponse.body.includes("'toggle-arb-panel': dashboardViewModeController.toggleArbView"));
     assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-arb-panel')"));
