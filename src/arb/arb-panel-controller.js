@@ -556,12 +556,25 @@
       }
     }
 
+    function handleContentFocusOut(event) {
+      const nextFocusedElement = event && event.relatedTarget;
+      if (
+        nextFocusedElement
+        && refs.arbPathContent
+        && typeof refs.arbPathContent.contains === 'function'
+        && refs.arbPathContent.contains(nextFocusedElement)
+      ) {
+        return;
+      }
+      flushContentRender();
+    }
+
     function bindContentEvents() {
       if (!refs.arbPathContent) return;
       refs.arbPathContent.addEventListener('pointerdown', handleContentPointerDown);
       refs.arbPathContent.addEventListener('click', handleContentClick);
       refs.arbPathContent.addEventListener('keydown', handleContentKeydown);
-      refs.arbPathContent.addEventListener('focusout', flushContentRender);
+      refs.arbPathContent.addEventListener('focusout', handleContentFocusOut);
     }
 
     function bindGlobalFilterEvents() {
