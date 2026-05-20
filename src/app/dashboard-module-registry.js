@@ -40,6 +40,7 @@
     getDashboardModalUtils: ['DashboardModalUtils', 'DashboardModalUtils is not loaded'],
     getDashboardRenderer: ['DashboardRenderer', 'DashboardRenderer is not loaded'],
     getDashboardRuntimeUtils: ['DashboardRuntimeUtils', 'DashboardRuntimeUtils is not loaded'],
+    getDashboardViewModeController: ['DashboardViewModeController', 'DashboardViewModeController is not loaded'],
     getDashboardViewController: ['DashboardViewController', 'DashboardViewController is not loaded'],
     getDataTerminalController: ['DataTerminalController', 'DataTerminalController is not loaded'],
     getDataTerminalUtils: ['DataTerminalUtils', 'DataTerminalUtils is not loaded'],

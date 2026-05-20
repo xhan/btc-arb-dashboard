@@ -9,6 +9,7 @@ const {
 assert.ok(MODULES.getDashboardRuntimeUtils, 'expected dashboard runtime module definition');
 assert.ok(MODULES.getDashboardDomRefs, 'expected dashboard DOM refs module definition');
 assert.ok(MODULES.getDashboardLifecycleController, 'expected dashboard lifecycle controller definition');
+assert.ok(MODULES.getDashboardViewModeController, 'expected dashboard view mode controller definition');
 assert.ok(MODULES.getArbPanelController, 'expected arb panel controller module definition');
 assert.ok(MODULES.getAlertRuntimeController, 'expected alert runtime controller definition');
 assert.ok(MODULES.getKeyboardShortcutController, 'expected keyboard shortcut controller definition');
@@ -17,12 +18,14 @@ assert.ok(MODULES.getQuoteSpreadUtils, 'expected quote spread utils definition')
 
 const windowImpl = {
   ChainDefaults: { id: 'chain-defaults' },
+  DashboardViewModeController: { id: 'dashboard-view-mode' },
   DashboardRuntimeUtils: { id: 'dashboard-runtime' }
 };
 const registry = createDashboardModuleRegistry(windowImpl);
 
 assert.strictEqual(registry.getChainDefaults(), windowImpl.ChainDefaults);
 assert.strictEqual(registry.getDashboardRuntimeUtils(), windowImpl.DashboardRuntimeUtils);
+assert.strictEqual(registry.getDashboardViewModeController(), windowImpl.DashboardViewModeController);
 assert.strictEqual(getWindowModule(windowImpl, 'ChainDefaults', 'missing'), windowImpl.ChainDefaults);
 assert.throws(
   () => registry.getAlertRuntimeController(),

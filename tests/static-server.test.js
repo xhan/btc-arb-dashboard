@@ -56,6 +56,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
     assert.ok(response.body.includes('#arb-path-window { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;'));
+    assert.ok(response.body.includes('<body class="app-view-arb">'));
+    assert.ok(response.body.includes('id="app-view-tabs"'));
+    assert.ok(response.body.includes('id="view-arb-btn"'));
+    assert.ok(response.body.includes('id="view-dashboard-btn"'));
+    assert.ok(response.body.includes('body.app-view-arb #dashboard,'));
+    assert.ok(response.body.includes('body.app-view-dashboard #arb-path-window'));
+    assert.ok(response.body.includes('body.app-view-arb #arb-path-window'));
+    assert.ok(response.body.includes('height: calc(100vh - 64px);'));
+    assert.ok(response.body.includes('z-index: 1500;'));
     assert.ok(response.body.includes('#arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }'));
     assert.ok(response.body.includes('#arb-global-filter-input,'));
     assert.ok(response.body.includes('#arb-global-chain-filter-input,'));
@@ -125,6 +134,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-dom-refs.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-view-mode-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-lifecycle-controller.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
@@ -222,6 +232,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-view-mode-controller.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -351,6 +364,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('id="path-alert-search-input"'));
     assert.ok(response.body.includes('id="toggle-quote-display-btn"'));
     assert.ok(response.body.includes('价格: 汇率'));
+    assert.ok(response.body.includes('<button id="view-arb-btn" class="app-view-tab active" type="button" role="tab" aria-selected="true">套利路径</button>'));
+    assert.ok(response.body.includes('<button id="view-dashboard-btn" class="app-view-tab" type="button" role="tab" aria-selected="false" tabindex="-1">交易对看板</button>'));
+    assert.ok(!response.body.includes('id="toggle-arb-btn"'));
     assert.ok(!response.body.includes('id="toggle-alert-settings-btn"'));
     assert.ok(response.body.includes('id="toggle-data-terminal-btn"'));
     assert.ok(response.body.includes('id="toggle-multi-channel-btn"'));
@@ -405,6 +421,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(domRefsResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
+    const viewModeControllerResponse = await request('/src/app/dashboard-view-mode-controller.js');
+    assert.strictEqual(viewModeControllerResponse.statusCode, 200);
     const lifecycleControllerResponse = await request('/src/app/dashboard-lifecycle-controller.js');
     assert.strictEqual(lifecycleControllerResponse.statusCode, 200);
     const alertLogUiResponse = await request('/src/alerts/alert-log-ui-utils.js');
@@ -526,6 +544,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('function getWindowModule(windowImpl, globalName, missingMessage)'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardLifecycleController: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardLifecycleController is not loaded'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardViewModeController: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardViewModeController is not loaded'));
+    assert.ok(viewModeControllerResponse.body.includes('function createDashboardViewModeController(deps = {})'));
+    assert.ok(viewModeControllerResponse.body.includes("const APP_VIEW_ARB = 'arb'"));
+    assert.ok(viewModeControllerResponse.body.includes('function toggleArbView(options = {})'));
+    assert.ok(appJsResponse.body.includes('getDashboardViewModeController().createDashboardViewModeController({'));
+    assert.ok(appJsResponse.body.includes("'toggle-arb-panel': dashboardViewModeController.toggleArbView"));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardViewModeController.bind();'));
     assert.ok(lifecycleControllerResponse.body.includes('function createDashboardLifecycleController(deps = {})'));
     assert.ok(lifecycleControllerResponse.body.includes('function bindStaticEvents()'));
     assert.ok(lifecycleControllerResponse.body.includes('function bindLoadedEvents()'));

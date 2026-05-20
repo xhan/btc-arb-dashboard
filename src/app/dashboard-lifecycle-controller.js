@@ -143,6 +143,9 @@
         windowImpl.addEventListener('storage', deps.alertRuntimeController.handlePathAlertConfigSyncStorage);
         windowImpl.addEventListener('resize', deps.setArbPanelMaxHeight);
       }
+      if (deps.dashboardViewModeController && typeof deps.dashboardViewModeController.bind === 'function') {
+        deps.dashboardViewModeController.bind();
+      }
       bindFloatingPanels();
       bindToolbarEvents();
       bindAlertLogEvents();

@@ -19,6 +19,8 @@ function makeElement(id) {
   'alert-log-header',
   'quote-settings-modal',
   'quote-source-pref',
+  'view-arb-btn',
+  'view-dashboard-btn',
   'manual-save-btn',
   'setting-kyber-interval',
   'add-quote-modal',
@@ -50,6 +52,8 @@ assert.strictEqual(refs.addCategoryBtn, elements.get('add-category-btn'));
 assert.strictEqual(refs.alertLogWindow, elements.get('alert-log-window'));
 assert.strictEqual(refs.quoteSettingsModal, elements.get('quote-settings-modal'));
 assert.strictEqual(refs.quoteSourceSelect, elements.get('quote-source-pref'));
+assert.strictEqual(refs.viewArbBtn, elements.get('view-arb-btn'));
+assert.strictEqual(refs.viewDashboardBtn, elements.get('view-dashboard-btn'));
 assert.strictEqual(refs.manualSaveBtn, elements.get('manual-save-btn'));
 assert.strictEqual(refs.settingsIntervalInputRefs['setting-kyber-interval'], elements.get('setting-kyber-interval'));
 assert.strictEqual(refs.addQuoteModalRefs.modal, elements.get('add-quote-modal'));

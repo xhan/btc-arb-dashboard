@@ -31,6 +31,7 @@
         getDashboardModalUtils,
         getDashboardRenderer,
         getDashboardRuntimeUtils,
+        getDashboardViewModeController,
         getDashboardViewController,
         getDataTerminalController,
         getDataTerminalUtils,
@@ -142,6 +143,8 @@
         alertLogMutedContent,
         alertLogSettingsContent,
         pathAlertSound,
+        viewArbBtn,
+        viewDashboardBtn,
         themeToggleBtn,
         audioNoticeEl,
         quoteSettingsModal,
@@ -437,9 +440,20 @@
         isRuleLeg,
         scheduleUpdate: scheduleArbPanelUpdate,
         setMaxHeight: setArbPanelMaxHeight,
-        togglePanel: toggleArbPanel,
         update: updateArbPanel
     } = arbPanelController;
+    const dashboardViewModeController = getDashboardViewModeController().createDashboardViewModeController({
+        bodyEl: document.body,
+        refs: {
+            dashboardEl,
+            addCategoryBtn,
+            arbPathWindow,
+            viewArbBtn,
+            viewDashboardBtn
+        },
+        setArbPanelMaxHeight,
+        updateArbPanel
+    });
     const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({
         applyFloatingPanelDisplay,
         documentImpl: document,
@@ -624,7 +638,7 @@
         isArbDetailVisible: () => arbDetailController.isVisible(),
         actions: {
             'close-arb-detail': closeArbDetailModal,
-            'toggle-arb-panel': toggleArbPanel,
+            'toggle-arb-panel': dashboardViewModeController.toggleArbView,
             'toggle-data-terminal': toggleDataTerminalPanel,
             'toggle-quote-display': toggleQuoteDisplayMode,
             'open-alert-log-settings': alertRuntimeController.openAlertLogSettingsPanel,
@@ -880,6 +894,7 @@
         confirmActionRuntime,
         dashboardApiClient,
         dashboardRenderer: getDashboardRenderer(),
+        dashboardViewModeController,
         defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
         defaultIntervals: DEFAULT_INTERVALS,
         documentImpl: document,
@@ -926,7 +941,7 @@
         setDashboardState: (nextState) => { dashboardState = nextState; },
         setPriceSnapshotConfig: (nextConfig) => { priceSnapshotConfig = nextConfig; },
         themeRuntime,
-        toggleArbPanel,
+        toggleArbPanel: dashboardViewModeController.toggleArbView,
         toggleDataTerminalPanel,
         toggleMultiChannel,
         toggleQuoteDisplayMode,

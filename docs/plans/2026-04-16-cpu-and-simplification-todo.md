@@ -146,6 +146,7 @@
   - `dashboard-actions`：主看板金额输入、报价/分区暂停、删除、交换、报价设置弹窗打开和确认动作编排已下沉到 `src/dashboard/dashboard-action-controller.js`，`src/app/dashboard-app.js` 只负责注入运行态依赖和绑定事件入口
   - `dashboard-forms`：报价设置保存、新增分区、新增报价和 add quote 表单控件同步已下沉到 `src/dashboard/dashboard-form-controller.js`，主入口只注入 renderer/modal/runtime 依赖
   - `dashboard-view`：报价项/分区 DOM 创建、拖拽排序、DEX 链接复制 target 绑定和 dashboard 整体 render 已下沉到 `src/dashboard/dashboard-view-controller.js`，`src/app/dashboard-app.js` 只注入展示依赖和回调
+  - `app-view-mode`：套利路径和默认交易对看板的主视图切换已下沉到 `src/app/dashboard-view-mode-controller.js`，默认进入套利路径视图；二者通过 body class 互斥显示，不再把套利路径作为覆盖默认看板的常驻浮层
   - `dashboard-api-client`：后端配置刷新、看板配置加载、请求通道加载、price snapshot 配置/保存和配置保存请求已下沉到 `src/dashboard/dashboard-api-utils.js`，`src/app/dashboard-app.js` 只负责状态赋值、UI feedback 和后续调度
   - `app-lifecycle`：启动加载、配置预加载、一次性全局事件绑定、浮窗 chrome 绑定和快捷键绑定已下沉到 `src/app/dashboard-lifecycle-controller.js`，为后续统一 command/view lifecycle、解决首次点击/快捷键不稳定提供单一入口
   - `dashboard-modal-dom`：add quote、add category、confirm 弹窗的 DOM 读写与显示/关闭适配、modal 当前选择状态、confirm 动作回调 runtime 和全局设置弹窗事件 runtime 已下沉到 `src/dashboard/dashboard-modal-utils.js`，quote settings 弹窗和全局 settings interval 的 DOM 读写适配也已下沉，dashboard modal 的通用 show/hide 也统一走该边界，主入口只保留新增/更新 quote、保存设置和确认动作后的 dashboard 状态更新与刷新调度

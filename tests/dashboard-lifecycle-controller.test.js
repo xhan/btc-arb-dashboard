@@ -166,6 +166,9 @@ assert.deepStrictEqual(staticCalls, [
       loadRequestChannels: async () => ({ channels: [{ id: 'fast' }] }),
       requestBackendConfigRefresh: async () => calls.push(['requestBackendConfigRefresh'])
     },
+    dashboardViewModeController: {
+      bind: () => calls.push(['bindDashboardViewMode'])
+    },
     defaultArbCycleStartPriority: ['default'],
     defaultIntervals: { kyber: 5000 },
     documentImpl: {},
@@ -253,6 +256,7 @@ assert.deepStrictEqual(staticCalls, [
   assert.strictEqual(windowImpl.listeners.resize.length, 1);
   assert.strictEqual(alertLogWindow.listeners.click.length, 1);
   assert.strictEqual(alertLogWindow.listeners.change.length, 1);
+  assert.ok(calls.some((call) => call[0] === 'bindDashboardViewMode'));
 
   arbPathMinBtn.dispatch('click', {
     stopPropagation() {

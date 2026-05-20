@@ -29,6 +29,8 @@
     const alertLogMutedContent = getById(documentImpl, 'alert-log-muted-content');
     const alertLogSettingsContent = getById(documentImpl, 'alert-log-settings-content');
     const pathAlertSound = getById(documentImpl, 'path-alert-sound');
+    const viewArbBtn = getById(documentImpl, 'view-arb-btn');
+    const viewDashboardBtn = getById(documentImpl, 'view-dashboard-btn');
     const themeToggleBtn = getById(documentImpl, 'theme-toggle-btn');
     const audioNoticeEl = getById(documentImpl, 'audio-notice');
     const quoteSettingsModal = getById(documentImpl, 'quote-settings-modal');
@@ -115,6 +117,8 @@
       alertLogMutedContent,
       alertLogSettingsContent,
       pathAlertSound,
+      viewArbBtn,
+      viewDashboardBtn,
       themeToggleBtn,
       audioNoticeEl,
       quoteSettingsModal,

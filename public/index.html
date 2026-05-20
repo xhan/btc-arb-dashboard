@@ -135,10 +135,62 @@
         .dark-mode #top-bar-right > button:hover,
         .dark-mode #top-bar-right > a:hover { background-color: rgba(255,255,255,0.08); }
 
+        .app-view-tabs {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 3px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: rgba(0,0,0,0.03);
+        }
+        .dark-mode .app-view-tabs { background-color: rgba(255,255,255,0.06); }
+        .app-view-tab {
+            border: 0;
+            background: transparent;
+            color: var(--text-color-light);
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            line-height: 1;
+            min-height: 28px;
+            box-sizing: border-box;
+        }
+        .app-view-tab:hover { color: var(--text-color); background-color: rgba(0,0,0,0.05); }
+        .dark-mode .app-view-tab:hover { background-color: rgba(255,255,255,0.08); }
+        .app-view-tab.active {
+            background-color: var(--module-bg-color);
+            color: var(--text-color);
+            box-shadow: 0 1px 2px var(--shadow-color);
+        }
+
         #dashboard { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); 
             gap: 15px; 
+        }
+        body.app-view-arb {
+            padding: 64px 0 0 0;
+            overflow: hidden;
+        }
+        body.app-view-arb #dashboard,
+        body.app-view-arb #add-category-btn {
+            display: none;
+        }
+        body.app-view-dashboard #arb-path-window {
+            display: none;
+        }
+        body.app-view-arb #arb-path-window {
+            top: 64px;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 64px);
+            border-radius: 0;
+            box-shadow: none;
+            resize: none;
+            z-index: 1500;
         }
         .module { 
             background-color: var(--module-bg-color); 
@@ -1638,13 +1690,17 @@
         }
     </style>
 </head>
-<body>
+<body class="app-view-arb">
     <div id="global-tooltip"></div>
     <div id="copy-toast"></div>
 
     <div id="top-bar">
         <div id="top-bar-left">
             <h3 style="margin: 0; color: var(--text-color);">聚合报价看板 4.0</h3>
+            <div id="app-view-tabs" class="app-view-tabs" role="tablist" aria-label="主视图">
+                <button id="view-arb-btn" class="app-view-tab active" type="button" role="tab" aria-selected="true">套利路径</button>
+                <button id="view-dashboard-btn" class="app-view-tab" type="button" role="tab" aria-selected="false" tabindex="-1">交易对看板</button>
+            </div>
             <button id="manual-save-btn" title="立即保存当前配置到文件">
                 <span>💾</span> <span id="manual-save-text">保存配置</span>
             </button>
@@ -1655,7 +1711,6 @@
              <button id="toggle-multi-channel-btn" title="临时开启或关闭多渠道">多渠道: 开</button>
              <button id="toggle-data-terminal-btn" title="显示/隐藏数据终端">数据终端</button>
              <button id="toggle-spread-btn" title="检测交易对买/卖 spread">Spread</button>
-             <button id="toggle-arb-btn" title="显示/隐藏套利路径">路径</button>
              <button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">📝</button>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">📸</a>
              <a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">📊</a>
@@ -2054,6 +2109,7 @@
     <script src="src/quote/quote-queue-runtime-utils.js"></script>
     <script src="src/app/dashboard-dom-refs.js"></script>
     <script src="src/app/dashboard-module-registry.js"></script>
+    <script src="src/app/dashboard-view-mode-controller.js"></script>
     <script src="src/app/dashboard-lifecycle-controller.js"></script>
     <script src="src/app/dashboard-app.js"></script>
 </body>
