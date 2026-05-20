@@ -40,6 +40,7 @@
         getCopyUtils,
         getDashboardActionController,
         getDashboardApiUtils,
+        getDashboardArbAlertRuntime,
         getDashboardCommandController,
         getDashboardCommandRuntime,
         getDashboardDomRefs,
@@ -95,6 +96,7 @@
 
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     let quoteRuntime = null;
+    let arbAlertRuntime = null;
     function getQuoteRuntime() {
         if (!quoteRuntime) {
             throw new Error('Dashboard quote runtime is not initialized');
@@ -110,13 +112,18 @@
     function updateSchedulers() {
         return getQuoteRuntime().updateSchedulers();
     }
-    const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
-    const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
-        durationMs: 8000,
-        setTimer: setTimeout,
-        clearTimer: clearTimeout,
-        onExpired: () => updateArbPanel()
-    });
+    function getArbAlertRuntime() {
+        if (!arbAlertRuntime) {
+            throw new Error('Dashboard arb alert runtime is not initialized');
+        }
+        return arbAlertRuntime;
+    }
+    function invalidateArbRuleSnapshotCache(options) {
+        return getArbAlertRuntime().invalidateArbRuleSnapshotCache(options);
+    }
+    function updateArbPanel(options) {
+        return getArbAlertRuntime().updateArbPanel(options);
+    }
     const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
     });
@@ -368,69 +375,65 @@
         updateQuotePairLabel,
         updateTrendArrow
     } = quoteUiController;
-    let alertRuntimeController = null;
     let arbDetailController = null;
-    const FIXED_PATH_RULES = getPathAlertRuleDefinitionsUtils().FIXED_PATH_RULES;
-    const SPECIAL_ARB_RULES = getPathAlertRuleDefinitionsUtils().SPECIAL_ARB_RULES;
-    const ARB_PATH_CONFIG = getArbPathConfig();
-    const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({
-        arbOpportunityRuntime,
-        arbOpportunityHighlightRuntime,
-        arbPanelLayoutUtils: getArbPanelLayoutUtils(),
-        closeArbDetailModal: () => {
-            if (arbDetailController) arbDetailController.close();
-        },
-        fixedPathRules: FIXED_PATH_RULES,
-        getAlertRuntimeController: () => alertRuntimeController,
-        invalidateArbRuleSnapshotCache: () => invalidateArbRuleSnapshotCache(),
-        isArbDetailVisible: () => Boolean(arbDetailController && arbDetailController.isVisible()),
-        renderArbDetailModal: () => {
-            if (arbDetailController) arbDetailController.render();
-        },
-        specialArbRules: SPECIAL_ARB_RULES,
-        specialRuleAlertConfigUtils: getSpecialRuleAlertConfigUtils(),
-        updateArbPanel: () => updateArbPanel()
-    });
-    const arbPanelController = getArbPanelController().createArbPanelController({
-        arbAlertBridgeRuntime,
+    arbAlertRuntime = getDashboardArbAlertRuntime().createDashboardArbAlertRuntime({
+        AudioCtor: Audio,
+        alertDebugUtils: getAlertDebugUtils(),
+        alertLogUiUtils: getAlertLogUiUtils(),
+        alertRuntimeControllerUtils: getAlertRuntimeController(),
+        arbAlertBridgeUtils: getArbAlertBridgeUtils(),
+        arbPanelControllerUtils: getArbPanelController(),
         arbCyclePriorityUtils: getArbCyclePriorityUtils(),
         arbDetailUtils: getArbDetailUtils(),
         arbEquivalenceUtils: getArbEquivalenceUtils(),
         arbFixedUtils: getArbFixedUtils(),
-        arbOpportunityHighlightRuntime,
-        arbOpportunityRuntime,
         arbPanelLayoutUtils: getArbPanelLayoutUtils(),
         arbPanelRenderer: getArbPanelRenderer(),
-        arbPathConfig: ARB_PATH_CONFIG,
+        arbPathConfig: getArbPathConfig(),
         arbPathConfigUtils: getArbPathConfigUtils(),
         arbPaths: getArbPaths(),
         arbPathTemplateCacheUtils: getArbPathTemplateCacheUtils(),
         arbRuleSnapshotUtils: getArbRuleSnapshotUtils(),
         arbRuntimeMemoryUtils: getArbRuntimeMemoryUtils(),
         arbSpecialUtils: getArbSpecialUtils(),
+        audioUtils: getAudioUtils(),
+        backendUrl: BACKEND_URL,
+        bodyEl: document.body,
         chainDefaults: getChainDefaults(),
         closestEventTarget,
+        copyDexLinkFromElement,
         dashboardRuntimeUtils: getDashboardRuntimeUtils(),
         documentImpl: document,
         domRenderUtils: getDomRenderUtils(),
-        fixedPathRules: FIXED_PATH_RULES,
+        fetchImpl: fetch,
         getActiveQuotes,
         getArbCycleStartPriority: () => arbCycleStartPriority,
         getArbDetailController: () => arbDetailController,
+        getDashboardLocalStorage,
         getDashboardState: () => dashboardState,
+        getQuoteChainDisplayName,
         getQuoteMarketState,
         getQuoteMarketStateMap,
         globalPathSourceSelectors: GLOBAL_PATH_SOURCE_SELECTORS,
+        highlightDurationMs: 8000,
+        isCrossChainQuote,
         isQuotePaused,
+        logError: (...args) => console.error(...args),
+        logInfo: (...args) => console.info(...args),
+        logWarning: (...args) => console.warn(...args),
         mutedPathLegUtils: getMutedPathLegUtils(),
-        openArbDetailModal: (opportunityId) => {
-            if (arbDetailController) arbDetailController.open(opportunityId);
-        },
+        mutedPathRuntimeUtils: getMutedPathRuntimeUtils(),
+        mutedPathStorageUtils: getMutedPathStorageUtils(),
+        mutedStateHiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS,
+        mutedStateVisibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS,
+        pathAlertNotificationUtils: getPathAlertNotificationUtils(),
         pathAlertPageUtils: getPathAlertPageUtils(),
         pathAlertRuleDefinitions: getPathAlertRuleDefinitionsUtils(),
+        pathAlertUtils: getPathAlertUtils(),
         quoteDisplayUtils: getQuoteDisplayUtils(),
         quoteStateRuntime,
-        refs: {
+        specialRuleAlertConfigUtils: getSpecialRuleAlertConfigUtils(),
+        arbPanelRefs: {
             arbPathWindow,
             arbPathContent,
             arbPathHeader,
@@ -441,15 +444,30 @@
             arbGlobalFilterClearBtn,
             arbGlobalFilterElements
         },
+        alertRefs: {
+            alertLogWindow,
+            alertLogLogTab,
+            alertLogMutedLogTab,
+            alertLogMutedTab,
+            alertLogSettingsTab,
+            alertLogContent,
+            alertLogMutedLogContent,
+            alertLogMutedContent,
+            alertLogSettingsContent,
+            audioNoticeEl,
+            pathAlertSound
+        },
+        setInterval,
+        clearInterval,
         setTimeout,
         clearTimeout,
-        specialArbRules: SPECIAL_ARB_RULES,
         updateDelayMs: ARB_PANEL_UPDATE_DELAY_MS,
         windowImpl: window,
-        zIndexRuntime: floatingPanelZIndexRuntime,
-        buildQuoteAlertDisplayLabel: (quote, state, direction) => buildQuoteAlertDisplayLabel(quote, state, direction)
+        zIndexRuntime: floatingPanelZIndexRuntime
     });
     const {
+        alertRuntimeController,
+        arbPanelController,
         applyFloatingPanelDisplay,
         buildArbPathLegLineOptions,
         buildLiveQuoteLabel,
@@ -459,13 +477,11 @@
         formatChainLabel,
         formatDetailNumber,
         getAliasRules,
-        getSharedRuleSnapshot: getSharedArbRuleSnapshot,
-        invalidateRuleSnapshotCache: invalidateArbRuleSnapshotCache,
+        getSharedArbRuleSnapshot,
         isRuleLeg,
-        scheduleUpdate: scheduleArbPanelUpdate,
-        setMaxHeight: setArbPanelMaxHeight,
-        update: updateArbPanel
-    } = arbPanelController;
+        scheduleArbPanelUpdate,
+        setArbPanelMaxHeight
+    } = arbAlertRuntime;
     let dashboardRendered = false;
 
     function renderDashboardForCurrentState() {
@@ -512,71 +528,6 @@
         clearInterval,
         zIndexRuntime: floatingPanelZIndexRuntime
     });
-    alertRuntimeController = getAlertRuntimeController().createAlertRuntimeController({
-        alertDebugUtils: getAlertDebugUtils(),
-        alertLogUiUtils: getAlertLogUiUtils(),
-        arbAlertBridgeRuntime,
-        applyFloatingPanelDisplay,
-        arbDetailUtils: getArbDetailUtils(),
-        arbRuntimeMemoryUtils: getArbRuntimeMemoryUtils(),
-        audioUtils: getAudioUtils(),
-        backendUrl: BACKEND_URL,
-        bodyEl: document.body,
-        AudioCtor: Audio,
-        buildLiveQuoteLabel,
-        closestEventTarget,
-        copyDexLinkFromElement,
-        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
-        documentImpl: document,
-        domRenderUtils: getDomRenderUtils(),
-        fetchImpl: fetch,
-        findQuoteById,
-        formatArbPathLegLine,
-        formatDetailNumber,
-        getDashboardLocalStorage,
-        getDashboardState: () => dashboardState,
-        getQuoteChainDisplayName,
-        getQuoteMarketState,
-        getQuoteMarketStateMap,
-        getSharedArbRuleSnapshot,
-        isCrossChainQuote,
-        isQuotePaused,
-        isRuleLeg,
-        logError: (...args) => console.error(...args),
-        logInfo: (...args) => console.info(...args),
-        logWarning: (...args) => console.warn(...args),
-        mutedPathLegUtils: getMutedPathLegUtils(),
-        mutedPathRuntimeUtils: getMutedPathRuntimeUtils(),
-        mutedPathStorageUtils: getMutedPathStorageUtils(),
-        mutedStateHiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS,
-        mutedStateVisibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS,
-        pathAlertNotificationUtils: getPathAlertNotificationUtils(),
-        pathAlertPageUtils: getPathAlertPageUtils(),
-        pathAlertRuleDefinitions: getPathAlertRuleDefinitionsUtils(),
-        pathAlertUtils: getPathAlertUtils(),
-        quoteDisplayUtils: getQuoteDisplayUtils(),
-        quoteStateRuntime,
-        refs: {
-            alertLogWindow,
-            alertLogLogTab,
-            alertLogMutedLogTab,
-            alertLogMutedTab,
-            alertLogSettingsTab,
-            alertLogContent,
-            alertLogMutedLogContent,
-            alertLogMutedContent,
-            alertLogSettingsContent,
-            audioNoticeEl,
-            pathAlertSound
-        },
-        setInterval,
-        clearInterval,
-        setTimeout,
-        clearTimeout,
-        windowImpl: window
-    });
-    alertRuntimeController.bindAudioUnlockEvents();
-
     arbDetailController = getArbDetailController().createArbDetailController({
         arbDetailRefreshUtils: getArbDetailRefreshUtils(),
         arbDetailUtils: getArbDetailUtils(),
@@ -598,7 +549,7 @@
         getApiIntervals: () => apiIntervals,
         getChartsRenderer: () => window.ChartsRenderer || null,
         getChartsUtils,
-        getOpportunity: (opportunityId) => arbOpportunityRuntime.getOpportunity(opportunityId),
+        getOpportunity: (opportunityId) => arbAlertRuntime.getOpportunity(opportunityId),
         getQuoteMarketState,
         isRuleLeg,
         logRefreshError: (error) => console.error('[arb-detail] refresh failed', error),

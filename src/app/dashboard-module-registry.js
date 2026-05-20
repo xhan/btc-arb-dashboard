@@ -35,6 +35,7 @@
     getCopyUtils: ['CopyUtils', 'CopyUtils is not loaded'],
     getDashboardActionController: ['DashboardActionController', 'DashboardActionController is not loaded'],
     getDashboardApiUtils: ['DashboardApiUtils', 'DashboardApiUtils is not loaded'],
+    getDashboardArbAlertRuntime: ['DashboardArbAlertRuntime', 'DashboardArbAlertRuntime is not loaded'],
     getDashboardCommandController: ['DashboardCommandController', 'DashboardCommandController is not loaded'],
     getDashboardCommandRuntime: ['DashboardCommandRuntime', 'DashboardCommandRuntime is not loaded'],
     getDashboardDomRefs: ['DashboardDomRefs', 'DashboardDomRefs is not loaded'],
