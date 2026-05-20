@@ -26,6 +26,7 @@
         getCopyUtils,
         getDashboardActionController,
         getDashboardApiUtils,
+        getDashboardCommandController,
         getDashboardDomRefs,
         getDashboardFormController,
         getDashboardLifecycleController,
@@ -652,10 +653,7 @@
     const renderDataTerminalPanel = dataTerminalController.renderPanel;
     const toggleDataTerminalPanel = dataTerminalController.togglePanel;
     const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
-    const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({
-        documentImpl: document,
-        keyboardShortcutUtils: getKeyboardShortcutUtils(),
-        isArbDetailVisible: () => arbDetailController.isVisible(),
+    const dashboardCommandController = getDashboardCommandController().createDashboardCommandController({
         actions: {
             'close-arb-detail': closeArbDetailModal,
             'toggle-arb-panel': dashboardViewModeController.toggleArbView,
@@ -665,6 +663,20 @@
             'toggle-alert-log': alertRuntimeController.toggleAlertLogPanel,
             'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle
         }
+    });
+    const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({
+        documentImpl: document,
+        keyboardShortcutUtils: getKeyboardShortcutUtils(),
+        isArbDetailVisible: () => arbDetailController.isVisible(),
+        actions: dashboardCommandController.buildActionMap([
+            'close-arb-detail',
+            'toggle-arb-panel',
+            'toggle-data-terminal',
+            'toggle-quote-display',
+            'open-alert-log-settings',
+            'toggle-alert-log',
+            'toggle-request-channel-tags'
+        ])
     });
     const quoteFetchController = getQuoteFetchController().createQuoteFetchController({
         activeFetchControllerRuntime,
@@ -904,6 +916,7 @@
         clearTopologyCache,
         confirmActionRuntime,
         dashboardApiClient,
+        dashboardCommandController,
         dashboardFormController,
         dashboardRenderer: getDashboardRenderer(),
         dashboardViewModeController,
@@ -958,10 +971,6 @@
         setPriceSnapshotConfig: (nextConfig) => { priceSnapshotConfig = nextConfig; },
         settingsModalRuntime,
         themeRuntime,
-        toggleArbPanel: dashboardViewModeController.toggleArbView,
-        toggleDataTerminalPanel,
-        toggleMultiChannel,
-        toggleQuoteDisplayMode,
         updateArbPanel,
         updateSchedulers,
         windowImpl: window

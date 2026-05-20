@@ -45,6 +45,13 @@
       return typeof deps.getPriceSnapshotConfig === 'function' ? deps.getPriceSnapshotConfig() : {};
     }
 
+    function dispatchCommand(commandId) {
+      if (!deps.dashboardCommandController || typeof deps.dashboardCommandController.dispatch !== 'function') {
+        return false;
+      }
+      return deps.dashboardCommandController.dispatch(commandId);
+    }
+
     async function loadPriceSnapshotConfig() {
       const config = await deps.dashboardApiClient.loadPriceSnapshotConfig();
       if (typeof deps.setPriceSnapshotConfig === 'function') {
@@ -130,12 +137,12 @@
     }
 
     function bindToolbarEvents() {
-      addClickListener(refs.toggleArbBtn, deps.toggleArbPanel);
-      addClickListener(refs.toggleQuoteDisplayBtn, deps.toggleQuoteDisplayMode);
-      addClickListener(refs.toggleDataTerminalBtn, deps.toggleDataTerminalPanel);
+      addClickListener(refs.toggleArbBtn, () => dispatchCommand('toggle-arb-panel'));
+      addClickListener(refs.toggleQuoteDisplayBtn, () => dispatchCommand('toggle-quote-display'));
+      addClickListener(refs.toggleDataTerminalBtn, () => dispatchCommand('toggle-data-terminal'));
       deps.quoteSpreadController.bindEvents();
-      addClickListener(refs.toggleAlertLogBtn, deps.alertRuntimeController.toggleAlertLogPanel);
-      addClickListener(refs.toggleMultiChannelBtn, deps.toggleMultiChannel);
+      addClickListener(refs.toggleAlertLogBtn, () => dispatchCommand('toggle-alert-log'));
+      addClickListener(refs.toggleMultiChannelBtn, () => dispatchCommand('toggle-request-channel-tags'));
     }
 
     function bindAlertLogEvents() {
@@ -147,11 +154,11 @@
     function bindPanelMinimizeEvents() {
       addClickListener(refs.arbPathMinBtn, (event) => {
         stopEventPropagation(event);
-        deps.toggleArbPanel();
+        dispatchCommand('toggle-arb-panel');
       });
       addClickListener(refs.alertLogMinBtn, (event) => {
         stopEventPropagation(event);
-        deps.alertRuntimeController.toggleAlertLogPanel();
+        dispatchCommand('toggle-alert-log');
       });
     }
 

@@ -203,6 +203,12 @@ assert.deepStrictEqual(staticCalls, [
       loadRequestChannels: async () => ({ channels: [{ id: 'fast' }] }),
       requestBackendConfigRefresh: async () => calls.push(['requestBackendConfigRefresh'])
     },
+    dashboardCommandController: {
+      dispatch: (commandId) => {
+        calls.push(['dispatchCommand', commandId]);
+        return true;
+      }
+    },
     dashboardViewModeController: {
       bind: () => calls.push(['bindDashboardViewMode'])
     },
@@ -267,10 +273,6 @@ assert.deepStrictEqual(staticCalls, [
     themeRuntime: {
       load: () => calls.push(['themeLoad'])
     },
-    toggleArbPanel: () => calls.push(['toggleArbPanel']),
-    toggleDataTerminalPanel: () => calls.push(['toggleDataTerminalPanel']),
-    toggleMultiChannel: () => calls.push(['toggleMultiChannel']),
-    toggleQuoteDisplayMode: () => calls.push(['toggleQuoteDisplayMode']),
     updateArbPanel: () => calls.push(['updateArbPanel']),
     updateSchedulers: () => calls.push(['updateSchedulers']),
     windowImpl
@@ -302,8 +304,8 @@ assert.deepStrictEqual(staticCalls, [
   });
   toggleAlertLogBtn.dispatch('click');
   assert.ok(calls.some((call) => call[0] === 'stopArbMin'));
-  assert.ok(calls.some((call) => call[0] === 'toggleArbPanel'));
-  assert.ok(calls.some((call) => call[0] === 'toggleAlertLogPanel'));
+  assert.ok(calls.some((call) => call[0] === 'dispatchCommand' && call[1] === 'toggle-arb-panel'));
+  assert.ok(calls.some((call) => call[0] === 'dispatchCommand' && call[1] === 'toggle-alert-log'));
 
   const failingDashboardEl = createFakeElement();
   const failingController = createDashboardLifecycleController({

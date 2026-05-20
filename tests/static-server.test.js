@@ -135,6 +135,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-dom-refs.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-view-mode-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-lifecycle-controller.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
@@ -233,6 +234,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-command-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-view-mode-controller.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -428,6 +432,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(domRefsResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
+    const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
+    assert.strictEqual(commandControllerResponse.statusCode, 200);
     const viewModeControllerResponse = await request('/src/app/dashboard-view-mode-controller.js');
     assert.strictEqual(viewModeControllerResponse.statusCode, 200);
     const lifecycleControllerResponse = await request('/src/app/dashboard-lifecycle-controller.js');
@@ -553,6 +559,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('ArbAlertBridgeUtils is not loaded'));
     assert.ok(dataTerminalControllerResponse.body.includes('function createDataTerminalController(deps = {})'));
     assert.ok(moduleRegistryResponse.body.includes('function getWindowModule(windowImpl, globalName, missingMessage)'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardCommandController: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardCommandController is not loaded'));
+    assert.ok(commandControllerResponse.body.includes('function createDashboardCommandController(options = {})'));
+    assert.ok(commandControllerResponse.body.includes('function dispatch(commandId, ...args)'));
+    assert.ok(appJsResponse.body.includes('const dashboardCommandController = getDashboardCommandController().createDashboardCommandController({'));
+    assert.ok(appJsResponse.body.includes('actions: dashboardCommandController.buildActionMap(['));
+    assert.ok(appJsResponse.body.includes('dashboardCommandController,'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardLifecycleController: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardLifecycleController is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardViewModeController: ['));
@@ -565,6 +578,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('let dashboardRendered = false;'));
     assert.ok(appJsResponse.body.includes('onShowDashboard: ensureDashboardRendered'));
     assert.ok(appJsResponse.body.includes("'toggle-arb-panel': dashboardViewModeController.toggleArbView"));
+    assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-arb-panel')"));
+    assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-alert-log')"));
     assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardViewModeController.bind();'));
     assert.ok(lifecycleControllerResponse.body.includes('function shouldRenderDashboardOnInit()'));
     assert.ok(lifecycleControllerResponse.body.includes('function createDashboardLifecycleController(deps = {})'));
