@@ -27,6 +27,8 @@ const controller = createKeyboardShortcutController({
 assert.strictEqual(controller.bind(), true);
 assert.deepStrictEqual(calls, [['bind', 'keydown']]);
 assert.strictEqual(typeof keydownHandler, 'function');
+assert.strictEqual(controller.bind(), false);
+assert.deepStrictEqual(calls, [['bind', 'keydown']]);
 
 const shortcutEvent = {
   key: 't',

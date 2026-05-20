@@ -11,6 +11,7 @@
     const keyboardShortcutUtils = deps.keyboardShortcutUtils || (root && root.KeyboardShortcutUtils);
     const documentImpl = deps.documentImpl || (typeof document !== 'undefined' ? document : null);
     const actions = deps.actions && typeof deps.actions === 'object' ? deps.actions : {};
+    let bound = false;
 
     function isArbDetailVisible() {
       return typeof deps.isArbDetailVisible === 'function' ? deps.isArbDetailVisible() : false;
@@ -40,7 +41,9 @@
 
     function bind() {
       if (!documentImpl || typeof documentImpl.addEventListener !== 'function') return false;
+      if (bound) return false;
       documentImpl.addEventListener('keydown', handleKeydown);
+      bound = true;
       return true;
     }
 

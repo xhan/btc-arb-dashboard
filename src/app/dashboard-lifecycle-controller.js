@@ -101,6 +101,9 @@
       addClickListener(refs.addCategoryBtn, deps.openAddCategoryModal);
       addEventListener(refs.dashboardEl, 'input', deps.handleDashboardInput);
       addEventListener(refs.dashboardEl, 'click', deps.handleDashboardClick);
+      if (deps.keyboardShortcutController && typeof deps.keyboardShortcutController.bind === 'function') {
+        deps.keyboardShortcutController.bind();
+      }
     }
 
     function bindFloatingPanels() {
@@ -161,7 +164,6 @@
       deps.arbDetailController.bindGridEvents();
       deps.arbDetailController.bindChromeEvents();
       deps.arbPanelController.bindGlobalFilterEvents();
-      deps.keyboardShortcutController.bind();
       bindPanelMinimizeEvents();
     }
 

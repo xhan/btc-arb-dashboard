@@ -1118,12 +1118,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(keyboardShortcutUtilsResponse.body.includes('function resolveGlobalShortcutAction(event, state = {})'));
     assert.ok(keyboardShortcutUtilsResponse.body.includes('function isTypingShortcutTarget(target)'));
     assert.ok(keyboardShortcutControllerResponse.body.includes('function createKeyboardShortcutController(deps = {})'));
+    assert.ok(keyboardShortcutControllerResponse.body.includes('let bound = false;'));
+    assert.ok(keyboardShortcutControllerResponse.body.includes('if (bound) return false;'));
     assert.ok(keyboardShortcutControllerResponse.body.includes('keyboardShortcutUtils.resolveGlobalShortcutAction(event, {'));
     assert.ok(moduleRegistryResponse.body.includes('getKeyboardShortcutUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('KeyboardShortcutUtils is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getKeyboardShortcutController: ['));
     assert.ok(moduleRegistryResponse.body.includes('KeyboardShortcutController is not loaded'));
     assert.ok(appJsResponse.body.includes('const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({'));
+    assert.ok(lifecycleControllerResponse.body.includes("if (deps.keyboardShortcutController && typeof deps.keyboardShortcutController.bind === 'function')"));
     assert.ok(lifecycleControllerResponse.body.includes('deps.keyboardShortcutController.bind();'));
     assert.ok(!appJsResponse.body.includes('keyboardShortcutController.bind();'));
     assert.ok(!appJsResponse.body.includes('function handleGlobalShortcuts(event)'));

@@ -75,6 +75,11 @@ const staticController = createDashboardLifecycleController({
   handleDashboardInput() {
     staticCalls.push(['dashboardInput']);
   },
+  keyboardShortcutController: {
+    bind() {
+      staticCalls.push(['bindKeyboard']);
+    }
+  },
   openAddCategoryModal() {
     staticCalls.push(['openAddCategory']);
   },
@@ -114,6 +119,7 @@ confirmCancelBtn.dispatch('click', {
 });
 confirmModal.dispatch('click', { actionType: 'none' });
 assert.deepStrictEqual(staticCalls, [
+  ['bindKeyboard'],
   ['performSave', true],
   ['themeToggle'],
   ['openAddCategory'],
