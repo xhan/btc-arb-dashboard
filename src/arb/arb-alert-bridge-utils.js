@@ -27,9 +27,36 @@
     return highlightRuntime.mark(opportunityIds, nowMs) === true;
   }
 
+  function resolveTriggeredArbOpportunityTargetKey(alert, evaluation, options = {}) {
+    const buildTargetKey = typeof options.buildTriggeredArbOpportunityHighlightTargetKey === 'function'
+      ? options.buildTriggeredArbOpportunityHighlightTargetKey
+      : null;
+    if (!buildTargetKey) return '';
+    return normalizeTargetKey(buildTargetKey(alert, evaluation, {
+      buildMutedPathTargetFromCycleLegs: options.buildMutedPathTargetFromCycleLegs,
+      buildTargetKey: options.buildMutedPathTargetKey
+    }));
+  }
+
+  function resolveBuildTriggeredArbOpportunityTargetKey(options = {}) {
+    if (typeof options.buildTriggeredArbOpportunityHighlightTargetKey === 'function') {
+      return options.buildTriggeredArbOpportunityHighlightTargetKey;
+    }
+    const arbPanelLayoutUtils = options.arbPanelLayoutUtils || null;
+    if (
+      arbPanelLayoutUtils
+      && typeof arbPanelLayoutUtils.buildTriggeredArbOpportunityHighlightTargetKey === 'function'
+    ) {
+      return arbPanelLayoutUtils.buildTriggeredArbOpportunityHighlightTargetKey;
+    }
+    return null;
+  }
+
   function createArbAlertBridgeRuntime(options = {}) {
     const opportunityRuntime = options.opportunityRuntime || options.arbOpportunityRuntime || null;
     const highlightRuntime = options.highlightRuntime || options.arbOpportunityHighlightRuntime || null;
+    const arbPanelLayoutUtils = options.arbPanelLayoutUtils || null;
+    const buildTriggeredArbOpportunityHighlightTargetKey = resolveBuildTriggeredArbOpportunityTargetKey(options);
     const invalidateArbRuleSnapshotCache = typeof options.invalidateArbRuleSnapshotCache === 'function'
       ? options.invalidateArbRuleSnapshotCache
       : null;
@@ -56,6 +83,25 @@
     function markTriggeredOpportunities(targetKey, nowMs) {
       const opportunityIds = getOpportunityIdsForTarget(opportunityRuntime, targetKey);
       return markOpportunityHighlights(highlightRuntime, opportunityIds, nowMs);
+    }
+
+    function markTriggeredAlertOpportunity(alert, evaluation, nowMs) {
+      const targetKey = resolveTriggeredArbOpportunityTargetKey(alert, evaluation, {
+        buildMutedPathTargetFromCycleLegs,
+        buildMutedPathTargetKey,
+        buildTriggeredArbOpportunityHighlightTargetKey
+      });
+      return markTriggeredOpportunities(targetKey, nowMs);
+    }
+
+    function selectFirstUnmutedDisplayedCycle(cycles, isMutedCandidate) {
+      if (
+        !arbPanelLayoutUtils
+        || typeof arbPanelLayoutUtils.selectFirstUnmutedDisplayedCycle !== 'function'
+      ) {
+        return null;
+      }
+      return arbPanelLayoutUtils.selectFirstUnmutedDisplayedCycle(cycles, isMutedCandidate);
     }
 
     function invalidateRuleSnapshot() {
@@ -121,9 +167,11 @@
       getActiveMutedPathLegs,
       getOpportunityIdsForTarget: (targetKey) => getOpportunityIdsForTarget(opportunityRuntime, targetKey),
       invalidateRuleSnapshot,
+      markTriggeredAlertOpportunity,
       refreshArbViewsAfterMutedPathLegChange,
       refreshArbPanel,
-      markTriggeredOpportunities
+      markTriggeredOpportunities,
+      selectFirstUnmutedDisplayedCycle
     };
   }
 
@@ -131,6 +179,8 @@
     createArbAlertBridgeRuntime,
     getOpportunityIdsForTarget,
     markOpportunityHighlights,
-    normalizeTargetKey
+    normalizeTargetKey,
+    resolveBuildTriggeredArbOpportunityTargetKey,
+    resolveTriggeredArbOpportunityTargetKey
   };
 });

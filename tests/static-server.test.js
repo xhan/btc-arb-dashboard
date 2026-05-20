@@ -1561,14 +1561,17 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes("logInfo('[quote-alert] muted trigger skipped'"));
     assert.ok(appJsResponse.body.includes('const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();'));
     assert.ok(appJsResponse.body.includes('const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({'));
+    assert.ok(appJsResponse.body.includes('arbPanelLayoutUtils: getArbPanelLayoutUtils(),'));
     assert.ok(appJsResponse.body.includes('getAlertRuntimeController: () => alertRuntimeController'));
     assert.ok(appJsResponse.body.includes('invalidateArbRuleSnapshotCache: () => invalidateArbRuleSnapshotCache()'));
     assert.ok(appJsResponse.body.includes('renderArbDetailModal: () => {'));
     assert.ok(appJsResponse.body.includes('updateArbPanel'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.markTriggeredOpportunities(targetKey, nowMs)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.markTriggeredAlertOpportunity(alert, evaluation, nowMs)'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.invalidateRuleSnapshot()'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.refreshArbViewsAfterMutedPathLegChange(options)'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.refreshArbPanel()'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.selectFirstUnmutedDisplayedCycle(cycles, (candidate) => {'));
+    assert.ok(!alertRuntimeControllerResponse.body.includes('const arbPanelLayoutUtils = deps.arbPanelLayoutUtils'));
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.arbOpportunityRuntime.getOpportunityIdsForTarget(targetKey)'));
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.arbOpportunityHighlightRuntime.mark(opportunityIds, nowMs)'));
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.invalidateArbRuleSnapshotCache'));
@@ -1590,7 +1593,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('durationMs: 8000'));
     assert.ok(appJsResponse.body.includes('onExpired: () => updateArbPanel()'));
     assert.ok(alertRuntimeControllerResponse.body.includes('markTriggeredArbOpportunities'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('arbPanelLayoutUtils.buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation, {'));
+    assert.ok(!alertRuntimeControllerResponse.body.includes('arbPanelLayoutUtils.buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation, {'));
     assert.ok(arbPanelControllerResponse.body.includes('arbPanelLayoutUtils.buildArbOpportunityHighlightTargetKeyFromCycle(cycle, {'));
     assert.ok(arbPanelControllerResponse.body.includes('arbPanelLayoutUtils.registerArbOpportunityHighlightTarget('));
     assert.ok(arbPanelControllerResponse.body.includes('isAlertHighlighted: options.arbOpportunityHighlightRuntime.isHighlighted(opportunityId)'));
@@ -1602,6 +1605,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function registerArbOpportunityHighlightTarget('));
     assert.ok(arbAlertBridgeUtilsResponse.body.includes('function createArbAlertBridgeRuntime(options = {})'));
     assert.ok(arbAlertBridgeUtilsResponse.body.includes('function markTriggeredOpportunities(targetKey, nowMs)'));
+    assert.ok(arbAlertBridgeUtilsResponse.body.includes('function markTriggeredAlertOpportunity(alert, evaluation, nowMs)'));
+    assert.ok(arbAlertBridgeUtilsResponse.body.includes('function resolveTriggeredArbOpportunityTargetKey(alert, evaluation, options = {})'));
+    assert.ok(arbAlertBridgeUtilsResponse.body.includes('function selectFirstUnmutedDisplayedCycle(cycles, isMutedCandidate)'));
     assert.ok(arbAlertBridgeUtilsResponse.body.includes('function refreshArbViewsAfterMutedPathLegChange(options = {})'));
     assert.ok(arbAlertBridgeUtilsResponse.body.includes('function refreshArbPanel()'));
     assert.ok(arbAlertBridgeUtilsResponse.body.includes('function getActiveMutedPathLegs(nowMs)'));

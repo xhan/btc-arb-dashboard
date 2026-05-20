@@ -372,6 +372,7 @@
     const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({
         arbOpportunityRuntime,
         arbOpportunityHighlightRuntime,
+        arbPanelLayoutUtils: getArbPanelLayoutUtils(),
         closeArbDetailModal: () => {
             if (arbDetailController) arbDetailController.close();
         },
@@ -510,7 +511,6 @@
         arbAlertBridgeRuntime,
         applyFloatingPanelDisplay,
         arbDetailUtils: getArbDetailUtils(),
-        arbPanelLayoutUtils: getArbPanelLayoutUtils(),
         arbRuntimeMemoryUtils: getArbRuntimeMemoryUtils(),
         audioUtils: getAudioUtils(),
         backendUrl: BACKEND_URL,

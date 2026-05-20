@@ -33,7 +33,6 @@
     const pathAlertPageUtils = deps.pathAlertPageUtils || (root && root.PathAlertPageUtils);
     const pathAlertRuleDefinitions = deps.pathAlertRuleDefinitions || (root && root.PathAlertRuleDefinitions) || {};
     const specialRuleAlertConfigUtils = deps.specialRuleAlertConfigUtils || (root && root.SpecialRuleAlertConfigUtils);
-    const arbPanelLayoutUtils = deps.arbPanelLayoutUtils || (root && root.ArbPanelLayoutUtils);
     const arbRuntimeMemoryUtils = deps.arbRuntimeMemoryUtils || (root && root.ArbRuntimeMemoryUtils);
     const arbDetailUtils = deps.arbDetailUtils || (root && root.ArbDetailUtils);
     const quoteDisplayUtils = deps.quoteDisplayUtils || (root && root.QuoteDisplayUtils);
@@ -213,15 +212,10 @@
     }
 
     function markTriggeredArbOpportunities(alert, evaluation, nowMs = getNow()) {
-      const targetKey = arbPanelLayoutUtils.buildTriggeredArbOpportunityHighlightTargetKey(alert, evaluation, {
-        buildMutedPathTargetFromCycleLegs,
-        buildTargetKey: buildMutedPathTargetKey
-      });
-      if (!targetKey) return false;
-      if (!deps.arbAlertBridgeRuntime || typeof deps.arbAlertBridgeRuntime.markTriggeredOpportunities !== 'function') {
+      if (!deps.arbAlertBridgeRuntime || typeof deps.arbAlertBridgeRuntime.markTriggeredAlertOpportunity !== 'function') {
         return false;
       }
-      return deps.arbAlertBridgeRuntime.markTriggeredOpportunities(targetKey, nowMs);
+      return deps.arbAlertBridgeRuntime.markTriggeredAlertOpportunity(alert, evaluation, nowMs);
     }
 
     function appendQuoteAlertLogEntry(entry, nowMs = getNow()) {
@@ -604,8 +598,14 @@
         const cycles = sharedRuleSnapshot && sharedRuleSnapshot.fixedByRuleId
           ? sharedRuleSnapshot.fixedByRuleId[target.ruleId]
           : null;
+        if (
+          !deps.arbAlertBridgeRuntime
+          || typeof deps.arbAlertBridgeRuntime.selectFirstUnmutedDisplayedCycle !== 'function'
+        ) {
+          return { available: false };
+        }
         const nowMs = getNow();
-        const cycle = arbPanelLayoutUtils.selectFirstUnmutedDisplayedCycle(cycles, (candidate) => {
+        const cycle = deps.arbAlertBridgeRuntime.selectFirstUnmutedDisplayedCycle(cycles, (candidate) => {
           const muteTarget = candidate && Array.isArray(candidate.legs)
             ? buildMutedPathTargetFromCycleLegs(candidate.legs)
             : null;
