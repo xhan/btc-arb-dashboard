@@ -41,6 +41,7 @@
         getDashboardActionController,
         getDashboardApiUtils,
         getDashboardCommandController,
+        getDashboardCommandRuntime,
         getDashboardDomRefs,
         getDashboardFormController,
         getDashboardLifecycleController,
@@ -642,7 +643,12 @@
     const renderDataTerminalPanel = dataTerminalController.renderPanel;
     const toggleDataTerminalPanel = dataTerminalController.togglePanel;
     const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
-    const dashboardCommandController = getDashboardCommandController().createDashboardCommandController({
+    const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({
+        dashboardCommandControllerUtils: getDashboardCommandController(),
+        documentImpl: document,
+        keyboardShortcutControllerUtils: getKeyboardShortcutController(),
+        keyboardShortcutUtils: getKeyboardShortcutUtils(),
+        isArbDetailVisible: () => arbDetailController.isVisible(),
         actions: {
             'close-arb-detail': closeArbDetailModal,
             'toggle-arb-panel': dashboardViewModeController.toggleArbView,
@@ -653,20 +659,7 @@
             'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle
         }
     });
-    const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({
-        documentImpl: document,
-        keyboardShortcutUtils: getKeyboardShortcutUtils(),
-        isArbDetailVisible: () => arbDetailController.isVisible(),
-        actions: dashboardCommandController.buildActionMap([
-            'close-arb-detail',
-            'toggle-arb-panel',
-            'toggle-data-terminal',
-            'toggle-quote-display',
-            'open-alert-log-settings',
-            'toggle-alert-log',
-            'toggle-request-channel-tags'
-        ])
-    });
+    const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;
     const quoteFetchController = getQuoteFetchController().createQuoteFetchController({
         activeFetchControllerRuntime,
         backendUrl: BACKEND_URL,

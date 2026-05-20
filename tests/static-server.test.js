@@ -137,6 +137,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-quote-domain-adapter.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-view-mode-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-lifecycle-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-app-config.js"'));
@@ -242,6 +243,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-command-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-command-controller.js"') < response.body.indexOf('src="src/app/dashboard-command-runtime.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-command-runtime.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-view-mode-controller.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -444,6 +451,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
     assert.strictEqual(commandControllerResponse.statusCode, 200);
+    const commandRuntimeResponse = await request('/src/app/dashboard-command-runtime.js');
+    assert.strictEqual(commandRuntimeResponse.statusCode, 200);
     const viewModeControllerResponse = await request('/src/app/dashboard-view-mode-controller.js');
     assert.strictEqual(viewModeControllerResponse.statusCode, 200);
     const lifecycleControllerResponse = await request('/src/app/dashboard-lifecycle-controller.js');
@@ -573,10 +582,16 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('function getWindowModule(windowImpl, globalName, missingMessage)'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardCommandController: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardCommandController is not loaded'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardCommandRuntime: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardCommandRuntime is not loaded'));
     assert.ok(commandControllerResponse.body.includes('function createDashboardCommandController(options = {})'));
     assert.ok(commandControllerResponse.body.includes('function dispatch(commandId, ...args)'));
-    assert.ok(appJsResponse.body.includes('const dashboardCommandController = getDashboardCommandController().createDashboardCommandController({'));
-    assert.ok(appJsResponse.body.includes('actions: dashboardCommandController.buildActionMap(['));
+    assert.ok(commandRuntimeResponse.body.includes('const DASHBOARD_COMMAND_IDS = Object.freeze(['));
+    assert.ok(commandRuntimeResponse.body.includes('function createDashboardCommandRuntime(options = {})'));
+    assert.ok(commandRuntimeResponse.body.includes('actions: dashboardCommandController.buildActionMap(DASHBOARD_COMMAND_IDS)'));
+    assert.ok(appJsResponse.body.includes('const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({'));
+    assert.ok(appJsResponse.body.includes('const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;'));
+    assert.ok(!appJsResponse.body.includes('actions: dashboardCommandController.buildActionMap(['));
     assert.ok(appJsResponse.body.includes('dashboardCommandController,'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardLifecycleController: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardLifecycleController is not loaded'));
@@ -1167,7 +1182,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('KeyboardShortcutUtils is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getKeyboardShortcutController: ['));
     assert.ok(moduleRegistryResponse.body.includes('KeyboardShortcutController is not loaded'));
-    assert.ok(appJsResponse.body.includes('const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({'));
+    assert.ok(commandRuntimeResponse.body.includes('keyboardShortcutControllerUtils.createKeyboardShortcutController({'));
+    assert.ok(!appJsResponse.body.includes('const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({'));
     assert.ok(lifecycleControllerResponse.body.includes("if (deps.keyboardShortcutController && typeof deps.keyboardShortcutController.bind === 'function')"));
     assert.ok(lifecycleControllerResponse.body.includes('deps.keyboardShortcutController.bind();'));
     assert.ok(!appJsResponse.body.includes('keyboardShortcutController.bind();'));
