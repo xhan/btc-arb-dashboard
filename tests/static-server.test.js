@@ -1254,6 +1254,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteStateRuntimeUtilsResponse.body.includes('function createQuoteStateRuntime(options = {})'));
     assert.ok(quoteStateRuntimeUtilsResponse.body.includes('dashboardRuntimeUtils.sanitizeQuoteMarketState(nextState)'));
     assert.ok(quoteStateRuntimeUtilsResponse.body.includes('dashboardRuntimeUtils.hasQuoteMarketStateChanged(previousState, marketState)'));
+    assert.ok(quoteStateRuntimeUtilsResponse.body.includes("typeof options.onMarketStateChanged === 'function'"));
+    assert.ok(appJsResponse.body.includes('onMarketStateChanged: () => invalidateArbRuleSnapshotCache({ bumpRevision: false })'));
     assert.ok(alertRuntimeControllerResponse.body.includes('dashboardRuntimeUtils.getActivePathAlertEvaluationAlerts(pathAlertConfig)'));
     assert.ok(arbPanelControllerResponse.body.includes('dashboardRuntimeUtils.findDashboardQuoteById(getDashboardCategories(), item.quoteId)'));
     assert.ok(!appJsResponse.body.includes('function findDashboardQuoteById(quoteId)'));
@@ -1276,7 +1278,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes('quoteStateRuntime.getUiState(quote.id)'));
     assert.ok(!appJsResponse.body.includes('function clearQuoteTrendTimer('));
     assert.ok(!appJsResponse.body.includes('function getQuoteUiState('));
-    assert.ok(appJsResponse.body.includes('quoteStateRuntime.resetUiRuntimeState(quoteId, clearTimeout)'));
+    assert.ok(appJsResponse.body.includes('const resetQuoteUiRuntimeState = quoteStateRuntime.resetUiRuntimeState;'));
+    assert.ok(!appJsResponse.body.includes('quoteStateRuntime.resetUiRuntimeState(quoteId, clearTimeout)'));
+    assert.ok(!appJsResponse.body.includes('function setQuoteMarketState(quoteId, nextState)'));
     assert.ok(!appJsResponse.body.includes('function buildDefaultQuoteUiState()'));
     const dashboardRuntimeExportBlock = dashboardRuntimeUtilsResponse.body.match(/return \{\n    buildArbRuleSnapshotCacheKey,[\s\S]*?\n  \};/);
     assert.ok(dashboardRuntimeExportBlock);

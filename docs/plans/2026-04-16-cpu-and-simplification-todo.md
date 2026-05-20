@@ -236,6 +236,7 @@
   - `src/app/dashboard-app.js` 的 quote fetch abort 单用途包装已移除，排队刷新和暂停流程直接委托 active fetch controller runtime
   - `src/app/dashboard-app.js` 的报价 fetch strategy、主报价成功/失败、反向报价成功/失败和 active fetch controller create/delete 生命周期已下沉到 `src/quote/quote-fetch-controller.js`
   - `src/app/dashboard-app.js` 的报价显示模式状态、报价文本重渲染、paused/active quote DOM 编排、复制、hover tooltip 和 trend arrow 编排已下沉到 `src/quote/quote-ui-controller.js`
+  - `src/app/dashboard-app.js` 的 quote market state 变更回调和 quote UI runtime timer 清理默认项已下沉到 `src/quote/quote-state-runtime-utils.js`
   - `src/app/dashboard-app.js` 的 active fetch 批量 abort 单用途包装已移除，套利详情暂停主看板时直接委托 active fetch controller runtime
   - `src/app/dashboard-app.js` 的套利详情 refresh scheduler 单用途回调包装已移除，active/refreshing/error 回调直接内联在 scheduler 配置里
   - `src/app/dashboard-app.js` 的 request channel display、queue type 和 queue interval 单用途包装已移除，调用点直接委托 `src/request-channel/request-channel-utils.js` / `src/queue-stats/queue-stats-utils.js`

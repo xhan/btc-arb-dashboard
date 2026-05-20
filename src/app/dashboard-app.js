@@ -97,6 +97,17 @@
     const ARB_DETAIL_REFRESH_INTERVAL_MS = 2500;
     const MUTED_STATE_VISIBLE_REFRESH_MS = 1000;
     const MUTED_STATE_HIDDEN_MAX_REFRESH_MS = 60 * 1000;
+    const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
+        dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        clearTimeout,
+        onMarketStateChanged: () => invalidateArbRuleSnapshotCache({ bumpRevision: false })
+    });
+    const getQuoteMarketState = quoteStateRuntime.getMarketState;
+    const getQuoteMarketStateMap = quoteStateRuntime.getMarketStateMap;
+    const setQuoteMarketState = quoteStateRuntime.setMarketState;
+    const deleteQuoteMarketState = quoteStateRuntime.deleteMarketState;
+    const resetQuoteUiRuntimeState = quoteStateRuntime.resetUiRuntimeState;
+    const deleteQuoteUiRuntimeState = quoteStateRuntime.deleteUiRuntimeState;
     const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({
         setInterval,
         clearInterval
@@ -297,9 +308,6 @@
         return getQuotePauseUtils().getCategoryPauseAction(quotes);
     }
 
-    const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
-        dashboardRuntimeUtils: getDashboardRuntimeUtils()
-    });
     const quoteUiController = getQuoteUiController().createQuoteUiController({
         copyToast,
         copyToastRuntime,
@@ -704,34 +712,6 @@
     }
 
     settingsModalRuntime.bind();
-
-    function getQuoteMarketState(quoteId, fallback = null) {
-        return quoteStateRuntime.getMarketState(quoteId, fallback);
-    }
-
-    function getQuoteMarketStateMap() {
-        return quoteStateRuntime.getMarketStateMap();
-    }
-
-    function setQuoteMarketState(quoteId, nextState) {
-        const marketStateChanged = quoteStateRuntime.setMarketState(quoteId, nextState);
-        if (marketStateChanged) {
-            invalidateArbRuleSnapshotCache({ bumpRevision: false });
-        }
-        return marketStateChanged;
-    }
-
-    function deleteQuoteMarketState(quoteId) {
-        return quoteStateRuntime.deleteMarketState(quoteId);
-    }
-
-    function resetQuoteUiRuntimeState(quoteId) {
-        quoteStateRuntime.resetUiRuntimeState(quoteId, clearTimeout);
-    }
-
-    function deleteQuoteUiRuntimeState(quoteId) {
-        quoteStateRuntime.deleteUiRuntimeState(quoteId, clearTimeout);
-    }
 
     function normalizeChainKey(chain) {
         return getQuoteRequestUtils().normalizeChainKey(chain);

@@ -3,7 +3,13 @@ const assert = require('assert');
 const dashboardRuntimeUtils = require('../src/dashboard/dashboard-runtime-utils');
 const { createQuoteStateRuntime } = require('../src/quote/quote-state-runtime-utils');
 
-const runtime = createQuoteStateRuntime({ dashboardRuntimeUtils });
+const marketChangeEvents = [];
+const defaultClearedTimers = [];
+const runtime = createQuoteStateRuntime({
+  dashboardRuntimeUtils,
+  clearTimeout: (timer) => defaultClearedTimers.push(timer),
+  onMarketStateChanged: (event) => marketChangeEvents.push(event)
+});
 
 assert.deepStrictEqual(runtime.getMarketState('101'), {});
 assert.strictEqual(runtime.getMarketRevision(), 0);
@@ -17,6 +23,12 @@ assert.strictEqual(
   true
 );
 assert.strictEqual(runtime.getMarketRevision(), 1);
+assert.strictEqual(marketChangeEvents.length, 1);
+assert.deepStrictEqual(marketChangeEvents[0].nextState, {
+  lastRawPrice: 1.23,
+  lastResultText: 'A'
+});
+assert.strictEqual(marketChangeEvents[0].marketRevision, 1);
 assert.deepStrictEqual(runtime.getMarketState(101), {
   lastRawPrice: 1.23,
   lastResultText: 'A'
@@ -32,6 +44,7 @@ assert.strictEqual(
   false
 );
 assert.strictEqual(runtime.getMarketRevision(), 1);
+assert.strictEqual(marketChangeEvents.length, 1);
 
 assert.strictEqual(
   runtime.setMarketState(101, {
@@ -41,6 +54,7 @@ assert.strictEqual(
   true
 );
 assert.strictEqual(runtime.getMarketRevision(), 2);
+assert.strictEqual(marketChangeEvents.length, 2);
 assert.strictEqual(runtime.bumpMarketRevision(), 3);
 assert.strictEqual(runtime.deleteMarketState('101'), true);
 assert.deepStrictEqual(runtime.getMarketState(101), {});
@@ -101,15 +115,17 @@ runtime.setUiState(202, {
   hasUnreadAlert: true,
   trendTimer: 'timer-3'
 });
-assert.deepStrictEqual(runtime.resetUiRuntimeState('202', (timer) => clearedTimers.push(timer)), {
+assert.deepStrictEqual(runtime.resetUiRuntimeState('202'), {
   hasUnreadAlert: false,
   trendTimer: null
 });
-assert.deepStrictEqual(clearedTimers, ['timer-2', 'timer-old', 'timer-3']);
+assert.deepStrictEqual(clearedTimers, ['timer-2', 'timer-old']);
+assert.deepStrictEqual(defaultClearedTimers, ['timer-3']);
 
 runtime.setUiState(202, {
   trendTimer: 'timer-4'
 });
-assert.strictEqual(runtime.deleteUiRuntimeState(202, (timer) => clearedTimers.push(timer)), true);
+assert.strictEqual(runtime.deleteUiRuntimeState(202), true);
 assert.deepStrictEqual(runtime.getUiStateMap().has(202), false);
-assert.deepStrictEqual(clearedTimers, ['timer-2', 'timer-old', 'timer-3', 'timer-4']);
+assert.deepStrictEqual(clearedTimers, ['timer-2', 'timer-old']);
+assert.deepStrictEqual(defaultClearedTimers, ['timer-3', 'timer-4']);

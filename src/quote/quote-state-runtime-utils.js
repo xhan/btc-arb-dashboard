@@ -25,6 +25,9 @@
 
   function createQuoteStateRuntime(options = {}) {
     const dashboardRuntimeUtils = getDashboardRuntimeUtils(options);
+    const defaultClearTimeout = typeof options.clearTimeout === 'function'
+      ? options.clearTimeout
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
     const quoteMarketState = new Map();
     const quoteUiState = new Map();
     let marketRevision = 0;
@@ -42,6 +45,14 @@
       quoteMarketState.set(key, marketState);
       if (marketStateChanged) {
         marketRevision += 1;
+        if (typeof options.onMarketStateChanged === 'function') {
+          options.onMarketStateChanged({
+            quoteId: key,
+            previousState,
+            nextState: marketState,
+            marketRevision
+          });
+        }
       }
       return marketStateChanged;
     }
@@ -71,17 +82,19 @@
       return dashboardRuntimeUtils.setQuoteUiState(quoteUiState, quoteId, nextState);
     }
 
+    function resolveClearTimeout(clearTimeoutImpl) {
+      return typeof clearTimeoutImpl === 'function' ? clearTimeoutImpl : defaultClearTimeout;
+    }
+
     function clearTrendTimer(quoteId, clearTimeoutImpl) {
-      return dashboardRuntimeUtils.clearQuoteTrendTimer(quoteUiState, quoteId, clearTimeoutImpl);
+      return dashboardRuntimeUtils.clearQuoteTrendTimer(quoteUiState, quoteId, resolveClearTimeout(clearTimeoutImpl));
     }
 
     function scheduleTrendTimer(quoteId, onElapsed, options = {}) {
       const setTimer = typeof options.setTimeout === 'function'
         ? options.setTimeout
         : (typeof setTimeout === 'function' ? setTimeout : null);
-      const clearTimer = typeof options.clearTimeout === 'function'
-        ? options.clearTimeout
-        : (typeof clearTimeout === 'function' ? clearTimeout : null);
+      const clearTimer = resolveClearTimeout(options.clearTimeout);
       const delayMs = Number.isFinite(Number(options.delayMs)) && Number(options.delayMs) >= 0
         ? Number(options.delayMs)
         : 30000;
@@ -106,11 +119,11 @@
     }
 
     function resetUiRuntimeState(quoteId, clearTimeoutImpl) {
-      return dashboardRuntimeUtils.resetQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeoutImpl);
+      return dashboardRuntimeUtils.resetQuoteUiRuntimeState(quoteUiState, quoteId, resolveClearTimeout(clearTimeoutImpl));
     }
 
     function deleteUiRuntimeState(quoteId, clearTimeoutImpl) {
-      return dashboardRuntimeUtils.deleteQuoteUiRuntimeState(quoteUiState, quoteId, clearTimeoutImpl);
+      return dashboardRuntimeUtils.deleteQuoteUiRuntimeState(quoteUiState, quoteId, resolveClearTimeout(clearTimeoutImpl));
     }
 
     function getUiStateMap() {
