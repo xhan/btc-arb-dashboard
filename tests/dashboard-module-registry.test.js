@@ -8,6 +8,7 @@ const {
 
 assert.ok(MODULES.getDashboardRuntimeUtils, 'expected dashboard runtime module definition');
 assert.ok(MODULES.getDashboardDomRefs, 'expected dashboard DOM refs module definition');
+assert.ok(MODULES.getDashboardLifecycleController, 'expected dashboard lifecycle controller definition');
 assert.ok(MODULES.getArbPanelController, 'expected arb panel controller module definition');
 assert.ok(MODULES.getAlertRuntimeController, 'expected alert runtime controller definition');
 assert.ok(MODULES.getKeyboardShortcutController, 'expected keyboard shortcut controller definition');

@@ -27,6 +27,7 @@
         getDashboardApiUtils,
         getDashboardDomRefs,
         getDashboardFormController,
+        getDashboardLifecycleController,
         getDashboardModalUtils,
         getDashboardRenderer,
         getDashboardRuntimeUtils,
@@ -68,7 +69,6 @@
 
     let apiIntervals = { ...DEFAULT_INTERVALS };
     let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
-    let requestChannelPayload = { channels: [] };
     const dashboardApiClient = getDashboardApiUtils().createDashboardApiClient({
         backendUrl: BACKEND_URL,
         fetchImpl: fetch,
@@ -269,7 +269,7 @@
         onPersistError: (error) => console.warn('保存多渠道开关本地缓存失败:', error)
     });
     const requestChannelRuntime = getRequestChannelUtils().createRequestChannelRuntime({
-        payload: requestChannelPayload,
+        payload: { channels: [] },
         defaultIntervals: apiIntervals,
         multiChannelToggleRuntime,
         tagOptions: {
@@ -728,29 +728,6 @@
         alertRuntimeController.evaluateQuoteAlertsOnce();
     }
 
-    async function loadPriceSnapshotConfig() {
-        priceSnapshotConfig = await dashboardApiClient.loadPriceSnapshotConfig();
-    }
-
-    async function loadArbSettings() {
-        arbCycleStartPriority = await dashboardApiClient.loadArbSettings({
-            normalizePriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority,
-            defaultPriority: DEFAULT_ARB_CYCLE_START_PRIORITY
-        });
-        invalidateArbRuleSnapshotCache();
-        clearTopologyCache();
-    }
-
-    async function loadRequestChannels() {
-        requestChannelPayload = await dashboardApiClient.loadRequestChannels();
-        requestChannelRuntime.setPayload(requestChannelPayload);
-        requestChannelRuntime.updateTagsForDashboard(dashboardState);
-    }
-
-    manualSaveBtn.addEventListener('click', () => { void performSave({ manual: true }); });
-    
-    themeToggleBtn.addEventListener('click', () => { themeRuntime.toggle(); });
-
     const dashboardActionController = getDashboardActionController().createDashboardActionController({
         activeFetchControllerRuntime,
         addCategoryModalRefs,
@@ -893,127 +870,70 @@
     });
     dashboardFormController.bind();
 
-    function handleConfirmModalClick(event) {
-        const action = getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal });
-        if (action.type !== 'none' && typeof event.stopPropagation === 'function') {
-            event.stopPropagation();
-        }
-        if (action.type === 'confirm') {
-            confirmActionRuntime.confirm();
-        }
-        if (action.type === 'confirm' || action.type === 'close') {
-            confirmActionRuntime.close(confirmModalRefs);
-        }
-    }
-
-    if (confirmOkBtn) confirmOkBtn.addEventListener('click', handleConfirmModalClick);
-    if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', handleConfirmModalClick);
-    confirmModal.addEventListener('click', handleConfirmModalClick);
-
-    async function init() {
-        audioNoticeEl.style.display = 'block';
-        requestChannelRuntime.loadMultiChannelEnabled();
-        requestChannelTagVisibilityRuntime.apply();
-        await dashboardApiClient.requestBackendConfigRefresh();
-        await loadPriceSnapshotConfig();
-        await loadArbSettings();
-        themeRuntime.load();
-        alertRuntimeController.loadMutedPathState();
-        
-        try {
-            const loadedConfig = await dashboardApiClient.loadDashboardConfig(DEFAULT_INTERVALS);
-            dashboardState = loadedConfig.dashboardState;
-            apiIntervals = loadedConfig.apiIntervals;
-            if (loadedConfig.migratedSolanaInterval) {
-                saveData();
-            }
-            requestChannelRuntime.setDefaultIntervals(apiIntervals);
-            await loadRequestChannels();
-
-            await alertRuntimeController.loadPathAlertConfig();
-            
-            renderDashboard();
-            updateArbPanel();
-            setArbPanelMaxHeight();
-            alertRuntimeController.renderAlertSettingsPanel();
-            
-            const allQuotes = dashboardState.flatMap(c => c.quotes || []);
-            
-            allQuotes.forEach(quote => {
-                addToQueue(quote);
-            });
-
-            arbDetailController.syncQuoteRunStateTag();
-            updateSchedulers();
-            priceSnapshotTimerRuntime.start(priceSnapshotConfig, () => {
-                void priceSnapshotSaveRuntime.saveIfNeeded();
-            });
-            window.addEventListener('storage', alertRuntimeController.handlePathAlertConfigSyncStorage);
-            alertRuntimeController.restartPathAlertScheduler();
-            
-            if (alertLogWindow && alertLogHeader) {
-                getDomRenderUtils().bindFloatingPanelChrome(alertLogWindow, alertLogHeader, {
-                    documentImpl: document,
-                    zIndexRuntime: floatingPanelZIndexRuntime
-                });
-            }
-            if (arbPathWindow && arbPathHeader) {
-                getDomRenderUtils().bindFloatingPanelChrome(arbPathWindow, arbPathHeader, {
-                    documentImpl: document,
-                    zIndexRuntime: floatingPanelZIndexRuntime,
-                    draggable: false
-                });
-            }
-            quoteSpreadController.bindPanelChrome();
-
-            applyQuoteDisplayToggleButtonState();
-            if (toggleArbBtn) {
-                toggleArbBtn.addEventListener('click', toggleArbPanel);
-            }
-            if (toggleQuoteDisplayBtn) {
-                toggleQuoteDisplayBtn.addEventListener('click', toggleQuoteDisplayMode);
-            }
-            if (toggleDataTerminalBtn) {
-                toggleDataTerminalBtn.addEventListener('click', toggleDataTerminalPanel);
-            }
-            quoteSpreadController.bindEvents();
-            if (toggleAlertLogBtn) {
-                toggleAlertLogBtn.addEventListener('click', alertRuntimeController.toggleAlertLogPanel);
-            }
-            if (toggleMultiChannelBtn) {
-                toggleMultiChannelBtn.addEventListener('click', toggleMultiChannel);
-            }
-            if (alertLogWindow) {
-                alertLogWindow.addEventListener('click', alertRuntimeController.handleAlertLogClick);
-                alertLogWindow.addEventListener('change', alertRuntimeController.handleAlertSettingsChange);
-            }
-            if (alertLogMutedLogContent) {
-                alertRuntimeController.restoreMutedAlertLogEntries(Date.now());
-            }
-            alertRuntimeController.renderMutedAlertStatePanel(Date.now());
-            alertRuntimeController.renderAlertLogTabState();
-            alertRuntimeController.syncMutedPathLogTimer();
-            arbPanelController.bindContentEvents();
-            arbDetailController.bindGridEvents();
-            arbDetailController.bindChromeEvents();
-            arbPanelController.bindGlobalFilterEvents();
-            keyboardShortcutController.bind();
-            if (arbPathMinBtn) {
-                arbPathMinBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    toggleArbPanel();
-                });
-            }
-            if (alertLogMinBtn) {
-                alertLogMinBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    alertRuntimeController.toggleAlertLogPanel();
-                });
-            }
-            window.addEventListener('resize', setArbPanelMaxHeight);
-        } catch (error) {
-            dashboardEl.innerHTML = `<div class="module"><h2 style="color: var(--error-color);">加载配置失败</h2><p>${error.message}。请确保后端服务已启动并刷新页面。</p></div>`;
-        }
-    }
+    const dashboardLifecycleController = getDashboardLifecycleController().createDashboardLifecycleController({
+        addToQueue,
+        alertRuntimeController,
+        applyQuoteDisplayToggleButtonState,
+        arbDetailController,
+        arbPanelController,
+        clearTopologyCache,
+        confirmActionRuntime,
+        dashboardApiClient,
+        dashboardRenderer: getDashboardRenderer(),
+        defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
+        defaultIntervals: DEFAULT_INTERVALS,
+        documentImpl: document,
+        domRenderUtils: getDomRenderUtils(),
+        floatingPanelZIndexRuntime,
+        getDashboardState: () => dashboardState,
+        getPriceSnapshotConfig: () => priceSnapshotConfig,
+        invalidateArbRuleSnapshotCache,
+        keyboardShortcutController,
+        normalizeArbCycleStartPriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority,
+        performSave,
+        priceSnapshotSaveRuntime,
+        priceSnapshotTimerRuntime,
+        quoteSpreadController,
+        renderDashboard,
+        requestChannelRuntime,
+        requestChannelTagVisibilityRuntime,
+        refs: {
+            dashboardEl,
+            audioNoticeEl,
+            manualSaveBtn,
+            themeToggleBtn,
+            confirmOkBtn,
+            confirmCancelBtn,
+            confirmModal,
+            confirmModalRefs,
+            alertLogWindow,
+            alertLogHeader,
+            alertLogMinBtn,
+            alertLogMutedLogContent,
+            arbPathWindow,
+            arbPathHeader,
+            arbPathMinBtn,
+            toggleArbBtn,
+            toggleQuoteDisplayBtn,
+            toggleDataTerminalBtn,
+            toggleAlertLogBtn,
+            toggleMultiChannelBtn
+        },
+        saveData,
+        setApiIntervals: (nextIntervals) => { apiIntervals = nextIntervals; },
+        setArbCycleStartPriority: (nextPriority) => { arbCycleStartPriority = nextPriority; },
+        setArbPanelMaxHeight,
+        setDashboardState: (nextState) => { dashboardState = nextState; },
+        setPriceSnapshotConfig: (nextConfig) => { priceSnapshotConfig = nextConfig; },
+        themeRuntime,
+        toggleArbPanel,
+        toggleDataTerminalPanel,
+        toggleMultiChannel,
+        toggleQuoteDisplayMode,
+        updateArbPanel,
+        updateSchedulers,
+        windowImpl: window
+    });
+    dashboardLifecycleController.bindStaticEvents();
     
-    init();
+    dashboardLifecycleController.init();

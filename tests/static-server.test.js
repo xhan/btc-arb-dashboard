@@ -125,6 +125,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-dom-refs.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-lifecycle-controller.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
       response.body.indexOf('src="src/quote/quote-pause-utils.js"') < response.body.indexOf('src="src/queue-stats/queue-stats-utils.js"')
@@ -218,6 +219,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-dom-refs.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -398,6 +405,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(domRefsResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
+    const lifecycleControllerResponse = await request('/src/app/dashboard-lifecycle-controller.js');
+    assert.strictEqual(lifecycleControllerResponse.statusCode, 200);
     const alertLogUiResponse = await request('/src/alerts/alert-log-ui-utils.js');
     assert.strictEqual(alertLogUiResponse.statusCode, 200);
     const alertRuntimeControllerResponse = await request('/src/alerts/alert-runtime-controller.js');
@@ -515,13 +524,21 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DataTerminalController is not loaded'));
     assert.ok(dataTerminalControllerResponse.body.includes('function createDataTerminalController(deps = {})'));
     assert.ok(moduleRegistryResponse.body.includes('function getWindowModule(windowImpl, globalName, missingMessage)'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardLifecycleController: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardLifecycleController is not loaded'));
+    assert.ok(lifecycleControllerResponse.body.includes('function createDashboardLifecycleController(deps = {})'));
+    assert.ok(lifecycleControllerResponse.body.includes('function bindStaticEvents()'));
+    assert.ok(lifecycleControllerResponse.body.includes('function bindLoadedEvents()'));
+    assert.ok(lifecycleControllerResponse.body.includes('function handleConfirmModalClick(event)'));
     assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadController: ['));
     assert.ok(quoteSpreadControllerResponse.body.includes('function createQuoteSpreadController(deps = {})'));
     assert.ok(quoteSpreadControllerResponse.body.includes('DEFAULT_UPDATE_INTERVAL_MS = 1000'));
     assert.ok(appJsResponse.body.includes('const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({'));
-    assert.ok(appJsResponse.body.includes('quoteSpreadController.bindPanelChrome();'));
-    assert.ok(appJsResponse.body.includes('quoteSpreadController.bindEvents();'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.quoteSpreadController.bindPanelChrome();'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.quoteSpreadController.bindEvents();'));
+    assert.ok(!appJsResponse.body.includes('quoteSpreadController.bindPanelChrome();'));
+    assert.ok(!appJsResponse.body.includes('quoteSpreadController.bindEvents();'));
     assert.ok(!appJsResponse.body.includes('QUOTE_SPREAD_UPDATE_INTERVAL_MS = 1000'));
     assert.ok(!appJsResponse.body.includes('function renderQuoteSpreadPanel()'));
     assert.ok(!appJsResponse.body.includes('function toggleQuoteSpreadPanel()'));
@@ -696,7 +713,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardFormControllerResponse.body.includes('readAddCategoryFormValues: deps.dashboardRenderer.readAddCategoryFormValues'));
     assert.ok(appJsResponse.body.includes('const confirmActionRuntime = getDashboardModalUtils().createConfirmActionRuntime();'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.confirmActionRuntime.show(deps.confirmModalRefs, message, callback)'));
-    assert.ok(appJsResponse.body.includes('confirmActionRuntime.close(confirmModalRefs)'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.confirmActionRuntime.close(refs.confirmModalRefs)'));
+    assert.ok(!appJsResponse.body.includes('confirmActionRuntime.close(confirmModalRefs)'));
     assert.ok(!appJsResponse.body.includes('getDashboardModalUtils().showModal(settingsModal)'));
     assert.ok(!appJsResponse.body.includes('getDashboardModalUtils().hideModal(settingsModal)'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.showModal(deps.quoteSettingsModal)'));
@@ -705,7 +723,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildAddCategoryDraft({'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.resolveAddCategoryModalClickAction(event, {'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.resolveQuoteSettingsModalClickAction(event, {'));
-    assert.ok(appJsResponse.body.includes('getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal })'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardRenderer.resolveConfirmModalClickAction(event, {'));
+    assert.ok(!appJsResponse.body.includes('getDashboardRenderer().resolveConfirmModalClickAction(event, { modal: confirmModal })'));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('input', handleDashboardInput)"));
     assert.ok(appJsResponse.body.includes("dashboardEl.addEventListener('click', handleDashboardClick)"));
     assert.ok(!appJsResponse.body.includes("const target = e.target.closest('button')"));
@@ -751,7 +770,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("document.getElementById('modal-title').textContent = modalState.title"));
     assert.ok(!appJsResponse.body.includes("quoteTokenAddressesEl.style.display = 'block';"));
     assert.ok(!dashboardRendererResponse.body.includes('>+ 添加报价</button>'));
-    assert.ok(appJsResponse.body.includes('arbPanelController.bindGlobalFilterEvents();'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.arbPanelController.bindGlobalFilterEvents();'));
+    assert.ok(!appJsResponse.body.includes('arbPanelController.bindGlobalFilterEvents();'));
     assert.ok(arbPanelControllerResponse.body.includes('arbPanelLayoutUtils.bindGlobalArbFilterEvents({'));
     assert.ok(!appJsResponse.body.includes('function updateArbGlobalFilterState('));
     assert.ok(!appJsResponse.body.includes('function handleArbGlobalFilterClear('));
@@ -778,7 +798,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("getArbPanelLayoutUtils().buildGlobalArbFilterEventPatch('excludedSymbolsInput', event)"));
     assert.ok(!appJsResponse.body.includes("arbPathHeader.addEventListener('click', handleArbPathHeaderClick)"));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes("closestEventTarget(event, 'button, input, textarea, select, [contenteditable=\"true\"]')"));
-    assert.ok(appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(alertLogWindow, alertLogHeader, {'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.domRenderUtils.bindFloatingPanelChrome(refs.alertLogWindow, refs.alertLogHeader, {'));
+    assert.ok(!appJsResponse.body.includes('getDomRenderUtils().bindFloatingPanelChrome(alertLogWindow, alertLogHeader, {'));
     assert.ok(!appJsResponse.body.includes('function bindFloatingPanelChrome(panel, header, options = {})'));
     assert.ok(appJsResponse.body.includes('const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({'));
     assert.ok(arbPanelControllerResponse.body.includes('options.zIndexRuntime.bringToFront(panel);'));
@@ -798,7 +819,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('if (!arbGlobalFilterBar) return;'));
     assert.ok(!appJsResponse.body.includes('function getEventTargetTextValue(event)'));
     assert.ok(!appJsResponse.body.includes('const nextChecked = Boolean(event && event.target && event.target.checked);'));
-    assert.ok(appJsResponse.body.includes('arbPanelController.bindContentEvents();'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.arbPanelController.bindContentEvents();'));
+    assert.ok(!appJsResponse.body.includes('arbPanelController.bindContentEvents();'));
     assert.ok(arbPanelControllerResponse.body.includes("addEventListener('pointerdown', handleContentPointerDown)"));
     assert.ok(!appJsResponse.body.includes("closest('.arb-opportunity-chart-link')"));
     assert.ok(!appJsResponse.body.includes("closest('[data-arb-opportunity-alert-id]')"));
@@ -806,7 +828,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes('/api/get-alert-config'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardApiUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardApiUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('dashboardApiClient.loadDashboardConfig(DEFAULT_INTERVALS)'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardApiClient.loadDashboardConfig(deps.defaultIntervals)'));
+    assert.ok(!appJsResponse.body.includes('dashboardApiClient.loadDashboardConfig(DEFAULT_INTERVALS)'));
     assert.ok(dashboardApiUtilsResponse.body.includes('/api/request-update-config'));
     assert.ok(dashboardApiUtilsResponse.body.includes('/api/get-request-channels'));
     assert.ok(dashboardApiUtilsResponse.body.includes('/api/save-config'));
@@ -900,8 +923,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const multiChannelToggleRuntime = getRequestChannelUtils().createMultiChannelToggleRuntime({'));
     assert.ok(appJsResponse.body.includes('const requestChannelRuntime = getRequestChannelUtils().createRequestChannelRuntime({'));
     assert.ok(appJsResponse.body.includes('const requestChannelTagVisibilityRuntime = getRequestChannelUtils().createRequestChannelTagVisibilityRuntime({'));
-    assert.ok(appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
-    assert.ok(appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelRuntime.loadMultiChannelEnabled();'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelTagVisibilityRuntime.apply();'));
+    assert.ok(!appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
+    assert.ok(!appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
     assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(appJsResponse.body.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks())'));
     assert.ok(!appJsResponse.body.includes('const result = multiChannelToggleRuntime.set(nextValue);'));
@@ -946,7 +971,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(!appJsResponse.body.includes("channels: [{ id: 'default', name: '默认通道'"));
     assert.ok(!appJsResponse.body.includes('function requestBackendConfigRefresh('));
-    assert.ok(appJsResponse.body.includes('await dashboardApiClient.requestBackendConfigRefresh();'));
+    assert.ok(lifecycleControllerResponse.body.includes('await deps.dashboardApiClient.requestBackendConfigRefresh();'));
+    assert.ok(!appJsResponse.body.includes('await dashboardApiClient.requestBackendConfigRefresh();'));
     assert.ok(dashboardActionControllerResponse.body.includes('function syncKyberExcludedSourcesControl(quote, selectedSource)'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyKyberExcludedSourcesControlState(deps.quoteSettingsModalElements, {'));
     assert.ok(!appJsResponse.body.includes("kyberDirectPoolsGroup.style.display = shouldShow ? 'flex' : 'none'"));
@@ -1000,7 +1026,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(requestChannelUtilsResponse.body.includes('function updateTagsForDashboard(dashboardState, tagOptions = {})'));
     assert.ok(appJsResponse.body.includes('tagOptions: {'));
     assert.ok(appJsResponse.body.includes('const updateRequestChannelTagForQuote = requestChannelRuntime.updateTagForQuote;'));
-    assert.ok(appJsResponse.body.includes('requestChannelRuntime.updateTagsForDashboard(dashboardState);'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelRuntime.updateTagsForDashboard(getDashboardState());'));
+    assert.ok(!appJsResponse.body.includes('requestChannelRuntime.updateTagsForDashboard(dashboardState);'));
     assert.ok(!appJsResponse.body.includes('function updateRequestChannelTagForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('showRequestChannelTags'));
     assert.ok(!appJsResponse.body.includes('getRequestChannelUtils().applyRequestChannelTagsVisibility(document.body'));
@@ -1026,8 +1053,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getThemeUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('ThemeUtils is not loaded'));
     assert.ok(appJsResponse.body.includes('const themeRuntime = getThemeUtils().createThemeRuntime({'));
-    assert.ok(appJsResponse.body.includes('themeRuntime.load();'));
-    assert.ok(appJsResponse.body.includes("themeToggleBtn.addEventListener('click', () => { themeRuntime.toggle(); });"));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.themeRuntime.load();'));
+    assert.ok(lifecycleControllerResponse.body.includes("addClickListener(refs.themeToggleBtn, () => { deps.themeRuntime.toggle(); });"));
+    assert.ok(!appJsResponse.body.includes('themeRuntime.load();'));
+    assert.ok(!appJsResponse.body.includes("themeToggleBtn.addEventListener('click', () => { themeRuntime.toggle(); });"));
     assert.ok(!appJsResponse.body.includes('const plan = getThemeUtils().buildThemeWritePlan(theme);'));
     assert.ok(!appJsResponse.body.includes('getThemeUtils().applyThemeWritePlan(plan, {'));
     assert.ok(!appJsResponse.body.includes('document.body.classList.remove(...plan.body.removeClasses);'));
@@ -1044,7 +1073,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getKeyboardShortcutController: ['));
     assert.ok(moduleRegistryResponse.body.includes('KeyboardShortcutController is not loaded'));
     assert.ok(appJsResponse.body.includes('const keyboardShortcutController = getKeyboardShortcutController().createKeyboardShortcutController({'));
-    assert.ok(appJsResponse.body.includes('keyboardShortcutController.bind();'));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.keyboardShortcutController.bind();'));
+    assert.ok(!appJsResponse.body.includes('keyboardShortcutController.bind();'));
     assert.ok(!appJsResponse.body.includes('function handleGlobalShortcuts(event)'));
     assert.ok(!appJsResponse.body.includes('function isTypingTarget(target)'));
     assert.ok(dashboardRendererResponse.body.includes('function renderQuoteItemShell(config = {})'));
@@ -1240,7 +1270,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload)'));
     assert.ok(appJsResponse.body.includes('const performSave = dashboardPersistenceRuntime.performSave;'));
     assert.ok(appJsResponse.body.includes('const saveData = dashboardPersistenceRuntime.scheduleSave;'));
-    assert.ok(appJsResponse.body.includes("manualSaveBtn.addEventListener('click', () => { void performSave({ manual: true }); });"));
+    assert.ok(lifecycleControllerResponse.body.includes("addClickListener(refs.manualSaveBtn, () => { void deps.performSave({ manual: true }); });"));
+    assert.ok(!appJsResponse.body.includes("manualSaveBtn.addEventListener('click', () => { void performSave({ manual: true }); });"));
     assert.ok(!appJsResponse.body.includes('const dashboardSaveRuntime ='));
     assert.ok(!appJsResponse.body.includes('const manualSaveFeedbackRuntime ='));
     assert.ok(!appJsResponse.body.includes('async function performSave'));
@@ -1373,7 +1404,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('getArbPanelController().createArbPanelController({'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbRuleSnapshotUtils.buildArbRuleSnapshot({'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority)'));
-    assert.ok(appJsResponse.body.includes('normalizePriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority'));
+    assert.ok(appJsResponse.body.includes('normalizeArbCycleStartPriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority'));
+    assert.ok(lifecycleControllerResponse.body.includes('normalizePriority: deps.normalizeArbCycleStartPriority'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbEquivalenceUtils.buildAliasRulesFromGroups('));
     assert.ok(!appJsResponse.body.includes('function getAssetEquivalenceGroups()'));
@@ -1770,7 +1802,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quotePauseUtilsResponse.body.includes('暂停分区'));
     assert.ok(quotePauseUtilsResponse.body.includes('恢复分区'));
     assert.ok(appJsResponse.body.includes('const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({'));
-    assert.ok(/priceSnapshotTimerRuntime\.start\(priceSnapshotConfig, \(\) => \{\s*void priceSnapshotSaveRuntime\.saveIfNeeded\(\);\s*\}\);/.test(appJsResponse.body));
+    assert.ok(/deps\.priceSnapshotTimerRuntime\.start\(getPriceSnapshotConfig\(\), \(\) => \{\s*void deps\.priceSnapshotSaveRuntime\.saveIfNeeded\(\);\s*\}\);/.test(lifecycleControllerResponse.body));
+    assert.ok(!/priceSnapshotTimerRuntime\.start\(priceSnapshotConfig, \(\) => \{\s*void priceSnapshotSaveRuntime\.saveIfNeeded\(\);\s*\}\);/.test(appJsResponse.body));
     assert.ok(!appJsResponse.body.includes('function startPriceSnapshotTimer('));
     assert.ok(!appJsResponse.body.includes('async function savePriceSnapshot()'));
     assert.ok(!appJsResponse.body.includes('let priceSnapshotTimer = null;'));
@@ -1829,8 +1862,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function restoreArbDetailInputSelection(selectionState)'));
     assert.ok(!appJsResponse.body.includes('input.select()'));
     assert.ok(!appJsResponse.body.includes("arbDetailGrid.addEventListener('mouseup'"));
-    assert.ok(appJsResponse.body.includes('setArbPanelMaxHeight();'));
-    assert.ok(appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
+    assert.ok(lifecycleControllerResponse.body.includes('deps.setArbPanelMaxHeight();'));
+    assert.ok(lifecycleControllerResponse.body.includes("windowImpl.addEventListener('resize', deps.setArbPanelMaxHeight)"));
+    assert.ok(!appJsResponse.body.includes('setArbPanelMaxHeight();'));
+    assert.ok(!appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
     assert.ok(arbPanelControllerResponse.body.includes('domRenderUtils.applyFloatingPanelViewportHeight(refs.arbPathWindow, windowImpl.innerHeight, { minHeight: 200 });'));
     assert.ok(!appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
     assert.ok(!appJsResponse.body.includes('arbPathWindow.style.height = `${maxHeight}px`;'));

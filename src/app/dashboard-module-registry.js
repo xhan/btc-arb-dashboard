@@ -36,6 +36,7 @@
     getDashboardApiUtils: ['DashboardApiUtils', 'DashboardApiUtils is not loaded'],
     getDashboardDomRefs: ['DashboardDomRefs', 'DashboardDomRefs is not loaded'],
     getDashboardFormController: ['DashboardFormController', 'DashboardFormController is not loaded'],
+    getDashboardLifecycleController: ['DashboardLifecycleController', 'DashboardLifecycleController is not loaded'],
     getDashboardModalUtils: ['DashboardModalUtils', 'DashboardModalUtils is not loaded'],
     getDashboardRenderer: ['DashboardRenderer', 'DashboardRenderer is not loaded'],
     getDashboardRuntimeUtils: ['DashboardRuntimeUtils', 'DashboardRuntimeUtils is not loaded'],

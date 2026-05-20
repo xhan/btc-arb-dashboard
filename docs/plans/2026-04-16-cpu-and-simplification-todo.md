@@ -147,6 +147,7 @@
   - `dashboard-forms`：报价设置保存、新增分区、新增报价和 add quote 表单控件同步已下沉到 `src/dashboard/dashboard-form-controller.js`，主入口只注入 renderer/modal/runtime 依赖
   - `dashboard-view`：报价项/分区 DOM 创建、拖拽排序、DEX 链接复制 target 绑定和 dashboard 整体 render 已下沉到 `src/dashboard/dashboard-view-controller.js`，`src/app/dashboard-app.js` 只注入展示依赖和回调
   - `dashboard-api-client`：后端配置刷新、看板配置加载、请求通道加载、price snapshot 配置/保存和配置保存请求已下沉到 `src/dashboard/dashboard-api-utils.js`，`src/app/dashboard-app.js` 只负责状态赋值、UI feedback 和后续调度
+  - `app-lifecycle`：启动加载、配置预加载、一次性全局事件绑定、浮窗 chrome 绑定和快捷键绑定已下沉到 `src/app/dashboard-lifecycle-controller.js`，为后续统一 command/view lifecycle、解决首次点击/快捷键不稳定提供单一入口
   - `dashboard-modal-dom`：add quote、add category、confirm 弹窗的 DOM 读写与显示/关闭适配、modal 当前选择状态、confirm 动作回调 runtime 和全局设置弹窗事件 runtime 已下沉到 `src/dashboard/dashboard-modal-utils.js`，quote settings 弹窗和全局 settings interval 的 DOM 读写适配也已下沉，dashboard modal 的通用 show/hide 也统一走该边界，主入口只保留新增/更新 quote、保存设置和确认动作后的 dashboard 状态更新与刷新调度
   - `snapshot/copy-ui`：价格快照 timer 和保存流程 runtime 已下沉到 `src/price-snapshots/price-snapshot-payload-utils.js`，复制提示 timer、价格文本复制解析、DEX 链接复制编排和 click 绑定已下沉到 `src/ui/copy-utils.js`
   - `audio-ui`：报警音频解锁 runtime、循环播放同步和一次性播放已下沉到 `src/ui/audio-utils.js`，`src/app/dashboard-app.js` 只保留业务触发条件和日志语义
@@ -336,6 +337,7 @@
   - `src/app/dashboard-app.js` 的 alert log 卡片插入 placement、restored 卡片清理和插入后 trimming 编排已下沉到 `src/alerts/alert-log-ui-utils.js`
   - `src/app/dashboard-app.js` 的主题 metadata、循环顺序、storage 读取、主题写入计划、计划执行和 runtime 编排已下沉到 `src/ui/theme-utils.js`
   - `src/app/dashboard-app.js` 的 dashboard 配置保存 payload、手动/自动保存反馈和 debounce 编排已下沉到 `src/dashboard/dashboard-runtime-utils.js` 的 `createDashboardPersistenceRuntime()`
+  - `src/app/dashboard-app.js` 的启动加载、配置加载后初始化、浮窗 chrome 绑定、主工具栏按钮绑定、确认弹窗 click 分发和全局快捷键绑定已下沉到 `src/app/dashboard-lifecycle-controller.js`
 - 建议改法：
   - 先删死代码和无生产调用 API
   - 继续统一剩余兼容边界命名
