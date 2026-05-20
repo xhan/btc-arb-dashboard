@@ -49,7 +49,29 @@
     };
   }
 
+  function createDashboardRuntimeBridge() {
+    const quoteRuntimeRef = createDashboardRuntimeRef({ name: 'Dashboard quote runtime' });
+    const arbAlertRuntimeRef = createDashboardRuntimeRef({ name: 'Dashboard arb alert runtime' });
+    const dashboardViewRenderRuntimeRef = createDashboardRuntimeRef({ name: 'Dashboard view render runtime' });
+
+    return {
+      quoteRuntimeRef,
+      arbAlertRuntimeRef,
+      dashboardViewRenderRuntimeRef,
+      abortActiveFetchControllers: () => quoteRuntimeRef.call('abortActiveFetchControllers'),
+      fetchQuoteByStrategy: (quote, options) => quoteRuntimeRef.call('fetchQuoteByStrategy', quote, options),
+      updateSchedulers: () => quoteRuntimeRef.call('updateSchedulers'),
+      invalidateArbRuleSnapshotCache: (options) => arbAlertRuntimeRef.call('invalidateArbRuleSnapshotCache', options),
+      updateArbPanel: (options) => arbAlertRuntimeRef.call('updateArbPanel', options),
+      isDashboardViewActive: () => Boolean(dashboardViewRenderRuntimeRef.callOr(false, 'isActive')),
+      markDashboardViewDirty: () => dashboardViewRenderRuntimeRef.callOr(false, 'markDirty'),
+      renderDashboardForCurrentState: () => dashboardViewRenderRuntimeRef.callOr(false, 'renderNow'),
+      ensureDashboardRendered: () => dashboardViewRenderRuntimeRef.callOr(false, 'ensureRendered')
+    };
+  }
+
   return {
+    createDashboardRuntimeBridge,
     createDashboardRuntimeRef
   };
 });

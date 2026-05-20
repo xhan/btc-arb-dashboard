@@ -86,30 +86,21 @@
         logger: console
     });
 
-    const quoteRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: 'Dashboard quote runtime' });
-    const arbAlertRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: 'Dashboard arb alert runtime' });
-    const dashboardViewRenderRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: 'Dashboard view render runtime' });
-    function abortActiveFetchControllers() {
-        return quoteRuntimeRef.call('abortActiveFetchControllers');
-    }
-    function fetchQuoteByStrategy(quote, options) {
-        return quoteRuntimeRef.call('fetchQuoteByStrategy', quote, options);
-    }
-    function updateSchedulers() {
-        return quoteRuntimeRef.call('updateSchedulers');
-    }
-    function invalidateArbRuleSnapshotCache(options) {
-        return arbAlertRuntimeRef.call('invalidateArbRuleSnapshotCache', options);
-    }
-    function updateArbPanel(options) {
-        return arbAlertRuntimeRef.call('updateArbPanel', options);
-    }
-    function isDashboardViewActive() {
-        return Boolean(dashboardViewRenderRuntimeRef.callOr(false, 'isActive'));
-    }
-    function markDashboardViewDirty() {
-        return dashboardViewRenderRuntimeRef.callOr(false, 'markDirty');
-    }
+    const dashboardRuntimeBridge = getDashboardRuntimeRefUtils().createDashboardRuntimeBridge();
+    const {
+        quoteRuntimeRef,
+        arbAlertRuntimeRef,
+        dashboardViewRenderRuntimeRef,
+        abortActiveFetchControllers,
+        fetchQuoteByStrategy,
+        updateSchedulers,
+        invalidateArbRuleSnapshotCache,
+        updateArbPanel,
+        isDashboardViewActive,
+        markDashboardViewDirty,
+        renderDashboardForCurrentState,
+        ensureDashboardRendered
+    } = dashboardRuntimeBridge;
     const floatingPanelZIndexRuntime = domRenderUtils.createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
     });
@@ -323,14 +314,6 @@
         updateQuotePairLabel,
         updateTrendArrow
     } = quoteUiController;
-    function renderDashboardForCurrentState() {
-        return dashboardViewRenderRuntimeRef.callOr(false, 'renderNow');
-    }
-
-    function ensureDashboardRendered() {
-        return dashboardViewRenderRuntimeRef.callOr(false, 'ensureRendered');
-    }
-
     const arbWorkspaceRuntime = getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({
         arbAlertRuntimeRef,
         modules: dashboardModules,
