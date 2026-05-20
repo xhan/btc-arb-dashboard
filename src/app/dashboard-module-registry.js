@@ -12,6 +12,7 @@
     getAlertDebugUtils: ['AlertDebugUtils', 'AlertDebugUtils is not loaded'],
     getAlertLogUiUtils: ['AlertLogUiUtils', 'AlertLogUiUtils is not loaded'],
     getAlertRuntimeController: ['AlertRuntimeController', 'AlertRuntimeController is not loaded'],
+    getArbAlertBridgeUtils: ['ArbAlertBridgeUtils', 'ArbAlertBridgeUtils is not loaded'],
     getArbCyclePriorityUtils: ['ArbCyclePriorityUtils', 'ArbCyclePriorityUtils is not loaded'],
     getArbDetailController: ['ArbDetailController', 'ArbDetailController is not loaded'],
     getArbDetailRefreshUtils: ['ArbDetailRefreshUtils', 'ArbDetailRefreshUtils is not loaded'],

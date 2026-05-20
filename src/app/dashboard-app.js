@@ -3,6 +3,7 @@
         getAlertDebugUtils,
         getAlertLogUiUtils,
         getAlertRuntimeController,
+        getArbAlertBridgeUtils,
         getArbCyclePriorityUtils,
         getArbDetailController,
         getArbDetailRefreshUtils,
@@ -87,6 +88,10 @@
         setTimer: setTimeout,
         clearTimer: clearTimeout,
         onExpired: () => updateArbPanel()
+    });
+    const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({
+        arbOpportunityRuntime,
+        arbOpportunityHighlightRuntime
     });
     const FLOATING_PANEL_BASE_Z_INDEX = 2100;
     const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({
@@ -491,10 +496,9 @@
     alertRuntimeController = getAlertRuntimeController().createAlertRuntimeController({
         alertDebugUtils: getAlertDebugUtils(),
         alertLogUiUtils: getAlertLogUiUtils(),
+        arbAlertBridgeRuntime,
         applyFloatingPanelDisplay,
         arbDetailUtils: getArbDetailUtils(),
-        arbOpportunityHighlightRuntime,
-        arbOpportunityRuntime,
         arbPanelLayoutUtils: getArbPanelLayoutUtils(),
         arbRuntimeMemoryUtils: getArbRuntimeMemoryUtils(),
         audioUtils: getAudioUtils(),

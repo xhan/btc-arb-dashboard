@@ -87,6 +87,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/arb/arb-equivalence-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-special-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-panel-layout-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-alert-bridge-utils.js"'));
     assert.ok(response.body.includes('src="src/ui/dom-render-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-path-config.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-path-config-utils.js"'));
@@ -303,6 +304,12 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="src/arb/arb-special-utils.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/arb/arb-runtime-memory-utils.js"') < response.body.indexOf('src="src/arb/arb-alert-bridge-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/arb/arb-alert-bridge-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/arb/arb-rule-snapshot-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
@@ -439,6 +446,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbPanelControllerResponse.statusCode, 200);
     const arbRuntimeMemoryUtilsResponse = await request('/src/arb/arb-runtime-memory-utils.js');
     assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
+    const arbAlertBridgeUtilsResponse = await request('/src/arb/arb-alert-bridge-utils.js');
+    assert.strictEqual(arbAlertBridgeUtilsResponse.statusCode, 200);
     const arbPathTemplateCacheUtilsResponse = await request('/src/arb/arb-path-template-cache-utils.js');
     assert.strictEqual(arbPathTemplateCacheUtilsResponse.statusCode, 200);
     const arbEquivalenceUtilsResponse = await request('/src/arb/arb-equivalence-utils.js');
@@ -540,6 +549,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DataTerminalUtils is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getDataTerminalController: ['));
     assert.ok(moduleRegistryResponse.body.includes('DataTerminalController is not loaded'));
+    assert.ok(moduleRegistryResponse.body.includes('getArbAlertBridgeUtils: ['));
+    assert.ok(moduleRegistryResponse.body.includes('ArbAlertBridgeUtils is not loaded'));
     assert.ok(dataTerminalControllerResponse.body.includes('function createDataTerminalController(deps = {})'));
     assert.ok(moduleRegistryResponse.body.includes('function getWindowModule(windowImpl, globalName, missingMessage)'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardLifecycleController: ['));
@@ -1517,7 +1528,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes("logWarning('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(alertRuntimeControllerResponse.body.includes("logInfo('[quote-alert] muted trigger skipped'"));
     assert.ok(appJsResponse.body.includes('const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbOpportunityRuntime.getOpportunityIdsForTarget(targetKey)'));
+    assert.ok(appJsResponse.body.includes('const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.markTriggeredOpportunities(targetKey, nowMs)'));
+    assert.ok(!alertRuntimeControllerResponse.body.includes('deps.arbOpportunityRuntime.getOpportunityIdsForTarget(targetKey)'));
+    assert.ok(!alertRuntimeControllerResponse.body.includes('deps.arbOpportunityHighlightRuntime.mark(opportunityIds, nowMs)'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);'));
     assert.ok(appJsResponse.body.includes('getOpportunity: (opportunityId) => arbOpportunityRuntime.getOpportunity(opportunityId)'));
     assert.ok(arbDetailControllerResponse.body.includes('let current = deps.getOpportunity(opportunityId);'));
@@ -1539,7 +1553,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function buildArbOpportunityHighlightTargetKeyFromCycle('));
     assert.ok(!appJsResponse.body.includes('function buildTriggeredArbOpportunityHighlightTargetKey('));
     assert.ok(!appJsResponse.body.includes('function registerArbOpportunityHighlightTarget('));
-    assert.ok(alertRuntimeControllerResponse.body.includes('return deps.arbOpportunityHighlightRuntime.mark(opportunityIds, nowMs);'));
+    assert.ok(arbAlertBridgeUtilsResponse.body.includes('function createArbAlertBridgeRuntime(options = {})'));
+    assert.ok(arbAlertBridgeUtilsResponse.body.includes('function markTriggeredOpportunities(targetKey, nowMs)'));
     assert.ok(!appJsResponse.body.includes('let arbHighlightedOpportunityUntilById = new Map();'));
     assert.ok(!appJsResponse.body.includes('let arbOpportunityHighlightCleanupTimer = null;'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function createArbOpportunityHighlightRuntime(options = {})'));

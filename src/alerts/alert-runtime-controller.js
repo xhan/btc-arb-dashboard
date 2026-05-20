@@ -218,10 +218,10 @@
         buildTargetKey: buildMutedPathTargetKey
       });
       if (!targetKey) return false;
-      const opportunityIds = deps.arbOpportunityRuntime.getOpportunityIdsForTarget(targetKey);
-      if (!Array.isArray(opportunityIds) || !opportunityIds.length) return false;
-
-      return deps.arbOpportunityHighlightRuntime.mark(opportunityIds, nowMs);
+      if (!deps.arbAlertBridgeRuntime || typeof deps.arbAlertBridgeRuntime.markTriggeredOpportunities !== 'function') {
+        return false;
+      }
+      return deps.arbAlertBridgeRuntime.markTriggeredOpportunities(targetKey, nowMs);
     }
 
     function appendQuoteAlertLogEntry(entry, nowMs = getNow()) {
