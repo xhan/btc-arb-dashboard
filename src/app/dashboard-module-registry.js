@@ -47,6 +47,7 @@
     getDashboardModalUtils: ['DashboardModalUtils', 'DashboardModalUtils is not loaded'],
     getDashboardQuoteDomainAdapter: ['DashboardQuoteDomainAdapter', 'DashboardQuoteDomainAdapter is not loaded'],
     getDashboardQuoteRuntime: ['DashboardQuoteRuntime', 'DashboardQuoteRuntime is not loaded'],
+    getDashboardQuoteWorkspaceRuntime: ['DashboardQuoteWorkspaceRuntime', 'DashboardQuoteWorkspaceRuntime is not loaded'],
     getDashboardRenderer: ['DashboardRenderer', 'DashboardRenderer is not loaded'],
     getDashboardRuntimeRefUtils: ['DashboardRuntimeRefUtils', 'DashboardRuntimeRefUtils is not loaded'],
     getDashboardRuntimeUtils: ['DashboardRuntimeUtils', 'DashboardRuntimeUtils is not loaded'],

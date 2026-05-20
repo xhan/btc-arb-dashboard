@@ -18,7 +18,6 @@
     const {
         getArbCyclePriorityUtils,
         getArbDetailUtils,
-        getChainDefaults,
         getCopyUtils,
         getDashboardActionController,
         getDashboardApiUtils,
@@ -31,8 +30,7 @@
         getDashboardFormController,
         getDashboardLifecycleController,
         getDashboardModalUtils,
-        getDashboardQuoteDomainAdapter,
-        getDashboardQuoteRuntime,
+        getDashboardQuoteWorkspaceRuntime,
         getDashboardRenderer,
         getDashboardRuntimeRefUtils,
         getDashboardRuntimeUtils,
@@ -49,14 +47,10 @@
         getPriceSnapshotPayloadUtils,
         getQueueStatsUtils,
         getQuoteDisplayUtils,
-        getQuoteFetchController,
         getQuotePauseUtils,
-        getQuoteQueueRuntimeUtils,
-        getQuoteRequestUtils,
         getQuoteSpreadController,
         getQuoteSpreadUtils,
         getQuoteStateRuntimeUtils,
-        getQuoteUiController,
         getRequestChannelUtils,
         getThemeUtils
     } = dashboardModules;
@@ -106,8 +100,7 @@
         updateArbPanel,
         isDashboardViewActive,
         markDashboardViewDirty,
-        renderDashboardForCurrentState,
-        ensureDashboardRendered
+        renderDashboardForCurrentState
     } = dashboardRuntimeBridge;
     const floatingPanelZIndexRuntime = domRenderUtils.createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
@@ -264,65 +257,92 @@
     const requestChannelTagVisibilityRuntime = dashboardShellRuntime.requestChannelTagVisibilityRuntime;
     const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;
 
-    const quoteDomainAdapter = getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({
-        chainDefaults: getChainDefaults(),
-        queueStatsUtils: getQueueStatsUtils(),
-        quotePauseUtils: getQuotePauseUtils(),
-        quoteRequestUtils: getQuoteRequestUtils()
+    let arbWorkspaceRuntime = null;
+    let arbDetailController = null;
+    let scheduleDataTerminalUpdate = () => {};
+    const quoteWorkspaceRuntime = getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({
+        modules: dashboardModules,
+        constants: {
+            defaultIntervals: DEFAULT_INTERVALS,
+            initialQuoteDisplayMode: DEFAULT_QUOTE_DISPLAY_MODE
+        },
+        deps: {
+            AbortController,
+            backendUrl: BACKEND_URL,
+            copyToastRuntime,
+            dashboardRuntimeUtils,
+            documentImpl: document,
+            domRenderUtils,
+            fetchImpl: fetch,
+            getApiIntervals,
+            getDashboardState,
+            getEffectiveRequestChannelIdForQuote,
+            getQuoteMarketState,
+            isDashboardUiActive: isDashboardViewActive,
+            isSchedulerPaused: () => arbDetailController && arbDetailController.isDashboardPaused(),
+            logger: console,
+            markDashboardUiDirty: markDashboardViewDirty,
+            onQuoteMainFetchSuccess: (quote, context) => {
+                if (arbWorkspaceRuntime && typeof arbWorkspaceRuntime.handleQuoteMainFetchSuccess === 'function') {
+                    arbWorkspaceRuntime.handleQuoteMainFetchSuccess(quote, context);
+                }
+            },
+            onQuoteMarketStateChanged: (quote, state, context) => {
+                if (arbWorkspaceRuntime && typeof arbWorkspaceRuntime.handleQuoteMarketStateChanged === 'function') {
+                    arbWorkspaceRuntime.handleQuoteMarketStateChanged(quote, state, context);
+                }
+            },
+            onQuoteMarketStateChangedSideEffect: () => {
+                scheduleDataTerminalUpdate();
+            },
+            quoteRuntimeRef,
+            quoteStateRuntime,
+            recordSourceAttempt: (source) => {
+                if (arbDetailController && typeof arbDetailController.recordSourceAttempt === 'function') {
+                    arbDetailController.recordSourceAttempt(source);
+                }
+            },
+            resetQuoteUiRuntimeState,
+            requestChannelRuntime,
+            setQuoteMarketState,
+            setTimeout,
+            clearTimeout
+        },
+        refs: {
+            copyToast,
+            globalTooltip,
+            toggleQuoteDisplayBtn
+        }
     });
     const {
-        getActiveQuotes,
-        getCategoryPauseAction,
-        getDefaultSourceForChain: defaultSourceResolver,
-        getQuoteChainDisplayName,
-        isCexOrderbookChain,
-        isCrossChainQuote,
-        isEvmChain,
-        isQuotePaused,
-        normalizeChainKey,
-        shouldQueueInverseFetch
-    } = quoteDomainAdapter;
-
-    const quoteUiController = getQuoteUiController().createQuoteUiController({
-        copyToast,
-        copyToastRuntime,
-        copyUtils: getCopyUtils(),
-        dexLinkUtils: getDexLinkUtils(),
-        documentImpl: document,
-        domRenderUtils,
-        getDashboardState,
-        getQuoteMarketState,
-        globalTooltip,
-        initialQuoteDisplayMode: DEFAULT_QUOTE_DISPLAY_MODE,
-        isEvmChain,
-        isDashboardUiActive: isDashboardViewActive,
-        isQuotePaused,
-        logger: console,
-        markDashboardUiDirty: markDashboardViewDirty,
-        quoteDisplayUtils: getQuoteDisplayUtils(),
-        quotePauseUtils: getQuotePauseUtils(),
-        quoteStateRuntime,
-        toggleQuoteDisplayBtn,
-        setTimeout,
-        clearTimeout
-    });
-    const {
+        activeFetchControllerRuntime,
+        addToQueue,
         applyActiveQuoteUiState,
         applyPausedQuoteUiState,
         applyQuoteDisplayToggleButtonState,
         copyDexLinkFromElement,
         copyPriceText,
         copyTextToClipboard,
-        getInverseQuoteDisplayText,
+        defaultSourceResolver,
+        getActiveQuotes,
+        getCategoryPauseAction,
+        getQuoteChainDisplayName,
         getQuoteDisplayMode,
         getQuoteDisplayText,
+        isCexOrderbookChain,
+        isCrossChainQuote,
+        isEvmChain,
+        isQuotePaused,
+        normalizeChainKey,
         handleQuoteHover,
+        queueQuoteRefresh,
+        removeFromQueue,
         showCopyToast,
         toggleQuoteDisplayMode,
         updateQuotePairLabel,
         updateTrendArrow
-    } = quoteUiController;
-    const arbWorkspaceRuntime = getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({
+    } = quoteWorkspaceRuntime;
+    arbWorkspaceRuntime = getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({
         arbAlertRuntimeRef,
         modules: dashboardModules,
         constants: {
@@ -361,7 +381,7 @@
             logError: (...args) => console.error(...args),
             logInfo: (...args) => console.info(...args),
             logWarning: (...args) => console.warn(...args),
-            onShowDashboard: ensureDashboardRendered,
+            onShowDashboard: renderDashboardForCurrentState,
             quoteStateRuntime,
             setQuoteMarketState,
             showCopyToast,
@@ -420,23 +440,21 @@
             clearTimeout
         }
     });
-    const {
-        alertRuntimeController,
-        arbDetailController,
-        arbPanelController,
-        dashboardViewModeController,
-        applyFloatingPanelDisplay,
-        buildLiveQuoteLabel,
-        clearTopologyCache,
-        formatArbPathLegLine,
-        formatChainLabel,
-        formatDetailNumber,
-        getAliasRules,
-        getSharedArbRuleSnapshot,
-        isRuleLeg,
-        scheduleArbPanelUpdate,
-        setArbPanelMaxHeight
-    } = arbWorkspaceRuntime;
+    const alertRuntimeController = arbWorkspaceRuntime.alertRuntimeController;
+    arbDetailController = arbWorkspaceRuntime.arbDetailController;
+    const arbPanelController = arbWorkspaceRuntime.arbPanelController;
+    const dashboardViewModeController = arbWorkspaceRuntime.dashboardViewModeController;
+    const applyFloatingPanelDisplay = arbWorkspaceRuntime.applyFloatingPanelDisplay;
+    const buildLiveQuoteLabel = arbWorkspaceRuntime.buildLiveQuoteLabel;
+    const clearTopologyCache = arbWorkspaceRuntime.clearTopologyCache;
+    const formatArbPathLegLine = arbWorkspaceRuntime.formatArbPathLegLine;
+    const formatChainLabel = arbWorkspaceRuntime.formatChainLabel;
+    const formatDetailNumber = arbWorkspaceRuntime.formatDetailNumber;
+    const getAliasRules = arbWorkspaceRuntime.getAliasRules;
+    const getSharedArbRuleSnapshot = arbWorkspaceRuntime.getSharedArbRuleSnapshot;
+    const isRuleLeg = arbWorkspaceRuntime.isRuleLeg;
+    const scheduleArbPanelUpdate = arbWorkspaceRuntime.scheduleArbPanelUpdate;
+    const setArbPanelMaxHeight = arbWorkspaceRuntime.setArbPanelMaxHeight;
     const closeArbDetailModal = arbWorkspaceRuntime.closeArbDetailModal;
     const openArbDetailModal = arbWorkspaceRuntime.openArbDetailModal;
     const renderArbDetailModal = arbWorkspaceRuntime.renderArbDetailModal;
@@ -489,13 +507,7 @@
     });
     const renderDataTerminalPanel = dataTerminalController.renderPanel;
     const toggleDataTerminalPanel = dataTerminalController.togglePanel;
-    const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
-    function handleQuoteMarketStateChanged(quote, state, context) {
-        if (arbWorkspaceRuntime && typeof arbWorkspaceRuntime.handleQuoteMarketStateChanged === 'function') {
-            arbWorkspaceRuntime.handleQuoteMarketStateChanged(quote, state, context);
-        }
-        scheduleDataTerminalUpdate();
-    }
+    scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
 
     const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({
         dashboardCommandControllerUtils: getDashboardCommandController(),
@@ -514,51 +526,6 @@
         }
     });
     const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;
-    const quoteRuntime = quoteRuntimeRef.set(getDashboardQuoteRuntime().createDashboardQuoteRuntime({
-        AbortController,
-        backendUrl: BACKEND_URL,
-        chainDefaults: getChainDefaults(),
-        dashboardRuntimeUtils,
-        defaultIntervals: DEFAULT_INTERVALS,
-        documentImpl: document,
-        domRenderUtils,
-        fetchImpl: fetch,
-        getApiIntervals,
-        getDashboardState,
-        getEffectiveRequestChannelIdForQuote,
-        getInverseQuoteDisplayText,
-        getQuoteDisplayMode,
-        getQuoteDisplayText,
-        getQuoteMarketState,
-        isDashboardUiActive: isDashboardViewActive,
-        isQuotePaused,
-        isSchedulerPaused: () => arbDetailController.isDashboardPaused(),
-        logWarning: (...args) => console.warn(...args),
-        markDashboardUiDirty: markDashboardViewDirty,
-        onQuoteMainFetchSuccess: arbWorkspaceRuntime.handleQuoteMainFetchSuccess,
-        onQuoteMarketStateChanged: handleQuoteMarketStateChanged,
-        applyActiveQuoteUiState,
-        queueStatsUtils: getQueueStatsUtils(),
-        quoteDisplayUtils: getQuoteDisplayUtils(),
-        quoteFetchControllerUtils: getQuoteFetchController(),
-        quoteQueueRuntimeUtils: getQuoteQueueRuntimeUtils(),
-        quoteRequestUtils: getQuoteRequestUtils(),
-        recordSourceAttempt: (source) => arbDetailController.recordSourceAttempt(source),
-        resetQuoteUiRuntimeState,
-        requestChannelRuntime,
-        requestChannelUtils: getRequestChannelUtils(),
-        setQuoteMarketState,
-        shouldQueueInverseFetch,
-        updateQuotePairLabel,
-        updateTrendArrow
-    }));
-    const {
-        activeFetchControllerRuntime,
-        addToQueue,
-        queueQuoteRefresh,
-        removeFromQueue,
-        toggleMultiChannel
-    } = quoteRuntime;
 
     function getDashboardLocalStorage() {
         return dashboardRuntimeUtils.getBrowserLocalStorage({ window }, {
