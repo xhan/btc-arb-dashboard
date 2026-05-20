@@ -99,8 +99,7 @@
     let quoteRuntime = null;
     let arbAlertRuntime = null;
     let dashboardViewModeController = null;
-    let dashboardRendered = false;
-    let dashboardDirty = false;
+    let dashboardViewRenderRuntime = null;
     function getQuoteRuntime() {
         if (!quoteRuntime) {
             throw new Error('Dashboard quote runtime is not initialized');
@@ -129,14 +128,10 @@
         return getArbAlertRuntime().updateArbPanel(options);
     }
     function isDashboardViewActive() {
-        return Boolean(
-            dashboardViewModeController
-            && dashboardViewModeController.getMode() === getDashboardViewModeController().APP_VIEW_DASHBOARD
-        );
+        return Boolean(dashboardViewRenderRuntime && dashboardViewRenderRuntime.isActive());
     }
     function markDashboardViewDirty() {
-        dashboardDirty = true;
-        return false;
+        return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.markDirty() : false;
     }
     const floatingPanelZIndexRuntime = getDomRenderUtils().createFloatingPanelZIndexRuntime({
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
@@ -499,16 +494,11 @@
         setArbPanelMaxHeight
     } = arbAlertRuntime;
     function renderDashboardForCurrentState() {
-        renderDashboard();
-        dashboardRendered = true;
-        dashboardDirty = false;
+        return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.renderNow() : false;
     }
 
     function ensureDashboardRendered() {
-        if (!dashboardRendered || dashboardDirty) {
-            renderDashboardForCurrentState();
-        }
-        return dashboardRendered;
+        return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.ensureRendered() : false;
     }
 
     dashboardViewModeController = getDashboardViewModeController().createDashboardViewModeController({
@@ -798,6 +788,11 @@
         createQuoteItem,
         renderDashboard
     } = dashboardViewController;
+    dashboardViewRenderRuntime = getDashboardViewModeController().createDashboardViewRenderRuntime({
+        activeMode: getDashboardViewModeController().APP_VIEW_DASHBOARD,
+        getMode: () => dashboardViewModeController && dashboardViewModeController.getMode(),
+        render: renderDashboard
+    });
 
     const dashboardFormController = getDashboardFormController().createDashboardFormController({
         addCategoryModal,

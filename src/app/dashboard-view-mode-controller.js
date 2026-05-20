@@ -123,10 +123,54 @@
     };
   }
 
+  function createDashboardViewRenderRuntime(options = {}) {
+    const activeMode = normalizeViewMode(options.activeMode || APP_VIEW_DASHBOARD);
+    const render = typeof options.render === 'function' ? options.render : () => {};
+    let rendered = false;
+    let dirty = false;
+
+    function getMode() {
+      return normalizeViewMode(typeof options.getMode === 'function' ? options.getMode() : null);
+    }
+
+    function isActive() {
+      return getMode() === activeMode;
+    }
+
+    function markDirty() {
+      dirty = true;
+      return false;
+    }
+
+    function renderNow() {
+      render();
+      rendered = true;
+      dirty = false;
+      return rendered;
+    }
+
+    function ensureRendered() {
+      if (!rendered || dirty) {
+        renderNow();
+      }
+      return rendered;
+    }
+
+    return {
+      ensureRendered,
+      hasRendered: () => rendered,
+      isActive,
+      isDirty: () => dirty,
+      markDirty,
+      renderNow
+    };
+  }
+
   return {
     APP_VIEW_ARB,
     APP_VIEW_DASHBOARD,
     VIEW_CLASS_BY_MODE,
+    createDashboardViewRenderRuntime,
     createDashboardViewModeController,
     normalizeViewMode,
     setButtonActive

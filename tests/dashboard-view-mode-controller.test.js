@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   APP_VIEW_ARB,
   APP_VIEW_DASHBOARD,
+  createDashboardViewRenderRuntime,
   createDashboardViewModeController,
   normalizeViewMode,
   setButtonActive
@@ -121,4 +122,35 @@ assert.deepStrictEqual(calls, [
   ['showDashboard'],
   ['updateArbPanel', true],
   ['setArbPanelMaxHeight']
+]);
+
+const renderCalls = [];
+let activeMode = APP_VIEW_ARB;
+const renderRuntime = createDashboardViewRenderRuntime({
+  activeMode: APP_VIEW_DASHBOARD,
+  getMode: () => activeMode,
+  render: () => renderCalls.push(['render'])
+});
+
+assert.strictEqual(renderRuntime.isActive(), false);
+assert.strictEqual(renderRuntime.hasRendered(), false);
+assert.strictEqual(renderRuntime.isDirty(), false);
+assert.strictEqual(renderRuntime.markDirty(), false);
+assert.strictEqual(renderRuntime.isDirty(), true);
+
+activeMode = APP_VIEW_DASHBOARD;
+assert.strictEqual(renderRuntime.isActive(), true);
+assert.strictEqual(renderRuntime.ensureRendered(), true);
+assert.strictEqual(renderRuntime.hasRendered(), true);
+assert.strictEqual(renderRuntime.isDirty(), false);
+assert.deepStrictEqual(renderCalls, [['render']]);
+
+assert.strictEqual(renderRuntime.ensureRendered(), true);
+assert.deepStrictEqual(renderCalls, [['render']]);
+
+renderRuntime.markDirty();
+assert.strictEqual(renderRuntime.ensureRendered(), true);
+assert.deepStrictEqual(renderCalls, [
+  ['render'],
+  ['render']
 ]);

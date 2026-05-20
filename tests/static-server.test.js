@@ -613,11 +613,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getDashboardViewModeController: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardViewModeController is not loaded'));
     assert.ok(viewModeControllerResponse.body.includes('function createDashboardViewModeController(deps = {})'));
+    assert.ok(viewModeControllerResponse.body.includes('function createDashboardViewRenderRuntime(options = {})'));
     assert.ok(viewModeControllerResponse.body.includes("const APP_VIEW_ARB = 'arb'"));
     assert.ok(viewModeControllerResponse.body.includes('function toggleArbView(options = {})'));
     assert.ok(viewModeControllerResponse.body.includes('deps.onShowDashboard'));
     assert.ok(appJsResponse.body.includes('getDashboardViewModeController().createDashboardViewModeController({'));
-    assert.ok(appJsResponse.body.includes('let dashboardRendered = false;'));
+    assert.ok(appJsResponse.body.includes('let dashboardViewRenderRuntime = null;'));
+    assert.ok(appJsResponse.body.includes('dashboardViewRenderRuntime = getDashboardViewModeController().createDashboardViewRenderRuntime({'));
     assert.ok(appJsResponse.body.includes('onShowDashboard: ensureDashboardRendered'));
     assert.ok(appJsResponse.body.includes("'toggle-arb-panel': dashboardViewModeController.toggleArbView"));
     assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-arb-panel')"));
@@ -793,9 +795,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRuntimeResponse.body.includes('const quoteRefreshRuntime = options.quoteQueueRuntimeUtils.createQuoteRefreshRuntime({'));
     assert.ok(appJsResponse.body.trimStart().startsWith('(function () {'));
     assert.ok(appJsResponse.body.trimEnd().endsWith('}());'));
-    assert.ok(appJsResponse.body.includes('let dashboardDirty = false;'));
     assert.ok(appJsResponse.body.includes('function markDashboardViewDirty()'));
-    assert.ok(appJsResponse.body.includes('if (!dashboardRendered || dashboardDirty)'));
+    assert.ok(appJsResponse.body.includes('return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.markDirty() : false;'));
+    assert.ok(appJsResponse.body.includes('return dashboardViewRenderRuntime ? dashboardViewRenderRuntime.ensureRendered() : false;'));
+    assert.ok(!appJsResponse.body.includes('let dashboardDirty = false;'));
+    assert.ok(!appJsResponse.body.includes('let dashboardRendered = false;'));
     assert.ok(appJsResponse.body.includes('const quoteDomainAdapter = getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({'));
     assert.ok(appJsResponse.body.includes('quoteRuntime = getDashboardQuoteRuntime().createDashboardQuoteRuntime({'));
     assert.ok(appJsResponse.body.includes('getDefaultSourceForChain: defaultSourceResolver,'));
