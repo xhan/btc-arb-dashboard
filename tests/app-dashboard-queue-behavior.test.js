@@ -7,21 +7,22 @@ const dashboardActionControllerJs = fs.readFileSync(path.join(__dirname, '..', '
 const dashboardFormControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/dashboard/dashboard-form-controller.js'), 'utf8');
 const arbDetailControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/arb/arb-detail-controller.js'), 'utf8');
 const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-queue-runtime-utils.js'), 'utf8');
+const dashboardQuoteRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-quote-runtime.js'), 'utf8');
 const quoteFetchControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-fetch-controller.js'), 'utf8');
 const requestChannelUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'src/request-channel/request-channel-utils.js'), 'utf8');
 
 assert.ok(
-  appJs.includes('const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({'),
+  dashboardQuoteRuntimeJs.includes('const quoteQueueRuntime = options.quoteQueueRuntimeUtils.createQuoteQueueRuntime({'),
   '主看板应通过 QuoteQueueRuntimeUtils 创建队列运行时'
 );
 
 assert.ok(
-  appJs.includes('const quoteRefreshRuntime = getQuoteQueueRuntimeUtils().createQuoteRefreshRuntime({'),
+  dashboardQuoteRuntimeJs.includes('const quoteRefreshRuntime = options.quoteQueueRuntimeUtils.createQuoteRefreshRuntime({'),
   '主看板应通过 QuoteQueueRuntimeUtils 创建报价刷新运行时'
 );
 
 assert.ok(
-  appJs.includes('const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({'),
+  dashboardQuoteRuntimeJs.includes('const activeFetchControllerRuntime = options.quoteQueueRuntimeUtils.createActiveFetchControllerRuntime({'),
   '主看板应通过 QuoteQueueRuntimeUtils 创建 fetch controller 运行时'
 );
 
@@ -31,17 +32,17 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('const addToQueue = quoteRefreshRuntime.addToQueue;'),
+  dashboardQuoteRuntimeJs.includes('addToQueue: quoteRefreshRuntime.addToQueue,'),
   '主看板添加报价时应委托报价刷新运行时'
 );
 
 assert.ok(
-  appJs.includes('const removeFromQueue = quoteRefreshRuntime.removeFromQueue;'),
+  dashboardQuoteRuntimeJs.includes('removeFromQueue: quoteRefreshRuntime.removeFromQueue,'),
   '主看板删除报价任务时应委托报价刷新运行时'
 );
 
 assert.ok(
-  appJs.includes('const updateSchedulers = quoteRefreshRuntime.updateSchedulers;'),
+  dashboardQuoteRuntimeJs.includes('updateSchedulers: quoteRefreshRuntime.updateSchedulers'),
   '主看板刷新 scheduler 时应委托报价刷新运行时'
 );
 
@@ -80,7 +81,7 @@ assert.ok(
 
 assert.ok(
   !appJs.includes('function abortQuoteFetch(')
-    && appJs.includes('activeFetchControllerRuntime,')
+    && dashboardQuoteRuntimeJs.includes('activeFetchControllerRuntime,')
     && queueRuntimeJs.includes('activeFetchControllerRuntime.abort(quote.id);')
     && dashboardActionControllerJs.includes('deps.activeFetchControllerRuntime.abort(quoteId);'),
   '主看板不应保留 fetch abort 单用途包装，报价暂停由 dashboard action controller 委托 runtime'
@@ -88,13 +89,14 @@ assert.ok(
 
 assert.ok(
   !appJs.includes('function abortActiveQuoteFetches(')
-    && appJs.includes('abortActiveFetchControllers: () => activeFetchControllerRuntime.abortAll()'),
+    && dashboardQuoteRuntimeJs.includes('abortActiveFetchControllers: () => activeFetchControllerRuntime.abortAll()'),
   '主看板不应保留 active fetch 批量 abort 单用途包装'
 );
 
 assert.ok(
   !appJs.includes('function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled)')
-    && appJs.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks())')
+    && dashboardQuoteRuntimeJs.includes('requestChannelRuntime.toggleMultiChannel(')
+    && dashboardQuoteRuntimeJs.includes('quoteRefreshRuntime.getQueueMutationCallbacks()')
     && requestChannelUtilsJs.includes('function buildMultiChannelChangedQuotes(dashboardState, requestChannels, previousEnabled, nextEnabled)'),
   '多渠道开关影响范围应由 request-channel runtime 统一计算'
 );
@@ -121,17 +123,17 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('getQueueStatsUtils().appendQuoteQueueTasks(queue, quote)'),
+  dashboardQuoteRuntimeJs.includes('options.queueStatsUtils.appendQuoteQueueTasks(queue, quote)'),
   '队列 task 构造和去重应继续复用 QueueStatsUtils'
 );
 
 assert.ok(
-  appJs.includes('getQueueStatsUtils().removeQuoteTasksFromQueues(queueState, quoteId)'),
+  dashboardQuoteRuntimeJs.includes('options.queueStatsUtils.removeQuoteTasksFromQueues(queueState, quoteId)'),
   '删除 quote 任务应继续复用 QueueStatsUtils，避免多处维护队列结构'
 );
 
 assert.ok(
-  appJs.includes('getQueueStatsUtils().deferQueueTask(queue, index)'),
+  dashboardQuoteRuntimeJs.includes('options.queueStatsUtils.deferQueueTask(queue, index)'),
   '当前任务 defer 的索引规则应继续由 QueueStatsUtils 统一维护'
 );
 
@@ -141,7 +143,7 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('getQueueStatsUtils().buildManagedQueueKeys({'),
+  dashboardQuoteRuntimeJs.includes('options.queueStatsUtils.buildManagedQueueKeys({'),
   '受管理队列集合应由 QueueStatsUtils 统一生成'
 );
 
@@ -151,7 +153,7 @@ assert.ok(
 );
 
 assert.ok(
-  appJs.includes('getQueueStatsUtils().getQueueTaskStatus('),
+  dashboardQuoteRuntimeJs.includes('options.queueStatsUtils.getQueueTaskStatus('),
   '队列任务状态判断应由 QueueStatsUtils 统一维护'
 );
 

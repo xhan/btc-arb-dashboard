@@ -47,6 +47,7 @@
         getDashboardLifecycleController,
         getDashboardModalUtils,
         getDashboardQuoteDomainAdapter,
+        getDashboardQuoteRuntime,
         getDashboardRenderer,
         getDashboardRuntimeUtils,
         getDashboardViewModeController,
@@ -92,10 +93,23 @@
         logger: console
     });
 
-    const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({
-        AbortController
-    });
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
+    let quoteRuntime = null;
+    function getQuoteRuntime() {
+        if (!quoteRuntime) {
+            throw new Error('Dashboard quote runtime is not initialized');
+        }
+        return quoteRuntime;
+    }
+    function abortActiveFetchControllers() {
+        return getQuoteRuntime().abortActiveFetchControllers();
+    }
+    function fetchQuoteByStrategy(quote, options) {
+        return getQuoteRuntime().fetchQuoteByStrategy(quote, options);
+    }
+    function updateSchedulers() {
+        return getQuoteRuntime().updateSchedulers();
+    }
     const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
     const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
         durationMs: 8000,
@@ -567,7 +581,7 @@
         arbDetailRefreshUtils: getArbDetailRefreshUtils(),
         arbDetailUtils: getArbDetailUtils(),
         arbPanelLayoutUtils: getArbPanelLayoutUtils(),
-        abortActiveFetchControllers: () => activeFetchControllerRuntime.abortAll(),
+        abortActiveFetchControllers,
         buildArbPathLegLineOptions,
         chartAutoRefreshIntervalMs: CHART_AUTO_REFRESH_INTERVAL_MS,
         closestEventTarget,
@@ -577,7 +591,7 @@
         documentImpl: document,
         domRenderUtils: getDomRenderUtils(),
         fetchImpl: fetch,
-        fetchQuoteByStrategy: (quote, options) => fetchQuoteByStrategy(quote, options),
+        fetchQuoteByStrategy,
         findQuoteById,
         formatChainLabel,
         formatDetailNumber,
@@ -605,7 +619,7 @@
         refreshOpportunities: () => updateArbPanel(),
         setQuoteMarketState,
         showCopyToast,
-        updateSchedulers: () => updateSchedulers(),
+        updateSchedulers,
         windowImpl: window,
         setTimeout,
         clearTimeout
@@ -660,26 +674,36 @@
         }
     });
     const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;
-    const quoteFetchController = getQuoteFetchController().createQuoteFetchController({
-        activeFetchControllerRuntime,
+    quoteRuntime = getDashboardQuoteRuntime().createDashboardQuoteRuntime({
+        AbortController,
         backendUrl: BACKEND_URL,
         chainDefaults: getChainDefaults(),
         checkPriceForAlerts: alertRuntimeController.checkPriceForAlerts,
         dashboardRuntimeUtils: getDashboardRuntimeUtils(),
+        defaultIntervals: DEFAULT_INTERVALS,
         documentImpl: document,
         domRenderUtils: getDomRenderUtils(),
         fetchImpl: fetch,
+        getApiIntervals: () => apiIntervals,
+        getDashboardState: () => dashboardState,
         getEffectiveRequestChannelIdForQuote,
         getInverseQuoteDisplayText,
         getQuoteDisplayMode,
         getQuoteDisplayText,
         getQuoteMarketState,
         isQuotePaused,
+        isSchedulerPaused: () => arbDetailController.isDashboardPaused(),
         logWarning: (...args) => console.warn(...args),
+        applyActiveQuoteUiState,
+        queueStatsUtils: getQueueStatsUtils(),
         quoteDisplayUtils: getQuoteDisplayUtils(),
+        quoteFetchControllerUtils: getQuoteFetchController(),
+        quoteQueueRuntimeUtils: getQuoteQueueRuntimeUtils(),
         quoteRequestUtils: getQuoteRequestUtils(),
         recordSourceAttempt: (source) => arbDetailController.recordSourceAttempt(source),
         resetQuoteUiRuntimeState,
+        requestChannelRuntime,
+        requestChannelUtils: getRequestChannelUtils(),
         scheduleArbPanelUpdate,
         scheduleDataTerminalUpdate,
         setQuoteMarketState,
@@ -687,54 +711,18 @@
         updateQuotePairLabel,
         updateTrendArrow
     });
-    const fetchQuoteByStrategy = quoteFetchController.fetchByStrategy;
-    const fetchSingleQuote = quoteFetchController.fetchSingle;
+    const {
+        activeFetchControllerRuntime,
+        addToQueue,
+        queueQuoteRefresh,
+        removeFromQueue,
+        toggleMultiChannel
+    } = quoteRuntime;
 
     function getDashboardLocalStorage() {
         return getDashboardRuntimeUtils().getBrowserLocalStorage({ window }, {
             onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
         });
-    }
-
-    const quoteQueueRuntime = getQuoteQueueRuntimeUtils().createQuoteQueueRuntime({
-        getDashboardState: () => dashboardState,
-        getQueueTypeForQuote: (quote) => getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelRuntime.getOptions(), {
-            multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled()
-        }),
-        getQueueIntervalMs: (type) => getRequestChannelUtils().getEffectiveIntervalForQueue(type, apiIntervals, requestChannelRuntime.getOptions()),
-        getManagedQueueKeys: () => getQueueStatsUtils().buildManagedQueueKeys({
-            defaultIntervals: DEFAULT_INTERVALS,
-            requestChannels: requestChannelRuntime.getOptions(),
-            multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled(),
-            quotes: dashboardState.flatMap((category) => category.quotes || [])
-        }),
-        appendQuoteQueueTasks: (queue, quote) => getQueueStatsUtils().appendQuoteQueueTasks(queue, quote),
-        removeQuoteTasksFromQueues: (queueState, quoteId) => getQueueStatsUtils().removeQuoteTasksFromQueues(queueState, quoteId),
-        deferQueueTask: (queue, index) => getQueueStatsUtils().deferQueueTask(queue, index),
-        getQueueTaskStatus: (task, type, quote) => getQueueStatsUtils().getQueueTaskStatus(
-            task,
-            type,
-            quote,
-            requestChannelRuntime.getOptions(),
-            { multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled() }
-        ),
-        isSchedulerPaused: () => arbDetailController.isDashboardPaused(),
-        hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId),
-        fetchQuote: (quote, mode) => fetchSingleQuote(quote, mode)
-    });
-    const quoteRefreshRuntime = getQuoteQueueRuntimeUtils().createQuoteRefreshRuntime({
-        activeFetchControllerRuntime,
-        applyActiveQuoteUiState,
-        isQuotePaused,
-        quoteQueueRuntime
-    });
-    const addToQueue = quoteRefreshRuntime.addToQueue;
-    const queueQuoteRefresh = quoteRefreshRuntime.queueQuoteRefresh;
-    const removeFromQueue = quoteRefreshRuntime.removeFromQueue;
-    const updateSchedulers = quoteRefreshRuntime.updateSchedulers;
-
-    function toggleMultiChannel() {
-        requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks());
     }
 
     function closestEventTarget(event, selector) {

@@ -135,6 +135,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-queue-runtime-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-dom-refs.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-quote-domain-adapter.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-quote-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
@@ -237,6 +238,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-quote-domain-adapter.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-quote-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -447,6 +451,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(domRefsResponse.statusCode, 200);
     const quoteDomainAdapterResponse = await request('/src/app/dashboard-quote-domain-adapter.js');
     assert.strictEqual(quoteDomainAdapterResponse.statusCode, 200);
+    const quoteRuntimeResponse = await request('/src/app/dashboard-quote-runtime.js');
+    assert.strictEqual(quoteRuntimeResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
@@ -758,10 +764,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DashboardDomRefs is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardQuoteDomainAdapter: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardQuoteDomainAdapter is not loaded'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardQuoteRuntime: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardQuoteRuntime is not loaded'));
     assert.ok(quoteDomainAdapterResponse.body.includes('function createDashboardQuoteDomainAdapter(options = {})'));
     assert.ok(quoteDomainAdapterResponse.body.includes('return chainDefaults.buildQuoteChainDisplayName(quote);'));
     assert.ok(quoteDomainAdapterResponse.body.includes('return chainDefaults.isCrossChainQuote(quote);'));
+    assert.ok(quoteRuntimeResponse.body.includes('function createDashboardQuoteRuntime(options = {})'));
+    assert.ok(quoteRuntimeResponse.body.includes('const activeFetchControllerRuntime = options.quoteQueueRuntimeUtils.createActiveFetchControllerRuntime({'));
+    assert.ok(quoteRuntimeResponse.body.includes('const quoteFetchController = options.quoteFetchControllerUtils.createQuoteFetchController({'));
+    assert.ok(quoteRuntimeResponse.body.includes('const quoteQueueRuntime = options.quoteQueueRuntimeUtils.createQuoteQueueRuntime({'));
+    assert.ok(quoteRuntimeResponse.body.includes('const quoteRefreshRuntime = options.quoteQueueRuntimeUtils.createQuoteRefreshRuntime({'));
     assert.ok(appJsResponse.body.includes('const quoteDomainAdapter = getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({'));
+    assert.ok(appJsResponse.body.includes('quoteRuntime = getDashboardQuoteRuntime().createDashboardQuoteRuntime({'));
     assert.ok(appJsResponse.body.includes('getDefaultSourceForChain: defaultSourceResolver,'));
     assert.ok(!appJsResponse.body.includes('function getQuoteChainDisplayName(quote)'));
     assert.ok(!appJsResponse.body.includes('function isCrossChainQuote(quote)'));
@@ -951,14 +965,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('QuoteUiController is not loaded'));
     assert.ok(appJsResponse.body.includes('const quoteUiController = getQuoteUiController().createQuoteUiController({'));
     assert.ok(quoteUiControllerResponse.body.includes('function createQuoteUiController(deps = {})'));
-    assert.ok(appJsResponse.body.includes('const quoteFetchController = getQuoteFetchController().createQuoteFetchController({'));
+    assert.ok(quoteRuntimeResponse.body.includes('options.quoteFetchControllerUtils.createQuoteFetchController({'));
     assert.ok(quoteFetchControllerResponse.body.includes('function createQuoteFetchController(deps = {})'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteRequestUtils.resolveQuoteRequestConfig(targetSource, quote)'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteRequestUtils.requestResolvedQuote({'));
     assert.ok(!appJsResponse.body.includes('function getMarketQuote(quote, signal, config)'));
     assert.ok(!appJsResponse.body.includes('function getCexOrderbookQuote(quote, signal, options)'));
-    assert.ok(appJsResponse.body.includes('const activeFetchControllerRuntime = getQuoteQueueRuntimeUtils().createActiveFetchControllerRuntime({'));
-    assert.ok(appJsResponse.body.includes('hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId)'));
+    assert.ok(quoteRuntimeResponse.body.includes('options.quoteQueueRuntimeUtils.createActiveFetchControllerRuntime({'));
+    assert.ok(quoteRuntimeResponse.body.includes('hasActiveFetchController: (quoteId) => activeFetchControllerRuntime.has(quoteId)'));
     assert.ok(quoteFetchControllerResponse.body.includes('const controller = deps.activeFetchControllerRuntime.create(quote.id);'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.activeFetchControllerRuntime.deleteIfCurrent(quote.id, controller);'));
     assert.ok(!appJsResponse.body.includes('let activeFetchControllers = new Map();'));
@@ -1035,7 +1049,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
     assert.ok(!appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
     assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
-    assert.ok(appJsResponse.body.includes('requestChannelRuntime.toggleMultiChannel(dashboardState, quoteRefreshRuntime.getQueueMutationCallbacks())'));
+    assert.ok(quoteRuntimeResponse.body.includes('requestChannelRuntime.toggleMultiChannel('));
+    assert.ok(quoteRuntimeResponse.body.includes('quoteRefreshRuntime.getQueueMutationCallbacks()'));
     assert.ok(!appJsResponse.body.includes('const result = multiChannelToggleRuntime.set(nextValue);'));
     assert.ok(!appJsResponse.body.includes('utils.loadMultiChannelEnabledFromStorage(getDashboardLocalStorage(), {'));
     assert.ok(!appJsResponse.body.includes('utils.persistMultiChannelEnabledToStorage(getDashboardLocalStorage(), multiChannelEnabled, {'));
@@ -1050,8 +1065,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("raw !== 'false'"));
     assert.ok(!appJsResponse.body.includes("multiChannelEnabled ? 'true' : 'false'"));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelOptionsHtml(requestChannelOptions.channels || [])'));
-    assert.ok(appJsResponse.body.includes('getQueueStatsUtils().getQueueTypeForQuote(quote, requestChannelRuntime.getOptions(), {'));
-    assert.ok(appJsResponse.body.includes('multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled()'));
+    assert.ok(quoteRuntimeResponse.body.includes('options.queueStatsUtils.getQueueTypeForQuote(quote, requestChannelRuntime.getOptions(), {'));
+    assert.ok(quoteRuntimeResponse.body.includes('multiChannelEnabled: requestChannelRuntime.isMultiChannelEnabled()'));
     assert.ok(quoteDomainAdapterResponse.body.includes('queueStatsUtils.shouldQueueInverseFetch(quote)'));
     assert.ok(!appJsResponse.body.includes('function shouldQueueInverseFetch(quote)'));
     assert.ok(!appJsResponse.body.includes('function getRequestChannelDisplayForQuote(quote)'));
