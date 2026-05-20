@@ -50,6 +50,7 @@
         getQuotePauseUtils,
         getQuoteQueueRuntimeUtils,
         getQuoteRequestUtils,
+        getQuoteSpreadUtils,
         getQuoteStateRuntimeUtils,
         getQuoteUiController,
         getRequestChannelUtils,
@@ -78,6 +79,7 @@
         AbortController
     });
     let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
+    let quoteSpreadTimer = null;
     const CHART_AUTO_REFRESH_INTERVAL_MS = 5000;
     const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();
     const arbOpportunityHighlightRuntime = getArbRuntimeMemoryUtils().createArbOpportunityHighlightRuntime({
@@ -91,6 +93,7 @@
         baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
     });
     const DATA_TERMINAL_UPDATE_DELAY_MS = 1000;
+    const QUOTE_SPREAD_UPDATE_INTERVAL_MS = 1000;
     const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';
     const ARB_PANEL_UPDATE_DELAY_MS = 1000;
     const ARB_DETAIL_REFRESH_INTERVAL_MS = 2500;
@@ -173,10 +176,15 @@
         arbPathHeader,
         arbPathMinBtn,
         toggleQuoteDisplayBtn,
+        toggleSpreadBtn,
         toggleDataTerminalBtn,
         toggleArbBtn,
         toggleAlertLogBtn,
         toggleMultiChannelBtn,
+        quoteSpreadWindow,
+        quoteSpreadHeader,
+        quoteSpreadMinBtn,
+        quoteSpreadContent,
         arbDetailModal,
         arbDetailCloseBtn,
         arbDetailChartLink,
@@ -715,6 +723,52 @@
         return quoteStateRuntime.getMarketStateMap();
     }
 
+    function clearQuoteSpreadTimer() {
+        if (!quoteSpreadTimer) return;
+        clearInterval(quoteSpreadTimer);
+        quoteSpreadTimer = null;
+    }
+
+    function clearQuoteSpreadPanel() {
+        if (quoteSpreadContent) {
+            quoteSpreadContent.innerHTML = '';
+        }
+    }
+
+    function renderQuoteSpreadPanel() {
+        if (!quoteSpreadContent) return;
+        const rows = getQuoteSpreadUtils().buildQuoteSpreadRows(dashboardState, getQuoteMarketStateMap(), {
+            limit: 20,
+            formatChainLabel
+        });
+        quoteSpreadContent.innerHTML = getQuoteSpreadUtils().buildQuoteSpreadPanelHtml(rows);
+    }
+
+    function startQuoteSpreadUpdates() {
+        clearQuoteSpreadTimer();
+        renderQuoteSpreadPanel();
+        quoteSpreadTimer = setInterval(renderQuoteSpreadPanel, QUOTE_SPREAD_UPDATE_INTERVAL_MS);
+    }
+
+    function stopQuoteSpreadUpdates() {
+        clearQuoteSpreadTimer();
+        clearQuoteSpreadPanel();
+    }
+
+    function toggleQuoteSpreadPanel() {
+        const result = applyFloatingPanelDisplay(quoteSpreadWindow, 'toggle', {
+            render: startQuoteSpreadUpdates,
+            afterApply: (state) => {
+                if (!state.visible) {
+                    stopQuoteSpreadUpdates();
+                }
+            }
+        });
+        if (!result.panelFound) {
+            stopQuoteSpreadUpdates();
+        }
+    }
+
     function setQuoteMarketState(quoteId, nextState) {
         const marketStateChanged = quoteStateRuntime.setMarketState(quoteId, nextState);
         if (marketStateChanged) {
@@ -1047,6 +1101,12 @@
                     draggable: false
                 });
             }
+            if (quoteSpreadWindow && quoteSpreadHeader) {
+                getDomRenderUtils().bindFloatingPanelChrome(quoteSpreadWindow, quoteSpreadHeader, {
+                    documentImpl: document,
+                    zIndexRuntime: floatingPanelZIndexRuntime
+                });
+            }
 
             applyQuoteDisplayToggleButtonState();
             if (toggleArbBtn) {
@@ -1057,6 +1117,15 @@
             }
             if (toggleDataTerminalBtn) {
                 toggleDataTerminalBtn.addEventListener('click', toggleDataTerminalPanel);
+            }
+            if (toggleSpreadBtn) {
+                toggleSpreadBtn.addEventListener('click', toggleQuoteSpreadPanel);
+            }
+            if (quoteSpreadMinBtn) {
+                quoteSpreadMinBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    toggleQuoteSpreadPanel();
+                });
             }
             if (toggleAlertLogBtn) {
                 toggleAlertLogBtn.addEventListener('click', alertRuntimeController.toggleAlertLogPanel);

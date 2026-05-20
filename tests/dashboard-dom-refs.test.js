@@ -28,6 +28,9 @@ function makeElement(id) {
   'confirm-message',
   'arb-global-filter-input',
   'toggle-arb-btn',
+  'toggle-spread-btn',
+  'quote-spread-window',
+  'quote-spread-content',
   'arb-detail-grid',
   'quote-request-channel'
 ].forEach(makeElement);
@@ -56,5 +59,8 @@ assert.strictEqual(refs.confirmModalRefs.modal, elements.get('confirm-modal'));
 assert.strictEqual(refs.confirmModalRefs.message, elements.get('confirm-message'));
 assert.strictEqual(refs.arbGlobalFilterElements['arb-global-filter-input'], elements.get('arb-global-filter-input'));
 assert.strictEqual(refs.toggleArbBtn, elements.get('toggle-arb-btn'));
+assert.strictEqual(refs.toggleSpreadBtn, elements.get('toggle-spread-btn'));
+assert.strictEqual(refs.quoteSpreadWindow, elements.get('quote-spread-window'));
+assert.strictEqual(refs.quoteSpreadContent, elements.get('quote-spread-content'));
 assert.strictEqual(refs.arbDetailGrid, elements.get('arb-detail-grid'));
 assert.strictEqual(refs.quoteSettingsModalElements['quote-request-channel'], elements.get('quote-request-channel'));

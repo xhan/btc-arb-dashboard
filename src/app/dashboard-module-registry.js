@@ -59,6 +59,7 @@
     getQuotePauseUtils: ['QuotePauseUtils', 'QuotePauseUtils is not loaded'],
     getQuoteQueueRuntimeUtils: ['QuoteQueueRuntimeUtils', 'QuoteQueueRuntimeUtils is not loaded'],
     getQuoteRequestUtils: ['QuoteRequestUtils', 'QuoteRequestUtils is not loaded'],
+    getQuoteSpreadUtils: ['QuoteSpreadUtils', 'QuoteSpreadUtils is not loaded'],
     getQuoteStateRuntimeUtils: ['QuoteStateRuntimeUtils', 'QuoteStateRuntimeUtils is not loaded'],
     getQuoteUiController: ['QuoteUiController', 'QuoteUiController is not loaded'],
     getRequestChannelUtils: ['RequestChannelUtils', 'RequestChannelUtils is not loaded'],

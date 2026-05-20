@@ -81,9 +81,14 @@
     const arbPathMinBtn = getById(documentImpl, 'arb-path-min-btn');
     const toggleQuoteDisplayBtn = getById(documentImpl, 'toggle-quote-display-btn');
     const toggleDataTerminalBtn = getById(documentImpl, 'toggle-data-terminal-btn');
+    const toggleSpreadBtn = getById(documentImpl, 'toggle-spread-btn');
     const toggleArbBtn = getById(documentImpl, 'toggle-arb-btn');
     const toggleAlertLogBtn = getById(documentImpl, 'toggle-alert-log-btn');
     const toggleMultiChannelBtn = getById(documentImpl, 'toggle-multi-channel-btn');
+    const quoteSpreadWindow = getById(documentImpl, 'quote-spread-window');
+    const quoteSpreadHeader = getById(documentImpl, 'quote-spread-header');
+    const quoteSpreadMinBtn = getById(documentImpl, 'quote-spread-min-btn');
+    const quoteSpreadContent = getById(documentImpl, 'quote-spread-content');
     const arbDetailModal = getById(documentImpl, 'arb-detail-modal');
     const arbDetailCloseBtn = getById(documentImpl, 'arb-detail-close-btn');
     const arbDetailChartLink = getById(documentImpl, 'arb-detail-chart-link');
@@ -201,9 +206,14 @@
       arbPathMinBtn,
       toggleQuoteDisplayBtn,
       toggleDataTerminalBtn,
+      toggleSpreadBtn,
       toggleArbBtn,
       toggleAlertLogBtn,
       toggleMultiChannelBtn,
+      quoteSpreadWindow,
+      quoteSpreadHeader,
+      quoteSpreadMinBtn,
+      quoteSpreadContent,
       arbDetailModal,
       arbDetailCloseBtn,
       arbDetailChartLink,

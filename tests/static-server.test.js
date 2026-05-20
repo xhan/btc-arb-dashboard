@@ -99,6 +99,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-spread-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-ui-controller.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-fetch-controller.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
@@ -332,6 +333,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('id="toggle-alert-settings-btn"'));
     assert.ok(response.body.includes('id="toggle-data-terminal-btn"'));
     assert.ok(response.body.includes('id="toggle-multi-channel-btn"'));
+    assert.ok(response.body.includes('<button id="toggle-spread-btn" title="检测交易对买/卖 spread">Spread</button>'));
     assert.ok(response.body.includes('id="arb-global-include-filter-input"'));
     assert.ok(response.body.includes('placeholder="仅显示代币"'));
     assert.ok(response.body.includes('id="arb-global-two-leg-only"'));
@@ -340,6 +342,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('id="arb-global-filter-bar"'));
     assert.ok(response.body.includes('多渠道'));
     assert.ok(response.body.includes('数据终端'));
+    assert.ok(response.body.includes('id="quote-spread-window"'));
+    assert.ok(response.body.includes('id="quote-spread-content"'));
     assert.ok(response.body.includes('<button id="alert-log-settings-tab" class="alert-log-tab" type="button" title="快速提醒设置 (A)">设置</button>'));
     assert.ok(response.body.includes('<button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">📝</button>'));
     assert.ok(response.body.includes('<a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">📸</a>'));
@@ -422,6 +426,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(priceSnapshotPayloadUtilsResponse.statusCode, 200);
     const quoteDisplayUtilsResponse = await request('/src/quote/quote-display-utils.js');
     assert.strictEqual(quoteDisplayUtilsResponse.statusCode, 200);
+    const quoteSpreadUtilsResponse = await request('/src/quote/quote-spread-utils.js');
+    assert.strictEqual(quoteSpreadUtilsResponse.statusCode, 200);
     const requestChannelUtilsResponse = await request('/src/request-channel/request-channel-utils.js');
     assert.strictEqual(requestChannelUtilsResponse.statusCode, 200);
     const queueStatsUtilsResponse = await request('/src/queue-stats/queue-stats-utils.js');
@@ -491,6 +497,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DataTerminalController is not loaded'));
     assert.ok(dataTerminalControllerResponse.body.includes('function createDataTerminalController(deps = {})'));
     assert.ok(moduleRegistryResponse.body.includes('function getWindowModule(windowImpl, globalName, missingMessage)'));
+    assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadUtils: ['));
+    assert.ok(appJsResponse.body.includes('QUOTE_SPREAD_UPDATE_INTERVAL_MS = 1000'));
+    assert.ok(appJsResponse.body.includes('function renderQuoteSpreadPanel()'));
+    assert.ok(appJsResponse.body.includes('function toggleQuoteSpreadPanel()'));
     assert.ok(!appJsResponse.body.includes('if (!window.ChainDefaults)'));
     assert.ok(!appJsResponse.body.includes('数据终端模块未加载'));
     assert.ok(domRenderUtilsResponse.body.includes('function applyTooltipState(tooltipEl, targetEl, tooltipState = {})'));
