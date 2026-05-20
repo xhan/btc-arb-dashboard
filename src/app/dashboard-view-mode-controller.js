@@ -147,6 +147,11 @@
     }
 
     function renderNow() {
+      if (!isActive()) {
+        dirty = true;
+        deferredRender = false;
+        return false;
+      }
       if (rendered && shouldDeferRender()) {
         dirty = true;
         deferredRender = true;

@@ -137,6 +137,10 @@ assert.strictEqual(renderRuntime.hasRendered(), false);
 assert.strictEqual(renderRuntime.isDirty(), false);
 assert.strictEqual(renderRuntime.markDirty(), false);
 assert.strictEqual(renderRuntime.isDirty(), true);
+assert.strictEqual(renderRuntime.renderNow(), false);
+assert.strictEqual(renderRuntime.hasRendered(), false);
+assert.strictEqual(renderRuntime.isDirty(), true);
+assert.deepStrictEqual(renderCalls, []);
 
 activeMode = APP_VIEW_DASHBOARD;
 assert.strictEqual(renderRuntime.isActive(), true);
@@ -151,6 +155,24 @@ assert.deepStrictEqual(renderCalls, [['render']]);
 renderRuntime.markDirty();
 assert.strictEqual(renderRuntime.ensureRendered(), true);
 assert.deepStrictEqual(renderCalls, [
+  ['render'],
+  ['render']
+]);
+
+activeMode = APP_VIEW_ARB;
+assert.strictEqual(renderRuntime.renderNow(), false);
+assert.strictEqual(renderRuntime.hasRendered(), true);
+assert.strictEqual(renderRuntime.isDirty(), true);
+assert.deepStrictEqual(renderCalls, [
+  ['render'],
+  ['render']
+]);
+
+activeMode = APP_VIEW_DASHBOARD;
+assert.strictEqual(renderRuntime.ensureRendered(), true);
+assert.strictEqual(renderRuntime.isDirty(), false);
+assert.deepStrictEqual(renderCalls, [
+  ['render'],
   ['render'],
   ['render']
 ]);

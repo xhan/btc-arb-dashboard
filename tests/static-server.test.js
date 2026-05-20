@@ -654,6 +654,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(viewModeControllerResponse.body.includes('function createDashboardViewModeController(deps = {})'));
     assert.ok(viewModeControllerResponse.body.includes('function createDashboardViewRenderRuntime(options = {})'));
     assert.ok(viewModeControllerResponse.body.includes('const shouldDeferRender = typeof options.shouldDeferRender === \'function\''));
+    assert.ok(viewModeControllerResponse.body.includes('if (!isActive()) {\n        dirty = true;'));
     assert.ok(viewModeControllerResponse.body.includes('hasDeferredRender: () => deferredRender'));
     assert.ok(viewModeControllerResponse.body.includes("const APP_VIEW_ARB = 'arb'"));
     assert.ok(viewModeControllerResponse.body.includes('function toggleArbView(options = {})'));
