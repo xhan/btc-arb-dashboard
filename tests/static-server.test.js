@@ -137,6 +137,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-arb-alert-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-quote-domain-adapter.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-quote-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-app-state-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
@@ -245,6 +246,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-quote-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-app-state-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -459,6 +463,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteDomainAdapterResponse.statusCode, 200);
     const quoteRuntimeResponse = await request('/src/app/dashboard-quote-runtime.js');
     assert.strictEqual(quoteRuntimeResponse.statusCode, 200);
+    const appStateRuntimeResponse = await request('/src/app/dashboard-app-state-runtime.js');
+    assert.strictEqual(appStateRuntimeResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
@@ -839,8 +845,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardFormController.bind();'));
     assert.ok(!appJsResponse.body.includes('settingsModalRuntime.bind();'));
     assert.ok(!appJsResponse.body.includes('dashboardFormController.bind();'));
-    assert.ok(appJsResponse.body.includes('getIntervals: () => apiIntervals'));
-    assert.ok(appJsResponse.body.includes('setIntervals: (nextIntervals) => { apiIntervals = nextIntervals; }'));
+    assert.ok(appJsResponse.body.includes('getIntervals: getApiIntervals'));
+    assert.ok(appJsResponse.body.includes('setIntervals: setApiIntervals'));
     assert.ok(appJsResponse.body.includes('buildSettingsIntervalWritePlan: getDashboardRenderer().buildSettingsIntervalWritePlan'));
     assert.ok(appJsResponse.body.includes('buildSettingsIntervalsFromFormValues: getDashboardRenderer().buildSettingsIntervalsFromFormValues'));
     assert.ok(appJsResponse.body.includes('readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues'));
@@ -1424,6 +1430,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('QuoteStateRuntimeUtils is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardRuntimeUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardRuntimeUtils is not loaded'));
+    assert.ok(appStateRuntimeResponse.body.includes('function createDashboardAppStateRuntime(options = {})'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardAppStateRuntime: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardAppStateRuntime is not loaded'));
+    assert.ok(appJsResponse.body.includes('const appStateRuntime = getDashboardAppStateRuntime().createDashboardAppStateRuntime({'));
+    assert.ok(appJsResponse.body.includes('const getDashboardState = appStateRuntime.getDashboardState;'));
+    assert.ok(appJsResponse.body.includes('const setDashboardState = appStateRuntime.setDashboardState;'));
+    assert.ok(appJsResponse.body.includes('const getApiIntervals = appStateRuntime.getApiIntervals;'));
+    assert.ok(appJsResponse.body.includes('const setApiIntervals = appStateRuntime.setApiIntervals;'));
+    assert.ok(!appJsResponse.body.includes('let dashboardState = [];'));
+    assert.ok(!appJsResponse.body.includes('let apiIntervals = { ...DEFAULT_INTERVALS };'));
+    assert.ok(!appJsResponse.body.includes('let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);'));
+    assert.ok(!appJsResponse.body.includes('let priceSnapshotConfig = { enabled: false, intervalSec: 10 };'));
     assert.ok(appJsResponse.body.includes('const dashboardPersistenceRuntime = dashboardRuntimeUtils.createDashboardPersistenceRuntime({'));
     assert.ok(appJsResponse.body.includes('saveRuntimeOptions: {'));
     assert.ok(appJsResponse.body.includes('feedbackOptions: {'));

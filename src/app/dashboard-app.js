@@ -41,6 +41,7 @@
         getCopyUtils,
         getDashboardActionController,
         getDashboardApiUtils,
+        getDashboardAppStateRuntime,
         getDashboardArbAlertRuntime,
         getDashboardCommandController,
         getDashboardCommandRuntime,
@@ -85,20 +86,29 @@
     const dashboardRuntimeUtils = getDashboardRuntimeUtils();
     const domRenderUtils = getDomRenderUtils();
     const closestEventTarget = domRenderUtils.closestEventTarget;
-    let dashboardState = [];
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
     const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
 
-    let apiIntervals = { ...DEFAULT_INTERVALS };
-    let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
+    const appStateRuntime = getDashboardAppStateRuntime().createDashboardAppStateRuntime({
+        defaultIntervals: DEFAULT_INTERVALS,
+        defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
+        defaultPriceSnapshotConfig: { enabled: false, intervalSec: 10 }
+    });
+    const getDashboardState = appStateRuntime.getDashboardState;
+    const setDashboardState = appStateRuntime.setDashboardState;
+    const getApiIntervals = appStateRuntime.getApiIntervals;
+    const setApiIntervals = appStateRuntime.setApiIntervals;
+    const getArbCycleStartPriority = appStateRuntime.getArbCycleStartPriority;
+    const setArbCycleStartPriority = appStateRuntime.setArbCycleStartPriority;
+    const getPriceSnapshotConfig = appStateRuntime.getPriceSnapshotConfig;
+    const setPriceSnapshotConfig = appStateRuntime.setPriceSnapshotConfig;
     const dashboardApiClient = getDashboardApiUtils().createDashboardApiClient({
         backendUrl: BACKEND_URL,
         fetchImpl: fetch,
         logger: console
     });
 
-    let priceSnapshotConfig = { enabled: false, intervalSec: 10 };
     let quoteRuntime = null;
     let arbAlertRuntime = null;
     let dashboardViewModeController = null;
@@ -155,9 +165,9 @@
         clearInterval
     });
     const priceSnapshotSaveRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotSaveRuntime({
-        getConfig: () => priceSnapshotConfig,
+        getConfig: getPriceSnapshotConfig,
         buildPayload: () => getPriceSnapshotPayloadUtils().buildPriceSnapshotPayload({
-            dashboardState,
+            dashboardState: getDashboardState(),
             quoteStateById: getQuoteMarketStateMap(),
             clientCapturedAt: new Date().toISOString()
         }),
@@ -268,8 +278,8 @@
             setTimeout,
             clearTimeout
         },
-        getDashboardState: () => dashboardState,
-        getApiIntervals: () => apiIntervals,
+        getDashboardState,
+        getApiIntervals,
         saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload),
         logger: console
     });
@@ -282,13 +292,13 @@
         modal: settingsModal,
         intervalInputRefs: settingsIntervalInputRefs,
         defaultIntervals: DEFAULT_INTERVALS,
-        getIntervals: () => apiIntervals,
-        setIntervals: (nextIntervals) => { apiIntervals = nextIntervals; },
+        getIntervals: getApiIntervals,
+        setIntervals: setApiIntervals,
         buildSettingsIntervalWritePlan: getDashboardRenderer().buildSettingsIntervalWritePlan,
         readSettingsIntervalFormValues: getDashboardRenderer().readSettingsIntervalFormValues,
         buildSettingsIntervalsFromFormValues: getDashboardRenderer().buildSettingsIntervalsFromFormValues,
         onSave: () => {
-            requestChannelRuntime.setDefaultIntervals(apiIntervals);
+            requestChannelRuntime.setDefaultIntervals(getApiIntervals());
             updateSchedulers();
             saveData();
         },
@@ -314,7 +324,7 @@
     });
     const requestChannelRuntime = getRequestChannelUtils().createRequestChannelRuntime({
         payload: { channels: [] },
-        defaultIntervals: apiIntervals,
+        defaultIntervals: getApiIntervals(),
         multiChannelToggleRuntime,
         tagOptions: {
             getElementById: (id) => document.getElementById(id)
@@ -357,7 +367,7 @@
         dexLinkUtils: getDexLinkUtils(),
         documentImpl: document,
         domRenderUtils,
-        getDashboardState: () => dashboardState,
+        getDashboardState,
         getQuoteMarketState,
         globalTooltip,
         initialQuoteDisplayMode: DEFAULT_QUOTE_DISPLAY_MODE,
@@ -421,10 +431,10 @@
         domRenderUtils,
         fetchImpl: fetch,
         getActiveQuotes,
-        getArbCycleStartPriority: () => arbCycleStartPriority,
+        getArbCycleStartPriority,
         getArbDetailController: () => arbDetailController,
         getDashboardLocalStorage,
-        getDashboardState: () => dashboardState,
+        getDashboardState,
         getQuoteChainDisplayName,
         getQuoteMarketState,
         getQuoteMarketStateMap,
@@ -522,7 +532,7 @@
         documentImpl: document,
         domRenderUtils,
         formatChainLabel,
-        getDashboardState: () => dashboardState,
+        getDashboardState,
         getQuoteMarketStateMap,
         quoteSpreadUtils: getQuoteSpreadUtils(),
         refs: {
@@ -554,7 +564,7 @@
         findQuoteById,
         formatChainLabel,
         formatDetailNumber,
-        getApiIntervals: () => apiIntervals,
+        getApiIntervals,
         getChartsRenderer: () => window.ChartsRenderer || null,
         getChartsUtils,
         getOpportunity: (opportunityId) => arbAlertRuntime.getOpportunity(opportunityId),
@@ -597,7 +607,7 @@
         updateDelayMs: DATA_TERMINAL_UPDATE_DELAY_MS,
         getAnchorPanel: () => arbPathWindow,
         zIndexRuntime: floatingPanelZIndexRuntime,
-        getDashboardState: () => dashboardState,
+        getDashboardState,
         getQuoteMarketStateMap,
         getMarketRevision: () => quoteStateRuntime.getMarketRevision(),
         isQuoteActive: (quote) => !isQuotePaused(quote),
@@ -643,8 +653,8 @@
         documentImpl: document,
         domRenderUtils,
         fetchImpl: fetch,
-        getApiIntervals: () => apiIntervals,
-        getDashboardState: () => dashboardState,
+        getApiIntervals,
+        getDashboardState,
         getEffectiveRequestChannelIdForQuote,
         getInverseQuoteDisplayText,
         getQuoteDisplayMode,
@@ -708,7 +718,7 @@
         formatChainLabel,
         getArbDetailState: () => arbDetailController.getState(),
         getCategoryPauseAction,
-        getDashboardState: () => dashboardState,
+        getDashboardState,
         getQuoteChainDisplayName,
         getQuoteMarketState,
         getRequestChannelOptions: () => requestChannelRuntime.getOptions(),
@@ -760,7 +770,7 @@
         dexLinkUtils: getDexLinkUtils(),
         documentImpl: document,
         getCategoryPauseAction,
-        getDashboardState: () => dashboardState,
+        getDashboardState,
         getQuoteChainDisplayName,
         getQuoteDisplayText,
         getQuoteMarketState,
@@ -805,7 +815,7 @@
         defaultSourceResolver,
         deleteQuoteFromCategory,
         documentImpl: document,
-        getDashboardState: () => dashboardState,
+        getDashboardState,
         isCexOrderbookChain,
         isCrossChainQuote,
         isEvmChain,
@@ -845,8 +855,8 @@
         documentImpl: document,
         domRenderUtils,
         floatingPanelZIndexRuntime,
-        getDashboardState: () => dashboardState,
-        getPriceSnapshotConfig: () => priceSnapshotConfig,
+        getDashboardState,
+        getPriceSnapshotConfig,
         handleDashboardClick,
         handleDashboardInput,
         invalidateArbRuleSnapshotCache,
@@ -884,11 +894,11 @@
             toggleMultiChannelBtn
         },
         saveData,
-        setApiIntervals: (nextIntervals) => { apiIntervals = nextIntervals; },
-        setArbCycleStartPriority: (nextPriority) => { arbCycleStartPriority = nextPriority; },
+        setApiIntervals,
+        setArbCycleStartPriority,
         setArbPanelMaxHeight,
-        setDashboardState: (nextState) => { dashboardState = nextState; },
-        setPriceSnapshotConfig: (nextConfig) => { priceSnapshotConfig = nextConfig; },
+        setDashboardState,
+        setPriceSnapshotConfig,
         settingsModalRuntime,
         themeRuntime,
         updateArbPanel,
