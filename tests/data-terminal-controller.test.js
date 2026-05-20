@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const dataTerminalUtils = require('../src/data-terminal/data-terminal-utils');
+const domRenderUtils = require('../src/ui/dom-render-utils');
 const { createDataTerminalController, createInitialState } = require('../src/data-terminal/data-terminal-controller');
 const dashboardRuntimeUtils = require('../src/dashboard/dashboard-runtime-utils');
 
@@ -21,6 +22,9 @@ function createElement(name, calls, documentRef) {
     addEventListener(type, handler) {
       this.listeners[type] = handler;
       calls.push(['bind', name, type]);
+    },
+    contains(target) {
+      return target === element || Boolean(target && target.inside === name);
     },
     focus() {
       documentRef.activeElement = element;
@@ -177,6 +181,44 @@ function createBaseDeps(overrides = {}) {
       domRefs: null
     }
   );
+}
+
+{
+  let marketRevision = 1;
+  const { calls, deps, timers } = createBaseDeps({
+    domRenderUtils: {
+      ...domRenderUtils,
+      bindFloatingPanelChrome(panel, header) {
+        calls.push(['bindChrome', panel.id, header.name]);
+      }
+    },
+    getMarketRevision: () => marketRevision
+  });
+  const controller = createDataTerminalController(deps);
+  const panel = controller.mountPanel();
+  const refs = panel.refs;
+  const content = refs['#data-terminal-content'];
+
+  refs['#data-terminal-search-input'].listeners.input({ target: { value: 'USDC' } });
+  assert.ok(content.innerHTML.includes('USDC -> USDT'));
+
+  content.listeners.pointerdown({});
+  deps.getQuoteMarketStateMap().set('q1', {
+    fromSymbol: 'USDC',
+    toSymbol: 'USDT0',
+    lastRawPrice: 1.002,
+    inverseRawPrice: 0.998
+  });
+  marketRevision = 2;
+
+  assert.strictEqual(controller.scheduleUpdate(), true);
+  timers[0].callback();
+  assert.ok(content.innerHTML.includes('USDC -> USDT'));
+  assert.ok(!content.innerHTML.includes('USDC -> USDT0'));
+
+  content.listeners.pointerup({});
+  timers[1].callback();
+  assert.ok(content.innerHTML.includes('USDC -> USDT0'));
 }
 
 {

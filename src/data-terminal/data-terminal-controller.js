@@ -33,11 +33,47 @@
     const utils = deps.dataTerminalUtils || (root && root.DataTerminalUtils);
     const dashboardRuntimeUtils = deps.dashboardRuntimeUtils || {};
     const domRenderUtils = deps.domRenderUtils || {};
-    const state = deps.state || createInitialState({
+    let state = null;
+    const interactionHoldRuntime = (
+      domRenderUtils && typeof domRenderUtils.createRenderInteractionHoldRuntime === 'function'
+    )
+      ? domRenderUtils.createRenderInteractionHoldRuntime({
+        setTimeout: deps.setTimeout,
+        clearTimeout: deps.clearTimeout,
+        onIdle: () => {
+          if (
+            state
+            && state.domRefs
+            && state.domRefs.content
+            && state.htmlRenderer
+            && typeof state.htmlRenderer.flush === 'function'
+          ) {
+            state.htmlRenderer.flush(state.domRefs.content);
+          }
+        }
+      })
+      : null;
+
+    function shouldDeferContentRender(element) {
+      return Boolean(
+        interactionHoldRuntime
+        && typeof interactionHoldRuntime.shouldDeferRender === 'function'
+        && interactionHoldRuntime.shouldDeferRender(element)
+      );
+    }
+
+    function createDefaultHtmlRenderer() {
+      if (!domRenderUtils || typeof domRenderUtils.createStableHtmlRenderer !== 'function') {
+        return null;
+      }
+      return domRenderUtils.createStableHtmlRenderer({
+        shouldDeferRender: shouldDeferContentRender
+      });
+    }
+
+    state = deps.state || createInitialState({
       htmlRenderer: deps.htmlRenderer || (
-        domRenderUtils && typeof domRenderUtils.createStableHtmlRenderer === 'function'
-          ? domRenderUtils.createStableHtmlRenderer()
-          : null
+        createDefaultHtmlRenderer()
       )
     });
     const cache = deps.cache || utils.createDataTerminalCache();
@@ -256,6 +292,9 @@
         onHeaderClick: handleHeaderClick,
         onMinimize: togglePanel
       });
+      if (interactionHoldRuntime && refs.content && typeof interactionHoldRuntime.bind === 'function') {
+        interactionHoldRuntime.bind(refs.content);
+      }
 
       if (refs.header && typeof domRenderUtils.bindFloatingPanelChrome === 'function') {
         domRenderUtils.bindFloatingPanelChrome(panel, refs.header, {

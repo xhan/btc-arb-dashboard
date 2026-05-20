@@ -1602,7 +1602,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function hasPending()'));
     assert.ok(domRenderUtilsResponse.body.includes('function createRenderInteractionHoldRuntime(options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function shouldDeferRenderWhileFocused(element, options = {})'));
-    assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.createStableHtmlRenderer()'));
+    assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.createRenderInteractionHoldRuntime({'));
+    assert.ok(dataTerminalControllerResponse.body.includes('function shouldDeferContentRender(element)'));
+    assert.ok(dataTerminalControllerResponse.body.includes('shouldDeferRender: shouldDeferContentRender'));
     assert.ok(!appJsResponse.body.includes('htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()'));
     assert.ok(!appJsResponse.body.includes('window.DomRenderUtils.'));
     assert.ok(arbPanelLayoutUtilsResponse.body.includes('function buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta = {})'));
@@ -2349,6 +2351,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("eventTarget.closest('[data-data-terminal-row-key]')"));
     assert.ok(!appJsResponse.body.includes('<div id="data-terminal-header">'));
     assert.ok(dataTerminalControllerResponse.body.includes('const updateRuntime = deps.updateRuntime || utils.createDataTerminalUpdateRuntime({'));
+    assert.ok(dataTerminalControllerResponse.body.includes('interactionHoldRuntime.bind(refs.content);'));
     assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.bindFloatingPanelChrome(panel, refs.header, {'));
     assert.ok(dataTerminalControllerResponse.body.includes('updateRuntime.clear();'));
     assert.ok(!appJsResponse.body.includes('function clearDataTerminalTimer()'));
