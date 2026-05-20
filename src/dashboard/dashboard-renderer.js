@@ -83,6 +83,7 @@
     const pauseTitle = isPaused ? '恢复' : '暂停';
     const pauseIcon = isPaused ? '▶️' : '⏸️';
     const quoteTextClassName = config.quoteTextClassName || 'quote-text';
+    const inverseResultText = config.inverseResultText == null ? '' : String(config.inverseResultText);
 
     return `
             <div class="quote-left-container">
@@ -103,6 +104,7 @@
                             <span class="${escapeAttr(quoteTextClassName)}" id="quote-text-${quoteId}">${escapeHtml(config.lastResultText)}</span>
                         </span>
                     </div>
+                    ${inverseResultText ? `<div id="inverse-quote-${quoteId}" class="inverse-quote-text">${escapeHtml(inverseResultText)}</div>` : ''}
                 </div>
                 <div class="quote-actions">
                     <button class="icon-btn" title="${pauseTitle}" aria-label="${pauseTitle}" aria-pressed="${isPaused ? 'true' : 'false'}" data-toggle-pause-id="${quoteId}" data-category-id="${categoryId}">${pauseIcon}</button>

@@ -326,6 +326,7 @@
         defaultSourceResolver,
         getActiveQuotes,
         getCategoryPauseAction,
+        getInverseQuoteDisplayText,
         getQuoteChainDisplayName,
         getQuoteDisplayMode,
         getQuoteDisplayText,
@@ -337,6 +338,7 @@
         handleQuoteHover,
         queueQuoteRefresh,
         removeFromQueue,
+        shouldQueueInverseFetch,
         showCopyToast,
         toggleQuoteDisplayMode,
         updateQuotePairLabel,
@@ -605,6 +607,7 @@
         viewOptions: {
             dexLinkUtils: getDexLinkUtils(),
             getCategoryPauseAction,
+            getInverseQuoteDisplayText,
             getQuoteChainDisplayName,
             getQuoteDisplayText,
             getQuoteMarketState,
@@ -615,7 +618,8 @@
             logger: console,
             quoteDisplayUtils: getQuoteDisplayUtils(),
             requestChannelUtils: getRequestChannelUtils(),
-            saveData
+            saveData,
+            shouldQueueInverseFetch
         },
         formOptions: {
             defaultSourceResolver,

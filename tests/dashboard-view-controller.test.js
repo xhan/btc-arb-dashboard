@@ -67,6 +67,7 @@ function createQuoteItemShell(quoteId) {
 
 function createBaseDeps(overrides = {}) {
   const calls = [];
+  const createdQuoteConfigs = [];
   const dashboardState = Object.prototype.hasOwnProperty.call(overrides, 'dashboardState')
     ? overrides.dashboardState
     : [{
@@ -92,6 +93,7 @@ function createBaseDeps(overrides = {}) {
     dashboardEl,
     dashboardRenderer: {
       createQuoteItemShellElement: (config) => {
+        createdQuoteConfigs.push(config);
         calls.push(['createQuoteShell', config.quoteId, config.amountInputHtml, config.quoteTextClassName, config.lastResultText]);
         return createQuoteItemShell(config.quoteId);
       },
@@ -114,12 +116,14 @@ function createBaseDeps(overrides = {}) {
     getDashboardState: () => dashboardState,
     getQuoteChainDisplayName: (quote) => `链-${quote.chain}`,
     getQuoteDisplayText: (quote) => `显示-${quote.id}`,
+    getInverseQuoteDisplayText: (quote, state) => `反向-${state.inverseRawPrice}`,
     getQuoteMarketState: () => ({ fromSymbol: 'USDC', toSymbol: 'USDT' }),
     getRequestChannelOptions: () => ({ channels: [] }),
     handleQuoteHover: (event, quoteId) => calls.push(['hover', quoteId]),
     isCexOrderbookChain: (chain) => chain === 'bybit',
     isCrossChainQuote: () => false,
     isQuotePaused: () => false,
+    shouldQueueInverseFetch: (quote) => quote && quote.showInverse === true,
     logger: {
       error: (...args) => calls.push(['error', ...args])
     },
@@ -134,7 +138,7 @@ function createBaseDeps(overrides = {}) {
     ...overrides.deps
   };
 
-  return { calls, dashboardEl, dashboardState, deps, draggedNode, listEl, targetNode };
+  return { calls, createdQuoteConfigs, dashboardEl, dashboardState, deps, draggedNode, listEl, targetNode };
 }
 
 {
@@ -172,6 +176,30 @@ function createBaseDeps(overrides = {}) {
   controller.renderDashboard();
   assert.strictEqual(dashboardEl.children.length, 1);
   assert.ok(calls.some((call) => call[0] === 'createCategoryShell' && call[1] === 1));
+}
+
+{
+  const { createdQuoteConfigs, deps } = createBaseDeps({
+    dashboardState: [{
+      id: 1,
+      name: '主区',
+      quotes: [
+        { id: 301, chain: 'ethereum', fromToken: '0xfrom', toToken: '0xto', amount: 1, showInverse: true }
+      ]
+    }],
+    deps: {
+      getQuoteMarketState: () => ({
+        fromSymbol: 'USDC',
+        toSymbol: 'USDT',
+        inverseRawPrice: 0.998,
+        inverseFromSymbol: 'USDT',
+        inverseToSymbol: 'USDC'
+      })
+    }
+  });
+  const controller = createDashboardViewController(deps);
+  controller.createQuoteItem(deps.getDashboardState()[0].quotes[0], 1);
+  assert.strictEqual(createdQuoteConfigs[0].inverseResultText, '反向-0.998');
 }
 
 {

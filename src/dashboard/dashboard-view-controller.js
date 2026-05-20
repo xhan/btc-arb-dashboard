@@ -88,6 +88,14 @@
       return `<input type="number" class="amount-input" value="${initialAmount}" step="any" min="0" data-category-id="${categoryId}" data-quote-id="${quote.id}">`;
     }
 
+    function buildInitialInverseResultText(quote, monitorState) {
+      if (deps.isQuotePaused(quote)) return '';
+      if (typeof deps.shouldQueueInverseFetch !== 'function' || !deps.shouldQueueInverseFetch(quote)) return '';
+      if (!monitorState || !Number.isFinite(Number(monitorState.inverseRawPrice))) return '';
+      if (typeof deps.getInverseQuoteDisplayText !== 'function') return '';
+      return deps.getInverseQuoteDisplayText(quote, monitorState);
+    }
+
     function applyDexLinkCopyTarget(labelStackEl, quote) {
       const dexLinkConfig = {
         chain: quote.chain,
@@ -136,6 +144,7 @@
         amountInputHtml: buildAmountInputHtml(quote, categoryId),
         quoteTextClassName,
         lastResultText: deps.getQuoteDisplayText(quote, monitorState),
+        inverseResultText: buildInitialInverseResultText(quote, monitorState),
         paused: deps.isQuotePaused(quote)
       }, { documentImpl: deps.documentImpl });
       if (!itemEl) return null;

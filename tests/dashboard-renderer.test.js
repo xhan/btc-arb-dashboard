@@ -667,6 +667,7 @@ const quoteItemHtml = renderQuoteItemShell({
   amountInputHtml: '<input class="amount-input">',
   quoteTextClassName: 'quote-text cex-orderbook-summary',
   lastResultText: '1 < 2',
+  inverseResultText: '2 > 1',
   paused: true
 });
 
@@ -678,6 +679,9 @@ assert.ok(quoteItemHtml.includes('<span class="quote-pair-label">ETH/USDC</span>
 assert.ok(quoteItemHtml.includes('<input class="amount-input">'));
 assert.ok(quoteItemHtml.includes('class="quote-text cex-orderbook-summary"'));
 assert.ok(quoteItemHtml.includes('1 &lt; 2'));
+assert.ok(quoteItemHtml.includes('id="inverse-quote-quote-1"'));
+assert.ok(quoteItemHtml.includes('class="inverse-quote-text"'));
+assert.ok(quoteItemHtml.includes('2 &gt; 1'));
 assert.ok(quoteItemHtml.includes('title="恢复"'));
 assert.ok(quoteItemHtml.includes('aria-pressed="true"'));
 
@@ -691,6 +695,7 @@ const createdQuoteItemEl = createQuoteItemShellElement({
   amountInputHtml: '<input class="amount-input">',
   quoteTextClassName: 'quote-text cex-orderbook-summary',
   lastResultText: '1 < 2',
+  inverseResultText: '2 > 1',
   paused: true
 }, {
   documentImpl: {
