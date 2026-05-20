@@ -584,15 +584,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(lifecycleControllerResponse.body.includes('function shouldRenderDashboardOnInit()'));
     assert.ok(lifecycleControllerResponse.body.includes('function createDashboardLifecycleController(deps = {})'));
     assert.ok(lifecycleControllerResponse.body.includes('function bindStaticEvents()'));
-    assert.ok(lifecycleControllerResponse.body.includes('function bindLoadedEvents()'));
+    assert.ok(lifecycleControllerResponse.body.includes('function bindInteractionEvents()'));
     assert.ok(lifecycleControllerResponse.body.includes('function handleConfirmModalClick(event)'));
     assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadController: ['));
     assert.ok(quoteSpreadControllerResponse.body.includes('function createQuoteSpreadController(deps = {})'));
     assert.ok(quoteSpreadControllerResponse.body.includes('DEFAULT_UPDATE_INTERVAL_MS = 1000'));
     assert.ok(appJsResponse.body.includes('const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({'));
-    assert.ok(lifecycleControllerResponse.body.includes('deps.quoteSpreadController.bindPanelChrome();'));
-    assert.ok(lifecycleControllerResponse.body.includes('deps.quoteSpreadController.bindEvents();'));
+    assert.ok(lifecycleControllerResponse.body.includes("typeof deps.quoteSpreadController.bindPanelChrome === 'function'"));
+    assert.ok(lifecycleControllerResponse.body.includes("typeof deps.quoteSpreadController.bindEvents === 'function'"));
     assert.ok(!appJsResponse.body.includes('quoteSpreadController.bindPanelChrome();'));
     assert.ok(!appJsResponse.body.includes('quoteSpreadController.bindEvents();'));
     assert.ok(!appJsResponse.body.includes('QUOTE_SPREAD_UPDATE_INTERVAL_MS = 1000'));
@@ -1975,7 +1975,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('input.select()'));
     assert.ok(!appJsResponse.body.includes("arbDetailGrid.addEventListener('mouseup'"));
     assert.ok(lifecycleControllerResponse.body.includes('deps.setArbPanelMaxHeight();'));
-    assert.ok(lifecycleControllerResponse.body.includes("windowImpl.addEventListener('resize', deps.setArbPanelMaxHeight)"));
+    assert.ok(lifecycleControllerResponse.body.includes("windowImpl.addEventListener('resize', deps.setArbPanelMaxHeight);"));
     assert.ok(!appJsResponse.body.includes('setArbPanelMaxHeight();'));
     assert.ok(!appJsResponse.body.includes("window.addEventListener('resize', setArbPanelMaxHeight)"));
     assert.ok(arbPanelControllerResponse.body.includes('domRenderUtils.applyFloatingPanelViewportHeight(refs.arbPathWindow, windowImpl.innerHeight, { minHeight: 200 });'));

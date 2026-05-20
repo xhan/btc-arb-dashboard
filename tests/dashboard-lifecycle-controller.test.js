@@ -291,6 +291,10 @@ assert.deepStrictEqual(staticCalls, [
     [101, 102, 201]
   );
   assert.ok(calls.some((call) => call[0] === 'startPriceSnapshotTimer' && call[1] === true && call[2] === 5));
+  assert.ok(
+    calls.findIndex((call) => call[0] === 'bindArbPanelContent')
+    < calls.findIndex((call) => call[0] === 'requestBackendConfigRefresh')
+  );
   assert.strictEqual(windowImpl.listeners.storage.length, 1);
   assert.strictEqual(windowImpl.listeners.resize.length, 1);
   assert.strictEqual(alertLogWindow.listeners.click.length, 1);

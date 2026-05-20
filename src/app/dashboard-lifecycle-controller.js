@@ -36,6 +36,7 @@
     const refs = deps.refs || {};
     const windowImpl = deps.windowImpl || (typeof window !== 'undefined' ? window : null);
     const documentImpl = deps.documentImpl || (typeof document !== 'undefined' ? document : null);
+    let interactionEventsBound = false;
 
     function getDashboardState() {
       return typeof deps.getDashboardState === 'function' ? deps.getDashboardState() : [];
@@ -117,38 +118,53 @@
       if (deps.dashboardFormController && typeof deps.dashboardFormController.bind === 'function') {
         deps.dashboardFormController.bind();
       }
+      bindInteractionEvents();
     }
 
     function bindFloatingPanels() {
-      if (refs.alertLogWindow && refs.alertLogHeader) {
+      if (
+        refs.alertLogWindow
+        && refs.alertLogHeader
+        && deps.domRenderUtils
+        && typeof deps.domRenderUtils.bindFloatingPanelChrome === 'function'
+      ) {
         deps.domRenderUtils.bindFloatingPanelChrome(refs.alertLogWindow, refs.alertLogHeader, {
           documentImpl,
           zIndexRuntime: deps.floatingPanelZIndexRuntime
         });
       }
-      if (refs.arbPathWindow && refs.arbPathHeader) {
+      if (
+        refs.arbPathWindow
+        && refs.arbPathHeader
+        && deps.domRenderUtils
+        && typeof deps.domRenderUtils.bindFloatingPanelChrome === 'function'
+      ) {
         deps.domRenderUtils.bindFloatingPanelChrome(refs.arbPathWindow, refs.arbPathHeader, {
           documentImpl,
           zIndexRuntime: deps.floatingPanelZIndexRuntime,
           draggable: false
         });
       }
-      deps.quoteSpreadController.bindPanelChrome();
+      if (deps.quoteSpreadController && typeof deps.quoteSpreadController.bindPanelChrome === 'function') {
+        deps.quoteSpreadController.bindPanelChrome();
+      }
     }
 
     function bindToolbarEvents() {
       addClickListener(refs.toggleArbBtn, () => dispatchCommand('toggle-arb-panel'));
       addClickListener(refs.toggleQuoteDisplayBtn, () => dispatchCommand('toggle-quote-display'));
       addClickListener(refs.toggleDataTerminalBtn, () => dispatchCommand('toggle-data-terminal'));
-      deps.quoteSpreadController.bindEvents();
+      if (deps.quoteSpreadController && typeof deps.quoteSpreadController.bindEvents === 'function') {
+        deps.quoteSpreadController.bindEvents();
+      }
       addClickListener(refs.toggleAlertLogBtn, () => dispatchCommand('toggle-alert-log'));
       addClickListener(refs.toggleMultiChannelBtn, () => dispatchCommand('toggle-request-channel-tags'));
     }
 
     function bindAlertLogEvents() {
-      if (!refs.alertLogWindow) return;
-      refs.alertLogWindow.addEventListener('click', deps.alertRuntimeController.handleAlertLogClick);
-      refs.alertLogWindow.addEventListener('change', deps.alertRuntimeController.handleAlertSettingsChange);
+      if (!refs.alertLogWindow || !deps.alertRuntimeController) return;
+      addEventListener(refs.alertLogWindow, 'click', deps.alertRuntimeController.handleAlertLogClick);
+      addEventListener(refs.alertLogWindow, 'change', deps.alertRuntimeController.handleAlertSettingsChange);
     }
 
     function bindPanelMinimizeEvents() {
@@ -162,10 +178,16 @@
       });
     }
 
-    function bindLoadedEvents() {
+    function bindInteractionEvents() {
+      if (interactionEventsBound) return false;
+      interactionEventsBound = true;
       if (windowImpl && typeof windowImpl.addEventListener === 'function') {
-        windowImpl.addEventListener('storage', deps.alertRuntimeController.handlePathAlertConfigSyncStorage);
-        windowImpl.addEventListener('resize', deps.setArbPanelMaxHeight);
+        if (deps.alertRuntimeController && typeof deps.alertRuntimeController.handlePathAlertConfigSyncStorage === 'function') {
+          windowImpl.addEventListener('storage', deps.alertRuntimeController.handlePathAlertConfigSyncStorage);
+        }
+        if (typeof deps.setArbPanelMaxHeight === 'function') {
+          windowImpl.addEventListener('resize', deps.setArbPanelMaxHeight);
+        }
       }
       if (deps.dashboardViewModeController && typeof deps.dashboardViewModeController.bind === 'function') {
         deps.dashboardViewModeController.bind();
@@ -173,11 +195,20 @@
       bindFloatingPanels();
       bindToolbarEvents();
       bindAlertLogEvents();
-      deps.arbPanelController.bindContentEvents();
-      deps.arbDetailController.bindGridEvents();
-      deps.arbDetailController.bindChromeEvents();
-      deps.arbPanelController.bindGlobalFilterEvents();
+      if (deps.arbPanelController && typeof deps.arbPanelController.bindContentEvents === 'function') {
+        deps.arbPanelController.bindContentEvents();
+      }
+      if (deps.arbDetailController && typeof deps.arbDetailController.bindGridEvents === 'function') {
+        deps.arbDetailController.bindGridEvents();
+      }
+      if (deps.arbDetailController && typeof deps.arbDetailController.bindChromeEvents === 'function') {
+        deps.arbDetailController.bindChromeEvents();
+      }
+      if (deps.arbPanelController && typeof deps.arbPanelController.bindGlobalFilterEvents === 'function') {
+        deps.arbPanelController.bindGlobalFilterEvents();
+      }
       bindPanelMinimizeEvents();
+      return true;
     }
 
     function shouldRenderDashboardOnInit() {
@@ -196,6 +227,7 @@
     }
 
     async function init() {
+      bindInteractionEvents();
       if (refs.audioNoticeEl) {
         refs.audioNoticeEl.style.display = 'block';
       }
@@ -243,7 +275,6 @@
         deps.alertRuntimeController.renderAlertLogTabState();
         deps.alertRuntimeController.syncMutedPathLogTimer();
         deps.applyQuoteDisplayToggleButtonState();
-        bindLoadedEvents();
       } catch (error) {
         renderLoadError(error);
       }
@@ -251,6 +282,7 @@
 
     return {
       bindStaticEvents,
+      bindInteractionEvents,
       init,
       loadArbSettings,
       loadPriceSnapshotConfig,
