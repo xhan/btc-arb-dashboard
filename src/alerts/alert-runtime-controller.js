@@ -9,6 +9,9 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function createNoopHtmlRenderer() {
     return {
+      flush() {
+        return false;
+      },
       render(target, html) {
         if (target) target.innerHTML = html;
       }
@@ -51,6 +54,46 @@
     let pathAlertConfig = pathAlertUtils.normalizeAlertConfig();
     let pathAlertReloading = false;
 
+    function createAlertContentInteractionRuntime(getRenderer, getElement) {
+      if (!domRenderUtils || typeof domRenderUtils.createRenderInteractionHoldRuntime !== 'function') {
+        return null;
+      }
+      return domRenderUtils.createRenderInteractionHoldRuntime({
+        setTimeout: deps.setTimeout,
+        clearTimeout: deps.clearTimeout,
+        onIdle: () => {
+          const renderer = typeof getRenderer === 'function' ? getRenderer() : null;
+          const element = typeof getElement === 'function' ? getElement() : null;
+          if (renderer && element && typeof renderer.flush === 'function') {
+            renderer.flush(element);
+          }
+        }
+      });
+    }
+
+    function shouldDeferAlertContentRender(runtime, element) {
+      return Boolean(
+        runtime
+        && typeof runtime.shouldDeferRender === 'function'
+        && runtime.shouldDeferRender(element)
+      );
+    }
+
+    function createAlertContentHtmlRenderer(runtime) {
+      if (!domRenderUtils || typeof domRenderUtils.createStableHtmlRenderer !== 'function') {
+        return createNoopHtmlRenderer();
+      }
+      return domRenderUtils.createStableHtmlRenderer({
+        shouldDeferRender: (element) => shouldDeferAlertContentRender(runtime, element)
+      });
+    }
+
+    function bindAlertContentInteractionRuntime(runtime, element) {
+      if (runtime && element && typeof runtime.bind === 'function') {
+        runtime.bind(element);
+      }
+    }
+
     const pathAlertConfigClient = pathAlertUtils.createPathAlertConfigClient({
       fetch: fetchImpl,
       url: `${backendUrl}/api/get-alert-config`,
@@ -58,10 +101,24 @@
         logWarning('加载路径报警配置失败:', error);
       }
     });
-    const alertSettingsHtmlRenderer = deps.alertSettingsHtmlRenderer
-      || (domRenderUtils.createStableHtmlRenderer ? domRenderUtils.createStableHtmlRenderer() : createNoopHtmlRenderer());
-    const mutedAlertStateHtmlRenderer = deps.mutedAlertStateHtmlRenderer
-      || (domRenderUtils.createStableHtmlRenderer ? domRenderUtils.createStableHtmlRenderer() : createNoopHtmlRenderer());
+    let alertSettingsHtmlRenderer = null;
+    const alertSettingsInteractionRuntime = deps.alertSettingsHtmlRenderer
+      ? null
+      : createAlertContentInteractionRuntime(
+        () => alertSettingsHtmlRenderer,
+        () => refs.alertLogSettingsContent
+      );
+    alertSettingsHtmlRenderer = deps.alertSettingsHtmlRenderer
+      || createAlertContentHtmlRenderer(alertSettingsInteractionRuntime);
+    let mutedAlertStateHtmlRenderer = null;
+    const mutedAlertStateInteractionRuntime = deps.mutedAlertStateHtmlRenderer
+      ? null
+      : createAlertContentInteractionRuntime(
+        () => mutedAlertStateHtmlRenderer,
+        () => refs.alertLogMutedContent
+      );
+    mutedAlertStateHtmlRenderer = deps.mutedAlertStateHtmlRenderer
+      || createAlertContentHtmlRenderer(mutedAlertStateInteractionRuntime);
     const pathAlertRuntimeState = deps.pathAlertRuntimeState || pathAlertUtils.createPathAlertRuntimeState();
     const pathAlertSchedulerRuntime = deps.pathAlertSchedulerRuntime || pathAlertUtils.createPathAlertSchedulerRuntime({
       setInterval: deps.setInterval,
@@ -446,6 +503,7 @@
 
     function renderMutedAlertStatePanel(nowMs = getNow()) {
       if (!refs.alertLogMutedContent) return;
+      bindAlertContentInteractionRuntime(mutedAlertStateInteractionRuntime, refs.alertLogMutedContent);
       pruneMutedPathTargetsInPlace(nowMs);
       pruneMutedPathLegsInPlace(nowMs);
       const panelHtml = alertLogUiUtils.buildMutedAlertStatePanelHtml({
@@ -465,6 +523,7 @@
 
     function renderAlertSettingsPanel() {
       if (!refs.alertLogSettingsContent) return;
+      bindAlertContentInteractionRuntime(alertSettingsInteractionRuntime, refs.alertLogSettingsContent);
       alertSettingsHtmlRenderer.render(refs.alertLogSettingsContent, alertLogUiUtils.buildAlertSettingsPanelHtml({
         settings: pathAlertConfig.settings || {},
         forceImmediateAlerts: pathAlertRuntimeState.isForceImmediateEnabled()

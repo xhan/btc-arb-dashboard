@@ -1341,8 +1341,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getDomRenderUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('DomRenderUtils is not loaded'));
     assert.ok(!appJsResponse.body.includes('pathAlertPanelHtmlRenderer'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('const alertSettingsHtmlRenderer = deps.alertSettingsHtmlRenderer'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('const mutedAlertStateHtmlRenderer = deps.mutedAlertStateHtmlRenderer'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('let alertSettingsHtmlRenderer = null;'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('let mutedAlertStateHtmlRenderer = null;'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function createAlertContentInteractionRuntime(getRenderer, getElement)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function shouldDeferAlertContentRender(runtime, element)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function bindAlertContentInteractionRuntime(runtime, element)'));
     assert.ok(moduleRegistryResponse.body.includes('getAlertLogUiUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('AlertLogUiUtils is not loaded'));
     assert.ok(alertRuntimeControllerResponse.body.includes('alertLogUiUtils.buildQuoteAlertLogHtml(logEntry, {'));
@@ -1362,6 +1365,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('querySelector(`.log-entry[data-muted-target-key='));
     assert.ok(alertRuntimeControllerResponse.body.includes('alertSettingsHtmlRenderer.render(refs.alertLogSettingsContent'));
     assert.ok(alertRuntimeControllerResponse.body.includes('mutedAlertStateHtmlRenderer.render(refs.alertLogMutedContent'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('bindAlertContentInteractionRuntime(alertSettingsInteractionRuntime, refs.alertLogSettingsContent);'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('bindAlertContentInteractionRuntime(mutedAlertStateInteractionRuntime, refs.alertLogMutedContent);'));
     assert.ok(alertRuntimeControllerResponse.body.includes('alertLogUiUtils.applyAlertLogTabDomState({'));
     assert.ok(alertRuntimeControllerResponse.body.includes('return deps.applyFloatingPanelDisplay(refs.alertLogWindow, action, {'));
     assert.ok(alertRuntimeControllerResponse.body.includes('alertLogUiUtils.buildAlertSettingsPanelHtml({'));
