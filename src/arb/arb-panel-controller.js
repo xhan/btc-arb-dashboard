@@ -58,15 +58,7 @@
     const arbPanelCache = arbPathTemplateCacheUtils.createArbPanelCache();
     const arbGlobalFilterStateRuntime = arbPanelLayoutUtils.createGlobalArbFilterStateRuntime();
     const arbPanelHtmlRenderer = domRenderUtils.createStableHtmlRenderer({
-      shouldDeferRender: (element) => {
-        const activeElement = documentImpl.activeElement;
-        return Boolean(
-          activeElement
-          && element
-          && typeof element.contains === 'function'
-          && element.contains(activeElement)
-        );
-      }
+      shouldDeferRender: (element) => domRenderUtils.shouldDeferRenderWhileFocused(element, { documentImpl })
     });
     const arbExpandedSections = new Set();
     let arbLastPointerOpenedOpportunityId = null;

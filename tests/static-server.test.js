@@ -1428,11 +1428,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!pathAlertPageUtilsResponse.body.includes('buildPathAlertPanelRenderOptions'));
     assert.ok(!appJsResponse.body.includes("return { text: '监控中', className: 'path-alert-status-monitoring' };"));
     assert.ok(arbPanelControllerResponse.body.includes('const arbPanelHtmlRenderer = domRenderUtils.createStableHtmlRenderer({'));
-    assert.ok(arbPanelControllerResponse.body.includes('shouldDeferRender: (element) => {'));
+    assert.ok(arbPanelControllerResponse.body.includes('shouldDeferRender: (element) => domRenderUtils.shouldDeferRenderWhileFocused(element, { documentImpl })'));
     assert.ok(arbPanelControllerResponse.body.includes('function handleContentFocusOut(event)'));
     assert.ok(arbPanelControllerResponse.body.includes("refs.arbPathContent.addEventListener('focusout', handleContentFocusOut);"));
     assert.ok(domRenderUtilsResponse.body.includes('function flush(element)'));
     assert.ok(domRenderUtilsResponse.body.includes('function hasPending()'));
+    assert.ok(domRenderUtilsResponse.body.includes('function shouldDeferRenderWhileFocused(element, options = {})'));
     assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.createStableHtmlRenderer()'));
     assert.ok(!appJsResponse.body.includes('htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()'));
     assert.ok(!appJsResponse.body.includes('window.DomRenderUtils.'));

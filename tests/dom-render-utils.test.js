@@ -26,6 +26,7 @@ const {
   createElementFromHtml,
   createFloatingPanelZIndexRuntime,
   createStableHtmlRenderer,
+  shouldDeferRenderWhileFocused,
   escapeCssAttributeValue,
   getQuoteDomRefs,
   showTooltip,
@@ -119,6 +120,16 @@ assert.strictEqual(deferredRenderer.hasPending(), true);
 deferredRenderer.reset();
 assert.strictEqual(deferredRenderer.hasPending(), false);
 assert.strictEqual(deferredRenderer.flush(deferredTarget), false);
+
+assert.strictEqual(
+  shouldDeferRenderWhileFocused(deferredTarget, { activeElement: { inside: true } }),
+  true
+);
+assert.strictEqual(
+  shouldDeferRenderWhileFocused(deferredTarget, { activeElement: { inside: false } }),
+  false
+);
+assert.strictEqual(shouldDeferRenderWhileFocused({}), false);
 
 const quoteDomLookups = [];
 const quoteDomRefs = getQuoteDomRefs({

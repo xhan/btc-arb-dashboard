@@ -532,6 +532,13 @@
     };
   }
 
+  function shouldDeferRenderWhileFocused(element, options = {}) {
+    if (!element || typeof element.contains !== 'function') return false;
+    const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
+    const activeElement = options.activeElement || (documentImpl && documentImpl.activeElement) || null;
+    return Boolean(activeElement && element.contains(activeElement));
+  }
+
   return {
     applyActiveQuoteDomState,
     applyPausedQuoteDomState,
@@ -559,6 +566,7 @@
     createElementFromHtml,
     createFloatingPanelZIndexRuntime,
     createStableHtmlRenderer,
+    shouldDeferRenderWhileFocused,
     escapeCssAttributeValue,
     getQuoteDomRefs,
     hideTooltip,
