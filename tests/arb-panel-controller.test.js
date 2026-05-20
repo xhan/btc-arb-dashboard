@@ -114,7 +114,7 @@ const controller = createArbPanelController({
   },
   fixedPathRules: [],
   getActiveQuotes: (quotes) => quotes,
-  getAlertRuntimeController: () => null,
+  arbAlertBridgeRuntime: {},
   getArbCycleStartPriority: () => ['cbBTC'],
   getArbDetailController: () => null,
   getDashboardState: () => dashboardState,

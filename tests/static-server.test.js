@@ -1529,7 +1529,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes("logInfo('[quote-alert] muted trigger skipped'"));
     assert.ok(appJsResponse.body.includes('const arbOpportunityRuntime = getArbRuntimeMemoryUtils().createArbOpportunityRuntime();'));
     assert.ok(appJsResponse.body.includes('const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({'));
-    assert.ok(appJsResponse.body.includes('invalidateArbRuleSnapshotCache,'));
+    assert.ok(appJsResponse.body.includes('getAlertRuntimeController: () => alertRuntimeController'));
+    assert.ok(appJsResponse.body.includes('invalidateArbRuleSnapshotCache: () => invalidateArbRuleSnapshotCache()'));
     assert.ok(appJsResponse.body.includes('renderArbDetailModal: () => {'));
     assert.ok(appJsResponse.body.includes('updateArbPanel'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.markTriggeredOpportunities(targetKey, nowMs)'));
@@ -1543,6 +1544,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.closeArbDetailModal'));
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.renderArbDetailModal'));
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.isArbDetailVisible'));
+    assert.ok(arbPanelControllerResponse.body.includes('const arbAlertBridgeRuntime = options.arbAlertBridgeRuntime || {};'));
+    assert.ok(arbPanelControllerResponse.body.includes('arbAlertBridgeRuntime.getActiveMutedPathLegs(nowMs)'));
+    assert.ok(!arbPanelControllerResponse.body.includes('getAlertRuntimeController'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);'));
     assert.ok(appJsResponse.body.includes('getOpportunity: (opportunityId) => arbOpportunityRuntime.getOpportunity(opportunityId)'));
     assert.ok(arbDetailControllerResponse.body.includes('let current = deps.getOpportunity(opportunityId);'));
@@ -1568,6 +1572,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbAlertBridgeUtilsResponse.body.includes('function markTriggeredOpportunities(targetKey, nowMs)'));
     assert.ok(arbAlertBridgeUtilsResponse.body.includes('function refreshArbViewsAfterMutedPathLegChange(options = {})'));
     assert.ok(arbAlertBridgeUtilsResponse.body.includes('function refreshArbPanel()'));
+    assert.ok(arbAlertBridgeUtilsResponse.body.includes('function getActiveMutedPathLegs(nowMs)'));
+    assert.ok(arbAlertBridgeUtilsResponse.body.includes('function buildMutedPathTargetKey(alertOrTarget)'));
     assert.ok(!appJsResponse.body.includes('let arbHighlightedOpportunityUntilById = new Map();'));
     assert.ok(!appJsResponse.body.includes('let arbOpportunityHighlightCleanupTimer = null;'));
     assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function createArbOpportunityHighlightRuntime(options = {})'));
@@ -1624,7 +1630,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('PathAlertUtils is not loaded'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertUtils.buildMutedPathStatusText('));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertUtils.buildMutedPathLegStatusText('));
-    assert.ok(arbPanelControllerResponse.body.includes('return getAlertRuntime().buildMutedPathTargetKey(alertOrTarget);'));
+    assert.ok(arbPanelControllerResponse.body.includes('arbAlertBridgeRuntime.buildMutedPathTargetKey(alertOrTarget)'));
+    assert.ok(arbPanelControllerResponse.body.includes('arbAlertBridgeRuntime.buildMutedPathTargetFromCycleLegs(legs)'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertUtils.buildMutedPathLogTitleSnapshot(entry)'));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathLogTitleSnapshot(entry)'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertUtils.getQuoteAlertsForQuoteId(pathAlertConfig, quote.id)'));

@@ -45,6 +45,13 @@
     const isArbDetailVisible = typeof options.isArbDetailVisible === 'function'
       ? options.isArbDetailVisible
       : () => false;
+    const getAlertRuntimeController = typeof options.getAlertRuntimeController === 'function'
+      ? options.getAlertRuntimeController
+      : () => options.alertRuntimeController || null;
+
+    function getAlertRuntime() {
+      return getAlertRuntimeController();
+    }
 
     function markTriggeredOpportunities(targetKey, nowMs) {
       const opportunityIds = getOpportunityIdsForTarget(opportunityRuntime, targetKey);
@@ -85,7 +92,33 @@
       return result;
     }
 
+    function getActiveMutedPathLegs(nowMs) {
+      const alertRuntime = getAlertRuntime();
+      if (!alertRuntime) return [];
+      if (typeof alertRuntime.pruneMutedPathLegsInPlace === 'function') {
+        alertRuntime.pruneMutedPathLegsInPlace(nowMs);
+      }
+      if (typeof alertRuntime.getMutedPathLegs !== 'function') return [];
+      const mutedPathLegs = alertRuntime.getMutedPathLegs();
+      return Array.isArray(mutedPathLegs) ? mutedPathLegs : [];
+    }
+
+    function buildMutedPathTargetKey(alertOrTarget) {
+      const alertRuntime = getAlertRuntime();
+      if (!alertRuntime || typeof alertRuntime.buildMutedPathTargetKey !== 'function') return '';
+      return alertRuntime.buildMutedPathTargetKey(alertOrTarget);
+    }
+
+    function buildMutedPathTargetFromCycleLegs(legs) {
+      const alertRuntime = getAlertRuntime();
+      if (!alertRuntime || typeof alertRuntime.buildMutedPathTargetFromCycleLegs !== 'function') return null;
+      return alertRuntime.buildMutedPathTargetFromCycleLegs(legs);
+    }
+
     return {
+      buildMutedPathTargetFromCycleLegs,
+      buildMutedPathTargetKey,
+      getActiveMutedPathLegs,
       getOpportunityIdsForTarget: (targetKey) => getOpportunityIdsForTarget(opportunityRuntime, targetKey),
       invalidateRuleSnapshot,
       refreshArbViewsAfterMutedPathLegChange,

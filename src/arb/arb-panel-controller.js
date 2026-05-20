@@ -37,12 +37,10 @@
     const getArbCycleStartPriority = typeof options.getArbCycleStartPriority === 'function'
       ? options.getArbCycleStartPriority
       : () => [];
-    const getAlertRuntimeController = typeof options.getAlertRuntimeController === 'function'
-      ? options.getAlertRuntimeController
-      : () => null;
     const getArbDetailController = typeof options.getArbDetailController === 'function'
       ? options.getArbDetailController
       : () => null;
+    const arbAlertBridgeRuntime = options.arbAlertBridgeRuntime || {};
     const openArbDetailModal = typeof options.openArbDetailModal === 'function'
       ? options.openArbDetailModal
       : () => {};
@@ -141,10 +139,6 @@
       });
     }
 
-    function getAlertRuntime() {
-      return getAlertRuntimeController();
-    }
-
     function invalidateRuleSnapshotCache(config = {}) {
       if (config.bumpRevision !== false && options.quoteStateRuntime) {
         options.quoteStateRuntime.bumpMarketRevision();
@@ -154,6 +148,11 @@
 
     function clearTopologyCache() {
       arbPanelCache.clearTopology();
+    }
+
+    function getActiveMutedPathLegs(nowMs) {
+      if (typeof arbAlertBridgeRuntime.getActiveMutedPathLegs !== 'function') return [];
+      return arbAlertBridgeRuntime.getActiveMutedPathLegs(nowMs);
     }
 
     function getArbPathTopologyCache() {
@@ -213,14 +212,13 @@
         return cachedSnapshot;
       }
 
-      const alertRuntime = getAlertRuntime();
       const aliasRules = getAliasRules();
       const allQuotes = getActiveQuotes(getAllDashboardQuotes());
       const nowMs = Date.now();
-      alertRuntime.pruneMutedPathLegsInPlace(nowMs);
+      const mutedPathLegs = getActiveMutedPathLegs(nowMs);
       const allEdges = options.mutedPathLegUtils.filterMutedPathLegs(
         options.arbPaths.buildEdges(allQuotes, getQuoteMarketStateMap(), null),
-        alertRuntime.getMutedPathLegs(),
+        mutedPathLegs,
         nowMs
       );
       const ruleEdges = options.arbPaths.buildRuleEdges(aliasRules);
@@ -241,7 +239,7 @@
         quotesByCategoryName,
         quoteStateById: getQuoteMarketStateMap(),
         aliasRules,
-        mutedPathLegs: alertRuntime.getMutedPathLegs(),
+        mutedPathLegs,
         mutedPathLegUtils: options.mutedPathLegUtils,
         preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
         arbPathsApi: options.arbPaths,
@@ -262,11 +260,15 @@
     }
 
     function buildMutedPathTargetKey(alertOrTarget) {
-      return getAlertRuntime().buildMutedPathTargetKey(alertOrTarget);
+      return typeof arbAlertBridgeRuntime.buildMutedPathTargetKey === 'function'
+        ? arbAlertBridgeRuntime.buildMutedPathTargetKey(alertOrTarget)
+        : '';
     }
 
     function buildMutedPathTargetFromCycleLegs(legs) {
-      return getAlertRuntime().buildMutedPathTargetFromCycleLegs(legs);
+      return typeof arbAlertBridgeRuntime.buildMutedPathTargetFromCycleLegs === 'function'
+        ? arbAlertBridgeRuntime.buildMutedPathTargetFromCycleLegs(legs)
+        : null;
     }
 
     function createOpportunityEntry(targetMap, highlightTargetMap, cycle, label, meta = {}) {
@@ -362,14 +364,13 @@
     function buildGlobalSection(topologyCache, templateUtils, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
       const globalSectionKey = 'global:all';
       const nowMs = Date.now();
-      const alertRuntime = getAlertRuntime();
-      alertRuntime.pruneMutedPathLegsInPlace(nowMs);
+      const mutedPathLegs = getActiveMutedPathLegs(nowMs);
       const globalCycles = options.mutedPathLegUtils.filterMutedCycles(
         topologyCache.globalTemplates
           .map((template) => templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap()))
           .filter(Boolean)
           .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)),
-        alertRuntime.getMutedPathLegs(),
+        mutedPathLegs,
         nowMs
       );
       const filterState = arbGlobalFilterStateRuntime.get();

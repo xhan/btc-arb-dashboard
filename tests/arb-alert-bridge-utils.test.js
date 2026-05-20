@@ -18,10 +18,29 @@ const opportunityRuntime = {
 };
 const highlighted = [];
 const sideEffects = [];
+const alertRuntimeCalls = [];
 const highlightRuntime = {
   mark(opportunityIds, nowMs) {
     highlighted.push([opportunityIds, nowMs]);
     return true;
+  }
+};
+const mutedPathLegs = [{ key: 'leg-a' }];
+const alertRuntime = {
+  buildMutedPathTargetFromCycleLegs(legs) {
+    alertRuntimeCalls.push(['buildTarget', legs]);
+    return { type: 'path', legs };
+  },
+  buildMutedPathTargetKey(alertOrTarget) {
+    alertRuntimeCalls.push(['buildKey', alertOrTarget]);
+    return 'target-key-a';
+  },
+  getMutedPathLegs() {
+    alertRuntimeCalls.push(['getLegs']);
+    return mutedPathLegs;
+  },
+  pruneMutedPathLegsInPlace(nowMs) {
+    alertRuntimeCalls.push(['prune', nowMs]);
   }
 };
 
@@ -36,6 +55,7 @@ const bridgeRuntime = createArbAlertBridgeRuntime({
   opportunityRuntime,
   highlightRuntime,
   closeArbDetailModal: () => sideEffects.push(['closeDetail']),
+  getAlertRuntimeController: () => alertRuntime,
   invalidateArbRuleSnapshotCache: () => sideEffects.push(['invalidate']),
   isArbDetailVisible: () => true,
   renderArbDetailModal: () => sideEffects.push(['renderDetail']),
@@ -59,6 +79,12 @@ assert.deepStrictEqual(
   bridgeRuntime.refreshArbViewsAfterMutedPathLegChange({ closeDetail: false }),
   { closedDetail: false, renderedDetail: true, updatedPanel: true }
 );
+assert.deepStrictEqual(bridgeRuntime.getActiveMutedPathLegs(2000), mutedPathLegs);
+assert.strictEqual(bridgeRuntime.buildMutedPathTargetKey({ target: { type: 'path' } }), 'target-key-a');
+assert.deepStrictEqual(
+  bridgeRuntime.buildMutedPathTargetFromCycleLegs([{ quoteId: 1 }]),
+  { type: 'path', legs: [{ quoteId: 1 }] }
+);
 assert.deepStrictEqual(sideEffects, [
   ['invalidate'],
   ['updatePanel'],
@@ -67,10 +93,19 @@ assert.deepStrictEqual(sideEffects, [
   ['updatePanel'],
   ['renderDetail']
 ]);
+assert.deepStrictEqual(alertRuntimeCalls, [
+  ['prune', 2000],
+  ['getLegs'],
+  ['buildKey', { target: { type: 'path' } }],
+  ['buildTarget', [{ quoteId: 1 }]]
+]);
 
 const emptyBridgeRuntime = createArbAlertBridgeRuntime();
 assert.strictEqual(emptyBridgeRuntime.invalidateRuleSnapshot(), false);
 assert.strictEqual(emptyBridgeRuntime.refreshArbPanel(), false);
+assert.deepStrictEqual(emptyBridgeRuntime.getActiveMutedPathLegs(2000), []);
+assert.strictEqual(emptyBridgeRuntime.buildMutedPathTargetKey({}), '');
+assert.strictEqual(emptyBridgeRuntime.buildMutedPathTargetFromCycleLegs([]), null);
 assert.deepStrictEqual(
   emptyBridgeRuntime.refreshArbViewsAfterMutedPathLegChange(),
   { closedDetail: false, renderedDetail: false, updatedPanel: false }

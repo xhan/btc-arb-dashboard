@@ -368,7 +368,22 @@
     const SPECIAL_ARB_RULES = getPathAlertRuleDefinitionsUtils().SPECIAL_ARB_RULES;
     const GLOBAL_PATH_SOURCE_SELECTORS = [0, 1, 2, 3];
     const ARB_PATH_CONFIG = getArbPathConfig();
+    const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({
+        arbOpportunityRuntime,
+        arbOpportunityHighlightRuntime,
+        closeArbDetailModal: () => {
+            if (arbDetailController) arbDetailController.close();
+        },
+        getAlertRuntimeController: () => alertRuntimeController,
+        invalidateArbRuleSnapshotCache: () => invalidateArbRuleSnapshotCache(),
+        isArbDetailVisible: () => Boolean(arbDetailController && arbDetailController.isVisible()),
+        renderArbDetailModal: () => {
+            if (arbDetailController) arbDetailController.render();
+        },
+        updateArbPanel: () => updateArbPanel()
+    });
     const arbPanelController = getArbPanelController().createArbPanelController({
+        arbAlertBridgeRuntime,
         arbCyclePriorityUtils: getArbCyclePriorityUtils(),
         arbDetailUtils: getArbDetailUtils(),
         arbEquivalenceUtils: getArbEquivalenceUtils(),
@@ -391,7 +406,6 @@
         domRenderUtils: getDomRenderUtils(),
         fixedPathRules: FIXED_PATH_RULES,
         getActiveQuotes,
-        getAlertRuntimeController: () => alertRuntimeController,
         getArbCycleStartPriority: () => arbCycleStartPriority,
         getArbDetailController: () => arbDetailController,
         getDashboardState: () => dashboardState,
@@ -443,19 +457,6 @@
         setMaxHeight: setArbPanelMaxHeight,
         update: updateArbPanel
     } = arbPanelController;
-    const arbAlertBridgeRuntime = getArbAlertBridgeUtils().createArbAlertBridgeRuntime({
-        arbOpportunityRuntime,
-        arbOpportunityHighlightRuntime,
-        closeArbDetailModal: () => {
-            if (arbDetailController) arbDetailController.close();
-        },
-        invalidateArbRuleSnapshotCache,
-        isArbDetailVisible: () => Boolean(arbDetailController && arbDetailController.isVisible()),
-        renderArbDetailModal: () => {
-            if (arbDetailController) arbDetailController.render();
-        },
-        updateArbPanel
-    });
     let dashboardRendered = false;
 
     function renderDashboardForCurrentState() {
