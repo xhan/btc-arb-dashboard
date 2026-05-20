@@ -71,6 +71,7 @@
       }
       return domRenderUtils.createRenderInteractionDeferralRuntime({
         getTarget: getElement,
+        interactionRuntime: deps.interactionRuntime,
         setTimeout: deps.setTimeout,
         clearTimeout: deps.clearTimeout,
         onIdle: () => flushAlertContentRenderer(getRenderer, getElement)

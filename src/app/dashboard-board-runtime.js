@@ -24,6 +24,7 @@
     )
       ? domRenderUtils.createRenderInteractionDeferralRuntime({
         getTarget: () => refs.dashboardEl,
+        interactionRuntime: options.interactionRuntime,
         setTimeout: options.setTimeout,
         clearTimeout: options.clearTimeout,
         onIdle: () => {

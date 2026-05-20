@@ -63,6 +63,14 @@
     const dashboardRuntimeUtils = getDashboardRuntimeUtils();
     const domRenderUtils = getDomRenderUtils();
     const closestEventTarget = domRenderUtils.closestEventTarget;
+    const dashboardInputInteractionRuntime = domRenderUtils.createRenderInteractionHoldRuntime({
+        clearTimeout,
+        eventListenerOptions: { capture: true },
+        idleDelayMs: 80,
+        setTimeout,
+        trackFocus: false
+    });
+    dashboardInputInteractionRuntime.bind(document);
 
     const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
     const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
@@ -344,6 +352,7 @@
             getArbCycleStartPriority,
             getDashboardLocalStorage,
             getDashboardState,
+            interactionRuntime: dashboardInputInteractionRuntime,
             getQuoteChainDisplayName,
             getQuoteMarketState,
             getQuoteMarketStateMap,
@@ -454,6 +463,7 @@
         dataTerminalUtils: getDataTerminalUtils(),
         dashboardRuntimeUtils,
         domRenderUtils,
+        interactionRuntime: dashboardInputInteractionRuntime,
         documentImpl: document,
         windowImpl: window,
         setTimeout,
@@ -559,6 +569,7 @@
     const dashboardBoardRuntime = getDashboardBoardRuntime().createDashboardBoardRuntime({
         addQuoteModalSelectionRuntime,
         confirmActionRuntime,
+        interactionRuntime: dashboardInputInteractionRuntime,
         dashboardActionControllerUtils: getDashboardActionController(),
         dashboardFormControllerUtils: getDashboardFormController(),
         dashboardViewControllerUtils: getDashboardViewController(),

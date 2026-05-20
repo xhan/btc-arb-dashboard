@@ -543,6 +543,9 @@
       ? Number(options.idleDelayMs)
       : 80;
     const onIdle = typeof options.onIdle === 'function' ? options.onIdle : () => {};
+    const trackFocus = options.trackFocus !== false;
+    const eventListenerOptions = options.eventListenerOptions;
+    const idleListeners = [];
     let boundTarget = null;
     let idleTimer = null;
     let manualHolding = false;
@@ -559,6 +562,11 @@
       return true;
     }
 
+    function notifyIdle() {
+      onIdle();
+      idleListeners.forEach((listener) => listener());
+    }
+
     function isHolding() {
       return manualHolding || pointerDepth > 0 || keyActive || focusInside;
     }
@@ -569,7 +577,7 @@
       idleTimer = setTimer(() => {
         idleTimer = null;
         if (!isHolding()) {
-          onIdle();
+          notifyIdle();
         }
       }, idleDelayMs);
       return true;
@@ -607,11 +615,13 @@
     }
 
     function focusIn() {
+      if (!trackFocus) return;
       focusInside = true;
       clearIdleTimer();
     }
 
     function focusOut(event) {
+      if (!trackFocus) return;
       const nextTarget = event && event.relatedTarget;
       if (
         nextTarget
@@ -629,21 +639,28 @@
       return isHolding();
     }
 
+    function addIdleListener(listener) {
+      if (typeof listener !== 'function') return false;
+      idleListeners.push(listener);
+      return true;
+    }
+
     function bind(target) {
       if (!target || typeof target.addEventListener !== 'function') return false;
       if (boundTarget) return false;
       boundTarget = target;
-      target.addEventListener('pointerdown', pointerDown);
-      target.addEventListener('pointerup', pointerUp);
-      target.addEventListener('pointercancel', pointerUp);
-      target.addEventListener('focusin', focusIn);
-      target.addEventListener('focusout', focusOut);
-      target.addEventListener('keydown', keyDown);
-      target.addEventListener('keyup', keyUp);
+      target.addEventListener('pointerdown', pointerDown, eventListenerOptions);
+      target.addEventListener('pointerup', pointerUp, eventListenerOptions);
+      target.addEventListener('pointercancel', pointerUp, eventListenerOptions);
+      target.addEventListener('focusin', focusIn, eventListenerOptions);
+      target.addEventListener('focusout', focusOut, eventListenerOptions);
+      target.addEventListener('keydown', keyDown, eventListenerOptions);
+      target.addEventListener('keyup', keyUp, eventListenerOptions);
       return true;
     }
 
     return {
+      addIdleListener,
       bind,
       hold,
       isHolding,
@@ -662,13 +679,28 @@
       idleDelayMs: options.idleDelayMs,
       onIdle: options.onIdle
     });
+    const sharedInteractionRuntime = options.interactionRuntime || null;
+    if (
+      sharedInteractionRuntime
+      && typeof sharedInteractionRuntime.addIdleListener === 'function'
+      && typeof options.onIdle === 'function'
+    ) {
+      sharedInteractionRuntime.addIdleListener(options.onIdle);
+    }
 
     function bind(target = getTarget()) {
       return interactionRuntime.bind(target);
     }
 
     function shouldDeferRender(target = getTarget()) {
-      return interactionRuntime.shouldDeferRender(target);
+      if (interactionRuntime.shouldDeferRender(target)) return true;
+      if (sharedInteractionRuntime && typeof sharedInteractionRuntime.shouldDeferRender === 'function') {
+        return sharedInteractionRuntime.shouldDeferRender(target);
+      }
+      if (sharedInteractionRuntime && typeof sharedInteractionRuntime.isHolding === 'function') {
+        return sharedInteractionRuntime.isHolding();
+      }
+      return false;
     }
 
     return {

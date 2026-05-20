@@ -235,6 +235,56 @@ holdFlushRuntime.release();
 assert.strictEqual(holdDeferredTarget.innerHTML, '<div>latest</div>');
 assert.deepStrictEqual(holdDeferredWrites, ['<div>latest</div>']);
 
+const sharedHoldCalls = [];
+const sharedHoldTimers = new Map();
+let nextSharedHoldTimerId = 1;
+const sharedHoldListeners = {};
+const sharedHoldListenerOptions = {};
+const sharedHoldRuntime = createRenderInteractionHoldRuntime({
+  idleDelayMs: 9,
+  trackFocus: false,
+  eventListenerOptions: { capture: true },
+  setTimeout(callback, delayMs) {
+    const id = nextSharedHoldTimerId;
+    nextSharedHoldTimerId += 1;
+    sharedHoldCalls.push(['setTimeout', delayMs, id]);
+    sharedHoldTimers.set(id, callback);
+    return id;
+  },
+  clearTimeout(id) {
+    sharedHoldCalls.push(['clearTimeout', id]);
+    sharedHoldTimers.delete(id);
+  },
+  onIdle() {
+    sharedHoldCalls.push(['idle']);
+  }
+});
+sharedHoldRuntime.addIdleListener(() => sharedHoldCalls.push(['idle-listener']));
+const sharedDocumentTarget = {
+  addEventListener(type, handler, listenerOptions) {
+    sharedHoldListeners[type] = handler;
+    sharedHoldListenerOptions[type] = listenerOptions;
+  },
+  contains() {
+    return true;
+  }
+};
+assert.strictEqual(sharedHoldRuntime.bind(sharedDocumentTarget), true);
+assert.deepStrictEqual(sharedHoldListenerOptions.pointerdown, { capture: true });
+sharedHoldListeners.focusin({});
+assert.strictEqual(sharedHoldRuntime.isHolding(), false);
+sharedHoldListeners.keydown({});
+assert.strictEqual(sharedHoldRuntime.isHolding(), true);
+sharedHoldListeners.keyup({});
+const sharedHoldTimerId = nextSharedHoldTimerId - 1;
+assert.ok(sharedHoldTimers.has(sharedHoldTimerId));
+sharedHoldTimers.get(sharedHoldTimerId)();
+assert.deepStrictEqual(sharedHoldCalls, [
+  ['setTimeout', 9, sharedHoldTimerId],
+  ['idle'],
+  ['idle-listener']
+]);
+
 const deferralCalls = [];
 const deferralTimers = new Map();
 let nextDeferralTimerId = 1;
@@ -274,6 +324,32 @@ assert.deepStrictEqual(deferralCalls, [
   ['setTimeout', 11, deferralTimerId],
   ['idle']
 ]);
+
+const sharedDeferralCalls = [];
+const sharedDeferralTimers = new Map();
+let nextSharedDeferralTimerId = 1;
+const sharedDeferralRuntime = createRenderInteractionHoldRuntime({
+  idleDelayMs: 13,
+  setTimeout(callback, delayMs) {
+    const id = nextSharedDeferralTimerId;
+    nextSharedDeferralTimerId += 1;
+    sharedDeferralTimers.set(id, callback);
+    return id;
+  },
+  clearTimeout(id) {
+    sharedDeferralTimers.delete(id);
+  }
+});
+const externalDeferralRuntime = createRenderInteractionDeferralRuntime({
+  interactionRuntime: sharedDeferralRuntime,
+  onIdle: () => sharedDeferralCalls.push(['idle'])
+});
+sharedDeferralRuntime.hold();
+assert.strictEqual(externalDeferralRuntime.shouldDeferRender(), true);
+sharedDeferralRuntime.release();
+const sharedDeferralTimerId = nextSharedDeferralTimerId - 1;
+sharedDeferralTimers.get(sharedDeferralTimerId)();
+assert.deepStrictEqual(sharedDeferralCalls, [['idle']]);
 
 const quoteDomLookups = [];
 const quoteDomRefs = getQuoteDomRefs({

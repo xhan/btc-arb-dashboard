@@ -45,6 +45,7 @@
       getArbCycleStartPriority: deps.getArbCycleStartPriority,
       getDashboardLocalStorage: deps.getDashboardLocalStorage,
       getDashboardState: deps.getDashboardState,
+      interactionRuntime: deps.interactionRuntime,
       getQuoteChainDisplayName: deps.getQuoteChainDisplayName,
       getQuoteMarketState: deps.getQuoteMarketState,
       getQuoteMarketStateMap: deps.getQuoteMarketStateMap,

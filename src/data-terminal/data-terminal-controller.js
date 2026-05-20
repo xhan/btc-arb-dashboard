@@ -39,6 +39,7 @@
     )
       ? domRenderUtils.createRenderInteractionDeferralRuntime({
         getTarget: () => (state && state.domRefs ? state.domRefs.content : null),
+        interactionRuntime: deps.interactionRuntime,
         setTimeout: deps.setTimeout,
         clearTimeout: deps.clearTimeout,
         onIdle: () => {
