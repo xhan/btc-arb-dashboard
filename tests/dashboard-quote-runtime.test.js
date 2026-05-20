@@ -123,7 +123,6 @@ const runtime = createDashboardQuoteRuntime({
   AbortController,
   backendUrl: 'http://127.0.0.1:3000',
   chainDefaults: { id: 'chainDefaults' },
-  checkPriceForAlerts: () => {},
   dashboardRuntimeUtils: { id: 'dashboardRuntime' },
   defaultIntervals: { main: 1000 },
   documentImpl: { id: 'document' },
@@ -141,6 +140,8 @@ const runtime = createDashboardQuoteRuntime({
   isSchedulerPaused: () => false,
   logWarning: () => {},
   markDashboardUiDirty: () => {},
+  onQuoteMainFetchSuccess: () => calls.push(['mainSuccess']),
+  onQuoteMarketStateChanged: () => calls.push(['marketChanged']),
   applyActiveQuoteUiState: () => {},
   queueStatsUtils,
   quoteDisplayUtils: { id: 'quoteDisplay' },
@@ -156,8 +157,6 @@ const runtime = createDashboardQuoteRuntime({
       return intervals[type];
     }
   },
-  scheduleArbPanelUpdate: () => {},
-  scheduleDataTerminalUpdate: () => {},
   setQuoteMarketState: () => {},
   shouldQueueInverseFetch: () => true,
   updateQuotePairLabel: () => {},
@@ -170,6 +169,8 @@ assert.strictEqual(fetchOptions.backendUrl, 'http://127.0.0.1:3000');
 assert.strictEqual(fetchOptions.chainDefaults.id, 'chainDefaults');
 assert.strictEqual(fetchOptions.isDashboardUiActive(), true);
 assert.strictEqual(typeof fetchOptions.markDashboardUiDirty, 'function');
+fetchOptions.onQuoteMarketStateChanged();
+fetchOptions.onQuoteMainFetchSuccess();
 refreshOptions.quoteQueueRuntime.addToQueue({ id: 9 });
 assert.deepStrictEqual(runtime.fetchQuoteByStrategy({ id: 3 }, { mode: 'main' }), {
   quote: { id: 3 },
@@ -206,3 +207,5 @@ assert.deepStrictEqual(calls.slice(0, 4), [
   ['createQueue'],
   ['createRefresh', true]
 ]);
+assert.ok(calls.some((call) => call[0] === 'marketChanged'));
+assert.ok(calls.some((call) => call[0] === 'mainSuccess'));

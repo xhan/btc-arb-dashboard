@@ -74,6 +74,18 @@
         : '';
     }
 
+    function handleQuoteMarketStateChanged() {
+      return arbPanelController && typeof arbPanelController.scheduleUpdate === 'function'
+        ? arbPanelController.scheduleUpdate()
+        : false;
+    }
+
+    function handleQuoteMainFetchSuccess(quote, context = {}) {
+      return alertRuntimeController && typeof alertRuntimeController.checkPriceForAlerts === 'function'
+        ? alertRuntimeController.checkPriceForAlerts(quote, context)
+        : false;
+    }
+
     const arbAlertBridgeRuntime = options.arbAlertBridgeUtils.createArbAlertBridgeRuntime({
       arbOpportunityRuntime,
       arbOpportunityHighlightRuntime,
@@ -209,6 +221,8 @@
       getAliasRules: arbPanelController.getAliasRules,
       getOpportunity: arbOpportunityRuntime.getOpportunity,
       getSharedArbRuleSnapshot: arbPanelController.getSharedRuleSnapshot,
+      handleQuoteMarketStateChanged,
+      handleQuoteMainFetchSuccess,
       invalidateArbRuleSnapshotCache: arbPanelController.invalidateRuleSnapshotCache,
       isRuleLeg: arbPanelController.isRuleLeg,
       scheduleArbPanelUpdate: arbPanelController.scheduleUpdate,

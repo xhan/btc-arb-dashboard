@@ -1313,8 +1313,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(!dashboardRendererResponse.body.includes('updates.kyberOnlyDirectPools = true;'));
     assert.ok(dashboardRendererResponse.body.includes('updates.kyberExcludedSources = nextKyberExcludedSources;'));
     assert.ok(arbPanelControllerResponse.body.includes('const arbPanelUpdateRuntime = arbRuntimeMemoryUtils.createArbPanelUpdateRuntime({'));
-    assert.ok(appJsResponse.body.includes('scheduleArbPanelUpdate,'));
-    assert.ok(quoteFetchControllerResponse.body.includes('deps.scheduleArbPanelUpdate();'));
+    assert.ok(appJsResponse.body.includes('onQuoteMarketStateChanged: handleQuoteMarketStateChanged,'));
+    assert.ok(appJsResponse.body.includes('onQuoteMainFetchSuccess: arbWorkspaceRuntime.handleQuoteMainFetchSuccess,'));
+    assert.ok(quoteRuntimeResponse.body.includes('onQuoteMarketStateChanged: options.onQuoteMarketStateChanged,'));
+    assert.ok(quoteFetchControllerResponse.body.includes('notifyQuoteMarketStateChanged(quote, inverseState, {'));
+    assert.ok(quoteFetchControllerResponse.body.includes('notifyQuoteMarketStateChanged(quote, newState, {'));
+    assert.ok(quoteFetchControllerResponse.body.includes('notifyQuoteMainFetchSuccess(quote, {'));
+    assert.ok(!quoteFetchControllerResponse.body.includes('deps.scheduleArbPanelUpdate();'));
     assert.ok(arbPanelControllerResponse.body.includes('arbPanelUpdateRuntime.markDirty();'));
     assert.ok(arbPanelControllerResponse.body.includes('arbPanelUpdateRuntime.clearDirty();'));
     assert.ok(arbPanelControllerResponse.body.includes('arbPanelUpdateRuntime.isDirty()'));
@@ -1647,7 +1652,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('const arbWorkspaceRuntime = getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({'));
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('dashboardArbAlertRuntimeUtils.createDashboardArbAlertRuntime({'));
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('options.arbAlertRuntimeRef.set(createdArbAlertRuntime)'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('handleQuoteMarketStateChanged: arbAlertRuntime.handleQuoteMarketStateChanged'));
+    assert.ok(arbWorkspaceRuntimeResponse.body.includes('handleQuoteMainFetchSuccess: arbAlertRuntime.handleQuoteMainFetchSuccess'));
     assert.ok(arbAlertRuntimeResponse.body.includes('options.arbPanelControllerUtils.createArbPanelController({'));
+    assert.ok(arbAlertRuntimeResponse.body.includes('function handleQuoteMarketStateChanged()'));
+    assert.ok(arbAlertRuntimeResponse.body.includes('function handleQuoteMainFetchSuccess(quote, context = {})'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const fixedPathRules = pathAlertRuleDefinitions.FIXED_PATH_RULES || [];'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const specialArbRules = pathAlertRuleDefinitions.SPECIAL_ARB_RULES || [];'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbRuleSnapshotUtils.buildArbRuleSnapshot({'));
@@ -2344,7 +2353,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalControllerResponse.body.includes('updateRuntime.clear();'));
     assert.ok(!appJsResponse.body.includes('function clearDataTerminalTimer()'));
     assert.ok(appJsResponse.body.includes('const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;'));
-    assert.ok(quoteFetchControllerResponse.body.includes('deps.scheduleDataTerminalUpdate();'));
+    assert.ok(appJsResponse.body.includes('function handleQuoteMarketStateChanged(quote, state, context)'));
+    assert.ok(appJsResponse.body.includes('scheduleDataTerminalUpdate();'));
+    assert.ok(!quoteFetchControllerResponse.body.includes('deps.scheduleDataTerminalUpdate();'));
     assert.ok(dataTerminalControllerResponse.body.includes('scheduleUpdate: () => updateRuntime.schedule(),'));
     assert.ok(!appJsResponse.body.includes('timer: null,'));
     assert.ok(!appJsResponse.body.includes('dataTerminalState.timer'));

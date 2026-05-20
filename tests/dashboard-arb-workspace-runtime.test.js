@@ -43,6 +43,8 @@ const runtime = createDashboardArbWorkspaceRuntime({
         getAliasRules: () => ({ usdt: 'usdt0' }),
         getOpportunity: (opportunityId) => ({ id: opportunityId }),
         getSharedArbRuleSnapshot: () => ({ id: 'snapshot' }),
+        handleQuoteMarketStateChanged: (quote, state, context) => calls.push(['handleMarketChanged', quote.id, state && state.lastRawPrice, context && context.fetchMode]),
+        handleQuoteMainFetchSuccess: (quote, context) => calls.push(['handleMainSuccess', quote.id, context && context.successSource]),
         invalidateArbRuleSnapshotCache: (optionsArg) => {
           calls.push(['invalidate', optionsArg]);
           return true;
@@ -119,6 +121,8 @@ runtime.closeArbDetailModal();
 runtime.renderArbDetailModal();
 runtime.dashboardViewModeController.toggleArbView();
 runtime.arbDetailController.recordSourceAttempt('kyber');
+runtime.handleQuoteMarketStateChanged({ id: 11 }, { lastRawPrice: 1.1 }, { fetchMode: 'inverse' });
+runtime.handleQuoteMainFetchSuccess({ id: 12 }, { successSource: '0x' });
 
 assert.deepStrictEqual(calls.slice(0, 4), [
   ['createArbAlert'],
@@ -128,3 +132,5 @@ assert.deepStrictEqual(calls.slice(0, 4), [
 ]);
 assert.ok(calls.some((call) => call[0] === 'updateArb'));
 assert.ok(calls.some((call) => call[0] === 'muteLeg'));
+assert.ok(calls.some((call) => call[0] === 'handleMarketChanged' && call[1] === 11 && call[3] === 'inverse'));
+assert.ok(calls.some((call) => call[0] === 'handleMainSuccess' && call[1] === 12 && call[2] === '0x'));

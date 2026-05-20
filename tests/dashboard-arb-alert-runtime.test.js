@@ -21,6 +21,7 @@ const runtime = createDashboardArbAlertRuntime({
       return {
         bindAudioUnlockEvents: () => calls.push(['bindAudio']),
         buildQuoteAlertDisplayLabel: (quote, state, direction) => `alert:${quote.id}:${direction}`,
+        checkPriceForAlerts: (quote, context = {}) => calls.push(['checkAlerts', quote.id, context.successSource || null]),
         toggleAlertLogPanel: () => calls.push(['toggleAlertLog'])
       };
     }
@@ -182,6 +183,8 @@ assert.strictEqual(alertOptions.arbAlertBridgeRuntime.id, 'bridge');
 assert.strictEqual(alertOptions.applyFloatingPanelDisplay(), 'display');
 assert.strictEqual(alertOptions.buildLiveQuoteLabel(), 'live-label');
 assert.deepStrictEqual(alertOptions.findQuoteById(42), { id: 42 });
+runtime.handleQuoteMarketStateChanged({ id: 6 }, {}, { fetchMode: 'inverse' });
+runtime.handleQuoteMainFetchSuccess({ id: 7 }, { successSource: 'Kyber' });
 
 assert.deepStrictEqual(calls.slice(0, 5), [
   ['createOpportunity'],
@@ -191,3 +194,5 @@ assert.deepStrictEqual(calls.slice(0, 5), [
   ['createAlert']
 ]);
 assert.ok(calls.some((call) => call[0] === 'bindAudio'));
+assert.ok(calls.some((call) => call[0] === 'scheduleUpdate'));
+assert.ok(calls.some((call) => call[0] === 'checkAlerts' && call[1] === 7 && call[2] === 'Kyber'));

@@ -497,6 +497,13 @@
     const renderDataTerminalPanel = dataTerminalController.renderPanel;
     const toggleDataTerminalPanel = dataTerminalController.togglePanel;
     const scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
+    function handleQuoteMarketStateChanged(quote, state, context) {
+        if (arbWorkspaceRuntime && typeof arbWorkspaceRuntime.handleQuoteMarketStateChanged === 'function') {
+            arbWorkspaceRuntime.handleQuoteMarketStateChanged(quote, state, context);
+        }
+        scheduleDataTerminalUpdate();
+    }
+
     const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({
         dashboardCommandControllerUtils: getDashboardCommandController(),
         documentImpl: document,
@@ -518,7 +525,6 @@
         AbortController,
         backendUrl: BACKEND_URL,
         chainDefaults: getChainDefaults(),
-        checkPriceForAlerts: alertRuntimeController.checkPriceForAlerts,
         dashboardRuntimeUtils,
         defaultIntervals: DEFAULT_INTERVALS,
         documentImpl: document,
@@ -536,6 +542,8 @@
         isSchedulerPaused: () => arbDetailController.isDashboardPaused(),
         logWarning: (...args) => console.warn(...args),
         markDashboardUiDirty: markDashboardViewDirty,
+        onQuoteMainFetchSuccess: arbWorkspaceRuntime.handleQuoteMainFetchSuccess,
+        onQuoteMarketStateChanged: handleQuoteMarketStateChanged,
         applyActiveQuoteUiState,
         queueStatsUtils: getQueueStatsUtils(),
         quoteDisplayUtils: getQuoteDisplayUtils(),
@@ -546,8 +554,6 @@
         resetQuoteUiRuntimeState,
         requestChannelRuntime,
         requestChannelUtils: getRequestChannelUtils(),
-        scheduleArbPanelUpdate,
-        scheduleDataTerminalUpdate,
         setQuoteMarketState,
         shouldQueueInverseFetch,
         updateQuotePairLabel,

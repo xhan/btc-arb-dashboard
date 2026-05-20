@@ -116,6 +116,20 @@ function createBaseDeps(overrides = {}) {
     },
     recordSourceAttempt: (source) => calls.push(['recordSource', source]),
     resetQuoteUiRuntimeState: (quoteId) => calls.push(['resetUi', quoteId]),
+    onQuoteMarketStateChanged: (nextQuote, state, context = {}) => calls.push([
+      'marketChanged',
+      nextQuote.id,
+      state.lastRawPrice,
+      state.isInverseFetch,
+      context.fetchMode,
+      context.successSource || null
+    ]),
+    onQuoteMainFetchSuccess: (nextQuote, context = {}) => calls.push([
+      'mainSuccess',
+      nextQuote.id,
+      context.marketStateChanged === true,
+      context.successSource || null
+    ]),
     scheduleArbPanelUpdate: () => calls.push(['scheduleArb']),
     scheduleDataTerminalUpdate: () => calls.push(['scheduleDataTerminal']),
     setQuoteMarketState: (quoteId, state) => {
@@ -154,17 +168,16 @@ function createBaseDeps(overrides = {}) {
     const { calls, controller, quote } = createBaseDeps();
     await controller.fetchSingle(quote);
     assert.deepStrictEqual(
-      calls.filter((call) => ['createController', 'clearError', 'mainResult', 'inverseQueued', 'setMarketState', 'scheduleArb', 'scheduleDataTerminal', 'trend', 'checkAlerts', 'deleteController'].includes(call[0])),
+      calls.filter((call) => ['createController', 'clearError', 'mainResult', 'inverseQueued', 'setMarketState', 'marketChanged', 'trend', 'mainSuccess', 'deleteController'].includes(call[0])),
       [
         ['createController', 101],
         ['clearError', 'quote-data-101'],
         ['mainResult', 'quote-text-101', 'display-1.01'],
         ['inverseQueued', 'quote-data-101', 'inverse-quote-101', 'queued-text'],
         ['setMarketState', 101, 1.01, false],
-        ['scheduleArb'],
-        ['scheduleDataTerminal'],
+        ['marketChanged', 101, 1.01, false, 'main', 'Kyber'],
         ['trend', 101, 1.01, 1, 'Kyber', '0x'],
-        ['checkAlerts', 101],
+        ['mainSuccess', 101, true, 'Kyber'],
         ['deleteController', 101, 'signal-101']
       ]
     );
@@ -177,13 +190,12 @@ function createBaseDeps(overrides = {}) {
     });
     await controller.fetchSingle(quote);
     assert.deepStrictEqual(
-      calls.filter((call) => ['clearError', 'mainResult', 'inverseQueued', 'setMarketState', 'scheduleArb', 'scheduleDataTerminal', 'trend', 'checkAlerts', 'markDirty', 'deleteController'].includes(call[0])),
+      calls.filter((call) => ['clearError', 'mainResult', 'inverseQueued', 'setMarketState', 'marketChanged', 'trend', 'mainSuccess', 'markDirty', 'deleteController'].includes(call[0])),
       [
         ['setMarketState', 101, 1.01, false],
-        ['scheduleArb'],
-        ['scheduleDataTerminal'],
+        ['marketChanged', 101, 1.01, false, 'main', 'Kyber'],
         ['markDirty'],
-        ['checkAlerts', 101],
+        ['mainSuccess', 101, true, 'Kyber'],
         ['deleteController', 101, 'signal-101']
       ]
     );
@@ -194,9 +206,10 @@ function createBaseDeps(overrides = {}) {
     elements['inverse-quote-101'].textContent = 'inverse text';
     await controller.fetchSingle(quote, 'inverse');
     assert.deepStrictEqual(
-      calls.filter((call) => ['inverseResult', 'setMarketState', 'deleteController'].includes(call[0])),
+      calls.filter((call) => ['inverseResult', 'setMarketState', 'marketChanged', 'deleteController'].includes(call[0])),
       [
         ['setMarketState', 101, 1.01, true],
+        ['marketChanged', 101, 1.01, true, 'inverse', 'Kyber'],
         ['inverseResult', 'quote-data-101', 'inverse-quote-101', '2 USDC ≈ 2.020000 USDT'],
         ['deleteController', 101, 'signal-101']
       ]
@@ -234,13 +247,12 @@ function createBaseDeps(overrides = {}) {
     });
     await controller.fetchSingle(quote);
     assert.deepStrictEqual(
-      calls.filter((call) => ['request', 'setMarketState', 'scheduleArb', 'scheduleDataTerminal', 'checkAlerts', 'deleteController'].includes(call[0])),
+      calls.filter((call) => ['request', 'setMarketState', 'marketChanged', 'mainSuccess', 'deleteController'].includes(call[0])),
       [
         ['request', 101, 'signal-101', 'Kyber'],
         ['setMarketState', 101, 1.01, false],
-        ['scheduleArb'],
-        ['scheduleDataTerminal'],
-        ['checkAlerts', 101],
+        ['marketChanged', 101, 1.01, false, 'main', 'Kyber'],
+        ['mainSuccess', 101, true, 'Kyber'],
         ['deleteController', 101, 'signal-101']
       ]
     );

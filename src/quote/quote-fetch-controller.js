@@ -102,7 +102,19 @@
       return false;
     }
 
-    function handleInverseSuccess(quote, data, previousState, inverseEl, inverseContainerId, quoteDataEl) {
+    function notifyQuoteMarketStateChanged(quote, state, context = {}) {
+      if (typeof deps.onQuoteMarketStateChanged === 'function') {
+        deps.onQuoteMarketStateChanged(quote, state, context);
+      }
+    }
+
+    function notifyQuoteMainFetchSuccess(quote, context = {}) {
+      if (typeof deps.onQuoteMainFetchSuccess === 'function') {
+        deps.onQuoteMainFetchSuccess(quote, context);
+      }
+    }
+
+    function handleInverseSuccess(quote, data, previousState, inverseEl, inverseContainerId, quoteDataEl, successSource) {
       if (!deps.shouldQueueInverseFetch(quote)) return;
 
       const inverseFallbackText = `${quote.amount || 1} ${data.symbols.from} ≈ ${data.finalAmountOut.toFixed(6)} ${data.symbols.to}`;
@@ -111,7 +123,16 @@
         data,
         { isInverseFetch: true }
       );
-      deps.setQuoteMarketState(quote.id, inverseState);
+      const marketStateChanged = deps.setQuoteMarketState(quote.id, inverseState);
+      if (marketStateChanged) {
+        notifyQuoteMarketStateChanged(quote, inverseState, {
+          data,
+          fetchMode: 'inverse',
+          isInverseFetch: true,
+          previousState,
+          successSource
+        });
+      }
       if (!isDashboardUiActive()) {
         markDashboardUiDirty();
         return;
@@ -177,8 +198,13 @@
 
       const marketStateChanged = deps.setQuoteMarketState(quote.id, newState);
       if (marketStateChanged) {
-        deps.scheduleArbPanelUpdate();
-        deps.scheduleDataTerminalUpdate();
+        notifyQuoteMarketStateChanged(quote, newState, {
+          data,
+          fetchMode: 'main',
+          isInverseFetch: false,
+          previousState,
+          successSource
+        });
       }
 
       if (dashboardUiActive) {
@@ -186,7 +212,15 @@
       } else {
         markDashboardUiDirty();
       }
-      deps.checkPriceForAlerts(quote);
+      notifyQuoteMainFetchSuccess(quote, {
+        data,
+        fetchMode: 'main',
+        isInverseFetch: false,
+        marketStateChanged,
+        previousState,
+        state: newState,
+        successSource
+      });
     }
 
     function handleFetchError(quote, error, isInverseFetch, refs) {
@@ -253,7 +287,7 @@
         const inverseEl = deps.documentImpl.getElementById(inverseContainerId);
 
         if (isInverseFetch) {
-          handleInverseSuccess(quote, data, previousState, inverseEl, inverseContainerId, refs.quoteDataEl);
+          handleInverseSuccess(quote, data, previousState, inverseEl, inverseContainerId, refs.quoteDataEl, successSource);
         } else {
           handleMainSuccess(quote, data, successSource, refs, previousState, inverseEl, inverseContainerId);
         }

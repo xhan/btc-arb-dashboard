@@ -195,6 +195,8 @@
       formatDetailNumber: arbAlertRuntime.formatDetailNumber,
       getAliasRules: arbAlertRuntime.getAliasRules,
       getSharedArbRuleSnapshot: arbAlertRuntime.getSharedArbRuleSnapshot,
+      handleQuoteMarketStateChanged: arbAlertRuntime.handleQuoteMarketStateChanged,
+      handleQuoteMainFetchSuccess: arbAlertRuntime.handleQuoteMainFetchSuccess,
       invalidateArbRuleSnapshotCache: arbAlertRuntime.invalidateArbRuleSnapshotCache,
       isRuleLeg: arbAlertRuntime.isRuleLeg,
       scheduleArbPanelUpdate: arbAlertRuntime.scheduleArbPanelUpdate,
