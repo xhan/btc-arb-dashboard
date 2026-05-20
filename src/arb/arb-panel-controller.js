@@ -83,6 +83,7 @@
     });
     const arbExpandedSections = new Set();
     let arbLastPointerOpenedOpportunityId = null;
+    let cachedAliasRules = null;
 
     const arbPanelUpdateRuntime = arbRuntimeMemoryUtils.createArbPanelUpdateRuntime({
       setTimer,
@@ -107,9 +108,12 @@
     }
 
     function getAliasRules() {
-      return options.arbEquivalenceUtils.buildAliasRulesFromGroups(
-        options.arbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
-      );
+      if (!cachedAliasRules) {
+        cachedAliasRules = options.arbEquivalenceUtils.buildAliasRulesFromGroups(
+          options.arbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
+        );
+      }
+      return cachedAliasRules;
     }
 
     function buildQuoteMetaById() {

@@ -8,6 +8,7 @@ let marketRevisionBumps = 0;
 let resetCount = 0;
 let renderedHtml = '';
 let broughtToFrontPanel = null;
+let aliasRulesBuildCount = 0;
 
 const arbPanelCache = {
   clearRuleSnapshot() {
@@ -35,7 +36,10 @@ const controller = createArbPanelController({
   },
   arbEquivalenceUtils: {
     DEFAULT_ASSET_EQUIVALENCE_GROUPS: [['USDT', 'USDT0']],
-    buildAliasRulesFromGroups: (groups) => ({ groups })
+    buildAliasRulesFromGroups: (groups) => {
+      aliasRulesBuildCount += 1;
+      return { groups };
+    }
   },
   arbFixedUtils: {},
   arbOpportunityHighlightRuntime: {
@@ -161,6 +165,8 @@ assert.strictEqual(
 assert.strictEqual(controller.formatDetailNumber(1.23456, 2), '1.23');
 assert.strictEqual(controller.findQuoteById(42), dashboardState[0].quotes[0]);
 assert.deepStrictEqual(controller.getAliasRules(), { groups: [['USDT', 'USDT0']] });
+assert.strictEqual(controller.getAliasRules(), controller.getAliasRules());
+assert.strictEqual(aliasRulesBuildCount, 1);
 assert.strictEqual(controller.buildLiveQuoteLabel('ethereum', 'USDC', 'USDT', ' spot'), 'Chain:ethereum:USDC->USDT spot');
 
 controller.invalidateRuleSnapshotCache();
