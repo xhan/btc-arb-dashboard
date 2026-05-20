@@ -376,12 +376,15 @@
         closeArbDetailModal: () => {
             if (arbDetailController) arbDetailController.close();
         },
+        fixedPathRules: FIXED_PATH_RULES,
         getAlertRuntimeController: () => alertRuntimeController,
         invalidateArbRuleSnapshotCache: () => invalidateArbRuleSnapshotCache(),
         isArbDetailVisible: () => Boolean(arbDetailController && arbDetailController.isVisible()),
         renderArbDetailModal: () => {
             if (arbDetailController) arbDetailController.render();
         },
+        specialArbRules: SPECIAL_ARB_RULES,
+        specialRuleAlertConfigUtils: getSpecialRuleAlertConfigUtils(),
         updateArbPanel: () => updateArbPanel()
     });
     const arbPanelController = getArbPanelController().createArbPanelController({
@@ -524,7 +527,6 @@
         domRenderUtils: getDomRenderUtils(),
         fetchImpl: fetch,
         findQuoteById,
-        fixedPathRules: FIXED_PATH_RULES,
         formatArbPathLegLine,
         formatDetailNumber,
         getDashboardLocalStorage,
@@ -567,8 +569,6 @@
         clearInterval,
         setTimeout,
         clearTimeout,
-        specialArbRules: SPECIAL_ARB_RULES,
-        specialRuleAlertConfigUtils: getSpecialRuleAlertConfigUtils(),
         windowImpl: window
     });
     alertRuntimeController.bindAudioUnlockEvents();

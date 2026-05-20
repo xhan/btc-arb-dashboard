@@ -56,6 +56,9 @@
     const opportunityRuntime = options.opportunityRuntime || options.arbOpportunityRuntime || null;
     const highlightRuntime = options.highlightRuntime || options.arbOpportunityHighlightRuntime || null;
     const arbPanelLayoutUtils = options.arbPanelLayoutUtils || null;
+    const fixedPathRules = Array.isArray(options.fixedPathRules) ? options.fixedPathRules : [];
+    const specialArbRules = Array.isArray(options.specialArbRules) ? options.specialArbRules : [];
+    const specialRuleAlertConfigUtils = options.specialRuleAlertConfigUtils || null;
     const buildTriggeredArbOpportunityHighlightTargetKey = resolveBuildTriggeredArbOpportunityTargetKey(options);
     const invalidateArbRuleSnapshotCache = typeof options.invalidateArbRuleSnapshotCache === 'function'
       ? options.invalidateArbRuleSnapshotCache
@@ -102,6 +105,53 @@
         return null;
       }
       return arbPanelLayoutUtils.selectFirstUnmutedDisplayedCycle(cycles, isMutedCandidate);
+    }
+
+    function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = {}, runtimeOptions = {}) {
+      if (!target) return { available: false };
+      if (target.ruleKind === 'fixed') {
+        const rule = fixedPathRules.find((item) => item.id === target.ruleId) || null;
+        if (!rule) return { available: false };
+        const cycles = sharedRuleSnapshot && sharedRuleSnapshot.fixedByRuleId
+          ? sharedRuleSnapshot.fixedByRuleId[target.ruleId]
+          : null;
+        const isMutedCycle = typeof runtimeOptions.isMutedCycle === 'function'
+          ? runtimeOptions.isMutedCycle
+          : () => false;
+        const cycle = selectFirstUnmutedDisplayedCycle(cycles, isMutedCycle);
+        return cycle
+          ? { available: true, profitRate: cycle.profitRate, label: rule.title, cycle }
+          : { available: false };
+      }
+
+      const rule = specialArbRules.find((item) => item.id === target.ruleId) || null;
+      if (!rule) return { available: false };
+      const opportunities = sharedRuleSnapshot && sharedRuleSnapshot.specialByRuleId
+        ? sharedRuleSnapshot.specialByRuleId[target.ruleId]
+        : null;
+      const best = Array.isArray(opportunities) ? opportunities[0] : null;
+      if (!best || !best.cycle) return { available: false };
+      if (
+        !specialRuleAlertConfigUtils
+        || typeof specialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig !== 'function'
+        || typeof specialRuleAlertConfigUtils.evaluateSpecialRuleTrigger !== 'function'
+      ) {
+        return { available: false };
+      }
+      const specialRuleConfig = specialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(
+        alert && alert.specialRuleConfig
+      );
+      const triggerEvaluation = specialRuleAlertConfigUtils.evaluateSpecialRuleTrigger(best.stats, specialRuleConfig);
+      return {
+        available: true,
+        profitRate: best.cycle.profitRate,
+        label: rule.title,
+        cycle: best.cycle,
+        meetsTriggerCondition: triggerEvaluation.meetsTriggerCondition === true,
+        debugComparison: triggerEvaluation,
+        displayMessage: String(best.display_message || ''),
+        alertMessage: String(best.alert_message || '')
+      };
     }
 
     function invalidateRuleSnapshot() {
@@ -162,6 +212,7 @@
     }
 
     return {
+      buildRuleAlertEvaluation,
       buildMutedPathTargetFromCycleLegs,
       buildMutedPathTargetKey,
       getActiveMutedPathLegs,

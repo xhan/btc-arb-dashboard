@@ -28,6 +28,17 @@ const highlightRuntime = {
   }
 };
 const mutedPathLegs = [{ key: 'leg-a' }];
+const specialRuleConfigCalls = [];
+const specialRuleAlertConfigUtils = {
+  normalizeSpecialRuleAlertConfig(input) {
+    specialRuleConfigCalls.push(['normalize', input]);
+    return { minProfitBp: Number(input && input.minProfitBp) || 0 };
+  },
+  evaluateSpecialRuleTrigger(stats, config) {
+    specialRuleConfigCalls.push(['evaluate', stats, config]);
+    return { meetsTriggerCondition: true, stats, config };
+  }
+};
 const alertRuntime = {
   buildMutedPathTargetFromCycleLegs(legs) {
     alertRuntimeCalls.push(['buildTarget', legs]);
@@ -78,6 +89,7 @@ assert.strictEqual(
 
 const bridgeRuntime = createArbAlertBridgeRuntime({
   arbPanelLayoutUtils,
+  fixedPathRules: [{ id: 'fixed-a', title: 'Fixed A' }],
   opportunityRuntime,
   highlightRuntime,
   closeArbDetailModal: () => sideEffects.push(['closeDetail']),
@@ -85,6 +97,8 @@ const bridgeRuntime = createArbAlertBridgeRuntime({
   invalidateArbRuleSnapshotCache: () => sideEffects.push(['invalidate']),
   isArbDetailVisible: () => true,
   renderArbDetailModal: () => sideEffects.push(['renderDetail']),
+  specialArbRules: [{ id: 'special-a', title: 'Special A' }],
+  specialRuleAlertConfigUtils,
   updateArbPanel: () => sideEffects.push(['updatePanel'])
 });
 
@@ -112,6 +126,41 @@ assert.deepStrictEqual(
     (cycle) => cycle.id === 'muted'
   ),
   { id: 'live' }
+);
+assert.deepStrictEqual(
+  bridgeRuntime.buildRuleAlertEvaluation(
+    { ruleKind: 'fixed', ruleId: 'fixed-a' },
+    null,
+    { fixedByRuleId: { 'fixed-a': [{ id: 'muted', profitRate: 1 }, { id: 'fixed-live', profitRate: 2 }] } },
+    { isMutedCycle: (cycle) => cycle.id === 'muted' }
+  ),
+  { available: true, profitRate: 2, label: 'Fixed A', cycle: { id: 'fixed-live', profitRate: 2 } }
+);
+assert.deepStrictEqual(
+  bridgeRuntime.buildRuleAlertEvaluation(
+    { ruleKind: 'special', ruleId: 'special-a' },
+    { specialRuleConfig: { minProfitBp: 12 } },
+    {
+      specialByRuleId: {
+        'special-a': [{
+          cycle: { id: 'special-cycle', profitRate: 8 },
+          stats: { profitBp: 12 },
+          display_message: 'display',
+          alert_message: 'alert'
+        }]
+      }
+    }
+  ),
+  {
+    available: true,
+    profitRate: 8,
+    label: 'Special A',
+    cycle: { id: 'special-cycle', profitRate: 8 },
+    meetsTriggerCondition: true,
+    debugComparison: { meetsTriggerCondition: true, stats: { profitBp: 12 }, config: { minProfitBp: 12 } },
+    displayMessage: 'display',
+    alertMessage: 'alert'
+  }
 );
 assert.deepStrictEqual(
   bridgeRuntime.refreshArbViewsAfterMutedPathLegChange({ closeDetail: true }),
@@ -152,13 +201,22 @@ assert.deepStrictEqual(arbLayoutCalls, [
   [
     'selectCycle',
     [{ id: 'muted' }, { id: 'live' }]
+  ],
+  [
+    'selectCycle',
+    [{ id: 'muted', profitRate: 1 }, { id: 'fixed-live', profitRate: 2 }]
   ]
+]);
+assert.deepStrictEqual(specialRuleConfigCalls, [
+  ['normalize', { minProfitBp: 12 }],
+  ['evaluate', { profitBp: 12 }, { minProfitBp: 12 }]
 ]);
 
 const emptyBridgeRuntime = createArbAlertBridgeRuntime();
 assert.strictEqual(emptyBridgeRuntime.invalidateRuleSnapshot(), false);
 assert.strictEqual(emptyBridgeRuntime.refreshArbPanel(), false);
 assert.strictEqual(emptyBridgeRuntime.selectFirstUnmutedDisplayedCycle([{ id: 1 }], () => false), null);
+assert.deepStrictEqual(emptyBridgeRuntime.buildRuleAlertEvaluation({ ruleKind: 'fixed', ruleId: 'missing' }), { available: false });
 assert.deepStrictEqual(emptyBridgeRuntime.getActiveMutedPathLegs(2000), []);
 assert.strictEqual(emptyBridgeRuntime.buildMutedPathTargetKey({}), '');
 assert.strictEqual(emptyBridgeRuntime.buildMutedPathTargetFromCycleLegs([]), null);

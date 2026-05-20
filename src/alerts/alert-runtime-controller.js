@@ -32,7 +32,6 @@
     const pathAlertNotificationUtils = deps.pathAlertNotificationUtils || (root && root.PathAlertNotificationUtils);
     const pathAlertPageUtils = deps.pathAlertPageUtils || (root && root.PathAlertPageUtils);
     const pathAlertRuleDefinitions = deps.pathAlertRuleDefinitions || (root && root.PathAlertRuleDefinitions) || {};
-    const specialRuleAlertConfigUtils = deps.specialRuleAlertConfigUtils || (root && root.SpecialRuleAlertConfigUtils);
     const arbRuntimeMemoryUtils = deps.arbRuntimeMemoryUtils || (root && root.ArbRuntimeMemoryUtils);
     const arbDetailUtils = deps.arbDetailUtils || (root && root.ArbDetailUtils);
     const quoteDisplayUtils = deps.quoteDisplayUtils || (root && root.QuoteDisplayUtils);
@@ -40,8 +39,6 @@
     const documentImpl = deps.documentImpl || (typeof document !== 'undefined' ? document : null);
     const windowImpl = deps.windowImpl || (typeof window !== 'undefined' ? window : null);
     const refs = deps.refs || {};
-    const fixedPathRules = deps.fixedPathRules || pathAlertRuleDefinitions.FIXED_PATH_RULES || [];
-    const specialArbRules = deps.specialArbRules || pathAlertRuleDefinitions.SPECIAL_ARB_RULES || [];
     const maxLogEntries = Number.isFinite(Number(deps.maxLogEntries)) ? Number(deps.maxLogEntries) : 300;
     const muteExtendDurationMs = Number(pathAlertUtils.PATH_ALERT_MUTE_EXTEND_DURATION_MS) || (2 * 60 * 60 * 1000);
     const muteDurationMs = Number(pathAlertUtils.PATH_ALERT_MUTE_DURATION_MS) || (60 * 60 * 1000);
@@ -592,56 +589,21 @@
     }
 
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
-      if (target.ruleKind === 'fixed') {
-        const rule = fixedPathRules.find((item) => item.id === target.ruleId) || null;
-        if (!rule) return { available: false };
-        const cycles = sharedRuleSnapshot && sharedRuleSnapshot.fixedByRuleId
-          ? sharedRuleSnapshot.fixedByRuleId[target.ruleId]
-          : null;
-        if (
-          !deps.arbAlertBridgeRuntime
-          || typeof deps.arbAlertBridgeRuntime.selectFirstUnmutedDisplayedCycle !== 'function'
-        ) {
-          return { available: false };
-        }
-        const nowMs = getNow();
-        const cycle = deps.arbAlertBridgeRuntime.selectFirstUnmutedDisplayedCycle(cycles, (candidate) => {
+      if (
+        !deps.arbAlertBridgeRuntime
+        || typeof deps.arbAlertBridgeRuntime.buildRuleAlertEvaluation !== 'function'
+      ) {
+        return { available: false };
+      }
+      const nowMs = getNow();
+      return deps.arbAlertBridgeRuntime.buildRuleAlertEvaluation(target, alert, sharedRuleSnapshot, {
+        isMutedCycle(candidate) {
           const muteTarget = candidate && Array.isArray(candidate.legs)
             ? buildMutedPathTargetFromCycleLegs(candidate.legs)
             : null;
           return Boolean(muteTarget && getMutedPathTargetEntry(muteTarget, nowMs));
-        });
-        return cycle
-          ? { available: true, profitRate: cycle.profitRate, label: rule.title, cycle }
-          : { available: false };
-      }
-
-      const rule = specialArbRules.find((item) => item.id === target.ruleId) || null;
-      if (!rule) {
-        return { available: false };
-      }
-      const opportunities = sharedRuleSnapshot && sharedRuleSnapshot.specialByRuleId
-        ? sharedRuleSnapshot.specialByRuleId[target.ruleId]
-        : null;
-      const best = Array.isArray(opportunities) ? opportunities[0] : null;
-      if (!best || !best.cycle) {
-        return { available: false };
-      }
-      const specialRuleConfig = specialRuleAlertConfigUtils.normalizeSpecialRuleAlertConfig(
-        alert && alert.specialRuleConfig
-      );
-      const triggerEvaluation = specialRuleAlertConfigUtils.evaluateSpecialRuleTrigger(best.stats, specialRuleConfig);
-      const meetsTriggerCondition = triggerEvaluation.meetsTriggerCondition === true;
-      return {
-        available: true,
-        profitRate: best.cycle.profitRate,
-        label: rule.title,
-        cycle: best.cycle,
-        meetsTriggerCondition,
-        debugComparison: triggerEvaluation,
-        displayMessage: String(best.display_message || ''),
-        alertMessage: String(best.alert_message || '')
-      };
+        }
+      });
     }
 
     function buildQuoteAlertSummaryLabel(target) {
