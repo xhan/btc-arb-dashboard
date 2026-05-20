@@ -140,6 +140,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-app-state-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-runtime-ref-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-shell-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-board-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
@@ -257,6 +258,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-shell-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-board-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -477,6 +481,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(runtimeRefUtilsResponse.statusCode, 200);
     const shellRuntimeResponse = await request('/src/app/dashboard-shell-runtime.js');
     assert.strictEqual(shellRuntimeResponse.statusCode, 200);
+    const boardRuntimeResponse = await request('/src/app/dashboard-board-runtime.js');
+    assert.strictEqual(boardRuntimeResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
@@ -637,7 +643,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(viewModeControllerResponse.body.includes('deps.onShowDashboard'));
     assert.ok(appJsResponse.body.includes('getDashboardViewModeController().createDashboardViewModeController({'));
     assert.ok(appJsResponse.body.includes('const dashboardViewRenderRuntimeRef = getDashboardRuntimeRefUtils().createDashboardRuntimeRef({ name: \'Dashboard view render runtime\' });'));
-    assert.ok(appJsResponse.body.includes('dashboardViewRenderRuntimeRef.set(getDashboardViewModeController().createDashboardViewRenderRuntime({'));
+    assert.ok(boardRuntimeResponse.body.includes('options.dashboardViewRenderRuntimeRef.set(viewRenderRuntime);'));
+    assert.ok(boardRuntimeResponse.body.includes('options.dashboardViewModeControllerUtils.createDashboardViewRenderRuntime({'));
     assert.ok(appJsResponse.body.includes('onShowDashboard: ensureDashboardRendered'));
     assert.ok(appJsResponse.body.includes("'toggle-arb-panel': dashboardViewModeController.toggleArbView"));
     assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-arb-panel')"));
@@ -871,8 +878,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function readSettingsIntervalInputs()'));
     assert.ok(!appJsResponse.body.includes("settingsBtn.addEventListener('click'"));
     assert.ok(!appJsResponse.body.includes("settingsSaveBtn.addEventListener('click'"));
-    assert.ok(appJsResponse.body.includes('getDashboardActionController().createDashboardActionController({'));
-    assert.ok(appJsResponse.body.includes('getDashboardFormController().createDashboardFormController({'));
+    assert.ok(boardRuntimeResponse.body.includes('function createDashboardBoardRuntime(options = {})'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardBoardRuntime: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardBoardRuntime is not loaded'));
+    assert.ok(appJsResponse.body.includes('const dashboardBoardRuntime = getDashboardBoardRuntime().createDashboardBoardRuntime({'));
+    assert.ok(boardRuntimeResponse.body.includes('const dashboardActionController = options.dashboardActionControllerUtils.createDashboardActionController({'));
+    assert.ok(boardRuntimeResponse.body.includes('const dashboardFormController = options.dashboardFormControllerUtils.createDashboardFormController({'));
+    assert.ok(!appJsResponse.body.includes('getDashboardActionController().createDashboardActionController({'));
+    assert.ok(!appJsResponse.body.includes('getDashboardFormController().createDashboardFormController({'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.openAddCategoryModal(deps.addCategoryModalRefs)'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.closeAddCategoryModal(deps.addCategoryModalRefs)'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readAddCategoryFormValues(deps.addCategoryModalRefs, {'));
@@ -1269,7 +1282,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DashboardRenderer is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardViewController: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardViewController is not loaded'));
-    assert.ok(appJsResponse.body.includes('const dashboardViewController = getDashboardViewController().createDashboardViewController({'));
+    assert.ok(boardRuntimeResponse.body.includes('const dashboardViewController = options.dashboardViewControllerUtils.createDashboardViewController({'));
+    assert.ok(!appJsResponse.body.includes('getDashboardViewController().createDashboardViewController({'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.dashboardRenderer.createQuoteItemShellElement({'));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.dashboardRenderer.createCategoryModuleShellElement({'));
     assert.ok(!appJsResponse.body.includes('function addDnDHandlers('));
