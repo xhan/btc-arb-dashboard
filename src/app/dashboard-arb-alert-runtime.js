@@ -74,7 +74,14 @@
         : '';
     }
 
-    function handleQuoteMarketStateChanged() {
+    function handleQuoteMarketStateChanged(quote, state, context = {}) {
+      if (alertRuntimeController && typeof alertRuntimeController.schedulePathAlertEvaluation === 'function') {
+        alertRuntimeController.schedulePathAlertEvaluation({
+          fetchMode: context.fetchMode,
+          quoteId: quote && quote.id,
+          reason: 'quote-market-state-changed'
+        });
+      }
       return arbPanelController && typeof arbPanelController.scheduleUpdate === 'function'
         ? arbPanelController.scheduleUpdate()
         : false;

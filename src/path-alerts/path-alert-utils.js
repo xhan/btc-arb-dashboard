@@ -1027,6 +1027,7 @@
       ? options.clearTimeout
       : (typeof clearTimeout === 'function' ? clearTimeout : null);
     let evaluationTimer = null;
+    let scheduledEvaluationTimer = null;
     let configSaveTimer = null;
     let externalReloadTimer = null;
 
@@ -1041,8 +1042,13 @@
       evaluationTimer = clearTimer(evaluationTimer, clearIntervalFn);
     }
 
+    function clearScheduledEvaluation() {
+      scheduledEvaluationTimer = clearTimer(scheduledEvaluationTimer, clearTimeoutFn);
+    }
+
     function restartEvaluation(config = {}) {
       clearEvaluation();
+      clearScheduledEvaluation();
       const hasActiveTarget = typeof config.hasActiveTarget === 'function'
         ? config.hasActiveTarget()
         : Boolean(config.hasActiveTarget);
@@ -1053,6 +1059,20 @@
 
       evaluationTimer = setIntervalFn(config.evaluate, intervalMs);
       config.evaluate();
+      return true;
+    }
+
+    function scheduleEvaluation(callback, delayMs = 0) {
+      if (typeof callback !== 'function' || !setTimeoutFn) return false;
+      const safeDelayMs = Number.isFinite(Number(delayMs)) && Number(delayMs) >= 0
+        ? Number(delayMs)
+        : 0;
+
+      clearScheduledEvaluation();
+      scheduledEvaluationTimer = setTimeoutFn(() => {
+        scheduledEvaluationTimer = null;
+        callback();
+      }, safeDelayMs);
       return true;
     }
 
@@ -1082,10 +1102,12 @@
     return {
       getTimers: () => ({
         evaluationTimer,
+        scheduledEvaluationTimer,
         configSaveTimer,
         externalReloadTimer
       }),
       restartEvaluation,
+      scheduleEvaluation,
       scheduleConfigSave(callback, delayMs = 250) {
         return scheduleTimeout('configSave', callback, delayMs);
       },

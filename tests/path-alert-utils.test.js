@@ -1330,6 +1330,14 @@ assert.deepStrictEqual(clearedTimeouts, [scheduledTimeouts[0].id]);
 scheduledTimeouts[1].callback();
 assert.strictEqual(saveCount, 10);
 
+let scheduledEvaluationCount = 0;
+assert.strictEqual(pathAlertSchedulerRuntime.scheduleEvaluation(() => { scheduledEvaluationCount += 1; }, 80), true);
+assert.strictEqual(pathAlertSchedulerRuntime.scheduleEvaluation(() => { scheduledEvaluationCount += 10; }, 90), true);
+assert.deepStrictEqual(clearedTimeouts.slice(-1), [scheduledTimeouts[2].id]);
+scheduledTimeouts[3].callback();
+assert.strictEqual(scheduledEvaluationCount, 10);
+assert.strictEqual(pathAlertSchedulerRuntime.getTimers().scheduledEvaluationTimer, null);
+
 let delayedRuntime = advancePathAlertRuntime(delayedAlert, null, {
   available: true,
   profitBp: 2.5,

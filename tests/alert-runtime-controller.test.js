@@ -24,6 +24,7 @@ function createPathAlertRuntimeState() {
   const map = new Map();
   return {
     get: (key) => map.get(key),
+    getState: () => map,
     isForceImmediateEnabled: () => forceImmediate,
     pruneInactive: () => {},
     reset(options = {}) {
@@ -60,6 +61,7 @@ function createMutedPathRuntime(initial = {}) {
 
 function createBaseDeps(overrides = {}) {
   const timers = [];
+  const schedulerCalls = [];
   const settingsContent = createElement('settings');
   const mutedContent = createElement('muted');
   const config = {
@@ -114,6 +116,8 @@ function createBaseDeps(overrides = {}) {
     },
     clearTimeout: () => {},
     dashboardRuntimeUtils: {
+      getActivePathAlertEvaluationAlerts: () => [],
+      hasActivePathAlertEvaluationTarget: () => true,
       hasActivePathAlertSound: () => false,
       isPanelVisible: () => true,
       resolveMutedStateRefreshDelay: () => 0
@@ -140,6 +144,11 @@ function createBaseDeps(overrides = {}) {
     pathAlertSchedulerRuntime: {
       restartEvaluation: () => {},
       scheduleConfigSave: (callback) => callback(),
+      scheduleEvaluation: (callback, delayMs) => {
+        schedulerCalls.push(['scheduleEvaluation', delayMs]);
+        callback();
+        return true;
+      },
       scheduleExternalReload: (callback) => callback()
     },
     pathAlertUtils: {
@@ -175,6 +184,7 @@ function createBaseDeps(overrides = {}) {
     deps,
     mutedPathRuntime,
     mutedContent,
+    schedulerCalls,
     settingsContent,
     timers
   };
@@ -217,4 +227,14 @@ function createBaseDeps(overrides = {}) {
   assert.strictEqual(timers.length, 1);
   timers[0].callback();
   assert.strictEqual(mutedContent.innerHTML, '<section>new-muted</section>');
+}
+
+{
+  const { deps, schedulerCalls } = createBaseDeps({
+    pathAlertMarketChangeDelayMs: 88
+  });
+  const controller = createAlertRuntimeController(deps);
+
+  assert.strictEqual(controller.schedulePathAlertEvaluation({ delayMs: 88 }), true);
+  assert.deepStrictEqual(schedulerCalls, [['scheduleEvaluation', 88]]);
 }

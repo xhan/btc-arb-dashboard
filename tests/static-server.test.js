@@ -1677,7 +1677,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('handleQuoteMarketStateChanged: arbAlertRuntime.handleQuoteMarketStateChanged'));
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('handleQuoteMainFetchSuccess: arbAlertRuntime.handleQuoteMainFetchSuccess'));
     assert.ok(arbAlertRuntimeResponse.body.includes('options.arbPanelControllerUtils.createArbPanelController({'));
-    assert.ok(arbAlertRuntimeResponse.body.includes('function handleQuoteMarketStateChanged()'));
+    assert.ok(arbAlertRuntimeResponse.body.includes('function handleQuoteMarketStateChanged(quote, state, context = {})'));
+    assert.ok(arbAlertRuntimeResponse.body.includes("reason: 'quote-market-state-changed'"));
     assert.ok(arbAlertRuntimeResponse.body.includes('function handleQuoteMainFetchSuccess(quote, context = {})'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const fixedPathRules = pathAlertRuleDefinitions.FIXED_PATH_RULES || [];'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const specialArbRules = pathAlertRuleDefinitions.SPECIAL_ARB_RULES || [];'));
@@ -2039,6 +2040,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes('const pathAlertRuntimeState = deps.pathAlertRuntimeState || pathAlertUtils.createPathAlertRuntimeState();'));
     assert.ok(alertRuntimeControllerResponse.body.includes('const pathAlertSchedulerRuntime = deps.pathAlertSchedulerRuntime || pathAlertUtils.createPathAlertSchedulerRuntime({'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.restartEvaluation({'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function schedulePathAlertEvaluation(options = {})'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.scheduleEvaluation(evaluatePathAlertsOnce, delayMs)'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.scheduleConfigSave(() => {'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.scheduleExternalReload(() => {'));
     assert.ok(pathAlertUtilsResponse.body.includes('function buildPathAlertConfigSyncPayload(source, nowMs = Date.now())'));
@@ -2057,6 +2060,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let forceImmediateAlerts = false;'));
     assert.ok(!appJsResponse.body.includes('pathAlertRuntimeState = new Map();'));
     assert.ok(pathAlertUtilsResponse.body.includes('function createPathAlertSchedulerRuntime(options = {})'));
+    assert.ok(pathAlertUtilsResponse.body.includes('function scheduleEvaluation(callback, delayMs = 0)'));
     assert.ok(pathAlertUtilsResponse.body.includes('function createPathAlertRuntimeState()'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertUtils.advanceQuoteAlertRuntime(alert, previous, evaluation, {'));
     assert.ok(pathAlertUtilsResponse.body.includes('function advanceQuoteAlertRuntime(alert, runtimeState, evaluation, options = {})'));

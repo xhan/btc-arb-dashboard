@@ -22,6 +22,7 @@ const runtime = createDashboardArbAlertRuntime({
         bindAudioUnlockEvents: () => calls.push(['bindAudio']),
         buildQuoteAlertDisplayLabel: (quote, state, direction) => `alert:${quote.id}:${direction}`,
         checkPriceForAlerts: (quote, context = {}) => calls.push(['checkAlerts', quote.id, context.successSource || null]),
+        schedulePathAlertEvaluation: (options = {}) => calls.push(['schedulePathAlertEvaluation', options.reason || null]),
         toggleAlertLogPanel: () => calls.push(['toggleAlertLog'])
       };
     }
@@ -195,4 +196,5 @@ assert.deepStrictEqual(calls.slice(0, 5), [
 ]);
 assert.ok(calls.some((call) => call[0] === 'bindAudio'));
 assert.ok(calls.some((call) => call[0] === 'scheduleUpdate'));
+assert.ok(calls.some((call) => call[0] === 'schedulePathAlertEvaluation' && call[1] === 'quote-market-state-changed'));
 assert.ok(calls.some((call) => call[0] === 'checkAlerts' && call[1] === 7 && call[2] === 'Kyber'));

@@ -50,6 +50,9 @@
     const logWarning = typeof deps.logWarning === 'function' ? deps.logWarning : () => {};
     const logError = typeof deps.logError === 'function' ? deps.logError : () => {};
     const logInfo = typeof deps.logInfo === 'function' ? deps.logInfo : () => {};
+    const pathAlertMarketChangeDelayMs = Number.isFinite(Number(deps.pathAlertMarketChangeDelayMs))
+      ? Number(deps.pathAlertMarketChangeDelayMs)
+      : 120;
 
     let pathAlertConfig = pathAlertUtils.normalizeAlertConfig();
     let pathAlertReloading = false;
@@ -864,6 +867,22 @@
       });
     }
 
+    function schedulePathAlertEvaluation(options = {}) {
+      const hasActiveTarget = typeof dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget === 'function'
+        ? dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget(pathAlertConfig)
+        : false;
+      if (!hasActiveTarget) return false;
+
+      const delayMs = Number.isFinite(Number(options.delayMs))
+        ? Number(options.delayMs)
+        : pathAlertMarketChangeDelayMs;
+      if (typeof pathAlertSchedulerRuntime.scheduleEvaluation === 'function') {
+        return pathAlertSchedulerRuntime.scheduleEvaluation(evaluatePathAlertsOnce, delayMs);
+      }
+      evaluatePathAlertsOnce();
+      return true;
+    }
+
     function emitPathAlertConfigSync(source) {
       try {
         const storage = deps.getDashboardLocalStorage();
@@ -1161,6 +1180,7 @@
       renderMutedAlertStatePanel,
       restartPathAlertScheduler,
       restoreMutedAlertLogEntries,
+      schedulePathAlertEvaluation,
       syncMutedPathLogTimer,
       toggleAlertLogPanel,
       updateAlertSoundState
