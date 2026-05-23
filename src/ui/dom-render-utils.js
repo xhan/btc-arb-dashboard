@@ -401,7 +401,7 @@
 
   function applyQuoteMainErrorDomState(refs = {}, options = {}) {
     if (!refs.quoteTextEl || !refs.quoteTextWrapperEl || !refs.quoteDataEl) return false;
-    refs.quoteTextEl.textContent = `❌ ${options.message || ''}`;
+    refs.quoteTextEl.textContent = '报价失败';
     removeClasses(refs.quoteTextWrapperEl, ['loading-text']);
     addClass(refs.quoteDataEl, 'error');
     refs.quoteDataEl.title = options.title || '';

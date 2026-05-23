@@ -161,26 +161,7 @@
   }
 
   function formatQuoteErrorMessage(error, options = {}) {
-    let displayMsg = getQuoteErrorMessage(error);
-    if (displayMsg.includes('ENOTFOUND')) displayMsg = '网络连接失败';
-
-    if (displayMsg.includes('ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT')) {
-      displayMsg = '流动性不足 (滑点过高)';
-    }
-    if (displayMsg.includes('Liquidity unavailable') || displayMsg.includes('Liquidity Unavailable')) {
-      displayMsg = '流动性不足 (0x)';
-    }
-    if (displayMsg.includes('INSUFFICIENT_ASSET_LIQUIDITY') || displayMsg.includes('Asset Liquidity')) {
-      displayMsg = '资产流动性不足 (0x)';
-    }
-
-    if (displayMsg.includes('429')) displayMsg = '请求过快 (Rate Limit)';
-
-    const maxLength = normalizePositiveAmount(options.maxLength, 40);
-    if (displayMsg.length > maxLength) {
-      return `${displayMsg.substring(0, maxLength)}...`;
-    }
-    return displayMsg;
+    return options.displayText || '报价失败';
   }
 
   function buildQuoteErrorTitle(error) {

@@ -393,8 +393,13 @@
             position: relative;
             cursor: pointer;
             padding: 4px 8px; 
+            max-width: 100%;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
             white-space: nowrap; 
             border-radius: 4px;
+            box-sizing: border-box;
             transition: background-color 0.2s;
         }
         .quote-text-wrapper:hover {
@@ -404,7 +409,14 @@
             background-color: rgba(255,255,255,0.1);
         }
 
-        .quote-text { white-space: nowrap; }
+        .quote-text {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: bottom;
+        }
         .quote-text.cex-orderbook-summary {
             display: inline-block;
             white-space: pre-line;
@@ -420,6 +432,10 @@
             padding-right: 8px;
             font-weight: normal;
             min-height: 1.2em; 
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             cursor: pointer;
         }
         

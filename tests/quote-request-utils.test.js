@@ -166,21 +166,12 @@ assert.deepStrictEqual(
   { amountOut: 10, usedSource: '0x' }
 );
 
-assert.strictEqual(formatQuoteErrorMessage(new Error('connect ENOTFOUND api.example.com')), '网络连接失败');
-assert.strictEqual(
-  formatQuoteErrorMessage(new Error('ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT')),
-  '流动性不足 (滑点过高)'
-);
-assert.strictEqual(formatQuoteErrorMessage(new Error('Liquidity Unavailable')), '流动性不足 (0x)');
-assert.strictEqual(
-  formatQuoteErrorMessage(new Error('INSUFFICIENT_ASSET_LIQUIDITY')),
-  '资产流动性不足 (0x)'
-);
-assert.strictEqual(formatQuoteErrorMessage(new Error('HTTP 429 Too Many Requests')), '请求过快 (Rate Limit)');
-assert.strictEqual(
-  formatQuoteErrorMessage(new Error('abcdefghijklmnopqrstuvwxyz'), { maxLength: 10 }),
-  'abcdefghij...'
-);
+assert.strictEqual(formatQuoteErrorMessage(new Error('connect ENOTFOUND api.example.com')), '报价失败');
+assert.strictEqual(formatQuoteErrorMessage(new Error('ESTIMATED_LOSS_GREATER_THAN_MAX_IMPACT')), '报价失败');
+assert.strictEqual(formatQuoteErrorMessage(new Error('Liquidity Unavailable')), '报价失败');
+assert.strictEqual(formatQuoteErrorMessage(new Error('INSUFFICIENT_ASSET_LIQUIDITY')), '报价失败');
+assert.strictEqual(formatQuoteErrorMessage(new Error('HTTP 429 Too Many Requests')), '报价失败');
+assert.strictEqual(formatQuoteErrorMessage(new Error('abcdefghijklmnopqrstuvwxyz'), { maxLength: 10 }), '报价失败');
 assert.strictEqual(buildQuoteErrorTitle(new Error('boom')), '详细错误: boom');
 
 assert.deepStrictEqual(

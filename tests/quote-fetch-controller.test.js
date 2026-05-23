@@ -130,7 +130,7 @@ function createBaseDeps(overrides = {}) {
       shouldDelayQuoteSource: () => false,
       applyAutoFallbackSourceLabel: (result, nextQuote, source) => ({ ...result, usedSource: source }),
       buildQuoteErrorTitle: (error) => `title:${error.message}`,
-      formatQuoteErrorMessage: (error) => `message:${error.message}`
+      formatQuoteErrorMessage: () => '报价失败'
     },
     recordSourceAttempt: (source) => calls.push(['recordSource', source]),
     resetQuoteUiRuntimeState: (quoteId) => calls.push(['resetUi', quoteId]),
@@ -289,7 +289,7 @@ function createBaseDeps(overrides = {}) {
     assert.deepStrictEqual(
       calls.filter((call) => ['mainError', 'deleteController'].includes(call[0])),
       [
-        ['mainError', 'quote-text-101', 'message:boom', 'title:boom'],
+        ['mainError', 'quote-text-101', '报价失败', 'title:boom'],
         ['deleteController', 101, 'signal-101']
       ]
     );

@@ -734,13 +734,13 @@ const mainErrorRefs = {
   }
 };
 assert.strictEqual(applyQuoteMainErrorDomState(mainErrorRefs, {
-  message: '网络失败',
-  title: 'RPC timeout'
+  message: '超长错误信息会破坏布局',
+  title: 'RPC timeout with full provider details'
 }), true);
-assert.strictEqual(mainErrorRefs.quoteTextEl.textContent, '❌ 网络失败');
+assert.strictEqual(mainErrorRefs.quoteTextEl.textContent, '报价失败');
 assert.strictEqual(mainErrorRefs.quoteTextWrapperEl.classList.contains('loading-text'), false);
 assert.strictEqual(mainErrorRefs.quoteDataEl.classList.contains('error'), true);
-assert.strictEqual(mainErrorRefs.quoteDataEl.title, 'RPC timeout');
+assert.strictEqual(mainErrorRefs.quoteDataEl.title, 'RPC timeout with full provider details');
 assert.strictEqual(applyQuoteMainErrorDomState({}, { message: 'x' }), false);
 
 const htmlElement = { tagName: 'ARTICLE' };

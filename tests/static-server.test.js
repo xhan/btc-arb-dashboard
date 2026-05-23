@@ -63,6 +63,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('body.app-view-arb #dashboard,'));
     assert.ok(response.body.includes('body.app-view-dashboard #arb-path-window'));
     assert.ok(response.body.includes('body.app-view-arb #arb-path-window'));
+    assert.ok(/\.quote-text-wrapper\s*\{[^}]*max-width:\s*100%;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;/.test(response.body));
+    assert.ok(/\.quote-text\s*\{[^}]*max-width:\s*100%;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;/.test(response.body));
+    assert.ok(/\.inverse-quote-text\s*\{[^}]*max-width:\s*100%;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;/.test(response.body));
     assert.ok(response.body.includes('height: calc(100vh - 64px);'));
     assert.ok(response.body.includes('z-index: 1500;'));
     assert.ok(response.body.includes('#arb-path-header { padding: 10px 15px; background-color: #2d3748; color: white; font-weight: bold; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }'));
