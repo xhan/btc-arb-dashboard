@@ -174,6 +174,30 @@
     };
   }
 
+  function buildQuoteErrorMarketState(previousState, options = {}) {
+    const baseState = previousState && typeof previousState === 'object'
+      ? { ...previousState }
+      : {};
+
+    if (options.isInverseFetch) {
+      return {
+        ...baseState,
+        inverseRawPrice: null,
+        inverseTotalAmountOut: null
+      };
+    }
+
+    return {
+      ...baseState,
+      lastResultText: '',
+      lastRawPrice: null,
+      lastTotalAmountOut: null,
+      cexOrderbook: null,
+      usedSource: '',
+      usedSourceReal: null
+    };
+  }
+
   function buildSwappedQuoteMarketState(previousState) {
     const source = previousState && typeof previousState === 'object' ? previousState : {};
     const nextState = {
@@ -685,6 +709,7 @@
     buildDataTerminalRecordsCacheKey,
     buildDefaultQuoteUiState,
     buildQuoteAlertUiUpdate,
+    buildQuoteErrorMarketState,
     buildQuoteMetaById,
     buildQuoteResultMarketState,
     buildQuotesByCategoryName,

@@ -61,7 +61,25 @@ function createBaseDeps(overrides = {}) {
         inverseTotalAmountOut: result.finalAmountOut,
         usedSourceReal: options.successSource || state.usedSourceReal,
         isInverseFetch: options.isInverseFetch === true
-      })
+      }),
+      buildQuoteErrorMarketState: (state, options = {}) => {
+        if (options.isInverseFetch) {
+          return {
+            ...state,
+            inverseRawPrice: null,
+            inverseTotalAmountOut: null
+          };
+        }
+        return {
+          ...state,
+          lastResultText: '',
+          lastRawPrice: null,
+          lastTotalAmountOut: null,
+          cexOrderbook: null,
+          usedSource: '',
+          usedSourceReal: null
+        };
+      }
     },
     documentImpl: {
       getElementById: (id) => elements[id] || null
@@ -272,6 +290,85 @@ function createBaseDeps(overrides = {}) {
       calls.filter((call) => ['mainError', 'deleteController'].includes(call[0])),
       [
         ['mainError', 'quote-text-101', 'message:boom', 'title:boom'],
+        ['deleteController', 101, 'signal-101']
+      ]
+    );
+  }
+
+  {
+    let capturedState = null;
+    const { calls, controller, quote } = createBaseDeps({
+      getQuoteMarketState: () => ({
+        fromSymbol: 'cbBTC',
+        toSymbol: 'LBTC',
+        lastRawPrice: 400,
+        lastTotalAmountOut: 400,
+        inverseRawPrice: 0.0025,
+        inverseTotalAmountOut: 0.0025,
+        usedSourceReal: 'Jupiter'
+      }),
+      isDashboardUiActive: () => false,
+      markDashboardUiDirty: () => calls.push(['markDirty']),
+      quoteRequestUtils: {
+        ...createBaseDeps().deps.quoteRequestUtils,
+        requestResolvedQuote: async () => {
+          throw new Error('no load');
+        }
+      },
+      setQuoteMarketState: (quoteId, state) => {
+        capturedState = state;
+        calls.push(['setErrorState', quoteId, state.lastRawPrice, state.inverseRawPrice]);
+        return true;
+      }
+    });
+    await controller.fetchSingle(quote);
+    assert.strictEqual(capturedState.lastRawPrice, null);
+    assert.strictEqual(capturedState.lastTotalAmountOut, null);
+    assert.strictEqual(capturedState.inverseRawPrice, 0.0025);
+    assert.deepStrictEqual(
+      calls.filter((call) => ['setErrorState', 'marketChanged', 'markDirty', 'deleteController'].includes(call[0])),
+      [
+        ['setErrorState', 101, null, 0.0025],
+        ['marketChanged', 101, null, undefined, 'main', null],
+        ['markDirty'],
+        ['deleteController', 101, 'signal-101']
+      ]
+    );
+  }
+
+  {
+    let capturedState = null;
+    const { calls, controller, quote } = createBaseDeps({
+      getQuoteMarketState: () => ({
+        fromSymbol: 'cbBTC',
+        toSymbol: 'LBTC',
+        lastRawPrice: 400,
+        lastTotalAmountOut: 400,
+        inverseRawPrice: 0.0025,
+        inverseTotalAmountOut: 0.0025
+      }),
+      quoteRequestUtils: {
+        ...createBaseDeps().deps.quoteRequestUtils,
+        requestResolvedQuote: async () => {
+          throw new Error('inverse no load');
+        }
+      },
+      setQuoteMarketState: (quoteId, state) => {
+        capturedState = state;
+        calls.push(['setErrorState', quoteId, state.lastRawPrice, state.inverseRawPrice]);
+        return true;
+      }
+    });
+    await controller.fetchSingle(quote, 'inverse');
+    assert.strictEqual(capturedState.lastRawPrice, 400);
+    assert.strictEqual(capturedState.inverseRawPrice, null);
+    assert.strictEqual(capturedState.inverseTotalAmountOut, null);
+    assert.deepStrictEqual(
+      calls.filter((call) => ['setErrorState', 'marketChanged', 'inverseError', 'deleteController'].includes(call[0])),
+      [
+        ['setErrorState', 101, 400, null],
+        ['marketChanged', 101, 400, undefined, 'inverse', null],
+        ['inverseError', 'quote-data-101', 'inverse-quote-101', 'title:inverse no load'],
         ['deleteController', 101, 'signal-101']
       ]
     );

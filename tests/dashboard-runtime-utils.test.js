@@ -6,6 +6,7 @@ const {
   buildDataTerminalRecordsCacheKey,
   buildQuoteMetaById,
   buildQuoteAlertUiUpdate,
+  buildQuoteErrorMarketState,
   buildQuoteResultMarketState,
   buildQuotesByCategoryName,
   buildSwappedQuoteMarketState,
@@ -650,6 +651,56 @@ assert.deepStrictEqual(
     inverseTotalAmountOut: 0.625,
     inverseFromSymbol: 'USDC',
     inverseToSymbol: 'ETH'
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuoteErrorMarketState({
+    fromSymbol: 'cbBTC',
+    toSymbol: 'LBTC',
+    lastResultText: 'old result',
+    lastRawPrice: 1.001,
+    lastTotalAmountOut: 1.001,
+    inverseRawPrice: 0.999,
+    inverseTotalAmountOut: 0.999,
+    cexOrderbook: { bid: 1 },
+    usedSource: 'Jupiter',
+    usedSourceReal: 'Jupiter'
+  }),
+  {
+    fromSymbol: 'cbBTC',
+    toSymbol: 'LBTC',
+    lastResultText: '',
+    lastRawPrice: null,
+    lastTotalAmountOut: null,
+    inverseRawPrice: 0.999,
+    inverseTotalAmountOut: 0.999,
+    cexOrderbook: null,
+    usedSource: '',
+    usedSourceReal: null
+  }
+);
+
+assert.deepStrictEqual(
+  buildQuoteErrorMarketState({
+    fromSymbol: 'cbBTC',
+    toSymbol: 'LBTC',
+    lastRawPrice: 1.001,
+    lastTotalAmountOut: 1.001,
+    inverseRawPrice: 0.999,
+    inverseTotalAmountOut: 0.999,
+    inverseFromSymbol: 'LBTC',
+    inverseToSymbol: 'cbBTC'
+  }, { isInverseFetch: true }),
+  {
+    fromSymbol: 'cbBTC',
+    toSymbol: 'LBTC',
+    lastRawPrice: 1.001,
+    lastTotalAmountOut: 1.001,
+    inverseRawPrice: null,
+    inverseTotalAmountOut: null,
+    inverseFromSymbol: 'LBTC',
+    inverseToSymbol: 'cbBTC'
   }
 );
 

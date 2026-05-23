@@ -226,6 +226,20 @@
     function handleFetchError(quote, error, isInverseFetch, refs) {
       if (error.name === 'AbortError') return false;
       const errorTitle = deps.quoteRequestUtils.buildQuoteErrorTitle(error);
+      const previousState = deps.getQuoteMarketState(quote.id) || {};
+      const nextState = deps.dashboardRuntimeUtils.buildQuoteErrorMarketState(previousState, {
+        isInverseFetch
+      });
+      const marketStateChanged = deps.setQuoteMarketState(quote.id, nextState);
+      if (marketStateChanged) {
+        notifyQuoteMarketStateChanged(quote, nextState, {
+          error,
+          fetchMode: isInverseFetch ? 'inverse' : 'main',
+          isInverseFetch,
+          previousState
+        });
+      }
+
       if (!isDashboardUiActive()) {
         return markDashboardUiDirty();
       }
