@@ -961,7 +961,7 @@ module.exports = {
     "zerox": 500,
     "velora": 3000,
     "llamaparaswap": 800,
-    "lifi": 500,
+    "lifi": 70000,
     "bybit": 2000,
     "binance": 3000,
     "solana": 1400,
