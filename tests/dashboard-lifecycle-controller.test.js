@@ -159,6 +159,7 @@ assert.deepStrictEqual(staticCalls, [
   const arbPathMinBtn = createFakeElement();
   const toggleArbBtn = createFakeElement();
   const toggleAlertLogBtn = createFakeElement();
+  const toggleMultiChannelBtn = createFakeElement();
   const windowImpl = createWindowStub();
   const lifecycleController = createDashboardLifecycleController({
     addToQueue(quote) {
@@ -262,7 +263,8 @@ assert.deepStrictEqual(staticCalls, [
       arbPathHeader,
       arbPathMinBtn,
       toggleArbBtn,
-      toggleAlertLogBtn
+      toggleAlertLogBtn,
+      toggleMultiChannelBtn
     },
     saveData: () => calls.push(['saveData']),
     setApiIntervals: (nextIntervals) => { apiIntervals = nextIntervals; },
@@ -307,9 +309,11 @@ assert.deepStrictEqual(staticCalls, [
     }
   });
   toggleAlertLogBtn.dispatch('click');
+  toggleMultiChannelBtn.dispatch('click');
   assert.ok(calls.some((call) => call[0] === 'stopArbMin'));
   assert.ok(calls.some((call) => call[0] === 'dispatchCommand' && call[1] === 'toggle-arb-panel'));
   assert.ok(calls.some((call) => call[0] === 'dispatchCommand' && call[1] === 'toggle-alert-log'));
+  assert.ok(calls.some((call) => call[0] === 'dispatchCommand' && call[1] === 'toggle-multi-channel'));
 
   const failingDashboardEl = createFakeElement();
   const failingController = createDashboardLifecycleController({

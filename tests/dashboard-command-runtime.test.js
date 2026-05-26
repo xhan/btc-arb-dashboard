@@ -12,6 +12,7 @@ assert.deepStrictEqual(DASHBOARD_COMMAND_IDS, [
   'toggle-quote-display',
   'open-alert-log-settings',
   'toggle-alert-log',
+  'toggle-multi-channel',
   'toggle-request-channel-tags'
 ]);
 assert.strictEqual(Object.isFrozen(DASHBOARD_COMMAND_IDS), true);
@@ -62,7 +63,8 @@ const commandRuntime = createDashboardCommandRuntime({
   isArbDetailVisible: () => true,
   actions: {
     'close-arb-detail': () => calls.push(['closeArbDetail']),
-    'toggle-arb-panel': () => calls.push(['toggleArbPanel'])
+    'toggle-arb-panel': () => calls.push(['toggleArbPanel']),
+    'toggle-multi-channel': () => calls.push(['toggleMultiChannel'])
   }
 });
 
@@ -70,15 +72,18 @@ assert.ok(commandRuntime.dashboardCommandController);
 assert.ok(commandRuntime.keyboardShortcutController);
 assert.strictEqual(commandRuntime.keyboardShortcutController.isArbDetailVisible(), true);
 assert.strictEqual(commandRuntime.dashboardCommandController.dispatch('toggle-arb-panel'), true);
+assert.strictEqual(commandRuntime.dashboardCommandController.dispatch('toggle-multi-channel'), true);
 assert.strictEqual(commandRuntime.keyboardShortcutController.trigger('close-arb-detail'), true);
 assert.strictEqual(commandRuntime.keyboardShortcutController.trigger('toggle-alert-log'), false);
 
 assert.deepStrictEqual(calls, [
-  ['createCommand', ['close-arb-detail', 'toggle-arb-panel']],
+  ['createCommand', ['close-arb-detail', 'toggle-arb-panel', 'toggle-multi-channel']],
   ['buildActionMap', DASHBOARD_COMMAND_IDS],
   ['createKeyboard', documentImpl, keyboardShortcutUtils, DASHBOARD_COMMAND_IDS],
   ['dispatch', 'toggle-arb-panel'],
   ['toggleArbPanel'],
+  ['dispatch', 'toggle-multi-channel'],
+  ['toggleMultiChannel'],
   ['dispatch', 'close-arb-detail'],
   ['closeArbDetail'],
   ['dispatch', 'toggle-alert-log']

@@ -1166,7 +1166,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelTagVisibilityRuntime.apply();'));
     assert.ok(!appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
     assert.ok(!appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
+    assert.ok(appJsResponse.body.includes('toggleMultiChannel,'));
+    assert.ok(appJsResponse.body.includes("'toggle-multi-channel': toggleMultiChannel"));
     assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
+    assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-multi-channel')"));
     assert.ok(quoteRuntimeResponse.body.includes('requestChannelRuntime.toggleMultiChannel('));
     assert.ok(quoteRuntimeResponse.body.includes('quoteRefreshRuntime.getQueueMutationCallbacks()'));
     assert.ok(!appJsResponse.body.includes('const result = multiChannelToggleRuntime.set(nextValue);'));
@@ -2045,6 +2048,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appConfigResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
     assert.ok(appJsResponse.body.includes("'toggle-quote-display': toggleQuoteDisplayMode"));
     assert.ok(appJsResponse.body.includes("'toggle-data-terminal': toggleDataTerminalPanel"));
+    assert.ok(appJsResponse.body.includes("'toggle-multi-channel': toggleMultiChannel"));
     assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(!appJsResponse.body.includes('toggleRequestChannelTags()'));
     assert.ok(!appJsResponse.body.includes('let showRequestChannelTags = true;'));

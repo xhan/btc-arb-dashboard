@@ -340,6 +340,7 @@
         removeFromQueue,
         shouldQueueInverseFetch,
         showCopyToast,
+        toggleMultiChannel,
         toggleQuoteDisplayMode,
         updateQuotePairLabel,
         updateTrendArrow
@@ -524,6 +525,7 @@
             'toggle-quote-display': toggleQuoteDisplayMode,
             'open-alert-log-settings': alertRuntimeController.openAlertLogSettingsPanel,
             'toggle-alert-log': alertRuntimeController.toggleAlertLogPanel,
+            'toggle-multi-channel': toggleMultiChannel,
             'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle
         }
     });

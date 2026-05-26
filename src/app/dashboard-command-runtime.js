@@ -12,6 +12,7 @@
     'toggle-quote-display',
     'open-alert-log-settings',
     'toggle-alert-log',
+    'toggle-multi-channel',
     'toggle-request-channel-tags'
   ]);
 

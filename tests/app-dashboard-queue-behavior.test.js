@@ -96,9 +96,11 @@ assert.ok(
 assert.ok(
   !appJs.includes('function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled)')
     && dashboardQuoteRuntimeJs.includes('requestChannelRuntime.toggleMultiChannel(')
+    && appJs.includes('toggleMultiChannel,')
+    && appJs.includes("'toggle-multi-channel': toggleMultiChannel")
     && dashboardQuoteRuntimeJs.includes('quoteRefreshRuntime.getQueueMutationCallbacks()')
     && requestChannelUtilsJs.includes('function buildMultiChannelChangedQuotes(dashboardState, requestChannels, previousEnabled, nextEnabled)'),
-  '多渠道开关影响范围应由 request-channel runtime 统一计算'
+  '多渠道开关影响范围应由 request-channel runtime 统一计算，并从顶部按钮命令入口触发'
 );
 
 assert.ok(

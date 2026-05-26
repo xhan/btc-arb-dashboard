@@ -158,7 +158,7 @@
         deps.quoteSpreadController.bindEvents();
       }
       addClickListener(refs.toggleAlertLogBtn, () => dispatchCommand('toggle-alert-log'));
-      addClickListener(refs.toggleMultiChannelBtn, () => dispatchCommand('toggle-request-channel-tags'));
+      addClickListener(refs.toggleMultiChannelBtn, () => dispatchCommand('toggle-multi-channel'));
     }
 
     function bindAlertLogEvents() {
