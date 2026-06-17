@@ -2318,6 +2318,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getQuotePriceWatchItems(arbPathConfig, {'));
     assert.ok(arbPanelControllerResponse.body.includes('alertConfig: getAlertConfig()'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.resolveQuotePriceValue(item, state)'));
+    assert.ok(!arbPanelControllerResponse.body.includes("const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];"));
+    assert.ok(!arbPanelControllerResponse.body.includes('targetNames.includes(c.name)'));
     assert.ok(arbPathConfigUtilsResponse.body.includes('filterWatchedQuoteAlerts,'));
     assert.ok(arbPathConfigUtilsResponse.body.includes('isWatchedQuoteTarget,'));
     assert.ok(!appJsResponse.body.includes('window.ArbPathConfigUtils &&'));

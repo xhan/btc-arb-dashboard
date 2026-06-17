@@ -1414,6 +1414,49 @@ assert.deepStrictEqual(advancedQuoteRuntime.evaluation, {
   meetsTriggerCondition: true,
   currentValue: 0.100115
 });
+
+const delayedQuoteRuntimeAlert = {
+  ...quoteRuntimeAlert,
+  id: 'quote-delayed-runtime',
+  triggerMode: 'delayed',
+  confirmDelaySec: 5
+};
+let delayedQuoteRuntime = advanceQuoteAlertRuntime(delayedQuoteRuntimeAlert, null, {
+  available: true,
+  targetType: 'quote',
+  meetsTriggerCondition: true,
+  currentValue: 0.100115
+}, {
+  forceImmediate: false,
+  nowMs: 30_000
+});
+assert.strictEqual(delayedQuoteRuntime.shouldTrigger, false);
+assert.strictEqual(delayedQuoteRuntime.status, 'pending_confirm');
+assert.strictEqual(delayedQuoteRuntime.eligibleSince, 30_000);
+
+delayedQuoteRuntime = advanceQuoteAlertRuntime(delayedQuoteRuntimeAlert, delayedQuoteRuntime, {
+  available: true,
+  targetType: 'quote',
+  meetsTriggerCondition: true,
+  currentValue: 0.100115
+}, {
+  forceImmediate: false,
+  nowMs: 34_000
+});
+assert.strictEqual(delayedQuoteRuntime.shouldTrigger, false);
+assert.strictEqual(delayedQuoteRuntime.status, 'pending_confirm');
+
+delayedQuoteRuntime = advanceQuoteAlertRuntime(delayedQuoteRuntimeAlert, delayedQuoteRuntime, {
+  available: true,
+  targetType: 'quote',
+  meetsTriggerCondition: true,
+  currentValue: 0.100115
+}, {
+  forceImmediate: false,
+  nowMs: 35_000
+});
+assert.strictEqual(delayedQuoteRuntime.shouldTrigger, true);
+assert.strictEqual(delayedQuoteRuntime.status, 'cooldown');
 assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: true }, { settings: { localSoundEnabled: true } }), true);
 assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: true }, { muted: true, settings: { localSoundEnabled: true } }), false);
 assert.strictEqual(shouldActivatePathAlertSound({ shouldTrigger: true }, { settings: { localSoundEnabled: false } }), false);

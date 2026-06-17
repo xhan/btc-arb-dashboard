@@ -481,12 +481,6 @@
     }
 
     function buildPanelData() {
-      const targetNames = ['WBTC监控', 'LBTC监控', 'TBTC监控'];
-      const targetCategories = getDashboardCategories().filter(c => targetNames.includes(c.name));
-      if (!targetCategories.length) {
-        return { error: '暂无可用路径' };
-      }
-
       const sharedRuleSnapshot = getSharedRuleSnapshot();
       const topologyCache = getArbPathTopologyCache();
       const templateUtils = arbPathTemplateCacheUtils;

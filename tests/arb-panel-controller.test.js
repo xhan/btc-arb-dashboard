@@ -11,6 +11,18 @@ let broughtToFrontPanel = null;
 let aliasRulesBuildCount = 0;
 
 const arbPanelCache = {
+  getRuleSnapshot() {
+    return null;
+  },
+  getTopology() {
+    return null;
+  },
+  setRuleSnapshot(_key, value) {
+    return value;
+  },
+  setTopology(_key, value) {
+    return value;
+  },
   clearRuleSnapshot() {
     ruleSnapshotCleared += 1;
   },
@@ -56,6 +68,23 @@ const controller = createArbPanelController({
       to: leg.to,
       rate: leg.rate
     }),
+    buildArbPanelColumns: ({ quoteSection, globalSection }) => [
+      quoteSection ? [quoteSection] : [],
+      [],
+      [],
+      globalSection ? [globalSection] : []
+    ],
+    buildFixedArbSections: () => [],
+    buildGlobalArbFilterCriteria: () => ({}),
+    buildGlobalArbFilterWritePlan: () => ({}),
+    buildGlobalArbSection: () => ({ title: '全局路径', opportunities: [] }),
+    buildQuotePriceWatchSection: (options) => ({
+      title: '关注列表',
+      opportunities: options.watchItems.map((item) => ({ title: item.title }))
+    }),
+    buildSpecialArbSections: () => [],
+    applyGlobalArbFilterWritePlan: () => {},
+    resolveItemsBySelectors: () => [],
     createGlobalArbFilterStateRuntime: () => ({
       get: () => ({}),
       update: () => ({ changed: false }),
@@ -66,19 +95,39 @@ const controller = createArbPanelController({
     applyArbPanelErrorText: (contentEl, errorText) => {
       contentEl.textContent = errorText;
     },
-    renderArbGrid: () => '<div>grid</div>'
+    renderArbGrid: ({ columns }) => columns.flat().map((section) => section.title).join('|')
   },
-  arbPathConfig: {},
-  arbPathConfigUtils: {},
+  arbPathConfig: {
+    watchItems: [
+      { title: 'USD 关注', type: 'quote-price', quoteId: 42, direction: 'forward' }
+    ]
+  },
+  arbPathConfigUtils: {
+    getFixedRuleWatchItems: () => [],
+    getQuotePriceWatchItems: (config) => config.watchItems,
+    getSpecialRuleWatchItems: () => [],
+    resolveQuotePriceValue: () => 1
+  },
   arbPaths: {
+    buildEdges: () => [],
+    buildRuleEdges: () => [],
     formatLegLine: (line) => `${line.chainLabel}:${line.from}->${line.to}@${line.rate}`,
     isMeaningfulPath: () => true,
     formatProfitWanfen: (profitRate) => String(profitRate)
   },
   arbPathTemplateCacheUtils: {
+    buildArbPathTopologyCacheKey: () => 'topology',
+    buildCycleTemplates: () => [],
+    buildFixedPathTemplates: () => [],
+    buildTopologyEdges: () => [],
     createArbPanelCache: () => arbPanelCache
   },
-  arbRuleSnapshotUtils: {},
+  arbRuleSnapshotUtils: {
+    buildArbRuleSnapshot: () => ({
+      fixedResults: [],
+      specialResults: []
+    })
+  },
   arbRuntimeMemoryUtils: {
     createArbPanelUpdateRuntime: (options) => ({
       clearDirty: () => true,
@@ -96,7 +145,9 @@ const controller = createArbPanelController({
     normalizeChainFilterToken: (chain) => String(chain || '').toLowerCase()
   },
   dashboardRuntimeUtils: {
+    buildArbRuleSnapshotCacheKey: () => 'snapshot',
     buildQuoteMetaById: () => new Map(),
+    buildQuotesByCategoryName: () => new Map(),
     findDashboardQuoteMatchById: (categories, quoteId) => categories.flatMap((category) => category.quotes || []).find((quote) => quote.id === quoteId) || null,
     isPanelVisible: () => true
   },
@@ -126,7 +177,10 @@ const controller = createArbPanelController({
   getQuoteMarketStateMap: () => ({}),
   globalPathSourceSelectors: [],
   isQuotePaused: () => false,
-  mutedPathLegUtils: {},
+  mutedPathLegUtils: {
+    filterMutedCycles: (cycles) => cycles,
+    filterMutedPathLegs: (legs) => legs
+  },
   openArbDetailModal: () => {},
   pathAlertPageUtils: {
     buildPathAlertQuoteLabel: ({ chain, fromSymbol, toSymbol, suffix, formatChainLabel }) => (
@@ -179,9 +233,9 @@ controller.clearTopologyCache();
 assert.strictEqual(topologyCleared, 1);
 
 controller.update({ force: true });
-assert.strictEqual(resetCount, 1);
-assert.strictEqual(panelContent.textContent, '暂无可用路径');
-assert.strictEqual(renderedHtml, '');
+assert.strictEqual(resetCount, 0);
+assert.strictEqual(panelContent.textContent, '');
+assert.strictEqual(renderedHtml, '关注列表|全局路径');
 
 const displayResult = controller.applyFloatingPanelDisplay(panel, 'toggle', {
   render: () => { renderedHtml = 'rendered'; }
