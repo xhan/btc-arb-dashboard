@@ -19,6 +19,13 @@
     return String(chain || '').trim().toLowerCase();
   }
 
+  function formatChainLabel(chain) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return String(chain || '');
+  }
+
   function isCexChain(chain) {
     const normalized = normalizeChain(chain);
     return normalized === 'bybit' || normalized === 'binance';
@@ -286,9 +293,11 @@
       const netProfitRate = netProfit / totalInput;
       const netProfitBp = netProfitRate * 10000;
       const weightedCexRate = weightedCexRateNotional / totalInput;
+      const dexChainLabel = formatChainLabel('ethereum');
+      const cexChainLabel = formatChainLabel(cexBook.chain || rule.cexChain || 'Bybit');
       const directionLabel = direction === 'eth-to-bybit-bid'
-        ? `ETH ${dexLeg.from}->${dexLeg.to} + Bybit BID`
-        : `Bybit ASK -> ETH ${dexLeg.from}->${dexLeg.to}`;
+        ? `${dexChainLabel} ${dexLeg.from}->${dexLeg.to} + ${cexChainLabel} BID`
+        : `${cexChainLabel} ASK -> ${dexChainLabel} ${dexLeg.from}->${dexLeg.to}`;
 
       return {
         direction,
@@ -346,18 +355,20 @@
     }
 
     buildDexLine(primary, rule) {
+      const dexChainLabel = formatChainLabel('ethereum');
       if (primary.direction === 'eth-to-bybit-bid') {
-        return `（ETH）${rule.dexBase} -> ${rule.dexQuote} ${formatNumber(primary.dexLeg.rate, 6)}`;
+        return `（${dexChainLabel}）${rule.dexBase} -> ${rule.dexQuote} ${formatNumber(primary.dexLeg.rate, 6)}`;
       }
-      return `（ETH）${rule.dexQuote} -> ${rule.dexBase} ${formatNumber(primary.dexLeg.rate, 6)}`;
+      return `（${dexChainLabel}）${rule.dexQuote} -> ${rule.dexBase} ${formatNumber(primary.dexLeg.rate, 6)}`;
     }
 
     buildCexLine(primary, rule) {
       const topPrice = formatNumber(primary.usedLevels[0] && primary.usedLevels[0].price, 6);
+      const cexChainLabel = formatChainLabel(primary.cexChain || rule.cexChain || 'Bybit');
       if (primary.direction === 'eth-to-bybit-bid') {
-        return `（Bybit）${rule.dexQuote} -> ${rule.cexQuote} ${topPrice} bid1`;
+        return `（${cexChainLabel}）${rule.dexQuote} -> ${rule.cexQuote} ${topPrice} bid1`;
       }
-      return `（Bybit）${rule.cexQuote} -> ${rule.dexQuote} ${topPrice} ask1`;
+      return `（${cexChainLabel}）${rule.cexQuote} -> ${rule.dexQuote} ${topPrice} ask1`;
     }
 
     buildDepthLine(item) {
