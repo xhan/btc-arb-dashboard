@@ -2808,6 +2808,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(queueStatsResponse.body.includes('src="src/queue-stats/queue-stats-utils.js"'));
     assert.ok(queueStatsResponse.body.includes('src="src/queue-stats/queue-stats-app.js"'));
+    const queueStatsAppResponse = await request('/src/queue-stats/queue-stats-app.js');
+    assert.strictEqual(queueStatsAppResponse.statusCode, 200);
+    assert.ok(queueStatsAppResponse.body.includes('item.sourceLabel || item.sourceKey || item.key'));
 
     assert.ok(response.body.includes('href="/queue-stats"'));
 

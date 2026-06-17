@@ -36,7 +36,7 @@
     const rows = summary.queues.map((item) => `
       <tr>
         <td><span class="badge">${escapeHtml(item.channelName || item.channelId || 'default')}</span></td>
-        <td>${escapeHtml(item.sourceKey || item.key)}</td>
+        <td>${escapeHtml(item.sourceLabel || item.sourceKey || item.key)}</td>
         <td>${escapeHtml(item.intervalMs)}ms</td>
         <td>${escapeHtml(item.quoteCount)}</td>
         <td>${escapeHtml(item.mainTasks)}</td>

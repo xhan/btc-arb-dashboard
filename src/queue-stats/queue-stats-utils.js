@@ -60,6 +60,13 @@
     return !!quote && !!quote.showInverse && normalized !== 'bybit' && normalized !== 'binance';
   }
 
+  function getQueueSourceLabel(sourceKey) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(sourceKey);
+    }
+    return String(sourceKey || '');
+  }
+
   function buildQueueTasksForQuote(quote) {
     if (!quote || quote.id == null) return [];
     const tasks = [{ quoteId: quote.id, mode: 'main' }];
@@ -228,6 +235,7 @@
         sourceKey: key,
         channelId: 'default'
       };
+    const sourceKey = parsed.sourceKey || key;
     const channel = requestChannels && requestChannels.byId instanceof Map
       ? requestChannels.byId.get(parsed.channelId)
       : null;
@@ -237,7 +245,8 @@
 
     return {
       key,
-      sourceKey: parsed.sourceKey || key,
+      sourceKey,
+      sourceLabel: getQueueSourceLabel(sourceKey),
       channelId: parsed.channelId || 'default',
       channelName: channel ? channel.name : (parsed.channelId || 'default'),
       intervalMs,
