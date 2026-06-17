@@ -714,12 +714,13 @@ assert.ok(panelHtml.includes('No &lt;rows&gt;'));
 const fallbackPanelHtml = buildDataTerminalPanelHtml(
   {
     mode: 'single',
-    leftRows: [{ key: 'left-2', chain: 'base', fromSymbol: 'A<B', toSymbol: 'C&D', displayValue: '<rate>', amount: 1 }],
+    leftRows: [{ key: 'left-2', chain: 'arbitrum', fromSymbol: 'A<B', toSymbol: 'C&D', displayValue: '<rate>', amount: 1 }],
     rightRows: [],
     emptyMessage: 'empty'
   },
   {}
 );
+assert.ok(fallbackPanelHtml.includes('<span class="data-terminal-chain">arb</span>'));
 assert.ok(fallbackPanelHtml.includes('<span class="data-terminal-pair">A&lt;B -&gt; C&amp;D</span>'));
 assert.ok(fallbackPanelHtml.includes('&lt;rate&gt;'));
 

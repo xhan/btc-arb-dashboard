@@ -40,6 +40,13 @@
     return normalized === 'bybit' || normalized === 'binance';
   }
 
+  function formatDefaultDataTerminalChainLabel(chain) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return String(chain || '');
+  }
+
   function parseDataTerminalQuery(inputText) {
     return String(inputText || '')
       .split(/[\s,]+/)
@@ -305,7 +312,7 @@
   function buildDataTerminalRowHtml(row, side, selectedKey, options = {}) {
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
-      : (chain) => String(chain || '');
+      : formatDefaultDataTerminalChainLabel;
     const formatAmount = typeof options.formatAmount === 'function'
       ? options.formatAmount
       : (amount) => String(amount || '');
