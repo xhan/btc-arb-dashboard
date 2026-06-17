@@ -130,6 +130,31 @@ const bidDominant = buildSpecialArbOpportunities({
 assert.strictEqual(bidDominant.length, 1);
 assert.strictEqual(bidDominant[0].direction, 'eth-to-bybit-bid');
 
+const aliasChainOpportunities = buildSpecialArbOpportunities({
+  rules,
+  quotes: [
+    { id: 5, chain: 'eth', showInverse: false },
+    { id: 6, chain: 'bybit', showInverse: true }
+  ],
+  quoteStateById: new Map([
+    [5, { fromSymbol: 'WBTC', toSymbol: 'cbBTC', lastRawPrice: 1.0011, inverseRawPrice: 0.9989 }],
+    [6, {
+      fromSymbol: 'WBTC',
+      toSymbol: 'BTC',
+      cexOrderbook: {
+        bestBidPrice: 0.9982,
+        bestBidSize: 0.5,
+        bestAskPrice: 0.9998,
+        bestAskSize: 0.5,
+        bidsTopDepth: [{ price: 0.9982, size: 0.5 }],
+        asksTopDepth: [{ price: 0.9998, size: 0.5 }]
+      }
+    }]
+  ]),
+  aliasRules: { xBTC: 'cbBTC' }
+});
+assert.strictEqual(aliasChainOpportunities.length, 1);
+
 const lowBpRules = [
   {
     ...rules[0],

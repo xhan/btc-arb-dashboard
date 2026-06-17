@@ -1,10 +1,10 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./arb-paths'), require('./arb-equivalence-utils'));
+    module.exports = factory(require('./arb-paths'), require('./arb-equivalence-utils'), require('../shared/chain-defaults'));
     return;
   }
-  root.ArbSpecialUtils = factory(root.ArbPaths, root.ArbEquivalenceUtils);
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi, arbEquivalenceUtils) {
+  root.ArbSpecialUtils = factory(root.ArbPaths, root.ArbEquivalenceUtils, root.ChainDefaults);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi, arbEquivalenceUtils, chainDefaults) {
   const DEFAULT_BYBIT_PAIR_RULE_CONFIG = Object.freeze({
     withdrawFee: 0.0001,
     maxBookLevels: 10,
@@ -12,13 +12,20 @@
     depthDisplayLevels: 3
   });
 
+  function normalizeChain(chain) {
+    if (chainDefaults && typeof chainDefaults.normalizeChain === 'function') {
+      return chainDefaults.normalizeChain(chain);
+    }
+    return String(chain || '').trim().toLowerCase();
+  }
+
   function isCexChain(chain) {
-    const normalized = String(chain || '').trim().toLowerCase();
+    const normalized = normalizeChain(chain);
     return normalized === 'bybit' || normalized === 'binance';
   }
 
   function isEthereumChain(chain) {
-    return String(chain || '').trim().toLowerCase() === 'ethereum';
+    return normalizeChain(chain) === 'ethereum';
   }
 
   function symbolsMatch(left, right, aliasRules) {
@@ -153,12 +160,12 @@
   }
 
   function buildBestBybitBook(quotes, quoteStateById, rule, aliasRules, maxBookLevels) {
-    const normalizedRuleCexChain = String(rule.cexChain || 'Bybit').trim().toLowerCase();
+    const normalizedRuleCexChain = normalizeChain(rule.cexChain || 'Bybit');
     let bidCandidate = null;
     let askCandidate = null;
 
     for (const quote of quotes || []) {
-      if (!quote || String(quote.chain || '').trim().toLowerCase() !== normalizedRuleCexChain) continue;
+      if (!quote || normalizeChain(quote.chain) !== normalizedRuleCexChain) continue;
       const state = quoteStateById instanceof Map ? quoteStateById.get(quote.id) : null;
       const book = state && state.cexOrderbook;
       if (!state || !book) continue;
