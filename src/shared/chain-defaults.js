@@ -19,7 +19,7 @@
   const CHAIN_FILTER_ALIASES = chainLabelConfig.buildChainFilterAliasMap();
 
   function normalizeChain(chain) {
-    return chainLabelConfig.normalizeChainKey(chain);
+    return chainLabelConfig.resolveChainKey(chain) || chainLabelConfig.normalizeChainKey(chain);
   }
 
   function getChainDisplayName(chain) {

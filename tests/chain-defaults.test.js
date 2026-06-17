@@ -14,15 +14,20 @@ const {
 } = require('../src/shared/chain-defaults');
 
 assert.strictEqual(normalizeChain(' Ethereum '), 'ethereum');
+assert.strictEqual(normalizeChain('ARB'), 'arbitrum');
+assert.strictEqual(normalizeChain(' eth '), 'ethereum');
 assert.strictEqual(CHAIN_DISPLAY_NAMES.ethereum, 'eth');
 assert.strictEqual(CHAIN_DISPLAY_NAMES.arbitrum, 'arb');
 assert.strictEqual(getChainDisplayName('ethereum'), 'eth');
 assert.strictEqual(getChainDisplayName(' Ethereum '), 'eth');
+assert.strictEqual(getChainDisplayName('ARB'), 'arb');
 assert.strictEqual(getChainDisplayName('Bybit'), 'bybit');
 assert.strictEqual(getChainDisplayName('unknown'), 'unknown');
 assert.strictEqual(buildQuoteChainDisplayName(null), '');
+assert.strictEqual(buildQuoteChainDisplayName({ chain: 'ARB' }), 'arb');
 assert.strictEqual(buildQuoteChainDisplayName({ chain: 'arbitrum' }), 'arb');
 assert.strictEqual(buildQuoteChainDisplayName({ chain: 'arbitrum', toChain: ' Arbitrum ' }), 'arb');
+assert.strictEqual(buildQuoteChainDisplayName({ chain: 'arb', toChain: ' Arbitrum ' }), 'arb');
 assert.strictEqual(buildQuoteChainDisplayName({ chain: 'arbitrum', toChain: 'ethereum' }), 'arb -> eth');
 assert.strictEqual(buildQuoteChainDisplayName({ chain: 'unknown', toChain: 'ethereum' }), 'unknown -> eth');
 assert.strictEqual(normalizeChainFilterToken('ETH'), 'ethereum');
@@ -39,6 +44,7 @@ assert.strictEqual(isCexOrderbookChain(' Bybit '), true);
 assert.strictEqual(isCexOrderbookChain('ethereum'), false);
 assert.strictEqual(isCrossChainQuote({ chain: 'arbitrum', toChain: 'ethereum' }), true);
 assert.strictEqual(isCrossChainQuote({ chain: 'arbitrum', toChain: ' Arbitrum ' }), false);
+assert.strictEqual(isCrossChainQuote({ chain: 'arb', toChain: ' Arbitrum ' }), false);
 
 assert.strictEqual(getDefaultSourceForChain('katana'), 'LI.FI');
 assert.strictEqual(getDefaultSourceForChain('hemi'), 'LI.FI');

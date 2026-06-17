@@ -1132,6 +1132,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(chainDefaultsResponse.body.includes("require('./chain-label-config')"));
     assert.ok(chainDefaultsResponse.body.includes('const CHAIN_DISPLAY_NAMES = chainLabelConfig.buildChainLabelMap();'));
     assert.ok(chainDefaultsResponse.body.includes('const CHAIN_FILTER_ALIASES = chainLabelConfig.buildChainFilterAliasMap();'));
+    assert.ok(chainDefaultsResponse.body.includes('return chainLabelConfig.resolveChainKey(chain) || chainLabelConfig.normalizeChainKey(chain);'));
     assert.ok(chainDefaultsResponse.body.includes('function getChainDisplayName(chain)'));
     assert.ok(chainDefaultsResponse.body.includes('function buildQuoteChainDisplayName(quote)'));
     assert.ok(chainDefaultsResponse.body.includes('function normalizeChainFilterToken(chainToken)'));
