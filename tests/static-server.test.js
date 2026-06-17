@@ -150,6 +150,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-runtime-ref-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-shell-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-board-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-data-terminal-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
@@ -288,6 +289,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-board-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-data-terminal-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -544,6 +548,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(shellRuntimeResponse.statusCode, 200);
     const boardRuntimeResponse = await request('/src/app/dashboard-board-runtime.js');
     assert.strictEqual(boardRuntimeResponse.statusCode, 200);
+    const dataTerminalRuntimeResponse = await request('/src/app/dashboard-data-terminal-runtime.js');
+    assert.strictEqual(dataTerminalRuntimeResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
@@ -675,7 +681,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getDexLinkLabel(config = {})'));
     assert.ok(!appJsResponse.body.includes("function buildDexLinkCopyButtonHtml(config = {}, className = '', buttonText = '复制')"));
     assert.ok(dashboardViewControllerResponse.body.includes('deps.dexLinkUtils.getDexLinkLabel(dexLinkConfig)'));
-    assert.ok(appJsResponse.body.includes('getDexLinkUtils().buildDexLinkCopyButtonHtml({'));
+    assert.ok(dataTerminalRuntimeResponse.body.includes('dexLinkUtils.buildDexLinkCopyButtonHtml({'));
     assert.ok(quoteUiControllerResponse.body.includes('copyUtils.copyDexLinkFromElement(targetEl, {'));
     assert.ok(!appJsResponse.body.includes('const dexLink = utils.buildDexLink({'));
     assert.ok(dataTerminalUtilsResponse.body.includes('data-terminal-pair-link'));
@@ -909,6 +915,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DashboardQuoteDomainAdapter is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardQuoteRuntime: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardQuoteRuntime is not loaded'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardDataTerminalRuntime: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardDataTerminalRuntime is not loaded'));
+    assert.ok(dataTerminalRuntimeResponse.body.includes('function createDashboardDataTerminalRuntime(options = {})'));
     assert.ok(quoteDomainAdapterResponse.body.includes('function createDashboardQuoteDomainAdapter(options = {})'));
     assert.ok(quoteDomainAdapterResponse.body.includes('return chainDefaults.buildQuoteChainDisplayName(quote);'));
     assert.ok(quoteDomainAdapterResponse.body.includes('return chainDefaults.isCrossChainQuote(quote);'));
@@ -2429,12 +2438,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-profit-card'));
     assert.ok(!appJsResponse.body.includes('resolveEventTargetElement(event)'));
     assert.ok(!appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
-    assert.ok(appJsResponse.body.includes('const dataTerminalController = getDataTerminalController().createDataTerminalController({'));
+    assert.ok(appJsResponse.body.includes('getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({'));
+    assert.ok(!appJsResponse.body.includes('const dataTerminalController = getDataTerminalController().createDataTerminalController({'));
     assert.ok(appJsResponse.body.includes('interactionRuntime: dashboardInputInteractionRuntime,'));
-    assert.ok(appJsResponse.body.includes('const renderDataTerminalPanel = dataTerminalController.renderPanel;'));
-    assert.ok(appJsResponse.body.includes('const toggleDataTerminalPanel = dataTerminalController.togglePanel;'));
+    assert.ok(appJsResponse.body.includes('const renderDataTerminalPanel = dataTerminalRuntime.renderDataTerminalPanel;'));
+    assert.ok(appJsResponse.body.includes('const toggleDataTerminalPanel = dataTerminalRuntime.toggleDataTerminalPanel;'));
     assert.ok(appJsResponse.body.includes('let scheduleDataTerminalUpdate = () => {};'));
-    assert.ok(appJsResponse.body.includes('scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;'));
+    assert.ok(appJsResponse.body.includes('scheduleDataTerminalUpdate = dataTerminalRuntime.scheduleDataTerminalUpdate;'));
     assert.ok(!appJsResponse.body.includes('function mountDataTerminalPanel()'));
     assert.ok(!appJsResponse.body.includes('function unmountDataTerminalPanel()'));
     assert.ok(dataTerminalControllerResponse.body.includes('function mountPanel()'));
@@ -2504,7 +2514,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.bindFloatingPanelChrome(panel, refs.header, {'));
     assert.ok(dataTerminalControllerResponse.body.includes('updateRuntime.clear();'));
     assert.ok(!appJsResponse.body.includes('function clearDataTerminalTimer()'));
-    assert.ok(appJsResponse.body.includes('scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;'));
+    assert.ok(appJsResponse.body.includes('scheduleDataTerminalUpdate = dataTerminalRuntime.scheduleDataTerminalUpdate;'));
     assert.ok(!appJsResponse.body.includes('function handleQuoteMarketStateChanged(quote, state, context)'));
     assert.ok(quoteWorkspaceRuntimeResponse.body.includes('callIfFunction(deps.onQuoteMarketStateChangedSideEffect, quote, state, context);'));
     assert.ok(!quoteFetchControllerResponse.body.includes('deps.scheduleDataTerminalUpdate();'));

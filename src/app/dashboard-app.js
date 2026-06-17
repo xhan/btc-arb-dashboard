@@ -26,6 +26,7 @@
         getDashboardBoardRuntime,
         getDashboardCommandController,
         getDashboardCommandRuntime,
+        getDashboardDataTerminalRuntime,
         getDashboardDomRefs,
         getDashboardFormController,
         getDashboardLifecycleController,
@@ -37,8 +38,6 @@
         getDashboardShellRuntime,
         getDashboardViewModeController,
         getDashboardViewController,
-        getDataTerminalController,
-        getDataTerminalUtils,
         getDexLinkUtils,
         getDomRenderUtils,
         getKeyboardShortcutController,
@@ -480,37 +479,35 @@
         clearInterval,
         zIndexRuntime: floatingPanelZIndexRuntime
     });
-    const dataTerminalController = getDataTerminalController().createDataTerminalController({
-        dataTerminalUtils: getDataTerminalUtils(),
-        dashboardRuntimeUtils,
-        domRenderUtils,
-        interactionRuntime: dashboardInputInteractionRuntime,
-        documentImpl: document,
-        windowImpl: window,
-        setTimeout,
-        clearTimeout,
-        updateDelayMs: DATA_TERMINAL_UPDATE_DELAY_MS,
-        getAnchorPanel: () => arbPathWindow,
-        zIndexRuntime: floatingPanelZIndexRuntime,
-        getDashboardState,
-        getQuoteMarketStateMap,
-        getMarketRevision: () => quoteStateRuntime.getMarketRevision(),
-        isQuoteActive: (quote) => !isQuotePaused(quote),
-        getAliasRules,
-        closestEventTarget,
-        formatChainLabel,
-        formatAmount: (amount) => formatDetailNumber(Number(amount), 6),
-        buildPairLinkHtml: (row, className, label) => getDexLinkUtils().buildDexLinkCopyButtonHtml({
-            chain: row.chain,
-            fromTokenAddress: row.fromTokenAddress,
-            toTokenAddress: row.toTokenAddress,
-            inputAmount: row.amount
-        }, className, label),
-        copyDexLinkFromElement
+    const dataTerminalRuntime = getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({
+        modules: dashboardModules,
+        constants: {
+            dataTerminalUpdateDelayMs: DATA_TERMINAL_UPDATE_DELAY_MS
+        },
+        deps: {
+            clearTimeout,
+            closestEventTarget,
+            copyDexLinkFromElement,
+            dashboardRuntimeUtils,
+            documentImpl: document,
+            domRenderUtils,
+            formatChainLabel,
+            formatDetailNumber,
+            getAliasRules,
+            getAnchorPanel: () => arbPathWindow,
+            getDashboardState,
+            getQuoteMarketStateMap,
+            interactionRuntime: dashboardInputInteractionRuntime,
+            isQuotePaused,
+            quoteStateRuntime,
+            setTimeout,
+            windowImpl: window,
+            zIndexRuntime: floatingPanelZIndexRuntime
+        }
     });
-    const renderDataTerminalPanel = dataTerminalController.renderPanel;
-    const toggleDataTerminalPanel = dataTerminalController.togglePanel;
-    scheduleDataTerminalUpdate = dataTerminalController.scheduleUpdate;
+    const renderDataTerminalPanel = dataTerminalRuntime.renderDataTerminalPanel;
+    const toggleDataTerminalPanel = dataTerminalRuntime.toggleDataTerminalPanel;
+    scheduleDataTerminalUpdate = dataTerminalRuntime.scheduleDataTerminalUpdate;
 
     const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({
         dashboardCommandControllerUtils: getDashboardCommandController(),

@@ -15,6 +15,7 @@ assert.ok(MODULES.getDashboardCommandController, 'expected dashboard command con
 assert.ok(MODULES.getDashboardCommandRuntime, 'expected dashboard command runtime definition');
 assert.ok(MODULES.getDashboardLifecycleController, 'expected dashboard lifecycle controller definition');
 assert.ok(MODULES.getDashboardViewModeController, 'expected dashboard view mode controller definition');
+assert.ok(MODULES.getDashboardDataTerminalRuntime, 'expected dashboard data terminal runtime definition');
 assert.ok(MODULES.getArbAlertBridgeUtils, 'expected arb alert bridge utils definition');
 assert.ok(MODULES.getArbPanelController, 'expected arb panel controller module definition');
 assert.ok(MODULES.getAlertRuntimeController, 'expected alert runtime controller definition');
@@ -28,6 +29,7 @@ const windowImpl = {
   DashboardArbAlertRuntime: { id: 'dashboard-arb-alert-runtime' },
   DashboardCommandController: { id: 'dashboard-command' },
   DashboardCommandRuntime: { id: 'dashboard-command-runtime' },
+  DashboardDataTerminalRuntime: { id: 'dashboard-data-terminal-runtime' },
   DashboardQuoteDomainAdapter: { id: 'dashboard-quote-domain' },
   DashboardQuoteRuntime: { id: 'dashboard-quote-runtime' },
   DashboardViewModeController: { id: 'dashboard-view-mode' },
@@ -40,6 +42,7 @@ assert.strictEqual(registry.getArbAlertBridgeUtils(), windowImpl.ArbAlertBridgeU
 assert.strictEqual(registry.getDashboardArbAlertRuntime(), windowImpl.DashboardArbAlertRuntime);
 assert.strictEqual(registry.getDashboardCommandController(), windowImpl.DashboardCommandController);
 assert.strictEqual(registry.getDashboardCommandRuntime(), windowImpl.DashboardCommandRuntime);
+assert.strictEqual(registry.getDashboardDataTerminalRuntime(), windowImpl.DashboardDataTerminalRuntime);
 assert.strictEqual(registry.getDashboardQuoteDomainAdapter(), windowImpl.DashboardQuoteDomainAdapter);
 assert.strictEqual(registry.getDashboardQuoteRuntime(), windowImpl.DashboardQuoteRuntime);
 assert.strictEqual(registry.getDashboardRuntimeUtils(), windowImpl.DashboardRuntimeUtils);
