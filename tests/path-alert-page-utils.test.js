@@ -297,6 +297,16 @@ assert.strictEqual(
 );
 assert.strictEqual(
   buildPathAlertContextQuoteLabel({
+    quote: {
+      chain: 'arbitrum',
+      fromToken: 'WBTC',
+      toToken: 'cbBTC'
+    }
+  }),
+  'arb WBTC -> cbBTC'
+);
+assert.strictEqual(
+  buildPathAlertContextQuoteLabel({
     filterQuoteId: 101,
     quote: {
       chain: 'ethereum',

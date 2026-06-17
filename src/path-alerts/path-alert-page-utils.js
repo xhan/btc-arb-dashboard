@@ -542,7 +542,7 @@
       : () => false;
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
-      : (chain) => String(chain || '');
+      : formatDefaultPathAlertChainLabel;
     const shortenToken = typeof options.shortenToken === 'function'
       ? options.shortenToken
       : shortenTokenText;
