@@ -1,10 +1,13 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(
+      typeof globalThis !== 'undefined' ? globalThis : root,
+      require('../shared/chain-defaults')
+    );
     return;
   }
-  root.PathAlertPageUtils = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  root.PathAlertPageUtils = factory(root, root.ChainDefaults || null);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (root, chainDefaults) {
   function sanitizeMode(mode) {
     return mode === 'edit' ? 'edit' : mode === 'create' ? 'create' : 'manage';
   }
@@ -25,10 +28,23 @@
     return `${text.slice(0, 8)}...${text.slice(-6)}`;
   }
 
+  function getPathAlertPageChainDefaults() {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') return chainDefaults;
+    if (root && root.ChainDefaults && typeof root.ChainDefaults.getChainDisplayName === 'function') {
+      return root.ChainDefaults;
+    }
+    return null;
+  }
+
+  function formatDefaultPathAlertChainLabel(chain) {
+    const defaults = getPathAlertPageChainDefaults();
+    return defaults ? defaults.getChainDisplayName(chain) : String(chain || '');
+  }
+
   function buildPathAlertQuoteLabel(options = {}) {
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
-      : (chain) => chain || '';
+      : formatDefaultPathAlertChainLabel;
     const chainLabel = formatChainLabel(options.chain);
     const fromSymbol = options.fromSymbol || '--';
     const toSymbol = options.toSymbol || '--';
@@ -65,7 +81,7 @@
   function formatPathAlertChainLabel(chain, options = {}) {
     return typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel(chain)
-      : String(chain || '');
+      : formatDefaultPathAlertChainLabel(chain);
   }
 
   function buildPathAlertQuotePairLabel(chain, fromSymbol, toSymbol, suffix, options = {}) {

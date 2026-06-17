@@ -47,6 +47,22 @@ assert.strictEqual(
   '(ETHEREUM) cbBTC -> WBTC [bid1]'
 );
 assert.strictEqual(
+  buildPathAlertQuoteLabel({
+    chain: 'ethereum',
+    fromSymbol: 'cbBTC',
+    toSymbol: 'WBTC'
+  }),
+  '(eth) cbBTC -> WBTC'
+);
+assert.strictEqual(
+  buildPathAlertQuotePairText(
+    { type: 'quote', quoteId: 302, direction: 'forward' },
+    { id: 302, chain: 'arbitrum', fromToken: 'WBTC', toToken: 'cbBTC' },
+    []
+  ),
+  'arb WBTC/cbBTC'
+);
+assert.strictEqual(
   buildPathAlertQuoteDisplayLabel(
     { type: 'quote', quoteId: 1, direction: 'inverse' },
     { id: 1, chain: 'Bybit', symbol: 'WBTCBTC' },
