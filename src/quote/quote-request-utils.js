@@ -1,5 +1,8 @@
 (function (root, factory) {
-  const api = factory();
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
@@ -7,7 +10,7 @@
   if (root && root.window && root.window !== root) {
     root.window.QuoteRequestUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   const MARKET_QUOTE_REQUESTS = Object.freeze({
     '0x': Object.freeze({ endpoint: '/api/get-0x-quote', source: '0x', errorMessage: '0x API Request Failed' }),
     Velora: Object.freeze({ endpoint: '/api/get-velora-quote', source: 'Velora', errorMessage: 'Velora API Request Failed' }),
@@ -41,6 +44,9 @@
   }
 
   function normalizeChainKey(chain) {
+    if (chainDefaults && typeof chainDefaults.normalizeChain === 'function') {
+      return chainDefaults.normalizeChain(chain);
+    }
     return normalizeString(chain).toLowerCase();
   }
 
@@ -68,7 +74,7 @@
       return { type: 'cex', config: CEX_ORDERBOOK_REQUESTS[source] };
     }
 
-    const quoteChain = normalizeString(quote && quote.chain).toLowerCase();
+    const quoteChain = normalizeChainKey(quote && quote.chain);
     const isSuiQuote = quoteChain === 'sui';
     return {
       type: 'market',

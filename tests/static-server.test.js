@@ -166,6 +166,9 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/quote/quote-request-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/quote/quote-request-utils.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/quote/quote-display-utils.js"') < response.body.indexOf('src="src/quote/quote-ui-controller.js"')
     );
     assert.ok(
@@ -1122,6 +1125,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function isKyberSupported(chain)'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.quoteRequestUtils.shouldSkipQuoteSource(source, quote)'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function formatQuoteErrorMessage(error, options = {})'));
+    assert.ok(quoteRequestUtilsResponse.body.includes("require('../shared/chain-defaults')"));
+    assert.ok(quoteRequestUtilsResponse.body.includes('return chainDefaults.normalizeChain(chain);'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function requestMarketQuote(options = {})'));

@@ -23,6 +23,9 @@ const {
 } = require('../src/quote/quote-request-utils');
 
 assert.strictEqual(normalizeChainKey(' Arbitrum '), 'arbitrum');
+assert.strictEqual(normalizeChainKey(' ARB '), 'arbitrum');
+assert.strictEqual(normalizeChainKey(' eth '), 'ethereum');
+assert.strictEqual(normalizeChainKey(' UnknownChain '), 'unknownchain');
 
 assert.strictEqual(resolveMarketQuoteRequestConfig('Velora'), MARKET_QUOTE_REQUESTS.Velora);
 assert.strictEqual(resolveMarketQuoteRequestConfig('Unknown'), null);
@@ -136,12 +139,16 @@ assert.strictEqual(
   true
 );
 assert.strictEqual(isKyberSupportedChain('Arbitrum'), true);
+assert.strictEqual(isKyberSupportedChain('arb'), true);
 assert.strictEqual(isKyberSupportedChain('unsupported'), false);
 assert.strictEqual(isZeroxSupportedChain('base'), true);
+assert.strictEqual(isZeroxSupportedChain('eth'), true);
 assert.strictEqual(isZeroxSupportedChain('solana'), false);
 assert.strictEqual(shouldSkipQuoteSource('Kyber', { chain: 'ethereum' }), false);
+assert.strictEqual(shouldSkipQuoteSource('Kyber', { chain: 'arb' }), false);
 assert.strictEqual(shouldSkipQuoteSource('Kyber', { chain: 'solana' }), true);
 assert.strictEqual(shouldSkipQuoteSource('0x', { chain: 'base' }), false);
+assert.strictEqual(shouldSkipQuoteSource('0x', { chain: 'eth' }), false);
 assert.strictEqual(shouldSkipQuoteSource('0x', { chain: 'sui' }), true);
 assert.strictEqual(
   shouldSkipQuoteSource('Velora', { chain: 'ethereum' }, {}),
