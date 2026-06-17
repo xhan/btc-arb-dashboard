@@ -165,6 +165,8 @@
       alertDebugUtils: options.alertDebugUtils,
       alertLogUiUtils: options.alertLogUiUtils,
       arbAlertBridgeRuntime,
+      arbPathConfig: options.arbPathConfig,
+      arbPathConfigUtils: options.arbPathConfigUtils,
       applyFloatingPanelDisplay: arbPanelController.applyFloatingPanelDisplay,
       arbDetailUtils: options.arbDetailUtils,
       arbRuntimeMemoryUtils: options.arbRuntimeMemoryUtils,

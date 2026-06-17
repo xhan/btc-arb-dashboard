@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const domRenderUtils = require('../src/ui/dom-render-utils');
+const arbPathConfigUtils = require('../src/arb/arb-path-config-utils');
 const {
   createAlertRuntimeController
 } = require('../src/alerts/alert-runtime-controller');
@@ -237,4 +238,38 @@ function createBaseDeps(overrides = {}) {
 
   assert.strictEqual(controller.schedulePathAlertEvaluation({ delayMs: 88 }), true);
   assert.deepStrictEqual(schedulerCalls, [['scheduleEvaluation', 88]]);
+}
+
+{
+  const unwatchedRuleAlert = {
+    id: 'unwatched-rule',
+    target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:missing' }
+  };
+  const { deps, schedulerCalls } = createBaseDeps({
+    arbPathConfig: {
+      watchItems: [
+        { title: 'watched', type: 'fixed-rule', ruleId: 'fixed:watched' }
+      ]
+    },
+    arbPathConfigUtils,
+    dashboardRuntimeUtils: {
+      getActivePathAlertEvaluationAlerts: () => [unwatchedRuleAlert],
+      hasActivePathAlertEvaluationTarget: () => true,
+      hasActivePathAlertSound: () => false,
+      isPanelVisible: () => true,
+      resolveMutedStateRefreshDelay: () => 0
+    },
+    pathAlertUtils: {
+      ...createBaseDeps().deps.pathAlertUtils,
+      buildAllLegSnapshots: () => [],
+      evaluatePathAlert: () => {
+        throw new Error('unwatched rule alert should not be evaluated');
+      }
+    }
+  });
+  const controller = createAlertRuntimeController(deps);
+
+  controller.evaluatePathAlertsOnce();
+  assert.strictEqual(controller.schedulePathAlertEvaluation({ delayMs: 88 }), false);
+  assert.deepStrictEqual(schedulerCalls, []);
 }

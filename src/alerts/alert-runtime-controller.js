@@ -35,6 +35,8 @@
     const pathAlertNotificationUtils = deps.pathAlertNotificationUtils || (root && root.PathAlertNotificationUtils);
     const pathAlertPageUtils = deps.pathAlertPageUtils || (root && root.PathAlertPageUtils);
     const pathAlertRuleDefinitions = deps.pathAlertRuleDefinitions || (root && root.PathAlertRuleDefinitions) || {};
+    const arbPathConfig = deps.arbPathConfig || (root && root.ArbPathConfig) || {};
+    const arbPathConfigUtils = deps.arbPathConfigUtils || (root && root.ArbPathConfigUtils) || null;
     const arbRuntimeMemoryUtils = deps.arbRuntimeMemoryUtils || (root && root.ArbRuntimeMemoryUtils);
     const arbDetailUtils = deps.arbDetailUtils || (root && root.ArbDetailUtils);
     const quoteDisplayUtils = deps.quoteDisplayUtils || (root && root.QuoteDisplayUtils);
@@ -654,6 +656,30 @@
       pathAlertRuntimeState.pruneInactive(pathAlertConfig && pathAlertConfig.alerts);
     }
 
+    function filterWatchedPathAlertEvaluationAlerts(alerts) {
+      if (arbPathConfigUtils && typeof arbPathConfigUtils.filterWatchedRuleAlerts === 'function') {
+        return arbPathConfigUtils.filterWatchedRuleAlerts(alerts, arbPathConfig);
+      }
+      return Array.isArray(alerts) ? alerts : [];
+    }
+
+    function getActiveWatchedPathAlertEvaluationAlerts() {
+      return filterWatchedPathAlertEvaluationAlerts(
+        dashboardRuntimeUtils.getActivePathAlertEvaluationAlerts(pathAlertConfig)
+      );
+    }
+
+    function hasActiveWatchedPathAlertEvaluationTarget() {
+      const hasActiveTarget = typeof dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget === 'function'
+        ? dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget(pathAlertConfig)
+        : dashboardRuntimeUtils.getActivePathAlertEvaluationAlerts(pathAlertConfig).length > 0;
+      if (!hasActiveTarget) return false;
+      if (!arbPathConfigUtils || typeof arbPathConfigUtils.filterWatchedRuleAlerts !== 'function') {
+        return true;
+      }
+      return getActiveWatchedPathAlertEvaluationAlerts().length > 0;
+    }
+
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
       if (
         !deps.arbAlertBridgeRuntime
@@ -773,7 +799,7 @@
     }
 
     function evaluatePathAlertsOnce() {
-      const evaluationAlerts = dashboardRuntimeUtils.getActivePathAlertEvaluationAlerts(pathAlertConfig);
+      const evaluationAlerts = getActiveWatchedPathAlertEvaluationAlerts();
       if (!evaluationAlerts.length) {
         pruneInactiveAlertRuntimeState();
         updateAlertSoundState();
@@ -860,7 +886,7 @@
 
     function restartPathAlertScheduler() {
       pathAlertSchedulerRuntime.restartEvaluation({
-        hasActiveTarget: () => dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget(pathAlertConfig),
+        hasActiveTarget: hasActiveWatchedPathAlertEvaluationTarget,
         intervalMs: pathAlertConfig && pathAlertConfig.settings
           ? pathAlertConfig.settings.pathAlertEvalIntervalMs
           : 0,
@@ -869,10 +895,7 @@
     }
 
     function schedulePathAlertEvaluation(options = {}) {
-      const hasActiveTarget = typeof dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget === 'function'
-        ? dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget(pathAlertConfig)
-        : false;
-      if (!hasActiveTarget) return false;
+      if (!hasActiveWatchedPathAlertEvaluationTarget()) return false;
 
       const delayMs = Number.isFinite(Number(options.delayMs))
         ? Number(options.delayMs)

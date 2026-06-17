@@ -3,9 +3,11 @@ const assert = require('assert');
 const {
   applyFixedRuleWatchItemsToResults,
   applySpecialRuleWatchItemsToRules,
+  filterWatchedRuleAlerts,
   getFixedRuleWatchItems,
   getQuotePriceWatchItems,
   getSpecialRuleWatchItems,
+  isWatchedRuleTarget,
   normalizeFixedRuleWatchItem,
   normalizeQuotePriceWatchItem,
   normalizeSpecialRuleWatchItem,
@@ -156,6 +158,44 @@ assert.deepStrictEqual(
   ]
 );
 assert.strictEqual(applySpecialRuleWatchItemsToRules(originalSpecialRules, []), originalSpecialRules);
+
+assert.strictEqual(isWatchedRuleTarget(config, {
+  type: 'rule',
+  ruleKind: 'fixed',
+  ruleId: 'fixed:wbtc'
+}), true);
+assert.strictEqual(isWatchedRuleTarget(config, {
+  type: 'rule',
+  ruleKind: 'special',
+  ruleId: 'special:wbtc-bybit'
+}), true);
+assert.strictEqual(isWatchedRuleTarget(config, {
+  type: 'rule',
+  ruleKind: 'fixed',
+  ruleId: 'fixed:missing'
+}), false);
+assert.strictEqual(isWatchedRuleTarget(config, {
+  type: 'rule',
+  ruleKind: 'special',
+  ruleId: 'special:missing'
+}), false);
+
+const watchedRuleAlert = {
+  id: 'watched-fixed',
+  target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:wbtc' }
+};
+const unwatchedRuleAlert = {
+  id: 'unwatched-fixed',
+  target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:missing' }
+};
+const customPathAlert = {
+  id: 'custom-path',
+  target: { type: 'path', legs: [] }
+};
+assert.deepStrictEqual(
+  filterWatchedRuleAlerts([watchedRuleAlert, unwatchedRuleAlert, customPathAlert], config),
+  [watchedRuleAlert, customPathAlert]
+);
 
 assert.strictEqual(normalizeQuotePriceWatchItem({ title: 'No type', quoteId: 1 }), null);
 assert.strictEqual(resolveQuotePriceValue({ direction: 'forward' }, { lastRawPrice: 1.23, inverseRawPrice: 0.81 }), 1.23);

@@ -1832,6 +1832,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbAlertRuntimeResponse.body.includes('specialArbRules,'));
     assert.ok(arbAlertRuntimeResponse.body.includes('specialRuleAlertConfigUtils: options.specialRuleAlertConfigUtils,'));
     assert.ok(arbAlertRuntimeResponse.body.includes('updateArbPanel'));
+    assert.ok(arbAlertRuntimeResponse.body.includes('arbPathConfig: options.arbPathConfig,'));
+    assert.ok(arbAlertRuntimeResponse.body.includes('arbPathConfigUtils: options.arbPathConfigUtils,'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.buildRuleAlertEvaluation(target, alert, sharedRuleSnapshot, {'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.markTriggeredAlertOpportunity(alert, evaluation, nowMs)'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.invalidateRuleSnapshot()'));
@@ -1933,7 +1935,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('buttonEl.textContent = statusState.buttonText'));
     assert.ok(!appJsResponse.body.includes('function getActivePathAlertEvaluationAlerts()'));
     assert.ok(!appJsResponse.body.includes('function hasActivePathAlertEvaluationTarget()'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('hasActiveTarget: () => dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget(pathAlertConfig)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function getActiveWatchedPathAlertEvaluationAlerts()'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function hasActiveWatchedPathAlertEvaluationTarget()'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('hasActiveTarget: hasActiveWatchedPathAlertEvaluationTarget'));
     assert.ok(alertRuntimeControllerResponse.body.includes('function pruneInactiveAlertRuntimeState()'));
     assert.ok(moduleRegistryResponse.body.includes('getPathAlertUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('PathAlertUtils is not loaded'));
@@ -2018,7 +2022,7 @@ async function waitForServer(attempts = 12) {
     const pruneMutedPathTargetsMatch = alertRuntimeControllerResponse.body.match(/function pruneMutedPathTargetsInPlace\([\s\S]*?\n    \}/);
     assert.ok(pruneMutedPathTargetsMatch);
     assert.ok(!pruneMutedPathTargetsMatch[0].includes('window.PathAlertUtils'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('const evaluationAlerts = dashboardRuntimeUtils.getActivePathAlertEvaluationAlerts(pathAlertConfig);'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('const evaluationAlerts = getActiveWatchedPathAlertEvaluationAlerts();'));
     assert.ok(alertRuntimeControllerResponse.body.includes('if (!evaluationAlerts.length) {'));
     assert.ok(!appJsResponse.body.includes('extendMutedPathTargetFromLogButton'));
     assert.ok(alertLogUiResponse.body.includes("buttonEl.closest('.log-entry[data-muted-target-key]')"));
