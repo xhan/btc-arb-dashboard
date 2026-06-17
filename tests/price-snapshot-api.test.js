@@ -131,14 +131,14 @@ async function waitForServer(attempts = 15) {
     assert.strictEqual(pairsResponse.statusCode, 200);
     const pairs = JSON.parse(pairsResponse.body);
     assert.ok(Array.isArray(pairs));
-    assert.ok(pairs.some((item) => item.key === '3:forward' && item.label === '(ETH) GHO -> USDC'));
+    assert.ok(pairs.some((item) => item.key === '3:forward' && item.label === '(eth) GHO -> USDC'));
     assert.ok(!pairs.some((item) => item.key === '9:forward'));
 
     const seriesResponse = await request('/api/chart-series?quoteId=1&direction=forward');
     assert.strictEqual(seriesResponse.statusCode, 200);
     const series = JSON.parse(seriesResponse.body);
     assert.strictEqual(series.key, '1:forward');
-    assert.strictEqual(series.label, '(ETH) WBTC -> WETH');
+    assert.strictEqual(series.label, '(eth) WBTC -> WETH');
     assert.deepStrictEqual(series.points, [
       { time: Math.floor(new Date('2026-02-28T16:00:10.000Z').getTime() / 1000), value: 16 },
       { time: Math.floor(new Date('2026-02-28T16:05:10.000Z').getTime() / 1000), value: 16.5 }

@@ -57,6 +57,6 @@ assert.ok(
   '设置面板应包含 Binance 间隔'
 );
 assert.ok(
-  indexHtml.includes('<option value="Binance">Binance</option>'),
-  '添加报价弹窗应包含 Binance'
+  indexHtml.includes('<option value="Binance">binance</option>'),
+  '添加报价弹窗应包含 Binance 平台且 UI 显示统一小写缩写'
 );

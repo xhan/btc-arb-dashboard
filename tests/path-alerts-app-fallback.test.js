@@ -4,6 +4,7 @@ const path = require('path');
 const vm = require('vm');
 
 const candidateUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-candidate-utils.js'), 'utf8');
+const chainLabelConfigCode = fs.readFileSync(path.join(__dirname, '..', 'src/shared/chain-label-config.js'), 'utf8');
 const chainDefaultsCode = fs.readFileSync(path.join(__dirname, '..', 'src/shared/chain-defaults.js'), 'utf8');
 const tradingPairUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/shared/trading-pair-utils.js'), 'utf8');
 const notificationUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-notification-utils.js'), 'utf8');
@@ -78,6 +79,8 @@ sandbox.window.setTimeout = setTimeout;
 sandbox.window.clearTimeout = clearTimeout;
 
 vm.createContext(sandbox);
+vm.runInContext(chainLabelConfigCode, sandbox);
+sandbox.window.ChainLabelConfig = sandbox.ChainLabelConfig;
 vm.runInContext(chainDefaultsCode, sandbox);
 sandbox.window.ChainDefaults = sandbox.ChainDefaults;
 vm.runInContext(candidateUtilsCode, sandbox);
@@ -230,4 +233,4 @@ const resolvedQuoteAlertName = sandbox.window.PathAlertsAppTestHooks.buildDefaul
     }
   ]
 );
-assert.strictEqual(resolvedQuoteAlertName, 'Avalanche WBTC/cbBTC 汇率高于');
+assert.strictEqual(resolvedQuoteAlertName, 'avax WBTC/cbBTC 汇率高于');

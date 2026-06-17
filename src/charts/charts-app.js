@@ -101,7 +101,7 @@
 
   function renderEmptyState() {
     if (!panelsEl || state.panels.size || state.profitPanel) return;
-    panelsEl.innerHTML = '<div class="chart-empty">暂无图表。先在上方输入交易对并添加，例如 <strong>(ETH) GHO -> USDC</strong>。</div>';
+    panelsEl.innerHTML = '<div class="chart-empty">暂无图表。先在上方输入交易对并添加，例如 <strong>(eth) GHO -> USDC</strong>。</div>';
   }
 
   function syncRefreshButtonState() {

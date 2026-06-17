@@ -105,7 +105,7 @@ async function waitForServer(attempts = 15) {
     assert.ok(ethForward);
     assert.strictEqual(ethForward.fromSymbol, 'GHO');
     assert.strictEqual(ethForward.toSymbol, 'USDC');
-    assert.ok(ethForward.label.includes('(ETH) GHO -> USDC'));
+    assert.ok(ethForward.label.includes('(eth) GHO -> USDC'));
 
     const pausedSui = candidates.find((item) => item.key.startsWith('102:'));
     assert.strictEqual(pausedSui, undefined);

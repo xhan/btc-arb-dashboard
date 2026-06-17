@@ -119,7 +119,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/dashboard/dashboard-renderer.js"'));
     assert.ok(response.body.includes('src="src/dashboard/dashboard-view-controller.js"'));
     assert.ok(response.body.includes('src="src/price-snapshots/price-snapshot-payload-utils.js"'));
+    assert.ok(response.body.includes('src="src/shared/chain-label-config.js"'));
     assert.ok(response.body.includes('src="src/shared/chain-defaults.js"'));
+    assert.ok(response.body.indexOf('src="src/shared/chain-label-config.js"') < response.body.indexOf('src="src/shared/chain-defaults.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-panel-controller.js"'));
     assert.ok(response.body.includes('src="src/ui/audio-utils.js"'));
     assert.ok(response.body.includes('src="src/ui/theme-utils.js"'));
@@ -402,6 +404,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('Llama-ParaSwap (默认 800ms)'));
     assert.ok(response.body.includes('.arb-opportunity.is-alert-highlight {'));
     assert.ok(response.body.includes('class="settings-grid"'));
+    assert.ok(response.body.includes('<option value="arbitrum">arb</option>'));
+    assert.ok(!response.body.includes('<option value="arbitrum">Arbitrum</option>'));
     assert.ok(response.body.includes('id="quote-request-channel"'));
     assert.ok(response.body.includes('请求通道'));
     assert.ok(response.body.includes('id="kyber-excluded-sources"'));
@@ -409,7 +413,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!response.body.includes('Kyber 仅直连池'));
     assert.ok(!response.body.includes('.quote-direct-badge'));
     assert.ok(response.body.includes('quote-channel-tag'));
-    assert.ok(response.body.includes('<option value="Binance">Binance</option>'));
+    assert.ok(response.body.includes('<option value="Binance">binance</option>'));
     assert.ok(response.body.includes('<option value="Llama-ParaSwap">Llama-ParaSwap</option>'));
     assert.ok(!response.body.includes('id="path-alert-window"'));
     assert.ok(!response.body.includes('#path-alert-window {'));
@@ -566,6 +570,10 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteSpreadControllerResponse.statusCode, 200);
     const requestChannelUtilsResponse = await request('/src/request-channel/request-channel-utils.js');
     assert.strictEqual(requestChannelUtilsResponse.statusCode, 200);
+    const chainLabelConfigResponse = await request('/src/shared/chain-label-config.js');
+    assert.strictEqual(chainLabelConfigResponse.statusCode, 200);
+    assert.ok(chainLabelConfigResponse.body.includes('CHAIN_LABEL_CONFIG'));
+    assert.ok(chainLabelConfigResponse.body.includes("arbitrum: { label: 'arb'"));
     const queueStatsUtilsResponse = await request('/src/queue-stats/queue-stats-utils.js');
     assert.strictEqual(queueStatsUtilsResponse.statusCode, 200);
     const quoteQueueRuntimeUtilsResponse = await request('/src/quote/quote-queue-runtime-utils.js');
@@ -1113,7 +1121,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRequestUtilsResponse.body.includes('function requestResolvedQuote(options = {})'));
     assert.ok(moduleRegistryResponse.body.includes('getChainDefaults: ['));
     assert.ok(moduleRegistryResponse.body.includes('ChainDefaults is not loaded'));
-    assert.ok(chainDefaultsResponse.body.includes('const CHAIN_DISPLAY_NAMES = Object.freeze({'));
+    assert.ok(chainDefaultsResponse.body.includes("require('./chain-label-config')"));
+    assert.ok(chainDefaultsResponse.body.includes('const CHAIN_DISPLAY_NAMES = chainLabelConfig.buildChainLabelMap();'));
+    assert.ok(chainDefaultsResponse.body.includes('const CHAIN_FILTER_ALIASES = chainLabelConfig.buildChainFilterAliasMap();'));
     assert.ok(chainDefaultsResponse.body.includes('function getChainDisplayName(chain)'));
     assert.ok(chainDefaultsResponse.body.includes('function buildQuoteChainDisplayName(quote)'));
     assert.ok(chainDefaultsResponse.body.includes('function normalizeChainFilterToken(chainToken)'));
@@ -2634,6 +2644,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(
       snapshotResponse.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < snapshotResponse.body.indexOf('src="src/arb/arb-cycle-priority-utils.js"')
     );
+    assert.ok(snapshotResponse.body.includes('src="src/shared/chain-label-config.js"'));
+    assert.ok(snapshotResponse.body.includes('src="src/shared/chain-defaults.js"'));
+    assert.ok(
+      snapshotResponse.body.indexOf('src="src/shared/chain-label-config.js"') < snapshotResponse.body.indexOf('src="src/shared/chain-defaults.js"')
+    );
+    assert.ok(
+      snapshotResponse.body.indexOf('src="src/shared/chain-defaults.js"') < snapshotResponse.body.indexOf('src="src/charts/charts-utils.js"')
+    );
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-panel-renderer.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/charts/charts-utils.js"'));
     assert.ok(snapshotResponse.body.includes('.arb-opportunity-head {'));
@@ -2656,6 +2674,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(chartsResponse.body.includes('id="chart-refresh-btn"'));
     assert.ok(chartsResponse.body.includes('id="chart-auto-refresh-toggle"'));
     assert.ok(chartsResponse.body.includes('id="chart-panels"'));
+    assert.ok(chartsResponse.body.includes('src="src/shared/chain-label-config.js"'));
+    assert.ok(chartsResponse.body.includes('src="src/shared/chain-defaults.js"'));
+    assert.ok(
+      chartsResponse.body.indexOf('src="src/shared/chain-label-config.js"') < chartsResponse.body.indexOf('src="src/shared/chain-defaults.js"')
+    );
+    assert.ok(
+      chartsResponse.body.indexOf('src="src/shared/chain-defaults.js"') < chartsResponse.body.indexOf('src="src/charts/charts-utils.js"')
+    );
     assert.ok(chartsResponse.body.includes('src="src/charts/charts-app.js"'));
     assert.ok(chartsResponse.body.includes('grid-template-columns: minmax(0, 1fr) 112px 112px auto;'));
     assert.ok(!chartsResponse.body.includes('<section class="hero">'));
@@ -2672,7 +2698,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(chartsUtilsResponse.statusCode, 200);
     const chartsUtilsExportBlock = chartsUtilsResponse.body.match(/return \{\n    buildChartPairKey,[\s\S]*?\n  \};/);
     assert.ok(chartsUtilsExportBlock);
-    assert.ok(!chartsUtilsExportBlock[0].includes('CHART_CHAIN_LABELS'));
+    assert.ok(!chartsUtilsResponse.body.includes('CHART_CHAIN_LABELS'));
+    assert.ok(chartsUtilsResponse.body.includes('chainDefaults.getChainDisplayName(chain)'));
     assert.ok(!chartsUtilsExportBlock[0].includes('getChartChainLabel'));
     assert.ok(!chartsUtilsExportBlock[0].includes('tokenizeChartSearch'));
     assert.ok(!chartsUtilsExportBlock[0].includes('buildChartSearchTerms'));
@@ -2695,8 +2722,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(queueStatsResponse.body.includes('队列统计'));
     assert.ok(queueStatsResponse.body.includes('请求发起间隔'));
     assert.ok(queueStatsResponse.body.includes('src="src/quote/quote-pause-utils.js"'));
+    assert.ok(queueStatsResponse.body.includes('src="src/shared/chain-label-config.js"'));
     assert.ok(queueStatsResponse.body.includes('src="src/shared/chain-defaults.js"'));
     assert.ok(queueStatsResponse.body.includes('src="src/request-channel/request-channel-utils.js"'));
+    assert.ok(
+      queueStatsResponse.body.indexOf('src="src/shared/chain-label-config.js"') < queueStatsResponse.body.indexOf('src="src/shared/chain-defaults.js"')
+    );
     assert.ok(
       queueStatsResponse.body.indexOf('src="src/quote/quote-pause-utils.js"') < queueStatsResponse.body.indexOf('src="src/queue-stats/queue-stats-utils.js"')
     );
@@ -2732,6 +2763,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('src="src/shared/trading-pair-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(!pathAlertsResponse.body.includes('src="quote-alert-config-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="src/shared/chain-label-config.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/shared/chain-defaults.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-candidate-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/alerts/special-rule-alert-config-utils.js"'));
@@ -2745,6 +2777,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alert-editor-utils.js"') < pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alerts-app.js"')
+    );
+    assert.ok(
+      pathAlertsResponse.body.indexOf('src="src/shared/chain-label-config.js"') < pathAlertsResponse.body.indexOf('src="src/shared/chain-defaults.js"')
     );
     assert.ok(
       pathAlertsResponse.body.indexOf('src="src/shared/chain-defaults.js"') < pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alert-candidate-utils.js"')

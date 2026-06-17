@@ -1,46 +1,18 @@
 (function (root, factory) {
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(chainDefaults);
     return;
   }
-  root.ChartsUtils = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  const CHART_CHAIN_LABELS = {
-    ethereum: 'ETH',
-    arbitrum: 'Arbitrum',
-    optimism: 'Optimism',
-    bsc: 'BSC',
-    polygon: 'Polygon',
-    avalanche: 'Avalanche',
-    base: 'Base',
-    linea: 'Linea',
-    mantle: 'Mantle',
-    sonic: 'Sonic',
-    berachain: 'Berachain',
-    ronin: 'Ronin',
-    unichain: 'Unichain',
-    hyperevm: 'HyperEVM',
-    plasma: 'Plasma',
-    scroll: 'Scroll',
-    blast: 'Blast',
-    mode: 'Mode',
-    monad: 'Monad',
-    etherlink: 'Etherlink',
-    fantom: 'Fantom',
-    cronos: 'Cronos',
-    moonbeam: 'Moonbeam',
-    boba: 'Boba',
-    gnosis: 'Gnosis',
-    celo: 'Celo',
-    katana: 'Katana',
-    hemi: 'Hemi',
-    solana: 'SOL',
-    sui: 'SUI',
-    Bybit: 'Bybit'
-  };
-
+  root.ChartsUtils = factory(chainDefaults);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   function getChartChainLabel(chain) {
-    return CHART_CHAIN_LABELS[chain] || chain || '';
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return chain || '';
   }
 
   function normalizeText(value) {
@@ -117,11 +89,14 @@
     const label = pair && pair.label ? pair.label : buildChartPairLabel(pair);
     const chain = pair && pair.chain ? pair.chain : '';
     const chainLabel = getChartChainLabel(chain);
+    const chainSearchText = chainDefaults && typeof chainDefaults.buildChainSearchText === 'function'
+      ? chainDefaults.buildChainSearchText(chain)
+      : chain;
     const fromSymbol = pair && pair.fromSymbol ? pair.fromSymbol : '';
     const toSymbol = pair && pair.toSymbol ? pair.toSymbol : '';
     const terms = new Set();
 
-    for (const token of tokenizeText(`${label} ${chain} ${chainLabel} ${fromSymbol} ${toSymbol}`)) {
+    for (const token of tokenizeText(`${label} ${chainSearchText} ${chainLabel} ${fromSymbol} ${toSymbol}`)) {
       terms.add(token);
     }
 

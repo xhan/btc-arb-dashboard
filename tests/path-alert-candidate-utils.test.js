@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const {
+  buildPathAlertCandidates,
   buildPathAlertCandidatesFromDashboard,
   filterPathAlertCandidates
 } = require('../src/path-alerts/path-alert-candidate-utils');
@@ -11,7 +12,7 @@ const dashboard = [
     quotes: [
       {
         id: 201,
-        chain: 'ethereum',
+        chain: 'arbitrum',
         fromToken: '0x1234567890abcdef123456',
         toToken: 'USDC',
         showInverse: true
@@ -58,13 +59,13 @@ assert.deepStrictEqual(
       key: '201:forward',
       fromSymbol: '0x123456...123456',
       toSymbol: 'USDC',
-      label: 'ethereum:0x123456...123456->USDC'
+      label: 'arbitrum:0x123456...123456->USDC'
     },
     {
       key: '201:inverse',
       fromSymbol: 'USDC',
       toSymbol: '0x123456...123456',
-      label: 'ethereum:USDC->0x123456...123456'
+      label: 'arbitrum:USDC->0x123456...123456'
     },
     {
       key: '202:cex-bid1',
@@ -84,5 +85,19 @@ assert.ok(!candidates.some((item) => item.key.startsWith('203:')));
 assert.deepStrictEqual(
   filterPathAlertCandidates(candidates, 'Dashboard 0x123456', 2).map((item) => item.key),
   ['201:forward', '201:inverse']
+);
+assert.deepStrictEqual(
+  filterPathAlertCandidates(candidates, 'arb 0x123456', 2).map((item) => item.key),
+  ['201:forward', '201:inverse']
+);
+const aliasSearchCandidates = buildPathAlertCandidates([{
+  categoryName: 'Alias Search',
+  quote: { id: 301, chain: 'avalanche' },
+  fromSymbol: 'BTC.b',
+  toSymbol: 'USDC'
+}]);
+assert.deepStrictEqual(
+  filterPathAlertCandidates(aliasSearchCandidates, 'avax BTC.b').map((item) => item.key),
+  ['301:forward']
 );
 assert.deepStrictEqual(filterPathAlertCandidates(candidates, 'missing'), []);

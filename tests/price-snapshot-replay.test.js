@@ -47,4 +47,5 @@ const text = renderReplayText(replay);
 assert.ok(text.includes('请求时间'));
 assert.ok(text.includes('命中快照'));
 assert.ok(text.includes('全局路径'));
+assert.ok(text.includes('arb'));
 assert.ok(text.includes('+08:00'));

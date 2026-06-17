@@ -1,10 +1,13 @@
 (function (root, factory) {
-  const api = factory();
+  const chainLabelConfig = typeof module !== 'undefined' && module.exports
+    ? require('./chain-label-config')
+    : root.ChainLabelConfig;
+  const api = factory(chainLabelConfig);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   root.ChainDefaults = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainLabelConfig) {
   const CHAIN_DEFAULT_SOURCES = new Map([
     ['katana', 'LI.FI'],
     ['hemi', 'LI.FI'],
@@ -12,89 +15,16 @@
     ['bybit', 'Bybit'],
     ['binance', 'Binance']
   ]);
-  const CHAIN_DISPLAY_NAMES = Object.freeze({
-    ethereum: 'ETH',
-    solana: 'SOL',
-    sui: 'SUI',
-    polygon: 'Polygon',
-    arbitrum: 'Arbitrum',
-    optimism: 'Optimism',
-    bsc: 'BSC',
-    avalanche: 'Avalanche',
-    base: 'Base',
-    Bybit: 'Bybit',
-    bybit: 'Bybit',
-    Binance: 'Binance',
-    binance: 'Binance',
-    linea: 'Linea',
-    mantle: 'Mantle',
-    sonic: 'Sonic',
-    berachain: 'Berachain',
-    ronin: 'Ronin',
-    unichain: 'Unichain',
-    hyperevm: 'HyperEVM',
-    plasma: 'Plasma',
-    scroll: 'Scroll',
-    blast: 'Blast',
-    mode: 'Mode',
-    monad: 'Monad',
-    etherlink: 'Etherlink',
-    fantom: 'Fantom',
-    cronos: 'Cronos',
-    moonbeam: 'Moonbeam',
-    boba: 'Boba',
-    gnosis: 'Gnosis',
-    celo: 'Celo',
-    megaeth: 'MegaETH',
-    hemi: 'Hemi',
-    katana: 'Katana',
-    starknet: 'Starknet'
-  });
-  const CHAIN_FILTER_ALIASES = Object.freeze({
-    ETH: 'ethereum',
-    SOL: 'solana',
-    SUI: 'sui',
-    POLY: 'polygon',
-    MATIC: 'polygon',
-    ARB: 'arbitrum',
-    OP: 'optimism',
-    BSC: 'bsc',
-    BNB: 'bsc',
-    AVAX: 'avalanche',
-    BASE: 'base',
-    LINEA: 'linea',
-    MNT: 'mantle',
-    MANTLE: 'mantle',
-    SONIC: 'sonic',
-    BERA: 'berachain',
-    RON: 'ronin',
-    UNI: 'unichain',
-    HYPE: 'hyperevm',
-    SCROLL: 'scroll',
-    BLAST: 'blast',
-    MODE: 'mode',
-    MONAD: 'monad',
-    FTM: 'fantom',
-    CRO: 'cronos',
-    GLMR: 'moonbeam',
-    BOBA: 'boba',
-    GNO: 'gnosis',
-    CELO: 'celo',
-    MEGA: 'megaeth',
-    MEGAETH: 'megaeth'
-  });
+  const CHAIN_DISPLAY_NAMES = chainLabelConfig.buildChainLabelMap();
+  const CHAIN_FILTER_ALIASES = chainLabelConfig.buildChainFilterAliasMap();
 
   function normalizeChain(chain) {
-    return typeof chain === 'string' ? chain.trim().toLowerCase() : '';
+    return chainLabelConfig.normalizeChainKey(chain);
   }
 
   function getChainDisplayName(chain) {
-    const raw = String(chain || '');
-    if (Object.prototype.hasOwnProperty.call(CHAIN_DISPLAY_NAMES, raw)) {
-      return CHAIN_DISPLAY_NAMES[raw];
-    }
     const normalized = normalizeChain(chain);
-    return CHAIN_DISPLAY_NAMES[normalized] || raw;
+    return CHAIN_DISPLAY_NAMES[normalized] || String(chain || '');
   }
 
   function buildQuoteChainDisplayName(quote) {
@@ -109,17 +39,7 @@
   function normalizeChainFilterToken(chainToken) {
     const token = String(chainToken || '').trim();
     if (!token) return '';
-    if (Object.prototype.hasOwnProperty.call(CHAIN_DISPLAY_NAMES, token)) {
-      return token;
-    }
-
-    for (const [chainKey, displayName] of Object.entries(CHAIN_DISPLAY_NAMES)) {
-      if (displayName === token) {
-        return chainKey;
-      }
-    }
-
-    return CHAIN_FILTER_ALIASES[token.toUpperCase()] || '';
+    return chainLabelConfig.normalizeChainSearchToken(token);
   }
 
   function isCrossChainQuote(quote) {
@@ -171,6 +91,8 @@
   return {
     CHAIN_DISPLAY_NAMES,
     CHAIN_FILTER_ALIASES,
+    buildChainSearchText: chainLabelConfig.buildChainSearchText,
+    getChainSearchAliases: chainLabelConfig.getChainSearchAliases,
     normalizeChain,
     normalizeChainFilterToken,
     getChainDisplayName,

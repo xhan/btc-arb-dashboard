@@ -11,40 +11,6 @@
   const arbContentEl = document.getElementById('snapshot-arb-content');
   const snapshotOpportunityStore = new Map();
 
-  const CHAIN_DISPLAY_NAMES = {
-    ethereum: 'ETH',
-    arbitrum: 'Arbitrum',
-    optimism: 'Optimism',
-    bsc: 'BSC',
-    polygon: 'Polygon',
-    avalanche: 'Avalanche',
-    base: 'Base',
-    linea: 'Linea',
-    mantle: 'Mantle',
-    sonic: 'Sonic',
-    berachain: 'Berachain',
-    ronin: 'Ronin',
-    unichain: 'Unichain',
-    hyperevm: 'HyperEVM',
-    plasma: 'Plasma',
-    scroll: 'Scroll',
-    blast: 'Blast',
-    mode: 'Mode',
-    monad: 'Monad',
-    etherlink: 'Etherlink',
-    fantom: 'Fantom',
-    cronos: 'Cronos',
-    moonbeam: 'Moonbeam',
-    boba: 'Boba',
-    gnosis: 'Gnosis',
-    celo: 'Celo',
-    katana: 'Katana',
-    hemi: 'Hemi',
-    solana: 'SOL',
-    sui: 'SUI',
-    Bybit: 'Bybit'
-  };
-
   const FIXED_PATH_RULES = (window.PathAlertRuleDefinitions && Array.isArray(window.PathAlertRuleDefinitions.FIXED_PATH_RULES))
     ? window.PathAlertRuleDefinitions.FIXED_PATH_RULES
     : [
@@ -79,7 +45,10 @@
   let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
 
   function formatChainLabel(chain) {
-    return CHAIN_DISPLAY_NAMES[chain] || chain || '';
+    if (window.ChainDefaults && typeof window.ChainDefaults.getChainDisplayName === 'function') {
+      return window.ChainDefaults.getChainDisplayName(chain);
+    }
+    return chain || '';
   }
 
   function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol) {

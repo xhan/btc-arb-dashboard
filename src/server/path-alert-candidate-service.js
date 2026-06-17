@@ -1,44 +1,6 @@
 const { buildPathAlertCandidates } = require('../path-alerts/path-alert-candidate-utils');
+const chainDefaults = require('../shared/chain-defaults');
 const { splitCompactTradingPairSymbol } = require('../shared/trading-pair-utils');
-
-const PATH_ALERT_CHAIN_LABELS = {
-  ethereum: 'ETH',
-  arbitrum: 'Arbitrum',
-  optimism: 'Optimism',
-  bsc: 'BSC',
-  polygon: 'Polygon',
-  avalanche: 'Avalanche',
-  base: 'Base',
-  linea: 'Linea',
-  mantle: 'Mantle',
-  sonic: 'Sonic',
-  berachain: 'Berachain',
-  ronin: 'Ronin',
-  unichain: 'Unichain',
-  hyperevm: 'HyperEVM',
-  plasma: 'Plasma',
-  scroll: 'Scroll',
-  blast: 'Blast',
-  mode: 'Mode',
-  monad: 'Monad',
-  etherlink: 'Etherlink',
-  megaeth: 'MegaETH',
-  fantom: 'Fantom',
-  cronos: 'Cronos',
-  moonbeam: 'Moonbeam',
-  boba: 'Boba',
-  gnosis: 'Gnosis',
-  celo: 'Celo',
-  hemi: 'Hemi',
-  katana: 'Katana',
-  solana: 'SOL',
-  sui: 'SUI',
-  starknet: 'Starknet',
-  Bybit: 'Bybit',
-  bybit: 'Bybit',
-  Binance: 'Binance',
-  binance: 'Binance'
-};
 
 function shortAddr(addr = '') {
   const s = String(addr || '');
@@ -47,7 +9,7 @@ function shortAddr(addr = '') {
 }
 
 function formatPathAlertChainLabel(chain) {
-  return PATH_ALERT_CHAIN_LABELS[chain] || chain || '';
+  return chainDefaults.getChainDisplayName(chain);
 }
 
 function buildPathAlertCandidateLabel(chain, fromSymbol, toSymbol, suffix = '') {
@@ -126,7 +88,7 @@ async function buildPathAlertQuoteCandidatesFromConfig(options = {}) {
         quote,
         fromSymbol: resolved.fromSymbol,
         toSymbol: resolved.toSymbol,
-        searchText: `${category.name || ''} ${quote.chain || ''} ${quote.symbol || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
+        searchText: `${category.name || ''} ${chainDefaults.buildChainSearchText(quote.chain)} ${quote.symbol || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${resolved.fromSymbol || ''} ${resolved.toSymbol || ''}`
       });
     }
   }
@@ -137,7 +99,6 @@ async function buildPathAlertQuoteCandidatesFromConfig(options = {}) {
 }
 
 module.exports = {
-  PATH_ALERT_CHAIN_LABELS,
   buildPathAlertCandidateLabel,
   buildPathAlertQuoteCandidatesFromConfig,
   formatPathAlertChainLabel,

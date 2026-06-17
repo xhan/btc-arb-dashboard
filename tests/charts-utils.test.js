@@ -18,7 +18,12 @@ assert.strictEqual(buildChartPairLabel({
   chain: 'ethereum',
   fromSymbol: 'GHO',
   toSymbol: 'USDC'
-}), '(ETH) GHO -> USDC');
+}), '(eth) GHO -> USDC');
+assert.strictEqual(buildChartPairLabel({
+  chain: 'avalanche',
+  fromSymbol: 'WBTC',
+  toSymbol: 'USDC'
+}), '(avax) WBTC -> USDC');
 const prefillHref = buildChartsPageHref([
   { quoteId: 1, direction: 'forward' },
   { quoteId: 2, direction: 'inverse' }
@@ -53,12 +58,17 @@ const pair = {
   chain: 'ethereum',
   fromSymbol: 'GHO',
   toSymbol: 'USDC',
-  label: '(ETH) GHO -> USDC'
+  label: '(eth) GHO -> USDC'
 };
 
 assert.strictEqual(matchesChartSearch(pair, 'eth gho us'), true);
 assert.strictEqual(matchesChartSearch(pair, 'gho eth'), true);
 assert.strictEqual(matchesChartSearch(pair, 'arb gho'), false);
+assert.strictEqual(matchesChartSearch({
+  chain: 'avalanche',
+  fromSymbol: 'WBTC',
+  toSymbol: 'USDC'
+}, 'avax wbtc'), true);
 
 assert.deepStrictEqual(buildProfitChartPoints([
   [

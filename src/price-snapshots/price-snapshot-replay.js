@@ -10,6 +10,7 @@ const {
   DEFAULT_ASSET_EQUIVALENCE_GROUPS,
   buildAliasRulesFromGroups
 } = require('../arb/arb-equivalence-utils');
+const { getChainDisplayName } = require('../shared/chain-defaults');
 
 const ALIAS_RULES = buildAliasRulesFromGroups(DEFAULT_ASSET_EQUIVALENCE_GROUPS);
 
@@ -32,15 +33,7 @@ const FIXED_PATH_RULES = [
 ];
 
 function formatChainLabel(chain) {
-  const labels = {
-    ethereum: 'ETH',
-    arbitrum: 'Arbitrum',
-    base: 'Base',
-    optimism: 'Optimism',
-    katana: 'Katana',
-    hemi: 'Hemi'
-  };
-  return labels[chain] || chain || '';
+  return getChainDisplayName(chain);
 }
 
 function legToPlain(leg) {

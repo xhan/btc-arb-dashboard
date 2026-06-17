@@ -209,22 +209,22 @@ assert.strictEqual(dbPath, path.join('db/price', 'price-snapshots.db'));
     chain: 'ethereum',
     fromSymbol: 'GHO',
     toSymbol: 'USDC',
-    label: '(ETH) GHO -> USDC',
+    label: '(eth) GHO -> USDC',
     source: ''
   });
-  assert.ok(recentPairs.some((item) => item.key === '1:inverse' && item.label === '(ETH) WETH -> WBTC'));
+  assert.ok(recentPairs.some((item) => item.key === '1:inverse' && item.label === '(eth) WETH -> WBTC'));
   assert.ok(!recentPairs.some((item) => item.quoteId === 9));
 
   const forwardSeries = await getChartSeries(tempDir, { quoteId: 1, direction: 'forward' });
   assert.strictEqual(forwardSeries.key, '1:forward');
-  assert.strictEqual(forwardSeries.label, '(ETH) WBTC -> WETH');
+  assert.strictEqual(forwardSeries.label, '(eth) WBTC -> WETH');
   assert.deepStrictEqual(forwardSeries.points, [
     { time: Math.floor(firstTime.getTime() / 1000), value: 38.12 },
     { time: Math.floor(thirdTime.getTime() / 1000), value: 39.5 }
   ]);
 
   const inverseSeries = await getChartSeries(tempDir, { quoteId: 1, direction: 'inverse' });
-  assert.strictEqual(inverseSeries.label, '(ETH) WETH -> WBTC');
+  assert.strictEqual(inverseSeries.label, '(eth) WETH -> WBTC');
   assert.deepStrictEqual(inverseSeries.points, [
     { time: Math.floor(firstTime.getTime() / 1000), value: 0.0262 },
     { time: Math.floor(thirdTime.getTime() / 1000), value: 0.025316 }

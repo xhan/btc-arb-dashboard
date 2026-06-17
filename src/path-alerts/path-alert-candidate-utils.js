@@ -27,7 +27,10 @@
   }
 
   function buildDefaultLabel(chain, fromSymbol, toSymbol, suffix = '') {
-    return `(${String(chain || '').trim()}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
+    const chainLabel = chainDefaults && typeof chainDefaults.getChainDisplayName === 'function'
+      ? chainDefaults.getChainDisplayName(chain)
+      : String(chain || '').trim();
+    return `(${chainLabel}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
   }
 
   function shortenTokenText(value) {
@@ -54,7 +57,7 @@
       const categoryName = String(record.categoryName || '').trim();
       const searchText = String(
         record.searchText
-          || `${categoryName} ${quote.chain || ''} ${quote.symbol || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${fromSymbol} ${toSymbol}`
+          || `${categoryName} ${buildChainSearchText(quote.chain)} ${quote.symbol || ''} ${quote.fromToken || ''} ${quote.toToken || ''} ${fromSymbol} ${toSymbol}`
       );
 
       if (isCexOrderbookChain(quote.chain)) {
@@ -137,7 +140,7 @@
             quote,
             fromSymbol: parsed.fromSymbol,
             toSymbol: parsed.toSymbol,
-            searchText: `${category.name} ${quote.chain} ${quote.symbol} ${parsed.fromSymbol} ${parsed.toSymbol}`
+            searchText: `${category.name} ${buildChainSearchText(quote.chain)} ${quote.symbol} ${parsed.fromSymbol} ${parsed.toSymbol}`
           });
           continue;
         }
@@ -149,12 +152,19 @@
           quote,
           fromSymbol: forwardFrom,
           toSymbol: forwardTo,
-          searchText: `${category.name} ${quote.chain} ${quote.fromToken || ''} ${quote.toToken || ''} ${forwardFrom} ${forwardTo}`
+          searchText: `${category.name} ${buildChainSearchText(quote.chain)} ${quote.fromToken || ''} ${quote.toToken || ''} ${forwardFrom} ${forwardTo}`
         });
       }
     }
 
     return records;
+  }
+
+  function buildChainSearchText(chain) {
+    if (chainDefaults && typeof chainDefaults.buildChainSearchText === 'function') {
+      return chainDefaults.buildChainSearchText(chain);
+    }
+    return String(chain || '').trim();
   }
 
   function buildPathAlertCandidatesFromDashboard(dashboard, options = {}) {

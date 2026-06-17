@@ -15,9 +15,10 @@ function createMarketClients() {
   };
 }
 
-assert.strictEqual(buildPathAlertCandidateLabel('ethereum', 'GHO', 'USDC'), '(ETH) GHO -> USDC');
+assert.strictEqual(buildPathAlertCandidateLabel('ethereum', 'GHO', 'USDC'), '(eth) GHO -> USDC');
+assert.strictEqual(buildPathAlertCandidateLabel('arbitrum', 'WBTC', 'USDC'), '(arb) WBTC -> USDC');
 assert.strictEqual(buildPathAlertCandidateLabel('unknown', 'A', 'B', ' [x]'), '(unknown) A -> B [x]');
-assert.strictEqual(buildPathAlertCandidateLabel('sui', '', '', ''), '(SUI) -- -> --');
+assert.strictEqual(buildPathAlertCandidateLabel('sui', '', '', ''), '(sui) -- -> --');
 
 async function runResolveSymbolsTest() {
   assert.deepStrictEqual(
@@ -70,7 +71,7 @@ async function runCandidatesFromConfigTest() {
           quotes: [
             {
               id: 101,
-              chain: 'ethereum',
+              chain: 'arbitrum',
               fromToken: '0xaaa',
               toToken: '0xbbb',
               showInverse: true
@@ -102,8 +103,8 @@ async function runCandidatesFromConfigTest() {
   const ethForward = candidates.find((item) => item.key === '101:forward');
   assert.strictEqual(ethForward.fromSymbol, 'GHO');
   assert.strictEqual(ethForward.toSymbol, 'USDC');
-  assert.ok(ethForward.label.includes('(ETH) GHO -> USDC'));
-  assert.ok(ethForward.searchText.includes('测试监控 ethereum  0xaaa 0xbbb GHO USDC'));
+  assert.ok(ethForward.label.includes('(arb) GHO -> USDC'));
+  assert.ok(ethForward.searchText.includes('测试监控 arbitrum arb  0xaaa 0xbbb GHO USDC'));
 }
 
 async function runMissingConfigTest() {
