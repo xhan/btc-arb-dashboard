@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory(root);
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(root, chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   if (root && root.window) {
     root.window.QuoteSpreadController = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, chainDefaults) {
   const DEFAULT_UPDATE_INTERVAL_MS = 1000;
 
   function createFallbackHtmlRenderer() {
@@ -47,8 +50,18 @@
       return typeof deps.getQuoteMarketStateMap === 'function' ? deps.getQuoteMarketStateMap() : new Map();
     }
 
+    function formatDefaultChainLabel(chain) {
+      if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+        return chainDefaults.getChainDisplayName(chain);
+      }
+      if (root && root.ChainDefaults && typeof root.ChainDefaults.getChainDisplayName === 'function') {
+        return root.ChainDefaults.getChainDisplayName(chain);
+      }
+      return String(chain || '');
+    }
+
     function formatChainLabel(chain) {
-      return typeof deps.formatChainLabel === 'function' ? deps.formatChainLabel(chain) : String(chain || '');
+      return typeof deps.formatChainLabel === 'function' ? deps.formatChainLabel(chain) : formatDefaultChainLabel(chain);
     }
 
     function clearTimer() {

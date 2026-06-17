@@ -125,6 +125,30 @@ assert.strictEqual(clearedTimers.length, 1);
 assert.strictEqual(refs.content.innerHTML, '');
 assert.ok(calls.some((call) => call[0] === 'resetRenderer'));
 
+const defaultRefs = {
+  window: { id: 'quote-spread-window-default', style: { display: 'none' } },
+  content: { innerHTML: '' }
+};
+const defaultController = createQuoteSpreadController({
+  quoteSpreadUtils,
+  refs: defaultRefs,
+  getDashboardState: () => dashboardState,
+  getQuoteMarketStateMap: () => quoteStateById,
+  setInterval(callback, delayMs) {
+    return { callback, delayMs };
+  },
+  clearInterval() {},
+  applyFloatingPanelDisplay(panel, action, config) {
+    const result = { panelFound: true, visible: true, shouldRender: true };
+    if (typeof config.render === 'function') {
+      config.render(result);
+    }
+    return result;
+  }
+});
+assert.strictEqual(defaultController.toggle().visible, true);
+assert.strictEqual(defaultRefs.content.innerHTML.includes('<span>eth</span>'), true);
+
 const missingApplyController = createQuoteSpreadController({
   quoteSpreadUtils,
   refs: { content: { innerHTML: 'stale' } }
