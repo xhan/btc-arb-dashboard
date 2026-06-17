@@ -34,6 +34,10 @@ async function runResolveSymbolsTest() {
     { fromSymbol: 'SOL', toSymbol: 'USDC' }
   );
   assert.deepStrictEqual(
+    await resolveQuoteTokenSymbols({ chain: 'sol', fromToken: 'So111', toToken: 'USDC111' }, createMarketClients()),
+    { fromSymbol: 'SOL', toSymbol: 'USDC' }
+  );
+  assert.deepStrictEqual(
     await resolveQuoteTokenSymbols({ chain: 'sui', fromToken: '0x2::sui::SUI', toToken: '0x2::usdc::USDC' }, createMarketClients()),
     { fromSymbol: 'SUI', toSymbol: 'USDC' }
   );
@@ -42,9 +46,28 @@ async function runResolveSymbolsTest() {
     { fromSymbol: 'STRK', toSymbol: 'USDC' }
   );
   assert.deepStrictEqual(
+    await resolveQuoteTokenSymbols({ chain: 'strk', fromToken: '0xstrk', toToken: '0xusdc' }, createMarketClients()),
+    { fromSymbol: 'STRK', toSymbol: 'USDC' }
+  );
+  assert.deepStrictEqual(
     await resolveQuoteTokenSymbols({ chain: 'ethereum', fromToken: '0xaaa', toToken: '0xbbb' }, createMarketClients()),
     { fromSymbol: 'GHO', toSymbol: 'USDC' }
   );
+  const evmChains = [];
+  assert.deepStrictEqual(
+    await resolveQuoteTokenSymbols(
+      { chain: 'arb', fromToken: '0xaaa', toToken: '0xbbb' },
+      {
+        ...createMarketClients(),
+        getEvmTokenMeta: async (chain, token) => {
+          evmChains.push(chain);
+          return { symbol: chain === 'arbitrum' && token === '0xaaa' ? 'GHO' : 'USDC' };
+        }
+      }
+    ),
+    { fromSymbol: 'GHO', toSymbol: 'USDC' }
+  );
+  assert.deepStrictEqual(evmChains, ['arbitrum', 'arbitrum']);
 }
 
 async function runFallbackTest() {

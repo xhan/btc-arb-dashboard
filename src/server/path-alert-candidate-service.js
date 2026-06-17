@@ -16,8 +16,12 @@ function buildPathAlertCandidateLabel(chain, fromSymbol, toSymbol, suffix = '') 
   return `(${formatPathAlertChainLabel(chain)}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix}`;
 }
 
+function normalizeChain(chain) {
+  return chainDefaults.normalizeChain(chain);
+}
+
 function isCexOrderbookChain(chain) {
-  const normalized = String(chain || '').trim().toLowerCase();
+  const normalized = normalizeChain(chain);
   return normalized === 'bybit' || normalized === 'binance';
 }
 
@@ -35,7 +39,9 @@ async function resolveQuoteTokenSymbols(quote, marketClients) {
   }
 
   try {
-    if (String(quote.chain).toLowerCase() === 'solana') {
+    const chain = normalizeChain(quote.chain);
+
+    if (chain === 'solana') {
       const [fromMeta, toMeta] = await Promise.all([
         marketClients.getSolanaTokenMeta(quote.fromToken),
         marketClients.getSolanaTokenMeta(quote.toToken)
@@ -43,7 +49,7 @@ async function resolveQuoteTokenSymbols(quote, marketClients) {
       return { fromSymbol: fromMeta.symbol || shortAddr(quote.fromToken), toSymbol: toMeta.symbol || shortAddr(quote.toToken) };
     }
 
-    if (String(quote.chain).toLowerCase() === 'sui') {
+    if (chain === 'sui') {
       const [fromMeta, toMeta] = await Promise.all([
         marketClients.getSuiTokenMeta(quote.fromToken),
         marketClients.getSuiTokenMeta(quote.toToken)
@@ -51,7 +57,7 @@ async function resolveQuoteTokenSymbols(quote, marketClients) {
       return { fromSymbol: fromMeta.symbol || shortAddr(quote.fromToken), toSymbol: toMeta.symbol || shortAddr(quote.toToken) };
     }
 
-    if (String(quote.chain).toLowerCase() === 'starknet') {
+    if (chain === 'starknet') {
       const [fromMeta, toMeta] = await Promise.all([
         marketClients.getStarknetTokenMeta(quote.fromToken),
         marketClients.getStarknetTokenMeta(quote.toToken)
@@ -60,8 +66,8 @@ async function resolveQuoteTokenSymbols(quote, marketClients) {
     }
 
     const [fromMeta, toMeta] = await Promise.all([
-      marketClients.getEvmTokenMeta(quote.chain, quote.fromToken),
-      marketClients.getEvmTokenMeta(quote.chain, quote.toToken)
+      marketClients.getEvmTokenMeta(chain, quote.fromToken),
+      marketClients.getEvmTokenMeta(chain, quote.toToken)
     ]);
     return { fromSymbol: fromMeta.symbol || shortAddr(quote.fromToken), toSymbol: toMeta.symbol || shortAddr(quote.toToken) };
   } catch {
