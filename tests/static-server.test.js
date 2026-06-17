@@ -202,6 +202,9 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/quote/quote-display-utils.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/ui/dex-link-utils.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/data-terminal/data-terminal-utils.js"')
     );
     assert.ok(
@@ -1127,6 +1130,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteRequestUtilsResponse.body.includes('function formatQuoteErrorMessage(error, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes("require('../shared/chain-defaults')"));
     assert.ok(quoteRequestUtilsResponse.body.includes('return chainDefaults.normalizeChain(chain);'));
+    assert.ok(dexLinkUtilsResponse.body.includes("require('../shared/chain-defaults')"));
+    assert.ok(dexLinkUtilsResponse.body.includes('return chainDefaults.normalizeChain(chain);'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildMarketQuoteResult(data, usedSource, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildCexOrderbookQuoteResult(data, quote, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function requestMarketQuote(options = {})'));

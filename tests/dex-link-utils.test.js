@@ -63,6 +63,30 @@ assert.deepStrictEqual(
 
 assert.deepStrictEqual(
   buildDexLink({
+    chain: 'arb',
+    fromTokenAddress: '0xaaa',
+    toTokenAddress: '0xbbb'
+  }),
+  {
+    label: 'swap.defillama',
+    url: 'https://swap.defillama.com/?chain=arbitrum&from=0xaaa&tab=swap&to=0xbbb'
+  }
+);
+
+assert.deepStrictEqual(
+  buildDexLink({
+    chain: 'eth',
+    fromTokenAddress: '0xaaa',
+    toTokenAddress: '0xbbb'
+  }),
+  {
+    label: 'swap.defillama',
+    url: 'https://swap.defillama.com/?chain=ethereum&from=0xaaa&tab=swap&to=0xbbb'
+  }
+);
+
+assert.deepStrictEqual(
+  buildDexLink({
     chain: 'mantle',
     fromTokenAddress: '0x779Ded0c9e1022225f8E0630b35a9b54bE713736',
     toTokenAddress: '0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34'

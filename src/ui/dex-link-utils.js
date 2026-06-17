@@ -1,5 +1,8 @@
 (function (root, factory) {
-  const api = factory();
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
@@ -7,7 +10,7 @@
   if (root && root.window && root.window !== root) {
     root.window.DexLinkUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   function escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -17,8 +20,15 @@
       .replace(/'/g, '&#39;');
   }
 
+  function normalizeChain(chain) {
+    if (chainDefaults && typeof chainDefaults.normalizeChain === 'function') {
+      return chainDefaults.normalizeChain(chain);
+    }
+    return String(chain || '').trim().toLowerCase();
+  }
+
   function getDexLinkLabel(config = {}) {
-    const chain = String(config.chain || '').trim().toLowerCase();
+    const chain = normalizeChain(config.chain);
     if (!chain || chain === 'bybit' || chain === 'binance') return null;
     if (chain === 'sui') return 'cetus';
     if (chain === 'solana') return 'jup.ag';
@@ -32,13 +42,12 @@
   };
 
   function buildDexLink(config = {}) {
-    const chain = String(config.chain || '').trim();
-    const normalizedChain = chain.toLowerCase();
+    const normalizedChain = normalizeChain(config.chain);
     const fromTokenAddress = String(config.fromTokenAddress || '').trim();
     const toTokenAddress = String(config.toTokenAddress || '').trim();
     if (!fromTokenAddress || !toTokenAddress) return null;
 
-    const label = getDexLinkLabel({ chain });
+    const label = getDexLinkLabel({ chain: normalizedChain });
     if (!label) {
       return null;
     }
