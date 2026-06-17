@@ -162,6 +162,11 @@
     }
 
     function bind() {
+      if (deps.dashboardModalUtils && typeof deps.dashboardModalUtils.applyChainSelectDisplayLabels === 'function') {
+        deps.dashboardModalUtils.applyChainSelectDisplayLabels(deps.addQuoteModalRefs, {
+          formatChainLabel: deps.formatChainLabel
+        });
+      }
       if (deps.quoteSettingsModal) {
         deps.quoteSettingsModal.addEventListener('click', handleQuoteSettingsModalClick);
       }

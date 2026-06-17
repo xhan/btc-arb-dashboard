@@ -626,6 +626,7 @@
         },
         formOptions: {
             defaultSourceResolver,
+            formatChainLabel,
             isCexOrderbookChain,
             isCrossChainQuote,
             isEvmChain,

@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const {
   applyAddQuoteFormViewState,
+  applyChainSelectDisplayLabels,
   applyKyberExcludedSourcesControlState,
   applyQuoteRequestChannelOptionsState,
   applyQuoteSettingsModalWritePlan,
@@ -121,6 +122,39 @@ assert.deepStrictEqual(syncViewState, {
   saveDisabled: false
 });
 assert.strictEqual(syncRefs.fromInput.placeholder, 'ethereum-from');
+
+const chainSelectRefs = {
+  chainSelect: {
+    options: [
+      { value: '', textContent: '--请选择--' },
+      { value: 'ethereum', textContent: 'Ethereum' },
+      { value: 'arbitrum', textContent: 'Arbitrum' },
+      { value: 'Bybit', textContent: 'Bybit' }
+    ]
+  },
+  toChainSelect: {
+    options: [
+      { value: '', textContent: '同源链' },
+      { value: 'ethereum', textContent: 'Ethereum' },
+      { value: 'arbitrum', textContent: 'Arbitrum' }
+    ]
+  }
+};
+
+assert.strictEqual(
+  applyChainSelectDisplayLabels(chainSelectRefs, {
+    formatChainLabel: (chain) => ({ ethereum: 'eth', arbitrum: 'arb', Bybit: 'bybit' }[chain] || '')
+  }),
+  5
+);
+assert.deepStrictEqual(
+  chainSelectRefs.chainSelect.options.map((option) => option.textContent),
+  ['--请选择--', 'eth', 'arb', 'bybit']
+);
+assert.deepStrictEqual(
+  chainSelectRefs.toChainSelect.options.map((option) => option.textContent),
+  ['同源链', 'eth', 'arb']
+);
 
 let resetSyncCount = 0;
 const resetRefs = createRefs();

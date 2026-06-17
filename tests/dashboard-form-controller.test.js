@@ -77,6 +77,9 @@ function createBaseDeps(overrides = {}) {
         calls.push(['resetAddQuoteModal']);
         options.syncControls();
       },
+      applyChainSelectDisplayLabels: (refs, options) => {
+        calls.push(['applyChainSelectDisplayLabels', refs === deps.addQuoteModalRefs, options.formatChainLabel('arbitrum')]);
+      },
       syncAddQuoteFormControls: () => calls.push(['syncAddQuoteFormControls'])
     },
     dashboardRenderer: createDashboardRenderer(),
@@ -93,6 +96,7 @@ function createBaseDeps(overrides = {}) {
     isCexOrderbookChain: () => false,
     isCrossChainQuote: () => false,
     isEvmChain: () => true,
+    formatChainLabel: (chain) => (chain === 'arbitrum' ? 'arb' : chain),
     normalizeChainKey: (chain) => chain,
     nowMs: () => 2000,
     pathAlertPageUtils: {
@@ -239,6 +243,7 @@ function createBaseDeps(overrides = {}) {
   const controller = createDashboardFormController(deps);
   controller.bind();
   assert.ok(calls.some((call) => call[0] === 'bind' && call[1] === 'quoteSettingsModal' && call[2] === 'click'));
+  assert.ok(calls.some((call) => call[0] === 'applyChainSelectDisplayLabels' && call[1] === true && call[2] === 'arb'));
   assert.ok(calls.some((call) => call[0] === 'bind' && call[1] === 'addQuoteChainSelect' && call[2] === 'change'));
   assert.ok(calls.some((call) => call[0] === 'bind' && call[1] === 'fromInput' && call[2] === 'input'));
 }

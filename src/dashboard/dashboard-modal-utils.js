@@ -283,6 +283,27 @@
     }
   }
 
+  function applyChainSelectDisplayLabels(refs = {}, options = {}) {
+    const formatChainLabel = typeof options.formatChainLabel === 'function'
+      ? options.formatChainLabel
+      : (chain) => String(chain || '');
+    const selects = [refs.chainSelect, refs.toChainSelect].filter(Boolean);
+    let updatedCount = 0;
+
+    selects.forEach((selectEl) => {
+      Array.from(selectEl.options || []).forEach((optionEl) => {
+        const value = String(optionEl && optionEl.value || '').trim();
+        if (!value) return;
+        const label = formatChainLabel(value);
+        if (!label || optionEl.textContent === label) return;
+        optionEl.textContent = label;
+        updatedCount += 1;
+      });
+    });
+
+    return updatedCount;
+  }
+
   function syncAddQuoteFormControls(refs = {}, options = {}) {
     const buildAddQuoteFormViewState = typeof options.buildAddQuoteFormViewState === 'function'
       ? options.buildAddQuoteFormViewState
@@ -311,6 +332,7 @@
 
   return {
     applyAddQuoteFormViewState,
+    applyChainSelectDisplayLabels,
     applyKyberExcludedSourcesControlState,
     applyQuoteRequestChannelOptionsState,
     applyQuoteSettingsModalWritePlan,
