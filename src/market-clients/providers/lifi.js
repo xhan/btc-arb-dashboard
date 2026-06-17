@@ -1,9 +1,11 @@
+const chainDefaults = require('../../shared/chain-defaults');
+
 function createLifiClient(deps) {
   return {
     async getQuote(input) {
       const requestContext = input && input.requestContext ? input.requestContext : undefined;
-      const chain = String(input.chain || '').trim();
-      const toChain = String(input.toChain || input.chain || '').trim();
+      const chain = chainDefaults.normalizeChain(input.chain);
+      const toChain = chainDefaults.normalizeChain(input.toChain || input.chain);
       const fromToken = input.fromToken;
       const toToken = input.toToken;
       const finalAmount = Number(input.amount) || 1;
@@ -24,7 +26,7 @@ function createLifiClient(deps) {
       if (!toChainId) {
         throw new Error(`LI.FI 不支持此链: ${toChain}`);
       }
-      const isCrossChain = chain.toLowerCase() !== toChain.toLowerCase();
+      const isCrossChain = chain !== toChain;
 
       const [fromMeta, toMeta] = await Promise.all([
         deps.getLifiTokenMeta(chain, fromChainId, fromToken, configMore, requestContext),
