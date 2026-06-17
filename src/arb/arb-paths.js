@@ -1,12 +1,19 @@
 (function () {
-function buildEdges(quotes, quoteStateById, allowedSymbols) {
+function normalizeChain(chain, chainDefaults) {
+  if (chainDefaults && typeof chainDefaults.normalizeChain === 'function') {
+    return chainDefaults.normalizeChain(chain);
+  }
+  return String(chain || '').trim().toLowerCase();
+}
+
+function buildEdges(quotes, quoteStateById, allowedSymbols, chainDefaults) {
   const allowSet = Array.isArray(allowedSymbols)
     ? new Set(allowedSymbols.filter(Boolean))
     : null;
 
   const edges = [];
   for (const quote of quotes || []) {
-    if (isCrossChainQuote(quote)) continue;
+    if (isCrossChainQuote(quote, chainDefaults)) continue;
     const state = quoteStateById.get(quote.id);
     if (!state) continue;
 
@@ -30,9 +37,9 @@ function buildEdges(quotes, quoteStateById, allowedSymbols) {
   return edges;
 }
 
-function isCrossChainQuote(quote) {
-  const fromChain = String(quote && quote.chain || '').trim().toLowerCase();
-  const toChain = String(quote && quote.toChain || '').trim().toLowerCase();
+function isCrossChainQuote(quote, chainDefaults) {
+  const fromChain = normalizeChain(quote && quote.chain, chainDefaults);
+  const toChain = normalizeChain(quote && quote.toChain, chainDefaults);
   return Boolean(fromChain && toChain && fromChain !== toChain);
 }
 
@@ -354,10 +361,10 @@ function isMeaningfulPath(legs) {
   return legs.some((leg) => leg && !leg.rule && leg.chain !== '规则');
 }
 
-function buildApi(arbEquivalenceUtils) {
+function buildApi(arbEquivalenceUtils, chainDefaults) {
   return {
-    buildEdges,
-    isCrossChainQuote,
+    buildEdges: (quotes, quoteStateById, allowedSymbols) => buildEdges(quotes, quoteStateById, allowedSymbols, chainDefaults),
+    isCrossChainQuote: (quote) => isCrossChainQuote(quote, chainDefaults),
     formatLegLine,
     formatProfitWanfen,
     buildRuleEdges: (aliases) => buildRuleEdges(aliases, arbEquivalenceUtils),
@@ -371,9 +378,9 @@ function buildApi(arbEquivalenceUtils) {
 
 (function attachApi(root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./arb-equivalence-utils'));
+    module.exports = factory(require('./arb-equivalence-utils'), require('../shared/chain-defaults'));
   } else {
-    root.ArbPaths = factory(root.ArbEquivalenceUtils);
+    root.ArbPaths = factory(root.ArbEquivalenceUtils, root.ChainDefaults);
   }
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this), buildApi);
 }());

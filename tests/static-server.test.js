@@ -364,6 +364,12 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/shared/token-alias-config.js"') < response.body.indexOf('src="src/arb/arb-equivalence-utils.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/arb/arb-paths.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/arb/arb-path-template-cache-utils.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="src/arb/arb-paths.js"')
     );
     assert.ok(
@@ -1146,6 +1152,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(chainDefaultsResponse.body.includes('function getChainDisplayName(chain)'));
     assert.ok(chainDefaultsResponse.body.includes('function buildQuoteChainDisplayName(quote)'));
     assert.ok(chainDefaultsResponse.body.includes('function normalizeChainFilterToken(chainToken)'));
+    assert.ok(arbPathsResponse.body.includes("require('../shared/chain-defaults')"));
+    assert.ok(arbPathTemplateCacheUtilsResponse.body.includes("require('../shared/chain-defaults')"));
     assert.ok(!appJsResponse.body.includes('const CHAIN_DISPLAY_NAMES = {'));
     assert.ok(!appJsResponse.body.includes('const CHAIN_FILTER_ALIASES = {'));
     assert.ok(!appJsResponse.body.includes('function getSingleChainDisplayName(chain)'));
@@ -2687,6 +2695,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('src="src/shared/chain-defaults.js"'));
     assert.ok(
       snapshotResponse.body.indexOf('src="src/shared/chain-label-config.js"') < snapshotResponse.body.indexOf('src="src/shared/chain-defaults.js"')
+    );
+    assert.ok(
+      snapshotResponse.body.indexOf('src="src/shared/chain-defaults.js"') < snapshotResponse.body.indexOf('src="src/arb/arb-paths.js"')
     );
     assert.ok(
       snapshotResponse.body.indexOf('src="src/shared/chain-defaults.js"') < snapshotResponse.body.indexOf('src="src/charts/charts-utils.js"')

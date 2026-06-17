@@ -1,10 +1,10 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('./arb-paths'), require('./arb-equivalence-utils'));
+    module.exports = factory(require('./arb-paths'), require('./arb-equivalence-utils'), require('../shared/chain-defaults'));
     return;
   }
-  root.ArbPathTemplateCacheUtils = factory(root.ArbPaths, root.ArbEquivalenceUtils);
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi, arbEquivalenceUtils) {
+  root.ArbPathTemplateCacheUtils = factory(root.ArbPaths, root.ArbEquivalenceUtils, root.ChainDefaults);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (arbPathsApi, arbEquivalenceUtils, chainDefaults) {
   function resolveAlias(symbol, aliases) {
     if (!aliases) return symbol;
     return arbEquivalenceUtils.resolveAliasTarget(symbol, aliases);
@@ -14,9 +14,16 @@
     return Boolean(quote && quote.paused === true);
   }
 
+  function normalizeChain(chain) {
+    if (chainDefaults && typeof chainDefaults.normalizeChain === 'function') {
+      return chainDefaults.normalizeChain(chain);
+    }
+    return String(chain || '').trim().toLowerCase();
+  }
+
   function isCrossChainQuote(quote) {
-    const fromChain = String(quote && quote.chain || '').trim().toLowerCase();
-    const toChain = String(quote && quote.toChain || '').trim().toLowerCase();
+    const fromChain = normalizeChain(quote && quote.chain);
+    const toChain = normalizeChain(quote && quote.toChain);
     return Boolean(fromChain && toChain && fromChain !== toChain);
   }
 

@@ -41,6 +41,20 @@ const crossChainEdges = buildEdges([
 ]));
 assert.deepStrictEqual(crossChainEdges, [], 'cross-chain quotes should not enter same-chain arb paths');
 
+const aliasSameChainEdges = buildEdges([
+  { id: 22, chain: 'arb', toChain: 'arbitrum', showInverse: true }
+], new Map([
+  [22, { fromSymbol: 'USDC', toSymbol: 'USDT', lastRawPrice: 0.999, inverseRawPrice: 1.001 }]
+]));
+assert.deepStrictEqual(
+  aliasSameChainEdges.map((edge) => ({ from: edge.from, to: edge.to, inverse: Boolean(edge.inverse) })),
+  [
+    { from: 'USDC', to: 'USDT', inverse: false },
+    { from: 'USDT', to: 'USDC', inverse: true }
+  ],
+  'chain aliases should not be treated as cross-chain arb paths'
+);
+
 const formatted = formatLegLine({
   from: 'cbBTC',
   to: 'WBTC',
