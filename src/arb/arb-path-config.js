@@ -8,7 +8,7 @@
   return {
     watchItems: [
       // fixed path watch items
-      { title: 'WBTC ETH <-> ARB', type: 'fixed-rule', ruleId: 'fixed:wbtc-eth-arb' },
+      { title: 'WBTC eth <-> arb', type: 'fixed-rule', ruleId: 'fixed:wbtc-eth-arb' },
       { title: 'WBTC - BTC (-arb)', type: 'fixed-rule', ruleId: 'fixed:wbtc-btc-no-arb' },
       { title: 'LBTC - BTC', type: 'fixed-rule', ruleId: 'fixed:lbtc-btc' },
       { title: 'WBTC - LBTC', type: 'fixed-rule', ruleId: 'fixed:wbtc-lbtc' },

@@ -316,6 +316,7 @@ const editorHtml = renderPathAlertEditorHtml({
 assert.ok(editorHtml.includes('错误 &lt;x&gt;'));
 assert.ok(editorHtml.includes('已有 &lt;报警&gt;'));
 assert.ok(editorHtml.includes('value="Draft &lt;name&gt;"'));
+assert.ok(editorHtml.includes('placeholder="例如：只关注 eth / arb 这条"'));
 assert.ok(editorHtml.includes('data-editor-type="special">特殊规则'));
 assert.ok(editorHtml.includes('id="editor-special-min-profit"'));
 assert.ok(editorHtml.includes('value="2"'));

@@ -10,7 +10,7 @@
   const FIXED_PATH_RULES = Object.freeze([
     {
       id: 'fixed:wbtc-eth-arb',
-      title: 'WBTC ETH <-> ARB',
+      title: 'WBTC eth <-> arb',
       base: 'cbBTC',
       quote: 'WBTC',
       categoryNames: ['WBTC监控'],

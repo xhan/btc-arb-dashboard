@@ -553,7 +553,7 @@
       ${dismissedHtml}
       <div class="form-group">
         <label for="editor-name">备注（可选）</label>
-        <input id="editor-name" type="text" value="${escapeHtml(draft.name)}" placeholder="例如：只关注 ETH / ARB 这条">
+        <input id="editor-name" type="text" value="${escapeHtml(draft.name)}" placeholder="例如：只关注 eth / arb 这条">
       </div>
 
       <div class="type-tabs">

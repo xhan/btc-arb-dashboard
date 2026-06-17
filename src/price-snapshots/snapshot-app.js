@@ -15,7 +15,7 @@
     ? window.PathAlertRuleDefinitions.FIXED_PATH_RULES
     : [
     {
-      title: 'WBTC ETH <-> ARB',
+      title: 'WBTC eth <-> arb',
       base: 'cbBTC',
       quote: 'WBTC',
       categoryNames: ['WBTC监控'],

@@ -6,9 +6,12 @@ const { readJsonFileSync } = require('../src/server/json-file-utils');
 const { DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP, FIXED_PATH_RULES, SPECIAL_ARB_RULES } = require('../src/path-alerts/path-alert-rule-definitions');
 
 const specialRuleIds = ['special:wbtc-bybit', 'special:usde-bybit', 'special:usdtb-bybit'];
+const wbtcEthArbRule = FIXED_PATH_RULES.find((entry) => entry.id === 'fixed:wbtc-eth-arb');
 const fixedRule = FIXED_PATH_RULES.find((entry) => entry.id === 'fixed:usde-usdt');
 const fixedSusdeRule = FIXED_PATH_RULES.find((entry) => entry.id === 'fixed:susde-usdt');
 
+assert.ok(wbtcEthArbRule, 'missing fixed rule: fixed:wbtc-eth-arb');
+assert.strictEqual(wbtcEthArbRule.title, 'WBTC eth <-> arb');
 assert.ok(fixedRule, 'missing fixed rule: fixed:usde-usdt');
 assert.strictEqual(DEFAULT_FIXED_PATH_DISPLAY_MIN_PROFIT_BP, 0.5);
 assert.strictEqual(fixedRule.title, 'USDE - USDT');
