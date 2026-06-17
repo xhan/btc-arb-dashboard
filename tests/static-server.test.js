@@ -420,6 +420,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="path-alert-sound"'));
     assert.ok(response.body.includes('src="assets/alert_path.mp3"'));
     assert.ok(response.body.includes('setting-binance-interval'));
+    assert.ok(response.body.includes('<label>bybit (默认 1000ms)</label>'));
+    assert.ok(response.body.includes('<label>binance (默认 1000ms)</label>'));
+    assert.ok(response.body.includes('<label>sol (默认 3500ms)</label>'));
+    assert.ok(response.body.includes('<label>sui (默认 500ms)</label>'));
+    assert.ok(response.body.includes('<label>strk / Ekubo (默认 1000ms)</label>'));
+    assert.ok(!response.body.includes('<label>Solana (默认 3500ms)</label>'));
+    assert.ok(!response.body.includes('<label>Starknet / Ekubo (默认 1000ms)</label>'));
     assert.ok(response.body.includes('Velora (默认 700ms)'));
     assert.ok(response.body.includes('Llama-ParaSwap (默认 800ms)'));
     assert.ok(response.body.includes('.arb-opportunity.is-alert-highlight {'));
