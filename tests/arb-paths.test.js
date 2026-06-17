@@ -231,11 +231,14 @@ const fixedEdges = [
 const fixedRule = { base: 'cbBTC', quote: 'WBTC', chains: ['ethereum', 'arbitrum'], steps: 2 };
 const fixedBest = findBestFixedPath(fixedEdges, fixedRule, null);
 const fixedAll = findFixedPaths(fixedEdges, { ...fixedRule, resultLimit: 2 }, null);
+const fixedAliasChains = findFixedPaths(fixedEdges, { ...fixedRule, chains: ['eth', 'arb'], resultLimit: 2 }, null);
 
 assert.ok(fixedBest);
 assert.strictEqual(fixedBest.legs[0].chain, 'arbitrum');
 assert.strictEqual(fixedBest.legs[1].chain, 'ethereum');
 assert.strictEqual(fixedAll.length, 2);
+assert.strictEqual(fixedAliasChains.length, 2);
+assert.strictEqual(fixedAliasChains[0].legs[0].chain, 'arbitrum');
 assert.strictEqual(fixedAll[0].legs[0].chain, 'arbitrum');
 
 const usdeUsdFixedPaths = findFixedPaths([
@@ -275,6 +278,13 @@ assert.strictEqual(fixedAnyChainBest.legs[1].chain, 'base');
 assert.strictEqual(fixedAnyChainWithoutBase.length, 1);
 assert.strictEqual(fixedAnyChainWithoutBase[0].legs[0].chain, 'ethereum');
 assert.strictEqual(fixedAnyChainWithoutBase[0].legs[1].chain, 'arbitrum');
+assert.strictEqual(findFixedPaths([
+  { from: 'GHO', to: 'USDC', rate: 1.001, chain: 'ethereum' },
+  { from: 'USDC', to: 'GHO', rate: 1.003, chain: 'arbitrum' }
+], {
+  ...fixedAnyChainRule,
+  excludeChains: ['arb']
+}, null).length, 0);
 
 const fixedAliasDisplayEdges = [
   { from: 'tBTC', to: 'cbBTC', rate: 0.999598, chain: 'ethereum' },

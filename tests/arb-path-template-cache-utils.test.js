@@ -131,6 +131,25 @@ const fixedTopologyEdges = [
 const fixedTemplates = buildFixedPathTemplates(fixedTopologyEdges, fixedRule, null, { limit: 5 });
 assert.ok(Array.isArray(fixedTemplates) && fixedTemplates.length > 0, 'should build fixed templates');
 assert.strictEqual(fixedTemplates[0].legs[0].quoteId, undefined, 'fixed templates should only keep route shape');
+const fixedAliasChainTemplates = buildFixedPathTemplates(fixedTopologyEdges, {
+  ...fixedRule,
+  chains: ['eth', 'arb']
+}, null, { limit: 5 });
+assert.ok(Array.isArray(fixedAliasChainTemplates) && fixedAliasChainTemplates.length > 0, 'fixed chain aliases should match topology edges');
+
+const excludedAliasTemplates = buildFixedPathTemplates([
+  { quoteId: 401, chain: 'ethereum', from: 'GHO', to: 'USDC', rate: 1 },
+  { quoteId: 402, chain: 'arbitrum', from: 'USDC', to: 'GHO', rate: 1 }
+], {
+  id: 'fixed:gho-usdc',
+  title: 'GHO - USDC',
+  base: 'GHO',
+  quote: 'USDC',
+  steps: 2,
+  crossChain: true,
+  excludeChains: ['arb']
+}, null, { limit: 5 });
+assert.deepStrictEqual(excludedAliasTemplates, [], 'excludeChains should resolve chain aliases in template cache');
 
 const fixedAliasTemplates = buildFixedPathTemplates([
   { quoteId: 301, chain: 'ethereum', from: 'tBTC', to: 'cbBTC', rate: 1 },

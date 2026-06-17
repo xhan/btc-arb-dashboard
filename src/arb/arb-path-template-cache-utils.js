@@ -21,6 +21,18 @@
     return String(chain || '').trim().toLowerCase();
   }
 
+  function normalizeRuleChains(chains) {
+    return Array.isArray(chains)
+      ? chains.map((chain) => normalizeChain(chain)).filter(Boolean)
+      : [];
+  }
+
+  function isSameChain(left, right) {
+    const normalizedLeft = normalizeChain(left);
+    const normalizedRight = normalizeChain(right);
+    return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
+  }
+
   function isCrossChainQuote(quote) {
     const fromChain = normalizeChain(quote && quote.chain);
     const toChain = normalizeChain(quote && quote.toChain);
@@ -116,21 +128,17 @@
         .filter((chain) => chain && chain !== '规则')
     ));
 
-    const excludedChains = new Set(
-      Array.isArray(rule.excludeChains)
-        ? rule.excludeChains.map((chain) => String(chain || '')).filter(Boolean)
-        : []
-    );
+    const excludedChains = new Set(normalizeRuleChains(rule.excludeChains));
 
     function pushTemplate(chainA, chainB) {
-      if (!chainA || !chainB || chainA === chainB) return;
-      if (excludedChains.has(chainA) || excludedChains.has(chainB)) return;
+      if (!chainA || !chainB || isSameChain(chainA, chainB)) return;
+      if (excludedChains.has(normalizeChain(chainA)) || excludedChains.has(normalizeChain(chainB))) return;
       const hasLegA = edgeList.some((edge) => {
-        if (!edge || edge.chain !== chainA) return false;
+        if (!edge || !isSameChain(edge.chain, chainA)) return false;
         return resolveAlias(edge.from, aliases) === normalizedBase && resolveAlias(edge.to, aliases) === normalizedQuote;
       });
       const hasLegB = edgeList.some((edge) => {
-        if (!edge || edge.chain !== chainB) return false;
+        if (!edge || !isSameChain(edge.chain, chainB)) return false;
         return resolveAlias(edge.from, aliases) === normalizedQuote && resolveAlias(edge.to, aliases) === normalizedBase;
       });
       if (!hasLegA || !hasLegB) return;
@@ -215,7 +223,7 @@
     let best = null;
 
     for (const edge of edges || []) {
-      if (!edge || edge.chain !== chain) continue;
+      if (!edge || !isSameChain(edge.chain, chain)) continue;
       const edgeFrom = resolveAlias(edge.from, aliases);
       const edgeTo = resolveAlias(edge.to, aliases);
       if (edgeFrom !== targetFrom || edgeTo !== targetTo) continue;
