@@ -592,6 +592,7 @@
             isCrossChainQuote,
             isEvmChain,
             isQuotePaused,
+            normalizeChainKey,
             quotePauseUtils: getQuotePauseUtils(),
             quoteStateRuntime,
             queueQuoteRefresh,

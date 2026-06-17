@@ -76,6 +76,12 @@
     return left.every((item, index) => item === right[index]);
   }
 
+  function resolveNormalizeChainKey(config = {}) {
+    return typeof config.normalizeChainKey === 'function'
+      ? config.normalizeChainKey
+      : (value) => String(value || '').trim().toLowerCase();
+  }
+
   function renderQuoteItemShell(config = {}) {
     const quoteId = escapeAttr(config.quoteId);
     const categoryId = escapeAttr(config.categoryId);
@@ -336,6 +342,7 @@
     const isEvmChain = typeof config.isEvmChain === 'function'
       ? config.isEvmChain
       : () => false;
+    const normalizeChainKey = resolveNormalizeChainKey(config);
     const getQuoteChainDisplayName = typeof config.getQuoteChainDisplayName === 'function'
       ? config.getQuoteChainDisplayName
       : () => '';
@@ -374,7 +381,7 @@
       sourceSelect.visible = true;
       sourceSelect.value = 'LI.FI';
       sourceSelect.disabled = true;
-    } else if (isEvmChain(quote.chain) && String(quote.chain || '').toLowerCase() !== 'plasma') {
+    } else if (isEvmChain(quote.chain) && normalizeChainKey(quote.chain) !== 'plasma') {
       sourceSelect.visible = true;
       sourceSelect.value = quote.preferredSource || 'Kyber';
     }
@@ -451,6 +458,7 @@
     const isEvmChain = typeof config.isEvmChain === 'function'
       ? config.isEvmChain
       : () => false;
+    const normalizeChainKey = resolveNormalizeChainKey(config);
     const isCrossChain = isCrossChainQuote(quote);
     const updates = {};
     const deletes = [];
@@ -471,7 +479,7 @@
 
     if (isCrossChain) {
       setIfChanged('preferredSource', 'LI.FI');
-    } else if (isEvmChain(quote.chain) && String(quote.chain || '').toLowerCase() !== 'plasma') {
+    } else if (isEvmChain(quote.chain) && normalizeChainKey(quote.chain) !== 'plasma') {
       setIfChanged('preferredSource', config.sourceValue || quote.preferredSource || 'Kyber');
     }
 
@@ -480,7 +488,7 @@
     const selectedSource = String(config.sourceValue || quote.preferredSource || 'Kyber').trim();
     const supportsKyberSourceFilter = !isCrossChain
       && isEvmChain(quote.chain)
-      && String(quote.chain || '').toLowerCase() !== 'plasma'
+      && normalizeChainKey(quote.chain) !== 'plasma'
       && (selectedSource === 'Kyber' || selectedSource === 'Auto');
     const previousKyberExcludedSources = parseKyberExcludedSourcesInput(quote.kyberExcludedSources);
     const nextKyberExcludedSources = supportsKyberSourceFilter

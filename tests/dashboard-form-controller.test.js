@@ -157,6 +157,36 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
+  const quote = { id: 102, chain: 'ethereum', preferredSource: 'Kyber' };
+  const normalizeChainKey = (chain) => String(chain || '').trim().toLowerCase();
+  let updatePlanOptions = null;
+  const { deps } = createBaseDeps({
+    deps: {
+      normalizeChainKey,
+      dashboardRenderer: {
+        ...createDashboardRenderer(),
+        resolveQuoteSettingsModalClickAction: () => ({ type: 'save' }),
+        buildQuoteSettingsUpdatePlan: (options) => {
+          updatePlanOptions = options;
+          return {
+            updates: {},
+            deletes: [],
+            requestChannelChanged: false,
+            shouldQueueRefreshQuote: false
+          };
+        }
+      },
+      quoteSettingsSelectionRuntime: {
+        get: () => ({ categoryId: 'cat-1', quote })
+      }
+    }
+  });
+  const controller = createDashboardFormController(deps);
+  controller.handleQuoteSettingsModalClick({});
+  assert.strictEqual(updatePlanOptions.normalizeChainKey, normalizeChainKey);
+}
+
+{
   const { calls, dashboardState, deps } = createBaseDeps({
     deps: {
       dashboardRenderer: {

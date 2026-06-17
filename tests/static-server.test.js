@@ -851,6 +851,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRendererResponse.body.includes('function resolveDashboardButtonClickAction(event, options = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsModalViewState(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildQuoteSettingsModalWritePlan(viewState = {})'));
+    assert.ok(dashboardRendererResponse.body.includes('function resolveNormalizeChainKey(config = {})'));
+    assert.ok(dashboardRendererResponse.body.includes("normalizeChainKey(quote.chain) !== 'plasma'"));
     assert.ok(dashboardRendererResponse.body.includes('function buildAddQuoteFormViewState(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function buildAddQuoteDraft(config = {})'));
     assert.ok(dashboardRendererResponse.body.includes('function resolveAddQuoteModalClickAction(event, options = {})'));
@@ -869,10 +871,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardActionControllerResponse.body.includes('void deps.copyDexLinkFromElement(action.element);'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.copyPriceText(action.element && action.element.textContent);'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsModalViewState({'));
+    assert.ok(dashboardActionControllerResponse.body.includes('normalizeChainKey: deps.normalizeChainKey'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsModalWritePlan(modalState)'));
     assert.ok(!appJsResponse.body.includes('function applyQuoteSettingsModalWritePlan(plan)'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyQuoteSettingsModalWritePlan(deps.quoteSettingsModalElements, writePlan)'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readQuoteSettingsFormValues(deps.quoteSettingsModalElements)'));
+    assert.ok(dashboardFormControllerResponse.body.includes('normalizeChainKey: deps.normalizeChainKey'));
+    assert.ok(appJsResponse.body.includes('normalizeChainKey,'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsUpdatePlan({'));
     assert.ok(dashboardFormControllerResponse.body.includes('buildAddQuoteFormViewState: deps.dashboardRenderer.buildAddQuoteFormViewState'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildAddQuoteDraft({'));

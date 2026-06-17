@@ -20,11 +20,17 @@
       return typeof deps.getArbDetailState === 'function' ? deps.getArbDetailState() : {};
     }
 
+    function normalizeChainKey(chain) {
+      return typeof deps.normalizeChainKey === 'function'
+        ? deps.normalizeChainKey(chain)
+        : String(chain || '').trim().toLowerCase();
+    }
+
     function syncKyberExcludedSourcesControl(quote, selectedSource) {
       const shouldShow = Boolean(
         quote
         && deps.isEvmChain(quote.chain)
-        && String(quote.chain || '').toLowerCase() !== 'plasma'
+        && normalizeChainKey(quote.chain) !== 'plasma'
         && (selectedSource === 'Kyber' || selectedSource === 'Auto')
       );
       deps.dashboardModalUtils.applyKyberExcludedSourcesControlState(deps.quoteSettingsModalElements, {
@@ -218,6 +224,7 @@
         isCexOrderbookChain: deps.isCexOrderbookChain,
         isCrossChainQuote: deps.isCrossChainQuote,
         isEvmChain: deps.isEvmChain,
+        normalizeChainKey: deps.normalizeChainKey,
         getQuoteChainDisplayName: deps.getQuoteChainDisplayName,
         getSingleChainDisplayName: deps.formatChainLabel
       });

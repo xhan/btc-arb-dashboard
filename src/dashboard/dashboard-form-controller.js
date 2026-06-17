@@ -79,7 +79,8 @@
         requestChannelEnabled: deps.requestChannelUtils.supportsRequestChannelForQuote(quote) && Boolean(deps.quoteRequestChannelSelect),
         requestChannelId: formValues.requestChannelId,
         isCrossChainQuote: deps.isCrossChainQuote,
-        isEvmChain: deps.isEvmChain
+        isEvmChain: deps.isEvmChain,
+        normalizeChainKey: deps.normalizeChainKey
       });
       Object.assign(quote, updatePlan.updates);
       updatePlan.deletes.forEach((key) => { delete quote[key]; });

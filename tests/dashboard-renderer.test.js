@@ -580,6 +580,19 @@ assert.strictEqual(
 );
 
 assert.deepStrictEqual(
+  buildQuoteSettingsModalViewState({
+    quote: { chain: 'plasma-alias', preferredSource: 'Kyber' },
+    isEvmChain: () => true,
+    normalizeChainKey: (chain) => chain === 'plasma-alias' ? 'plasma' : String(chain || '').trim().toLowerCase()
+  }).sourceSelect,
+  {
+    visible: false,
+    value: '',
+    disabled: false
+  }
+);
+
+assert.deepStrictEqual(
   buildQuoteSettingsUpdatePlan({
     quote: {
       chain: 'ethereum',
@@ -653,6 +666,30 @@ assert.deepStrictEqual(
   {
     updates: {},
     deletes: ['kyberOnlyDirectPools', 'kyberExcludedSources'],
+    shouldQueueRefreshQuote: true,
+    requestChannelChanged: false
+  }
+);
+assert.deepStrictEqual(
+  buildQuoteSettingsUpdatePlan({
+    quote: {
+      chain: 'plasma-alias',
+      preferredSource: 'Kyber',
+      kyberExcludedSources: ['curve']
+    },
+    sourceValue: 'Auto',
+    kyberExcludedSourcesInput: 'uniswap-v3',
+    showInverse: false,
+    requestChannelEnabled: false,
+    isCrossChainQuote: () => false,
+    isEvmChain: () => true,
+    normalizeChainKey: (chain) => chain === 'plasma-alias' ? 'plasma' : String(chain || '').trim().toLowerCase()
+  }),
+  {
+    updates: {
+      showInverse: false
+    },
+    deletes: ['kyberExcludedSources'],
     shouldQueueRefreshQuote: true,
     requestChannelChanged: false
   }

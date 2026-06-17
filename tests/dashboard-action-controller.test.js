@@ -226,6 +226,59 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
+  const normalizeChainKey = (chain) => chain === 'plasma-alias' ? 'plasma' : String(chain || '').trim().toLowerCase();
+  const { calls, deps } = createBaseDeps({
+    deps: {
+      normalizeChainKey,
+      dashboardModalUtils: {
+        applyKyberExcludedSourcesControlState: (refs, state) => calls.push(['kyberControl', state])
+      }
+    }
+  });
+  const controller = createDashboardActionController(deps);
+  controller.syncKyberExcludedSourcesControl({ chain: 'plasma-alias' }, 'Kyber');
+  assert.deepStrictEqual(calls.filter((call) => call[0] === 'kyberControl'), [
+    ['kyberControl', { visible: false }]
+  ]);
+}
+
+{
+  const normalizeChainKey = (chain) => String(chain || '').trim().toLowerCase();
+  let modalOptions = null;
+  const { deps } = createBaseDeps({
+    dashboardState: [{ id: 'cat-1', quotes: [{ id: 301, chain: 'ethereum' }] }],
+    deps: {
+      normalizeChainKey,
+      dashboardRenderer: {
+        buildQuoteSettingsModalViewState: (options) => {
+          modalOptions = options;
+          return { sourceSelect: { value: 'Kyber' } };
+        },
+        buildQuoteSettingsModalWritePlan: () => ({}),
+        resolveDashboardAmountInputAction: () => ({ type: 'none' }),
+        resolveDashboardClickAction: () => ({ type: 'none' })
+      },
+      dashboardModalUtils: {
+        applyQuoteSettingsModalWritePlan: () => {},
+        applyKyberExcludedSourcesControlState: () => {},
+        applyQuoteRequestChannelOptionsState: () => {},
+        showModal: () => {}
+      },
+      getQuoteMarketState: () => ({}),
+      requestChannelUtils: {
+        supportsRequestChannelForQuote: () => false
+      },
+      quoteSettingsSelectionRuntime: {
+        set: () => {}
+      }
+    }
+  });
+  const controller = createDashboardActionController(deps);
+  assert.strictEqual(controller.openQuoteSettingsModal('cat-1', '301'), true);
+  assert.strictEqual(modalOptions.normalizeChainKey, normalizeChainKey);
+}
+
+{
   const { calls, dashboardState, deps, removedNodes } = createBaseDeps({
     dashboardState: [{ id: 'cat-1', name: '主分区', quotes: [{ id: 201 }, { id: 202 }] }]
   });
