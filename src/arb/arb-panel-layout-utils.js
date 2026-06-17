@@ -620,8 +620,30 @@
           titleProfitRate: opportunity && opportunity.cycle ? opportunity.cycle.profitRate : null,
           opportunities: opportunity ? [opportunity] : [],
           emptyText: '无收益率'
-        };
-      });
+      };
+    });
+  }
+
+  function buildQuoteAlertRuleText(alert) {
+    if (!alert || typeof alert !== 'object') return '';
+    const value = alert.value == null ? '' : String(alert.value);
+    if (alert.ruleKind === 'targetAbove') return value ? `>= ${value}` : '>= --';
+    if (alert.ruleKind === 'targetBelow') return value ? `<= ${value}` : '<= --';
+    if (alert.ruleKind === 'percentUp') return value ? `上涨 >= ${value}%` : '上涨 >= --%';
+    if (alert.ruleKind === 'percentDown') return value ? `下跌 >= ${value}%` : '下跌 >= --%';
+    return '';
+  }
+
+  function buildQuoteAlertText(alert) {
+    if (!alert || typeof alert !== 'object') return '';
+    const stateText = alert.enabled === false ? '报警关闭' : '报警';
+    const delaySec = Number(alert.confirmDelaySec);
+    const modeText = alert.enabled === false
+      ? ''
+      : (alert.triggerMode === 'immediate'
+          ? '立即'
+          : (Number.isFinite(delaySec) && delaySec > 0 ? `延迟${delaySec}s` : ''));
+    return [stateText, modeText, buildQuoteAlertRuleText(alert)].filter(Boolean).join(' ');
   }
 
   function buildQuotePriceWatchDisplayEntry(options = {}) {
@@ -633,7 +655,7 @@
     } else if (options.isPaused) {
       statusText = '报价暂停';
     }
-    return {
+    const entry = {
       entryType: 'quote-price',
       title: String(options.title || ''),
       priceText: hasValue ? String(options.priceText) : '--',
@@ -641,6 +663,9 @@
       statusText,
       muted: Boolean(statusText)
     };
+    const alertText = buildQuoteAlertText(options.alert);
+    if (alertText) entry.alertText = alertText;
+    return entry;
   }
 
   function buildQuotePriceWatchSection(options = {}) {
@@ -666,7 +691,8 @@
           priceText: value == null ? '--' : formatPrice(value, item, state, quote),
           isPaused: hasQuote ? isQuotePaused(quote, item, state) : false,
           chainLabel: hasQuote ? formatChainLabel(quote.chain, quote, item, state) : '未知链',
-          pairLabel: hasQuote ? buildPairLabel(quote, state, item) : `报价 #${String(item.quoteId)}`
+          pairLabel: hasQuote ? buildPairLabel(quote, state, item) : `报价 #${String(item.quoteId)}`,
+          alert: item.alert
         });
       })
       .filter(Boolean);
@@ -690,6 +716,7 @@
     buildGlobalArbSection,
     buildSpecialArbSections,
     buildQuotePriceWatchSection,
+    buildQuoteAlertText,
     parseFilterInput,
     buildGlobalArbFilterState,
     buildGlobalArbFilterControlState,

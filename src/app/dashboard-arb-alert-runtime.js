@@ -134,6 +134,11 @@
       getActiveQuotes: options.getActiveQuotes,
       getArbCycleStartPriority: options.getArbCycleStartPriority,
       getArbDetailController,
+      getAlertConfig: () => (
+        alertRuntimeController && typeof alertRuntimeController.getConfig === 'function'
+          ? alertRuntimeController.getConfig()
+          : null
+      ),
       getDashboardState: options.getDashboardState,
       getQuoteMarketState: options.getQuoteMarketState,
       getQuoteMarketStateMap: options.getQuoteMarketStateMap,

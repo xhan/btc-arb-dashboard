@@ -36,9 +36,13 @@
     const title = entry && entry.title ? String(entry.title) : '交易对价格';
     const priceText = entry && entry.priceText ? String(entry.priceText) : '--';
     const metaText = entry && entry.metaText ? String(entry.metaText) : '';
+    const alertText = entry && entry.alertText ? String(entry.alertText) : '';
     const statusText = entry && entry.statusText ? String(entry.statusText) : '';
     const statusHtml = statusText
       ? `<div class="arb-quote-price-status">${escapeHtml(statusText)}</div>`
+      : '';
+    const alertHtml = alertText
+      ? `<div class="arb-quote-price-alert">${escapeHtml(alertText)}</div>`
       : '';
     return `
       <div class="${classNames.join(' ')}">
@@ -47,6 +51,7 @@
           ${statusHtml}
         </div>
         <div class="arb-quote-price-value">${escapeHtml(priceText)}</div>
+        ${alertHtml}
         ${metaText ? `<div class="arb-quote-price-meta">${escapeHtml(metaText)}</div>` : ''}
       </div>
     `;

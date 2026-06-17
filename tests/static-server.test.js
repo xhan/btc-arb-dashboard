@@ -2296,7 +2296,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getArbPathConfig: ['));
     assert.ok(moduleRegistryResponse.body.includes('ArbPathConfig is not loaded'));
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('arbPathConfig: modules.getArbPathConfig(),'));
-    assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getQuotePriceWatchItems(arbPathConfig)'));
+    assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getQuotePriceWatchItems(arbPathConfig, {'));
+    assert.ok(arbPanelControllerResponse.body.includes('alertConfig: getAlertConfig()'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.resolveQuotePriceValue(item, state)'));
     assert.ok(!appJsResponse.body.includes('window.ArbPathConfigUtils &&'));
     assert.ok(!appJsResponse.body.includes('typeof window.ArbPathConfigUtils'));

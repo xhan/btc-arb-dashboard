@@ -28,6 +28,9 @@
     const getQuoteMarketStateMap = typeof options.getQuoteMarketStateMap === 'function'
       ? options.getQuoteMarketStateMap
       : () => ({});
+    const getAlertConfig = typeof options.getAlertConfig === 'function'
+      ? options.getAlertConfig
+      : () => null;
     const getActiveQuotes = typeof options.getActiveQuotes === 'function'
       ? options.getActiveQuotes
       : (quotes) => (Array.isArray(quotes) ? quotes : []);
@@ -337,7 +340,9 @@
 
     function buildQuotePriceWatchSection() {
       return arbPanelLayoutUtils.buildQuotePriceWatchSection({
-        watchItems: options.arbPathConfigUtils.getQuotePriceWatchItems(arbPathConfig),
+        watchItems: options.arbPathConfigUtils.getQuotePriceWatchItems(arbPathConfig, {
+          alertConfig: getAlertConfig()
+        }),
         findQuote: (item) => dashboardRuntimeUtils.findDashboardQuoteById(getDashboardCategories(), item.quoteId),
         getQuoteState: (quote) => getQuoteMarketState(Number(quote.id)) || {},
         resolveValue: (item, state) => options.arbPathConfigUtils.resolveQuotePriceValue(item, state),

@@ -873,6 +873,50 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
+  buildQuotePriceWatchSection({
+    watchItems: [
+      {
+        title: '报警关注',
+        quoteId: 31,
+        direction: 'forward',
+        alert: {
+          enabled: true,
+          triggerMode: 'delayed',
+          confirmDelaySec: 13,
+          ruleKind: 'targetAbove',
+          value: 1.0008
+        }
+      },
+      {
+        title: '关闭报警',
+        quoteId: 32,
+        direction: 'forward',
+        alert: {
+          enabled: false,
+          triggerMode: 'immediate',
+          ruleKind: 'targetBelow',
+          value: 0.998
+        }
+      }
+    ],
+    findQuote: (item) => ({ id: item.quoteId, chain: 'ethereum' }),
+    getQuoteState: () => ({ lastRawPrice: 1 }),
+    resolveValue: (_item, state) => Number(state.lastRawPrice),
+    isQuotePaused: () => false,
+    buildPairLabel: () => 'USDT/USDe',
+    formatChainLabel: () => 'eth',
+    formatPrice: (value) => String(value)
+  }).opportunities.map((entry) => ({
+    title: entry.title,
+    alertText: entry.alertText
+  })),
+  [
+    { title: '报警关注', alertText: '报警 延迟13s >= 1.0008' },
+    { title: '关闭报警', alertText: '报警关闭 <= 0.998' }
+  ]
+);
+
+assert.deepStrictEqual(
   buildQuotePriceWatchSection({ watchItems: null }),
   {
     title: '关注列表',

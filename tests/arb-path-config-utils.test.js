@@ -21,6 +21,71 @@ assert.deepStrictEqual(getQuotePriceWatchItems(config), [
   { title: 'Inverse item', type: 'quote-price', quoteId: 102, direction: 'inverse' }
 ]);
 
+assert.deepStrictEqual(
+  getQuotePriceWatchItems(config, {
+    alertConfig: {
+      alerts: [
+        {
+          id: 'alert-forward',
+          name: 'Forward alert',
+          enabled: true,
+          triggerMode: 'delayed',
+          confirmDelaySec: 13,
+          cooldownSec: 180,
+          target: {
+            type: 'quote',
+            quoteId: 101,
+            direction: 'forward',
+            ruleKind: 'targetAbove',
+            value: 1.0008
+          }
+        },
+        {
+          id: 'alert-inverse-wrong-direction',
+          enabled: true,
+          target: {
+            type: 'quote',
+            quoteId: 101,
+            direction: 'inverse',
+            ruleKind: 'targetBelow',
+            value: 0.999
+          }
+        },
+        {
+          id: 'alert-only-item',
+          enabled: true,
+          target: {
+            type: 'quote',
+            quoteId: 999,
+            direction: 'forward',
+            ruleKind: 'targetAbove',
+            value: 2
+          }
+        }
+      ]
+    }
+  }),
+  [
+    {
+      title: 'ETH USDT/USDe',
+      type: 'quote-price',
+      quoteId: 101,
+      direction: 'forward',
+      alert: {
+        id: 'alert-forward',
+        name: 'Forward alert',
+        enabled: true,
+        triggerMode: 'delayed',
+        confirmDelaySec: 13,
+        cooldownSec: 180,
+        ruleKind: 'targetAbove',
+        value: 1.0008
+      }
+    },
+    { title: 'Inverse item', type: 'quote-price', quoteId: 102, direction: 'inverse' }
+  ]
+);
+
 assert.strictEqual(normalizeQuotePriceWatchItem({ title: 'No type', quoteId: 1 }), null);
 assert.strictEqual(resolveQuotePriceValue({ direction: 'forward' }, { lastRawPrice: 1.23, inverseRawPrice: 0.81 }), 1.23);
 assert.strictEqual(resolveQuotePriceValue({ direction: 'inverse' }, { lastRawPrice: 1.23, inverseRawPrice: 0.81 }), 0.81);

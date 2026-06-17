@@ -9,6 +9,7 @@ let bridgeOptions = null;
 let panelOptions = null;
 let alertOptions = null;
 let detailController = null;
+const alertConfig = { alerts: [{ id: 'quote-alert' }] };
 
 const runtime = createDashboardArbAlertRuntime({
   AudioCtor: function AudioCtor() {},
@@ -22,6 +23,7 @@ const runtime = createDashboardArbAlertRuntime({
         bindAudioUnlockEvents: () => calls.push(['bindAudio']),
         buildQuoteAlertDisplayLabel: (quote, state, direction) => `alert:${quote.id}:${direction}`,
         checkPriceForAlerts: (quote, context = {}) => calls.push(['checkAlerts', quote.id, context.successSource || null]),
+        getConfig: () => alertConfig,
         schedulePathAlertEvaluation: (options = {}) => calls.push(['schedulePathAlertEvaluation', options.reason || null]),
         toggleAlertLogPanel: () => calls.push(['toggleAlertLog'])
       };
@@ -180,6 +182,7 @@ assert.strictEqual(panelOptions.arbAlertBridgeRuntime.id, 'bridge');
 assert.strictEqual(panelOptions.fixedPathRules[0].id, 'fixed');
 assert.strictEqual(panelOptions.specialArbRules[0].id, 'special');
 assert.strictEqual(panelOptions.arbPathConfig.id, 'config');
+assert.strictEqual(panelOptions.getAlertConfig(), alertConfig);
 assert.strictEqual(alertOptions.arbAlertBridgeRuntime.id, 'bridge');
 assert.strictEqual(alertOptions.applyFloatingPanelDisplay(), 'display');
 assert.strictEqual(alertOptions.buildLiveQuoteLabel(), 'live-label');

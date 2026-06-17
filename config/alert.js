@@ -185,7 +185,7 @@ module.exports = {
     },
     {
       "id": "quote-alert-1774206818567-target-above",
-      "name": "ETH cbBTC/syBTC 价格高于",
+      "name": "eth cbBTC/syBTC 价格高于",
       "enabled": true,
       "thresholdBp": 0,
       "triggerMode": "delayed",
@@ -201,7 +201,7 @@ module.exports = {
     },
     {
       "id": "quote-alert-1774206874519-target-above",
-      "name": "BSC BTCB/syBTC 价格高于",
+      "name": "bsc BTCB/syBTC 价格高于",
       "enabled": true,
       "thresholdBp": 0,
       "triggerMode": "delayed",
@@ -217,7 +217,7 @@ module.exports = {
     },
     {
       "id": "quote-alert-1774600991130-target-above",
-      "name": "ETH cbBTC/BTC.b 价格高于",
+      "name": "eth cbBTC/BTC.b 价格高于",
       "enabled": true,
       "thresholdBp": 0,
       "triggerMode": "delayed",
@@ -233,7 +233,7 @@ module.exports = {
     },
     {
       "id": "quote-alert-1760021727906-target-above",
-      "name": "ETH tBTC/cbBTC 价格高于",
+      "name": "eth tBTC/cbBTC 价格高于",
       "enabled": true,
       "thresholdBp": 0,
       "triggerMode": "delayed",
@@ -249,7 +249,7 @@ module.exports = {
     },
     {
       "id": "quote-alert-1766413776518-target-above",
-      "name": "BSC BTCB/SolvBTC 价格高于",
+      "name": "bsc BTCB/SolvBTC 价格高于",
       "enabled": true,
       "thresholdBp": 0,
       "triggerMode": "immediate",
@@ -301,7 +301,7 @@ module.exports = {
     },
     {
       "id": "path-alert-1775208935817-lhbyjt",
-      "name": "SOL cbBTC/zBTC 汇率高于",
+      "name": "sol cbBTC/zBTC 汇率高于",
       "enabled": true,
       "thresholdBp": 0,
       "triggerMode": "immediate",
@@ -335,7 +335,7 @@ module.exports = {
     },
     {
       "id": "path-alert-1775835112644-umpogp",
-      "name": "ETH USDT/USDe 汇率高于",
+      "name": "eth USDT/USDe 汇率高于",
       "enabled": true,
       "thresholdBp": 0,
       "triggerMode": "delayed",

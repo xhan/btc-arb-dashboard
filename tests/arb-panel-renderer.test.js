@@ -220,6 +220,7 @@ const quotePriceHtml = renderArbGrid({
             title: 'ETH USDT/USDe 汇率高于',
             priceText: '1.00042',
             metaText: 'Ethereum · USDT/USDe',
+            alertText: '报警 延迟13s >= 1.0008',
             statusText: ''
           },
           {
@@ -241,6 +242,7 @@ assert.ok(quotePriceHtml.includes('class="arb-opportunity arb-opportunity-quote-
 assert.ok(quotePriceHtml.includes('ETH USDT/USDe 汇率高于'));
 assert.ok(quotePriceHtml.includes('class="arb-quote-price-value">1.00042</div>'));
 assert.ok(quotePriceHtml.includes('Ethereum · USDT/USDe'));
+assert.ok(quotePriceHtml.includes('报警 延迟13s &gt;= 1.0008'));
 assert.ok(quotePriceHtml.includes('等待报价'));
 assert.ok(!quotePriceHtml.includes('正向'));
 assert.ok(!quotePriceHtml.includes('阈值'));
