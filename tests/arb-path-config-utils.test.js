@@ -2,10 +2,13 @@ const assert = require('assert');
 
 const {
   applyFixedRuleWatchItemsToResults,
+  applySpecialRuleWatchItemsToRules,
   getFixedRuleWatchItems,
   getQuotePriceWatchItems,
+  getSpecialRuleWatchItems,
   normalizeFixedRuleWatchItem,
   normalizeQuotePriceWatchItem,
+  normalizeSpecialRuleWatchItem,
   resolveQuotePriceValue
 } = require('../src/arb/arb-path-config-utils');
 
@@ -15,6 +18,8 @@ const config = {
     { title: 'Inverse item', type: 'quote-price', quoteId: 102, direction: 'inverse' },
     { title: 'WBTC 关注', type: 'fixed-rule', ruleId: 'fixed:wbtc', displayMinProfitBp: '1.5' },
     { title: 'Bad fixed', type: 'fixed-rule' },
+    { title: 'Bybit 关注', type: 'special-rule', ruleId: 'special:wbtc-bybit' },
+    { title: 'Bad special', type: 'special-rule' },
     { title: '', type: 'quote-price', quoteId: 104 },
     { title: 'Bad id', type: 'quote-price', quoteId: 'x' }
   ]
@@ -123,6 +128,34 @@ const originalFixedResults = [
   { rule: { id: 'fixed:a', title: 'A' }, cycles: [] }
 ];
 assert.strictEqual(applyFixedRuleWatchItemsToResults(originalFixedResults, []), originalFixedResults);
+
+assert.deepStrictEqual(getSpecialRuleWatchItems(config), [
+  { title: 'Bybit 关注', type: 'special-rule', ruleId: 'special:wbtc-bybit' }
+]);
+
+assert.strictEqual(normalizeSpecialRuleWatchItem({ title: 'No rule', type: 'special-rule' }), null);
+assert.deepStrictEqual(
+  normalizeSpecialRuleWatchItem({ type: 'special-rule', ruleId: 'special:usde-bybit' }),
+  { title: '', type: 'special-rule', ruleId: 'special:usde-bybit' }
+);
+
+const originalSpecialRules = [
+  { id: 'special:a', title: 'A' },
+  { id: 'special:b', title: 'B' },
+  { id: 'special:c', title: 'C' }
+];
+assert.deepStrictEqual(
+  applySpecialRuleWatchItemsToRules(originalSpecialRules, [
+    { title: 'B 关注', type: 'special-rule', ruleId: 'special:b' },
+    { title: '', type: 'special-rule', ruleId: 'special:a' },
+    { title: 'missing', type: 'special-rule', ruleId: 'special:missing' }
+  ]),
+  [
+    { id: 'special:b', title: 'B' },
+    { id: 'special:a', title: 'A' }
+  ]
+);
+assert.strictEqual(applySpecialRuleWatchItemsToRules(originalSpecialRules, []), originalSpecialRules);
 
 assert.strictEqual(normalizeQuotePriceWatchItem({ title: 'No type', quoteId: 1 }), null);
 assert.strictEqual(resolveQuotePriceValue({ direction: 'forward' }, { lastRawPrice: 1.23, inverseRawPrice: 0.81 }), 1.23);

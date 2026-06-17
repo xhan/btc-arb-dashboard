@@ -20,6 +20,10 @@
       { title: 'msETH', type: 'fixed-rule', ruleId: 'fixed:mseth' },
       { title: 'weETH', type: 'fixed-rule', ruleId: 'fixed:weeth' },
       { title: 'wstETH', type: 'fixed-rule', ruleId: 'fixed:wsteth' },
+      // special rule watch items
+      { title: 'WBTC <-> BYBIT', type: 'special-rule', ruleId: 'special:wbtc-bybit' },
+      { title: 'USDe <-> BYBIT', type: 'special-rule', ruleId: 'special:usde-bybit' },
+      { title: 'USDtb <-> BYBIT', type: 'special-rule', ruleId: 'special:usdtb-bybit' },
       // ethereum cbBTC/syBTC
       { title: 'eth cbBTC/syBTC 价格高于', type: 'quote-price', quoteId: 1774206818567, direction: 'forward' },
       // bsc BTCB/syBTC

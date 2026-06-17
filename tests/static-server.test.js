@@ -2254,6 +2254,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getFixedRuleWatchItems(arbPathConfig)'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.applyFixedRuleWatchItemsToResults('));
     assert.ok(arbPanelControllerResponse.body.includes('function buildSpecialSections('));
+    assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getSpecialRuleWatchItems(arbPathConfig)'));
+    assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.applySpecialRuleWatchItemsToRules('));
     assert.ok(arbPanelControllerResponse.body.includes('function buildGlobalSection('));
     assert.ok(moduleRegistryResponse.body.includes('getArbPathTemplateCacheUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('ArbPathTemplateCacheUtils is not loaded'));

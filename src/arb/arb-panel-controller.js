@@ -152,6 +152,21 @@
         .filter(Boolean);
     }
 
+    function getSpecialRuleWatchItems() {
+      return options.arbPathConfigUtils && typeof options.arbPathConfigUtils.getSpecialRuleWatchItems === 'function'
+        ? options.arbPathConfigUtils.getSpecialRuleWatchItems(arbPathConfig)
+        : [];
+    }
+
+    function getConfiguredSpecialArbRules() {
+      return options.arbPathConfigUtils && typeof options.arbPathConfigUtils.applySpecialRuleWatchItemsToRules === 'function'
+        ? options.arbPathConfigUtils.applySpecialRuleWatchItemsToRules(
+          specialArbRules,
+          getSpecialRuleWatchItems()
+        )
+        : specialArbRules;
+    }
+
     function formatChainLabel(chain) {
       return options.chainDefaults.getChainDisplayName(chain);
     }
@@ -281,7 +296,7 @@
       );
       const baseSnapshot = options.arbRuleSnapshotUtils.buildArbRuleSnapshot({
         fixedRules: getConfiguredFixedPathRules(),
-        specialRules: specialArbRules,
+        specialRules: getConfiguredSpecialArbRules(),
         allEdgesWithRules,
         fixedTemplatesByRuleId: topologyCacheForFixed && topologyCacheForFixed.fixedTemplatesByRuleId
           ? topologyCacheForFixed.fixedTemplatesByRuleId
@@ -400,7 +415,7 @@
     function buildSpecialSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
       return arbPanelLayoutUtils.buildSpecialArbSections({
         specialResults: sharedRuleSnapshot.specialResults,
-        specialRules: specialArbRules,
+        specialRules: getConfiguredSpecialArbRules(),
         buildEntry: (opportunity) => createOpportunityEntry(
           nextOpportunityMap,
           nextOpportunityIdsByTargetKey,

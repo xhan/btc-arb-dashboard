@@ -41,6 +41,18 @@
     return normalized;
   }
 
+  function normalizeSpecialRuleWatchItem(item) {
+    if (!item || typeof item !== 'object') return null;
+    if (item.type !== 'special-rule') return null;
+    const ruleId = String(item.ruleId || '').trim();
+    if (!ruleId) return null;
+    return {
+      title: String(item.title || '').trim(),
+      type: 'special-rule',
+      ruleId
+    };
+  }
+
   function normalizeOptionalNumber(value) {
     const normalized = Number(value);
     return Number.isFinite(normalized) ? normalized : null;
@@ -137,6 +149,25 @@
       .filter(Boolean);
   }
 
+  function getSpecialRuleWatchItems(config) {
+    const items = Array.isArray(config && config.watchItems) ? config.watchItems : [];
+    return items.map(normalizeSpecialRuleWatchItem).filter(Boolean);
+  }
+
+  function applySpecialRuleWatchItemsToRules(rules, watchItems) {
+    const sourceRules = Array.isArray(rules) ? rules : [];
+    const specialWatchItems = Array.isArray(watchItems) ? watchItems.filter(Boolean) : [];
+    if (!specialWatchItems.length) return sourceRules;
+    const rulesById = new Map(
+      sourceRules
+        .filter((rule) => rule && rule.id)
+        .map((rule) => [rule.id, rule])
+    );
+    return specialWatchItems
+      .map((item) => rulesById.get(item.ruleId))
+      .filter(Boolean);
+  }
+
   function resolveQuotePriceValue(item, quoteState) {
     if (!item || !quoteState || typeof quoteState !== 'object') return null;
     const value = item.direction === 'inverse'
@@ -149,10 +180,13 @@
     normalizeDirection,
     normalizeFixedRuleWatchItem,
     normalizeQuotePriceWatchItem,
+    normalizeSpecialRuleWatchItem,
     applyFixedRuleWatchItemsToResults,
+    applySpecialRuleWatchItemsToRules,
     findQuoteAlertForWatchItem,
     getFixedRuleWatchItems,
     getQuotePriceWatchItems,
+    getSpecialRuleWatchItems,
     resolveQuotePriceValue
   };
 }));
