@@ -1,3 +1,5 @@
+const chainDefaults = require('../../shared/chain-defaults');
+
 function createKyberClient(deps) {
   function parseExcludedSources(value) {
     const rawItems = Array.isArray(value)
@@ -34,7 +36,7 @@ function createKyberClient(deps) {
   return {
     async getQuote(input) {
       const requestContext = input && input.requestContext ? input.requestContext : undefined;
-      const chain = String(input.chain || '').toLowerCase();
+      const chain = chainDefaults.normalizeChain(input.chain);
       const fromToken = input.fromToken;
       const toToken = input.toToken;
       const finalAmount = Number(input.amount) || 1;

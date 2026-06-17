@@ -1,3 +1,5 @@
+const chainDefaults = require('../../shared/chain-defaults');
+
 function trimTrailingSlash(value) {
   return String(value || '').trim().replace(/\/+$/, '');
 }
@@ -22,7 +24,7 @@ function createDefiLlamaProxyClient(deps) {
         throw new Error('未配置 Llama-ParaSwap proxy URL');
       }
 
-      const chain = String(input.chain || '').toLowerCase();
+      const chain = chainDefaults.normalizeChain(input.chain);
       const fromToken = input.fromToken;
       const toToken = input.toToken;
       const finalAmount = Number(input.amount) || 1;

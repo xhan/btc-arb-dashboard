@@ -1,3 +1,5 @@
+const chainDefaults = require('../../shared/chain-defaults');
+
 const ZEROX_API_KEY = '7e3d32e8-2cf8-413a-9cbe-24b8b0779588';
 const ZEROX_CHAIN_IDS = {
   ethereum: 1,
@@ -18,7 +20,7 @@ function createZeroXClient(deps) {
   return {
     async getQuote(input) {
       const requestContext = input && input.requestContext ? input.requestContext : undefined;
-      const chain = String(input.chain || '').toLowerCase();
+      const chain = chainDefaults.normalizeChain(input.chain);
       const fromToken = input.fromToken;
       const toToken = input.toToken;
       const finalAmount = Number(input.amount) || 1;

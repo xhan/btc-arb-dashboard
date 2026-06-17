@@ -1,3 +1,5 @@
+const chainDefaults = require('../../shared/chain-defaults');
+
 const VELORA_NETWORK_IDS = {
   ethereum: 1,
   optimism: 10,
@@ -22,7 +24,7 @@ function createVeloraClient(deps) {
       const configMore = requestContext && requestContext.configMore
         ? requestContext.configMore
         : (deps.getConfigMore ? await deps.getConfigMore() : {});
-      const chain = String(input.chain || '').toLowerCase();
+      const chain = chainDefaults.normalizeChain(input.chain);
       const fromToken = input.fromToken;
       const toToken = input.toToken;
       const finalAmount = Number(input.amount) || 1;

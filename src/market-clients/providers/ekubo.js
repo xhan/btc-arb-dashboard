@@ -1,8 +1,10 @@
+const chainDefaults = require('../../shared/chain-defaults');
+
 function createEkuboClient(deps) {
   return {
     async getQuote(input) {
       const requestContext = input && input.requestContext ? input.requestContext : undefined;
-      const chain = String(input.chain || '').trim().toLowerCase();
+      const chain = chainDefaults.normalizeChain(input.chain);
       const fromToken = input.fromToken;
       const toToken = input.toToken;
       const finalAmount = Number(input.amount) || 1;
