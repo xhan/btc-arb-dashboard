@@ -87,6 +87,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/ui/copy-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-paths.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-cycle-priority-utils.js"'));
+    assert.ok(response.body.includes('src="src/shared/token-alias-config.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-equivalence-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-special-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-panel-layout-utils.js"'));
@@ -354,6 +355,9 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/arb/arb-path-config-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/shared/token-alias-config.js"') < response.body.indexOf('src="src/arb/arb-equivalence-utils.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="src/arb/arb-paths.js"')
     );
     assert.ok(
@@ -570,6 +574,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteSpreadControllerResponse.statusCode, 200);
     const requestChannelUtilsResponse = await request('/src/request-channel/request-channel-utils.js');
     assert.strictEqual(requestChannelUtilsResponse.statusCode, 200);
+    const tokenAliasConfigResponse = await request('/src/shared/token-alias-config.js');
+    assert.strictEqual(tokenAliasConfigResponse.statusCode, 200);
     const chainLabelConfigResponse = await request('/src/shared/chain-label-config.js');
     assert.strictEqual(chainLabelConfigResponse.statusCode, 200);
     assert.ok(chainLabelConfigResponse.body.includes('CHAIN_LABEL_CONFIG'));
@@ -2064,7 +2070,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let showRequestChannelTags = true;'));
     assert.ok(!appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));
     assert.ok(!appJsResponse.body.includes("USDE: 'USDe'"));
-    assert.ok(arbEquivalenceUtilsResponse.body.includes("USDe: ['USDe', 'USDE']"));
+    assert.ok(tokenAliasConfigResponse.body.includes("USDe: ['USDe', 'USDE']"));
+    assert.ok(arbEquivalenceUtilsResponse.body.includes('DEFAULT_TOKEN_ALIAS_GROUPS'));
     assert.ok(arbEquivalenceUtilsResponse.body.includes('aliasRules[symbol] = canonicalSymbol;'));
     assert.ok(arbEquivalenceUtilsResponse.body.includes('function buildAliasLookup(aliasRules)'));
     assert.ok(arbEquivalenceUtilsResponse.body.includes('function buildAliasGroups(aliasRules)'));
@@ -2638,7 +2645,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(snapshotResponse.body.includes('查看回放 JSON'));
     assert.ok(snapshotResponse.body.includes('grid-template-columns: minmax(220px, 0.55fr) minmax(480px, 1.45fr);'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-paths.js"'));
+    assert.ok(snapshotResponse.body.includes('src="src/shared/token-alias-config.js"'));
     assert.ok(snapshotResponse.body.includes('src="src/arb/arb-equivalence-utils.js"'));
+    assert.ok(
+      snapshotResponse.body.indexOf('src="src/shared/token-alias-config.js"') < snapshotResponse.body.indexOf('src="src/arb/arb-equivalence-utils.js"')
+    );
     assert.ok(
       snapshotResponse.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < snapshotResponse.body.indexOf('src="src/arb/arb-paths.js"')
     );

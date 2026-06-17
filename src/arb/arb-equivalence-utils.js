@@ -1,14 +1,14 @@
 (function () {
-function buildApi() {
-  const DEFAULT_ASSET_EQUIVALENCE_GROUPS = {
-    ETH: ['ETH', 'WETH'],
-    cbBTC: ['cbBTC', 'xBTC', 'BTCB', 'BTC.b', 'BTC.B'],
-    WBTC: ['WBTC', 'wBTC'],
-    tBTC: ['tBTC', 'TBTC'],
-    USDe: ['USDe', 'USDE'],
-    USDtb: ['USDtb', 'USDTB'],
-    USDT: ['USDT', 'USD₮0', 'USDT0']
-  };
+function resolveTokenAliasConfig(root) {
+  if (typeof module === 'object' && module.exports) {
+    return require('../shared/token-alias-config');
+  }
+  return root.TokenAliasConfig || {};
+}
+
+function buildApi(tokenAliasConfig) {
+  tokenAliasConfig = tokenAliasConfig || {};
+  const DEFAULT_ASSET_EQUIVALENCE_GROUPS = tokenAliasConfig.DEFAULT_TOKEN_ALIAS_GROUPS || {};
 
   function buildAliasRulesFromGroups(groups) {
     const aliasRules = {};
@@ -159,10 +159,11 @@ function buildApi() {
 }
 
 (function attachApi(root, factory) {
+  const tokenAliasConfig = resolveTokenAliasConfig(root);
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(tokenAliasConfig);
   } else {
-    root.ArbEquivalenceUtils = factory();
+    root.ArbEquivalenceUtils = factory(tokenAliasConfig);
   }
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this), buildApi);
 }());
