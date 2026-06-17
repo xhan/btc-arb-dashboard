@@ -1,3 +1,5 @@
+const chainDefaults = require('../../shared/chain-defaults');
+
 function normalizeChainKey(chain) {
   if (typeof chain !== 'string') return '';
   return chain.trim().toLowerCase();
@@ -26,7 +28,10 @@ function resolveLifiChainId(chain, chainIdMap) {
   if (!chainIdMap || typeof chainIdMap !== 'object') return null;
   const normalized = normalizeChainKey(chain);
   if (!normalized) return null;
-  return Number.isFinite(chainIdMap[normalized]) ? chainIdMap[normalized] : null;
+  if (Number.isFinite(chainIdMap[normalized])) return chainIdMap[normalized];
+
+  const canonical = chainDefaults.normalizeChain(chain);
+  return Number.isFinite(chainIdMap[canonical]) ? chainIdMap[canonical] : null;
 }
 
 module.exports = {

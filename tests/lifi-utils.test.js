@@ -20,6 +20,12 @@ const sampleChains = [
     name: 'MegaETH',
     id: 4326,
     metamask: { chainName: 'MegaETH' }
+  },
+  {
+    key: 'arbitrum',
+    name: 'Arbitrum',
+    id: 42161,
+    metamask: { chainName: 'Arbitrum One' }
   }
 ];
 
@@ -32,4 +38,5 @@ assert.strictEqual(resolveLifiChainId('kat', chainMap), 747474);
 assert.strictEqual(resolveLifiChainId('  KaTaNa  ', chainMap), 747474);
 assert.strictEqual(resolveLifiChainId('megaeth', chainMap), 4326);
 assert.strictEqual(resolveLifiChainId('meg', chainMap), 4326);
+assert.strictEqual(resolveLifiChainId('arb', chainMap), 42161);
 assert.strictEqual(resolveLifiChainId('unknown', chainMap), null);
