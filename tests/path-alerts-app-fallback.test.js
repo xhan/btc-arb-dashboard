@@ -10,6 +10,7 @@ const tradingPairUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/sha
 const notificationUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-notification-utils.js'), 'utf8');
 const pageUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-page-utils.js'), 'utf8');
 const editorUtilsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-editor-utils.js'), 'utf8');
+const domRefsCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alert-dom-refs.js'), 'utf8');
 const appCode = fs.readFileSync(path.join(__dirname, '..', 'src/path-alerts/path-alerts-app.js'), 'utf8');
 
 function createElement() {
@@ -90,6 +91,8 @@ vm.runInContext(pageUtilsCode, sandbox);
 sandbox.window.PathAlertPageUtils = sandbox.PathAlertPageUtils;
 vm.runInContext(editorUtilsCode, sandbox);
 sandbox.window.PathAlertEditorUtils = sandbox.PathAlertEditorUtils;
+vm.runInContext(domRefsCode, sandbox);
+sandbox.window.PathAlertDomRefs = sandbox.PathAlertDomRefs;
 vm.runInContext(appCode, sandbox);
 
 const candidates = sandbox.window.PathAlertsAppTestHooks.buildFallbackQuoteCandidatesFromDashboard([

@@ -2,20 +2,23 @@
   const BACKEND_URL = `${location.protocol}//${location.hostname}:3000`;
   const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
   const PATH_ALERT_CONFIG_SYNC_SOURCE_MANAGE = 'path-alerts-manage';
-  const statusEl = document.getElementById('path-alerts-status');
-  const listEl = document.getElementById('path-alerts-sections');
-  const dismissedListEl = document.getElementById('path-alerts-dismissed-list');
-  const editorEl = document.getElementById('path-alerts-editor');
-  const editorTitleEl = document.getElementById('path-alerts-editor-title');
-  const editorModalEl = document.getElementById('path-alerts-editor-modal');
-  const createBtn = document.getElementById('path-alerts-create-btn');
-  const closeEditorBtn = document.getElementById('path-alerts-close-editor-btn');
-  const contextBarEl = document.getElementById('path-alerts-context');
-  const dismissSelectedBtn = document.getElementById('path-alerts-dismiss-selected-btn');
-  const deleteSelectedBtn = document.getElementById('path-alerts-delete-selected-btn');
-  const deleteDismissedSelectedBtn = document.getElementById('path-alerts-dismissed-delete-selected-btn');
-  const selectionCountEl = document.getElementById('path-alerts-selection-count');
-  const dismissedSelectionCountEl = document.getElementById('path-alerts-dismissed-selection-count');
+  const refs = window.PathAlertDomRefs.getPathAlertDomRefs(document);
+  const {
+    statusEl,
+    listEl,
+    dismissedListEl,
+    editorEl,
+    editorTitleEl,
+    editorModalEl,
+    createBtn,
+    closeEditorBtn,
+    contextBarEl,
+    dismissSelectedBtn,
+    deleteSelectedBtn,
+    deleteDismissedSelectedBtn,
+    selectionCountEl,
+    dismissedSelectionCountEl
+  } = refs;
 
   let dashboardState = [];
   let alertConfig = window.PathAlertUtils

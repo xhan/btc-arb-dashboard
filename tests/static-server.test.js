@@ -2831,6 +2831,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('src="src/alerts/special-rule-alert-config-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-notification-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-editor-utils.js"'));
+    assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-dom-refs.js"'));
     assert.ok(
       pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alert-notification-utils.js"') < pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alerts-app.js"')
     );
@@ -2849,18 +2850,25 @@ async function waitForServer(attempts = 12) {
     assert.ok(
       pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alert-candidate-utils.js"') < pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alerts-app.js"')
     );
+    assert.ok(
+      pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alert-dom-refs.js"') < pathAlertsResponse.body.indexOf('src="src/path-alerts/path-alerts-app.js"')
+    );
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-page-utils.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alert-rule-definitions.js"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/path-alerts/path-alerts-app.js"'));
 
     const pathAlertsAppResponse = await request('/src/path-alerts/path-alerts-app.js');
     assert.strictEqual(pathAlertsAppResponse.statusCode, 200);
+    const pathAlertDomRefsResponse = await request('/src/path-alerts/path-alert-dom-refs.js');
+    assert.strictEqual(pathAlertDomRefsResponse.statusCode, 200);
     const pathAlertCandidateUtilsResponse = await request('/src/path-alerts/path-alert-candidate-utils.js');
     assert.strictEqual(pathAlertCandidateUtilsResponse.statusCode, 200);
     assert.ok(pathAlertEditorUtilsResponse.body.includes('path-alert-search-input'));
     assert.ok(pathAlertEditorUtilsResponse.body.includes('path-alert-add-leg-btn'));
     assert.ok(pathAlertEditorUtilsResponse.body.includes('path-alert-suggestions'));
     assert.ok(!pathAlertsAppResponse.body.includes('const CHAIN_DISPLAY_NAMES = {'));
+    assert.ok(!pathAlertsAppResponse.body.includes("document.getElementById('path-alerts-status')"));
+    assert.ok(pathAlertsAppResponse.body.includes('PathAlertDomRefs.getPathAlertDomRefs(document)'));
     assert.ok(pathAlertsAppResponse.body.includes('window.ChainDefaults.getChainDisplayName(chain)'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertCandidateUtils'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertCandidateUtils.filterPathAlertCandidates(quoteCandidates, query, 12)'));
@@ -2888,8 +2896,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsAppResponse.body.includes('groupAlertsBySection'));
     assert.ok(pathAlertsAppResponse.body.includes('PathAlertNotificationUtils.buildQuoteAlertRuleLine(target)'));
     assert.ok(!pathAlertsAppResponse.body.includes('相对基准上涨 >='));
-    assert.ok(pathAlertsAppResponse.body.includes('path-alerts-editor-modal'));
-    assert.ok(pathAlertsAppResponse.body.includes('path-alerts-dismiss-selected-btn'));
+    assert.ok(pathAlertDomRefsResponse.body.includes('path-alerts-editor-modal'));
+    assert.ok(pathAlertDomRefsResponse.body.includes('path-alerts-dismiss-selected-btn'));
     assert.ok(pathAlertsAppResponse.body.includes('data-alert-dismiss-delete'));
     assert.ok(pathAlertsAppResponse.body.includes('data-dismissed-restore'));
     assert.ok(pathAlertsAppResponse.body.includes("event.key === 'ArrowDown'"));
