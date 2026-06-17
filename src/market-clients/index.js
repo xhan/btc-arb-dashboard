@@ -20,6 +20,7 @@ const { createLifiClient } = require('./providers/lifi');
 const { createVeloraClient } = require('./providers/velora');
 const { createDefiLlamaProxyClient } = require('./providers/defillama-proxy');
 const { createZeroXClient } = require('./providers/zerox');
+const chainDefaults = require('../shared/chain-defaults');
 
 const ERC20_ABI = ['function decimals() view returns (uint8)', 'function symbol() view returns (string)'];
 const ERC20_DECIMALS_SELECTOR = '0x313ce567';
@@ -61,6 +62,10 @@ function normalizeAddress(value) {
   return /^0x[0-9a-fA-F]+$/.test(raw) ? raw.toLowerCase() : raw;
 }
 
+function normalizeChain(chain) {
+  return chainDefaults.normalizeChain(chain);
+}
+
 function createMarketClients(options) {
   const tokenMetaStore = createTokenMetaStore({
     cachePath: options.cachePath,
@@ -74,7 +79,7 @@ function createMarketClients(options) {
   let lifiChainIdMapFetchedAt = 0;
 
   function getEvmProvider(chain) {
-    return options.evmProviders[String(chain || '').toLowerCase()];
+    return options.evmProviders[normalizeChain(chain)];
   }
 
   function getLifiHeaders(configMore = {}) {
@@ -126,7 +131,7 @@ function createMarketClients(options) {
   }
 
   async function getOfficialTokenListFallback(chain, requestContext) {
-    const fallback = OFFICIAL_EVM_TOKEN_LIST_FALLBACKS[String(chain || '').toLowerCase()];
+    const fallback = OFFICIAL_EVM_TOKEN_LIST_FALLBACKS[normalizeChain(chain)];
     if (!fallback) {
       return null;
     }
@@ -142,7 +147,7 @@ function createMarketClients(options) {
   }
 
   async function getOfficialEvmTokenMetaFallback(chain, tokenAddress, requestContext) {
-    const fallback = OFFICIAL_EVM_TOKEN_LIST_FALLBACKS[String(chain || '').toLowerCase()];
+    const fallback = OFFICIAL_EVM_TOKEN_LIST_FALLBACKS[normalizeChain(chain)];
     if (!fallback) {
       return null;
     }

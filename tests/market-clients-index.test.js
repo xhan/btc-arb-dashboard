@@ -55,6 +55,9 @@ const ethersModule = require('ethers');
     assert.strictEqual(decimalsCalls, 2, 'CALL_EXCEPTION 后应重试 decimals');
     assert.ok(symbolCalls >= 1, '应成功读取 symbol');
 
+    const aliasMeta = await retryClients.getEvmTokenMeta('eth', '0x1111111111111111111111111111111111111111');
+    assert.deepStrictEqual(aliasMeta, { decimals: 18, symbol: 'USDe' });
+
     const symbolCallRequests = [];
     class SymbolFallbackContract {
       constructor() {}
