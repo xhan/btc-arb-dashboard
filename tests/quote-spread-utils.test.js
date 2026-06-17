@@ -58,6 +58,8 @@ assert.ok(Math.abs(rows[0].product - 1.00495) < 1e-12);
 assert.ok(Math.abs(rows[0].spreadBp - 49.5) < 1e-9);
 assert.ok(Math.abs(rows[1].product - 1.0015005) < 1e-12);
 
+const defaultRows = buildQuoteSpreadRows(dashboardState, quoteStateById, { limit: 2 });
+assert.deepStrictEqual(defaultRows.map((row) => row.chainLabel), ['eth', 'base']);
 assert.strictEqual(buildQuoteSpreadRows(dashboardState, quoteStateById, { limit: 1 }).length, 1);
 assert.strictEqual(formatQuoteSpreadNumber(1.23456789), '1.234568');
 assert.strictEqual(formatQuoteSpreadNumber(NaN), '--');

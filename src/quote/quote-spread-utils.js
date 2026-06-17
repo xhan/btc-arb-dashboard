@@ -1,5 +1,8 @@
 (function (root, factory) {
-  const api = factory();
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
@@ -7,7 +10,7 @@
   if (root && root.window && root.window !== root) {
     root.window.QuoteSpreadUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   function escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -41,6 +44,13 @@
     return `#${quote && quote.id != null ? quote.id : '--'}`;
   }
 
+  function formatDefaultQuoteSpreadChainLabel(chain) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return String(chain || '');
+  }
+
   function buildQuoteSpreadRows(dashboardState, quoteStateById, options = {}) {
     const dashboard = Array.isArray(dashboardState) ? dashboardState : [];
     const stateById = normalizeQuoteStateMap(quoteStateById);
@@ -49,7 +59,7 @@
       : 20;
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
-      : (chain) => String(chain || '');
+      : formatDefaultQuoteSpreadChainLabel;
     const rows = [];
 
     dashboard.forEach((category) => {
