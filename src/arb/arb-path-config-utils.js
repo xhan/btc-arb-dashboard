@@ -191,6 +191,26 @@
     });
   }
 
+  function isWatchedQuoteTarget(config, target) {
+    if (!target || target.type !== 'quote') return false;
+    const quoteId = Number(target.quoteId);
+    if (!Number.isFinite(quoteId) || quoteId <= 0) return false;
+    const direction = normalizeDirection(target.direction);
+    return getQuotePriceWatchItems(config).some((item) => (
+      item.quoteId === quoteId
+      && item.direction === direction
+    ));
+  }
+
+  function filterWatchedQuoteAlerts(alerts, config) {
+    const list = Array.isArray(alerts) ? alerts : [];
+    return list.filter((alert) => {
+      const target = alert && alert.target;
+      if (!target || target.type !== 'quote') return true;
+      return isWatchedQuoteTarget(config, target);
+    });
+  }
+
   function resolveQuotePriceValue(item, quoteState) {
     if (!item || !quoteState || typeof quoteState !== 'object') return null;
     const value = item.direction === 'inverse'
@@ -206,11 +226,13 @@
     normalizeSpecialRuleWatchItem,
     applyFixedRuleWatchItemsToResults,
     applySpecialRuleWatchItemsToRules,
+    filterWatchedQuoteAlerts,
     filterWatchedRuleAlerts,
     findQuoteAlertForWatchItem,
     getFixedRuleWatchItems,
     getQuotePriceWatchItems,
     getSpecialRuleWatchItems,
+    isWatchedQuoteTarget,
     isWatchedRuleTarget,
     resolveQuotePriceValue
   };

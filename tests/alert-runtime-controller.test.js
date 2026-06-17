@@ -273,3 +273,50 @@ function createBaseDeps(overrides = {}) {
   assert.strictEqual(controller.schedulePathAlertEvaluation({ delayMs: 88 }), false);
   assert.deepStrictEqual(schedulerCalls, []);
 }
+
+{
+  const unwatchedQuoteAlert = {
+    id: 'unwatched-quote',
+    target: {
+      type: 'quote',
+      quoteId: 101,
+      direction: 'inverse',
+      ruleKind: 'targetAbove',
+      value: 1
+    }
+  };
+  const base = createBaseDeps();
+  const { deps } = createBaseDeps({
+    arbPathConfig: {
+      watchItems: [
+        { title: 'watched forward quote', type: 'quote-price', quoteId: 101, direction: 'forward' }
+      ]
+    },
+    arbPathConfigUtils,
+    dashboardRuntimeUtils: {
+      ...base.deps.dashboardRuntimeUtils,
+      buildQuoteAlertUiUpdate: () => ({
+        nextState: { hasUnreadAlert: false },
+        highlighted: false,
+        highlightPast: false
+      })
+    },
+    documentImpl: {
+      getElementById: () => null
+    },
+    pathAlertUtils: {
+      ...base.deps.pathAlertUtils,
+      getQuoteAlertsForQuoteId: () => [unwatchedQuoteAlert],
+      evaluatePathAlert: () => {
+        throw new Error('unwatched quote alert should not be evaluated');
+      }
+    },
+    quoteStateRuntime: {
+      getUiState: () => ({}),
+      setUiState: () => {}
+    }
+  });
+  const controller = createAlertRuntimeController(deps);
+
+  controller.checkPriceForAlerts({ id: 101 });
+}

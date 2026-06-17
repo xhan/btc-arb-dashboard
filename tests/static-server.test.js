@@ -540,6 +540,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
     const arbAlertBridgeUtilsResponse = await request('/src/arb/arb-alert-bridge-utils.js');
     assert.strictEqual(arbAlertBridgeUtilsResponse.statusCode, 200);
+    const arbPathConfigUtilsResponse = await request('/src/arb/arb-path-config-utils.js');
+    assert.strictEqual(arbPathConfigUtilsResponse.statusCode, 200);
     const arbPathTemplateCacheUtilsResponse = await request('/src/arb/arb-path-template-cache-utils.js');
     assert.strictEqual(arbPathTemplateCacheUtilsResponse.statusCode, 200);
     const arbEquivalenceUtilsResponse = await request('/src/arb/arb-equivalence-utils.js');
@@ -1948,6 +1950,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertUtils.buildMutedPathLogTitleSnapshot(entry)'));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathLogTitleSnapshot(entry)'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertUtils.getQuoteAlertsForQuoteId(pathAlertConfig, quote.id)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function filterWatchedQuoteAlerts(alerts)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('const quoteAlerts = filterWatchedQuoteAlerts('));
     assert.ok(!appJsResponse.body.includes('function getQuoteAlertsForQuoteId(quoteId)'));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathStatusText('));
     assert.ok(!appJsResponse.body.includes('function buildMutedPathLegStatusText('));
@@ -2314,6 +2318,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getQuotePriceWatchItems(arbPathConfig, {'));
     assert.ok(arbPanelControllerResponse.body.includes('alertConfig: getAlertConfig()'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.resolveQuotePriceValue(item, state)'));
+    assert.ok(arbPathConfigUtilsResponse.body.includes('filterWatchedQuoteAlerts,'));
+    assert.ok(arbPathConfigUtilsResponse.body.includes('isWatchedQuoteTarget,'));
     assert.ok(!appJsResponse.body.includes('window.ArbPathConfigUtils &&'));
     assert.ok(!appJsResponse.body.includes('typeof window.ArbPathConfigUtils'));
     assert.ok(!appJsResponse.body.includes(".filter((item) => item && item.type === 'quote-price')"));

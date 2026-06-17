@@ -3,10 +3,12 @@ const assert = require('assert');
 const {
   applyFixedRuleWatchItemsToResults,
   applySpecialRuleWatchItemsToRules,
+  filterWatchedQuoteAlerts,
   filterWatchedRuleAlerts,
   getFixedRuleWatchItems,
   getQuotePriceWatchItems,
   getSpecialRuleWatchItems,
+  isWatchedQuoteTarget,
   isWatchedRuleTarget,
   normalizeFixedRuleWatchItem,
   normalizeQuotePriceWatchItem,
@@ -195,6 +197,35 @@ const customPathAlert = {
 assert.deepStrictEqual(
   filterWatchedRuleAlerts([watchedRuleAlert, unwatchedRuleAlert, customPathAlert], config),
   [watchedRuleAlert, customPathAlert]
+);
+
+assert.strictEqual(isWatchedQuoteTarget(config, {
+  type: 'quote',
+  quoteId: 101,
+  direction: 'forward'
+}), true);
+assert.strictEqual(isWatchedQuoteTarget(config, {
+  type: 'quote',
+  quoteId: 101,
+  direction: 'inverse'
+}), false);
+assert.strictEqual(isWatchedQuoteTarget(config, {
+  type: 'quote',
+  quoteId: 102,
+  direction: 'inverse'
+}), true);
+
+const watchedQuoteAlert = {
+  id: 'watched-quote',
+  target: { type: 'quote', quoteId: 101, direction: 'forward' }
+};
+const unwatchedQuoteAlert = {
+  id: 'unwatched-quote',
+  target: { type: 'quote', quoteId: 101, direction: 'inverse' }
+};
+assert.deepStrictEqual(
+  filterWatchedQuoteAlerts([watchedQuoteAlert, unwatchedQuoteAlert, customPathAlert], config),
+  [watchedQuoteAlert, customPathAlert]
 );
 
 assert.strictEqual(normalizeQuotePriceWatchItem({ title: 'No type', quoteId: 1 }), null);

@@ -669,6 +669,13 @@
       );
     }
 
+    function filterWatchedQuoteAlerts(alerts) {
+      if (arbPathConfigUtils && typeof arbPathConfigUtils.filterWatchedQuoteAlerts === 'function') {
+        return arbPathConfigUtils.filterWatchedQuoteAlerts(alerts, arbPathConfig);
+      }
+      return Array.isArray(alerts) ? alerts : [];
+    }
+
     function hasActiveWatchedPathAlertEvaluationTarget() {
       const hasActiveTarget = typeof dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget === 'function'
         ? dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget(pathAlertConfig)
@@ -1138,7 +1145,9 @@
       if (typeof deps.isQuotePaused === 'function' && deps.isQuotePaused(quote)) return;
       const quoteStateRuntime = getQuoteStateRuntime();
       const uiState = quoteStateRuntime.getUiState(quote.id);
-      const quoteAlerts = pathAlertUtils.getQuoteAlertsForQuoteId(pathAlertConfig, quote.id);
+      const quoteAlerts = filterWatchedQuoteAlerts(
+        pathAlertUtils.getQuoteAlertsForQuoteId(pathAlertConfig, quote.id)
+      );
       let hasTriggeredThisTick = false;
 
       for (const alert of quoteAlerts) {
