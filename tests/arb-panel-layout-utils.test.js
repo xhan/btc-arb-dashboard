@@ -151,6 +151,16 @@ assert.strictEqual(
   'Chain:ethereum:cbBTC->WBTC@0.99'
 );
 
+assert.strictEqual(
+  buildArbPathLegLine({
+    chain: 'arbitrum',
+    from: 'WBTC',
+    to: 'cbBTC',
+    rate: 1.01
+  }),
+  'arb: WBTC -> cbBTC'
+);
+
 assert.deepStrictEqual(
   buildArbPathLegLines(
     [
@@ -844,6 +854,17 @@ assert.deepStrictEqual(
       muted: true
     }
   ]
+);
+
+assert.strictEqual(
+  buildQuotePriceWatchSection({
+    watchItems: [{ title: '默认链名', quoteId: 23 }],
+    findQuote: () => ({ id: 23, chain: 'arbitrum' }),
+    getQuoteState: () => ({ lastRawPrice: 1 }),
+    resolveValue: (_item, state) => Number(state.lastRawPrice),
+    buildPairLabel: () => 'WBTC/cbBTC'
+  }).opportunities[0].metaText,
+  'arb · WBTC/cbBTC'
 );
 
 assert.deepStrictEqual(

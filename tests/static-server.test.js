@@ -371,6 +371,12 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/arb/arb-path-template-cache-utils.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/arb/arb-panel-layout-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/arb/arb-panel-renderer.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/arb/arb-equivalence-utils.js"') < response.body.indexOf('src="src/arb/arb-paths.js"')
     );
     assert.ok(
@@ -1177,6 +1183,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPathTemplateCacheUtilsResponse.body.includes("require('../shared/chain-defaults')"));
     assert.ok(arbSpecialUtilsResponse.body.includes("require('../shared/chain-defaults')"));
     assert.ok(arbDetailUtilsResponse.body.includes("require('../shared/chain-defaults')"));
+    assert.ok(arbPanelLayoutUtilsResponse.body.includes("require('../shared/chain-defaults')"));
+    assert.ok(arbPanelRendererResponse.body.includes("require('../shared/chain-defaults')"));
     assert.ok(!appJsResponse.body.includes('const CHAIN_DISPLAY_NAMES = {'));
     assert.ok(!appJsResponse.body.includes('const CHAIN_FILTER_ALIASES = {'));
     assert.ok(!appJsResponse.body.includes('function getSingleChainDisplayName(chain)'));

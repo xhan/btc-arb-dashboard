@@ -1,10 +1,13 @@
 (function (root, factory) {
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(chainDefaults);
     return;
   }
-  root.ArbPanelRenderer = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  root.ArbPanelRenderer = factory(chainDefaults);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   function escapeAttr(value) {
     return String(value)
       .replace(/&/g, '&amp;')
@@ -28,6 +31,13 @@
 
   function defaultFormatProfit(profitRate) {
     return String(profitRate);
+  }
+
+  function formatDefaultChainLabel(chain) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return String(chain || '');
   }
 
   function renderQuotePriceOpportunity(entry) {
@@ -78,7 +88,7 @@
       .map((leg) => {
         const chainLabel = typeof options.formatChainLabel === 'function'
           ? options.formatChainLabel(leg.chain)
-          : (leg.chain || '');
+          : formatDefaultChainLabel(leg.chain);
         const line = (options.formatLegLine || defaultFormatLegLine)({
           ...leg,
           from: leg.from,

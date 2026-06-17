@@ -1,11 +1,21 @@
 (function (root, factory) {
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(chainDefaults);
     return;
   }
-  root.ArbPanelLayoutUtils = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  root.ArbPanelLayoutUtils = factory(chainDefaults);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   const DEFAULT_DISPLAY_MIN_PROFIT_BP = 0.5;
+
+  function formatDefaultChainLabel(chain) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return String(chain || '');
+  }
 
   function cloneSection(section, opportunities) {
     return {
@@ -78,7 +88,7 @@
       : (line) => `${line.chainLabel}: ${line.from} -> ${line.to}`;
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
-      : (chain) => String(chain || '');
+      : formatDefaultChainLabel;
     const formatCexBookValue = typeof options.formatCexBookValue === 'function'
       ? options.formatCexBookValue
       : (value) => String(value);
@@ -680,7 +690,7 @@
     const resolveValue = typeof options.resolveValue === 'function' ? options.resolveValue : () => null;
     const isQuotePaused = typeof options.isQuotePaused === 'function' ? options.isQuotePaused : () => false;
     const buildPairLabel = typeof options.buildPairLabel === 'function' ? options.buildPairLabel : () => '';
-    const formatChainLabel = typeof options.formatChainLabel === 'function' ? options.formatChainLabel : (chain) => String(chain || '');
+    const formatChainLabel = typeof options.formatChainLabel === 'function' ? options.formatChainLabel : formatDefaultChainLabel;
     const formatPrice = typeof options.formatPrice === 'function' ? options.formatPrice : (value) => value;
     const opportunities = watchItems
       .map((item) => {
