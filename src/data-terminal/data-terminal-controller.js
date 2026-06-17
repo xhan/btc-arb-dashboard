@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory(root);
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(root, chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   if (root && root.window) {
     root.window.DataTerminalController = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, chainDefaults) {
   function createFallbackHtmlRenderer() {
     return {
       render(target, html) {
@@ -159,8 +162,18 @@
       );
     }
 
+    function formatDefaultChainLabel(chain) {
+      if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+        return chainDefaults.getChainDisplayName(chain);
+      }
+      if (root && root.ChainDefaults && typeof root.ChainDefaults.getChainDisplayName === 'function') {
+        return root.ChainDefaults.getChainDisplayName(chain);
+      }
+      return String(chain || '');
+    }
+
     function formatChainLabel(chain) {
-      return typeof deps.formatChainLabel === 'function' ? deps.formatChainLabel(chain) : String(chain || '');
+      return typeof deps.formatChainLabel === 'function' ? deps.formatChainLabel(chain) : formatDefaultChainLabel(chain);
     }
 
     function formatAmount(amount) {

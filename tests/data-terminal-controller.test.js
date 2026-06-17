@@ -287,3 +287,15 @@ function createBaseDeps(overrides = {}) {
   assert.strictEqual(controller.getState().visible, false);
   assert.strictEqual(controller.scheduleUpdate(), false);
 }
+
+{
+  const { deps } = createBaseDeps({
+    formatChainLabel: undefined
+  });
+  const controller = createDataTerminalController(deps);
+  const panel = controller.mountPanel();
+  const refs = panel.refs;
+
+  refs['#data-terminal-search-input'].listeners.input({ target: { value: 'USDC' } });
+  assert.ok(refs['#data-terminal-content'].innerHTML.includes('<span class="data-terminal-chain">eth</span>'));
+}
