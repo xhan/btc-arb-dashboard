@@ -2251,6 +2251,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const maxHeight = Math.max(200, window.innerHeight);'));
     assert.ok(!appJsResponse.body.includes('arbPathWindow.style.height = `${maxHeight}px`;'));
     assert.ok(arbPanelControllerResponse.body.includes('function buildFixedSections('));
+    assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getFixedRuleWatchItems(arbPathConfig)'));
+    assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.applyFixedRuleWatchItemsToResults('));
     assert.ok(arbPanelControllerResponse.body.includes('function buildSpecialSections('));
     assert.ok(arbPanelControllerResponse.body.includes('function buildGlobalSection('));
     assert.ok(moduleRegistryResponse.body.includes('getArbPathTemplateCacheUtils: ['));

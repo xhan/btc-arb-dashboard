@@ -24,6 +24,23 @@
     };
   }
 
+  function normalizeFixedRuleWatchItem(item) {
+    if (!item || typeof item !== 'object') return null;
+    if (item.type !== 'fixed-rule') return null;
+    const ruleId = String(item.ruleId || '').trim();
+    if (!ruleId) return null;
+    const displayMinProfitBp = normalizeOptionalNumber(item.displayMinProfitBp);
+    const normalized = {
+      title: String(item.title || '').trim(),
+      type: 'fixed-rule',
+      ruleId
+    };
+    if (displayMinProfitBp !== null) {
+      normalized.displayMinProfitBp = displayMinProfitBp;
+    }
+    return normalized;
+  }
+
   function normalizeOptionalNumber(value) {
     const normalized = Number(value);
     return Number.isFinite(normalized) ? normalized : null;
@@ -92,6 +109,34 @@
       });
   }
 
+  function getFixedRuleWatchItems(config) {
+    const items = Array.isArray(config && config.watchItems) ? config.watchItems : [];
+    return items.map(normalizeFixedRuleWatchItem).filter(Boolean);
+  }
+
+  function applyFixedRuleWatchItemsToResults(fixedResults, watchItems) {
+    const results = Array.isArray(fixedResults) ? fixedResults : [];
+    const fixedWatchItems = Array.isArray(watchItems) ? watchItems.filter(Boolean) : [];
+    if (!fixedWatchItems.length) return results;
+    const resultsByRuleId = new Map(
+      results
+        .filter((result) => result && result.rule && result.rule.id)
+        .map((result) => [result.rule.id, result])
+    );
+    return fixedWatchItems
+      .map((item) => {
+        const result = resultsByRuleId.get(item.ruleId);
+        if (!result) return null;
+        const rule = { ...result.rule };
+        if (item.title) rule.title = item.title;
+        if (Number.isFinite(Number(item.displayMinProfitBp))) {
+          rule.displayMinProfitBp = Number(item.displayMinProfitBp);
+        }
+        return { ...result, rule };
+      })
+      .filter(Boolean);
+  }
+
   function resolveQuotePriceValue(item, quoteState) {
     if (!item || !quoteState || typeof quoteState !== 'object') return null;
     const value = item.direction === 'inverse'
@@ -102,8 +147,11 @@
 
   return {
     normalizeDirection,
+    normalizeFixedRuleWatchItem,
     normalizeQuotePriceWatchItem,
+    applyFixedRuleWatchItemsToResults,
     findQuoteAlertForWatchItem,
+    getFixedRuleWatchItems,
     getQuotePriceWatchItems,
     resolveQuotePriceValue
   };

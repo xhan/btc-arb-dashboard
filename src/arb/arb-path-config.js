@@ -7,6 +7,19 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   return {
     watchItems: [
+      // fixed path watch items
+      { title: 'WBTC ETH <-> ARB', type: 'fixed-rule', ruleId: 'fixed:wbtc-eth-arb' },
+      { title: 'WBTC - BTC (-arb)', type: 'fixed-rule', ruleId: 'fixed:wbtc-btc-no-arb' },
+      { title: 'LBTC - BTC', type: 'fixed-rule', ruleId: 'fixed:lbtc-btc' },
+      { title: 'WBTC - LBTC', type: 'fixed-rule', ruleId: 'fixed:wbtc-lbtc' },
+      { title: 'tBTC - WBTC', type: 'fixed-rule', ruleId: 'fixed:tbtc-wbtc' },
+      { title: 'tBTC - BTC', type: 'fixed-rule', ruleId: 'fixed:tbtc-btc' },
+      { title: 'GHO - USD', type: 'fixed-rule', ruleId: 'fixed:gho-usd' },
+      { title: 'USDE - USDT', type: 'fixed-rule', ruleId: 'fixed:usde-usdt' },
+      { title: 'sUSDE - USDT', type: 'fixed-rule', ruleId: 'fixed:susde-usdt' },
+      { title: 'msETH', type: 'fixed-rule', ruleId: 'fixed:mseth' },
+      { title: 'weETH', type: 'fixed-rule', ruleId: 'fixed:weeth' },
+      { title: 'wstETH', type: 'fixed-rule', ruleId: 'fixed:wsteth' },
       // ethereum cbBTC/syBTC
       { title: 'eth cbBTC/syBTC 价格高于', type: 'quote-price', quoteId: 1774206818567, direction: 'forward' },
       // bsc BTCB/syBTC

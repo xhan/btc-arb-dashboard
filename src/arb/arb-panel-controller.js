@@ -133,6 +133,25 @@
       return options.arbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
     }
 
+    function getFixedRuleWatchItems() {
+      return options.arbPathConfigUtils && typeof options.arbPathConfigUtils.getFixedRuleWatchItems === 'function'
+        ? options.arbPathConfigUtils.getFixedRuleWatchItems(arbPathConfig)
+        : [];
+    }
+
+    function getConfiguredFixedPathRules() {
+      const watchItems = getFixedRuleWatchItems();
+      if (!watchItems.length) return fixedPathRules;
+      const rulesById = new Map(
+        fixedPathRules
+          .filter((rule) => rule && rule.id)
+          .map((rule) => [rule.id, rule])
+      );
+      return watchItems
+        .map((item) => rulesById.get(item.ruleId))
+        .filter(Boolean);
+    }
+
     function formatChainLabel(chain) {
       return options.chainDefaults.getChainDisplayName(chain);
     }
@@ -216,7 +235,7 @@
         preferredStartSymbols: preferredCycleStartSymbols
       });
 
-      for (const rule of fixedPathRules) {
+      for (const rule of getConfiguredFixedPathRules()) {
         if (!rule) continue;
         const filteredEdges = options.arbFixedUtils.filterEdgesForFixedRule(rule, allTopologyEdgesWithRules, quoteMetaById);
         fixedTemplatesByRuleId[rule.id] = utils.buildFixedPathTemplates(filteredEdges, rule, aliasRules, {
@@ -261,7 +280,7 @@
         getActiveQuotes
       );
       const baseSnapshot = options.arbRuleSnapshotUtils.buildArbRuleSnapshot({
-        fixedRules: fixedPathRules,
+        fixedRules: getConfiguredFixedPathRules(),
         specialRules: specialArbRules,
         allEdgesWithRules,
         fixedTemplatesByRuleId: topologyCacheForFixed && topologyCacheForFixed.fixedTemplatesByRuleId
@@ -354,8 +373,16 @@
     }
 
     function buildFixedSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
+      const fixedResults = (
+        options.arbPathConfigUtils && typeof options.arbPathConfigUtils.applyFixedRuleWatchItemsToResults === 'function'
+      )
+        ? options.arbPathConfigUtils.applyFixedRuleWatchItemsToResults(
+          sharedRuleSnapshot.fixedResults,
+          getFixedRuleWatchItems()
+        )
+        : sharedRuleSnapshot.fixedResults;
       return arbPanelLayoutUtils.buildFixedArbSections({
-        fixedResults: sharedRuleSnapshot.fixedResults,
+        fixedResults,
         getDisplayMinProfitBp: (rule) => arbPanelLayoutUtils.normalizeDisplayMinProfitBp(
           rule && rule.displayMinProfitBp,
           arbPanelLayoutUtils.resolveDefaultDisplayMinProfitBp(options.pathAlertRuleDefinitions)
