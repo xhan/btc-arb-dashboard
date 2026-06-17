@@ -1,8 +1,9 @@
 const { ethers } = require('ethers');
 const path = require('path');
+const chainDefaults = require('../shared/chain-defaults');
 
 function normalizeChainKey(chain) {
-  return String(chain || '').trim().toLowerCase();
+  return chainDefaults.normalizeChain(chain);
 }
 
 function normalizeTokenKey(token) {

@@ -30,6 +30,14 @@ const {
     'ethereum-0xabcd'
   );
   assert.strictEqual(
+    normalizeTokenMetaCacheKey(' arb ', '0xAbCd'),
+    'arbitrum-0xabcd'
+  );
+  assert.strictEqual(
+    normalizeTokenMetaCacheKey(' eth ', '0xAbCd'),
+    'ethereum-0xabcd'
+  );
+  assert.strictEqual(
     normalizeTokenMetaCacheKey('solana', 'So11111111111111111111111111111111111111112'),
     'solana-So11111111111111111111111111111111111111112'
   );
