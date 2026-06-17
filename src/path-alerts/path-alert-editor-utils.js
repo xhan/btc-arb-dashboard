@@ -1,10 +1,13 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(
+      typeof globalThis !== 'undefined' ? globalThis : root,
+      require('../shared/chain-defaults')
+    );
     return;
   }
-  root.PathAlertEditorUtils = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  root.PathAlertEditorUtils = factory(root, root.ChainDefaults || null);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (root, chainDefaults) {
   function escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -14,13 +17,26 @@
       .replace(/'/g, '&#39;');
   }
 
+  function getPathAlertEditorChainDefaults() {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') return chainDefaults;
+    if (root && root.ChainDefaults && typeof root.ChainDefaults.getChainDisplayName === 'function') {
+      return root.ChainDefaults;
+    }
+    return null;
+  }
+
+  function formatDefaultPathAlertEditorChainLabel(chain) {
+    const defaults = getPathAlertEditorChainDefaults();
+    return defaults ? defaults.getChainDisplayName(chain) : String(chain || '');
+  }
+
   function buildPathAlertQuotePairLabel(chain, fromSymbol, toSymbol, suffix, options = {}) {
     if (typeof options.buildQuoteLabel === 'function') {
       return options.buildQuoteLabel(chain, fromSymbol, toSymbol, suffix);
     }
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
-      : (value) => String(value || '');
+      : formatDefaultPathAlertEditorChainLabel;
     return `(${formatChainLabel(chain)}) ${fromSymbol || '--'} -> ${toSymbol || '--'}${suffix || ''}`;
   }
 

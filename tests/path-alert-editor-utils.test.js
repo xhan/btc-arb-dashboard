@@ -233,6 +233,16 @@ assert.deepStrictEqual(
 );
 assert.deepStrictEqual(
   buildPathAlertEditorTargetSummaryLines({
+    sourceType: 'path',
+    legs: [
+      { chain: 'ethereum', fromSymbol: 'WETH', toSymbol: 'USDC' },
+      { chain: 'arbitrum', fromSymbol: 'USDC', toSymbol: 'WETH' }
+    ]
+  }),
+  ['(eth) WETH -> USDC', '(arb) USDC -> WETH']
+);
+assert.deepStrictEqual(
+  buildPathAlertEditorTargetSummaryLines({
     sourceType: 'quote',
     selectedQuoteId: '202',
     quoteDirection: 'forward',
@@ -294,6 +304,11 @@ const selectedLegsHtml = renderPathAlertEditorSelectedLegsHtml(
 );
 assert.ok(selectedLegsHtml.includes('ethereum:WETH-&gt;USDC'));
 assert.ok(selectedLegsHtml.includes('data-editor-remove-leg="0"'));
+const selectedLegsDefaultHtml = renderPathAlertEditorSelectedLegsHtml({
+  sourceType: 'path',
+  legs: [{ chain: 'arbitrum', fromSymbol: 'USDC', toSymbol: 'WETH' }]
+});
+assert.ok(selectedLegsDefaultHtml.includes('(arb) USDC -&gt; WETH'));
 const editorHtml = renderPathAlertEditorHtml({
   draft: {
     name: 'Draft <name>',
