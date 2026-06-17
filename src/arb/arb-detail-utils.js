@@ -1,10 +1,13 @@
 (function (root, factory) {
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('../ui/dex-link-utils'), require('./arb-paths'));
+    module.exports = factory(require('../ui/dex-link-utils'), require('./arb-paths'), chainDefaults);
     return;
   }
-  root.ArbDetailUtils = factory(root.DexLinkUtils, root.ArbPaths);
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (dexLinkUtils, arbPaths) {
+  root.ArbDetailUtils = factory(root.DexLinkUtils, root.ArbPaths, chainDefaults);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (dexLinkUtils, arbPaths, chainDefaults) {
   const buildDexLink = dexLinkUtils && typeof dexLinkUtils.buildDexLink === 'function'
     ? dexLinkUtils.buildDexLink
     : () => null;
@@ -164,6 +167,13 @@
     return 'neutral';
   }
 
+  function formatDefaultChainLabel(chain) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return String(chain || '');
+  }
+
   function buildArbDetailRow(quote, quoteData, options = {}) {
     const isInverseFetch = options.isInverseFetch === true;
     const symbols = quoteData && quoteData.symbols && typeof quoteData.symbols === 'object'
@@ -171,7 +181,7 @@
       : {};
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
-      : (chain) => String(chain || '');
+      : formatDefaultChainLabel;
     const formatAmount = typeof options.formatAmount === 'function'
       ? options.formatAmount
       : (value) => String(formatDetailNumber(value));

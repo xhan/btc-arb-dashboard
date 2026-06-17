@@ -386,6 +386,9 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/arb/arb-special-utils.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/arb/arb-detail-utils.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/arb/arb-runtime-memory-utils.js"') < response.body.indexOf('src="src/arb/arb-alert-bridge-utils.js"')
     );
     assert.ok(
@@ -1173,6 +1176,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPathsResponse.body.includes("require('../shared/chain-defaults')"));
     assert.ok(arbPathTemplateCacheUtilsResponse.body.includes("require('../shared/chain-defaults')"));
     assert.ok(arbSpecialUtilsResponse.body.includes("require('../shared/chain-defaults')"));
+    assert.ok(arbDetailUtilsResponse.body.includes("require('../shared/chain-defaults')"));
     assert.ok(!appJsResponse.body.includes('const CHAIN_DISPLAY_NAMES = {'));
     assert.ok(!appJsResponse.body.includes('const CHAIN_FILTER_ALIASES = {'));
     assert.ok(!appJsResponse.body.includes('function getSingleChainDisplayName(chain)'));

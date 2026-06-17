@@ -383,6 +383,14 @@ assert.deepStrictEqual(
   }
 );
 
+assert.strictEqual(
+  buildArbDetailRow(
+    { id: 19, chain: 'arbitrum' },
+    { symbols: { from: 'WBTC', to: 'cbBTC' }, rawPrice: 1, finalAmountOut: 1 }
+  ).chainLabel,
+  'arb'
+);
+
 assert.deepStrictEqual(
   applyArbDetailRateDeltas(
     [{ rawPrice: 1.001 }, { rawPrice: 0.9998 }, { rawPrice: 1 }, { rawPrice: 1.0001 }],
