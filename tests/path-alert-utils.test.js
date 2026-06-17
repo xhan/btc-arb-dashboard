@@ -636,6 +636,19 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   buildPathAlertSummaryLines({
     target: {
+      type: 'path',
+      legs: [
+        { chain: 'ethereum', fromSymbol: 'A', toSymbol: 'B' },
+        { chain: 'arbitrum', fromSymbol: 'B', toSymbol: 'A' }
+      ]
+    }
+  }),
+  ['(eth) A -> B', '(arb) B -> A']
+);
+
+assert.deepStrictEqual(
+  buildPathAlertSummaryLines({
+    target: {
       type: 'rule',
       ruleKind: 'fixed',
       ruleId: 'fixed:gho-usdc'

@@ -2,12 +2,13 @@
   if (typeof module === 'object' && module.exports) {
     module.exports = factory(
       typeof globalThis !== 'undefined' ? globalThis : root,
-      require('../alerts/special-rule-alert-config-utils')
+      require('../alerts/special-rule-alert-config-utils'),
+      require('../shared/chain-defaults')
     );
     return;
   }
-  root.PathAlertUtils = factory(root, root.SpecialRuleAlertConfigUtils || null);
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (root, specialRuleAlertConfigUtils) {
+  root.PathAlertUtils = factory(root, root.SpecialRuleAlertConfigUtils || null, root.ChainDefaults || null);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (root, specialRuleAlertConfigUtils, chainDefaults) {
   const DEFAULT_PATH_ALERT_WEBHOOK_URL = 'https://api.day.app/45xWAiD79Rn8DPXw6Beudh/[title]/[body]?sound=ladder';
   const DEFAULT_TELEGRAM_BOT_API_BASE_URL = 'https://api.telegram.org';
   const DEFAULT_PATH_ALERT_THRESHOLD_BP = 1.1;
@@ -63,6 +64,19 @@
       return root.SpecialRuleAlertConfigUtils;
     }
     return null;
+  }
+
+  function getPathAlertChainDefaults() {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') return chainDefaults;
+    if (root && root.ChainDefaults && typeof root.ChainDefaults.getChainDisplayName === 'function') {
+      return root.ChainDefaults;
+    }
+    return null;
+  }
+
+  function formatPathAlertChainLabel(chain) {
+    const defaults = getPathAlertChainDefaults();
+    return defaults ? defaults.getChainDisplayName(chain) : String(chain || '');
   }
 
   function normalizePathAlertLeg(leg) {
@@ -316,7 +330,7 @@
     if (!alert || !alert.target) return [];
     const formatLeg = typeof options.formatLeg === 'function'
       ? options.formatLeg
-      : (leg) => `(${leg.chain || '--'}) ${leg.fromSymbol || '--'} -> ${leg.toSymbol || '--'}`;
+      : (leg) => `(${formatPathAlertChainLabel(leg.chain) || '--'}) ${leg.fromSymbol || '--'} -> ${leg.toSymbol || '--'}`;
     const findRule = typeof options.findRule === 'function' ? options.findRule : () => null;
 
     if (alert.target.type === 'rule') {
