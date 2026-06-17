@@ -156,6 +156,20 @@ assert.deepStrictEqual(
   ['同源链', 'eth', 'arb']
 );
 
+const defaultChainLabelRefs = {
+  chainSelect: {
+    options: [
+      { value: 'arbitrum', textContent: 'Arbitrum' },
+      { value: 'ethereum', textContent: 'Ethereum' }
+    ]
+  }
+};
+assert.strictEqual(applyChainSelectDisplayLabels(defaultChainLabelRefs), 2);
+assert.deepStrictEqual(
+  defaultChainLabelRefs.chainSelect.options.map((option) => option.textContent),
+  ['arb', 'eth']
+);
+
 let resetSyncCount = 0;
 const resetRefs = createRefs();
 const resetResult = resetAddQuoteModal(resetRefs, {

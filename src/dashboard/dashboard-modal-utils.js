@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory();
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
+  const api = factory(chainDefaults);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   if (root && root.window) {
     root.window.DashboardModalUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   function readElementValue(element) {
     return element ? element.value : '';
   }
@@ -21,6 +24,13 @@
     if (element && element.style) {
       element.style.display = display;
     }
+  }
+
+  function formatDefaultChainLabel(chain) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return String(chain || '');
   }
 
   function addClass(element, className) {
@@ -286,7 +296,7 @@
   function applyChainSelectDisplayLabels(refs = {}, options = {}) {
     const formatChainLabel = typeof options.formatChainLabel === 'function'
       ? options.formatChainLabel
-      : (chain) => String(chain || '');
+      : formatDefaultChainLabel;
     const selects = [refs.chainSelect, refs.toChainSelect].filter(Boolean);
     let updatedCount = 0;
 

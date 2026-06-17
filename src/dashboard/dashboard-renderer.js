@@ -1,10 +1,13 @@
 (function (root, factory) {
+  const chainDefaults = typeof module !== 'undefined' && module.exports
+    ? require('../shared/chain-defaults')
+    : root.ChainDefaults;
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
+    module.exports = factory(chainDefaults);
     return;
   }
-  root.DashboardRenderer = factory();
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  root.DashboardRenderer = factory(chainDefaults);
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   function escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -80,6 +83,13 @@
     return typeof config.normalizeChainKey === 'function'
       ? config.normalizeChainKey
       : (value) => String(value || '').trim().toLowerCase();
+  }
+
+  function formatDefaultChainLabel(chain) {
+    if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
+      return chainDefaults.getChainDisplayName(chain);
+    }
+    return String(chain || '');
   }
 
   function renderQuoteItemShell(config = {}) {
@@ -348,7 +358,7 @@
       : () => '';
     const getSingleChainDisplayName = typeof config.getSingleChainDisplayName === 'function'
       ? config.getSingleChainDisplayName
-      : (chain) => String(chain || '');
+      : formatDefaultChainLabel;
 
     const isCex = isCexOrderbookChain(quote.chain);
     const isCrossChain = isCrossChainQuote(quote);

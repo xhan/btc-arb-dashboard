@@ -558,6 +558,25 @@ assert.deepStrictEqual(buildQuoteSettingsModalWritePlan(modalViewState), {
   ]
 });
 
+const defaultChainLabelModalViewState = buildQuoteSettingsModalViewState({
+  quote: {
+    chain: 'arbitrum',
+    toChain: 'ethereum',
+    fromToken: '0xfrom',
+    toToken: '0xto'
+  },
+  monitorState: {
+    fromSymbol: 'WBTC',
+    toSymbol: 'cbBTC'
+  },
+  isEvmChain: () => true
+});
+assert.deepStrictEqual(defaultChainLabelModalViewState.tokenAddresses, {
+  visible: true,
+  fromLine: 'WBTC (arb) 0xfrom',
+  toLine: 'cbBTC (eth) 0xto'
+});
+
 assert.deepStrictEqual(
   buildQuoteSettingsModalViewState({
     quote: { chain: 'arbitrum', toChain: 'base', preferredSource: 'Kyber' },
