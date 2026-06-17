@@ -461,6 +461,7 @@
         sectionKey: globalSectionKey,
         cycles: globalCycles,
         ...filterCriteria,
+        normalizeChain: (chain) => options.chainDefaults.normalizeChain(chain),
         expanded: arbExpandedSections.has(globalSectionKey),
         isRuleLeg,
         buildEntry: (cycle, index) => createOpportunityEntry(

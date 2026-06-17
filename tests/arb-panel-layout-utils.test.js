@@ -310,6 +310,18 @@ assert.deepStrictEqual(
   }
 );
 
+const chainAliasFilterSection = buildGlobalArbSection({
+  cycles: [
+    { id: 'arb-cycle', profitRate: 0.001, legs: [{ chain: 'arb', from: 'A', to: 'B' }] },
+    { id: 'base-cycle', profitRate: 0.001, legs: [{ chain: 'base', from: 'B', to: 'A' }] }
+  ],
+  excludedChains: ['arbitrum'],
+  normalizeChain: (chain) => ({ arb: 'arbitrum' }[String(chain || '').toLowerCase()] || String(chain || '').toLowerCase()),
+  buildEntry: (cycle) => cycle.id
+});
+
+assert.deepStrictEqual(chainAliasFilterSection.opportunities, ['base-cycle']);
+
 assert.deepStrictEqual(
   buildGlobalArbFilterState({
     excludedSymbolsInput: ' cbBTC ',

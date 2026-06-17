@@ -457,10 +457,13 @@
     return cycle.legs.some(leg => symbolSet.has(leg.from) || symbolSet.has(leg.to));
   }
 
-  function cycleContainsAnyChains(cycle, chains) {
+  function cycleContainsAnyChains(cycle, chains, options = {}) {
     if (!cycle || !Array.isArray(cycle.legs) || !Array.isArray(chains) || !chains.length) return false;
-    const chainSet = new Set(chains);
-    return cycle.legs.some(leg => chainSet.has(String(leg.chain || '')));
+    const normalizeChain = typeof options.normalizeChain === 'function'
+      ? options.normalizeChain
+      : (chain) => String(chain || '');
+    const chainSet = new Set(chains.map((chain) => normalizeChain(chain)).filter(Boolean));
+    return cycle.legs.some((leg) => chainSet.has(normalizeChain(leg && leg.chain)));
   }
 
   function filterGlobalArbCycles(cycles, options = {}) {
@@ -469,6 +472,7 @@
     const excludedSymbols = Array.isArray(options.excludedSymbols) ? options.excludedSymbols : [];
     const excludedChains = Array.isArray(options.excludedChains) ? options.excludedChains : [];
     const isRuleLeg = typeof options.isRuleLeg === 'function' ? options.isRuleLeg : () => false;
+    const normalizeChain = typeof options.normalizeChain === 'function' ? options.normalizeChain : null;
     const twoLegOnlyCycles = options.twoLegOnly === true
       ? sourceCycles.filter((cycle) => {
         const cycleLegs = Array.isArray(cycle && cycle.legs) ? cycle.legs.filter((leg) => !isRuleLeg(leg)) : [];
@@ -480,7 +484,7 @@
       ? twoLegOnlyCycles.filter(cycle =>
         (!includedSymbols.length || cycleContainsAnySymbols(cycle, includedSymbols)) &&
         !cycleContainsAnySymbols(cycle, excludedSymbols) &&
-        !cycleContainsAnyChains(cycle, excludedChains)
+        !cycleContainsAnyChains(cycle, excludedChains, { normalizeChain })
       )
       : twoLegOnlyCycles;
 
@@ -497,6 +501,7 @@
       includedSymbols: options.includedSymbols,
       excludedSymbols: options.excludedSymbols,
       excludedChains: options.excludedChains,
+      normalizeChain: options.normalizeChain,
       twoLegOnly: options.twoLegOnly === true,
       isRuleLeg: options.isRuleLeg
     });
