@@ -11,6 +11,10 @@ assert.strictEqual(
   getQuoteLogPairLabel('base', 'GHO', '', '0xfrom', '0xabcdef1234567890'),
   'base GHO/0xabcd...7890'
 );
+assert.strictEqual(
+  getQuoteLogPairLabel('arbitrum', 'USDC', 'USDT', '0xfrom', '0xto'),
+  'arb USDC/USDT'
+);
 
 assert.strictEqual(getQuoteLogChannelLabel({ channelId: 'HK-1', channelName: '香港 1' }), '香港 1/HK-1');
 assert.strictEqual(getQuoteLogChannelLabel({ channelId: 'default', channelName: 'default' }), 'default');

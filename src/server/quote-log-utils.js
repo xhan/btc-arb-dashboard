@@ -1,13 +1,21 @@
+const chainDefaults = require('../shared/chain-defaults');
+
 function shortAddr(addr = '') {
     const s = String(addr);
     if (s.length <= 12) return s;
     return `${s.slice(0, 6)}...${s.slice(-4)}`;
 }
 
+function formatQuoteLogChainLabel(chain) {
+    return chainDefaults && typeof chainDefaults.getChainDisplayName === 'function'
+        ? chainDefaults.getChainDisplayName(chain)
+        : String(chain || '').toLowerCase();
+}
+
 function getQuoteLogPairLabel(chain, fromSymbol, toSymbol, fromToken, toToken) {
     const left = fromSymbol || shortAddr(fromToken);
     const right = toSymbol || shortAddr(toToken);
-    return `${String(chain || '').toLowerCase()} ${left}/${right}`;
+    return `${formatQuoteLogChainLabel(chain)} ${left}/${right}`;
 }
 
 function getQuoteLogChannelLabel(ctx) {
