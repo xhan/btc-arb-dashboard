@@ -12,6 +12,7 @@
     const modules = options.modules || {};
     const deps = options.deps || {};
     const refs = options.refs || {};
+    const shellRuntime = deps.dashboardShellRuntime || {};
     const commandRuntime = deps.dashboardCommandRuntime || {};
     const boardRuntime = deps.dashboardAppBoardRuntime || {};
     const dashboardLifecycleController = modules.getDashboardLifecycleController().createDashboardLifecycleController({
@@ -40,22 +41,22 @@
       keyboardShortcutController: commandRuntime.keyboardShortcutController || deps.keyboardShortcutController,
       normalizeArbCycleStartPriority: modules.getArbCyclePriorityUtils().normalizeArbCycleStartPriority,
       openAddCategoryModal: boardRuntime.openAddCategoryModal || deps.openAddCategoryModal,
-      performSave: deps.performSave,
+      performSave: shellRuntime.performSave || deps.performSave,
       priceSnapshotSaveRuntime: deps.priceSnapshotSaveRuntime,
       priceSnapshotTimerRuntime: deps.priceSnapshotTimerRuntime,
       quoteSpreadController: deps.quoteSpreadController,
       renderDashboard: deps.renderDashboardForCurrentState,
-      requestChannelRuntime: deps.requestChannelRuntime,
-      requestChannelTagVisibilityRuntime: deps.requestChannelTagVisibilityRuntime,
+      requestChannelRuntime: shellRuntime.requestChannelRuntime || deps.requestChannelRuntime,
+      requestChannelTagVisibilityRuntime: shellRuntime.requestChannelTagVisibilityRuntime || deps.requestChannelTagVisibilityRuntime,
       refs,
-      saveData: deps.saveData,
+      saveData: shellRuntime.saveData || deps.saveData,
       setApiIntervals: deps.setApiIntervals,
       setArbCycleStartPriority: deps.setArbCycleStartPriority,
       setArbPanelMaxHeight: deps.setArbPanelMaxHeight,
       setDashboardState: deps.setDashboardState,
       setPriceSnapshotConfig: deps.setPriceSnapshotConfig,
-      settingsModalRuntime: deps.settingsModalRuntime,
-      themeRuntime: deps.themeRuntime,
+      settingsModalRuntime: shellRuntime.settingsModalRuntime || deps.settingsModalRuntime,
+      themeRuntime: shellRuntime.themeRuntime || deps.themeRuntime,
       updateArbPanel: deps.updateArbPanel,
       updateSchedulers: deps.updateSchedulers,
       windowImpl: deps.windowImpl

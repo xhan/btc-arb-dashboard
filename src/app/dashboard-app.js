@@ -124,10 +124,7 @@
             setTimeout
         }
     });
-    const themeRuntime = dashboardShellRuntime.themeRuntime;
-    const performSave = dashboardShellRuntime.performSave;
     const saveData = dashboardShellRuntime.saveData;
-    const settingsModalRuntime = dashboardShellRuntime.settingsModalRuntime;
     const addQuoteModalSelectionRuntime = dashboardShellRuntime.addQuoteModalSelectionRuntime;
     const quoteSettingsSelectionRuntime = dashboardShellRuntime.quoteSettingsSelectionRuntime;
     const confirmActionRuntime = dashboardShellRuntime.confirmActionRuntime;
@@ -333,6 +330,7 @@
             dashboardApiClient,
             dashboardAppBoardRuntime,
             dashboardCommandRuntime,
+            dashboardShellRuntime,
             dashboardViewModeController,
             defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
             defaultIntervals: DEFAULT_INTERVALS,
@@ -342,7 +340,6 @@
             getDashboardState,
             getPriceSnapshotConfig,
             invalidateArbRuleSnapshotCache,
-            performSave,
             priceSnapshotSaveRuntime,
             priceSnapshotTimerRuntime,
             quoteSpreadController,
@@ -355,8 +352,6 @@
             setArbPanelMaxHeight,
             setDashboardState,
             setPriceSnapshotConfig,
-            settingsModalRuntime,
-            themeRuntime,
             updateArbPanel,
             updateSchedulers,
             windowImpl: window

@@ -1720,8 +1720,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(shellRuntimeResponse.body.includes('saveRuntimeOptions: {'));
     assert.ok(shellRuntimeResponse.body.includes('feedbackOptions: {'));
     assert.ok(appShellRuntimeResponse.body.includes('saveDashboardConfig: (payload) => deps.dashboardApiClient.saveDashboardConfig(payload)'));
-    assert.ok(appJsResponse.body.includes('const performSave = dashboardShellRuntime.performSave;'));
+    assert.ok(!appJsResponse.body.includes('const performSave = dashboardShellRuntime.performSave;'));
     assert.ok(appJsResponse.body.includes('const saveData = dashboardShellRuntime.saveData;'));
+    assert.ok(appJsResponse.body.includes('dashboardShellRuntime,'));
     assert.ok(lifecycleControllerResponse.body.includes("addClickListener(refs.manualSaveBtn, () => { void deps.performSave({ manual: true }); });"));
     assert.ok(!appJsResponse.body.includes("manualSaveBtn.addEventListener('click', () => { void performSave({ manual: true }); });"));
     assert.ok(!appJsResponse.body.includes('const dashboardSaveRuntime ='));

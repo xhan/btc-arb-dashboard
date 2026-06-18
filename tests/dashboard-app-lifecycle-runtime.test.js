@@ -30,6 +30,14 @@ const deps = {
   clearTopologyCache: () => {},
   confirmActionRuntime: { id: 'confirm-runtime' },
   dashboardApiClient: { id: 'api-client' },
+  dashboardShellRuntime: {
+    performSave: () => 'perform-save',
+    requestChannelRuntime: { id: 'request-channel' },
+    requestChannelTagVisibilityRuntime: { id: 'request-tag-visibility' },
+    saveData: () => 'save-data',
+    settingsModalRuntime: { id: 'settings-modal' },
+    themeRuntime: { id: 'theme-runtime' }
+  },
   dashboardCommandController: { id: 'legacy-command-controller' },
   dashboardCommandRuntime: {
     dashboardCommandController: { id: 'command-controller' },
@@ -55,21 +63,21 @@ const deps = {
   invalidateArbRuleSnapshotCache: () => {},
   keyboardShortcutController: { id: 'legacy-keyboard-controller' },
   openAddCategoryModal: () => 'legacy-open-category',
-  performSave: () => {},
+  performSave: () => 'legacy-perform-save',
   priceSnapshotSaveRuntime: { id: 'price-save' },
   priceSnapshotTimerRuntime: { id: 'price-timer' },
   quoteSpreadController: { id: 'quote-spread' },
   renderDashboardForCurrentState: () => {},
-  requestChannelRuntime: { id: 'request-channel' },
-  requestChannelTagVisibilityRuntime: { id: 'request-tag-visibility' },
-  saveData: () => {},
+  requestChannelRuntime: { id: 'legacy-request-channel' },
+  requestChannelTagVisibilityRuntime: { id: 'legacy-request-tag-visibility' },
+  saveData: () => 'legacy-save-data',
   setApiIntervals: () => {},
   setArbCycleStartPriority: () => {},
   setArbPanelMaxHeight: () => {},
   setDashboardState: () => {},
   setPriceSnapshotConfig: () => {},
-  settingsModalRuntime: { id: 'settings-modal' },
-  themeRuntime: { id: 'theme-runtime' },
+  settingsModalRuntime: { id: 'legacy-settings-modal' },
+  themeRuntime: { id: 'legacy-theme-runtime' },
   updateArbPanel: () => {},
   updateSchedulers: () => {},
   windowImpl: { id: 'window' }
@@ -115,6 +123,12 @@ assert.strictEqual(capturedOptions.dashboardFormController, deps.dashboardAppBoa
 assert.strictEqual(capturedOptions.handleDashboardClick(), 'dashboard-click');
 assert.strictEqual(capturedOptions.handleDashboardInput(), 'dashboard-input');
 assert.strictEqual(capturedOptions.openAddCategoryModal(), 'open-category');
+assert.strictEqual(capturedOptions.performSave(), 'perform-save');
+assert.strictEqual(capturedOptions.saveData(), 'save-data');
+assert.strictEqual(capturedOptions.requestChannelRuntime, deps.dashboardShellRuntime.requestChannelRuntime);
+assert.strictEqual(capturedOptions.requestChannelTagVisibilityRuntime, deps.dashboardShellRuntime.requestChannelTagVisibilityRuntime);
+assert.strictEqual(capturedOptions.settingsModalRuntime, deps.dashboardShellRuntime.settingsModalRuntime);
+assert.strictEqual(capturedOptions.themeRuntime, deps.dashboardShellRuntime.themeRuntime);
 assert.strictEqual(capturedOptions.dashboardRenderer.id, 'renderer');
 assert.strictEqual(capturedOptions.defaultArbCycleStartPriority, deps.defaultArbCycleStartPriority);
 assert.strictEqual(capturedOptions.defaultIntervals, deps.defaultIntervals);
