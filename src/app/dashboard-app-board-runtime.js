@@ -13,8 +13,21 @@
     const deps = options.deps || {};
     const refs = options.refs || {};
     const shellRuntime = deps.dashboardShellRuntime || {};
+    const workspaceRuntime = deps.dashboardAppWorkspaceRuntime || {};
     const saveData = shellRuntime.saveData || deps.saveData;
     const updateRequestChannelTagForQuote = shellRuntime.updateRequestChannelTagForQuote || deps.updateRequestChannelTagForQuote;
+
+    function getWorkspaceDep(name) {
+      return workspaceRuntime[name] || deps[name];
+    }
+
+    function getArbDetailState() {
+      const arbDetailController = workspaceRuntime.arbDetailController;
+      if (arbDetailController && typeof arbDetailController.getState === 'function') {
+        return arbDetailController.getState();
+      }
+      return typeof deps.getArbDetailState === 'function' ? deps.getArbDetailState() : null;
+    }
 
     function getRequestChannelOptions() {
       const requestChannelRuntime = shellRuntime.requestChannelRuntime || deps.requestChannelRuntime;
@@ -48,32 +61,32 @@
         getDashboardState: deps.getDashboardState
       },
       actionOptions: {
-        activeFetchControllerRuntime: deps.activeFetchControllerRuntime,
+        activeFetchControllerRuntime: getWorkspaceDep('activeFetchControllerRuntime'),
         amountInputDebounceRuntime: deps.amountInputDebounceRuntime,
         arbDetailUtils: modules.getArbDetailUtils(),
         closestEventTarget: deps.closestEventTarget,
-        closeArbDetailModal: deps.closeArbDetailModal,
-        copyDexLinkFromElement: deps.copyDexLinkFromElement,
-        copyPriceText: deps.copyPriceText,
+        closeArbDetailModal: getWorkspaceDep('closeArbDetailModal'),
+        copyDexLinkFromElement: getWorkspaceDep('copyDexLinkFromElement'),
+        copyPriceText: getWorkspaceDep('copyPriceText'),
         deleteQuoteMarketState: deps.deleteQuoteMarketState,
         deleteQuoteUiRuntimeState: deps.deleteQuoteUiRuntimeState,
         domRenderUtils: deps.domRenderUtils,
         evaluatePathAlertsOnce: deps.evaluatePathAlertsOnce,
-        formatChainLabel: deps.formatChainLabel,
-        getArbDetailState: deps.getArbDetailState,
-        getCategoryPauseAction: deps.getCategoryPauseAction,
-        getQuoteChainDisplayName: deps.getQuoteChainDisplayName,
+        formatChainLabel: getWorkspaceDep('formatChainLabel'),
+        getArbDetailState,
+        getCategoryPauseAction: getWorkspaceDep('getCategoryPauseAction'),
+        getQuoteChainDisplayName: getWorkspaceDep('getQuoteChainDisplayName'),
         getQuoteMarketState: deps.getQuoteMarketState,
-        isCexOrderbookChain: deps.isCexOrderbookChain,
-        isCrossChainQuote: deps.isCrossChainQuote,
-        isEvmChain: deps.isEvmChain,
-        isQuotePaused: deps.isQuotePaused,
-        normalizeChainKey: deps.normalizeChainKey,
+        isCexOrderbookChain: getWorkspaceDep('isCexOrderbookChain'),
+        isCrossChainQuote: getWorkspaceDep('isCrossChainQuote'),
+        isEvmChain: getWorkspaceDep('isEvmChain'),
+        isQuotePaused: getWorkspaceDep('isQuotePaused'),
+        normalizeChainKey: getWorkspaceDep('normalizeChainKey'),
         quotePauseUtils: modules.getQuotePauseUtils(),
         quoteStateRuntime: deps.quoteStateRuntime,
-        queueQuoteRefresh: deps.queueQuoteRefresh,
-        removeFromQueue: deps.removeFromQueue,
-        renderDataTerminalPanel: deps.renderDataTerminalPanel,
+        queueQuoteRefresh: getWorkspaceDep('queueQuoteRefresh'),
+        removeFromQueue: getWorkspaceDep('removeFromQueue'),
+        renderDataTerminalPanel: getWorkspaceDep('renderDataTerminalPanel'),
         requestChannelUtils: modules.getRequestChannelUtils(),
         resetQuoteUiRuntimeState: deps.resetQuoteUiRuntimeState,
         saveData,
@@ -85,31 +98,31 @@
       },
       viewOptions: {
         dexLinkUtils: modules.getDexLinkUtils(),
-        getCategoryPauseAction: deps.getCategoryPauseAction,
-        getInverseQuoteDisplayText: deps.getInverseQuoteDisplayText,
-        getQuoteChainDisplayName: deps.getQuoteChainDisplayName,
-        getQuoteDisplayText: deps.getQuoteDisplayText,
+        getCategoryPauseAction: getWorkspaceDep('getCategoryPauseAction'),
+        getInverseQuoteDisplayText: getWorkspaceDep('getInverseQuoteDisplayText'),
+        getQuoteChainDisplayName: getWorkspaceDep('getQuoteChainDisplayName'),
+        getQuoteDisplayText: getWorkspaceDep('getQuoteDisplayText'),
         getQuoteMarketState: deps.getQuoteMarketState,
-        handleQuoteHover: deps.handleQuoteHover,
-        isCexOrderbookChain: deps.isCexOrderbookChain,
-        isCrossChainQuote: deps.isCrossChainQuote,
-        isQuotePaused: deps.isQuotePaused,
+        handleQuoteHover: getWorkspaceDep('handleQuoteHover'),
+        isCexOrderbookChain: getWorkspaceDep('isCexOrderbookChain'),
+        isCrossChainQuote: getWorkspaceDep('isCrossChainQuote'),
+        isQuotePaused: getWorkspaceDep('isQuotePaused'),
         logger: deps.logger,
         quoteDisplayUtils: modules.getQuoteDisplayUtils(),
         requestChannelUtils: modules.getRequestChannelUtils(),
         saveData,
-        shouldQueueInverseFetch: deps.shouldQueueInverseFetch
+        shouldQueueInverseFetch: getWorkspaceDep('shouldQueueInverseFetch')
       },
       formOptions: {
-        defaultSourceResolver: deps.defaultSourceResolver,
-        formatChainLabel: deps.formatChainLabel,
-        isCexOrderbookChain: deps.isCexOrderbookChain,
-        isCrossChainQuote: deps.isCrossChainQuote,
-        isEvmChain: deps.isEvmChain,
-        normalizeChainKey: deps.normalizeChainKey,
+        defaultSourceResolver: getWorkspaceDep('defaultSourceResolver'),
+        formatChainLabel: getWorkspaceDep('formatChainLabel'),
+        isCexOrderbookChain: getWorkspaceDep('isCexOrderbookChain'),
+        isCrossChainQuote: getWorkspaceDep('isCrossChainQuote'),
+        isEvmChain: getWorkspaceDep('isEvmChain'),
+        normalizeChainKey: getWorkspaceDep('normalizeChainKey'),
         pathAlertPageUtils: modules.getPathAlertPageUtils(),
-        queueQuoteRefresh: deps.queueQuoteRefresh,
-        removeFromQueue: deps.removeFromQueue,
+        queueQuoteRefresh: getWorkspaceDep('queueQuoteRefresh'),
+        removeFromQueue: getWorkspaceDep('removeFromQueue'),
         requestChannelUtils: modules.getRequestChannelUtils(),
         saveData,
         updateRequestChannelTagForQuote,

@@ -41,6 +41,31 @@ const deps = {
   confirmActionRuntime: { id: 'confirm-runtime' },
   copyDexLinkFromElement: () => {},
   copyPriceText: () => {},
+  dashboardAppWorkspaceRuntime: {
+    activeFetchControllerRuntime: { id: 'workspace-active-fetch-runtime' },
+    closeArbDetailModal: () => 'workspace-close-detail',
+    copyDexLinkFromElement: () => 'workspace-copy-dex',
+    copyPriceText: () => 'workspace-copy-price',
+    defaultSourceResolver: () => 'workspace-source',
+    formatChainLabel: (chain) => `workspace-chain:${chain}`,
+    getCategoryPauseAction: () => 'workspace-pause',
+    getInverseQuoteDisplayText: () => 'workspace-inverse',
+    getQuoteChainDisplayName: () => 'workspace-chain-name',
+    getQuoteDisplayText: () => 'workspace-display',
+    handleQuoteHover: () => 'workspace-hover',
+    isCexOrderbookChain: () => true,
+    isCrossChainQuote: () => true,
+    isEvmChain: () => false,
+    isQuotePaused: () => true,
+    normalizeChainKey: (chain) => `workspace-normalized:${chain}`,
+    queueQuoteRefresh: () => 'workspace-queue-refresh',
+    removeFromQueue: () => 'workspace-remove',
+    renderDataTerminalPanel: () => 'workspace-render-data-terminal',
+    shouldQueueInverseFetch: () => false,
+    arbDetailController: {
+      getState: () => ({ id: 'workspace-arb-detail-state' })
+    }
+  },
   dashboardRuntimeUtils: { id: 'dashboard-runtime-utils' },
   dashboardShellRuntime: {
     addQuoteModalSelectionRuntime: { id: 'shell-add-quote-selection' },
@@ -134,17 +159,49 @@ assert.strictEqual(capturedOptions.shared.dashboardRenderer.id, 'renderer');
 assert.strictEqual(capturedOptions.shared.dashboardRuntimeUtils, deps.dashboardRuntimeUtils);
 assert.strictEqual(capturedOptions.shared.documentImpl, deps.documentImpl);
 assert.deepStrictEqual(capturedOptions.shared.getDashboardState(), [{ id: 'category' }]);
+assert.strictEqual(capturedOptions.actionOptions.activeFetchControllerRuntime, deps.dashboardAppWorkspaceRuntime.activeFetchControllerRuntime);
 assert.strictEqual(capturedOptions.actionOptions.arbDetailUtils.id, 'arb-detail-utils');
 assert.strictEqual(capturedOptions.actionOptions.quotePauseUtils.id, 'quote-pause-utils');
 assert.strictEqual(capturedOptions.actionOptions.requestChannelUtils.id, 'request-channel-utils');
+assert.strictEqual(capturedOptions.actionOptions.closeArbDetailModal(), 'workspace-close-detail');
+assert.strictEqual(capturedOptions.actionOptions.copyDexLinkFromElement(), 'workspace-copy-dex');
+assert.strictEqual(capturedOptions.actionOptions.copyPriceText(), 'workspace-copy-price');
+assert.deepStrictEqual(capturedOptions.actionOptions.getArbDetailState(), { id: 'workspace-arb-detail-state' });
+assert.strictEqual(capturedOptions.actionOptions.getCategoryPauseAction(), 'workspace-pause');
+assert.strictEqual(capturedOptions.actionOptions.getQuoteChainDisplayName(), 'workspace-chain-name');
+assert.strictEqual(capturedOptions.actionOptions.isCexOrderbookChain(), true);
+assert.strictEqual(capturedOptions.actionOptions.isCrossChainQuote(), true);
+assert.strictEqual(capturedOptions.actionOptions.isEvmChain(), false);
+assert.strictEqual(capturedOptions.actionOptions.isQuotePaused(), true);
+assert.strictEqual(capturedOptions.actionOptions.normalizeChainKey('arb'), 'workspace-normalized:arb');
+assert.strictEqual(capturedOptions.actionOptions.queueQuoteRefresh(), 'workspace-queue-refresh');
+assert.strictEqual(capturedOptions.actionOptions.removeFromQueue(), 'workspace-remove');
+assert.strictEqual(capturedOptions.actionOptions.renderDataTerminalPanel(), 'workspace-render-data-terminal');
 assert.strictEqual(capturedOptions.actionOptions.saveData(), 'shell-save-data');
 assert.strictEqual(capturedOptions.actionOptions.updateRequestChannelTagForQuote(), 'shell-update-request-channel-tag');
 assert.strictEqual(capturedOptions.actionOptions.updateAlertSoundState, deps.updateAlertSoundState);
 assert.strictEqual(capturedOptions.viewOptions.dexLinkUtils.id, 'dex-link-utils');
 assert.strictEqual(capturedOptions.viewOptions.quoteDisplayUtils.id, 'quote-display-utils');
 assert.strictEqual(capturedOptions.viewOptions.logger, deps.logger);
+assert.strictEqual(capturedOptions.viewOptions.getCategoryPauseAction(), 'workspace-pause');
+assert.strictEqual(capturedOptions.viewOptions.getInverseQuoteDisplayText(), 'workspace-inverse');
+assert.strictEqual(capturedOptions.viewOptions.getQuoteChainDisplayName(), 'workspace-chain-name');
+assert.strictEqual(capturedOptions.viewOptions.getQuoteDisplayText(), 'workspace-display');
+assert.strictEqual(capturedOptions.viewOptions.handleQuoteHover(), 'workspace-hover');
+assert.strictEqual(capturedOptions.viewOptions.isCexOrderbookChain(), true);
+assert.strictEqual(capturedOptions.viewOptions.isCrossChainQuote(), true);
+assert.strictEqual(capturedOptions.viewOptions.isQuotePaused(), true);
+assert.strictEqual(capturedOptions.viewOptions.shouldQueueInverseFetch(), false);
 assert.strictEqual(capturedOptions.viewOptions.saveData(), 'shell-save-data');
 assert.strictEqual(capturedOptions.formOptions.pathAlertPageUtils.id, 'path-alert-page-utils');
+assert.strictEqual(capturedOptions.formOptions.defaultSourceResolver(), 'workspace-source');
+assert.strictEqual(capturedOptions.formOptions.formatChainLabel('arb'), 'workspace-chain:arb');
+assert.strictEqual(capturedOptions.formOptions.isCexOrderbookChain(), true);
+assert.strictEqual(capturedOptions.formOptions.isCrossChainQuote(), true);
+assert.strictEqual(capturedOptions.formOptions.isEvmChain(), false);
+assert.strictEqual(capturedOptions.formOptions.normalizeChainKey('arb'), 'workspace-normalized:arb');
+assert.strictEqual(capturedOptions.formOptions.queueQuoteRefresh(), 'workspace-queue-refresh');
+assert.strictEqual(capturedOptions.formOptions.removeFromQueue(), 'workspace-remove');
 assert.strictEqual(capturedOptions.formOptions.saveData(), 'shell-save-data');
 assert.strictEqual(capturedOptions.formOptions.updateRequestChannelTagForQuote(), 'shell-update-request-channel-tag');
 assert.strictEqual(capturedOptions.formOptions.windowImpl, deps.windowImpl);

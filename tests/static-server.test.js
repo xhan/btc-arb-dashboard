@@ -969,7 +969,13 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.applyQuoteSettingsModalWritePlan(deps.quoteSettingsModalElements, writePlan)'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readQuoteSettingsFormValues(deps.quoteSettingsModalElements)'));
     assert.ok(dashboardFormControllerResponse.body.includes('normalizeChainKey: deps.normalizeChainKey'));
-    assert.ok(appJsResponse.body.includes('normalizeChainKey,'));
+    assert.ok(!appJsResponse.body.includes('normalizeChainKey,'));
+    assert.ok(appBoardRuntimeResponse.body.includes('const workspaceRuntime = deps.dashboardAppWorkspaceRuntime || {};'));
+    assert.ok(appJsResponse.body.includes('dashboardAppWorkspaceRuntime,'));
+    assert.ok(!appJsResponse.body.includes('copyDexLinkFromElement,'));
+    assert.ok(!appJsResponse.body.includes('queueQuoteRefresh,'));
+    assert.ok(!appJsResponse.body.includes('getQuoteDisplayText,'));
+    assert.ok(appBoardRuntimeResponse.body.includes("normalizeChainKey: getWorkspaceDep('normalizeChainKey'),"));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsUpdatePlan({'));
     assert.ok(dashboardFormControllerResponse.body.includes('buildAddQuoteFormViewState: deps.dashboardRenderer.buildAddQuoteFormViewState'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildAddQuoteDraft({'));
@@ -1012,7 +1018,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('let dashboardRendered = false;'));
     assert.ok(appJsResponse.body.includes('const dashboardAppWorkspaceRuntime = getDashboardAppWorkspaceRuntime().createDashboardAppWorkspaceRuntime({'));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('const quoteWorkspaceRuntime = modules.getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({'));
-    assert.ok(appJsResponse.body.includes('defaultSourceResolver,'));
+    assert.ok(!appJsResponse.body.includes('defaultSourceResolver,'));
+    assert.ok(appBoardRuntimeResponse.body.includes("defaultSourceResolver: getWorkspaceDep('defaultSourceResolver'),"));
     assert.ok(!appJsResponse.body.includes('getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({'));
     assert.ok(!appJsResponse.body.includes('quoteRuntimeRef.set(getDashboardQuoteRuntime().createDashboardQuoteRuntime({'));
     assert.ok(quoteWorkspaceRuntimeResponse.body.includes('defaultSourceResolver: quoteDomainAdapter.getDefaultSourceForChain'));
@@ -2541,7 +2548,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const dataTerminalController = getDataTerminalController().createDataTerminalController({'));
     assert.ok(appJsResponse.body.includes('interactionRuntime: dashboardInputInteractionRuntime,'));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('const auxPanelsRuntime = modules.getDashboardAuxPanelsRuntime().createDashboardAuxPanelsRuntime({'));
-    assert.ok(appJsResponse.body.includes('renderDataTerminalPanel,'));
+    assert.ok(!appJsResponse.body.includes('renderDataTerminalPanel,'));
+    assert.ok(appBoardRuntimeResponse.body.includes("renderDataTerminalPanel: getWorkspaceDep('renderDataTerminalPanel'),"));
     assert.ok(!appJsResponse.body.includes('toggleDataTerminalPanel,'));
     assert.ok(!appJsResponse.body.includes('let scheduleDataTerminalUpdate = () => {};'));
     assert.ok(auxPanelsRuntimeResponse.body.includes('const dataTerminalRuntime = setRuntime('));
