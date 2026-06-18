@@ -31,6 +31,7 @@ const deps = {
   confirmActionRuntime: { id: 'confirm-runtime' },
   dashboardApiClient: { id: 'api-client' },
   dashboardShellRuntime: {
+    confirmActionRuntime: { id: 'shell-confirm-runtime' },
     performSave: () => 'perform-save',
     requestChannelRuntime: { id: 'request-channel' },
     requestChannelTagVisibilityRuntime: { id: 'request-tag-visibility' },
@@ -120,6 +121,7 @@ assert.strictEqual(capturedOptions.alertRuntimeController, deps.alertRuntimeCont
 assert.strictEqual(capturedOptions.dashboardCommandController, deps.dashboardCommandRuntime.dashboardCommandController);
 assert.strictEqual(capturedOptions.keyboardShortcutController, deps.dashboardCommandRuntime.keyboardShortcutController);
 assert.strictEqual(capturedOptions.dashboardFormController, deps.dashboardAppBoardRuntime.dashboardFormController);
+assert.strictEqual(capturedOptions.confirmActionRuntime, deps.dashboardShellRuntime.confirmActionRuntime);
 assert.strictEqual(capturedOptions.handleDashboardClick(), 'dashboard-click');
 assert.strictEqual(capturedOptions.handleDashboardInput(), 'dashboard-input');
 assert.strictEqual(capturedOptions.openAddCategoryModal(), 'open-category');

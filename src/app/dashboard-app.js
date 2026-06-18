@@ -124,12 +124,6 @@
             setTimeout
         }
     });
-    const saveData = dashboardShellRuntime.saveData;
-    const addQuoteModalSelectionRuntime = dashboardShellRuntime.addQuoteModalSelectionRuntime;
-    const quoteSettingsSelectionRuntime = dashboardShellRuntime.quoteSettingsSelectionRuntime;
-    const confirmActionRuntime = dashboardShellRuntime.confirmActionRuntime;
-    const requestChannelRuntime = dashboardShellRuntime.requestChannelRuntime;
-    const updateRequestChannelTagForQuote = dashboardShellRuntime.updateRequestChannelTagForQuote;
 
     const dashboardAppWorkspaceRuntime = getDashboardAppWorkspaceRuntime().createDashboardAppWorkspaceRuntime({
         modules: dashboardModules,
@@ -263,13 +257,12 @@
         modules: dashboardModules,
         deps: {
             activeFetchControllerRuntime,
-            addQuoteModalSelectionRuntime,
             amountInputDebounceRuntime,
             closeArbDetailModal,
             closestEventTarget,
-            confirmActionRuntime,
             copyDexLinkFromElement,
             copyPriceText,
+            dashboardShellRuntime,
             dashboardRuntimeUtils,
             dashboardViewModeController,
             dashboardViewRenderRuntimeRef,
@@ -287,7 +280,6 @@
             getQuoteChainDisplayName,
             getQuoteDisplayText,
             getQuoteMarketState,
-            getRequestChannelOptions: () => requestChannelRuntime.getOptions(),
             handleQuoteHover,
             interactionRuntime: dashboardInputInteractionRuntime,
             isCexOrderbookChain,
@@ -296,18 +288,15 @@
             isQuotePaused,
             logger: console,
             normalizeChainKey,
-            quoteSettingsSelectionRuntime,
             quoteStateRuntime,
             queueQuoteRefresh,
             removeFromQueue,
             renderDataTerminalPanel,
             resetQuoteUiRuntimeState,
-            saveData,
             setQuoteMarketState,
             shouldQueueInverseFetch,
             updateAlertSoundState: alertRuntimeController.updateAlertSoundState,
             updateArbPanel,
-            updateRequestChannelTagForQuote,
             updateSchedulers,
             windowImpl: window
         },
@@ -322,7 +311,6 @@
             arbDetailController,
             arbPanelController,
             clearTopologyCache,
-            confirmActionRuntime,
             dashboardApiClient,
             dashboardAppBoardRuntime,
             dashboardCommandRuntime,
@@ -340,8 +328,6 @@
             priceSnapshotTimerRuntime,
             quoteSpreadController,
             renderDashboardForCurrentState,
-            requestChannelRuntime,
-            saveData,
             setApiIntervals,
             setArbCycleStartPriority,
             setArbPanelMaxHeight,

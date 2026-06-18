@@ -42,6 +42,16 @@ const deps = {
   copyDexLinkFromElement: () => {},
   copyPriceText: () => {},
   dashboardRuntimeUtils: { id: 'dashboard-runtime-utils' },
+  dashboardShellRuntime: {
+    addQuoteModalSelectionRuntime: { id: 'shell-add-quote-selection' },
+    confirmActionRuntime: { id: 'shell-confirm-runtime' },
+    quoteSettingsSelectionRuntime: { id: 'shell-quote-settings-selection' },
+    requestChannelRuntime: {
+      getOptions: () => ({ channels: ['shell'] })
+    },
+    saveData: () => 'shell-save-data',
+    updateRequestChannelTagForQuote: () => 'shell-update-request-channel-tag'
+  },
   dashboardViewModeController: { id: 'dashboard-view-mode-controller' },
   dashboardViewRenderRuntimeRef: { id: 'view-render-ref' },
   defaultSourceResolver: () => 'source',
@@ -112,12 +122,12 @@ assert.strictEqual(capturedOptions.dashboardActionControllerUtils.id, 'action-ut
 assert.strictEqual(capturedOptions.dashboardFormControllerUtils.id, 'form-utils');
 assert.strictEqual(capturedOptions.dashboardViewControllerUtils.id, 'view-utils');
 assert.strictEqual(capturedOptions.dashboardViewModeControllerUtils.id, 'view-mode-utils');
-assert.strictEqual(capturedOptions.addQuoteModalSelectionRuntime, deps.addQuoteModalSelectionRuntime);
-assert.strictEqual(capturedOptions.confirmActionRuntime, deps.confirmActionRuntime);
+assert.strictEqual(capturedOptions.addQuoteModalSelectionRuntime, deps.dashboardShellRuntime.addQuoteModalSelectionRuntime);
+assert.strictEqual(capturedOptions.confirmActionRuntime, deps.dashboardShellRuntime.confirmActionRuntime);
 assert.strictEqual(capturedOptions.interactionRuntime, deps.interactionRuntime);
 assert.strictEqual(capturedOptions.dashboardViewModeController, deps.dashboardViewModeController);
 assert.strictEqual(capturedOptions.dashboardViewRenderRuntimeRef, deps.dashboardViewRenderRuntimeRef);
-assert.deepStrictEqual(capturedOptions.getRequestChannelOptions(), { channels: [] });
+assert.deepStrictEqual(capturedOptions.getRequestChannelOptions(), { channels: ['shell'] });
 assert.strictEqual(capturedOptions.refs, refs);
 assert.strictEqual(capturedOptions.shared.dashboardModalUtils.id, 'modal-utils');
 assert.strictEqual(capturedOptions.shared.dashboardRenderer.id, 'renderer');
@@ -127,9 +137,14 @@ assert.deepStrictEqual(capturedOptions.shared.getDashboardState(), [{ id: 'categ
 assert.strictEqual(capturedOptions.actionOptions.arbDetailUtils.id, 'arb-detail-utils');
 assert.strictEqual(capturedOptions.actionOptions.quotePauseUtils.id, 'quote-pause-utils');
 assert.strictEqual(capturedOptions.actionOptions.requestChannelUtils.id, 'request-channel-utils');
+assert.strictEqual(capturedOptions.actionOptions.saveData(), 'shell-save-data');
+assert.strictEqual(capturedOptions.actionOptions.updateRequestChannelTagForQuote(), 'shell-update-request-channel-tag');
 assert.strictEqual(capturedOptions.actionOptions.updateAlertSoundState, deps.updateAlertSoundState);
 assert.strictEqual(capturedOptions.viewOptions.dexLinkUtils.id, 'dex-link-utils');
 assert.strictEqual(capturedOptions.viewOptions.quoteDisplayUtils.id, 'quote-display-utils');
 assert.strictEqual(capturedOptions.viewOptions.logger, deps.logger);
+assert.strictEqual(capturedOptions.viewOptions.saveData(), 'shell-save-data');
 assert.strictEqual(capturedOptions.formOptions.pathAlertPageUtils.id, 'path-alert-page-utils');
+assert.strictEqual(capturedOptions.formOptions.saveData(), 'shell-save-data');
+assert.strictEqual(capturedOptions.formOptions.updateRequestChannelTagForQuote(), 'shell-update-request-channel-tag');
 assert.strictEqual(capturedOptions.formOptions.windowImpl, deps.windowImpl);

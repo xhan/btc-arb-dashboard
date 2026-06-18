@@ -12,9 +12,24 @@
     const modules = options.modules || {};
     const deps = options.deps || {};
     const refs = options.refs || {};
+    const shellRuntime = deps.dashboardShellRuntime || {};
+    const saveData = shellRuntime.saveData || deps.saveData;
+    const updateRequestChannelTagForQuote = shellRuntime.updateRequestChannelTagForQuote || deps.updateRequestChannelTagForQuote;
+
+    function getRequestChannelOptions() {
+      const requestChannelRuntime = shellRuntime.requestChannelRuntime || deps.requestChannelRuntime;
+      if (requestChannelRuntime && typeof requestChannelRuntime.getOptions === 'function') {
+        return requestChannelRuntime.getOptions();
+      }
+      if (typeof deps.getRequestChannelOptions === 'function') {
+        return deps.getRequestChannelOptions();
+      }
+      return [];
+    }
+
     const dashboardBoardRuntime = modules.getDashboardBoardRuntime().createDashboardBoardRuntime({
-      addQuoteModalSelectionRuntime: deps.addQuoteModalSelectionRuntime,
-      confirmActionRuntime: deps.confirmActionRuntime,
+      addQuoteModalSelectionRuntime: shellRuntime.addQuoteModalSelectionRuntime || deps.addQuoteModalSelectionRuntime,
+      confirmActionRuntime: shellRuntime.confirmActionRuntime || deps.confirmActionRuntime,
       interactionRuntime: deps.interactionRuntime,
       dashboardActionControllerUtils: modules.getDashboardActionController(),
       dashboardFormControllerUtils: modules.getDashboardFormController(),
@@ -22,8 +37,8 @@
       dashboardViewModeController: deps.dashboardViewModeController,
       dashboardViewModeControllerUtils: modules.getDashboardViewModeController(),
       dashboardViewRenderRuntimeRef: deps.dashboardViewRenderRuntimeRef,
-      getRequestChannelOptions: deps.getRequestChannelOptions,
-      quoteSettingsSelectionRuntime: deps.quoteSettingsSelectionRuntime,
+      getRequestChannelOptions,
+      quoteSettingsSelectionRuntime: shellRuntime.quoteSettingsSelectionRuntime || deps.quoteSettingsSelectionRuntime,
       refs,
       shared: {
         dashboardModalUtils: modules.getDashboardModalUtils(),
@@ -61,11 +76,11 @@
         renderDataTerminalPanel: deps.renderDataTerminalPanel,
         requestChannelUtils: modules.getRequestChannelUtils(),
         resetQuoteUiRuntimeState: deps.resetQuoteUiRuntimeState,
-        saveData: deps.saveData,
+        saveData,
         setQuoteMarketState: deps.setQuoteMarketState,
         updateAlertSoundState: deps.updateAlertSoundState,
         updateArbPanel: deps.updateArbPanel,
-        updateRequestChannelTagForQuote: deps.updateRequestChannelTagForQuote,
+        updateRequestChannelTagForQuote,
         updateSchedulers: deps.updateSchedulers
       },
       viewOptions: {
@@ -82,7 +97,7 @@
         logger: deps.logger,
         quoteDisplayUtils: modules.getQuoteDisplayUtils(),
         requestChannelUtils: modules.getRequestChannelUtils(),
-        saveData: deps.saveData,
+        saveData,
         shouldQueueInverseFetch: deps.shouldQueueInverseFetch
       },
       formOptions: {
@@ -96,8 +111,8 @@
         queueQuoteRefresh: deps.queueQuoteRefresh,
         removeFromQueue: deps.removeFromQueue,
         requestChannelUtils: modules.getRequestChannelUtils(),
-        saveData: deps.saveData,
-        updateRequestChannelTagForQuote: deps.updateRequestChannelTagForQuote,
+        saveData,
+        updateRequestChannelTagForQuote,
         windowImpl: deps.windowImpl
       }
     });

@@ -1028,8 +1028,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.syncAddQuoteFormControls(deps.addQuoteModalRefs, {'));
     assert.ok(appJsResponse.body.includes('const dashboardShellRuntime = getDashboardAppShellRuntime().createDashboardAppShellRuntime({'));
     assert.ok(appShellRuntimeResponse.body.includes('return modules.getDashboardShellRuntime().createDashboardShellRuntime({'));
-    assert.ok(appJsResponse.body.includes('const addQuoteModalSelectionRuntime = dashboardShellRuntime.addQuoteModalSelectionRuntime;'));
-    assert.ok(appJsResponse.body.includes('const quoteSettingsSelectionRuntime = dashboardShellRuntime.quoteSettingsSelectionRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const addQuoteModalSelectionRuntime = dashboardShellRuntime.addQuoteModalSelectionRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const quoteSettingsSelectionRuntime = dashboardShellRuntime.quoteSettingsSelectionRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const requestChannelRuntime = dashboardShellRuntime.requestChannelRuntime;'));
+    assert.ok(appBoardRuntimeResponse.body.includes('const shellRuntime = deps.dashboardShellRuntime || {};'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function showModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function hideModal(modal)'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function applyQuoteSettingsModalWritePlan(refs = {}, plan = {})'));
@@ -1086,7 +1088,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardActionControllerResponse.body.includes('deps.dashboardModalUtils.closeAddCategoryModal(deps.addCategoryModalRefs)'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readAddCategoryFormValues(deps.addCategoryModalRefs, {'));
     assert.ok(dashboardFormControllerResponse.body.includes('readAddCategoryFormValues: deps.dashboardRenderer.readAddCategoryFormValues'));
-    assert.ok(appJsResponse.body.includes('const confirmActionRuntime = dashboardShellRuntime.confirmActionRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const confirmActionRuntime = dashboardShellRuntime.confirmActionRuntime;'));
+    assert.ok(appBoardRuntimeResponse.body.includes('confirmActionRuntime: shellRuntime.confirmActionRuntime || deps.confirmActionRuntime,'));
+    assert.ok(appLifecycleRuntimeResponse.body.includes('confirmActionRuntime: shellRuntime.confirmActionRuntime || deps.confirmActionRuntime,'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.confirmActionRuntime.show(deps.confirmModalRefs, message, callback)'));
     assert.ok(lifecycleControllerResponse.body.includes('deps.confirmActionRuntime.close(refs.confirmModalRefs)'));
     assert.ok(!appJsResponse.body.includes('confirmActionRuntime.close(confirmModalRefs)'));
@@ -1431,7 +1435,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardViewControllerResponse.body.includes('deps.requestChannelUtils.buildRequestChannelTagHtml(quote, requestChannel)'));
     assert.ok(requestChannelUtilsResponse.body.includes('function updateTagsForDashboard(dashboardState, tagOptions = {})'));
     assert.ok(shellRuntimeResponse.body.includes('tagOptions: {'));
-    assert.ok(appJsResponse.body.includes('const updateRequestChannelTagForQuote = dashboardShellRuntime.updateRequestChannelTagForQuote;'));
+    assert.ok(!appJsResponse.body.includes('const updateRequestChannelTagForQuote = dashboardShellRuntime.updateRequestChannelTagForQuote;'));
+    assert.ok(appBoardRuntimeResponse.body.includes('const updateRequestChannelTagForQuote = shellRuntime.updateRequestChannelTagForQuote || deps.updateRequestChannelTagForQuote;'));
     assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelRuntime.updateTagsForDashboard(getDashboardState());'));
     assert.ok(!appJsResponse.body.includes('requestChannelRuntime.updateTagsForDashboard(dashboardState);'));
     assert.ok(!appJsResponse.body.includes('function updateRequestChannelTagForQuote(quote)'));
@@ -1730,7 +1735,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(shellRuntimeResponse.body.includes('feedbackOptions: {'));
     assert.ok(appShellRuntimeResponse.body.includes('saveDashboardConfig: (payload) => deps.dashboardApiClient.saveDashboardConfig(payload)'));
     assert.ok(!appJsResponse.body.includes('const performSave = dashboardShellRuntime.performSave;'));
-    assert.ok(appJsResponse.body.includes('const saveData = dashboardShellRuntime.saveData;'));
+    assert.ok(!appJsResponse.body.includes('const saveData = dashboardShellRuntime.saveData;'));
+    assert.ok(appBoardRuntimeResponse.body.includes('const saveData = shellRuntime.saveData || deps.saveData;'));
     assert.ok(appJsResponse.body.includes('dashboardShellRuntime,'));
     assert.ok(lifecycleControllerResponse.body.includes("addClickListener(refs.manualSaveBtn, () => { void deps.performSave({ manual: true }); });"));
     assert.ok(!appJsResponse.body.includes("manualSaveBtn.addEventListener('click', () => { void performSave({ manual: true }); });"));

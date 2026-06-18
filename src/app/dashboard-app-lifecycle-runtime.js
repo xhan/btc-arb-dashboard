@@ -22,7 +22,7 @@
       arbDetailController: deps.arbDetailController,
       arbPanelController: deps.arbPanelController,
       clearTopologyCache: deps.clearTopologyCache,
-      confirmActionRuntime: deps.confirmActionRuntime,
+      confirmActionRuntime: shellRuntime.confirmActionRuntime || deps.confirmActionRuntime,
       dashboardApiClient: deps.dashboardApiClient,
       dashboardCommandController: commandRuntime.dashboardCommandController || deps.dashboardCommandController,
       dashboardFormController: boardRuntime.dashboardFormController || deps.dashboardFormController,
