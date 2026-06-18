@@ -153,6 +153,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-board-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-quote-spread-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-data-terminal-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-aux-panels-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
@@ -300,6 +301,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-data-terminal-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-aux-panels-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -562,6 +566,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(quoteSpreadRuntimeResponse.statusCode, 200);
     const dataTerminalRuntimeResponse = await request('/src/app/dashboard-data-terminal-runtime.js');
     assert.strictEqual(dataTerminalRuntimeResponse.statusCode, 200);
+    const auxPanelsRuntimeResponse = await request('/src/app/dashboard-aux-panels-runtime.js');
+    assert.strictEqual(auxPanelsRuntimeResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
@@ -773,7 +779,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadController: ['));
     assert.ok(quoteSpreadControllerResponse.body.includes('function createQuoteSpreadController(deps = {})'));
     assert.ok(quoteSpreadControllerResponse.body.includes('DEFAULT_UPDATE_INTERVAL_MS = 1000'));
-    assert.ok(appJsResponse.body.includes('getDashboardQuoteSpreadRuntime().createDashboardQuoteSpreadRuntime({'));
+    assert.ok(appJsResponse.body.includes('getDashboardAuxPanelsRuntime().createDashboardAuxPanelsRuntime({'));
+    assert.ok(auxPanelsRuntimeResponse.body.includes('modules.getDashboardQuoteSpreadRuntime().createDashboardQuoteSpreadRuntime({'));
     assert.ok(!appJsResponse.body.includes('const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({'));
     assert.ok(lifecycleControllerResponse.body.includes("typeof deps.quoteSpreadController.bindPanelChrome === 'function'"));
     assert.ok(lifecycleControllerResponse.body.includes("typeof deps.quoteSpreadController.bindEvents === 'function'"));
@@ -2460,13 +2467,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailUtilsResponse.body.includes('data-arb-detail-profit-card'));
     assert.ok(!appJsResponse.body.includes('resolveEventTargetElement(event)'));
     assert.ok(!appJsResponse.body.includes('const eventTarget = resolveEventTargetElement(event);'));
-    assert.ok(appJsResponse.body.includes('getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({'));
+    assert.ok(auxPanelsRuntimeResponse.body.includes('modules.getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({'));
     assert.ok(!appJsResponse.body.includes('const dataTerminalController = getDataTerminalController().createDataTerminalController({'));
     assert.ok(appJsResponse.body.includes('interactionRuntime: dashboardInputInteractionRuntime,'));
-    assert.ok(appJsResponse.body.includes('const renderDataTerminalPanel = dataTerminalRuntime.renderDataTerminalPanel;'));
-    assert.ok(appJsResponse.body.includes('const toggleDataTerminalPanel = dataTerminalRuntime.toggleDataTerminalPanel;'));
+    assert.ok(appJsResponse.body.includes('const renderDataTerminalPanel = auxPanelsRuntime.renderDataTerminalPanel;'));
+    assert.ok(appJsResponse.body.includes('const toggleDataTerminalPanel = auxPanelsRuntime.toggleDataTerminalPanel;'));
     assert.ok(!appJsResponse.body.includes('let scheduleDataTerminalUpdate = () => {};'));
-    assert.ok(appJsResponse.body.includes('const dataTerminalRuntime = dataTerminalRuntimeRef.set(getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({'));
+    assert.ok(auxPanelsRuntimeResponse.body.includes('const dataTerminalRuntime = setRuntime('));
+    assert.ok(auxPanelsRuntimeResponse.body.includes('deps.dataTerminalRuntimeRef,'));
     assert.ok(!appJsResponse.body.includes('function mountDataTerminalPanel()'));
     assert.ok(!appJsResponse.body.includes('function unmountDataTerminalPanel()'));
     assert.ok(dataTerminalControllerResponse.body.includes('function mountPanel()'));

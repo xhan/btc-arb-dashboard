@@ -21,16 +21,15 @@
         getCopyUtils,
         getDashboardActionController,
         getDashboardArbWorkspaceRuntime,
+        getDashboardAuxPanelsRuntime,
         getDashboardBoardRuntime,
         getDashboardCommandController,
         getDashboardCommandRuntime,
         getDashboardCoreRuntime,
-        getDashboardDataTerminalRuntime,
         getDashboardDomRefs,
         getDashboardFormController,
         getDashboardLifecycleController,
         getDashboardModalUtils,
-        getDashboardQuoteSpreadRuntime,
         getDashboardQuoteWorkspaceRuntime,
         getDashboardRenderer,
         getDashboardShellRuntime,
@@ -422,40 +421,18 @@
     const closeArbDetailModal = arbWorkspaceRuntime.closeArbDetailModal;
     const openArbDetailModal = arbWorkspaceRuntime.openArbDetailModal;
     const renderArbDetailModal = arbWorkspaceRuntime.renderArbDetailModal;
-    const quoteSpreadRuntime = getDashboardQuoteSpreadRuntime().createDashboardQuoteSpreadRuntime({
-        modules: dashboardModules,
-        deps: {
-            applyFloatingPanelDisplay,
-            documentImpl: document,
-            domRenderUtils,
-            formatChainLabel,
-            getDashboardState,
-            getQuoteMarketStateMap,
-            zIndexRuntime: floatingPanelZIndexRuntime
-        },
-        refs: {
-            window: quoteSpreadWindow,
-            header: quoteSpreadHeader,
-            minButton: quoteSpreadMinBtn,
-            toggleButton: toggleSpreadBtn,
-            content: quoteSpreadContent
-        },
-        timers: {
-            setInterval,
-            clearInterval
-        }
-    });
-    const quoteSpreadController = quoteSpreadRuntime.quoteSpreadController;
-    const dataTerminalRuntime = dataTerminalRuntimeRef.set(getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({
+    const auxPanelsRuntime = getDashboardAuxPanelsRuntime().createDashboardAuxPanelsRuntime({
         modules: dashboardModules,
         constants: {
             dataTerminalUpdateDelayMs: DATA_TERMINAL_UPDATE_DELAY_MS
         },
         deps: {
+            applyFloatingPanelDisplay,
             clearTimeout,
             closestEventTarget,
             copyDexLinkFromElement,
             dashboardRuntimeUtils,
+            dataTerminalRuntimeRef,
             documentImpl: document,
             domRenderUtils,
             formatChainLabel,
@@ -470,10 +447,24 @@
             setTimeout,
             windowImpl: window,
             zIndexRuntime: floatingPanelZIndexRuntime
+        },
+        refs: {
+            quoteSpread: {
+                window: quoteSpreadWindow,
+                header: quoteSpreadHeader,
+                minButton: quoteSpreadMinBtn,
+                toggleButton: toggleSpreadBtn,
+                content: quoteSpreadContent
+            }
+        },
+        timers: {
+            setInterval,
+            clearInterval
         }
-    }));
-    const renderDataTerminalPanel = dataTerminalRuntime.renderDataTerminalPanel;
-    const toggleDataTerminalPanel = dataTerminalRuntime.toggleDataTerminalPanel;
+    });
+    const quoteSpreadController = auxPanelsRuntime.quoteSpreadController;
+    const renderDataTerminalPanel = auxPanelsRuntime.renderDataTerminalPanel;
+    const toggleDataTerminalPanel = auxPanelsRuntime.toggleDataTerminalPanel;
 
     const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({
         dashboardCommandControllerUtils: getDashboardCommandController(),

@@ -38,6 +38,7 @@
     getDashboardAppStateRuntime: ['DashboardAppStateRuntime', 'DashboardAppStateRuntime is not loaded'],
     getDashboardArbAlertRuntime: ['DashboardArbAlertRuntime', 'DashboardArbAlertRuntime is not loaded'],
     getDashboardArbWorkspaceRuntime: ['DashboardArbWorkspaceRuntime', 'DashboardArbWorkspaceRuntime is not loaded'],
+    getDashboardAuxPanelsRuntime: ['DashboardAuxPanelsRuntime', 'DashboardAuxPanelsRuntime is not loaded'],
     getDashboardBoardRuntime: ['DashboardBoardRuntime', 'DashboardBoardRuntime is not loaded'],
     getDashboardCommandController: ['DashboardCommandController', 'DashboardCommandController is not loaded'],
     getDashboardCommandRuntime: ['DashboardCommandRuntime', 'DashboardCommandRuntime is not loaded'],
