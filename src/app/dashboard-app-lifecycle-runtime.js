@@ -15,19 +15,25 @@
     const shellRuntime = deps.dashboardShellRuntime || {};
     const commandRuntime = deps.dashboardCommandRuntime || {};
     const boardRuntime = deps.dashboardAppBoardRuntime || {};
+    const workspaceRuntime = deps.dashboardAppWorkspaceRuntime || {};
+
+    function getWorkspaceDep(name) {
+      return workspaceRuntime[name] || deps[name];
+    }
+
     const dashboardLifecycleController = modules.getDashboardLifecycleController().createDashboardLifecycleController({
-      addToQueue: deps.addToQueue,
-      alertRuntimeController: deps.alertRuntimeController,
-      applyQuoteDisplayToggleButtonState: deps.applyQuoteDisplayToggleButtonState,
-      arbDetailController: deps.arbDetailController,
-      arbPanelController: deps.arbPanelController,
-      clearTopologyCache: deps.clearTopologyCache,
+      addToQueue: getWorkspaceDep('addToQueue'),
+      alertRuntimeController: getWorkspaceDep('alertRuntimeController'),
+      applyQuoteDisplayToggleButtonState: getWorkspaceDep('applyQuoteDisplayToggleButtonState'),
+      arbDetailController: getWorkspaceDep('arbDetailController'),
+      arbPanelController: getWorkspaceDep('arbPanelController'),
+      clearTopologyCache: getWorkspaceDep('clearTopologyCache'),
       confirmActionRuntime: shellRuntime.confirmActionRuntime || deps.confirmActionRuntime,
       dashboardApiClient: deps.dashboardApiClient,
       dashboardCommandController: commandRuntime.dashboardCommandController || deps.dashboardCommandController,
       dashboardFormController: boardRuntime.dashboardFormController || deps.dashboardFormController,
       dashboardRenderer: modules.getDashboardRenderer(),
-      dashboardViewModeController: deps.dashboardViewModeController,
+      dashboardViewModeController: getWorkspaceDep('dashboardViewModeController'),
       defaultArbCycleStartPriority: deps.defaultArbCycleStartPriority,
       defaultIntervals: deps.defaultIntervals,
       documentImpl: deps.documentImpl,
@@ -44,7 +50,7 @@
       performSave: shellRuntime.performSave || deps.performSave,
       priceSnapshotSaveRuntime: deps.priceSnapshotSaveRuntime,
       priceSnapshotTimerRuntime: deps.priceSnapshotTimerRuntime,
-      quoteSpreadController: deps.quoteSpreadController,
+      quoteSpreadController: getWorkspaceDep('quoteSpreadController'),
       renderDashboard: deps.renderDashboardForCurrentState,
       requestChannelRuntime: shellRuntime.requestChannelRuntime || deps.requestChannelRuntime,
       requestChannelTagVisibilityRuntime: shellRuntime.requestChannelTagVisibilityRuntime || deps.requestChannelTagVisibilityRuntime,
@@ -52,7 +58,7 @@
       saveData: shellRuntime.saveData || deps.saveData,
       setApiIntervals: deps.setApiIntervals,
       setArbCycleStartPriority: deps.setArbCycleStartPriority,
-      setArbPanelMaxHeight: deps.setArbPanelMaxHeight,
+      setArbPanelMaxHeight: getWorkspaceDep('setArbPanelMaxHeight'),
       setDashboardState: deps.setDashboardState,
       setPriceSnapshotConfig: deps.setPriceSnapshotConfig,
       settingsModalRuntime: shellRuntime.settingsModalRuntime || deps.settingsModalRuntime,

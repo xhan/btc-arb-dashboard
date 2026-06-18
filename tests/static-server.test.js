@@ -775,6 +775,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appCommandRuntimeResponse.body.includes('function createDashboardAppCommandRuntime(options = {})'));
     assert.ok(appCommandRuntimeResponse.body.includes('const shellRuntime = deps.dashboardShellRuntime || {};'));
     assert.ok(appCommandRuntimeResponse.body.includes('const workspaceRuntime = deps.dashboardAppWorkspaceRuntime || {};'));
+    assert.ok(appLifecycleRuntimeResponse.body.includes('const workspaceRuntime = deps.dashboardAppWorkspaceRuntime || {};'));
+    assert.ok(appLifecycleRuntimeResponse.body.includes("addToQueue: getWorkspaceDep('addToQueue'),"));
+    assert.ok(appLifecycleRuntimeResponse.body.includes("quoteSpreadController: getWorkspaceDep('quoteSpreadController'),"));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('const shellRuntime = deps.dashboardShellRuntime || {};'));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('copyToastRuntime: shellRuntime.copyToastRuntime || deps.copyToastRuntime,'));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('getEffectiveRequestChannelIdForQuote: shellRuntime.getEffectiveRequestChannelIdForQuote || deps.getEffectiveRequestChannelIdForQuote,'));
@@ -975,6 +978,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('copyDexLinkFromElement,'));
     assert.ok(!appJsResponse.body.includes('queueQuoteRefresh,'));
     assert.ok(!appJsResponse.body.includes('getQuoteDisplayText,'));
+    assert.ok(!appJsResponse.body.includes('addToQueue,'));
+    assert.ok(!appJsResponse.body.includes('applyQuoteDisplayToggleButtonState,'));
+    assert.ok(!appJsResponse.body.includes('arbPanelController,'));
+    assert.ok(!appJsResponse.body.includes('clearTopologyCache,'));
+    assert.ok(!appJsResponse.body.includes('quoteSpreadController,'));
+    assert.ok(!appJsResponse.body.includes('setArbPanelMaxHeight,'));
     assert.ok(appBoardRuntimeResponse.body.includes("normalizeChainKey: getWorkspaceDep('normalizeChainKey'),"));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardRenderer.buildQuoteSettingsUpdatePlan({'));
     assert.ok(dashboardFormControllerResponse.body.includes('buildAddQuoteFormViewState: deps.dashboardRenderer.buildAddQuoteFormViewState'));

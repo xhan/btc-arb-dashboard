@@ -188,10 +188,8 @@
         }
     });
     const {
-        addToQueue,
         applyActiveQuoteUiState,
         applyPausedQuoteUiState,
-        applyQuoteDisplayToggleButtonState,
         copyTextToClipboard,
         getActiveQuotes,
         getQuoteDisplayMode,
@@ -200,19 +198,15 @@
         updateTrendArrow,
         alertRuntimeController,
         arbDetailController,
-        arbPanelController,
         dashboardViewModeController,
         buildLiveQuoteLabel,
-        clearTopologyCache,
         formatArbPathLegLine,
         getSharedArbRuleSnapshot,
         isRuleLeg,
         scheduleArbPanelUpdate,
-        setArbPanelMaxHeight,
         closeArbDetailModal,
         openArbDetailModal,
-        renderArbDetailModal,
-        quoteSpreadController
+        renderArbDetailModal
     } = dashboardAppWorkspaceRuntime;
 
     const dashboardCommandRuntime = getDashboardAppCommandRuntime().createDashboardAppCommandRuntime({
@@ -261,15 +255,12 @@
     const dashboardAppLifecycleRuntime = getDashboardAppLifecycleRuntime().createDashboardAppLifecycleRuntime({
         modules: dashboardModules,
         deps: {
-            addToQueue,
             alertRuntimeController,
-            applyQuoteDisplayToggleButtonState,
             arbDetailController,
-            arbPanelController,
-            clearTopologyCache,
             dashboardApiClient,
             dashboardAppBoardRuntime,
             dashboardCommandRuntime,
+            dashboardAppWorkspaceRuntime,
             dashboardShellRuntime,
             dashboardViewModeController,
             defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
@@ -282,11 +273,9 @@
             invalidateArbRuleSnapshotCache,
             priceSnapshotSaveRuntime,
             priceSnapshotTimerRuntime,
-            quoteSpreadController,
             renderDashboardForCurrentState,
             setApiIntervals,
             setArbCycleStartPriority,
-            setArbPanelMaxHeight,
             setDashboardState,
             setPriceSnapshotConfig,
             updateArbPanel,

@@ -51,6 +51,17 @@ const deps = {
     handleDashboardInput: () => 'dashboard-input',
     openAddCategoryModal: () => 'open-category'
   },
+  dashboardAppWorkspaceRuntime: {
+    addToQueue: () => 'workspace-add-to-queue',
+    alertRuntimeController: { id: 'workspace-alert-runtime' },
+    applyQuoteDisplayToggleButtonState: () => 'workspace-display-toggle',
+    arbDetailController: { id: 'workspace-arb-detail' },
+    arbPanelController: { id: 'workspace-arb-panel' },
+    clearTopologyCache: () => 'workspace-clear-topology',
+    dashboardViewModeController: { id: 'workspace-view-mode' },
+    quoteSpreadController: { id: 'workspace-quote-spread' },
+    setArbPanelMaxHeight: () => 'workspace-set-height'
+  },
   dashboardViewModeController: { id: 'view-mode' },
   defaultArbCycleStartPriority: ['polygon'],
   defaultIntervals: { kyber: 3000 },
@@ -116,8 +127,15 @@ const runtime = createDashboardAppLifecycleRuntime({
 assert.strictEqual(runtime.dashboardLifecycleController, lifecycleController);
 assert.strictEqual(runtime.bindStaticEvents(), 'bind');
 assert.strictEqual(runtime.init(), 'init');
-assert.strictEqual(capturedOptions.addToQueue, deps.addToQueue);
-assert.strictEqual(capturedOptions.alertRuntimeController, deps.alertRuntimeController);
+assert.strictEqual(capturedOptions.addToQueue(), 'workspace-add-to-queue');
+assert.strictEqual(capturedOptions.alertRuntimeController, deps.dashboardAppWorkspaceRuntime.alertRuntimeController);
+assert.strictEqual(capturedOptions.applyQuoteDisplayToggleButtonState(), 'workspace-display-toggle');
+assert.strictEqual(capturedOptions.arbDetailController, deps.dashboardAppWorkspaceRuntime.arbDetailController);
+assert.strictEqual(capturedOptions.arbPanelController, deps.dashboardAppWorkspaceRuntime.arbPanelController);
+assert.strictEqual(capturedOptions.clearTopologyCache(), 'workspace-clear-topology');
+assert.strictEqual(capturedOptions.dashboardViewModeController, deps.dashboardAppWorkspaceRuntime.dashboardViewModeController);
+assert.strictEqual(capturedOptions.quoteSpreadController, deps.dashboardAppWorkspaceRuntime.quoteSpreadController);
+assert.strictEqual(capturedOptions.setArbPanelMaxHeight(), 'workspace-set-height');
 assert.strictEqual(capturedOptions.dashboardCommandController, deps.dashboardCommandRuntime.dashboardCommandController);
 assert.strictEqual(capturedOptions.keyboardShortcutController, deps.dashboardCommandRuntime.keyboardShortcutController);
 assert.strictEqual(capturedOptions.dashboardFormController, deps.dashboardAppBoardRuntime.dashboardFormController);
