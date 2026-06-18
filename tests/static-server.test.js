@@ -157,6 +157,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-app-command-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-view-mode-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-lifecycle-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-app-config.js"'));
@@ -316,6 +317,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-command-runtime.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-app-command-runtime.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-view-mode-controller.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -574,6 +578,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(commandControllerResponse.statusCode, 200);
     const commandRuntimeResponse = await request('/src/app/dashboard-command-runtime.js');
     assert.strictEqual(commandRuntimeResponse.statusCode, 200);
+    const appCommandRuntimeResponse = await request('/src/app/dashboard-app-command-runtime.js');
+    assert.strictEqual(appCommandRuntimeResponse.statusCode, 200);
     const viewModeControllerResponse = await request('/src/app/dashboard-view-mode-controller.js');
     assert.strictEqual(viewModeControllerResponse.statusCode, 200);
     const lifecycleControllerResponse = await request('/src/app/dashboard-lifecycle-controller.js');
@@ -735,7 +741,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(commandRuntimeResponse.body.includes('const DASHBOARD_COMMAND_IDS = Object.freeze(['));
     assert.ok(commandRuntimeResponse.body.includes('function createDashboardCommandRuntime(options = {})'));
     assert.ok(commandRuntimeResponse.body.includes('actions: dashboardCommandController.buildActionMap(DASHBOARD_COMMAND_IDS)'));
-    assert.ok(appJsResponse.body.includes('const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardAppCommandRuntime: ['));
+    assert.ok(appCommandRuntimeResponse.body.includes('function createDashboardAppCommandRuntime(options = {})'));
+    assert.ok(appJsResponse.body.includes('const dashboardCommandRuntime = getDashboardAppCommandRuntime().createDashboardAppCommandRuntime({'));
     assert.ok(appJsResponse.body.includes('const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;'));
     assert.ok(!appJsResponse.body.includes('actions: dashboardCommandController.buildActionMap(['));
     assert.ok(appJsResponse.body.includes('dashboardCommandController,'));
@@ -766,7 +774,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(boardRuntimeResponse.body.includes('shouldDeferRender: shouldDeferDashboardRender'));
     assert.ok(boardRuntimeResponse.body.includes('dashboardInteractionDeferralRuntime.bind();'));
     assert.ok(appJsResponse.body.includes('onShowDashboard: renderDashboardForCurrentState'));
-    assert.ok(appJsResponse.body.includes("'toggle-arb-panel': dashboardViewModeController.toggleArbView"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-arb-panel': deps.dashboardViewModeController.toggleArbView"));
     assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-arb-panel')"));
     assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-alert-log')"));
     assert.ok(lifecycleControllerResponse.body.includes('deps.dashboardViewModeController.bind();'));
@@ -1267,8 +1275,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
     assert.ok(!appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
     assert.ok(appJsResponse.body.includes('toggleMultiChannel,'));
-    assert.ok(appJsResponse.body.includes("'toggle-multi-channel': toggleMultiChannel"));
-    assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-multi-channel': deps.toggleMultiChannel"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-request-channel-tags': deps.requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-multi-channel')"));
     assert.ok(quoteRuntimeResponse.body.includes('requestChannelRuntime.toggleMultiChannel('));
     assert.ok(quoteRuntimeResponse.body.includes('quoteRefreshRuntime.getQueueMutationCallbacks()'));
@@ -2143,7 +2151,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(keyboardShortcutUtilsResponse.body.includes("l: 'toggle-alert-log'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("p: 'toggle-quote-display'"));
     assert.ok(keyboardShortcutUtilsResponse.body.includes("s: 'toggle-data-terminal'"));
-    assert.ok(appJsResponse.body.includes("'open-alert-log-settings': alertRuntimeController.openAlertLogSettingsPanel"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'open-alert-log-settings': deps.alertRuntimeController.openAlertLogSettingsPanel"));
     assert.ok(keyboardShortcutControllerResponse.body.includes('function dispatch(action)'));
     assert.ok(alertRuntimeControllerResponse.body.includes("alertLogTabRuntime.set('settings');"));
     assert.ok(!appJsResponse.body.includes('function openAlertLogSettingsTab('));
@@ -2158,10 +2166,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('calculatorEntries'));
     assert.ok(!appJsResponse.body.includes('addToCalculator('));
     assert.ok(appConfigResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
-    assert.ok(appJsResponse.body.includes("'toggle-quote-display': toggleQuoteDisplayMode"));
-    assert.ok(appJsResponse.body.includes("'toggle-data-terminal': toggleDataTerminalPanel"));
-    assert.ok(appJsResponse.body.includes("'toggle-multi-channel': toggleMultiChannel"));
-    assert.ok(appJsResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-quote-display': deps.toggleQuoteDisplayMode"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-data-terminal': deps.toggleDataTerminalPanel"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-multi-channel': deps.toggleMultiChannel"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-request-channel-tags': deps.requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(!appJsResponse.body.includes('toggleRequestChannelTags()'));
     assert.ok(!appJsResponse.body.includes('let showRequestChannelTags = true;'));
     assert.ok(!appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));

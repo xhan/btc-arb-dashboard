@@ -20,11 +20,10 @@
         getArbDetailUtils,
         getCopyUtils,
         getDashboardActionController,
+        getDashboardAppCommandRuntime,
         getDashboardArbWorkspaceRuntime,
         getDashboardAuxPanelsRuntime,
         getDashboardBoardRuntime,
-        getDashboardCommandController,
-        getDashboardCommandRuntime,
         getDashboardCoreRuntime,
         getDashboardDomRefs,
         getDashboardFormController,
@@ -36,8 +35,6 @@
         getDashboardViewModeController,
         getDashboardViewController,
         getDexLinkUtils,
-        getKeyboardShortcutController,
-        getKeyboardShortcutUtils,
         getPathAlertPageUtils,
         getQuoteDisplayUtils,
         getQuotePauseUtils,
@@ -466,21 +463,18 @@
     const renderDataTerminalPanel = auxPanelsRuntime.renderDataTerminalPanel;
     const toggleDataTerminalPanel = auxPanelsRuntime.toggleDataTerminalPanel;
 
-    const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({
-        dashboardCommandControllerUtils: getDashboardCommandController(),
-        documentImpl: document,
-        keyboardShortcutControllerUtils: getKeyboardShortcutController(),
-        keyboardShortcutUtils: getKeyboardShortcutUtils(),
-        isArbDetailVisible: () => arbDetailController.isVisible(),
-        actions: {
-            'close-arb-detail': closeArbDetailModal,
-            'toggle-arb-panel': dashboardViewModeController.toggleArbView,
-            'toggle-data-terminal': toggleDataTerminalPanel,
-            'toggle-quote-display': toggleQuoteDisplayMode,
-            'open-alert-log-settings': alertRuntimeController.openAlertLogSettingsPanel,
-            'toggle-alert-log': alertRuntimeController.toggleAlertLogPanel,
-            'toggle-multi-channel': toggleMultiChannel,
-            'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle
+    const dashboardCommandRuntime = getDashboardAppCommandRuntime().createDashboardAppCommandRuntime({
+        modules: dashboardModules,
+        deps: {
+            alertRuntimeController,
+            arbDetailController,
+            closeArbDetailModal,
+            dashboardViewModeController,
+            documentImpl: document,
+            requestChannelTagVisibilityRuntime,
+            toggleDataTerminalPanel,
+            toggleMultiChannel,
+            toggleQuoteDisplayMode
         }
     });
     const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;

@@ -8,6 +8,7 @@ const dashboardFormControllerJs = fs.readFileSync(path.join(__dirname, '..', 'sr
 const arbDetailControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/arb/arb-detail-controller.js'), 'utf8');
 const queueRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-queue-runtime-utils.js'), 'utf8');
 const dashboardQuoteRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-quote-runtime.js'), 'utf8');
+const dashboardAppCommandRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-app-command-runtime.js'), 'utf8');
 const quoteFetchControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-fetch-controller.js'), 'utf8');
 const requestChannelUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'src/request-channel/request-channel-utils.js'), 'utf8');
 
@@ -97,7 +98,7 @@ assert.ok(
   !appJs.includes('function rebuildQueuesForMultiChannelToggle(previousEnabled, nextEnabled)')
     && dashboardQuoteRuntimeJs.includes('requestChannelRuntime.toggleMultiChannel(')
     && appJs.includes('toggleMultiChannel,')
-    && appJs.includes("'toggle-multi-channel': toggleMultiChannel")
+    && dashboardAppCommandRuntimeJs.includes("'toggle-multi-channel': deps.toggleMultiChannel")
     && dashboardQuoteRuntimeJs.includes('quoteRefreshRuntime.getQueueMutationCallbacks()')
     && requestChannelUtilsJs.includes('function buildMultiChannelChangedQuotes(dashboardState, requestChannels, previousEnabled, nextEnabled)'),
   '多渠道开关影响范围应由 request-channel runtime 统一计算，并从顶部按钮命令入口触发'
