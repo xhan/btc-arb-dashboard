@@ -16,7 +16,6 @@
     const BACKEND_URL = buildBackendUrl(location);
     const dashboardModules = window.DashboardModuleRegistry.createDashboardModuleRegistry(window);
     const {
-        getArbDetailUtils,
         getDashboardAppBoardRuntime,
         getDashboardAppCommandRuntime,
         getDashboardAppLifecycleRuntime,

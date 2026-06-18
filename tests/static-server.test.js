@@ -2340,6 +2340,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailControllerResponse.body.includes('arbDetailUtils.applyArbDetailRateDeltas(rows, baseRows)'));
     assert.ok(moduleRegistryResponse.body.includes('getArbDetailUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('ArbDetailUtils is not loaded'));
+    assert.ok(!appJsResponse.body.includes('getArbDetailUtils,'));
     assert.ok(arbDetailControllerResponse.body.includes('arbDetailUtils.buildArbDetailRowsHtml(card, {'));
     assert.ok(arbDetailControllerResponse.body.includes('arbDetailUtils.buildArbDetailSummaryHtml(card, {'));
     assert.ok(!appJsResponse.body.includes('formatProfitRate: formatDetailProfitRate'));
