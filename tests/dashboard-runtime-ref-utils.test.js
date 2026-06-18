@@ -37,11 +37,18 @@ assert.throws(
 const bridge = createDashboardRuntimeBridge();
 assert.strictEqual(bridge.quoteRuntimeRef.peek(), null);
 assert.strictEqual(bridge.arbAlertRuntimeRef.peek(), null);
+assert.strictEqual(bridge.arbWorkspaceRuntimeRef.peek(), null);
+assert.strictEqual(bridge.dataTerminalRuntimeRef.peek(), null);
 assert.strictEqual(bridge.dashboardViewRenderRuntimeRef.peek(), null);
 assert.strictEqual(bridge.isDashboardViewActive(), false);
 assert.strictEqual(bridge.markDashboardViewDirty(), false);
 assert.strictEqual(bridge.renderDashboardForCurrentState(), false);
 assert.strictEqual(bridge.ensureDashboardRendered(), false);
+assert.strictEqual(bridge.isArbDetailSchedulerPaused(), false);
+assert.strictEqual(bridge.handleQuoteMainFetchSuccess({ id: 'quote-1' }, { fetchMode: 'main' }), false);
+assert.strictEqual(bridge.handleQuoteMarketStateChanged({ id: 'quote-1' }, { price: 1 }, { fetchMode: 'main' }), false);
+assert.strictEqual(bridge.scheduleDataTerminalUpdate(), false);
+assert.strictEqual(bridge.recordArbDetailSourceAttempt('Kyber'), false);
 assert.throws(
   () => bridge.abortActiveFetchControllers(),
   /Dashboard quote runtime is not initialized/
@@ -72,6 +79,32 @@ bridge.arbAlertRuntimeRef.set({
     return 'updated';
   }
 });
+bridge.arbWorkspaceRuntimeRef.set({
+  arbDetailController: {
+    isDashboardPaused() {
+      bridgeCalls.push(['isPaused']);
+      return true;
+    },
+    recordSourceAttempt(source) {
+      bridgeCalls.push(['recordSourceAttempt', source]);
+      return 'recorded';
+    }
+  },
+  handleQuoteMainFetchSuccess(quote, context) {
+    bridgeCalls.push(['quoteSuccess', quote, context]);
+    return 'quote-success';
+  },
+  handleQuoteMarketStateChanged(quote, state, context) {
+    bridgeCalls.push(['quoteMarketStateChanged', quote, state, context]);
+    return 'quote-state-changed';
+  }
+});
+bridge.dataTerminalRuntimeRef.set({
+  scheduleDataTerminalUpdate() {
+    bridgeCalls.push(['scheduleDataTerminalUpdate']);
+    return 'data-terminal-scheduled';
+  }
+});
 bridge.dashboardViewRenderRuntimeRef.set({
   isActive() {
     bridgeCalls.push(['isActive']);
@@ -96,6 +129,14 @@ assert.strictEqual(bridge.fetchQuoteByStrategy({ id: 1 }, { force: true }), 'fet
 assert.strictEqual(bridge.updateSchedulers(), 'scheduled');
 assert.strictEqual(bridge.invalidateArbRuleSnapshotCache({ bumpRevision: false }), 'invalidated');
 assert.strictEqual(bridge.updateArbPanel({ force: true }), 'updated');
+assert.strictEqual(bridge.isArbDetailSchedulerPaused(), true);
+assert.strictEqual(bridge.recordArbDetailSourceAttempt('Cetus'), 'recorded');
+assert.strictEqual(bridge.handleQuoteMainFetchSuccess({ id: 2 }, { fetchMode: 'main' }), 'quote-success');
+assert.strictEqual(
+  bridge.handleQuoteMarketStateChanged({ id: 3 }, { price: 3 }, { fetchMode: 'inverse' }),
+  'quote-state-changed'
+);
+assert.strictEqual(bridge.scheduleDataTerminalUpdate(), 'data-terminal-scheduled');
 assert.strictEqual(bridge.isDashboardViewActive(), true);
 assert.strictEqual(bridge.markDashboardViewDirty(), false);
 assert.strictEqual(bridge.renderDashboardForCurrentState(), true);
@@ -106,6 +147,11 @@ assert.deepStrictEqual(bridgeCalls, [
   ['updateSchedulers'],
   ['invalidate', { bumpRevision: false }],
   ['updatePanel', { force: true }],
+  ['isPaused'],
+  ['recordSourceAttempt', 'Cetus'],
+  ['quoteSuccess', { id: 2 }, { fetchMode: 'main' }],
+  ['quoteMarketStateChanged', { id: 3 }, { price: 3 }, { fetchMode: 'inverse' }],
+  ['scheduleDataTerminalUpdate'],
   ['isActive'],
   ['markDirty'],
   ['renderNow'],

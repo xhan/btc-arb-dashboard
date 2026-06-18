@@ -96,12 +96,19 @@
     const {
         quoteRuntimeRef,
         arbAlertRuntimeRef,
+        arbWorkspaceRuntimeRef,
+        dataTerminalRuntimeRef,
         dashboardViewRenderRuntimeRef,
         abortActiveFetchControllers,
         fetchQuoteByStrategy,
         updateSchedulers,
         invalidateArbRuleSnapshotCache,
         updateArbPanel,
+        isArbDetailSchedulerPaused,
+        recordArbDetailSourceAttempt,
+        handleQuoteMainFetchSuccess,
+        handleQuoteMarketStateChanged,
+        scheduleDataTerminalUpdate,
         isDashboardViewActive,
         markDashboardViewDirty,
         renderDashboardForCurrentState
@@ -228,9 +235,6 @@
     const requestChannelTagVisibilityRuntime = dashboardShellRuntime.requestChannelTagVisibilityRuntime;
     const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;
 
-    let arbWorkspaceRuntime = null;
-    let arbDetailController = null;
-    let scheduleDataTerminalUpdate = () => {};
     const quoteWorkspaceRuntime = getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({
         modules: dashboardModules,
         constants: {
@@ -250,29 +254,15 @@
             getEffectiveRequestChannelIdForQuote,
             getQuoteMarketState,
             isDashboardUiActive: isDashboardViewActive,
-            isSchedulerPaused: () => arbDetailController && arbDetailController.isDashboardPaused(),
+            isSchedulerPaused: isArbDetailSchedulerPaused,
             logger: console,
             markDashboardUiDirty: markDashboardViewDirty,
-            onQuoteMainFetchSuccess: (quote, context) => {
-                if (arbWorkspaceRuntime && typeof arbWorkspaceRuntime.handleQuoteMainFetchSuccess === 'function') {
-                    arbWorkspaceRuntime.handleQuoteMainFetchSuccess(quote, context);
-                }
-            },
-            onQuoteMarketStateChanged: (quote, state, context) => {
-                if (arbWorkspaceRuntime && typeof arbWorkspaceRuntime.handleQuoteMarketStateChanged === 'function') {
-                    arbWorkspaceRuntime.handleQuoteMarketStateChanged(quote, state, context);
-                }
-            },
-            onQuoteMarketStateChangedSideEffect: () => {
-                scheduleDataTerminalUpdate();
-            },
+            onQuoteMainFetchSuccess: handleQuoteMainFetchSuccess,
+            onQuoteMarketStateChanged: handleQuoteMarketStateChanged,
+            onQuoteMarketStateChangedSideEffect: scheduleDataTerminalUpdate,
             quoteRuntimeRef,
             quoteStateRuntime,
-            recordSourceAttempt: (source) => {
-                if (arbDetailController && typeof arbDetailController.recordSourceAttempt === 'function') {
-                    arbDetailController.recordSourceAttempt(source);
-                }
-            },
+            recordSourceAttempt: recordArbDetailSourceAttempt,
             resetQuoteUiRuntimeState,
             requestChannelRuntime,
             setQuoteMarketState,
@@ -316,7 +306,7 @@
         updateQuotePairLabel,
         updateTrendArrow
     } = quoteWorkspaceRuntime;
-    arbWorkspaceRuntime = getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({
+    const arbWorkspaceRuntime = arbWorkspaceRuntimeRef.set(getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({
         arbAlertRuntimeRef,
         modules: dashboardModules,
         constants: {
@@ -413,9 +403,9 @@
             setTimeout,
             clearTimeout
         }
-    });
+    }));
     const alertRuntimeController = arbWorkspaceRuntime.alertRuntimeController;
-    arbDetailController = arbWorkspaceRuntime.arbDetailController;
+    const arbDetailController = arbWorkspaceRuntime.arbDetailController;
     const arbPanelController = arbWorkspaceRuntime.arbPanelController;
     const dashboardViewModeController = arbWorkspaceRuntime.dashboardViewModeController;
     const applyFloatingPanelDisplay = arbWorkspaceRuntime.applyFloatingPanelDisplay;
@@ -456,7 +446,7 @@
         }
     });
     const quoteSpreadController = quoteSpreadRuntime.quoteSpreadController;
-    const dataTerminalRuntime = getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({
+    const dataTerminalRuntime = dataTerminalRuntimeRef.set(getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({
         modules: dashboardModules,
         constants: {
             dataTerminalUpdateDelayMs: DATA_TERMINAL_UPDATE_DELAY_MS
@@ -481,10 +471,9 @@
             windowImpl: window,
             zIndexRuntime: floatingPanelZIndexRuntime
         }
-    });
+    }));
     const renderDataTerminalPanel = dataTerminalRuntime.renderDataTerminalPanel;
     const toggleDataTerminalPanel = dataTerminalRuntime.toggleDataTerminalPanel;
-    scheduleDataTerminalUpdate = dataTerminalRuntime.scheduleDataTerminalUpdate;
 
     const dashboardCommandRuntime = getDashboardCommandRuntime().createDashboardCommandRuntime({
         dashboardCommandControllerUtils: getDashboardCommandController(),

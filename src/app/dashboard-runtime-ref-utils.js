@@ -52,17 +52,49 @@
   function createDashboardRuntimeBridge() {
     const quoteRuntimeRef = createDashboardRuntimeRef({ name: 'Dashboard quote runtime' });
     const arbAlertRuntimeRef = createDashboardRuntimeRef({ name: 'Dashboard arb alert runtime' });
+    const arbWorkspaceRuntimeRef = createDashboardRuntimeRef({ name: 'Dashboard arb workspace runtime' });
+    const dataTerminalRuntimeRef = createDashboardRuntimeRef({ name: 'Dashboard data terminal runtime' });
     const dashboardViewRenderRuntimeRef = createDashboardRuntimeRef({ name: 'Dashboard view render runtime' });
+
+    function getArbDetailController() {
+      const arbWorkspaceRuntime = arbWorkspaceRuntimeRef.peek();
+      return arbWorkspaceRuntime && arbWorkspaceRuntime.arbDetailController
+        ? arbWorkspaceRuntime.arbDetailController
+        : null;
+    }
 
     return {
       quoteRuntimeRef,
       arbAlertRuntimeRef,
+      arbWorkspaceRuntimeRef,
+      dataTerminalRuntimeRef,
       dashboardViewRenderRuntimeRef,
       abortActiveFetchControllers: () => quoteRuntimeRef.call('abortActiveFetchControllers'),
       fetchQuoteByStrategy: (quote, options) => quoteRuntimeRef.call('fetchQuoteByStrategy', quote, options),
       updateSchedulers: () => quoteRuntimeRef.call('updateSchedulers'),
       invalidateArbRuleSnapshotCache: (options) => arbAlertRuntimeRef.call('invalidateArbRuleSnapshotCache', options),
       updateArbPanel: (options) => arbAlertRuntimeRef.call('updateArbPanel', options),
+      isArbDetailSchedulerPaused: () => {
+        const arbDetailController = getArbDetailController();
+        return Boolean(
+          arbDetailController
+          && typeof arbDetailController.isDashboardPaused === 'function'
+          && arbDetailController.isDashboardPaused()
+        );
+      },
+      recordArbDetailSourceAttempt: (source) => {
+        const arbDetailController = getArbDetailController();
+        return arbDetailController && typeof arbDetailController.recordSourceAttempt === 'function'
+          ? arbDetailController.recordSourceAttempt(source)
+          : false;
+      },
+      handleQuoteMainFetchSuccess: (quote, context) => (
+        arbWorkspaceRuntimeRef.callOr(false, 'handleQuoteMainFetchSuccess', quote, context)
+      ),
+      handleQuoteMarketStateChanged: (quote, state, context) => (
+        arbWorkspaceRuntimeRef.callOr(false, 'handleQuoteMarketStateChanged', quote, state, context)
+      ),
+      scheduleDataTerminalUpdate: () => dataTerminalRuntimeRef.callOr(false, 'scheduleDataTerminalUpdate'),
       isDashboardViewActive: () => Boolean(dashboardViewRenderRuntimeRef.callOr(false, 'isActive')),
       markDashboardViewDirty: () => dashboardViewRenderRuntimeRef.callOr(false, 'markDirty'),
       renderDashboardForCurrentState: () => dashboardViewRenderRuntimeRef.callOr(false, 'renderNow'),
