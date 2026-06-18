@@ -37,6 +37,11 @@ const deps = {
     toggleArbView: () => calls.push(['toggleArb'])
   },
   documentImpl: { id: 'document' },
+  dashboardShellRuntime: {
+    requestChannelTagVisibilityRuntime: {
+      toggle: () => calls.push(['toggleRequestChannelTagsFromShell'])
+    }
+  },
   requestChannelTagVisibilityRuntime: {
     toggle: () => calls.push(['toggleRequestChannelTags'])
   },
@@ -72,5 +77,5 @@ assert.deepStrictEqual(calls, [
   ['openAlertLogSettings'],
   ['toggleAlertLog'],
   ['toggleMultiChannel'],
-  ['toggleRequestChannelTags']
+  ['toggleRequestChannelTagsFromShell']
 ]);

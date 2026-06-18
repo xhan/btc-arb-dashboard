@@ -773,8 +773,11 @@ async function waitForServer(attempts = 12) {
     assert.ok(commandRuntimeResponse.body.includes('actions: dashboardCommandController.buildActionMap(DASHBOARD_COMMAND_IDS)'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardAppCommandRuntime: ['));
     assert.ok(appCommandRuntimeResponse.body.includes('function createDashboardAppCommandRuntime(options = {})'));
+    assert.ok(appCommandRuntimeResponse.body.includes('const shellRuntime = deps.dashboardShellRuntime || {};'));
     assert.ok(appJsResponse.body.includes('const dashboardCommandRuntime = getDashboardAppCommandRuntime().createDashboardAppCommandRuntime({'));
     assert.ok(!appJsResponse.body.includes('const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const requestChannelTagVisibilityRuntime = dashboardShellRuntime.requestChannelTagVisibilityRuntime;'));
+    assert.ok(appJsResponse.body.includes('dashboardShellRuntime,'));
     assert.ok(!appJsResponse.body.includes('actions: dashboardCommandController.buildActionMap(['));
     assert.ok(appJsResponse.body.includes('dashboardCommandRuntime,'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardLifecycleController: ['));
@@ -1317,7 +1320,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
     assert.ok(appJsResponse.body.includes('toggleMultiChannel,'));
     assert.ok(appCommandRuntimeResponse.body.includes("'toggle-multi-channel': deps.toggleMultiChannel"));
-    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-request-channel-tags': deps.requestChannelTagVisibilityRuntime.toggle"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-multi-channel')"));
     assert.ok(quoteRuntimeResponse.body.includes('requestChannelRuntime.toggleMultiChannel('));
     assert.ok(quoteRuntimeResponse.body.includes('quoteRefreshRuntime.getQueueMutationCallbacks()'));
@@ -2213,7 +2216,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appCommandRuntimeResponse.body.includes("'toggle-quote-display': deps.toggleQuoteDisplayMode"));
     assert.ok(appCommandRuntimeResponse.body.includes("'toggle-data-terminal': deps.toggleDataTerminalPanel"));
     assert.ok(appCommandRuntimeResponse.body.includes("'toggle-multi-channel': deps.toggleMultiChannel"));
-    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-request-channel-tags': deps.requestChannelTagVisibilityRuntime.toggle"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(!appJsResponse.body.includes('toggleRequestChannelTags()'));
     assert.ok(!appJsResponse.body.includes('let showRequestChannelTags = true;'));
     assert.ok(!appJsResponse.body.includes("USDe: ['USDe', 'USDE']"));

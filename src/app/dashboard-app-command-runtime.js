@@ -11,6 +11,9 @@
   function createDashboardAppCommandRuntime(options = {}) {
     const modules = options.modules || {};
     const deps = options.deps || {};
+    const shellRuntime = deps.dashboardShellRuntime || {};
+    const requestChannelTagVisibilityRuntime = shellRuntime.requestChannelTagVisibilityRuntime
+      || deps.requestChannelTagVisibilityRuntime;
     return modules.getDashboardCommandRuntime().createDashboardCommandRuntime({
       dashboardCommandControllerUtils: modules.getDashboardCommandController(),
       documentImpl: deps.documentImpl,
@@ -25,7 +28,7 @@
         'open-alert-log-settings': deps.alertRuntimeController.openAlertLogSettingsPanel,
         'toggle-alert-log': deps.alertRuntimeController.toggleAlertLogPanel,
         'toggle-multi-channel': deps.toggleMultiChannel,
-        'toggle-request-channel-tags': deps.requestChannelTagVisibilityRuntime.toggle
+        'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle
       }
     });
   }

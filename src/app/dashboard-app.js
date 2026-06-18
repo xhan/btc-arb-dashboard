@@ -131,7 +131,6 @@
     const requestChannelRuntime = dashboardShellRuntime.requestChannelRuntime;
     const getEffectiveRequestChannelIdForQuote = dashboardShellRuntime.getEffectiveRequestChannelIdForQuote;
     const updateRequestChannelTagForQuote = dashboardShellRuntime.updateRequestChannelTagForQuote;
-    const requestChannelTagVisibilityRuntime = dashboardShellRuntime.requestChannelTagVisibilityRuntime;
     const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;
 
     const dashboardAppWorkspaceRuntime = getDashboardAppWorkspaceRuntime().createDashboardAppWorkspaceRuntime({
@@ -256,7 +255,7 @@
             closeArbDetailModal,
             dashboardViewModeController,
             documentImpl: document,
-            requestChannelTagVisibilityRuntime,
+            dashboardShellRuntime,
             toggleDataTerminalPanel,
             toggleMultiChannel,
             toggleQuoteDisplayMode
@@ -345,7 +344,6 @@
             quoteSpreadController,
             renderDashboardForCurrentState,
             requestChannelRuntime,
-            requestChannelTagVisibilityRuntime,
             saveData,
             setApiIntervals,
             setArbCycleStartPriority,
