@@ -783,6 +783,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('const requestChannelTagVisibilityRuntime = dashboardShellRuntime.requestChannelTagVisibilityRuntime;'));
     assert.ok(!appJsResponse.body.includes('const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;'));
     assert.ok(!appJsResponse.body.includes('const getEffectiveRequestChannelIdForQuote = dashboardShellRuntime.getEffectiveRequestChannelIdForQuote;'));
+    assert.ok(!appJsResponse.body.includes('requestChannelRuntime,'));
     assert.ok(appJsResponse.body.includes('dashboardShellRuntime,'));
     assert.ok(!appJsResponse.body.includes('actions: dashboardCommandController.buildActionMap(['));
     assert.ok(appJsResponse.body.includes('dashboardCommandRuntime,'));

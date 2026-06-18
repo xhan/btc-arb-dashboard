@@ -173,7 +173,6 @@
             quoteRuntimeRef,
             quoteStateRuntime,
             recordSourceAttempt: recordArbDetailSourceAttempt,
-            requestChannelRuntime,
             resetQuoteUiRuntimeState,
             setQuoteMarketState,
             updateSchedulers,
