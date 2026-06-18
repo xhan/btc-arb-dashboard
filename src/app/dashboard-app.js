@@ -17,20 +17,15 @@
     const dashboardModules = window.DashboardModuleRegistry.createDashboardModuleRegistry(window);
     const {
         getArbDetailUtils,
-        getCopyUtils,
         getDashboardAppBoardRuntime,
         getDashboardAppCommandRuntime,
         getDashboardAppLifecycleRuntime,
+        getDashboardAppShellRuntime,
         getDashboardArbWorkspaceRuntime,
         getDashboardAuxPanelsRuntime,
         getDashboardCoreRuntime,
         getDashboardDomRefs,
-        getDashboardModalUtils,
-        getDashboardQuoteWorkspaceRuntime,
-        getDashboardRenderer,
-        getDashboardShellRuntime,
-        getRequestChannelUtils,
-        getThemeUtils
+        getDashboardQuoteWorkspaceRuntime
     } = dashboardModules;
     const coreRuntime = getDashboardCoreRuntime().createDashboardCoreRuntime({
         modules: dashboardModules,
@@ -176,19 +171,23 @@
         quoteSettingsModalElements
     } = getDashboardDomRefs().createDashboardDomRefs(document);
 
-    const dashboardShellRuntime = getDashboardShellRuntime().createDashboardShellRuntime({
-        clearTimeout,
-        copyUtils: getCopyUtils(),
-        dashboardModalUtils: getDashboardModalUtils(),
-        dashboardRenderer: getDashboardRenderer(),
-        dashboardRuntimeUtils,
-        dashboardSaveDebounceMs: DASHBOARD_SAVE_DEBOUNCE_MS,
-        defaultIntervals: DEFAULT_INTERVALS,
-        documentImpl: document,
-        getApiIntervals,
-        getDashboardLocalStorage,
-        getDashboardState,
-        logger: console,
+    const dashboardShellRuntime = getDashboardAppShellRuntime().createDashboardAppShellRuntime({
+        modules: dashboardModules,
+        constants: {
+            dashboardSaveDebounceMs: DASHBOARD_SAVE_DEBOUNCE_MS,
+            defaultIntervals: DEFAULT_INTERVALS
+        },
+        deps: {
+            dashboardApiClient,
+            dashboardRuntimeUtils,
+            documentImpl: document,
+            getApiIntervals,
+            getDashboardLocalStorage,
+            getDashboardState,
+            logger: console,
+            setApiIntervals,
+            updateSchedulers
+        },
         refs: {
             bodyEl: document.body,
             themeToggleBtn,
@@ -202,12 +201,10 @@
             toggleMultiChannelBtn,
             copyToast
         },
-        requestChannelUtils: getRequestChannelUtils(),
-        saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload),
-        setApiIntervals,
-        setTimeout,
-        themeUtils: getThemeUtils(),
-        updateSchedulers
+        timers: {
+            clearTimeout,
+            setTimeout
+        }
     });
     const themeRuntime = dashboardShellRuntime.themeRuntime;
     const performSave = dashboardShellRuntime.performSave;

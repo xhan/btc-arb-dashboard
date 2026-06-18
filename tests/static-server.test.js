@@ -150,6 +150,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-runtime-ref-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-core-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-shell-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-app-shell-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-board-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-app-board-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-quote-spread-runtime.js"'));
@@ -295,6 +296,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-shell-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-app-shell-runtime.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-board-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
@@ -572,6 +576,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(coreRuntimeResponse.statusCode, 200);
     const shellRuntimeResponse = await request('/src/app/dashboard-shell-runtime.js');
     assert.strictEqual(shellRuntimeResponse.statusCode, 200);
+    const appShellRuntimeResponse = await request('/src/app/dashboard-app-shell-runtime.js');
+    assert.strictEqual(appShellRuntimeResponse.statusCode, 200);
     const boardRuntimeResponse = await request('/src/app/dashboard-board-runtime.js');
     assert.strictEqual(boardRuntimeResponse.statusCode, 200);
     const appBoardRuntimeResponse = await request('/src/app/dashboard-app-board-runtime.js');
@@ -995,7 +1001,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('DashboardModalUtils is not loaded'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.readAddQuoteFormValues(deps.addQuoteModalRefs)'));
     assert.ok(dashboardFormControllerResponse.body.includes('deps.dashboardModalUtils.syncAddQuoteFormControls(deps.addQuoteModalRefs, {'));
-    assert.ok(appJsResponse.body.includes('const dashboardShellRuntime = getDashboardShellRuntime().createDashboardShellRuntime({'));
+    assert.ok(appJsResponse.body.includes('const dashboardShellRuntime = getDashboardAppShellRuntime().createDashboardAppShellRuntime({'));
+    assert.ok(appShellRuntimeResponse.body.includes('return modules.getDashboardShellRuntime().createDashboardShellRuntime({'));
     assert.ok(appJsResponse.body.includes('const addQuoteModalSelectionRuntime = dashboardShellRuntime.addQuoteModalSelectionRuntime;'));
     assert.ok(appJsResponse.body.includes('const quoteSettingsSelectionRuntime = dashboardShellRuntime.quoteSettingsSelectionRuntime;'));
     assert.ok(dashboardModalUtilsResponse.body.includes('function showModal(modal)'));
@@ -1692,7 +1699,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(shellRuntimeResponse.body.includes('const dashboardPersistenceRuntime = dashboardRuntimeUtils.createDashboardPersistenceRuntime({'));
     assert.ok(shellRuntimeResponse.body.includes('saveRuntimeOptions: {'));
     assert.ok(shellRuntimeResponse.body.includes('feedbackOptions: {'));
-    assert.ok(appJsResponse.body.includes('saveDashboardConfig: (payload) => dashboardApiClient.saveDashboardConfig(payload)'));
+    assert.ok(appShellRuntimeResponse.body.includes('saveDashboardConfig: (payload) => deps.dashboardApiClient.saveDashboardConfig(payload)'));
     assert.ok(appJsResponse.body.includes('const performSave = dashboardShellRuntime.performSave;'));
     assert.ok(appJsResponse.body.includes('const saveData = dashboardShellRuntime.saveData;'));
     assert.ok(lifecycleControllerResponse.body.includes("addClickListener(refs.manualSaveBtn, () => { void deps.performSave({ manual: true }); });"));
