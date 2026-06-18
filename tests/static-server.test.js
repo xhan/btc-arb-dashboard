@@ -774,9 +774,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getDashboardAppCommandRuntime: ['));
     assert.ok(appCommandRuntimeResponse.body.includes('function createDashboardAppCommandRuntime(options = {})'));
     assert.ok(appJsResponse.body.includes('const dashboardCommandRuntime = getDashboardAppCommandRuntime().createDashboardAppCommandRuntime({'));
-    assert.ok(appJsResponse.body.includes('const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;'));
     assert.ok(!appJsResponse.body.includes('actions: dashboardCommandController.buildActionMap(['));
-    assert.ok(appJsResponse.body.includes('dashboardCommandController,'));
+    assert.ok(appJsResponse.body.includes('dashboardCommandRuntime,'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardLifecycleController: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardLifecycleController is not loaded'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardViewModeController: ['));
@@ -1066,6 +1066,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(appBoardRuntimeResponse.body.includes('function createDashboardAppBoardRuntime(options = {})'));
     assert.ok(appBoardRuntimeResponse.body.includes('modules.getDashboardBoardRuntime().createDashboardBoardRuntime({'));
     assert.ok(appJsResponse.body.includes('const dashboardAppBoardRuntime = getDashboardAppBoardRuntime().createDashboardAppBoardRuntime({'));
+    assert.ok(!appJsResponse.body.includes('const dashboardFormController = dashboardAppBoardRuntime.dashboardFormController;'));
+    assert.ok(appJsResponse.body.includes('dashboardCommandRuntime,'));
+    assert.ok(appJsResponse.body.includes('dashboardAppBoardRuntime,'));
     assert.ok(boardRuntimeResponse.body.includes('const dashboardActionController = options.dashboardActionControllerUtils.createDashboardActionController({'));
     assert.ok(boardRuntimeResponse.body.includes('const dashboardFormController = options.dashboardFormControllerUtils.createDashboardFormController({'));
     assert.ok(!appJsResponse.body.includes('getDashboardActionController().createDashboardActionController({'));

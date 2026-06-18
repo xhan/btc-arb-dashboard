@@ -12,6 +12,8 @@
     const modules = options.modules || {};
     const deps = options.deps || {};
     const refs = options.refs || {};
+    const commandRuntime = deps.dashboardCommandRuntime || {};
+    const boardRuntime = deps.dashboardAppBoardRuntime || {};
     const dashboardLifecycleController = modules.getDashboardLifecycleController().createDashboardLifecycleController({
       addToQueue: deps.addToQueue,
       alertRuntimeController: deps.alertRuntimeController,
@@ -21,8 +23,8 @@
       clearTopologyCache: deps.clearTopologyCache,
       confirmActionRuntime: deps.confirmActionRuntime,
       dashboardApiClient: deps.dashboardApiClient,
-      dashboardCommandController: deps.dashboardCommandController,
-      dashboardFormController: deps.dashboardFormController,
+      dashboardCommandController: commandRuntime.dashboardCommandController || deps.dashboardCommandController,
+      dashboardFormController: boardRuntime.dashboardFormController || deps.dashboardFormController,
       dashboardRenderer: modules.getDashboardRenderer(),
       dashboardViewModeController: deps.dashboardViewModeController,
       defaultArbCycleStartPriority: deps.defaultArbCycleStartPriority,
@@ -32,12 +34,12 @@
       floatingPanelZIndexRuntime: deps.floatingPanelZIndexRuntime,
       getDashboardState: deps.getDashboardState,
       getPriceSnapshotConfig: deps.getPriceSnapshotConfig,
-      handleDashboardClick: deps.handleDashboardClick,
-      handleDashboardInput: deps.handleDashboardInput,
+      handleDashboardClick: boardRuntime.handleDashboardClick || deps.handleDashboardClick,
+      handleDashboardInput: boardRuntime.handleDashboardInput || deps.handleDashboardInput,
       invalidateArbRuleSnapshotCache: deps.invalidateArbRuleSnapshotCache,
-      keyboardShortcutController: deps.keyboardShortcutController,
+      keyboardShortcutController: commandRuntime.keyboardShortcutController || deps.keyboardShortcutController,
       normalizeArbCycleStartPriority: modules.getArbCyclePriorityUtils().normalizeArbCycleStartPriority,
-      openAddCategoryModal: deps.openAddCategoryModal,
+      openAddCategoryModal: boardRuntime.openAddCategoryModal || deps.openAddCategoryModal,
       performSave: deps.performSave,
       priceSnapshotSaveRuntime: deps.priceSnapshotSaveRuntime,
       priceSnapshotTimerRuntime: deps.priceSnapshotTimerRuntime,

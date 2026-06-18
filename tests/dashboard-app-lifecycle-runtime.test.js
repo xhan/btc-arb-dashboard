@@ -30,8 +30,18 @@ const deps = {
   clearTopologyCache: () => {},
   confirmActionRuntime: { id: 'confirm-runtime' },
   dashboardApiClient: { id: 'api-client' },
-  dashboardCommandController: { id: 'command-controller' },
-  dashboardFormController: { id: 'form-controller' },
+  dashboardCommandController: { id: 'legacy-command-controller' },
+  dashboardCommandRuntime: {
+    dashboardCommandController: { id: 'command-controller' },
+    keyboardShortcutController: { id: 'keyboard-controller' }
+  },
+  dashboardFormController: { id: 'legacy-form-controller' },
+  dashboardAppBoardRuntime: {
+    dashboardFormController: { id: 'form-controller' },
+    handleDashboardClick: () => 'dashboard-click',
+    handleDashboardInput: () => 'dashboard-input',
+    openAddCategoryModal: () => 'open-category'
+  },
   dashboardViewModeController: { id: 'view-mode' },
   defaultArbCycleStartPriority: ['polygon'],
   defaultIntervals: { kyber: 3000 },
@@ -40,11 +50,11 @@ const deps = {
   floatingPanelZIndexRuntime: { id: 'z-index' },
   getDashboardState: () => [{ id: 'category' }],
   getPriceSnapshotConfig: () => ({ enabled: false }),
-  handleDashboardClick: () => {},
-  handleDashboardInput: () => {},
+  handleDashboardClick: () => 'legacy-dashboard-click',
+  handleDashboardInput: () => 'legacy-dashboard-input',
   invalidateArbRuleSnapshotCache: () => {},
-  keyboardShortcutController: { id: 'keyboard-controller' },
-  openAddCategoryModal: () => {},
+  keyboardShortcutController: { id: 'legacy-keyboard-controller' },
+  openAddCategoryModal: () => 'legacy-open-category',
   performSave: () => {},
   priceSnapshotSaveRuntime: { id: 'price-save' },
   priceSnapshotTimerRuntime: { id: 'price-timer' },
@@ -99,6 +109,12 @@ assert.strictEqual(runtime.bindStaticEvents(), 'bind');
 assert.strictEqual(runtime.init(), 'init');
 assert.strictEqual(capturedOptions.addToQueue, deps.addToQueue);
 assert.strictEqual(capturedOptions.alertRuntimeController, deps.alertRuntimeController);
+assert.strictEqual(capturedOptions.dashboardCommandController, deps.dashboardCommandRuntime.dashboardCommandController);
+assert.strictEqual(capturedOptions.keyboardShortcutController, deps.dashboardCommandRuntime.keyboardShortcutController);
+assert.strictEqual(capturedOptions.dashboardFormController, deps.dashboardAppBoardRuntime.dashboardFormController);
+assert.strictEqual(capturedOptions.handleDashboardClick(), 'dashboard-click');
+assert.strictEqual(capturedOptions.handleDashboardInput(), 'dashboard-input');
+assert.strictEqual(capturedOptions.openAddCategoryModal(), 'open-category');
 assert.strictEqual(capturedOptions.dashboardRenderer.id, 'renderer');
 assert.strictEqual(capturedOptions.defaultArbCycleStartPriority, deps.defaultArbCycleStartPriority);
 assert.strictEqual(capturedOptions.defaultIntervals, deps.defaultIntervals);

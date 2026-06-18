@@ -265,7 +265,6 @@
             toggleQuoteDisplayMode
         }
     });
-    const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;
 
     const dashboardAppBoardRuntime = getDashboardAppBoardRuntime().createDashboardAppBoardRuntime({
         modules: dashboardModules,
@@ -321,10 +320,6 @@
         },
         refs: dashboardAppRefGroups.board
     });
-    const dashboardFormController = dashboardAppBoardRuntime.dashboardFormController;
-    const handleDashboardClick = dashboardAppBoardRuntime.handleDashboardClick;
-    const handleDashboardInput = dashboardAppBoardRuntime.handleDashboardInput;
-    const openAddCategoryModal = dashboardAppBoardRuntime.openAddCategoryModal;
     const dashboardAppLifecycleRuntime = getDashboardAppLifecycleRuntime().createDashboardAppLifecycleRuntime({
         modules: dashboardModules,
         deps: {
@@ -336,8 +331,8 @@
             clearTopologyCache,
             confirmActionRuntime,
             dashboardApiClient,
-            dashboardCommandController,
-            dashboardFormController,
+            dashboardAppBoardRuntime,
+            dashboardCommandRuntime,
             dashboardViewModeController,
             defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
             defaultIntervals: DEFAULT_INTERVALS,
@@ -346,11 +341,7 @@
             floatingPanelZIndexRuntime,
             getDashboardState,
             getPriceSnapshotConfig,
-            handleDashboardClick,
-            handleDashboardInput,
             invalidateArbRuleSnapshotCache,
-            keyboardShortcutController,
-            openAddCategoryModal,
             performSave,
             priceSnapshotSaveRuntime,
             priceSnapshotTimerRuntime,
