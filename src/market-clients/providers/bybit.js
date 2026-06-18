@@ -1,8 +1,10 @@
 const { createCexOrderbookClient } = require('./cex-orderbook');
 
-function createBybitClient(deps) {
+const DEFAULT_BYBIT_ORDERBOOK_BASE_URL = 'https://api.bybitglobal.com/v5/market/orderbook';
+
+function createBybitClient(deps = {}) {
   return createCexOrderbookClient({
-    apiBaseUrl: deps.apiBaseUrl || 'https://api.bybit.com/v5/market/orderbook',
+    apiBaseUrl: deps.apiBaseUrl || DEFAULT_BYBIT_ORDERBOOK_BASE_URL,
     source: 'Bybit',
     feeRate: 0,
     fetchOnce: deps.fetchOnce,

@@ -401,7 +401,7 @@ function createMarketClients(options) {
         toRawAmount
       }),
       bybit: createBybitClient({
-        apiBaseUrl: 'https://api.bybit.com/v5/market/orderbook',
+        apiBaseUrl: 'https://api.bybitglobal.com/v5/market/orderbook',
         fetchOnce: options.fetchOnce,
         splitTradingPairSymbol: splitCompactTradingPairSymbol
       }),

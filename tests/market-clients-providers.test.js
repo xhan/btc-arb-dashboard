@@ -480,7 +480,7 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
   });
   assert.strictEqual(
     bybitRequests[0],
-    'https://api.bybit.com/v5/market/orderbook?category=spot&symbol=WBTCBTC&limit=10'
+    'https://api.bybitglobal.com/v5/market/orderbook?category=spot&symbol=WBTCBTC&limit=10'
   );
 
   const binanceRequests = [];
