@@ -161,6 +161,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-app-command-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-view-mode-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-lifecycle-controller.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-app-lifecycle-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-app-config.js"'));
     assert.ok(!response.body.includes('src="quote-calculator.js"'));
     assert.ok(
@@ -330,6 +331,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-app-lifecycle-runtime.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-app-config.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
@@ -590,6 +594,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(viewModeControllerResponse.statusCode, 200);
     const lifecycleControllerResponse = await request('/src/app/dashboard-lifecycle-controller.js');
     assert.strictEqual(lifecycleControllerResponse.statusCode, 200);
+    const appLifecycleRuntimeResponse = await request('/src/app/dashboard-app-lifecycle-runtime.js');
+    assert.strictEqual(appLifecycleRuntimeResponse.statusCode, 200);
     const appConfigResponse = await request('/src/app/dashboard-app-config.js');
     assert.strictEqual(appConfigResponse.statusCode, 200);
     const alertLogUiResponse = await request('/src/alerts/alert-log-ui-utils.js');
@@ -1844,7 +1850,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbAlertRuntimeResponse.body.includes('const specialArbRules = pathAlertRuleDefinitions.SPECIAL_ARB_RULES || [];'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbRuleSnapshotUtils.buildArbRuleSnapshot({'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority)'));
-    assert.ok(appJsResponse.body.includes('normalizeArbCycleStartPriority: getArbCyclePriorityUtils().normalizeArbCycleStartPriority'));
+    assert.ok(appLifecycleRuntimeResponse.body.includes('normalizeArbCycleStartPriority: modules.getArbCyclePriorityUtils().normalizeArbCycleStartPriority'));
     assert.ok(lifecycleControllerResponse.body.includes('normalizePriority: deps.normalizeArbCycleStartPriority'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbEquivalenceUtils.buildAliasRulesFromGroups('));
