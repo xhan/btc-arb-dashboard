@@ -8,6 +8,7 @@ const {
 
 assert.ok(MODULES.getDashboardRuntimeUtils, 'expected dashboard runtime module definition');
 assert.ok(MODULES.getDashboardAppCommandRuntime, 'expected dashboard app command runtime definition');
+assert.ok(MODULES.getDashboardAppBoardRuntime, 'expected dashboard app board runtime definition');
 assert.ok(MODULES.getDashboardDomRefs, 'expected dashboard DOM refs module definition');
 assert.ok(MODULES.getDashboardArbAlertRuntime, 'expected dashboard arb alert runtime definition');
 assert.ok(MODULES.getDashboardQuoteDomainAdapter, 'expected dashboard quote domain adapter definition');
@@ -30,6 +31,7 @@ assert.ok(MODULES.getQuoteSpreadUtils, 'expected quote spread utils definition')
 const windowImpl = {
   ChainDefaults: { id: 'chain-defaults' },
   ArbAlertBridgeUtils: { id: 'arb-alert-bridge' },
+  DashboardAppBoardRuntime: { id: 'dashboard-app-board-runtime' },
   DashboardAppCommandRuntime: { id: 'dashboard-app-command-runtime' },
   DashboardArbAlertRuntime: { id: 'dashboard-arb-alert-runtime' },
   DashboardAuxPanelsRuntime: { id: 'dashboard-aux-panels-runtime' },
@@ -47,6 +49,7 @@ const registry = createDashboardModuleRegistry(windowImpl);
 
 assert.strictEqual(registry.getChainDefaults(), windowImpl.ChainDefaults);
 assert.strictEqual(registry.getArbAlertBridgeUtils(), windowImpl.ArbAlertBridgeUtils);
+assert.strictEqual(registry.getDashboardAppBoardRuntime(), windowImpl.DashboardAppBoardRuntime);
 assert.strictEqual(registry.getDashboardAppCommandRuntime(), windowImpl.DashboardAppCommandRuntime);
 assert.strictEqual(registry.getDashboardArbAlertRuntime(), windowImpl.DashboardArbAlertRuntime);
 assert.strictEqual(registry.getDashboardAuxPanelsRuntime(), windowImpl.DashboardAuxPanelsRuntime);

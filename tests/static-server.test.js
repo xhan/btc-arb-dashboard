@@ -151,6 +151,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-core-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-shell-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-board-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-app-board-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-quote-spread-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-data-terminal-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-aux-panels-runtime.js"'));
@@ -296,6 +297,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-board-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-app-board-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-quote-spread-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
@@ -566,6 +570,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(shellRuntimeResponse.statusCode, 200);
     const boardRuntimeResponse = await request('/src/app/dashboard-board-runtime.js');
     assert.strictEqual(boardRuntimeResponse.statusCode, 200);
+    const appBoardRuntimeResponse = await request('/src/app/dashboard-app-board-runtime.js');
+    assert.strictEqual(appBoardRuntimeResponse.statusCode, 200);
     const quoteSpreadRuntimeResponse = await request('/src/app/dashboard-quote-spread-runtime.js');
     assert.strictEqual(quoteSpreadRuntimeResponse.statusCode, 200);
     const dataTerminalRuntimeResponse = await request('/src/app/dashboard-data-terminal-runtime.js');
@@ -1027,7 +1033,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(boardRuntimeResponse.body.includes('function createDashboardBoardRuntime(options = {})'));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardBoardRuntime: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardBoardRuntime is not loaded'));
-    assert.ok(appJsResponse.body.includes('const dashboardBoardRuntime = getDashboardBoardRuntime().createDashboardBoardRuntime({'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardAppBoardRuntime: ['));
+    assert.ok(appBoardRuntimeResponse.body.includes('function createDashboardAppBoardRuntime(options = {})'));
+    assert.ok(appBoardRuntimeResponse.body.includes('modules.getDashboardBoardRuntime().createDashboardBoardRuntime({'));
+    assert.ok(appJsResponse.body.includes('const dashboardAppBoardRuntime = getDashboardAppBoardRuntime().createDashboardAppBoardRuntime({'));
     assert.ok(boardRuntimeResponse.body.includes('const dashboardActionController = options.dashboardActionControllerUtils.createDashboardActionController({'));
     assert.ok(boardRuntimeResponse.body.includes('const dashboardFormController = options.dashboardFormControllerUtils.createDashboardFormController({'));
     assert.ok(!appJsResponse.body.includes('getDashboardActionController().createDashboardActionController({'));
