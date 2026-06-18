@@ -20,12 +20,11 @@
         getArbDetailUtils,
         getCopyUtils,
         getDashboardActionController,
-        getDashboardApiUtils,
-        getDashboardAppStateRuntime,
         getDashboardArbWorkspaceRuntime,
         getDashboardBoardRuntime,
         getDashboardCommandController,
         getDashboardCommandRuntime,
+        getDashboardCoreRuntime,
         getDashboardDataTerminalRuntime,
         getDashboardDomRefs,
         getDashboardFormController,
@@ -34,59 +33,66 @@
         getDashboardQuoteSpreadRuntime,
         getDashboardQuoteWorkspaceRuntime,
         getDashboardRenderer,
-        getDashboardRuntimeRefUtils,
-        getDashboardRuntimeUtils,
         getDashboardShellRuntime,
         getDashboardViewModeController,
         getDashboardViewController,
         getDexLinkUtils,
-        getDomRenderUtils,
         getKeyboardShortcutController,
         getKeyboardShortcutUtils,
         getPathAlertPageUtils,
-        getPriceSnapshotPayloadUtils,
-        getQueueStatsUtils,
         getQuoteDisplayUtils,
         getQuotePauseUtils,
-        getQuoteStateRuntimeUtils,
         getRequestChannelUtils,
         getThemeUtils
     } = dashboardModules;
-    const dashboardRuntimeUtils = getDashboardRuntimeUtils();
-    const domRenderUtils = getDomRenderUtils();
-    const closestEventTarget = domRenderUtils.closestEventTarget;
-    const dashboardInputInteractionRuntime = domRenderUtils.createRenderInteractionHoldRuntime({
-        clearTimeout,
-        eventListenerOptions: { capture: true },
-        idleDelayMs: 80,
-        setTimeout,
-        trackFocus: false
+    const coreRuntime = getDashboardCoreRuntime().createDashboardCoreRuntime({
+        modules: dashboardModules,
+        constants: {
+            amountInputDebounceMs: AMOUNT_INPUT_DEBOUNCE_MS,
+            floatingPanelBaseZIndex: FLOATING_PANEL_BASE_Z_INDEX
+        },
+        deps: {
+            backendUrl: BACKEND_URL,
+            documentImpl: document,
+            fetchImpl: fetch,
+            logger: console
+        },
+        timers: {
+            setInterval,
+            clearInterval,
+            setTimeout,
+            clearTimeout
+        }
     });
-    dashboardInputInteractionRuntime.bind(document);
-
-    const DEFAULT_INTERVALS = { ...getQueueStatsUtils().DEFAULT_INTERVALS };
-    const DEFAULT_ARB_CYCLE_START_PRIORITY = getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;
-
-    const appStateRuntime = getDashboardAppStateRuntime().createDashboardAppStateRuntime({
+    const {
+        dashboardRuntimeUtils,
+        domRenderUtils,
+        closestEventTarget,
+        dashboardInputInteractionRuntime,
         defaultIntervals: DEFAULT_INTERVALS,
         defaultArbCycleStartPriority: DEFAULT_ARB_CYCLE_START_PRIORITY,
-        defaultPriceSnapshotConfig: { enabled: false, intervalSec: 10 }
-    });
-    const getDashboardState = appStateRuntime.getDashboardState;
-    const setDashboardState = appStateRuntime.setDashboardState;
-    const getApiIntervals = appStateRuntime.getApiIntervals;
-    const setApiIntervals = appStateRuntime.setApiIntervals;
-    const getArbCycleStartPriority = appStateRuntime.getArbCycleStartPriority;
-    const setArbCycleStartPriority = appStateRuntime.setArbCycleStartPriority;
-    const getPriceSnapshotConfig = appStateRuntime.getPriceSnapshotConfig;
-    const setPriceSnapshotConfig = appStateRuntime.setPriceSnapshotConfig;
-    const dashboardApiClient = getDashboardApiUtils().createDashboardApiClient({
-        backendUrl: BACKEND_URL,
-        fetchImpl: fetch,
-        logger: console
-    });
-
-    const dashboardRuntimeBridge = getDashboardRuntimeRefUtils().createDashboardRuntimeBridge();
+        getDashboardState,
+        setDashboardState,
+        getApiIntervals,
+        setApiIntervals,
+        getArbCycleStartPriority,
+        setArbCycleStartPriority,
+        getPriceSnapshotConfig,
+        setPriceSnapshotConfig,
+        dashboardApiClient,
+        dashboardRuntimeBridge,
+        floatingPanelZIndexRuntime,
+        quoteStateRuntime,
+        getQuoteMarketState,
+        getQuoteMarketStateMap,
+        setQuoteMarketState,
+        deleteQuoteMarketState,
+        resetQuoteUiRuntimeState,
+        deleteQuoteUiRuntimeState,
+        priceSnapshotTimerRuntime,
+        priceSnapshotSaveRuntime,
+        amountInputDebounceRuntime
+    } = coreRuntime;
     const {
         quoteRuntimeRef,
         arbAlertRuntimeRef,
@@ -100,39 +106,6 @@
         markDashboardViewDirty,
         renderDashboardForCurrentState
     } = dashboardRuntimeBridge;
-    const floatingPanelZIndexRuntime = domRenderUtils.createFloatingPanelZIndexRuntime({
-        baseZIndex: FLOATING_PANEL_BASE_Z_INDEX
-    });
-    const quoteStateRuntime = getQuoteStateRuntimeUtils().createQuoteStateRuntime({
-        dashboardRuntimeUtils,
-        clearTimeout,
-        onMarketStateChanged: () => invalidateArbRuleSnapshotCache({ bumpRevision: false })
-    });
-    const getQuoteMarketState = quoteStateRuntime.getMarketState;
-    const getQuoteMarketStateMap = quoteStateRuntime.getMarketStateMap;
-    const setQuoteMarketState = quoteStateRuntime.setMarketState;
-    const deleteQuoteMarketState = quoteStateRuntime.deleteMarketState;
-    const resetQuoteUiRuntimeState = quoteStateRuntime.resetUiRuntimeState;
-    const deleteQuoteUiRuntimeState = quoteStateRuntime.deleteUiRuntimeState;
-    const priceSnapshotTimerRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotTimerRuntime({
-        setInterval,
-        clearInterval
-    });
-    const priceSnapshotSaveRuntime = getPriceSnapshotPayloadUtils().createPriceSnapshotSaveRuntime({
-        getConfig: getPriceSnapshotConfig,
-        buildPayload: () => getPriceSnapshotPayloadUtils().buildPriceSnapshotPayload({
-            dashboardState: getDashboardState(),
-            quoteStateById: getQuoteMarketStateMap(),
-            clientCapturedAt: new Date().toISOString()
-        }),
-        savePayload: (payload) => dashboardApiClient.savePriceSnapshot(payload),
-        logWarning: (...args) => console.warn(...args)
-    });
-    const amountInputDebounceRuntime = dashboardRuntimeUtils.createInputDebounceRuntime({
-        setTimeout,
-        clearTimeout,
-        delayMs: AMOUNT_INPUT_DEBOUNCE_MS
-    });
     const {
         dashboardEl,
         addCategoryBtn,

@@ -13,6 +13,7 @@ assert.ok(MODULES.getDashboardQuoteDomainAdapter, 'expected dashboard quote doma
 assert.ok(MODULES.getDashboardQuoteRuntime, 'expected dashboard quote runtime definition');
 assert.ok(MODULES.getDashboardCommandController, 'expected dashboard command controller definition');
 assert.ok(MODULES.getDashboardCommandRuntime, 'expected dashboard command runtime definition');
+assert.ok(MODULES.getDashboardCoreRuntime, 'expected dashboard core runtime definition');
 assert.ok(MODULES.getDashboardLifecycleController, 'expected dashboard lifecycle controller definition');
 assert.ok(MODULES.getDashboardViewModeController, 'expected dashboard view mode controller definition');
 assert.ok(MODULES.getDashboardDataTerminalRuntime, 'expected dashboard data terminal runtime definition');
@@ -30,6 +31,7 @@ const windowImpl = {
   DashboardArbAlertRuntime: { id: 'dashboard-arb-alert-runtime' },
   DashboardCommandController: { id: 'dashboard-command' },
   DashboardCommandRuntime: { id: 'dashboard-command-runtime' },
+  DashboardCoreRuntime: { id: 'dashboard-core-runtime' },
   DashboardDataTerminalRuntime: { id: 'dashboard-data-terminal-runtime' },
   DashboardQuoteSpreadRuntime: { id: 'dashboard-quote-spread-runtime' },
   DashboardQuoteDomainAdapter: { id: 'dashboard-quote-domain' },
@@ -44,6 +46,7 @@ assert.strictEqual(registry.getArbAlertBridgeUtils(), windowImpl.ArbAlertBridgeU
 assert.strictEqual(registry.getDashboardArbAlertRuntime(), windowImpl.DashboardArbAlertRuntime);
 assert.strictEqual(registry.getDashboardCommandController(), windowImpl.DashboardCommandController);
 assert.strictEqual(registry.getDashboardCommandRuntime(), windowImpl.DashboardCommandRuntime);
+assert.strictEqual(registry.getDashboardCoreRuntime(), windowImpl.DashboardCoreRuntime);
 assert.strictEqual(registry.getDashboardDataTerminalRuntime(), windowImpl.DashboardDataTerminalRuntime);
 assert.strictEqual(registry.getDashboardQuoteSpreadRuntime(), windowImpl.DashboardQuoteSpreadRuntime);
 assert.strictEqual(registry.getDashboardQuoteDomainAdapter(), windowImpl.DashboardQuoteDomainAdapter);
