@@ -10,6 +10,7 @@ assert.ok(MODULES.getDashboardRuntimeUtils, 'expected dashboard runtime module d
 assert.ok(MODULES.getDashboardAppCommandRuntime, 'expected dashboard app command runtime definition');
 assert.ok(MODULES.getDashboardAppBoardRuntime, 'expected dashboard app board runtime definition');
 assert.ok(MODULES.getDashboardAppShellRuntime, 'expected dashboard app shell runtime definition');
+assert.ok(MODULES.getDashboardAppWorkspaceRuntime, 'expected dashboard app workspace runtime definition');
 assert.ok(MODULES.getDashboardDomRefs, 'expected dashboard DOM refs module definition');
 assert.ok(MODULES.getDashboardAppLifecycleRuntime, 'expected dashboard app lifecycle runtime definition');
 assert.ok(MODULES.getDashboardArbAlertRuntime, 'expected dashboard arb alert runtime definition');
@@ -36,6 +37,7 @@ const windowImpl = {
   DashboardAppBoardRuntime: { id: 'dashboard-app-board-runtime' },
   DashboardAppCommandRuntime: { id: 'dashboard-app-command-runtime' },
   DashboardAppShellRuntime: { id: 'dashboard-app-shell-runtime' },
+  DashboardAppWorkspaceRuntime: { id: 'dashboard-app-workspace-runtime' },
   DashboardAppLifecycleRuntime: { id: 'dashboard-app-lifecycle-runtime' },
   DashboardArbAlertRuntime: { id: 'dashboard-arb-alert-runtime' },
   DashboardAuxPanelsRuntime: { id: 'dashboard-aux-panels-runtime' },
@@ -56,6 +58,7 @@ assert.strictEqual(registry.getArbAlertBridgeUtils(), windowImpl.ArbAlertBridgeU
 assert.strictEqual(registry.getDashboardAppBoardRuntime(), windowImpl.DashboardAppBoardRuntime);
 assert.strictEqual(registry.getDashboardAppCommandRuntime(), windowImpl.DashboardAppCommandRuntime);
 assert.strictEqual(registry.getDashboardAppShellRuntime(), windowImpl.DashboardAppShellRuntime);
+assert.strictEqual(registry.getDashboardAppWorkspaceRuntime(), windowImpl.DashboardAppWorkspaceRuntime);
 assert.strictEqual(registry.getDashboardAppLifecycleRuntime(), windowImpl.DashboardAppLifecycleRuntime);
 assert.strictEqual(registry.getDashboardArbAlertRuntime(), windowImpl.DashboardArbAlertRuntime);
 assert.strictEqual(registry.getDashboardAuxPanelsRuntime(), windowImpl.DashboardAuxPanelsRuntime);

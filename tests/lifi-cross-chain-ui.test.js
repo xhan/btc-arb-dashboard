@@ -4,6 +4,7 @@ const fs = require('fs');
 const appJs = fs.readFileSync('src/app/dashboard-app.js', 'utf8');
 const chainDefaultsJs = fs.readFileSync('src/shared/chain-defaults.js', 'utf8');
 const quoteDomainAdapterJs = fs.readFileSync('src/app/dashboard-quote-domain-adapter.js', 'utf8');
+const appWorkspaceRuntimeJs = fs.readFileSync('src/app/dashboard-app-workspace-runtime.js', 'utf8');
 const quoteWorkspaceRuntimeJs = fs.readFileSync('src/app/dashboard-quote-workspace-runtime.js', 'utf8');
 const dashboardDomRefsJs = fs.readFileSync('src/app/dashboard-dom-refs.js', 'utf8');
 const dashboardFormControllerJs = fs.readFileSync('src/dashboard/dashboard-form-controller.js', 'utf8');
@@ -17,7 +18,8 @@ assert.ok(dashboardFormControllerJs.includes('deps.dashboardRenderer.buildAddQuo
 assert.ok(dashboardRendererJs.includes('quote.toChain = normalizedToChain'), '保存跨链报价时应写入 toChain');
 assert.ok(dashboardRendererJs.includes("quote.preferredSource = 'LI.FI'"), '跨链报价应强制使用 LI.FI');
 assert.ok(
-  appJs.includes('getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({')
+  appJs.includes('getDashboardAppWorkspaceRuntime().createDashboardAppWorkspaceRuntime({')
+    && appWorkspaceRuntimeJs.includes('modules.getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({')
     && quoteWorkspaceRuntimeJs.includes('modules.getDashboardQuoteDomainAdapter()')
     && quoteDomainAdapterJs.includes('function isCrossChainQuote(quote)'),
   '前端应有统一跨链报价判断'

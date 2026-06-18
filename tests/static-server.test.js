@@ -156,6 +156,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-quote-spread-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-data-terminal-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-aux-panels-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-app-workspace-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-runtime.js"'));
@@ -314,6 +315,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-aux-panels-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-app-workspace-runtime.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-module-registry.js"') < response.body.indexOf('src="src/app/dashboard-lifecycle-controller.js"')
@@ -588,6 +592,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dataTerminalRuntimeResponse.statusCode, 200);
     const auxPanelsRuntimeResponse = await request('/src/app/dashboard-aux-panels-runtime.js');
     assert.strictEqual(auxPanelsRuntimeResponse.statusCode, 200);
+    const appWorkspaceRuntimeResponse = await request('/src/app/dashboard-app-workspace-runtime.js');
+    assert.strictEqual(appWorkspaceRuntimeResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
     assert.strictEqual(moduleRegistryResponse.statusCode, 200);
     const commandControllerResponse = await request('/src/app/dashboard-command-controller.js');
@@ -805,7 +811,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadController: ['));
     assert.ok(quoteSpreadControllerResponse.body.includes('function createQuoteSpreadController(deps = {})'));
     assert.ok(quoteSpreadControllerResponse.body.includes('DEFAULT_UPDATE_INTERVAL_MS = 1000'));
-    assert.ok(appJsResponse.body.includes('getDashboardAuxPanelsRuntime().createDashboardAuxPanelsRuntime({'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('modules.getDashboardAuxPanelsRuntime().createDashboardAuxPanelsRuntime({'));
     assert.ok(auxPanelsRuntimeResponse.body.includes('modules.getDashboardQuoteSpreadRuntime().createDashboardQuoteSpreadRuntime({'));
     assert.ok(!appJsResponse.body.includes('const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({'));
     assert.ok(lifecycleControllerResponse.body.includes("typeof deps.quoteSpreadController.bindPanelChrome === 'function'"));
@@ -987,7 +993,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("return dashboardViewRenderRuntimeRef.callOr(false, 'ensureRendered');"));
     assert.ok(!appJsResponse.body.includes('let dashboardDirty = false;'));
     assert.ok(!appJsResponse.body.includes('let dashboardRendered = false;'));
-    assert.ok(appJsResponse.body.includes('const quoteWorkspaceRuntime = getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({'));
+    assert.ok(appJsResponse.body.includes('const dashboardAppWorkspaceRuntime = getDashboardAppWorkspaceRuntime().createDashboardAppWorkspaceRuntime({'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('const quoteWorkspaceRuntime = modules.getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({'));
     assert.ok(appJsResponse.body.includes('defaultSourceResolver,'));
     assert.ok(!appJsResponse.body.includes('getDashboardQuoteDomainAdapter().createDashboardQuoteDomainAdapter({'));
     assert.ok(!appJsResponse.body.includes('quoteRuntimeRef.set(getDashboardQuoteRuntime().createDashboardQuoteRuntime({'));
@@ -1844,7 +1851,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('ArbPanelController is not loaded'));
     assert.ok(arbPanelControllerResponse.body.includes('function createArbPanelController(options = {})'));
     assert.ok(coreRuntimeResponse.body.includes('const defaultArbCycleStartPriority = modules.getArbCyclePriorityUtils().DEFAULT_ARB_CYCLE_START_PRIORITY;'));
-    assert.ok(appJsResponse.body.includes('const arbWorkspaceRuntime = arbWorkspaceRuntimeRef.set(getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('const createdArbWorkspaceRuntime = modules.getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('const arbWorkspaceRuntime = setRuntimeRef(deps.arbWorkspaceRuntimeRef, createdArbWorkspaceRuntime);'));
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('dashboardArbAlertRuntimeUtils.createDashboardArbAlertRuntime({'));
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('options.arbAlertRuntimeRef.set(createdArbAlertRuntime)'));
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('handleQuoteMarketStateChanged: arbAlertRuntime.handleQuoteMarketStateChanged'));
@@ -2500,8 +2508,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(auxPanelsRuntimeResponse.body.includes('modules.getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({'));
     assert.ok(!appJsResponse.body.includes('const dataTerminalController = getDataTerminalController().createDataTerminalController({'));
     assert.ok(appJsResponse.body.includes('interactionRuntime: dashboardInputInteractionRuntime,'));
-    assert.ok(appJsResponse.body.includes('const renderDataTerminalPanel = auxPanelsRuntime.renderDataTerminalPanel;'));
-    assert.ok(appJsResponse.body.includes('const toggleDataTerminalPanel = auxPanelsRuntime.toggleDataTerminalPanel;'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('const auxPanelsRuntime = modules.getDashboardAuxPanelsRuntime().createDashboardAuxPanelsRuntime({'));
+    assert.ok(appJsResponse.body.includes('renderDataTerminalPanel,'));
+    assert.ok(appJsResponse.body.includes('toggleDataTerminalPanel'));
     assert.ok(!appJsResponse.body.includes('let scheduleDataTerminalUpdate = () => {};'));
     assert.ok(auxPanelsRuntimeResponse.body.includes('const dataTerminalRuntime = setRuntime('));
     assert.ok(auxPanelsRuntimeResponse.body.includes('deps.dataTerminalRuntimeRef,'));

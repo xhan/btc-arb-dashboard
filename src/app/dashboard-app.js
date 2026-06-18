@@ -21,11 +21,9 @@
         getDashboardAppCommandRuntime,
         getDashboardAppLifecycleRuntime,
         getDashboardAppShellRuntime,
-        getDashboardArbWorkspaceRuntime,
-        getDashboardAuxPanelsRuntime,
+        getDashboardAppWorkspaceRuntime,
         getDashboardCoreRuntime,
-        getDashboardDomRefs,
-        getDashboardQuoteWorkspaceRuntime
+        getDashboardDomRefs
     } = dashboardModules;
     const coreRuntime = getDashboardCoreRuntime().createDashboardCoreRuntime({
         modules: dashboardModules,
@@ -219,24 +217,44 @@
     const requestChannelTagVisibilityRuntime = dashboardShellRuntime.requestChannelTagVisibilityRuntime;
     const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;
 
-    const quoteWorkspaceRuntime = getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({
+    const dashboardAppWorkspaceRuntime = getDashboardAppWorkspaceRuntime().createDashboardAppWorkspaceRuntime({
         modules: dashboardModules,
         constants: {
             defaultIntervals: DEFAULT_INTERVALS,
-            initialQuoteDisplayMode: DEFAULT_QUOTE_DISPLAY_MODE
+            initialQuoteDisplayMode: DEFAULT_QUOTE_DISPLAY_MODE,
+            arbDetailRefreshIntervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
+            arbPanelUpdateDelayMs: ARB_PANEL_UPDATE_DELAY_MS,
+            chartAutoRefreshIntervalMs: CHART_AUTO_REFRESH_INTERVAL_MS,
+            dataTerminalUpdateDelayMs: DATA_TERMINAL_UPDATE_DELAY_MS,
+            globalPathSourceSelectors: GLOBAL_PATH_SOURCE_SELECTORS,
+            highlightDurationMs: 8000,
+            mutedStateHiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS,
+            mutedStateVisibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS
         },
         deps: {
             AbortController,
+            AudioCtor: Audio,
+            abortActiveFetchControllers,
+            arbAlertRuntimeRef,
+            arbWorkspaceRuntimeRef,
             backendUrl: BACKEND_URL,
+            bodyEl: document.body,
+            closestEventTarget,
             copyToastRuntime,
             dashboardRuntimeUtils,
+            dataTerminalRuntimeRef,
             documentImpl: document,
             domRenderUtils,
             fetchImpl: fetch,
+            fetchQuoteByStrategy,
             getApiIntervals,
+            getArbCycleStartPriority,
+            getDashboardLocalStorage,
             getDashboardState,
             getEffectiveRequestChannelIdForQuote,
             getQuoteMarketState,
+            getQuoteMarketStateMap,
+            interactionRuntime: dashboardInputInteractionRuntime,
             isDashboardUiActive: isDashboardViewActive,
             isSchedulerPaused: isArbDetailSchedulerPaused,
             logger: console,
@@ -244,100 +262,21 @@
             onQuoteMainFetchSuccess: handleQuoteMainFetchSuccess,
             onQuoteMarketStateChanged: handleQuoteMarketStateChanged,
             onQuoteMarketStateChangedSideEffect: scheduleDataTerminalUpdate,
+            onShowDashboard: renderDashboardForCurrentState,
             quoteRuntimeRef,
             quoteStateRuntime,
             recordSourceAttempt: recordArbDetailSourceAttempt,
-            resetQuoteUiRuntimeState,
             requestChannelRuntime,
+            resetQuoteUiRuntimeState,
             setQuoteMarketState,
-            setTimeout,
-            clearTimeout
-        },
-        refs: {
-            copyToast,
-            globalTooltip,
-            toggleQuoteDisplayBtn
-        }
-    });
-    const {
-        activeFetchControllerRuntime,
-        addToQueue,
-        applyActiveQuoteUiState,
-        applyPausedQuoteUiState,
-        applyQuoteDisplayToggleButtonState,
-        copyDexLinkFromElement,
-        copyPriceText,
-        copyTextToClipboard,
-        defaultSourceResolver,
-        getActiveQuotes,
-        getCategoryPauseAction,
-        getInverseQuoteDisplayText,
-        getQuoteChainDisplayName,
-        getQuoteDisplayMode,
-        getQuoteDisplayText,
-        isCexOrderbookChain,
-        isCrossChainQuote,
-        isEvmChain,
-        isQuotePaused,
-        normalizeChainKey,
-        handleQuoteHover,
-        queueQuoteRefresh,
-        removeFromQueue,
-        shouldQueueInverseFetch,
-        showCopyToast,
-        toggleMultiChannel,
-        toggleQuoteDisplayMode,
-        updateQuotePairLabel,
-        updateTrendArrow
-    } = quoteWorkspaceRuntime;
-    const arbWorkspaceRuntime = arbWorkspaceRuntimeRef.set(getDashboardArbWorkspaceRuntime().createDashboardArbWorkspaceRuntime({
-        arbAlertRuntimeRef,
-        modules: dashboardModules,
-        constants: {
-            arbDetailRefreshIntervalMs: ARB_DETAIL_REFRESH_INTERVAL_MS,
-            arbPanelUpdateDelayMs: ARB_PANEL_UPDATE_DELAY_MS,
-            chartAutoRefreshIntervalMs: CHART_AUTO_REFRESH_INTERVAL_MS,
-            globalPathSourceSelectors: GLOBAL_PATH_SOURCE_SELECTORS,
-            highlightDurationMs: 8000,
-            mutedStateHiddenMaxRefreshMs: MUTED_STATE_HIDDEN_MAX_REFRESH_MS,
-            mutedStateVisibleRefreshMs: MUTED_STATE_VISIBLE_REFRESH_MS
-        },
-        deps: {
-            AudioCtor: Audio,
-            abortActiveFetchControllers,
-            backendUrl: BACKEND_URL,
-            bodyEl: document.body,
-            closestEventTarget,
-            copyDexLinkFromElement,
-            copyTextToClipboard,
-            dashboardRuntimeUtils,
-            documentImpl: document,
-            domRenderUtils,
-            fetchImpl: fetch,
-            fetchQuoteByStrategy,
-            getActiveQuotes,
-            getApiIntervals,
-            getArbCycleStartPriority,
-            getDashboardLocalStorage,
-            getDashboardState,
-            interactionRuntime: dashboardInputInteractionRuntime,
-            getQuoteChainDisplayName,
-            getQuoteMarketState,
-            getQuoteMarketStateMap,
-            isCrossChainQuote,
-            isQuotePaused,
-            logError: (...args) => console.error(...args),
-            logInfo: (...args) => console.info(...args),
-            logWarning: (...args) => console.warn(...args),
-            onShowDashboard: renderDashboardForCurrentState,
-            quoteStateRuntime,
-            setQuoteMarketState,
-            showCopyToast,
             updateSchedulers,
             windowImpl: window,
             zIndexRuntime: floatingPanelZIndexRuntime
         },
         refs: {
+            copyToast,
+            globalTooltip,
+            toggleQuoteDisplayBtn,
             arbPanel: {
                 arbPathWindow,
                 arbPathContent,
@@ -379,61 +318,7 @@
                 arbPathWindow,
                 viewArbBtn,
                 viewDashboardBtn
-            }
-        },
-        timers: {
-            setInterval,
-            clearInterval,
-            setTimeout,
-            clearTimeout
-        }
-    }));
-    const alertRuntimeController = arbWorkspaceRuntime.alertRuntimeController;
-    const arbDetailController = arbWorkspaceRuntime.arbDetailController;
-    const arbPanelController = arbWorkspaceRuntime.arbPanelController;
-    const dashboardViewModeController = arbWorkspaceRuntime.dashboardViewModeController;
-    const applyFloatingPanelDisplay = arbWorkspaceRuntime.applyFloatingPanelDisplay;
-    const buildLiveQuoteLabel = arbWorkspaceRuntime.buildLiveQuoteLabel;
-    const clearTopologyCache = arbWorkspaceRuntime.clearTopologyCache;
-    const formatArbPathLegLine = arbWorkspaceRuntime.formatArbPathLegLine;
-    const formatChainLabel = arbWorkspaceRuntime.formatChainLabel;
-    const formatDetailNumber = arbWorkspaceRuntime.formatDetailNumber;
-    const getAliasRules = arbWorkspaceRuntime.getAliasRules;
-    const getSharedArbRuleSnapshot = arbWorkspaceRuntime.getSharedArbRuleSnapshot;
-    const isRuleLeg = arbWorkspaceRuntime.isRuleLeg;
-    const scheduleArbPanelUpdate = arbWorkspaceRuntime.scheduleArbPanelUpdate;
-    const setArbPanelMaxHeight = arbWorkspaceRuntime.setArbPanelMaxHeight;
-    const closeArbDetailModal = arbWorkspaceRuntime.closeArbDetailModal;
-    const openArbDetailModal = arbWorkspaceRuntime.openArbDetailModal;
-    const renderArbDetailModal = arbWorkspaceRuntime.renderArbDetailModal;
-    const auxPanelsRuntime = getDashboardAuxPanelsRuntime().createDashboardAuxPanelsRuntime({
-        modules: dashboardModules,
-        constants: {
-            dataTerminalUpdateDelayMs: DATA_TERMINAL_UPDATE_DELAY_MS
-        },
-        deps: {
-            applyFloatingPanelDisplay,
-            clearTimeout,
-            closestEventTarget,
-            copyDexLinkFromElement,
-            dashboardRuntimeUtils,
-            dataTerminalRuntimeRef,
-            documentImpl: document,
-            domRenderUtils,
-            formatChainLabel,
-            formatDetailNumber,
-            getAliasRules,
-            getAnchorPanel: () => arbPathWindow,
-            getDashboardState,
-            getQuoteMarketStateMap,
-            interactionRuntime: dashboardInputInteractionRuntime,
-            isQuotePaused,
-            quoteStateRuntime,
-            setTimeout,
-            windowImpl: window,
-            zIndexRuntime: floatingPanelZIndexRuntime
-        },
-        refs: {
+            },
             quoteSpread: {
                 window: quoteSpreadWindow,
                 header: quoteSpreadHeader,
@@ -444,12 +329,60 @@
         },
         timers: {
             setInterval,
-            clearInterval
+            clearInterval,
+            setTimeout,
+            clearTimeout
         }
     });
-    const quoteSpreadController = auxPanelsRuntime.quoteSpreadController;
-    const renderDataTerminalPanel = auxPanelsRuntime.renderDataTerminalPanel;
-    const toggleDataTerminalPanel = auxPanelsRuntime.toggleDataTerminalPanel;
+    const {
+        activeFetchControllerRuntime,
+        addToQueue,
+        applyActiveQuoteUiState,
+        applyPausedQuoteUiState,
+        applyQuoteDisplayToggleButtonState,
+        copyDexLinkFromElement,
+        copyPriceText,
+        copyTextToClipboard,
+        defaultSourceResolver,
+        getActiveQuotes,
+        getCategoryPauseAction,
+        getInverseQuoteDisplayText,
+        getQuoteChainDisplayName,
+        getQuoteDisplayMode,
+        getQuoteDisplayText,
+        isCexOrderbookChain,
+        isCrossChainQuote,
+        isEvmChain,
+        isQuotePaused,
+        normalizeChainKey,
+        handleQuoteHover,
+        queueQuoteRefresh,
+        removeFromQueue,
+        shouldQueueInverseFetch,
+        showCopyToast,
+        toggleMultiChannel,
+        toggleQuoteDisplayMode,
+        updateQuotePairLabel,
+        updateTrendArrow,
+        alertRuntimeController,
+        arbDetailController,
+        arbPanelController,
+        dashboardViewModeController,
+        buildLiveQuoteLabel,
+        clearTopologyCache,
+        formatArbPathLegLine,
+        formatChainLabel,
+        getSharedArbRuleSnapshot,
+        isRuleLeg,
+        scheduleArbPanelUpdate,
+        setArbPanelMaxHeight,
+        closeArbDetailModal,
+        openArbDetailModal,
+        renderArbDetailModal,
+        quoteSpreadController,
+        renderDataTerminalPanel,
+        toggleDataTerminalPanel
+    } = dashboardAppWorkspaceRuntime;
 
     const dashboardCommandRuntime = getDashboardAppCommandRuntime().createDashboardAppCommandRuntime({
         modules: dashboardModules,

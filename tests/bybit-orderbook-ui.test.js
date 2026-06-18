@@ -7,6 +7,7 @@ const chainDefaultsJs = fs.readFileSync(path.join(__dirname, '..', 'src/shared/c
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'public/index.html'), 'utf8');
 const quoteDisplayUtilsJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-display-utils.js'), 'utf8');
 const quoteDomainAdapterJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-quote-domain-adapter.js'), 'utf8');
+const appWorkspaceRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-app-workspace-runtime.js'), 'utf8');
 const quoteWorkspaceRuntimeJs = fs.readFileSync(path.join(__dirname, '..', 'src/app/dashboard-quote-workspace-runtime.js'), 'utf8');
 const quoteUiControllerJs = fs.readFileSync(path.join(__dirname, '..', 'src/quote/quote-ui-controller.js'), 'utf8');
 
@@ -19,7 +20,8 @@ assert.ok(
   'quote display 工具应生成 CEX 盘口 tooltip'
 );
 assert.ok(
-  appJs.includes('getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({')
+  appJs.includes('getDashboardAppWorkspaceRuntime().createDashboardAppWorkspaceRuntime({')
+    && appWorkspaceRuntimeJs.includes('modules.getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({')
     && quoteWorkspaceRuntimeJs.includes('modules.getDashboardQuoteDomainAdapter()')
     && quoteDomainAdapterJs.includes('return chainDefaults.isCexOrderbookChain(chain);'),
   '前端应通过 ChainDefaults 识别 CEX quote'
