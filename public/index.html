@@ -1172,7 +1172,25 @@
         }
         #arb-detail-header h3 { margin: 0; }
         #arb-detail-header-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             min-width: 0;
+        }
+        #arb-detail-multi-links-btn {
+            border: 1px solid var(--border-color);
+            background: var(--module-bg-color);
+            color: var(--text-color);
+            border-radius: 999px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1.2;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        #arb-detail-multi-links-btn:hover {
+            background: var(--button-hover-bg);
         }
         #arb-detail-header-actions {
             display: flex;
@@ -1800,6 +1818,7 @@
             <div id="arb-detail-header">
                 <div id="arb-detail-header-main">
                     <h3>套利路径详情</h3>
+                    <button id="arb-detail-multi-links-btn" type="button">复制多链接</button>
                 </div>
                 <div id="arb-detail-header-actions">
                     <label class="auto-refresh-toggle" for="arb-detail-chart-auto-refresh">

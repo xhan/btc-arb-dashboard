@@ -35,6 +35,7 @@ const refs = {
   arbDetailChartPreview: ref('arbDetailChartPreview'),
   arbDetailCloseBtn: ref('arbDetailCloseBtn'),
   arbDetailGrid: ref('arbDetailGrid'),
+  arbDetailMultiLinksBtn: ref('arbDetailMultiLinksBtn'),
   arbDetailModal: ref('arbDetailModal'),
   arbDetailProfitPreview: ref('arbDetailProfitPreview'),
   arbDetailSubtitle: ref('arbDetailSubtitle'),
@@ -93,6 +94,7 @@ assert.strictEqual(groups.shell.settingsIntervalInputRefs, refs.settingsInterval
 assert.strictEqual(groups.shell.toggleMultiChannelBtn, refs.toggleMultiChannelBtn);
 
 assert.strictEqual(groups.workspace.copyToast, refs.copyToast);
+assert.strictEqual(groups.workspace.detail.multiLinksButton, refs.arbDetailMultiLinksBtn);
 assert.strictEqual(groups.workspace.arbPanel.arbPathWindow, refs.arbPathWindow);
 assert.strictEqual(groups.workspace.arbPanel.arbGlobalFilterElements, refs.arbGlobalFilterElements);
 assert.strictEqual(groups.workspace.alert.alertLogSettingsContent, refs.alertLogSettingsContent);

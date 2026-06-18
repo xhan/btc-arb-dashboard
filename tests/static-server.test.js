@@ -52,6 +52,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('target="_blank"'));
     assert.ok(response.body.includes('width: min(960px, 94vw);'));
     assert.ok(response.body.includes('id="arb-detail-chart-link"'));
+    assert.ok(response.body.includes('id="arb-detail-multi-links-btn"'));
+    assert.ok(response.body.includes('复制多链接'));
     assert.ok(response.body.includes('id="arb-detail-chart-preview"'));
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
@@ -2742,6 +2744,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailControllerResponse.body.includes('const renderer = typeof deps.getChartsRenderer === \'function\''));
     assert.ok(!appJsResponse.body.includes('function getChartsRenderer('));
     assert.ok(arbDetailControllerResponse.body.includes('arbDetailUtils.buildArbDetailChartPreviewSignature(pairs)'));
+    assert.ok(arbDetailControllerResponse.body.includes('deps.refs.multiLinksButton.addEventListener'));
+    assert.ok(arbDetailControllerResponse.body.includes('arbDetailUtils.buildArbDetailMultiLinksUrl(rows, {'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildOpenMultiLinksUrl(config = {})'));
+    assert.ok(arbDetailUtilsResponse.body.includes('function buildArbDetailMultiLinksUrl(rows = [], options = {})'));
     assert.ok(arbPanelControllerResponse.body.includes('return options.arbDetailUtils.isArbRuleLeg(leg);'));
     assert.ok(dashboardActionControllerResponse.body.includes('deps.arbDetailUtils.doesArbDetailUseQuote(getArbDetailState().selectedOpportunity, quoteId)'));
     assert.ok(arbDetailControllerResponse.body.includes('const chartHref = chartsUtils && typeof chartsUtils.buildChartsPageHref === \'function\''));

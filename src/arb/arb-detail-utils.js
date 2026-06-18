@@ -283,6 +283,96 @@
     return chartPairs.length ? buildChartsPageHref(chartPairs) : '';
   }
 
+  function encodeBase64UrlUtf8(value) {
+    const input = String(value == null ? '' : value);
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(input, 'utf8')
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
+    }
+
+    const encoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
+    const bytes = encoder
+      ? encoder.encode(input)
+      : Array.from(input, (char) => char.charCodeAt(0));
+    const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+    return btoa(binary)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/g, '');
+  }
+
+  function isHttpLink(url) {
+    return /^https?:\/\//i.test(String(url || ''));
+  }
+
+  function buildOpenMultiLinksUrl(config = {}) {
+    const links = (Array.isArray(config.links) ? config.links : [])
+      .map((link) => String(link || '').trim())
+      .filter(isHttpLink);
+    if (!links.length) return '';
+
+    const payload = {
+      color: String(config.color || '').trim() || 'blue',
+      links
+    };
+    const name = String(config.name || '').trim();
+    if (name) {
+      payload.name = name;
+    }
+    return `chrome-extension://kopjcgdfdbflnmmjplaefilbjjagiakb/open.html?payload=${encodeBase64UrlUtf8(JSON.stringify(payload))}`;
+  }
+
+  function resolveOpenMultiLinksColorForChain(chain) {
+    switch (String(chain || '').trim().toLowerCase()) {
+      case 'arbitrum':
+        return 'cyan';
+      case 'base':
+      case 'ethereum':
+        return 'blue';
+      case 'optimism':
+        return 'red';
+      case 'polygon':
+      case 'solana':
+        return 'purple';
+      case 'bsc':
+      case 'bnb':
+        return 'yellow';
+      case 'sui':
+        return 'green';
+      case 'starknet':
+      case 'katana':
+        return 'orange';
+      case 'monad':
+        return 'pink';
+      case 'plasma':
+        return 'grey';
+      default:
+        return 'blue';
+    }
+  }
+
+  function buildArbDetailMultiLinksUrl(rows = [], options = {}) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const links = (Array.isArray(rows) ? rows : [])
+      .map((row) => buildArbDetailDexLink({
+        chain: row && row.chain,
+        fromTokenAddress: row && row.fromTokenAddress,
+        toTokenAddress: row && row.toTokenAddress,
+        inputAmount: row && row.inputAmount
+      }))
+      .filter((link) => link && isHttpLink(link.url))
+      .map((link) => link.url);
+
+    return buildOpenMultiLinksUrl({
+      name: options.name || '',
+      color: options.color || resolveOpenMultiLinksColorForChain(safeRows[0] && safeRows[0].chain),
+      links
+    });
+  }
+
   function resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg = () => false) {
     const legs = Array.isArray(cycle?.legs) ? cycle.legs : [];
     const firstLeg = legs.find((leg) => !isRuleLeg(leg) && leg && leg.quoteId !== undefined && leg.quoteId !== null);
@@ -1151,6 +1241,9 @@
     buildArbDetailChartPairs,
     buildArbDetailChartPreviewSignature,
     buildArbOpportunityChartHref,
+    buildOpenMultiLinksUrl,
+    resolveOpenMultiLinksColorForChain,
+    buildArbDetailMultiLinksUrl,
     resolveArbOpportunityBaseAmount,
     findBestSummaryIndices,
     getArbDetailCardDomIds,

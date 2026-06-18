@@ -11,6 +11,9 @@ const {
   buildArbDetailChartPairs,
   buildArbDetailChartPreviewSignature,
   buildArbOpportunityChartHref,
+  buildOpenMultiLinksUrl,
+  resolveOpenMultiLinksColorForChain,
+  buildArbDetailMultiLinksUrl,
   resolveArbOpportunityBaseAmount,
   findBestSummaryIndices,
   getArbDetailCardDomIds,
@@ -74,6 +77,12 @@ const {
   applyArbDetailChartLinkState,
   hasArbDetailChartPreviewContent
 } = require('../src/arb/arb-detail-utils');
+
+function decodeOpenMultiLinksPayload(url) {
+  const payload = String(url).split('payload=')[1] || '';
+  const padded = payload.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - payload.length % 4) % 4);
+  return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
+}
 
 function resolveGridActionFor(resolver, matches, event = { type: 'click' }) {
   return resolver(event, {
@@ -845,6 +854,63 @@ assert.strictEqual(
 assert.strictEqual(
   buildArbOpportunityChartHref({ cycle: { legs: [] } }, null),
   ''
+);
+
+const multiLinksUrl = buildOpenMultiLinksUrl({
+  name: '机会 7',
+  color: 'green',
+  links: ['https://a.example/swap', 'chrome-extension://skip', 'http://b.example/path']
+});
+assert.ok(multiLinksUrl.startsWith('chrome-extension://kopjcgdfdbflnmmjplaefilbjjagiakb/open.html?payload='));
+assert.deepStrictEqual(
+  decodeOpenMultiLinksPayload(multiLinksUrl),
+  {
+    name: '机会 7',
+    color: 'green',
+    links: ['https://a.example/swap', 'http://b.example/path']
+  }
+);
+assert.strictEqual(buildOpenMultiLinksUrl({ links: ['chrome-extension://skip'] }), '');
+assert.deepStrictEqual(
+  decodeOpenMultiLinksPayload(buildOpenMultiLinksUrl({
+    color: 'orange',
+    links: ['https://a.example/swap']
+  })),
+  {
+    color: 'orange',
+    links: ['https://a.example/swap']
+  }
+);
+
+assert.strictEqual(resolveOpenMultiLinksColorForChain('arbitrum'), 'cyan');
+assert.strictEqual(resolveOpenMultiLinksColorForChain('starknet'), 'orange');
+assert.strictEqual(resolveOpenMultiLinksColorForChain('unknown'), 'blue');
+
+const detailMultiLinksUrl = buildArbDetailMultiLinksUrl([
+  {
+    chain: 'arbitrum',
+    fromTokenAddress: '0xaaa',
+    toTokenAddress: '0xbbb',
+    inputAmount: 1
+  },
+  {
+    chain: 'solana',
+    fromTokenAddress: 'So11111111111111111111111111111111111111112',
+    toTokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    inputAmount: 2
+  }
+], {
+  name: ''
+});
+assert.deepStrictEqual(
+  decodeOpenMultiLinksPayload(detailMultiLinksUrl),
+  {
+    color: 'cyan',
+    links: [
+      'https://swap.defillama.com/?chain=arbitrum&from=0xaaa&tab=swap&to=0xbbb',
+      'https://jup.ag/?sell=So11111111111111111111111111111111111111112&buy=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+    ]
+  }
 );
 
 assert.strictEqual(

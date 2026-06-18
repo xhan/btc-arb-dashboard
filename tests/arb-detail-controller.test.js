@@ -36,6 +36,7 @@ function createBaseDeps(overrides = {}) {
   const refs = {
     modal: createElement('modal'),
     closeButton: createElement('close'),
+    multiLinksButton: createElement('multi-links'),
     chartLink: createElement('chart-link'),
     chartAutoRefreshToggle: createElement('chart-toggle'),
     subtitle: createElement('subtitle'),
@@ -77,6 +78,7 @@ function createBaseDeps(overrides = {}) {
       buildArbDetailSourceHtml: () => '<source>',
       buildArbDetailSubtitleText: () => 'subtitle text',
       buildArbDetailSummaryHtml: () => '<summary>',
+      buildArbDetailMultiLinksUrl: () => '',
       buildDefaultArbDetailState: () => state,
       buildClosedArbDetailState: (currentState) => {
         state = { ...currentState, visible: false };
@@ -213,4 +215,41 @@ function createBaseDeps(overrides = {}) {
   assert.deepStrictEqual(calls.filter((call) => call[0] === 'recordSource'), [['recordSource', 'Kyber']]);
   controller.open('opp-1');
   assert.deepStrictEqual(controller.getRetainedOpportunities(() => ({ id: 'active' })).map((entry) => entry.id), ['opp-1', 'active']);
+}
+
+{
+  const { calls, controller, refs } = createBaseDeps({
+    arbDetailUtils: {
+      ...createBaseDeps().deps.arbDetailUtils,
+      buildOpenArbDetailState: (currentState, options) => ({
+        ...currentState,
+        visible: true,
+        refreshToken: 12,
+        pausedDashboard: false,
+        selectedOpportunity: { ...options.opportunity, label: '机会 7' },
+        opportunityId: options.opportunityId,
+        cards: [{ inputAmount: options.baseAmount, requestVersion: 0, rows: [{ id: 'row-1' }] }],
+        editingInputIndex: null
+      }),
+      buildArbDetailMultiLinksUrl: (rows, options) => {
+        calls.push(['buildMultiLinks', rows.length, options.name, options.color]);
+        return 'chrome-extension://kopjcgdfdbflnmmjplaefilbjjagiakb/open.html?payload=abc';
+      }
+    },
+    copyTextToClipboard: (text) => ({
+      then(resolve) {
+        calls.push(['copyText', text]);
+        resolve();
+        return {
+          catch() {}
+        };
+      }
+    })
+  });
+  controller.open('opp-1');
+  controller.bindChromeEvents();
+  refs.multiLinksButton.listeners.click({});
+  assert.ok(calls.some((call) => call[0] === 'buildMultiLinks' && call[1] === 1 && call[2] === '' && call[3] === undefined));
+  assert.ok(calls.some((call) => call[0] === 'copyText' && String(call[1]).startsWith('chrome-extension://kopjcgdfdbflnmmjplaefilbjjagiakb/open.html?payload=')));
+  assert.ok(calls.some((call) => call[0] === 'toast' && call[1] === '已复制多链接'));
 }

@@ -33,6 +33,7 @@ function makeElement(id) {
   'toggle-spread-btn',
   'quote-spread-window',
   'quote-spread-content',
+  'arb-detail-multi-links-btn',
   'arb-detail-grid',
   'quote-request-channel'
 ].forEach(makeElement);
@@ -66,5 +67,6 @@ assert.strictEqual(refs.toggleArbBtn, elements.get('toggle-arb-btn'));
 assert.strictEqual(refs.toggleSpreadBtn, elements.get('toggle-spread-btn'));
 assert.strictEqual(refs.quoteSpreadWindow, elements.get('quote-spread-window'));
 assert.strictEqual(refs.quoteSpreadContent, elements.get('quote-spread-content'));
+assert.strictEqual(refs.arbDetailMultiLinksBtn, elements.get('arb-detail-multi-links-btn'));
 assert.strictEqual(refs.arbDetailGrid, elements.get('arb-detail-grid'));
 assert.strictEqual(refs.quoteSettingsModalElements['quote-request-channel'], elements.get('quote-request-channel'));

@@ -93,6 +93,7 @@
     const quoteSpreadContent = getById(documentImpl, 'quote-spread-content');
     const arbDetailModal = getById(documentImpl, 'arb-detail-modal');
     const arbDetailCloseBtn = getById(documentImpl, 'arb-detail-close-btn');
+    const arbDetailMultiLinksBtn = getById(documentImpl, 'arb-detail-multi-links-btn');
     const arbDetailChartLink = getById(documentImpl, 'arb-detail-chart-link');
     const arbDetailChartAutoRefreshToggle = getById(documentImpl, 'arb-detail-chart-auto-refresh');
     const arbDetailSubtitle = getById(documentImpl, 'arb-detail-subtitle');
@@ -220,6 +221,7 @@
       quoteSpreadContent,
       arbDetailModal,
       arbDetailCloseBtn,
+      arbDetailMultiLinksBtn,
       arbDetailChartLink,
       arbDetailChartAutoRefreshToggle,
       arbDetailSubtitle,

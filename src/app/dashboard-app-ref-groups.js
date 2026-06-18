@@ -55,6 +55,7 @@
         detail: {
           modal: refs.arbDetailModal,
           closeButton: refs.arbDetailCloseBtn,
+          multiLinksButton: refs.arbDetailMultiLinksBtn,
           chartLink: refs.arbDetailChartLink,
           chartAutoRefreshToggle: refs.arbDetailChartAutoRefreshToggle,
           subtitle: refs.arbDetailSubtitle,

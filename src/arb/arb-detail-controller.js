@@ -371,6 +371,20 @@
       setDashboardPause(false);
     }
 
+    function copyMultiLinks() {
+      const rows = Array.isArray(state.cards[0]?.rows) ? state.cards[0].rows : [];
+      const url = arbDetailUtils.buildArbDetailMultiLinksUrl(rows, {
+        name: ''
+      });
+      if (!url) {
+        deps.showCopyToast('暂无可复制多链接');
+        return;
+      }
+      deps.copyTextToClipboard(url)
+        .then(() => deps.showCopyToast('已复制多链接'))
+        .catch(() => deps.showCopyToast('复制失败'));
+    }
+
     function open(opportunityId) {
       refreshScheduler.clear();
       let current = deps.getOpportunity(opportunityId);
@@ -610,6 +624,9 @@
     function bindChromeEvents() {
       if (deps.refs.closeButton) {
         deps.refs.closeButton.addEventListener('click', close);
+      }
+      if (deps.refs.multiLinksButton) {
+        deps.refs.multiLinksButton.addEventListener('click', copyMultiLinks);
       }
       if (deps.refs.chartAutoRefreshToggle) {
         deps.refs.chartAutoRefreshToggle.addEventListener('change', () => {
