@@ -45,6 +45,15 @@
       fetchImpl: deps.fetchImpl,
       logger: deps.logger
     });
+    function getDashboardLocalStorage() {
+      return dashboardRuntimeUtils.getBrowserLocalStorage({ window: deps.windowImpl }, {
+        onError: (error) => {
+          if (deps.logger && typeof deps.logger.warn === 'function') {
+            deps.logger.warn('访问浏览器本地缓存失败:', error);
+          }
+        }
+      });
+    }
 
     const dashboardRuntimeBridge = modules.getDashboardRuntimeRefUtils().createDashboardRuntimeBridge();
     const floatingPanelZIndexRuntime = domRenderUtils.createFloatingPanelZIndexRuntime({
@@ -104,6 +113,7 @@
       getPriceSnapshotConfig,
       setPriceSnapshotConfig,
       dashboardApiClient,
+      getDashboardLocalStorage,
       dashboardRuntimeBridge,
       floatingPanelZIndexRuntime,
       quoteStateRuntime,

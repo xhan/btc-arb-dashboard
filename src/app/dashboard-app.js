@@ -35,7 +35,8 @@
             backendUrl: BACKEND_URL,
             documentImpl: document,
             fetchImpl: fetch,
-            logger: console
+            logger: console,
+            windowImpl: window
         },
         timers: {
             setInterval,
@@ -60,6 +61,7 @@
         getPriceSnapshotConfig,
         setPriceSnapshotConfig,
         dashboardApiClient,
+        getDashboardLocalStorage,
         dashboardRuntimeBridge,
         floatingPanelZIndexRuntime,
         quoteStateRuntime,
@@ -264,12 +266,6 @@
         }
     });
     const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;
-
-    function getDashboardLocalStorage() {
-        return dashboardRuntimeUtils.getBrowserLocalStorage({ window }, {
-            onError: (error) => console.warn('访问浏览器本地缓存失败:', error)
-        });
-    }
 
     const dashboardAppBoardRuntime = getDashboardAppBoardRuntime().createDashboardAppBoardRuntime({
         modules: dashboardModules,

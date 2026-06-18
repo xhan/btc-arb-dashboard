@@ -11,10 +11,18 @@ let capturedInteractionOptions = null;
 let capturedQuoteStateOptions = null;
 let capturedSnapshotSaveOptions = null;
 let capturedDebounceOptions = null;
+let capturedStorageEnv = null;
+let capturedStorageOptions = null;
+const dashboardStorage = { id: 'storage' };
 const dashboardRuntimeUtils = {
   createInputDebounceRuntime(options) {
     capturedDebounceOptions = options;
     return { id: 'amount-debounce' };
+  },
+  getBrowserLocalStorage(env, options) {
+    capturedStorageEnv = env;
+    capturedStorageOptions = options;
+    return env.window.localStorage;
   }
 };
 const domRenderUtils = {
@@ -116,7 +124,8 @@ const deps = {
   backendUrl: 'http://127.0.0.1:3000',
   documentImpl: { id: 'document' },
   fetchImpl: () => {},
-  logger: { warn: () => {} }
+  logger: { warn: (...args) => calls.push(['warn', args]) },
+  windowImpl: { localStorage: dashboardStorage }
 };
 const timers = {
   clearInterval: () => {},
@@ -143,6 +152,12 @@ assert.strictEqual(runtime.closestEventTarget, domRenderUtils.closestEventTarget
 assert.strictEqual(runtime.dashboardApiClient, dashboardApiClient);
 assert.strictEqual(runtime.dashboardRuntimeBridge, dashboardRuntimeBridge);
 assert.strictEqual(runtime.floatingPanelZIndexRuntime.id, 'z-index');
+assert.strictEqual(runtime.getDashboardLocalStorage(), dashboardStorage);
+assert.strictEqual(capturedStorageEnv.window, deps.windowImpl);
+capturedStorageOptions.onError(new Error('storage denied'));
+const warnCallIndex = calls.findIndex((call) => call[0] === 'warn');
+assert.ok(warnCallIndex >= 0);
+calls.splice(warnCallIndex, 1);
 assert.strictEqual(runtime.quoteStateRuntime, quoteStateRuntime);
 assert.strictEqual(runtime.getQuoteMarketState(), 'market-state');
 assert.strictEqual(runtime.priceSnapshotTimerRuntime.id, 'snapshot-timer');

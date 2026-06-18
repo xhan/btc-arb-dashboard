@@ -1325,8 +1325,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getLocalStorageSafe()'));
     assert.ok(!appJsResponse.body.includes('getLocalStorageSafe()'));
     assert.ok(coreRuntimeResponse.body.includes('const dashboardRuntimeUtils = modules.getDashboardRuntimeUtils();'));
-    assert.ok(appJsResponse.body.includes('function getDashboardLocalStorage()'));
-    assert.ok(appJsResponse.body.includes('return dashboardRuntimeUtils.getBrowserLocalStorage({ window }, {'));
+    assert.ok(!appJsResponse.body.includes('function getDashboardLocalStorage()'));
+    assert.ok(coreRuntimeResponse.body.includes('function getDashboardLocalStorage()'));
+    assert.ok(coreRuntimeResponse.body.includes('return dashboardRuntimeUtils.getBrowserLocalStorage({ window: deps.windowImpl }, {'));
     assert.ok(!appJsResponse.body.includes('return getRequestChannelUtils().getBrowserLocalStorage({ window }, {'));
     assert.ok(!appJsResponse.body.includes('parseMultiChannelEnabledStorageValue(raw)'));
     assert.ok(!appJsResponse.body.includes('formatMultiChannelEnabledStorageValue(multiChannelEnabled)'));
