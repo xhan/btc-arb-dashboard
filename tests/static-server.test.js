@@ -150,6 +150,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-runtime-ref-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-shell-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-board-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-quote-spread-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-data-terminal-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-module-registry.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-command-controller.js"'));
@@ -289,6 +290,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-board-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-quote-spread-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-data-terminal-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
@@ -548,6 +552,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(shellRuntimeResponse.statusCode, 200);
     const boardRuntimeResponse = await request('/src/app/dashboard-board-runtime.js');
     assert.strictEqual(boardRuntimeResponse.statusCode, 200);
+    const quoteSpreadRuntimeResponse = await request('/src/app/dashboard-quote-spread-runtime.js');
+    assert.strictEqual(quoteSpreadRuntimeResponse.statusCode, 200);
     const dataTerminalRuntimeResponse = await request('/src/app/dashboard-data-terminal-runtime.js');
     assert.strictEqual(dataTerminalRuntimeResponse.statusCode, 200);
     const moduleRegistryResponse = await request('/src/app/dashboard-module-registry.js');
@@ -761,7 +767,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getQuoteSpreadController: ['));
     assert.ok(quoteSpreadControllerResponse.body.includes('function createQuoteSpreadController(deps = {})'));
     assert.ok(quoteSpreadControllerResponse.body.includes('DEFAULT_UPDATE_INTERVAL_MS = 1000'));
-    assert.ok(appJsResponse.body.includes('const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({'));
+    assert.ok(appJsResponse.body.includes('getDashboardQuoteSpreadRuntime().createDashboardQuoteSpreadRuntime({'));
+    assert.ok(!appJsResponse.body.includes('const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({'));
     assert.ok(lifecycleControllerResponse.body.includes("typeof deps.quoteSpreadController.bindPanelChrome === 'function'"));
     assert.ok(lifecycleControllerResponse.body.includes("typeof deps.quoteSpreadController.bindEvents === 'function'"));
     assert.ok(!appJsResponse.body.includes('quoteSpreadController.bindPanelChrome();'));
@@ -918,6 +925,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getDashboardDataTerminalRuntime: ['));
     assert.ok(moduleRegistryResponse.body.includes('DashboardDataTerminalRuntime is not loaded'));
     assert.ok(dataTerminalRuntimeResponse.body.includes('function createDashboardDataTerminalRuntime(options = {})'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardQuoteSpreadRuntime: ['));
+    assert.ok(moduleRegistryResponse.body.includes('DashboardQuoteSpreadRuntime is not loaded'));
+    assert.ok(quoteSpreadRuntimeResponse.body.includes('function createDashboardQuoteSpreadRuntime(options = {})'));
     assert.ok(quoteDomainAdapterResponse.body.includes('function createDashboardQuoteDomainAdapter(options = {})'));
     assert.ok(quoteDomainAdapterResponse.body.includes('return chainDefaults.buildQuoteChainDisplayName(quote);'));
     assert.ok(quoteDomainAdapterResponse.body.includes('return chainDefaults.isCrossChainQuote(quote);'));

@@ -31,6 +31,7 @@
         getDashboardFormController,
         getDashboardLifecycleController,
         getDashboardModalUtils,
+        getDashboardQuoteSpreadRuntime,
         getDashboardQuoteWorkspaceRuntime,
         getDashboardRenderer,
         getDashboardRuntimeRefUtils,
@@ -47,8 +48,6 @@
         getQueueStatsUtils,
         getQuoteDisplayUtils,
         getQuotePauseUtils,
-        getQuoteSpreadController,
-        getQuoteSpreadUtils,
         getQuoteStateRuntimeUtils,
         getRequestChannelUtils,
         getThemeUtils
@@ -460,14 +459,17 @@
     const closeArbDetailModal = arbWorkspaceRuntime.closeArbDetailModal;
     const openArbDetailModal = arbWorkspaceRuntime.openArbDetailModal;
     const renderArbDetailModal = arbWorkspaceRuntime.renderArbDetailModal;
-    const quoteSpreadController = getQuoteSpreadController().createQuoteSpreadController({
-        applyFloatingPanelDisplay,
-        documentImpl: document,
-        domRenderUtils,
-        formatChainLabel,
-        getDashboardState,
-        getQuoteMarketStateMap,
-        quoteSpreadUtils: getQuoteSpreadUtils(),
+    const quoteSpreadRuntime = getDashboardQuoteSpreadRuntime().createDashboardQuoteSpreadRuntime({
+        modules: dashboardModules,
+        deps: {
+            applyFloatingPanelDisplay,
+            documentImpl: document,
+            domRenderUtils,
+            formatChainLabel,
+            getDashboardState,
+            getQuoteMarketStateMap,
+            zIndexRuntime: floatingPanelZIndexRuntime
+        },
         refs: {
             window: quoteSpreadWindow,
             header: quoteSpreadHeader,
@@ -475,10 +477,12 @@
             toggleButton: toggleSpreadBtn,
             content: quoteSpreadContent
         },
-        setInterval,
-        clearInterval,
-        zIndexRuntime: floatingPanelZIndexRuntime
+        timers: {
+            setInterval,
+            clearInterval
+        }
     });
+    const quoteSpreadController = quoteSpreadRuntime.quoteSpreadController;
     const dataTerminalRuntime = getDashboardDataTerminalRuntime().createDashboardDataTerminalRuntime({
         modules: dashboardModules,
         constants: {
