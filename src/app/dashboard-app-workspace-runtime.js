@@ -30,6 +30,7 @@
     const refs = options.refs || {};
     const timers = options.timers || {};
     const logger = deps.logger || {};
+    const shellRuntime = deps.dashboardShellRuntime || {};
 
     const quoteWorkspaceRuntime = modules.getDashboardQuoteWorkspaceRuntime().createDashboardQuoteWorkspaceRuntime({
       modules,
@@ -40,14 +41,14 @@
       deps: {
         AbortController: deps.AbortController,
         backendUrl: deps.backendUrl,
-        copyToastRuntime: deps.copyToastRuntime,
+        copyToastRuntime: shellRuntime.copyToastRuntime || deps.copyToastRuntime,
         dashboardRuntimeUtils: deps.dashboardRuntimeUtils,
         documentImpl: deps.documentImpl,
         domRenderUtils: deps.domRenderUtils,
         fetchImpl: deps.fetchImpl,
         getApiIntervals: deps.getApiIntervals,
         getDashboardState: deps.getDashboardState,
-        getEffectiveRequestChannelIdForQuote: deps.getEffectiveRequestChannelIdForQuote,
+        getEffectiveRequestChannelIdForQuote: shellRuntime.getEffectiveRequestChannelIdForQuote || deps.getEffectiveRequestChannelIdForQuote,
         getQuoteMarketState: deps.getQuoteMarketState,
         isDashboardUiActive: deps.isDashboardUiActive,
         isSchedulerPaused: deps.isSchedulerPaused,
@@ -60,7 +61,7 @@
         quoteStateRuntime: deps.quoteStateRuntime,
         recordSourceAttempt: deps.recordSourceAttempt,
         resetQuoteUiRuntimeState: deps.resetQuoteUiRuntimeState,
-        requestChannelRuntime: deps.requestChannelRuntime,
+        requestChannelRuntime: shellRuntime.requestChannelRuntime || deps.requestChannelRuntime,
         setQuoteMarketState: deps.setQuoteMarketState,
         setTimeout: timers.setTimeout,
         clearTimeout: timers.clearTimeout

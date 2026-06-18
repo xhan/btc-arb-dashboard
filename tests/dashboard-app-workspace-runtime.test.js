@@ -127,6 +127,11 @@ const deps = {
   closestEventTarget: () => {},
   copyToastRuntime: { id: 'copy-toast-runtime' },
   dashboardRuntimeUtils: { id: 'dashboard-runtime-utils' },
+  dashboardShellRuntime: {
+    copyToastRuntime: { id: 'shell-copy-toast-runtime' },
+    getEffectiveRequestChannelIdForQuote: () => 'shell-default',
+    requestChannelRuntime: { id: 'shell-request-channel' }
+  },
   dataTerminalRuntimeRef: { id: 'data-terminal-ref' },
   documentImpl: { id: 'document' },
   domRenderUtils: { id: 'dom-render-utils' },
@@ -216,10 +221,11 @@ assert.deepStrictEqual(quoteOptions.constants, {
   initialQuoteDisplayMode: constants.initialQuoteDisplayMode
 });
 assert.strictEqual(quoteOptions.deps.AbortController, AbortController);
-assert.strictEqual(quoteOptions.deps.copyToastRuntime, deps.copyToastRuntime);
+assert.strictEqual(quoteOptions.deps.copyToastRuntime, deps.dashboardShellRuntime.copyToastRuntime);
+assert.strictEqual(quoteOptions.deps.getEffectiveRequestChannelIdForQuote(), 'shell-default');
 assert.strictEqual(quoteOptions.deps.isSchedulerPaused, deps.isSchedulerPaused);
 assert.strictEqual(quoteOptions.deps.quoteRuntimeRef, deps.quoteRuntimeRef);
-assert.strictEqual(quoteOptions.deps.requestChannelRuntime, deps.requestChannelRuntime);
+assert.strictEqual(quoteOptions.deps.requestChannelRuntime, deps.dashboardShellRuntime.requestChannelRuntime);
 assert.strictEqual(quoteOptions.deps.setTimeout, timers.setTimeout);
 assert.strictEqual(quoteOptions.deps.clearTimeout, timers.clearTimeout);
 assert.strictEqual(quoteOptions.refs.copyToast, refs.copyToast);

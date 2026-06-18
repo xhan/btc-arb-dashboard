@@ -129,9 +129,7 @@
     const quoteSettingsSelectionRuntime = dashboardShellRuntime.quoteSettingsSelectionRuntime;
     const confirmActionRuntime = dashboardShellRuntime.confirmActionRuntime;
     const requestChannelRuntime = dashboardShellRuntime.requestChannelRuntime;
-    const getEffectiveRequestChannelIdForQuote = dashboardShellRuntime.getEffectiveRequestChannelIdForQuote;
     const updateRequestChannelTagForQuote = dashboardShellRuntime.updateRequestChannelTagForQuote;
-    const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;
 
     const dashboardAppWorkspaceRuntime = getDashboardAppWorkspaceRuntime().createDashboardAppWorkspaceRuntime({
         modules: dashboardModules,
@@ -156,8 +154,8 @@
             backendUrl: BACKEND_URL,
             bodyEl: document.body,
             closestEventTarget,
-            copyToastRuntime,
             dashboardRuntimeUtils,
+            dashboardShellRuntime,
             dataTerminalRuntimeRef,
             documentImpl: document,
             domRenderUtils,
@@ -167,7 +165,6 @@
             getArbCycleStartPriority,
             getDashboardLocalStorage,
             getDashboardState,
-            getEffectiveRequestChannelIdForQuote,
             getQuoteMarketState,
             getQuoteMarketStateMap,
             interactionRuntime: dashboardInputInteractionRuntime,

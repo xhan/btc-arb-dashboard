@@ -774,9 +774,15 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getDashboardAppCommandRuntime: ['));
     assert.ok(appCommandRuntimeResponse.body.includes('function createDashboardAppCommandRuntime(options = {})'));
     assert.ok(appCommandRuntimeResponse.body.includes('const shellRuntime = deps.dashboardShellRuntime || {};'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('const shellRuntime = deps.dashboardShellRuntime || {};'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('copyToastRuntime: shellRuntime.copyToastRuntime || deps.copyToastRuntime,'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('getEffectiveRequestChannelIdForQuote: shellRuntime.getEffectiveRequestChannelIdForQuote || deps.getEffectiveRequestChannelIdForQuote,'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('requestChannelRuntime: shellRuntime.requestChannelRuntime || deps.requestChannelRuntime,'));
     assert.ok(appJsResponse.body.includes('const dashboardCommandRuntime = getDashboardAppCommandRuntime().createDashboardAppCommandRuntime({'));
     assert.ok(!appJsResponse.body.includes('const { dashboardCommandController, keyboardShortcutController } = dashboardCommandRuntime;'));
     assert.ok(!appJsResponse.body.includes('const requestChannelTagVisibilityRuntime = dashboardShellRuntime.requestChannelTagVisibilityRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const getEffectiveRequestChannelIdForQuote = dashboardShellRuntime.getEffectiveRequestChannelIdForQuote;'));
     assert.ok(appJsResponse.body.includes('dashboardShellRuntime,'));
     assert.ok(!appJsResponse.body.includes('actions: dashboardCommandController.buildActionMap(['));
     assert.ok(appJsResponse.body.includes('dashboardCommandRuntime,'));
@@ -2628,7 +2634,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(dataTerminalUtilsResponse.body.includes('Token -&gt; Token'));
     assert.ok(moduleRegistryResponse.body.includes('getCopyUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('CopyUtils is not loaded'));
-    assert.ok(appJsResponse.body.includes('const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;'));
+    assert.ok(!appJsResponse.body.includes('const copyToastRuntime = dashboardShellRuntime.copyToastRuntime;'));
+    assert.ok(appWorkspaceRuntimeResponse.body.includes('copyToastRuntime: shellRuntime.copyToastRuntime || deps.copyToastRuntime,'));
     assert.ok(shellRuntimeResponse.body.includes('const copyToastRuntime = copyUtils.createCopyToastRuntime({'));
     assert.ok(quoteUiControllerResponse.body.includes('copyUtils.bindCopyPriceHandler(targetEl, {'));
     assert.ok(quoteUiControllerResponse.body.includes('function copyPriceText(text)'));
