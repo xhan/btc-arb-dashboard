@@ -20,6 +20,7 @@
         getDashboardAppBoardRuntime,
         getDashboardAppCommandRuntime,
         getDashboardAppLifecycleRuntime,
+        getDashboardAppRefGroups,
         getDashboardAppShellRuntime,
         getDashboardAppWorkspaceRuntime,
         getDashboardCoreRuntime,
@@ -93,81 +94,11 @@
         markDashboardViewDirty,
         renderDashboardForCurrentState
     } = dashboardRuntimeBridge;
-    const {
-        dashboardEl,
-        addCategoryBtn,
-        alertLogWindow,
-        alertLogHeader,
-        alertLogMinBtn,
-        alertLogLogTab,
-        alertLogMutedLogTab,
-        alertLogMutedTab,
-        alertLogSettingsTab,
-        alertLogContent,
-        alertLogMutedLogContent,
-        alertLogMutedContent,
-        alertLogSettingsContent,
-        pathAlertSound,
-        viewArbBtn,
-        viewDashboardBtn,
-        themeToggleBtn,
-        audioNoticeEl,
-        quoteSettingsModal,
-        quoteSourceSelect,
-        manualSaveBtn,
-        manualSaveText,
-        quoteRunStateTag,
-        settingsBtn,
-        settingsSaveBtn,
-        settingsCancelBtn,
-        settingsModal,
-        settingsIntervalInputRefs,
-        addQuoteModal,
-        addQuoteChainSelect,
-        addQuoteToChainSelect,
-        addQuoteFromInput,
-        addQuoteToInput,
-        addQuoteSymbolInput,
-        addQuoteModalRefs,
-        confirmModal,
-        confirmOkBtn,
-        confirmCancelBtn,
-        addCategoryModal,
-        addCategoryModalRefs,
-        confirmModalRefs,
-        globalTooltip,
-        copyToast,
-        arbPathWindow,
-        arbPathContent,
-        arbGlobalFilterInput,
-        arbGlobalChainFilterInput,
-        arbGlobalIncludeFilterInput,
-        arbGlobalTwoLegOnlyInput,
-        arbGlobalFilterClearBtn,
-        arbGlobalFilterElements,
-        arbPathHeader,
-        arbPathMinBtn,
-        toggleQuoteDisplayBtn,
-        toggleSpreadBtn,
-        toggleDataTerminalBtn,
-        toggleArbBtn,
-        toggleAlertLogBtn,
-        toggleMultiChannelBtn,
-        quoteSpreadWindow,
-        quoteSpreadHeader,
-        quoteSpreadMinBtn,
-        quoteSpreadContent,
-        arbDetailModal,
-        arbDetailCloseBtn,
-        arbDetailChartLink,
-        arbDetailChartAutoRefreshToggle,
-        arbDetailSubtitle,
-        arbDetailChartPreview,
-        arbDetailProfitPreview,
-        arbDetailGrid,
-        quoteRequestChannelSelect,
-        quoteSettingsModalElements
-    } = getDashboardDomRefs().createDashboardDomRefs(document);
+    const dashboardDomRefs = getDashboardDomRefs().createDashboardDomRefs(document);
+    const dashboardAppRefGroups = getDashboardAppRefGroups().createDashboardAppRefGroups({
+        refs: dashboardDomRefs,
+        bodyEl: document.body
+    });
 
     const dashboardShellRuntime = getDashboardAppShellRuntime().createDashboardAppShellRuntime({
         modules: dashboardModules,
@@ -186,19 +117,7 @@
             setApiIntervals,
             updateSchedulers
         },
-        refs: {
-            bodyEl: document.body,
-            themeToggleBtn,
-            manualSaveBtn,
-            manualSaveText,
-            settingsBtn,
-            settingsCancelBtn,
-            settingsSaveBtn,
-            settingsModal,
-            settingsIntervalInputRefs,
-            toggleMultiChannelBtn,
-            copyToast
-        },
+        refs: dashboardAppRefGroups.shell,
         timers: {
             clearTimeout,
             setTimeout
@@ -273,60 +192,7 @@
             windowImpl: window,
             zIndexRuntime: floatingPanelZIndexRuntime
         },
-        refs: {
-            copyToast,
-            globalTooltip,
-            toggleQuoteDisplayBtn,
-            arbPanel: {
-                arbPathWindow,
-                arbPathContent,
-                arbPathHeader,
-                arbGlobalFilterInput,
-                arbGlobalChainFilterInput,
-                arbGlobalIncludeFilterInput,
-                arbGlobalTwoLegOnlyInput,
-                arbGlobalFilterClearBtn,
-                arbGlobalFilterElements
-            },
-            alert: {
-                alertLogWindow,
-                alertLogLogTab,
-                alertLogMutedLogTab,
-                alertLogMutedTab,
-                alertLogSettingsTab,
-                alertLogContent,
-                alertLogMutedLogContent,
-                alertLogMutedContent,
-                alertLogSettingsContent,
-                audioNoticeEl,
-                pathAlertSound
-            },
-            detail: {
-                modal: arbDetailModal,
-                closeButton: arbDetailCloseBtn,
-                chartLink: arbDetailChartLink,
-                chartAutoRefreshToggle: arbDetailChartAutoRefreshToggle,
-                subtitle: arbDetailSubtitle,
-                chartPreview: arbDetailChartPreview,
-                profitPreview: arbDetailProfitPreview,
-                grid: arbDetailGrid,
-                quoteRunStateTag
-            },
-            viewMode: {
-                dashboardEl,
-                addCategoryBtn,
-                arbPathWindow,
-                viewArbBtn,
-                viewDashboardBtn
-            },
-            quoteSpread: {
-                window: quoteSpreadWindow,
-                header: quoteSpreadHeader,
-                minButton: quoteSpreadMinBtn,
-                toggleButton: toggleSpreadBtn,
-                content: quoteSpreadContent
-            }
-        },
+        refs: dashboardAppRefGroups.workspace,
         timers: {
             setInterval,
             clearInterval,
@@ -458,21 +324,7 @@
             updateSchedulers,
             windowImpl: window
         },
-        refs: {
-            addCategoryModal,
-            addCategoryModalRefs,
-            addQuoteChainSelect,
-            addQuoteInputs: [addQuoteFromInput, addQuoteToInput, addQuoteSymbolInput],
-            addQuoteModal,
-            addQuoteModalRefs,
-            addQuoteToChainSelect,
-            confirmModalRefs,
-            dashboardEl,
-            quoteRequestChannelSelect,
-            quoteSettingsModal,
-            quoteSettingsModalElements,
-            quoteSourceSelect
-        }
+        refs: dashboardAppRefGroups.board
     });
     const dashboardFormController = dashboardAppBoardRuntime.dashboardFormController;
     const handleDashboardClick = dashboardAppBoardRuntime.handleDashboardClick;
@@ -523,29 +375,7 @@
             updateSchedulers,
             windowImpl: window
         },
-        refs: {
-            dashboardEl,
-            addCategoryBtn,
-            audioNoticeEl,
-            manualSaveBtn,
-            themeToggleBtn,
-            confirmOkBtn,
-            confirmCancelBtn,
-            confirmModal,
-            confirmModalRefs,
-            alertLogWindow,
-            alertLogHeader,
-            alertLogMinBtn,
-            alertLogMutedLogContent,
-            arbPathWindow,
-            arbPathHeader,
-            arbPathMinBtn,
-            toggleArbBtn,
-            toggleQuoteDisplayBtn,
-            toggleDataTerminalBtn,
-            toggleAlertLogBtn,
-            toggleMultiChannelBtn
-        }
+        refs: dashboardAppRefGroups.lifecycle
     });
     dashboardAppLifecycleRuntime.bindStaticEvents();
     

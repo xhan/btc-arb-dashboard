@@ -149,6 +149,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/app/dashboard-app-state-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-runtime-ref-utils.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-core-runtime.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-app-ref-groups.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-shell-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-app-shell-runtime.js"'));
     assert.ok(response.body.includes('src="src/app/dashboard-board-runtime.js"'));
@@ -294,6 +295,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-core-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/app/dashboard-app-ref-groups.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/app/dashboard-shell-runtime.js"') < response.body.indexOf('src="src/app/dashboard-module-registry.js"')
@@ -578,6 +582,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(runtimeRefUtilsResponse.statusCode, 200);
     const coreRuntimeResponse = await request('/src/app/dashboard-core-runtime.js');
     assert.strictEqual(coreRuntimeResponse.statusCode, 200);
+    const appRefGroupsResponse = await request('/src/app/dashboard-app-ref-groups.js');
+    assert.strictEqual(appRefGroupsResponse.statusCode, 200);
     const shellRuntimeResponse = await request('/src/app/dashboard-shell-runtime.js');
     assert.strictEqual(shellRuntimeResponse.statusCode, 200);
     const appShellRuntimeResponse = await request('/src/app/dashboard-app-shell-runtime.js');
@@ -1001,7 +1007,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteWorkspaceRuntimeResponse.body.includes('defaultSourceResolver: quoteDomainAdapter.getDefaultSourceForChain'));
     assert.ok(!appJsResponse.body.includes('function getQuoteChainDisplayName(quote)'));
     assert.ok(!appJsResponse.body.includes('function isCrossChainQuote(quote)'));
-    assert.ok(appJsResponse.body.includes('} = getDashboardDomRefs().createDashboardDomRefs(document);'));
+    assert.ok(appJsResponse.body.includes('const dashboardDomRefs = getDashboardDomRefs().createDashboardDomRefs(document);'));
+    assert.ok(appJsResponse.body.includes('const dashboardAppRefGroups = getDashboardAppRefGroups().createDashboardAppRefGroups({'));
+    assert.ok(appRefGroupsResponse.body.includes('function createDashboardAppRefGroups(options = {})'));
+    assert.ok(moduleRegistryResponse.body.includes('getDashboardAppRefGroups: ['));
     assert.ok(!appJsResponse.body.includes("document.getElementById('dashboard')"));
     assert.ok(!appJsResponse.body.includes("document.getElementById('quote-settings-modal')"));
     assert.ok(moduleRegistryResponse.body.includes('getDashboardModalUtils: ['));
