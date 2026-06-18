@@ -774,6 +774,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(moduleRegistryResponse.body.includes('getDashboardAppCommandRuntime: ['));
     assert.ok(appCommandRuntimeResponse.body.includes('function createDashboardAppCommandRuntime(options = {})'));
     assert.ok(appCommandRuntimeResponse.body.includes('const shellRuntime = deps.dashboardShellRuntime || {};'));
+    assert.ok(appCommandRuntimeResponse.body.includes('const workspaceRuntime = deps.dashboardAppWorkspaceRuntime || {};'));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('const shellRuntime = deps.dashboardShellRuntime || {};'));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('copyToastRuntime: shellRuntime.copyToastRuntime || deps.copyToastRuntime,'));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('getEffectiveRequestChannelIdForQuote: shellRuntime.getEffectiveRequestChannelIdForQuote || deps.getEffectiveRequestChannelIdForQuote,'));
@@ -1329,8 +1330,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(lifecycleControllerResponse.body.includes('deps.requestChannelTagVisibilityRuntime.apply();'));
     assert.ok(!appJsResponse.body.includes('requestChannelRuntime.loadMultiChannelEnabled();'));
     assert.ok(!appJsResponse.body.includes('requestChannelTagVisibilityRuntime.apply();'));
-    assert.ok(appJsResponse.body.includes('toggleMultiChannel,'));
-    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-multi-channel': deps.toggleMultiChannel"));
+    assert.ok(!appJsResponse.body.includes('toggleMultiChannel,'));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-multi-channel': workspaceRuntime.toggleMultiChannel || deps.toggleMultiChannel"));
     assert.ok(appCommandRuntimeResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(lifecycleControllerResponse.body.includes("dispatchCommand('toggle-multi-channel')"));
     assert.ok(quoteRuntimeResponse.body.includes('requestChannelRuntime.toggleMultiChannel('));
@@ -2226,9 +2227,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('calculatorEntries'));
     assert.ok(!appJsResponse.body.includes('addToCalculator('));
     assert.ok(appConfigResponse.body.includes("const DEFAULT_QUOTE_DISPLAY_MODE = 'rate';"));
-    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-quote-display': deps.toggleQuoteDisplayMode"));
-    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-data-terminal': deps.toggleDataTerminalPanel"));
-    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-multi-channel': deps.toggleMultiChannel"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-quote-display': workspaceRuntime.toggleQuoteDisplayMode || deps.toggleQuoteDisplayMode"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-data-terminal': workspaceRuntime.toggleDataTerminalPanel || deps.toggleDataTerminalPanel"));
+    assert.ok(appCommandRuntimeResponse.body.includes("'toggle-multi-channel': workspaceRuntime.toggleMultiChannel || deps.toggleMultiChannel"));
     assert.ok(appCommandRuntimeResponse.body.includes("'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle"));
     assert.ok(!appJsResponse.body.includes('toggleRequestChannelTags()'));
     assert.ok(!appJsResponse.body.includes('let showRequestChannelTags = true;'));
@@ -2541,7 +2542,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(appJsResponse.body.includes('interactionRuntime: dashboardInputInteractionRuntime,'));
     assert.ok(appWorkspaceRuntimeResponse.body.includes('const auxPanelsRuntime = modules.getDashboardAuxPanelsRuntime().createDashboardAuxPanelsRuntime({'));
     assert.ok(appJsResponse.body.includes('renderDataTerminalPanel,'));
-    assert.ok(appJsResponse.body.includes('toggleDataTerminalPanel'));
+    assert.ok(!appJsResponse.body.includes('toggleDataTerminalPanel,'));
     assert.ok(!appJsResponse.body.includes('let scheduleDataTerminalUpdate = () => {};'));
     assert.ok(auxPanelsRuntimeResponse.body.includes('const dataTerminalRuntime = setRuntime('));
     assert.ok(auxPanelsRuntimeResponse.body.includes('deps.dataTerminalRuntimeRef,'));

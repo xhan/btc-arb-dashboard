@@ -12,6 +12,7 @@
     const modules = options.modules || {};
     const deps = options.deps || {};
     const shellRuntime = deps.dashboardShellRuntime || {};
+    const workspaceRuntime = deps.dashboardAppWorkspaceRuntime || {};
     const requestChannelTagVisibilityRuntime = shellRuntime.requestChannelTagVisibilityRuntime
       || deps.requestChannelTagVisibilityRuntime;
     return modules.getDashboardCommandRuntime().createDashboardCommandRuntime({
@@ -23,11 +24,11 @@
       actions: {
         'close-arb-detail': deps.closeArbDetailModal,
         'toggle-arb-panel': deps.dashboardViewModeController.toggleArbView,
-        'toggle-data-terminal': deps.toggleDataTerminalPanel,
-        'toggle-quote-display': deps.toggleQuoteDisplayMode,
+        'toggle-data-terminal': workspaceRuntime.toggleDataTerminalPanel || deps.toggleDataTerminalPanel,
+        'toggle-quote-display': workspaceRuntime.toggleQuoteDisplayMode || deps.toggleQuoteDisplayMode,
         'open-alert-log-settings': deps.alertRuntimeController.openAlertLogSettingsPanel,
         'toggle-alert-log': deps.alertRuntimeController.toggleAlertLogPanel,
-        'toggle-multi-channel': deps.toggleMultiChannel,
+        'toggle-multi-channel': workspaceRuntime.toggleMultiChannel || deps.toggleMultiChannel,
         'toggle-request-channel-tags': requestChannelTagVisibilityRuntime.toggle
       }
     });

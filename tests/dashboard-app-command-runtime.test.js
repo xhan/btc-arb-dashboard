@@ -42,6 +42,11 @@ const deps = {
       toggle: () => calls.push(['toggleRequestChannelTagsFromShell'])
     }
   },
+  dashboardAppWorkspaceRuntime: {
+    toggleDataTerminalPanel: () => calls.push(['toggleDataTerminalFromWorkspace']),
+    toggleMultiChannel: () => calls.push(['toggleMultiChannelFromWorkspace']),
+    toggleQuoteDisplayMode: () => calls.push(['toggleQuoteDisplayFromWorkspace'])
+  },
   requestChannelTagVisibilityRuntime: {
     toggle: () => calls.push(['toggleRequestChannelTags'])
   },
@@ -72,10 +77,10 @@ capturedOptions.actions['toggle-multi-channel']();
 capturedOptions.actions['toggle-request-channel-tags']();
 assert.deepStrictEqual(calls, [
   ['toggleArb'],
-  ['toggleDataTerminal'],
-  ['toggleQuoteDisplay'],
+  ['toggleDataTerminalFromWorkspace'],
+  ['toggleQuoteDisplayFromWorkspace'],
   ['openAlertLogSettings'],
   ['toggleAlertLog'],
-  ['toggleMultiChannel'],
+  ['toggleMultiChannelFromWorkspace'],
   ['toggleRequestChannelTagsFromShell']
 ]);

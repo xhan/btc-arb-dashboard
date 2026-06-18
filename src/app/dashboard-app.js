@@ -213,8 +213,6 @@
         removeFromQueue,
         shouldQueueInverseFetch,
         showCopyToast,
-        toggleMultiChannel,
-        toggleQuoteDisplayMode,
         updateQuotePairLabel,
         updateTrendArrow,
         alertRuntimeController,
@@ -233,8 +231,7 @@
         openArbDetailModal,
         renderArbDetailModal,
         quoteSpreadController,
-        renderDataTerminalPanel,
-        toggleDataTerminalPanel
+        renderDataTerminalPanel
     } = dashboardAppWorkspaceRuntime;
 
     const dashboardCommandRuntime = getDashboardAppCommandRuntime().createDashboardAppCommandRuntime({
@@ -243,12 +240,10 @@
             alertRuntimeController,
             arbDetailController,
             closeArbDetailModal,
+            dashboardAppWorkspaceRuntime,
             dashboardViewModeController,
             documentImpl: document,
-            dashboardShellRuntime,
-            toggleDataTerminalPanel,
-            toggleMultiChannel,
-            toggleQuoteDisplayMode
+            dashboardShellRuntime
         }
     });
 
