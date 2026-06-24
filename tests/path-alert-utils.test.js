@@ -1346,10 +1346,127 @@ assert.strictEqual(saveCount, 10);
 let scheduledEvaluationCount = 0;
 assert.strictEqual(pathAlertSchedulerRuntime.scheduleEvaluation(() => { scheduledEvaluationCount += 1; }, 80), true);
 assert.strictEqual(pathAlertSchedulerRuntime.scheduleEvaluation(() => { scheduledEvaluationCount += 10; }, 90), true);
-assert.deepStrictEqual(clearedTimeouts.slice(-1), [scheduledTimeouts[2].id]);
-scheduledTimeouts[3].callback();
-assert.strictEqual(scheduledEvaluationCount, 10);
+assert.deepStrictEqual(clearedTimeouts.slice(-1), [scheduledTimeouts[0].id]);
+assert.strictEqual(scheduledTimeouts.length, 3);
+scheduledTimeouts[2].callback();
+assert.strictEqual(scheduledEvaluationCount, 1);
 assert.strictEqual(pathAlertSchedulerRuntime.getTimers().scheduledEvaluationTimer, null);
+
+{
+  let nowMs = 0;
+  let timerIdForCoalescing = 0;
+  const coalescingIntervals = [];
+  const coalescingTimeouts = [];
+  const coalescingRuntime = createPathAlertSchedulerRuntime({
+    now: () => nowMs,
+    setInterval(callback, delayMs) {
+      const timer = { id: ++timerIdForCoalescing, callback, delayMs };
+      coalescingIntervals.push(timer);
+      return timer;
+    },
+    clearInterval() {},
+    setTimeout(callback, delayMs) {
+      const timer = { id: ++timerIdForCoalescing, callback, delayMs };
+      coalescingTimeouts.push(timer);
+      return timer;
+    },
+    clearTimeout() {}
+  });
+  let coalescedEvaluationCount = 0;
+
+  assert.strictEqual(coalescingRuntime.restartEvaluation({
+    hasActiveTarget: true,
+    intervalMs: 1000,
+    evaluate: () => { coalescedEvaluationCount += 1; }
+  }), true);
+  assert.strictEqual(coalescedEvaluationCount, 1);
+
+  nowMs = 100;
+  assert.strictEqual(coalescingRuntime.scheduleEvaluation(() => {
+    coalescedEvaluationCount += 1;
+  }, 800), true);
+  assert.strictEqual(coalescingTimeouts[0].delayMs, 800);
+
+  nowMs = 900;
+  coalescingTimeouts[0].callback();
+  assert.strictEqual(coalescedEvaluationCount, 2);
+
+  nowMs = 1000;
+  coalescingIntervals[0].callback();
+  assert.strictEqual(coalescedEvaluationCount, 2);
+
+  nowMs = 1200;
+  assert.strictEqual(coalescingRuntime.scheduleEvaluation(() => {
+    coalescedEvaluationCount += 1;
+  }, 800), true);
+  assert.strictEqual(coalescingTimeouts.length, 1, 'periodic evaluation within delay window should cover quote-triggered evaluation');
+  nowMs = 2000;
+  coalescingIntervals[0].callback();
+  assert.strictEqual(coalescedEvaluationCount, 3);
+
+  nowMs = 2200;
+  assert.strictEqual(coalescingRuntime.scheduleEvaluation(() => {
+    coalescedEvaluationCount += 1;
+  }, 800), true);
+  assert.strictEqual(coalescingTimeouts.length, 1, 'exact next periodic boundary should not need an extra timer');
+  nowMs = 3000;
+  coalescingIntervals[0].callback();
+  assert.strictEqual(coalescedEvaluationCount, 4);
+}
+
+{
+  let nowMs = 0;
+  let timerIdForSkippedInterval = 0;
+  const skippedIntervalTimers = [];
+  const skippedIntervalTimeouts = [];
+  const skippedIntervalRuntime = createPathAlertSchedulerRuntime({
+    now: () => nowMs,
+    setInterval(callback, delayMs) {
+      const timer = { id: ++timerIdForSkippedInterval, callback, delayMs };
+      skippedIntervalTimers.push(timer);
+      return timer;
+    },
+    clearInterval() {},
+    setTimeout(callback, delayMs) {
+      const timer = { id: ++timerIdForSkippedInterval, callback, delayMs };
+      skippedIntervalTimeouts.push(timer);
+      return timer;
+    },
+    clearTimeout() {}
+  });
+  let skippedIntervalEvaluationCount = 0;
+
+  assert.strictEqual(skippedIntervalRuntime.restartEvaluation({
+    hasActiveTarget: true,
+    intervalMs: 1000,
+    evaluate: () => { skippedIntervalEvaluationCount += 1; }
+  }), true);
+  assert.strictEqual(skippedIntervalEvaluationCount, 1);
+
+  nowMs = 100;
+  assert.strictEqual(skippedIntervalRuntime.scheduleEvaluation(() => {
+    skippedIntervalEvaluationCount += 1;
+  }, 800), true);
+  nowMs = 900;
+  skippedIntervalTimeouts[0].callback();
+  assert.strictEqual(skippedIntervalEvaluationCount, 2);
+
+  nowMs = 950;
+  assert.strictEqual(skippedIntervalRuntime.scheduleEvaluation(() => {
+    skippedIntervalEvaluationCount += 1;
+  }, 800), true);
+  assert.strictEqual(
+    skippedIntervalTimeouts.length,
+    2,
+    'an interval that will be skipped by min-gap must not cover quote-triggered evaluation'
+  );
+  nowMs = 1000;
+  skippedIntervalTimers[0].callback();
+  assert.strictEqual(skippedIntervalEvaluationCount, 2);
+  nowMs = 1750;
+  skippedIntervalTimeouts[1].callback();
+  assert.strictEqual(skippedIntervalEvaluationCount, 3);
+}
 
 let delayedRuntime = advancePathAlertRuntime(delayedAlert, null, {
   available: true,

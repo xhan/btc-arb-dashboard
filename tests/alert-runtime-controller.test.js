@@ -241,6 +241,14 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
+  const { deps, schedulerCalls } = createBaseDeps();
+  const controller = createAlertRuntimeController(deps);
+
+  assert.strictEqual(controller.schedulePathAlertEvaluation(), true);
+  assert.deepStrictEqual(schedulerCalls, [['scheduleEvaluation', 800]]);
+}
+
+{
   const unwatchedRuleAlert = {
     id: 'unwatched-rule',
     target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:missing' }

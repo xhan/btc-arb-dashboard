@@ -27,6 +27,13 @@
       : [];
   }
 
+  function normalizeRuleChainsWith(chains, normalizeFn) {
+    const normalize = typeof normalizeFn === 'function' ? normalizeFn : normalizeChain;
+    return Array.isArray(chains)
+      ? chains.map((chain) => normalize(chain)).filter(Boolean)
+      : [];
+  }
+
   function isSameChain(left, right) {
     const normalizedLeft = normalizeChain(left);
     const normalizedRight = normalizeChain(right);
@@ -119,6 +126,12 @@
     if (!rule || rule.steps !== 2 || !rule.base || !rule.quote) return [];
     const normalizedBase = resolveAlias(rule.base, aliases);
     const normalizedQuote = resolveAlias(rule.quote, aliases);
+    const normalizeCachedChain = createCachedChainNormalizer();
+    const isSameCachedChain = (left, right) => {
+      const normalizedLeft = normalizeCachedChain(left);
+      const normalizedRight = normalizeCachedChain(right);
+      return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
+    };
     const templates = [];
     const seen = new Set();
     const edgeList = Array.isArray(edges) ? edges : [];
@@ -128,17 +141,17 @@
         .filter((chain) => chain && chain !== '规则')
     ));
 
-    const excludedChains = new Set(normalizeRuleChains(rule.excludeChains));
+    const excludedChains = new Set(normalizeRuleChainsWith(rule.excludeChains, normalizeCachedChain));
 
     function pushTemplate(chainA, chainB) {
-      if (!chainA || !chainB || isSameChain(chainA, chainB)) return;
-      if (excludedChains.has(normalizeChain(chainA)) || excludedChains.has(normalizeChain(chainB))) return;
+      if (!chainA || !chainB || isSameCachedChain(chainA, chainB)) return;
+      if (excludedChains.has(normalizeCachedChain(chainA)) || excludedChains.has(normalizeCachedChain(chainB))) return;
       const hasLegA = edgeList.some((edge) => {
-        if (!edge || !isSameChain(edge.chain, chainA)) return false;
+        if (!edge || !isSameCachedChain(edge.chain, chainA)) return false;
         return resolveAlias(edge.from, aliases) === normalizedBase && resolveAlias(edge.to, aliases) === normalizedQuote;
       });
       const hasLegB = edgeList.some((edge) => {
-        if (!edge || !isSameChain(edge.chain, chainB)) return false;
+        if (!edge || !isSameCachedChain(edge.chain, chainB)) return false;
         return resolveAlias(edge.from, aliases) === normalizedQuote && resolveAlias(edge.to, aliases) === normalizedBase;
       });
       if (!hasLegA || !hasLegB) return;
@@ -216,10 +229,63 @@
     };
   }
 
+  function buildFixedLiveEdgeKey(chain, from, to, aliases) {
+    const normalizedChain = normalizeChain(chain);
+    const normalizedFrom = resolveAlias(from, aliases);
+    const normalizedTo = resolveAlias(to, aliases);
+    return normalizedChain && normalizedFrom && normalizedTo
+      ? `${normalizedChain}\u0000${normalizedFrom}\u0000${normalizedTo}`
+      : '';
+  }
+
+  function createCachedChainNormalizer() {
+    const cache = new Map();
+    return (chain) => {
+      const key = String(chain || '');
+      if (cache.has(key)) return cache.get(key);
+      const value = normalizeChain(chain);
+      cache.set(key, value);
+      return value;
+    };
+  }
+
+  function buildFixedLiveEdgeIndex(edges, aliases) {
+    const bestByKey = new Map();
+    const normalizeCachedChain = createCachedChainNormalizer();
+    for (const edge of edges || []) {
+      if (!edge || edge.rule || edge.chain === '规则') continue;
+      const normalizedChain = normalizeCachedChain(edge.chain);
+      const normalizedFrom = resolveAlias(edge.from, aliases);
+      const normalizedTo = resolveAlias(edge.to, aliases);
+      const key = normalizedChain && normalizedFrom && normalizedTo
+        ? `${normalizedChain}\u0000${normalizedFrom}\u0000${normalizedTo}`
+        : '';
+      if (!key) continue;
+      const rate = Number(edge.rate);
+      if (!Number.isFinite(rate)) continue;
+      const best = bestByKey.get(key);
+      if (!best || rate > Number(best.rate)) {
+        const targetFrom = resolveAlias(edge.from, aliases);
+        const targetTo = resolveAlias(edge.to, aliases);
+        bestByKey.set(key, {
+          ...edge,
+          rawFrom: edge.rawFrom || edge.from,
+          rawTo: edge.rawTo || edge.to,
+          from: targetFrom,
+          to: targetTo
+        });
+      }
+    }
+    return { bestByKey, aliases };
+  }
+
   function selectBestLiveEdge(edges, chain, from, to, aliases) {
     if (!chain || !from || !to) return null;
     const targetFrom = resolveAlias(from, aliases);
     const targetTo = resolveAlias(to, aliases);
+    if (edges && edges.bestByKey instanceof Map) {
+      return edges.bestByKey.get(buildFixedLiveEdgeKey(chain, targetFrom, targetTo, aliases)) || null;
+    }
     let best = null;
 
     for (const edge of edges || []) {
@@ -307,6 +373,7 @@
     buildTopologyEdges,
     buildCycleTemplates,
     buildFixedPathTemplates,
+    buildFixedLiveEdgeIndex,
     evaluateCycleTemplate,
     evaluateFixedPathTemplate,
     createArbPanelCache

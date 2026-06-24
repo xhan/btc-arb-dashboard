@@ -1,10 +1,12 @@
 const assert = require('assert');
+const ChainDefaults = require('../src/shared/chain-defaults');
 
 const {
   buildArbPathTopologyCacheKey,
   buildTopologyEdges,
   buildCycleTemplates,
   buildFixedPathTemplates,
+  buildFixedLiveEdgeIndex,
   evaluateCycleTemplate,
   evaluateFixedPathTemplate,
   createArbPanelCache
@@ -131,6 +133,36 @@ const fixedTopologyEdges = [
 const fixedTemplates = buildFixedPathTemplates(fixedTopologyEdges, fixedRule, null, { limit: 5 });
 assert.ok(Array.isArray(fixedTemplates) && fixedTemplates.length > 0, 'should build fixed templates');
 assert.strictEqual(fixedTemplates[0].legs[0].quoteId, undefined, 'fixed templates should only keep route shape');
+
+{
+  const originalNormalizeChain = ChainDefaults.normalizeChain;
+  let normalizeChainCallCount = 0;
+  ChainDefaults.normalizeChain = (chain) => {
+    normalizeChainCallCount += 1;
+    return originalNormalizeChain(chain);
+  };
+
+  try {
+    buildFixedPathTemplates([
+      { quoteId: 601, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1 },
+      { quoteId: 602, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1 },
+      { quoteId: 603, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1 },
+      { quoteId: 604, chain: 'arb', from: 'WBTC', to: 'cbBTC', rate: 1 },
+      { quoteId: 605, chain: 'arb', from: 'WBTC', to: 'cbBTC', rate: 1 }
+    ], {
+      ...fixedRule,
+      chains: ['ethereum', 'arb']
+    }, null, { limit: 5 });
+  } finally {
+    ChainDefaults.normalizeChain = originalNormalizeChain;
+  }
+
+  assert.ok(
+    normalizeChainCallCount <= 3,
+    `fixed template generation should reuse normalized chains, got ${normalizeChainCallCount}`
+  );
+}
+
 const fixedAliasChainTemplates = buildFixedPathTemplates(fixedTopologyEdges, {
   ...fixedRule,
   chains: ['eth', 'arb']
@@ -176,3 +208,43 @@ const evaluatedFixed = evaluateFixedPathTemplate(fixedTemplates[0], [
 ]);
 assert.ok(evaluatedFixed, 'fixed template should be evaluable from live edges');
 assert.strictEqual(evaluatedFixed.legs[0].quoteId, 102, 'fixed template should pick best live quote on the same chain');
+
+const fixedLiveEdgeIndex = buildFixedLiveEdgeIndex([
+  { quoteId: 101, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.001 },
+  { quoteId: 102, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.003 },
+  { quoteId: 201, chain: 'arb', from: 'WBTC', to: 'xBTC', rate: 0.999 }
+], { xBTC: 'cbBTC' });
+const evaluatedFixedFromIndex = evaluateFixedPathTemplate(fixedTemplates[0], fixedLiveEdgeIndex);
+assert.ok(evaluatedFixedFromIndex, 'fixed template should be evaluable from indexed live edges');
+assert.deepStrictEqual(
+  evaluatedFixedFromIndex.legs.map((leg) => leg.quoteId),
+  [102, 201],
+  'indexed fixed template evaluation should keep best live edge selection and aliases'
+);
+
+{
+  const originalNormalizeChain = ChainDefaults.normalizeChain;
+  let normalizeChainCallCount = 0;
+  ChainDefaults.normalizeChain = (chain) => {
+    normalizeChainCallCount += 1;
+    return originalNormalizeChain(chain);
+  };
+
+  try {
+    buildFixedLiveEdgeIndex([
+      { quoteId: 501, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.001 },
+      { quoteId: 502, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.002 },
+      { quoteId: 503, chain: 'ethereum', from: 'cbBTC', to: 'WBTC', rate: 1.003 },
+      { quoteId: 504, chain: 'arb', from: 'WBTC', to: 'cbBTC', rate: 0.999 },
+      { quoteId: 505, chain: 'arb', from: 'WBTC', to: 'cbBTC', rate: 0.998 }
+    ]);
+  } finally {
+    ChainDefaults.normalizeChain = originalNormalizeChain;
+  }
+
+  assert.strictEqual(
+    normalizeChainCallCount,
+    2,
+    'fixed live edge indexing should normalize each raw chain only once'
+  );
+}

@@ -45,8 +45,11 @@
         : null;
 
       if (fixedTemplates && arbPathTemplateCacheUtils && typeof arbPathTemplateCacheUtils.evaluateFixedPathTemplate === 'function') {
+        const fixedLiveEdgeIndex = typeof arbPathTemplateCacheUtils.buildFixedLiveEdgeIndex === 'function'
+          ? arbPathTemplateCacheUtils.buildFixedLiveEdgeIndex(filteredEdges, aliasRules)
+          : filteredEdges;
         cycles = fixedTemplates
-          .map((template) => arbPathTemplateCacheUtils.evaluateFixedPathTemplate(template, filteredEdges, aliasRules))
+          .map((template) => arbPathTemplateCacheUtils.evaluateFixedPathTemplate(template, fixedLiveEdgeIndex, aliasRules))
           .filter(Boolean)
           .sort((left, right) => Number(right && right.profitRate) - Number(left && left.profitRate))
           .slice(0, Math.max(1, Number(rule.resultLimit) || 1));

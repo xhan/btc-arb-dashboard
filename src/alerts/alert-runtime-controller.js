@@ -54,7 +54,7 @@
     const logInfo = typeof deps.logInfo === 'function' ? deps.logInfo : () => {};
     const pathAlertMarketChangeDelayMs = Number.isFinite(Number(deps.pathAlertMarketChangeDelayMs))
       ? Number(deps.pathAlertMarketChangeDelayMs)
-      : 120;
+      : 800;
 
     let pathAlertConfig = pathAlertUtils.normalizeAlertConfig();
     let pathAlertReloading = false;

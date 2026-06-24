@@ -1040,10 +1040,17 @@
     const clearTimeoutFn = typeof options.clearTimeout === 'function'
       ? options.clearTimeout
       : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const nowFn = typeof options.now === 'function'
+      ? options.now
+      : () => Date.now();
     let evaluationTimer = null;
     let scheduledEvaluationTimer = null;
     let configSaveTimer = null;
     let externalReloadTimer = null;
+    let evaluationIntervalMs = 0;
+    let lastEvaluationAt = null;
+    let lastEvaluationMinGapMs = 0;
+    let nextEvaluationIntervalAt = null;
 
     function clearTimer(timer, clearFn) {
       if (timer !== null && clearFn) {
@@ -1060,9 +1067,39 @@
       scheduledEvaluationTimer = clearTimer(scheduledEvaluationTimer, clearTimeoutFn);
     }
 
+    function resetEvaluationClock() {
+      lastEvaluationAt = null;
+      lastEvaluationMinGapMs = 0;
+      nextEvaluationIntervalAt = null;
+      evaluationIntervalMs = 0;
+    }
+
+    function getNowMs() {
+      const nowMs = Number(nowFn());
+      return Number.isFinite(nowMs) ? nowMs : Date.now();
+    }
+
+    function toSafeDelayMs(delayMs, fallback = 0) {
+      const value = Number(delayMs);
+      return Number.isFinite(value) && value >= 0 ? value : fallback;
+    }
+
+    function runEvaluation(callback, minGapMs = 0) {
+      const safeMinGapMs = toSafeDelayMs(minGapMs);
+      const nowMs = getNowMs();
+      const elapsedMs = lastEvaluationAt === null ? Infinity : nowMs - lastEvaluationAt;
+      if (elapsedMs < safeMinGapMs) return false;
+
+      lastEvaluationAt = nowMs;
+      lastEvaluationMinGapMs = safeMinGapMs;
+      callback();
+      return true;
+    }
+
     function restartEvaluation(config = {}) {
       clearEvaluation();
       clearScheduledEvaluation();
+      resetEvaluationClock();
       const hasActiveTarget = typeof config.hasActiveTarget === 'function'
         ? config.hasActiveTarget()
         : Boolean(config.hasActiveTarget);
@@ -1071,30 +1108,41 @@
       const intervalMs = Number(config.intervalMs);
       if (!Number.isFinite(intervalMs) || intervalMs <= 0) return false;
 
-      evaluationTimer = setIntervalFn(config.evaluate, intervalMs);
-      config.evaluate();
+      evaluationIntervalMs = intervalMs;
+      nextEvaluationIntervalAt = getNowMs() + intervalMs;
+      evaluationTimer = setIntervalFn(() => {
+        runEvaluation(config.evaluate, Math.min(intervalMs, lastEvaluationMinGapMs || intervalMs));
+        nextEvaluationIntervalAt = getNowMs() + intervalMs;
+      }, intervalMs);
+      runEvaluation(config.evaluate, 0);
       return true;
     }
 
     function scheduleEvaluation(callback, delayMs = 0) {
       if (typeof callback !== 'function' || !setTimeoutFn) return false;
-      const safeDelayMs = Number.isFinite(Number(delayMs)) && Number(delayMs) >= 0
-        ? Number(delayMs)
-        : 0;
+      if (scheduledEvaluationTimer) return true;
+      const safeDelayMs = toSafeDelayMs(delayMs);
+      const dueAt = getNowMs() + safeDelayMs;
+      if (nextEvaluationIntervalAt !== null && nextEvaluationIntervalAt <= dueAt) {
+        const intervalMinGapMs = Math.min(
+          evaluationIntervalMs || safeDelayMs,
+          lastEvaluationMinGapMs || evaluationIntervalMs || safeDelayMs
+        );
+        const intervalCanRun = lastEvaluationAt === null
+          || (nextEvaluationIntervalAt - lastEvaluationAt) >= intervalMinGapMs;
+        if (intervalCanRun) return true;
+      }
 
-      clearScheduledEvaluation();
       scheduledEvaluationTimer = setTimeoutFn(() => {
         scheduledEvaluationTimer = null;
-        callback();
+        runEvaluation(callback, safeDelayMs);
       }, safeDelayMs);
       return true;
     }
 
     function scheduleTimeout(name, callback, delayMs) {
       if (typeof callback !== 'function' || !setTimeoutFn) return false;
-      const safeDelayMs = Number.isFinite(Number(delayMs)) && Number(delayMs) >= 0
-        ? Number(delayMs)
-        : 0;
+      const safeDelayMs = toSafeDelayMs(delayMs);
 
       if (name === 'configSave') {
         configSaveTimer = clearTimer(configSaveTimer, clearTimeoutFn);
