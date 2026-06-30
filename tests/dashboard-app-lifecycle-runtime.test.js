@@ -87,6 +87,7 @@ const deps = {
   setArbCycleStartPriority: () => {},
   setArbPanelMaxHeight: () => {},
   setDashboardState: () => {},
+  setQuoteMarketState: () => 'set-market-state',
   setPriceSnapshotConfig: () => {},
   settingsModalRuntime: { id: 'legacy-settings-modal' },
   themeRuntime: { id: 'legacy-theme-runtime' },
@@ -145,6 +146,7 @@ assert.strictEqual(capturedOptions.handleDashboardInput(), 'dashboard-input');
 assert.strictEqual(capturedOptions.openAddCategoryModal(), 'open-category');
 assert.strictEqual(capturedOptions.performSave(), 'perform-save');
 assert.strictEqual(capturedOptions.saveData(), 'save-data');
+assert.strictEqual(capturedOptions.setQuoteMarketState(), 'set-market-state');
 assert.strictEqual(capturedOptions.requestChannelRuntime, deps.dashboardShellRuntime.requestChannelRuntime);
 assert.strictEqual(capturedOptions.requestChannelTagVisibilityRuntime, deps.dashboardShellRuntime.requestChannelTagVisibilityRuntime);
 assert.strictEqual(capturedOptions.settingsModalRuntime, deps.dashboardShellRuntime.settingsModalRuntime);

@@ -209,6 +209,7 @@ function createDashboardServer(options = {}) {
     refreshRuntimeConfigCache,
     getRequestChannelsConfig,
     getConfigMore,
+    marketClients,
     logger
   });
 

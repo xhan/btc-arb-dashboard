@@ -22,7 +22,25 @@ assert.deepStrictEqual(
   {
     dashboardState: [{ id: 1 }],
     apiIntervals: { kyber: 200, solana: 3500 },
-    migratedSolanaInterval: true
+    migratedSolanaInterval: true,
+    quoteMarketStateById: {}
+  }
+);
+assert.deepStrictEqual(
+  normalizeDashboardConfigResponse({
+    dashboard: [{ id: 101 }],
+    settings: {},
+    quoteMarketStateById: {
+      101: { fromSymbol: 'GHO', toSymbol: 'USDC' }
+    }
+  }),
+  {
+    dashboardState: [{ id: 101 }],
+    apiIntervals: {},
+    migratedSolanaInterval: false,
+    quoteMarketStateById: {
+      101: { fromSymbol: 'GHO', toSymbol: 'USDC' }
+    }
   }
 );
 assert.deepStrictEqual(
@@ -30,7 +48,8 @@ assert.deepStrictEqual(
   {
     dashboardState: [{ id: 1 }],
     apiIntervals: { kyber: 170 },
-    migratedSolanaInterval: false
+    migratedSolanaInterval: false,
+    quoteMarketStateById: {}
   }
 );
 
@@ -83,7 +102,8 @@ async function runClientTest() {
   assert.deepStrictEqual(await client.loadDashboardConfig({ kyber: 170 }), {
     dashboardState: [{ id: 2 }],
     apiIntervals: { kyber: 210 },
-    migratedSolanaInterval: false
+    migratedSolanaInterval: false,
+    quoteMarketStateById: {}
   });
   await client.savePriceSnapshot({ quotes: [{ quoteId: 1 }] });
 
@@ -132,7 +152,8 @@ async function runFallbackTest() {
   assert.deepStrictEqual(await client.loadDashboardConfig({ kyber: 170 }), {
     dashboardState: [],
     apiIntervals: { kyber: 170 },
-    migratedSolanaInterval: false
+    migratedSolanaInterval: false,
+    quoteMarketStateById: {}
   });
   assert.strictEqual(await client.requestBackendConfigRefresh(), false);
   assert.strictEqual(warnings.length, 5);

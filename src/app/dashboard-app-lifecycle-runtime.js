@@ -60,6 +60,7 @@
       setArbCycleStartPriority: deps.setArbCycleStartPriority,
       setArbPanelMaxHeight: getWorkspaceDep('setArbPanelMaxHeight'),
       setDashboardState: deps.setDashboardState,
+      setQuoteMarketState: deps.setQuoteMarketState,
       setPriceSnapshotConfig: deps.setPriceSnapshotConfig,
       settingsModalRuntime: shellRuntime.settingsModalRuntime || deps.settingsModalRuntime,
       themeRuntime: shellRuntime.themeRuntime || deps.themeRuntime,

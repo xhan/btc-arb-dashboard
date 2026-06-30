@@ -26,7 +26,8 @@
       return {
         dashboardState: rawData,
         apiIntervals: { ...defaultIntervals },
-        migratedSolanaInterval: false
+        migratedSolanaInterval: false,
+        quoteMarketStateById: {}
       };
     }
 
@@ -38,17 +39,22 @@
       if (migratedSolanaInterval) {
         apiIntervals.solana = 3500;
       }
+      const quoteMarketStateById = rawData.quoteMarketStateById && typeof rawData.quoteMarketStateById === 'object'
+        ? rawData.quoteMarketStateById
+        : {};
       return {
         dashboardState: Array.isArray(rawData.dashboard) ? rawData.dashboard : [],
         apiIntervals,
-        migratedSolanaInterval
+        migratedSolanaInterval,
+        quoteMarketStateById
       };
     }
 
     return {
       dashboardState: [],
       apiIntervals: { ...defaultIntervals },
-      migratedSolanaInterval: false
+      migratedSolanaInterval: false,
+      quoteMarketStateById: {}
     };
   }
 

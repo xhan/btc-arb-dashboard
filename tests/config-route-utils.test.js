@@ -32,6 +32,7 @@ function createResponse() {
 
 const calls = [];
 let configRead = { dashboard: [{ id: 1 }], settings: { kyber: 170 } };
+let metadataCache = {};
 let requestChannelsConfig = {
   channels: [
     {
@@ -63,6 +64,9 @@ registerConfigRoutes({
   },
   getRequestChannelsConfig: async () => requestChannelsConfig,
   getConfigMore: async () => configMore,
+  marketClients: {
+    loadTokenMetaCache: async () => metadataCache
+  },
   logger: {
     error: (...args) => calls.push(['error', ...args])
   }
@@ -83,9 +87,32 @@ async function runSaveAndRefreshTests() {
 }
 
 async function runReadConfigTests() {
+  configRead = {
+    dashboard: [{
+      id: 1,
+      quotes: [{
+        id: 101,
+        chain: 'ethereum',
+        fromToken: '0xaaa',
+        toToken: '0xbbb',
+        paused: true
+      }]
+    }],
+    settings: { kyber: 170 }
+  };
+  metadataCache = {
+    'ethereum-0xaaa': { symbol: 'GHO' },
+    'ethereum-0xbbb': { symbol: 'USDC' }
+  };
   const configResponse = createResponse();
   await app.handlers.get('GET /api/get-config')({ query: {} }, configResponse);
-  assert.deepStrictEqual(configResponse.body, configRead);
+  assert.deepStrictEqual(configResponse.body, {
+    ...configRead,
+    quoteMarketStateById: {
+      101: { fromSymbol: 'GHO', toSymbol: 'USDC' }
+    }
+  });
+  assert.strictEqual(configRead.quoteMarketStateById, undefined);
 
   configRead = new SyntaxError('bad json');
   const badJsonResponse = createResponse();

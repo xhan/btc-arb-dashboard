@@ -32,6 +32,29 @@
     ));
   }
 
+  function seedQuoteMarketState(dashboardState, quoteMarketStateById, setQuoteMarketState) {
+    if (typeof setQuoteMarketState !== 'function') return 0;
+    const seed = quoteMarketStateById && typeof quoteMarketStateById === 'object' ? quoteMarketStateById : {};
+    const quoteIds = new Map(
+      getDashboardQuotes(dashboardState)
+        .filter((quote) => quote && quote.id !== undefined && quote.id !== null)
+        .map((quote) => [String(quote.id), quote.id])
+    );
+    let seededCount = 0;
+
+    for (const [rawQuoteId, state] of Object.entries(seed)) {
+      const quoteId = quoteIds.get(String(rawQuoteId));
+      if (quoteId === undefined) continue;
+      const fromSymbol = String(state && state.fromSymbol || '').trim();
+      const toSymbol = String(state && state.toSymbol || '').trim();
+      if (!fromSymbol || !toSymbol) continue;
+      setQuoteMarketState(quoteId, { fromSymbol, toSymbol });
+      seededCount += 1;
+    }
+
+    return seededCount;
+  }
+
   function createDashboardLifecycleController(deps = {}) {
     const refs = deps.refs || {};
     const windowImpl = deps.windowImpl || (typeof window !== 'undefined' ? window : null);
@@ -242,6 +265,7 @@
       try {
         const loadedConfig = await deps.dashboardApiClient.loadDashboardConfig(deps.defaultIntervals);
         deps.setDashboardState(loadedConfig.dashboardState);
+        seedQuoteMarketState(loadedConfig.dashboardState, loadedConfig.quoteMarketStateById, deps.setQuoteMarketState);
         deps.setApiIntervals(loadedConfig.apiIntervals);
         if (loadedConfig.migratedSolanaInterval) {
           deps.saveData();

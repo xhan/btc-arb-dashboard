@@ -198,7 +198,10 @@ assert.deepStrictEqual(staticCalls, [
           { quotes: [{ id: 201 }] }
         ],
         apiIntervals: { kyber: 3000 },
-        migratedSolanaInterval: true
+        migratedSolanaInterval: true,
+        quoteMarketStateById: {
+          102: { fromSymbol: 'GHO', toSymbol: 'USDC' }
+        }
       }),
       loadPriceSnapshotConfig: async () => ({ enabled: true, intervalSec: 5 }),
       loadRequestChannels: async () => ({ channels: [{ id: 'fast' }] }),
@@ -271,6 +274,7 @@ assert.deepStrictEqual(staticCalls, [
     setArbCycleStartPriority: (nextPriority) => { arbCycleStartPriority = nextPriority; },
     setArbPanelMaxHeight: () => calls.push(['setArbPanelMaxHeight']),
     setDashboardState: (nextState) => { dashboardState = nextState; },
+    setQuoteMarketState: (quoteId, state) => calls.push(['setQuoteMarketState', quoteId, state.fromSymbol, state.toSymbol]),
     setPriceSnapshotConfig: (nextConfig) => { priceSnapshotConfig = nextConfig; },
     themeRuntime: {
       load: () => calls.push(['themeLoad'])
@@ -291,6 +295,14 @@ assert.deepStrictEqual(staticCalls, [
   assert.deepStrictEqual(
     calls.filter((call) => call[0] === 'addToQueue').map((call) => call[1]),
     [101, 102, 201]
+  );
+  assert.deepStrictEqual(
+    calls.filter((call) => call[0] === 'setQuoteMarketState'),
+    [['setQuoteMarketState', 102, 'GHO', 'USDC']]
+  );
+  assert.ok(
+    calls.findIndex((call) => call[0] === 'setQuoteMarketState')
+    < calls.findIndex((call) => call[0] === 'renderDashboard')
   );
   assert.ok(calls.some((call) => call[0] === 'startPriceSnapshotTimer' && call[1] === true && call[2] === 5));
   assert.ok(
