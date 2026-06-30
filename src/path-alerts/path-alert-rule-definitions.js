@@ -102,6 +102,16 @@
       resultLimit: 2
     },
     {
+      id: 'fixed:dai-usdt',
+      title: 'DAI - USDT',
+      base: 'DAI',
+      quote: 'USDT',
+      categoryNames: ['USD监控'],
+      steps: 2,
+      crossChain: true,
+      resultLimit: 2
+    },
+    {
       id: 'fixed:mseth',
       title: 'msETH',
       base: 'msETH',

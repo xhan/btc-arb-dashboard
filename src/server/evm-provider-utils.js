@@ -1,5 +1,5 @@
 const DEFAULT_EVM_RPC_URLS = Object.freeze({
-    ethereum: 'https://eth.llamarpc.com',
+    ethereum: 'https://ethereum-rpc.publicnode.com',
     optimism: 'https://optimism-rpc.publicnode.com',
     bsc: 'https://bsc-rpc.publicnode.com',
     polygon: 'https://polygon-bor-rpc.publicnode.com',

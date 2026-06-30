@@ -5,7 +5,7 @@ const {
   createEvmProviders
 } = require('../src/server/evm-provider-utils');
 
-assert.strictEqual(DEFAULT_EVM_RPC_URLS.ethereum, 'https://eth.llamarpc.com');
+assert.strictEqual(DEFAULT_EVM_RPC_URLS.ethereum, 'https://ethereum-rpc.publicnode.com');
 assert.strictEqual(DEFAULT_EVM_RPC_URLS.arbitrum, 'https://arbitrum-one-rpc.publicnode.com');
 
 function createLogger() {

@@ -684,6 +684,25 @@ module.exports = {
           "toToken": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497",
           "showInverse": true,
           "paused": false
+        },
+        {
+          "id": 1782817382711,
+          "chain": "polygon",
+          "amount": 50000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+          "toToken": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+          "showInverse": true
+        },
+        {
+          "id": 1782817432002,
+          "chain": "ethereum",
+          "amount": 50000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          "toToken": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+          "showInverse": true,
+          "paused": false
         }
       ]
     },
