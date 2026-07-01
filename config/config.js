@@ -628,6 +628,15 @@ module.exports = {
           "paused": false
         },
         {
+          "id": 1782818793656,
+          "chain": "plasma",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+          "toToken": "0xb77E872A68C62CfC0dFb02C067Ecc3DA23B4bbf3",
+          "showInverse": true
+        },
+        {
           "id": 1772990044817,
           "chain": "ethereum",
           "amount": 100000,
@@ -636,7 +645,7 @@ module.exports = {
           "toToken": "0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f",
           "showInverse": true,
           "requestChannelId": "ch1",
-          "paused": true
+          "paused": false
         },
         {
           "id": 1772990129706,
@@ -647,7 +656,7 @@ module.exports = {
           "toToken": "0x7dfF72693f6A4149b17e7C6314655f6A9F7c8B33",
           "showInverse": true,
           "requestChannelId": "ch1",
-          "paused": true
+          "paused": false
         },
         {
           "id": 1775203737574,
@@ -703,6 +712,24 @@ module.exports = {
           "toToken": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
           "showInverse": true,
           "paused": false
+        },
+        {
+          "id": 1782917371755,
+          "chain": "solana",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "toToken": "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo",
+          "showInverse": true
+        },
+        {
+          "id": 1782917441810,
+          "chain": "ethereum",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8",
+          "toToken": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "showInverse": true
         }
       ]
     },

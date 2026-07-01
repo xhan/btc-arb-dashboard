@@ -15,6 +15,8 @@
       { title: 'tBTC - WBTC', type: 'fixed-rule', ruleId: 'fixed:tbtc-wbtc' },
       { title: 'tBTC - BTC', type: 'fixed-rule', ruleId: 'fixed:tbtc-btc' },
       { title: 'GHO - USD', type: 'fixed-rule', ruleId: 'fixed:gho-usd' },
+      { title: 'GHO - USDT', type: 'fixed-rule', ruleId: 'fixed:gho-usdt' },
+      { title: 'PYUSD - USDC', type: 'fixed-rule', ruleId: 'fixed:pyusd-usdc' },
       { title: 'USDE - USDT', type: 'fixed-rule', ruleId: 'fixed:usde-usdt' },
       { title: 'sUSDE - USDT', type: 'fixed-rule', ruleId: 'fixed:susde-usdt' },
       { title: 'DAI - USDT', type: 'fixed-rule', ruleId: 'fixed:dai-usdt' },

@@ -114,6 +114,34 @@ module.exports = {
       }
     },
     {
+      "id": "path-alert-1782820000000-ghousdt",
+      "name": "",
+      "enabled": true,
+      "thresholdBp": 1,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 13,
+      "cooldownSec": 180,
+      "target": {
+        "type": "rule",
+        "ruleKind": "fixed",
+        "ruleId": "fixed:gho-usdt"
+      }
+    },
+    {
+      "id": "path-alert-1782917450000-pyusdusdc",
+      "name": "",
+      "enabled": true,
+      "thresholdBp": 1,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 13,
+      "cooldownSec": 180,
+      "target": {
+        "type": "rule",
+        "ruleKind": "fixed",
+        "ruleId": "fixed:pyusd-usdc"
+      }
+    },
+    {
       "id": "path-alert-1773395527000-usdeusdt",
       "name": "",
       "enabled": true,
@@ -139,6 +167,20 @@ module.exports = {
         "type": "rule",
         "ruleKind": "fixed",
         "ruleId": "fixed:susde-usdt"
+      }
+    },
+    {
+      "id": "path-alert-1782820001000-daiusdt",
+      "name": "",
+      "enabled": true,
+      "thresholdBp": 1,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 13,
+      "cooldownSec": 180,
+      "target": {
+        "type": "rule",
+        "ruleKind": "fixed",
+        "ruleId": "fixed:dai-usdt"
       }
     },
     {
