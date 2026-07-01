@@ -170,6 +170,20 @@ module.exports = {
       }
     },
     {
+      "id": "path-alert-1782926810000-susdaiusdt",
+      "name": "",
+      "enabled": true,
+      "thresholdBp": 1,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 13,
+      "cooldownSec": 180,
+      "target": {
+        "type": "rule",
+        "ruleKind": "fixed",
+        "ruleId": "fixed:susdai-usdt"
+      }
+    },
+    {
       "id": "path-alert-1782820001000-daiusdt",
       "name": "",
       "enabled": true,

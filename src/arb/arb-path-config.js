@@ -19,6 +19,7 @@
       { title: 'PYUSD - USDC', type: 'fixed-rule', ruleId: 'fixed:pyusd-usdc' },
       { title: 'USDE - USDT', type: 'fixed-rule', ruleId: 'fixed:usde-usdt' },
       { title: 'sUSDE - USDT', type: 'fixed-rule', ruleId: 'fixed:susde-usdt' },
+      { title: 'sUSDai - USDT', type: 'fixed-rule', ruleId: 'fixed:susdai-usdt' },
       { title: 'DAI - USDT', type: 'fixed-rule', ruleId: 'fixed:dai-usdt' },
       { title: 'msETH', type: 'fixed-rule', ruleId: 'fixed:mseth' },
       { title: 'weETH', type: 'fixed-rule', ruleId: 'fixed:weeth' },

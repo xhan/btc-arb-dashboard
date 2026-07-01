@@ -82,7 +82,8 @@ module.exports = {
           "preferredSource": "Kyber",
           "fromToken": "0x50b7545627a5162F82A992c33b87aDc75187B218",
           "toToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
-          "showInverse": true
+          "showInverse": true,
+          "paused": true
         },
         {
           "id": 1765263440178,
@@ -91,7 +92,8 @@ module.exports = {
           "preferredSource": "Kyber",
           "fromToken": "0x50b7545627a5162F82A992c33b87aDc75187B218",
           "toToken": "0x152b9d0FdC40C096757F570A51E494bd4b943E50",
-          "showInverse": false
+          "showInverse": false,
+          "paused": true
         },
         {
           "id": 1766515450074,
@@ -262,7 +264,7 @@ module.exports = {
           "fromToken": "0x036834a40984312f7f7de8d31e3f6305b325389eaeea5b1c0664b2fb936461a4",
           "toToken": "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
           "showInverse": true,
-          "paused": false
+          "paused": true
         }
       ]
     },
@@ -515,7 +517,7 @@ module.exports = {
           "fromToken": "0xCAbAE6f6Ea1ecaB08Ad02fE02ce9A44F09aebfA2",
           "toToken": "0xC96dE26018A54D51c097160568752c4E3BD6C364",
           "showInverse": false,
-          "paused": false
+          "paused": true
         },
         {
           "id": 1772368453495,
@@ -529,11 +531,12 @@ module.exports = {
         {
           "id": 1776857534656,
           "chain": "starknet",
-          "amount": 1,
+          "amount": 0.1,
           "preferredSource": "Ekubo",
           "fromToken": "0x04daa17763b286d1e59b97c283c0b8c949994c361e426a28f743c67bdfe9a32f",
           "toToken": "0x036834a40984312f7f7de8d31e3f6305b325389eaeea5b1c0664b2fb936461a4",
-          "showInverse": true
+          "showInverse": true,
+          "paused": true
         }
       ]
     },
@@ -730,6 +733,24 @@ module.exports = {
           "fromToken": "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8",
           "toToken": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           "showInverse": true
+        },
+        {
+          "id": 1782926758617,
+          "chain": "arbitrum",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+          "toToken": "0x0B2b2B2076d95dda7817e785989fE353fe955ef9",
+          "showInverse": true
+        },
+        {
+          "id": 1782926802754,
+          "chain": "plasma",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+          "toToken": "0x0B2b2B2076d95dda7817e785989fE353fe955ef9",
+          "showInverse": true
         }
       ]
     },
@@ -847,7 +868,8 @@ module.exports = {
           "preferredSource": "LI.FI",
           "fromToken": "0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242",
           "toToken": "0xA3D68b74bF0528fdD07263c60d6488749044914b",
-          "showInverse": true
+          "showInverse": true,
+          "paused": true
         },
         {
           "id": 1773198975716,
@@ -969,7 +991,8 @@ module.exports = {
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x01a8b61E7b03891a736B5DF865E0EF9C511850ad",
           "showInverse": false,
-          "requestChannelId": "ch1"
+          "requestChannelId": "ch1",
+          "paused": true
         },
         {
           "id": 1774206874519,
@@ -979,7 +1002,8 @@ module.exports = {
           "fromToken": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
           "toToken": "0xA67c48F86Fc6d0176Dca38883CA8153C76a532c7",
           "showInverse": false,
-          "requestChannelId": "ch1"
+          "requestChannelId": "ch1",
+          "paused": false
         },
         {
           "id": 1774600991130,
@@ -1007,7 +1031,7 @@ module.exports = {
     "zerox": 500,
     "velora": 3000,
     "llamaparaswap": 800,
-    "lifi": 70000,
+    "lifi": 7000,
     "bybit": 2000,
     "binance": 3000,
     "solana": 1400,

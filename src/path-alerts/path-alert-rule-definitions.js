@@ -122,6 +122,16 @@
       resultLimit: 2
     },
     {
+      id: 'fixed:susdai-usdt',
+      title: 'sUSDai - USDT',
+      base: 'sUSDai',
+      quote: 'USDT',
+      categoryNames: ['USD监控'],
+      steps: 2,
+      crossChain: true,
+      resultLimit: 2
+    },
+    {
       id: 'fixed:dai-usdt',
       title: 'DAI - USDT',
       base: 'DAI',
