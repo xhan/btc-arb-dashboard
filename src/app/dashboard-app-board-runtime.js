@@ -63,6 +63,7 @@
       actionOptions: {
         activeFetchControllerRuntime: getWorkspaceDep('activeFetchControllerRuntime'),
         amountInputDebounceRuntime: deps.amountInputDebounceRuntime,
+        applyPausedQuoteUiState: getWorkspaceDep('applyPausedQuoteUiState'),
         arbDetailUtils: modules.getArbDetailUtils(),
         closestEventTarget: deps.closestEventTarget,
         closeArbDetailModal: getWorkspaceDep('closeArbDetailModal'),

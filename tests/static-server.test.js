@@ -1744,6 +1744,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(coreRuntimeResponse.body.includes('const appStateRuntime = modules.getDashboardAppStateRuntime().createDashboardAppStateRuntime({'));
     assert.ok(coreRuntimeResponse.body.includes('const getDashboardState = appStateRuntime.getDashboardState;'));
     assert.ok(coreRuntimeResponse.body.includes('const setDashboardState = appStateRuntime.setDashboardState;'));
+    assert.ok(appJsResponse.body.includes([
+      'renderDashboardForCurrentState,',
+      '            setApiIntervals,',
+      '            setArbCycleStartPriority,',
+      '            setDashboardState,',
+      '            setQuoteMarketState,',
+      '            setPriceSnapshotConfig,'
+    ].join('\n')));
     assert.ok(coreRuntimeResponse.body.includes('const getApiIntervals = appStateRuntime.getApiIntervals;'));
     assert.ok(coreRuntimeResponse.body.includes('const setApiIntervals = appStateRuntime.setApiIntervals;'));
     assert.ok(!appJsResponse.body.includes('let dashboardState = [];'));

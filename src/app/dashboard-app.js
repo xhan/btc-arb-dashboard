@@ -277,6 +277,7 @@
             setApiIntervals,
             setArbCycleStartPriority,
             setDashboardState,
+            setQuoteMarketState,
             setPriceSnapshotConfig,
             updateArbPanel,
             updateSchedulers,

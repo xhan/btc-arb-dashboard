@@ -43,6 +43,7 @@ const deps = {
   copyPriceText: () => {},
   dashboardAppWorkspaceRuntime: {
     activeFetchControllerRuntime: { id: 'workspace-active-fetch-runtime' },
+    applyPausedQuoteUiState: () => 'workspace-paused-ui',
     closeArbDetailModal: () => 'workspace-close-detail',
     copyDexLinkFromElement: () => 'workspace-copy-dex',
     copyPriceText: () => 'workspace-copy-price',
@@ -163,6 +164,7 @@ assert.strictEqual(capturedOptions.actionOptions.activeFetchControllerRuntime, d
 assert.strictEqual(capturedOptions.actionOptions.arbDetailUtils.id, 'arb-detail-utils');
 assert.strictEqual(capturedOptions.actionOptions.quotePauseUtils.id, 'quote-pause-utils');
 assert.strictEqual(capturedOptions.actionOptions.requestChannelUtils.id, 'request-channel-utils');
+assert.strictEqual(capturedOptions.actionOptions.applyPausedQuoteUiState(), 'workspace-paused-ui');
 assert.strictEqual(capturedOptions.actionOptions.closeArbDetailModal(), 'workspace-close-detail');
 assert.strictEqual(capturedOptions.actionOptions.copyDexLinkFromElement(), 'workspace-copy-dex');
 assert.strictEqual(capturedOptions.actionOptions.copyPriceText(), 'workspace-copy-price');
