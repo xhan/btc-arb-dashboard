@@ -101,6 +101,16 @@
       resultLimit: 2
     },
     {
+      id: 'fixed:usdg-usdc',
+      title: 'USDG - USDC',
+      base: 'USDG',
+      quote: 'USDC',
+      categoryNames: ['USD监控'],
+      steps: 2,
+      crossChain: true,
+      resultLimit: 2
+    },
+    {
       id: 'fixed:usde-usdt',
       title: 'USDE - USDT',
       base: 'USDe',

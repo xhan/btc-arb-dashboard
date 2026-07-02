@@ -7,7 +7,7 @@ module.exports = {
     "pathAlertEvalIntervalMs": 1000,
     "defaultCooldownSec": 180,
     "changedLegMinBp": 0.1,
-    "localSoundEnabled": false,
+    "localSoundEnabled": true,
     "webhookEnabled": false,
     "dayAppEnabled": false,
     "telegramEnabled": true,
@@ -139,6 +139,20 @@ module.exports = {
         "type": "rule",
         "ruleKind": "fixed",
         "ruleId": "fixed:pyusd-usdc"
+      }
+    },
+    {
+      "id": "path-alert-1783017610000-usdgusdc",
+      "name": "",
+      "enabled": true,
+      "thresholdBp": 1,
+      "triggerMode": "delayed",
+      "confirmDelaySec": 13,
+      "cooldownSec": 180,
+      "target": {
+        "type": "rule",
+        "ruleKind": "fixed",
+        "ruleId": "fixed:usdg-usdc"
       }
     },
     {

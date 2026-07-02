@@ -751,6 +751,24 @@ module.exports = {
           "fromToken": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
           "toToken": "0x0B2b2B2076d95dda7817e785989fE353fe955ef9",
           "showInverse": true
+        },
+        {
+          "id": 1783017584013,
+          "chain": "solana",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "toToken": "2u1tszSeqZ3qBWF3uNGPFc8TzMk2tdiwknnRMWGWjGWH",
+          "showInverse": true
+        },
+        {
+          "id": 1783017608218,
+          "chain": "ethereum",
+          "amount": 100000,
+          "preferredSource": "Kyber",
+          "fromToken": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "toToken": "0xe343167631d89B6Ffc58B88d6b7fB0228795491D",
+          "showInverse": true
         }
       ]
     },
