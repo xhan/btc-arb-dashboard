@@ -188,13 +188,15 @@ function createBaseDeps(overrides = {}) {
   assert.deepStrictEqual(dashboardState[0].quotes.map((quote) => quote.id), [101]);
   assert.deepStrictEqual(removedNodes, ['quote-item-102']);
   assert.deepStrictEqual(
-    calls.filter((call) => ['removeFromQueue', 'deleteMarket', 'deleteUi', 'updateAlertSound', 'renderDataTerminal', 'saveData'].includes(call[0])),
+    calls.filter((call) => ['removeFromQueue', 'deleteMarket', 'deleteUi', 'updateAlertSound', 'updateArbPanel', 'renderDataTerminal', 'evaluatePathAlerts', 'saveData'].includes(call[0])),
     [
       ['removeFromQueue', 102],
       ['deleteMarket', '102'],
       ['deleteUi', '102'],
       ['updateAlertSound'],
+      ['updateArbPanel'],
       ['renderDataTerminal'],
+      ['evaluatePathAlerts'],
       ['saveData']
     ]
   );
@@ -221,6 +223,61 @@ function createBaseDeps(overrides = {}) {
       ['renderDataTerminal'],
       ['evaluatePathAlerts'],
       ['saveData']
+    ]
+  );
+}
+
+{
+  const { calls, dashboardState, deps } = createBaseDeps({
+    dashboardState: [
+      {
+        id: 'cat-1',
+        quotes: [
+          { id: 301, chain: 'ethereum', fromToken: '0xfrom', toToken: '0xto' }
+        ]
+      }
+    ],
+    deps: {
+      getQuoteMarketState: () => ({
+        fromSymbol: 'FROM',
+        toSymbol: 'TO',
+        lastRawPrice: 2,
+        lastTotalAmountOut: 2,
+        inverseRawPrice: 0.5,
+        inverseTotalAmountOut: 0.5
+      }),
+      domRenderUtils: {
+        resetTrendArrow: (element) => calls.push(['resetTrendArrow', element && element.id]),
+        clearQuoteHighlightUi: (element) => calls.push(['clearHighlight', element && element.id]),
+        getQuoteDomRefs: () => ({ quoteDataEl: {}, quoteTextEl: {} }),
+        applyQuoteSwitchingDomState: () => calls.push(['switchingDom'])
+      }
+    }
+  });
+  const controller = createDashboardActionController(deps);
+  assert.strictEqual(controller.swapQuoteTokens('cat-1', '301'), true);
+  assert.strictEqual(dashboardState[0].quotes[0].fromToken, '0xto');
+  assert.strictEqual(dashboardState[0].quotes[0].toToken, '0xfrom');
+  assert.deepStrictEqual(
+    calls.filter((call) => ['setMarketState', 'resetUi', 'updateAlertSound', 'switchingDom', 'saveData', 'removeFromQueue', 'queueQuoteRefresh', 'updateArbPanel', 'renderDataTerminal', 'evaluatePathAlerts'].includes(call[0])),
+    [
+      ['setMarketState', '301', {
+        fromSymbol: 'TO',
+        toSymbol: 'FROM',
+        lastRawPrice: null,
+        lastTotalAmountOut: null,
+        inverseRawPrice: null,
+        inverseTotalAmountOut: null
+      }],
+      ['resetUi', '301'],
+      ['updateAlertSound'],
+      ['switchingDom'],
+      ['saveData'],
+      ['removeFromQueue', 301],
+      ['queueQuoteRefresh', 301],
+      ['updateArbPanel'],
+      ['renderDataTerminal'],
+      ['evaluatePathAlerts']
     ]
   );
 }
@@ -292,6 +349,16 @@ function createBaseDeps(overrides = {}) {
   assert.strictEqual(controller.deleteCategoryFromDashboard('cat-1'), true);
   assert.deepStrictEqual(calls.filter((call) => call[0] === 'confirm'), [['confirm', '确定删除分区 "主分区" 吗？']]);
   assert.deepStrictEqual(calls.filter((call) => call[0] === 'removeFromQueue'), [['removeFromQueue', 201], ['removeFromQueue', 202]]);
+  assert.deepStrictEqual(
+    calls.filter((call) => ['updateAlertSound', 'updateArbPanel', 'renderDataTerminal', 'evaluatePathAlerts', 'saveData'].includes(call[0])),
+    [
+      ['updateAlertSound'],
+      ['updateArbPanel'],
+      ['renderDataTerminal'],
+      ['evaluatePathAlerts'],
+      ['saveData']
+    ]
+  );
   assert.deepStrictEqual(removedNodes, ['module-cat-1']);
   assert.deepStrictEqual(dashboardState, []);
   assert.strictEqual(controller.deleteCategoryFromDashboard('missing'), false);

@@ -97,7 +97,7 @@
       deps.deleteQuoteUiRuntimeState(quoteId);
       updateCategoryPauseButtonState(categoryId);
       deps.updateAlertSoundState();
-      deps.renderDataTerminalPanel();
+      syncPauseLinkedViews();
       deps.saveData();
       return true;
     }
@@ -208,7 +208,7 @@
       deps.saveData();
       deps.removeFromQueue(quote.id);
       deps.queueQuoteRefresh(quote);
-      deps.renderDataTerminalPanel();
+      syncPauseLinkedViews();
       return true;
     }
 
@@ -269,7 +269,7 @@
         dashboardState.splice(categoryIndex, 1);
         const moduleEl = deps.documentImpl.getElementById(`module-${categoryId}`);
         if (moduleEl) moduleEl.remove();
-        deps.renderDataTerminalPanel();
+        syncPauseLinkedViews();
         deps.saveData();
       });
       return true;

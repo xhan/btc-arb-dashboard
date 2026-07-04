@@ -140,7 +140,16 @@
         successSource,
         isInverseFetch
       });
-      deps.setQuoteMarketState(quote.id, nextState);
+      const marketStateChanged = deps.setQuoteMarketState(quote.id, nextState);
+      if (marketStateChanged && typeof deps.onQuoteMarketStateChanged === 'function') {
+        deps.onQuoteMarketStateChanged(quote, nextState, {
+          data,
+          fetchMode: isInverseFetch ? 'inverse' : 'main',
+          isInverseFetch: Boolean(isInverseFetch),
+          previousState,
+          successSource
+        });
+      }
     }
 
     async function waitForSourceBudget(source, signal) {

@@ -82,6 +82,13 @@
           reason: 'quote-market-state-changed'
         });
       }
+      if (
+        (context.isInverseFetch === true || context.fetchMode === 'inverse')
+        && alertRuntimeController
+        && typeof alertRuntimeController.checkPriceForAlerts === 'function'
+      ) {
+        alertRuntimeController.checkPriceForAlerts(quote, context);
+      }
       return arbPanelController && typeof arbPanelController.scheduleUpdate === 'function'
         ? arbPanelController.scheduleUpdate()
         : false;

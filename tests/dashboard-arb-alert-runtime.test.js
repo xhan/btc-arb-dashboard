@@ -189,7 +189,7 @@ assert.strictEqual(alertOptions.arbPathConfigUtils.id, 'config-utils');
 assert.strictEqual(alertOptions.applyFloatingPanelDisplay(), 'display');
 assert.strictEqual(alertOptions.buildLiveQuoteLabel(), 'live-label');
 assert.deepStrictEqual(alertOptions.findQuoteById(42), { id: 42 });
-runtime.handleQuoteMarketStateChanged({ id: 6 }, {}, { fetchMode: 'inverse' });
+runtime.handleQuoteMarketStateChanged({ id: 6 }, {}, { fetchMode: 'inverse', successSource: 'Jupiter' });
 runtime.handleQuoteMainFetchSuccess({ id: 7 }, { successSource: 'Kyber' });
 
 assert.deepStrictEqual(calls.slice(0, 5), [
@@ -202,4 +202,5 @@ assert.deepStrictEqual(calls.slice(0, 5), [
 assert.ok(calls.some((call) => call[0] === 'bindAudio'));
 assert.ok(calls.some((call) => call[0] === 'scheduleUpdate'));
 assert.ok(calls.some((call) => call[0] === 'schedulePathAlertEvaluation' && call[1] === 'quote-market-state-changed'));
+assert.ok(calls.some((call) => call[0] === 'checkAlerts' && call[1] === 6 && call[2] === 'Jupiter'));
 assert.ok(calls.some((call) => call[0] === 'checkAlerts' && call[1] === 7 && call[2] === 'Kyber'));

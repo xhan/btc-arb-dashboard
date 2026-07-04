@@ -253,3 +253,81 @@ function createBaseDeps(overrides = {}) {
   assert.ok(calls.some((call) => call[0] === 'copyText' && String(call[1]).startsWith('chrome-extension://kopjcgdfdbflnmmjplaefilbjjagiakb/open.html?payload=')));
   assert.ok(calls.some((call) => call[0] === 'toast' && call[1] === '已复制多链接'));
 }
+
+(async () => {
+  let refreshCards = null;
+  const baseDeps = createBaseDeps().deps;
+  const opportunity = {
+    id: 'opp-live',
+    cycle: {
+      legs: [{ quoteId: 101, chain: 'ethereum', inverse: true }]
+    }
+  };
+  const { calls, controller } = createBaseDeps({
+    arbDetailRefreshUtils: {
+      ...baseDeps.arbDetailRefreshUtils,
+      createArbDetailRefreshScheduler: (options) => {
+        refreshCards = options.refresh;
+        return {
+          clear: () => calls.push(['schedulerClear']),
+          start: (refreshToken) => calls.push(['schedulerStart', refreshToken])
+        };
+      }
+    },
+    arbDetailUtils: {
+      ...baseDeps.arbDetailUtils,
+      buildArbDetailSnapshotMonitorState: (previousState, data, options) => ({
+        ...previousState,
+        lastRawPrice: data.rawPrice,
+        usedSourceReal: options.successSource,
+        isInverseFetch: options.isInverseFetch
+      }),
+      buildArbDetailRow: (quote, data, options) => ({
+        quoteId: quote.id,
+        outputAmount: data.finalAmountOut,
+        inputAmount: options.inputAmount,
+        isInverseFetch: options.isInverseFetch
+      }),
+      shouldApplyArbDetailRequestVersion: () => true,
+      shouldSyncArbDetailSnapshotForCard: (cardIndex) => cardIndex === 0,
+      summarizeDetailResult: (startAmount, finalAmount) => ({
+        profit: finalAmount - startAmount,
+        profitRate: finalAmount / startAmount - 1
+      })
+    },
+    fetchQuoteByStrategy: async (quote, options) => {
+      calls.push(['fetchQuote', quote.id, options.isInverseFetch, options.skipDelay]);
+      return {
+        data: {
+          rawPrice: 0.995,
+          finalAmountOut: 4.975,
+          symbols: { to: 'WBTC' }
+        },
+        successSource: '0x'
+      };
+    },
+    getOpportunity: (id) => (id === 'opp-live' ? opportunity : null),
+    onQuoteMarketStateChanged: (quote, state, context) => calls.push([
+      'marketChanged',
+      quote.id,
+      state.lastRawPrice,
+      context.fetchMode,
+      context.successSource
+    ]),
+    setQuoteMarketState: (quoteId, nextState) => {
+      calls.push(['setQuote', quoteId, nextState.lastRawPrice, nextState.isInverseFetch]);
+      return true;
+    }
+  });
+
+  controller.open('opp-live');
+  assert.ok(refreshCards);
+  await refreshCards(12);
+
+  assert.ok(calls.some((call) => call[0] === 'fetchQuote' && call[1] === 101 && call[2] === true && call[3] === true));
+  assert.ok(calls.some((call) => call[0] === 'setQuote' && call[1] === 101 && call[2] === 0.995 && call[3] === true));
+  assert.ok(calls.some((call) => call[0] === 'marketChanged' && call[1] === 101 && call[2] === 0.995 && call[3] === 'inverse' && call[4] === '0x'));
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

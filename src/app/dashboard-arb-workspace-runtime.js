@@ -97,6 +97,14 @@
     const constants = options.constants || {};
     const timers = options.timers || {};
     const windowImpl = deps.windowImpl || {};
+    function notifyQuoteMarketStateChanged(quote, state, context) {
+      if (typeof deps.onQuoteMarketStateChanged === 'function') {
+        deps.onQuoteMarketStateChanged(quote, state, context);
+      }
+      if (typeof deps.onQuoteMarketStateChangedSideEffect === 'function') {
+        deps.onQuoteMarketStateChangedSideEffect(quote, state, context);
+      }
+    }
     return {
       arbDetailRefreshUtils: modules.getArbDetailRefreshUtils(),
       arbDetailUtils: modules.getArbDetailUtils(),
@@ -116,6 +124,7 @@
       getChartsUtils: modules.getChartsUtils,
       getQuoteMarketState: deps.getQuoteMarketState,
       logRefreshError: (error) => deps.logError('[arb-detail] refresh failed', error),
+      onQuoteMarketStateChanged: notifyQuoteMarketStateChanged,
       promptImpl: windowImpl.prompt ? windowImpl.prompt.bind(windowImpl) : null,
       promptMutedPathLegDurationHours: (promptImpl) => modules.getMutedPathLegUtils().promptMutedPathLegDurationHours(promptImpl),
       refs: refs.detail,

@@ -240,6 +240,8 @@ assert.strictEqual(arbOptions.deps.getActiveQuotes, quoteWorkspaceRuntime.getAct
 assert.strictEqual(arbOptions.deps.getQuoteChainDisplayName, quoteWorkspaceRuntime.getQuoteChainDisplayName);
 assert.strictEqual(arbOptions.deps.isCrossChainQuote, quoteWorkspaceRuntime.isCrossChainQuote);
 assert.strictEqual(arbOptions.deps.isQuotePaused, quoteWorkspaceRuntime.isQuotePaused);
+assert.strictEqual(arbOptions.deps.onQuoteMarketStateChanged, deps.onQuoteMarketStateChanged);
+assert.strictEqual(arbOptions.deps.onQuoteMarketStateChangedSideEffect, deps.onQuoteMarketStateChangedSideEffect);
 assert.strictEqual(arbOptions.deps.showCopyToast, quoteWorkspaceRuntime.showCopyToast);
 assert.strictEqual(arbOptions.refs.arbPanel, refs.arbPanel);
 assert.strictEqual(arbOptions.timers.setInterval, timers.setInterval);

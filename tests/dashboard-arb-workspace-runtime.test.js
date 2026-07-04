@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const {
+  buildDetailOptions,
   createDashboardArbWorkspaceRuntime
 } = require('../src/app/dashboard-arb-workspace-runtime');
 
@@ -134,3 +135,47 @@ assert.ok(calls.some((call) => call[0] === 'updateArb'));
 assert.ok(calls.some((call) => call[0] === 'muteLeg'));
 assert.ok(calls.some((call) => call[0] === 'handleMarketChanged' && call[1] === 11 && call[3] === 'inverse'));
 assert.ok(calls.some((call) => call[0] === 'handleMainSuccess' && call[1] === 12 && call[2] === '0x'));
+
+{
+  const notifyCalls = [];
+  const options = buildDetailOptions({
+    modules: {
+      getArbDetailRefreshUtils: () => 'refresh-utils',
+      getArbDetailUtils: () => 'detail-utils',
+      getArbPanelLayoutUtils: () => 'panel-layout-utils',
+      getChartsUtils: () => 'charts-utils',
+      getMutedPathLegUtils: () => ({
+        promptMutedPathLegDurationHours: () => 2
+      })
+    },
+    deps: {
+      onQuoteMarketStateChanged: (quote, state, context) => notifyCalls.push([
+        'market',
+        quote.id,
+        state.lastRawPrice,
+        context.fetchMode
+      ]),
+      onQuoteMarketStateChangedSideEffect: (quote, state, context) => notifyCalls.push([
+        'side-effect',
+        quote.id,
+        state.lastRawPrice,
+        context.fetchMode
+      ]),
+      windowImpl: {}
+    },
+    refs: { detail: {} },
+    constants: {},
+    timers: {}
+  });
+
+  options.onQuoteMarketStateChanged(
+    { id: 21 },
+    { lastRawPrice: 1.5 },
+    { fetchMode: 'main' }
+  );
+
+  assert.deepStrictEqual(notifyCalls, [
+    ['market', 21, 1.5, 'main'],
+    ['side-effect', 21, 1.5, 'main']
+  ]);
+}

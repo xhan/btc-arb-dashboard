@@ -112,6 +112,8 @@
         logError: createLoggerMethod(logger, 'error'),
         logInfo: createLoggerMethod(logger, 'info'),
         logWarning: createLoggerMethod(logger, 'warn'),
+        onQuoteMarketStateChanged: deps.onQuoteMarketStateChanged,
+        onQuoteMarketStateChangedSideEffect: deps.onQuoteMarketStateChangedSideEffect,
         onShowDashboard: deps.onShowDashboard,
         quoteStateRuntime: deps.quoteStateRuntime,
         setQuoteMarketState: deps.setQuoteMarketState,
