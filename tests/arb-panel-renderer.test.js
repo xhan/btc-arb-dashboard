@@ -129,6 +129,36 @@ const emptyHtml = renderArbGrid({
 
 assert.ok(emptyHtml.includes('<div class="arb-path-line arb-path-empty">无收益率 &gt; 0.5bp</div>'));
 
+const underThresholdHtml = renderArbGrid({
+  columns: [
+    [
+      {
+        title: '低收益路径',
+        opportunities: [
+          {
+            entryType: 'fixed-under-threshold',
+            opportunityId: 'fixed-low-1',
+            cycle: {
+              profitRate: 0.00004,
+              legs: [
+                { from: 'WBTC', to: 'LBTC', rate: 0.9999, chain: 'ethereum' }
+              ]
+            },
+            displayMessage: '收益率 +0.40bp < 1bp',
+            hideLegs: true
+          }
+        ]
+      }
+    ]
+  ]
+});
+
+assert.ok(underThresholdHtml.includes('data-arb-opportunity-id="fixed-low-1"'));
+assert.ok(underThresholdHtml.includes('class="arb-opportunity arb-opportunity-fixed-under-threshold"'));
+assert.ok(underThresholdHtml.includes('class="arb-path-line arb-path-display-line">收益率 +0.40bp &lt; 1bp</div>'));
+assert.ok(!underThresholdHtml.includes('arb-opportunity-head'));
+assert.ok(!underThresholdHtml.includes('WBTC -&gt; LBTC'));
+
 const htmlWithoutLabel = renderArbGrid({
   columns: [
     [

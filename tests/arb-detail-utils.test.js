@@ -929,6 +929,32 @@ assert.strictEqual(
 
 assert.strictEqual(
   resolveArbOpportunityBaseAmount(
+    {
+      legs: [
+        { chain: 'ethereum', quoteId: 12 },
+        { chain: 'arbitrum', quoteId: 13 },
+        { chain: 'base', quoteId: 14 },
+        { chain: '规则', rule: true, quoteId: 15 }
+      ]
+    },
+    (quoteId) => ({
+      quote: {
+        id: quoteId,
+        amount: {
+          12: '5',
+          13: '1.5',
+          14: '3',
+          15: '0.2'
+        }[quoteId]
+      }
+    }),
+    (leg) => leg && leg.rule === true
+  ),
+  1.5
+);
+
+assert.strictEqual(
+  resolveArbOpportunityBaseAmount(
     { legs: [{ chain: 'ethereum', quoteId: 99 }] },
     () => ({ quote: { amount: 0 } })
   ),

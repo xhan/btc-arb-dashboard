@@ -141,6 +141,40 @@
     });
   }
 
+  function selectBestFiniteCycle(cycles) {
+    const list = Array.isArray(cycles) ? cycles.filter(Boolean) : [];
+    let best = null;
+    for (const cycle of list) {
+      const profitRate = Number(cycle && cycle.profitRate);
+      if (!Number.isFinite(profitRate)) continue;
+      if (!best || profitRate > Number(best.profitRate)) {
+        best = cycle;
+      }
+    }
+    return best;
+  }
+
+  function formatFixedUnderThresholdMessage(cycle, displayMinProfitBp) {
+    const profitBp = Number(cycle && cycle.profitRate) * 10000;
+    if (!Number.isFinite(profitBp)) return '';
+    const sign = profitBp >= 0 ? '+' : '';
+    return `收益率 ${sign}${profitBp.toFixed(2)}bp < ${displayMinProfitBp}bp`;
+  }
+
+  function buildFixedUnderThresholdEntry(cycles, rule, displayMinProfitBp, buildEntry) {
+    const bestCycle = selectBestFiniteCycle(cycles);
+    if (!bestCycle) return null;
+    const entry = buildEntry(bestCycle, 0, [bestCycle], rule, displayMinProfitBp);
+    if (!entry) return null;
+    return {
+      ...entry,
+      label: '',
+      displayMessage: formatFixedUnderThresholdMessage(bestCycle, displayMinProfitBp),
+      hideLegs: true,
+      entryType: 'fixed-under-threshold'
+    };
+  }
+
   function selectPositiveCyclesOrBest(cycles) {
     const list = Array.isArray(cycles) ? cycles.filter(Boolean) : [];
     if (!list.length) return [];
@@ -596,9 +630,13 @@
     return fixedResults.map(({ rule, cycles }) => {
       const displayMinProfitBp = normalizeDisplayMinProfitBp(getDisplayMinProfitBp(rule));
       const displayCycles = selectCyclesAboveDisplayThreshold(cycles, displayMinProfitBp);
-      const opportunities = displayCycles
+      let opportunities = displayCycles
         .map((cycle, index, items) => buildEntry(cycle, index, items, rule, displayMinProfitBp))
         .filter(Boolean);
+      if (!opportunities.length && !displayCycles.length) {
+        const underThresholdEntry = buildFixedUnderThresholdEntry(cycles, rule, displayMinProfitBp, buildEntry);
+        opportunities = underThresholdEntry ? [underThresholdEntry] : [];
+      }
       return {
         title: String(rule?.title || '固定路径'),
         opportunities,

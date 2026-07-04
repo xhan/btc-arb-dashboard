@@ -375,11 +375,17 @@
 
   function resolveArbOpportunityBaseAmount(cycle, findQuoteById, isRuleLeg = () => false) {
     const legs = Array.isArray(cycle?.legs) ? cycle.legs : [];
-    const firstLeg = legs.find((leg) => !isRuleLeg(leg) && leg && leg.quoteId !== undefined && leg.quoteId !== null);
-    if (!firstLeg || typeof findQuoteById !== 'function') return 1;
-    const match = findQuoteById(firstLeg.quoteId);
-    const amount = match && match.quote ? Number(match.quote.amount) : NaN;
-    return Number.isFinite(amount) && amount > 0 ? amount : 1;
+    if (typeof findQuoteById !== 'function') return 1;
+
+    let minAmount = null;
+    legs.forEach((leg) => {
+      if (isRuleLeg(leg) || !leg || leg.quoteId === undefined || leg.quoteId === null) return;
+      const match = findQuoteById(leg.quoteId);
+      const amount = match && match.quote ? Number(match.quote.amount) : NaN;
+      if (!Number.isFinite(amount) || amount <= 0) return;
+      minAmount = minAmount === null ? amount : Math.min(minAmount, amount);
+    });
+    return minAmount === null ? 1 : minAmount;
   }
 
   function collectBestIndices(items, selector) {

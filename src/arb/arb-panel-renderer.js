@@ -104,6 +104,7 @@
     const profitClass = cycle.profitRate >= 0 ? 'arb-profit' : 'arb-profit arb-profit-neg';
     const profitText = (options.formatProfit || defaultFormatProfit)(cycle.profitRate);
     const isSpecialRuleEntry = entry && entry.entryType === 'special-rule';
+    const isUnderThresholdEntry = entry && entry.entryType === 'fixed-under-threshold';
     const labelTextHtml = entry && entry.label
       ? `<div class="arb-path-line arb-opportunity-head-label"><strong>${entry.label}</strong></div>`
       : '<div class="arb-path-line arb-opportunity-head-label" aria-hidden="true"></div>';
@@ -122,7 +123,7 @@
         ))
         .join('')
       : '';
-    const labelHtml = isSpecialRuleEntry
+    const labelHtml = (isSpecialRuleEntry || isUnderThresholdEntry)
       ? ''
       : `
       <div class="arb-opportunity-head">
@@ -134,6 +135,9 @@
     const classNames = ['arb-opportunity'];
     if (isSpecialRuleEntry) {
       classNames.push('arb-opportunity-special-body');
+    }
+    if (isUnderThresholdEntry) {
+      classNames.push('arb-opportunity-fixed-under-threshold');
     }
     if (entry && entry.isAlertHighlighted === true) {
       classNames.push('is-alert-highlight');

@@ -229,6 +229,39 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   buildFixedArbSections({
     fixedResults: [{
+      rule: { id: 'low-route', title: '低收益路径' },
+      cycles: [
+        { id: 'low-1', profitRate: 0.00002 },
+        { id: 'low-best', profitRate: 0.00004 },
+        { id: 'negative', profitRate: -0.00001 }
+      ]
+    }],
+    getDisplayMinProfitBp: () => 1,
+    buildEntry: (cycle, index, items, rule) => ({
+      label: items.length > 1 ? `机会 ${index + 1}` : '',
+      cycleId: cycle.id,
+      section: `fixed:${rule.id || ''}`
+    })
+  })[0],
+  {
+    title: '低收益路径',
+    opportunities: [
+      {
+        label: '',
+        cycleId: 'low-best',
+        section: 'fixed:low-route',
+        displayMessage: '收益率 +0.40bp < 1bp',
+        hideLegs: true,
+        entryType: 'fixed-under-threshold'
+      }
+    ],
+    emptyText: '无收益率 > 1bp'
+  }
+);
+
+assert.deepStrictEqual(
+  buildFixedArbSections({
+    fixedResults: [{
       rule: { title: '零阈值路径' },
       cycles: [
         { id: 'low-positive', profitRate: 0.00004 },
