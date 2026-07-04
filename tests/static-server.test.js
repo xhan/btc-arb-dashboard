@@ -817,6 +817,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(boardRuntimeResponse.body.includes('options.dashboardViewModeControllerUtils.createDashboardViewRenderRuntime({'));
     assert.ok(boardRuntimeResponse.body.includes('domRenderUtils.createRenderInteractionDeferralRuntime({'));
     assert.ok(boardRuntimeResponse.body.includes('interactionRuntime: options.interactionRuntime,'));
+    assert.ok(boardRuntimeResponse.body.includes("trackFocus: 'editable'"));
+    assert.ok(boardRuntimeResponse.body.includes('domRenderUtils.shouldDeferRenderForFocusedEditable(refs.dashboardEl, { documentImpl })'));
     assert.ok(boardRuntimeResponse.body.includes('shouldDeferRender: shouldDeferDashboardRender'));
     assert.ok(boardRuntimeResponse.body.includes('dashboardInteractionDeferralRuntime.bind();'));
     assert.ok(appJsResponse.body.includes('onShowDashboard: renderDashboardForCurrentState'));
@@ -1574,9 +1576,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes('let alertSettingsHtmlRenderer = null;'));
     assert.ok(alertRuntimeControllerResponse.body.includes('let mutedAlertStateHtmlRenderer = null;'));
     assert.ok(alertRuntimeControllerResponse.body.includes('function flushAlertContentRenderer(getRenderer, getElement)'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('function createAlertContentInteractionRuntime(getRenderer, getElement)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function createAlertContentInteractionRuntime(getRenderer, getElement, options = {})'));
     assert.ok(alertRuntimeControllerResponse.body.includes('domRenderUtils.createRenderInteractionDeferralRuntime({'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('function shouldDeferAlertContentRender(runtime, element)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes("trackFocus: 'editable'"));
+    assert.ok(alertRuntimeControllerResponse.body.includes('trackFocus: false'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('domRenderUtils.shouldDeferRenderForFocusedEditable(element, { documentImpl })'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function shouldDeferAlertContentRender(runtime, element, options = {})'));
     assert.ok(alertRuntimeControllerResponse.body.includes('function bindAlertContentInteractionRuntime(runtime, element)'));
     assert.ok(moduleRegistryResponse.body.includes('getAlertLogUiUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('AlertLogUiUtils is not loaded'));
@@ -1858,8 +1863,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(domRenderUtilsResponse.body.includes('function hasPending()'));
     assert.ok(domRenderUtilsResponse.body.includes('function createRenderInteractionHoldRuntime(options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function createRenderInteractionDeferralRuntime(options = {})'));
+    assert.ok(domRenderUtilsResponse.body.includes('function shouldDeferRenderForFocusedEditable(element, options = {})'));
     assert.ok(domRenderUtilsResponse.body.includes('function shouldDeferRenderWhileFocused(element, options = {})'));
     assert.ok(dataTerminalControllerResponse.body.includes('domRenderUtils.createRenderInteractionDeferralRuntime({'));
+    assert.ok(dataTerminalControllerResponse.body.includes('trackFocus: false'));
     assert.ok(dataTerminalControllerResponse.body.includes('function shouldDeferContentRender(element)'));
     assert.ok(dataTerminalControllerResponse.body.includes('shouldDeferRender: shouldDeferContentRender'));
     assert.ok(!appJsResponse.body.includes('htmlRenderer: getDomRenderUtils().createStableHtmlRenderer()'));

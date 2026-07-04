@@ -532,6 +532,43 @@
     };
   }
 
+  const TEXT_EDITING_INPUT_TYPES = new Set([
+    '',
+    'date',
+    'datetime-local',
+    'email',
+    'month',
+    'number',
+    'password',
+    'search',
+    'tel',
+    'text',
+    'time',
+    'url',
+    'week'
+  ]);
+
+  function isTextEditingElement(element) {
+    if (!element) return false;
+    if (element.isContentEditable === true) return true;
+    if (typeof element.getAttribute === 'function') {
+      const contentEditable = String(element.getAttribute('contenteditable') || '').toLowerCase();
+      if (contentEditable === 'true' || contentEditable === 'plaintext-only') return true;
+    }
+    const tagName = String(element.tagName || element.nodeName || '').toLowerCase();
+    if (tagName === 'textarea') return true;
+    if (tagName !== 'input') return false;
+    const rawType = typeof element.type === 'string'
+      ? element.type
+      : (
+        typeof element.getAttribute === 'function'
+          ? element.getAttribute('type')
+          : ''
+      );
+    const inputType = String(rawType || 'text').toLowerCase();
+    return TEXT_EDITING_INPUT_TYPES.has(inputType);
+  }
+
   function createRenderInteractionHoldRuntime(options = {}) {
     const setTimer = typeof options.setTimeout === 'function'
       ? options.setTimeout
@@ -543,6 +580,7 @@
       ? Number(options.idleDelayMs)
       : 80;
     const onIdle = typeof options.onIdle === 'function' ? options.onIdle : () => {};
+    const focusMode = options.trackFocus === 'editable' ? 'editable' : 'all';
     const trackFocus = options.trackFocus !== false;
     const eventListenerOptions = options.eventListenerOptions;
     const idleListeners = [];
@@ -614,8 +652,9 @@
       scheduleIdle();
     }
 
-    function focusIn() {
+    function focusIn(event) {
       if (!trackFocus) return;
+      if (focusMode === 'editable' && !isTextEditingElement(event && event.target)) return;
       focusInside = true;
       clearIdleTimer();
     }
@@ -629,7 +668,9 @@
         && typeof boundTarget.contains === 'function'
         && boundTarget.contains(nextTarget)
       ) {
-        return;
+        if (focusMode !== 'editable' || isTextEditingElement(nextTarget)) {
+          return;
+        }
       }
       focusInside = false;
       scheduleIdle();
@@ -677,6 +718,7 @@
       setTimeout: options.setTimeout,
       clearTimeout: options.clearTimeout,
       idleDelayMs: options.idleDelayMs,
+      trackFocus: options.trackFocus,
       onIdle: options.onIdle
     });
     const sharedInteractionRuntime = options.interactionRuntime || null;
@@ -719,6 +761,15 @@
     return Boolean(activeElement && element.contains(activeElement));
   }
 
+  function shouldDeferRenderForFocusedEditable(element, options = {}) {
+    if (!element || typeof element.contains !== 'function') return false;
+    const documentImpl = options.documentImpl || (typeof document !== 'undefined' ? document : null);
+    const activeElement = Object.prototype.hasOwnProperty.call(options, 'activeElement')
+      ? options.activeElement
+      : ((documentImpl && documentImpl.activeElement) || null);
+    return Boolean(activeElement && element.contains(activeElement) && isTextEditingElement(activeElement));
+  }
+
   return {
     applyActiveQuoteDomState,
     applyPausedQuoteDomState,
@@ -748,6 +799,7 @@
     createRenderInteractionDeferralRuntime,
     createRenderInteractionHoldRuntime,
     createStableHtmlRenderer,
+    shouldDeferRenderForFocusedEditable,
     shouldDeferRenderWhileFocused,
     escapeCssAttributeValue,
     getQuoteDomRefs,

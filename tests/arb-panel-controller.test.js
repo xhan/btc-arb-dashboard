@@ -9,6 +9,9 @@ let resetCount = 0;
 let renderedHtml = '';
 let broughtToFrontPanel = null;
 let aliasRulesBuildCount = 0;
+let arbPanelDeferralOptions = null;
+let stableRendererOptions = null;
+let contentInteractionHolding = false;
 
 const arbPanelCache = {
   getRuleSnapshot() {
@@ -31,8 +34,13 @@ const arbPanelCache = {
   }
 };
 
-const panelContent = { textContent: '' };
+const panelContent = {
+  textContent: '',
+  contains: () => true,
+  addEventListener: () => {}
+};
 const panel = { style: { display: 'none' } };
+const documentImpl = { activeElement: null };
 const dashboardState = [{
   name: 'USD监控',
   quotes: [{ id: 42, chain: 'ethereum', fromToken: 'USDC', toToken: 'USDT' }]
@@ -151,7 +159,7 @@ const controller = createArbPanelController({
     findDashboardQuoteMatchById: (categories, quoteId) => categories.flatMap((category) => category.quotes || []).find((quote) => quote.id === quoteId) || null,
     isPanelVisible: () => true
   },
-  documentImpl: { activeElement: null },
+  documentImpl,
   domRenderUtils: {
     applyFloatingPanelDisplayState: (targetPanel, action) => ({
       action,
@@ -162,10 +170,23 @@ const controller = createArbPanelController({
     applyFloatingPanelViewportHeight: (targetPanel, height, options) => {
       targetPanel.maxHeight = `${height - options.minHeight}px`;
     },
-    createStableHtmlRenderer: () => ({
-      reset: () => { resetCount += 1; },
-      render: (_contentEl, html) => { renderedHtml = html; }
-    })
+    createRenderInteractionDeferralRuntime: (options) => {
+      arbPanelDeferralOptions = options;
+      return {
+        bind: () => true,
+        shouldDeferRender: () => contentInteractionHolding
+      };
+    },
+    createStableHtmlRenderer: (options) => {
+      stableRendererOptions = options;
+      return {
+        reset: () => { resetCount += 1; },
+        render: (_contentEl, html) => { renderedHtml = html; }
+      };
+    },
+    shouldDeferRenderWhileFocused: (element, options) => Boolean(
+      element && typeof element.contains === 'function' && element.contains(options && options.documentImpl && options.documentImpl.activeElement)
+    )
   },
   fixedPathRules: [],
   getActiveQuotes: (quotes) => quotes,
@@ -222,6 +243,15 @@ assert.deepStrictEqual(controller.getAliasRules(), { groups: [['USDT', 'USDT0']]
 assert.strictEqual(controller.getAliasRules(), controller.getAliasRules());
 assert.strictEqual(aliasRulesBuildCount, 1);
 assert.strictEqual(controller.buildLiveQuoteLabel('ethereum', 'USDC', 'USDT', ' spot'), 'Chain:ethereum:USDC->USDT spot');
+
+assert.strictEqual(arbPanelDeferralOptions.trackFocus, false);
+documentImpl.activeElement = { id: 'focused-opportunity' };
+contentInteractionHolding = false;
+assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), false);
+contentInteractionHolding = true;
+assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), true);
+contentInteractionHolding = false;
+documentImpl.activeElement = null;
 
 controller.invalidateRuleSnapshotCache();
 assert.strictEqual(marketRevisionBumps, 1);

@@ -69,6 +69,7 @@
         interactionRuntime: options.interactionRuntime,
         setTimeout: setTimer,
         clearTimeout: clearTimer,
+        trackFocus: false,
         onIdle: () => {
           if (arbPanelHtmlRenderer && typeof arbPanelHtmlRenderer.flush === 'function') {
             arbPanelHtmlRenderer.flush(refs.arbPathContent);
@@ -83,7 +84,6 @@
           && typeof arbPanelInteractionDeferralRuntime.shouldDeferRender === 'function'
           && arbPanelInteractionDeferralRuntime.shouldDeferRender(element)
         )
-        || domRenderUtils.shouldDeferRenderWhileFocused(element, { documentImpl })
       )
     });
     const arbExpandedSections = new Set();

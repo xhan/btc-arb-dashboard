@@ -15,6 +15,7 @@
     const viewOptions = options.viewOptions || {};
     const formOptions = options.formOptions || {};
     const domRenderUtils = shared.domRenderUtils || actionOptions.domRenderUtils || null;
+    const documentImpl = shared.documentImpl || actionOptions.documentImpl || viewOptions.documentImpl || null;
     const getRequestChannelOptions = typeof options.getRequestChannelOptions === 'function'
       ? options.getRequestChannelOptions
       : () => ({});
@@ -27,6 +28,7 @@
         interactionRuntime: options.interactionRuntime,
         setTimeout: options.setTimeout,
         clearTimeout: options.clearTimeout,
+        trackFocus: 'editable',
         onIdle: () => {
           if (viewRenderRuntime && typeof viewRenderRuntime.ensureRendered === 'function') {
             viewRenderRuntime.ensureRendered();
@@ -36,10 +38,17 @@
       : null;
 
     function shouldDeferDashboardRender() {
-      return Boolean(
+      if (
         dashboardInteractionDeferralRuntime
         && typeof dashboardInteractionDeferralRuntime.shouldDeferRender === 'function'
         && dashboardInteractionDeferralRuntime.shouldDeferRender()
+      ) {
+        return true;
+      }
+      return Boolean(
+        domRenderUtils
+        && typeof domRenderUtils.shouldDeferRenderForFocusedEditable === 'function'
+        && domRenderUtils.shouldDeferRenderForFocusedEditable(refs.dashboardEl, { documentImpl })
       );
     }
 

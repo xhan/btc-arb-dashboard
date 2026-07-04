@@ -65,6 +65,7 @@ function createBaseDeps(overrides = {}) {
   const schedulerCalls = [];
   const settingsContent = createElement('settings');
   const mutedContent = createElement('muted');
+  const documentImpl = { activeElement: null };
   const config = {
     settings: {
       localSoundEnabled: true,
@@ -124,6 +125,7 @@ function createBaseDeps(overrides = {}) {
       resolveMutedStateRefreshDelay: () => 0
     },
     domRenderUtils,
+    documentImpl,
     fetchImpl: async () => ({ ok: true, json: async () => ({}) }),
     getDashboardLocalStorage: () => null,
     mutedPathLegUtils: {
@@ -183,6 +185,7 @@ function createBaseDeps(overrides = {}) {
   return {
     config,
     deps,
+    documentImpl,
     mutedPathRuntime,
     mutedContent,
     schedulerCalls,
@@ -192,12 +195,13 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
-  const { config, deps, settingsContent, timers } = createBaseDeps();
+  const { config, deps, documentImpl, settingsContent, timers } = createBaseDeps();
   const controller = createAlertRuntimeController(deps);
 
   controller.renderAlertSettingsPanel();
   assert.strictEqual(settingsContent.innerHTML, '<section>sound-on:immediate-off</section>');
   assert.strictEqual(typeof settingsContent.listeners.pointerdown, 'function');
+  assert.strictEqual(typeof settingsContent.listeners.focusin, 'function');
 
   settingsContent.listeners.pointerdown({});
   config.settings.localSoundEnabled = false;
@@ -208,6 +212,25 @@ function createBaseDeps(overrides = {}) {
   settingsContent.listeners.pointerup({});
   assert.strictEqual(timers.length, 1);
   timers[0].callback();
+  assert.strictEqual(settingsContent.innerHTML, '<section>sound-off:immediate-on</section>');
+
+  documentImpl.activeElement = { inside: 'settings', tagName: 'BUTTON' };
+  config.settings.localSoundEnabled = true;
+  deps.pathAlertRuntimeState.setForceImmediate(false);
+  controller.renderAlertSettingsPanel();
+  assert.strictEqual(settingsContent.innerHTML, '<section>sound-on:immediate-off</section>');
+
+  documentImpl.activeElement = { inside: 'settings', tagName: 'INPUT', type: 'number' };
+  settingsContent.listeners.focusin({ target: documentImpl.activeElement });
+  config.settings.localSoundEnabled = false;
+  deps.pathAlertRuntimeState.setForceImmediate(true);
+  controller.renderAlertSettingsPanel();
+  assert.strictEqual(settingsContent.innerHTML, '<section>sound-on:immediate-off</section>');
+
+  documentImpl.activeElement = null;
+  settingsContent.listeners.focusout({ relatedTarget: null });
+  assert.strictEqual(timers.length, 2);
+  timers[1].callback();
   assert.strictEqual(settingsContent.innerHTML, '<section>sound-off:immediate-on</section>');
 }
 

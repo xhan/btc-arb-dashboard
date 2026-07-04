@@ -28,6 +28,7 @@ const {
   createElementFromHtml,
   createFloatingPanelZIndexRuntime,
   createStableHtmlRenderer,
+  shouldDeferRenderForFocusedEditable,
   shouldDeferRenderWhileFocused,
   escapeCssAttributeValue,
   getQuoteDomRefs,
@@ -132,6 +133,48 @@ assert.strictEqual(
   false
 );
 assert.strictEqual(shouldDeferRenderWhileFocused({}), false);
+
+const focusedEditableTarget = {
+  contains(element) {
+    return element && element.inside === true;
+  }
+};
+assert.strictEqual(
+  shouldDeferRenderForFocusedEditable(focusedEditableTarget, {
+    activeElement: { inside: true, tagName: 'INPUT', type: 'number' }
+  }),
+  true
+);
+assert.strictEqual(
+  shouldDeferRenderForFocusedEditable(focusedEditableTarget, {
+    activeElement: { inside: true, tagName: 'TEXTAREA' }
+  }),
+  true
+);
+assert.strictEqual(
+  shouldDeferRenderForFocusedEditable(focusedEditableTarget, {
+    activeElement: { inside: true, isContentEditable: true }
+  }),
+  true
+);
+assert.strictEqual(
+  shouldDeferRenderForFocusedEditable(focusedEditableTarget, {
+    activeElement: { inside: true, tagName: 'INPUT', type: 'checkbox' }
+  }),
+  false
+);
+assert.strictEqual(
+  shouldDeferRenderForFocusedEditable(focusedEditableTarget, {
+    activeElement: { inside: true, tagName: 'BUTTON' }
+  }),
+  false
+);
+assert.strictEqual(
+  shouldDeferRenderForFocusedEditable(focusedEditableTarget, {
+    activeElement: { inside: false, tagName: 'INPUT', type: 'text' }
+  }),
+  false
+);
 
 const holdCalls = [];
 const holdTimers = new Map();
@@ -350,6 +393,43 @@ sharedDeferralRuntime.release();
 const sharedDeferralTimerId = nextSharedDeferralTimerId - 1;
 sharedDeferralTimers.get(sharedDeferralTimerId)();
 assert.deepStrictEqual(sharedDeferralCalls, [['idle']]);
+
+const noFocusDeferralTarget = createListenerTarget();
+const noFocusDeferralRuntime = createRenderInteractionDeferralRuntime({
+  target: noFocusDeferralTarget,
+  trackFocus: false
+});
+assert.strictEqual(noFocusDeferralRuntime.bind(), true);
+noFocusDeferralTarget.listeners.focusin({});
+assert.strictEqual(noFocusDeferralRuntime.shouldDeferRender(), false);
+
+let editableFocusIdleCalls = 0;
+const editableFocusTarget = createListenerTarget();
+const editableFocusRuntime = createRenderInteractionDeferralRuntime({
+  target: editableFocusTarget,
+  trackFocus: 'editable',
+  setTimeout(callback) {
+    callback();
+    return 1;
+  },
+  clearTimeout() {},
+  onIdle() {
+    editableFocusIdleCalls += 1;
+  }
+});
+assert.strictEqual(editableFocusRuntime.bind(), true);
+editableFocusTarget.listeners.focusin({ target: { tagName: 'BUTTON' } });
+assert.strictEqual(editableFocusRuntime.shouldDeferRender(), false);
+editableFocusTarget.listeners.focusin({ target: { tagName: 'INPUT', type: 'text' } });
+assert.strictEqual(editableFocusRuntime.shouldDeferRender(), true);
+editableFocusTarget.listeners.focusout({ relatedTarget: null });
+assert.strictEqual(editableFocusRuntime.shouldDeferRender(), false);
+assert.strictEqual(editableFocusIdleCalls, 1);
+editableFocusTarget.listeners.focusin({ target: { tagName: 'INPUT', type: 'text' } });
+assert.strictEqual(editableFocusRuntime.shouldDeferRender(), true);
+editableFocusTarget.listeners.focusout({ relatedTarget: { tagName: 'BUTTON' } });
+assert.strictEqual(editableFocusRuntime.shouldDeferRender(), false);
+assert.strictEqual(editableFocusIdleCalls, 2);
 
 const quoteDomLookups = [];
 const quoteDomRefs = getQuoteDomRefs({

@@ -67,7 +67,7 @@
       }
     }
 
-    function createAlertContentInteractionRuntime(getRenderer, getElement) {
+    function createAlertContentInteractionRuntime(getRenderer, getElement, options = {}) {
       if (!domRenderUtils || typeof domRenderUtils.createRenderInteractionDeferralRuntime !== 'function') {
         return null;
       }
@@ -76,24 +76,33 @@
         interactionRuntime: deps.interactionRuntime,
         setTimeout: deps.setTimeout,
         clearTimeout: deps.clearTimeout,
+        trackFocus: options.trackFocus,
         onIdle: () => flushAlertContentRenderer(getRenderer, getElement)
       });
     }
 
-    function shouldDeferAlertContentRender(runtime, element) {
-      return Boolean(
+    function shouldDeferAlertContentRender(runtime, element, options = {}) {
+      if (
         runtime
         && typeof runtime.shouldDeferRender === 'function'
         && runtime.shouldDeferRender(element)
+      ) {
+        return true;
+      }
+      return Boolean(
+        options.deferFocusedEditable === true
+        && domRenderUtils
+        && typeof domRenderUtils.shouldDeferRenderForFocusedEditable === 'function'
+        && domRenderUtils.shouldDeferRenderForFocusedEditable(element, { documentImpl })
       );
     }
 
-    function createAlertContentHtmlRenderer(runtime) {
+    function createAlertContentHtmlRenderer(runtime, options = {}) {
       if (!domRenderUtils || typeof domRenderUtils.createStableHtmlRenderer !== 'function') {
         return createNoopHtmlRenderer();
       }
       return domRenderUtils.createStableHtmlRenderer({
-        shouldDeferRender: (element) => shouldDeferAlertContentRender(runtime, element)
+        shouldDeferRender: (element) => shouldDeferAlertContentRender(runtime, element, options)
       });
     }
 
@@ -115,16 +124,18 @@
       ? null
       : createAlertContentInteractionRuntime(
         () => alertSettingsHtmlRenderer,
-        () => refs.alertLogSettingsContent
+        () => refs.alertLogSettingsContent,
+        { trackFocus: 'editable' }
       );
     alertSettingsHtmlRenderer = deps.alertSettingsHtmlRenderer
-      || createAlertContentHtmlRenderer(alertSettingsInteractionRuntime);
+      || createAlertContentHtmlRenderer(alertSettingsInteractionRuntime, { deferFocusedEditable: true });
     let mutedAlertStateHtmlRenderer = null;
     const mutedAlertStateInteractionRuntime = deps.mutedAlertStateHtmlRenderer
       ? null
       : createAlertContentInteractionRuntime(
         () => mutedAlertStateHtmlRenderer,
-        () => refs.alertLogMutedContent
+        () => refs.alertLogMutedContent,
+        { trackFocus: false }
       );
     mutedAlertStateHtmlRenderer = deps.mutedAlertStateHtmlRenderer
       || createAlertContentHtmlRenderer(mutedAlertStateInteractionRuntime);

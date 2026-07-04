@@ -31,11 +31,15 @@ const formController = { id: 'form-controller' };
 let renderRefValue = null;
 let dashboardInteractionHolding = false;
 let dashboardInteractionOptions = null;
+const documentImpl = { id: 'document', activeElement: null };
 const dashboardEl = {
   id: 'dashboard',
   listeners: {},
   addEventListener(type, handler) {
     this.listeners[type] = handler;
+  },
+  contains(target) {
+    return target === this || Boolean(target && target.insideDashboard);
   }
 };
 
@@ -79,7 +83,7 @@ const runtime = createDashboardBoardRuntime({
   dashboardViewModeController: { getMode: () => 'dashboard' },
   getRequestChannelOptions: () => ({ channels: [] }),
   shared: {
-    documentImpl: { id: 'document' },
+    documentImpl,
     dashboardRuntimeUtils: { id: 'runtime-utils' },
     domRenderUtils: {
       createRenderInteractionDeferralRuntime(options = {}) {
@@ -97,6 +101,11 @@ const runtime = createDashboardBoardRuntime({
             return dashboardInteractionHolding;
           }
         };
+      },
+      shouldDeferRenderForFocusedEditable(target, options = {}) {
+        const activeElement = options.documentImpl && options.documentImpl.activeElement;
+        calls.push(['shouldDeferDashboardFocusedEditable', target && target.id, activeElement && activeElement.name]);
+        return Boolean(activeElement && activeElement.editable === true && target.contains(activeElement));
       }
     }
   },
@@ -138,12 +147,19 @@ assert.strictEqual(renderOptions.getMode(), 'dashboard');
 assert.strictEqual(renderOptions.render(), 'render-dashboard');
 assert.strictEqual(typeof renderOptions.shouldDeferRender, 'function');
 assert.ok(calls.some((call) => call[0] === 'bindDashboardInteraction' && call[1] === 'dashboard'));
+assert.strictEqual(dashboardInteractionOptions.trackFocus, 'editable');
 assert.strictEqual(typeof dashboardInteractionOptions.onIdle, 'function');
 dashboardInteractionHolding = true;
 assert.strictEqual(renderOptions.shouldDeferRender(), true);
 dashboardInteractionHolding = false;
 assert.strictEqual(renderOptions.shouldDeferRender(), false);
+documentImpl.activeElement = { name: 'copyButton', insideDashboard: true, editable: false };
+assert.strictEqual(renderOptions.shouldDeferRender(), false);
+documentImpl.activeElement = { name: 'quoteAmountInput', insideDashboard: true, editable: true };
+assert.strictEqual(renderOptions.shouldDeferRender(), true);
+documentImpl.activeElement = null;
 assert.ok(calls.some((call) => call[0] === 'shouldDeferDashboardInteraction' && call[1] === 'dashboard'));
+assert.ok(calls.some((call) => call[0] === 'shouldDeferDashboardFocusedEditable' && call[1] === 'dashboard'));
 assert.deepStrictEqual(formOptions.addQuoteInputs.map((item) => item.id), ['from', 'to']);
 assert.strictEqual(formOptions.createCategoryModule, viewController.createCategoryModule);
 assert.strictEqual(formOptions.createQuoteItem, viewController.createQuoteItem);

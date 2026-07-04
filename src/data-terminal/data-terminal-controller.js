@@ -45,6 +45,7 @@
         interactionRuntime: deps.interactionRuntime,
         setTimeout: deps.setTimeout,
         clearTimeout: deps.clearTimeout,
+        trackFocus: false,
         onIdle: () => {
           if (
             state

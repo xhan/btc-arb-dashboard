@@ -130,6 +130,18 @@ function createBaseDeps(overrides = {}) {
       }
     },
     domRenderUtils: {
+      createRenderInteractionDeferralRuntime(options = {}) {
+        calls.push(['createDeferral', options.trackFocus]);
+        return {
+          bind(target) {
+            calls.push(['bindDeferral', target && target.name]);
+            return true;
+          },
+          shouldDeferRender() {
+            return false;
+          }
+        };
+      },
       createStableHtmlRenderer: () => ({
         render(target, html) {
           target.innerHTML = html;
@@ -234,6 +246,8 @@ function createBaseDeps(overrides = {}) {
   assert.strictEqual(panel.style.top, '144px');
   assert.strictEqual(refs['#data-terminal-alias-toggle'].checked, true);
   assert.ok(calls.some((call) => call[0] === 'bindChrome'));
+  assert.ok(calls.some((call) => call[0] === 'createDeferral' && call[1] === false));
+  assert.ok(calls.some((call) => call[0] === 'bindDeferral' && call[1] === 'content'));
   assert.ok(calls.some((call) => call[0] === 'focus' && call[1] === 'searchInput'));
 
   refs['#data-terminal-search-input'].listeners.input({ target: { value: 'USDC' } });
