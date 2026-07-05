@@ -575,6 +575,10 @@
       domRenderUtils.applyFloatingPanelViewportHeight(refs.arbPathWindow, windowImpl.innerHeight, { minHeight: 200 });
     }
 
+    function openOpportunityDetail(opportunityId) {
+      return openArbDetailModal(opportunityId) !== false;
+    }
+
     function handleContentClick(event) {
       if (!refs.arbPathContent) return;
       const action = arbPanelRenderer.resolveArbPathContentClickAction(event, {
@@ -595,7 +599,7 @@
         arbLastPointerOpenedOpportunityId = null;
         return;
       }
-      openArbDetailModal(action.opportunityId);
+      openOpportunityDetail(action.opportunityId);
     }
 
     function handleContentKeydown(event) {
@@ -603,15 +607,16 @@
       const action = arbPanelRenderer.resolveArbPathContentKeydownAction(event, { closestEventTarget });
       if (action.type !== 'open-opportunity') return;
       event.preventDefault();
-      openArbDetailModal(action.opportunityId);
+      openOpportunityDetail(action.opportunityId);
     }
 
     function handleContentPointerDown(event) {
       if (!refs.arbPathContent) return;
       const action = arbPanelRenderer.resolveArbPathContentPointerDownAction(event, { closestEventTarget });
       if (action.type !== 'open-opportunity') return;
-      arbLastPointerOpenedOpportunityId = action.opportunityId;
-      openArbDetailModal(action.opportunityId);
+      arbLastPointerOpenedOpportunityId = openOpportunityDetail(action.opportunityId)
+        ? action.opportunityId
+        : null;
     }
 
     function flushContentRender() {

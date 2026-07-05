@@ -64,8 +64,9 @@
     function openArbDetailModal(opportunityId) {
       const controller = getArbDetailController();
       if (controller && typeof controller.open === 'function') {
-        controller.open(opportunityId);
+        return controller.open(opportunityId) !== false;
       }
+      return false;
     }
 
     function buildQuoteAlertDisplayLabel(quote, monitorState, direction) {

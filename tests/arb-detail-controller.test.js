@@ -169,7 +169,9 @@ function createBaseDeps(overrides = {}) {
 
 {
   const { calls, controller, refs } = createBaseDeps();
-  controller.open('opp-1');
+  assert.strictEqual(controller.open('missing'), false);
+  calls.length = 0;
+  assert.strictEqual(controller.open('opp-1'), true);
   assert.strictEqual(controller.isVisible(), true);
   assert.strictEqual(controller.isDashboardPaused(), true);
   assert.strictEqual(refs.chartAutoRefreshToggle.checked, true);

@@ -173,14 +173,15 @@
         updatedPanel: false
       };
 
-      result.updatedPanel = refreshArbPanel();
       if (options.closeDetail !== false) {
         if (closeArbDetailModal) {
           closeArbDetailModal();
           result.closedDetail = true;
         }
+        result.updatedPanel = refreshArbPanel();
         return result;
       }
+      result.updatedPanel = refreshArbPanel();
       if (isArbDetailVisible() && renderArbDetailModal) {
         renderArbDetailModal();
         result.renderedDetail = true;

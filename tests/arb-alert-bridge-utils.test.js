@@ -179,8 +179,8 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(sideEffects, [
   ['invalidate'],
   ['updatePanel'],
-  ['updatePanel'],
   ['closeDetail'],
+  ['updatePanel'],
   ['updatePanel'],
   ['renderDetail']
 ]);

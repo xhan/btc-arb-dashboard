@@ -13,6 +13,9 @@ let arbPanelDeferralOptions = null;
 let stableRendererOptions = null;
 let contentInteractionHolding = false;
 let sharedInteractionHolding = false;
+const contentListeners = {};
+const openedOpportunities = [];
+const openResultByOpportunityId = new Map();
 const sharedInteractionRuntime = {
   addIdleListener: () => true,
   shouldDeferRender: () => sharedInteractionHolding
@@ -42,7 +45,9 @@ const arbPanelCache = {
 const panelContent = {
   textContent: '',
   contains: () => true,
-  addEventListener: () => {}
+  addEventListener: (type, handler) => {
+    contentListeners[type] = handler;
+  }
 };
 const panel = { style: { display: 'none' } };
 const documentImpl = { activeElement: null };
@@ -108,7 +113,10 @@ const controller = createArbPanelController({
     applyArbPanelErrorText: (contentEl, errorText) => {
       contentEl.textContent = errorText;
     },
-    renderArbGrid: ({ columns }) => columns.flat().map((section) => section.title).join('|')
+    renderArbGrid: ({ columns }) => columns.flat().map((section) => section.title).join('|'),
+    resolveArbPathContentClickAction: (event) => event.action || { type: 'none' },
+    resolveArbPathContentKeydownAction: (event) => event.action || { type: 'none' },
+    resolveArbPathContentPointerDownAction: (event) => event.action || { type: 'none' }
   },
   arbPathConfig: {
     watchItems: [
@@ -211,7 +219,12 @@ const controller = createArbPanelController({
     filterMutedCycles: (cycles) => cycles,
     filterMutedPathLegs: (legs) => legs
   },
-  openArbDetailModal: () => {},
+  openArbDetailModal: (opportunityId) => {
+    openedOpportunities.push(opportunityId);
+    return openResultByOpportunityId.has(opportunityId)
+      ? openResultByOpportunityId.get(opportunityId)
+      : true;
+  },
   pathAlertPageUtils: {
     buildPathAlertQuoteLabel: ({ chain, fromSymbol, toSymbol, suffix, formatChainLabel }) => (
       `${formatChainLabel(chain)}:${fromSymbol}->${toSymbol}${suffix}`
@@ -278,6 +291,19 @@ controller.update({ force: true });
 assert.strictEqual(resetCount, 0);
 assert.strictEqual(panelContent.textContent, '');
 assert.strictEqual(renderedHtml, '关注列表|全局路径');
+
+controller.bindContentEvents();
+openResultByOpportunityId.set('stale-opportunity', false);
+openedOpportunities.length = 0;
+contentListeners.pointerdown({ action: { type: 'open-opportunity', opportunityId: 'stale-opportunity' } });
+contentListeners.click({ action: { type: 'open-opportunity', opportunityId: 'stale-opportunity' } });
+assert.deepStrictEqual(openedOpportunities, ['stale-opportunity', 'stale-opportunity']);
+
+openResultByOpportunityId.set('live-opportunity', true);
+openedOpportunities.length = 0;
+contentListeners.pointerdown({ action: { type: 'open-opportunity', opportunityId: 'live-opportunity' } });
+contentListeners.click({ action: { type: 'open-opportunity', opportunityId: 'live-opportunity' } });
+assert.deepStrictEqual(openedOpportunities, ['live-opportunity']);
 
 const displayResult = controller.applyFloatingPanelDisplay(panel, 'toggle', {
   render: () => { renderedHtml = 'rendered'; }

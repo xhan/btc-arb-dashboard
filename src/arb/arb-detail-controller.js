@@ -402,7 +402,7 @@
         deps.refreshOpportunities();
         current = deps.getOpportunity(opportunityId);
       }
-      if (!current || !current.cycle) return;
+      if (!current || !current.cycle) return false;
 
       abortRefresh();
 
@@ -423,6 +423,7 @@
       render(true);
       chartAutoRefreshRuntime.sync();
       refreshScheduler.start(state.refreshToken);
+      return true;
     }
 
     function restartRefresh() {
