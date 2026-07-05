@@ -308,6 +308,22 @@
     return /^https?:\/\//i.test(String(url || ''));
   }
 
+  const OPEN_MULTI_LINK_GROUP_COLORS = ['blue', 'cyan', 'green', 'orange', 'pink', 'purple', 'red', 'yellow', 'grey'];
+
+  function resolveOpenMultiLinksGroupName(name) {
+    return String(name || '').trim().split(/\s+/)[0] || '';
+  }
+
+  function resolveOpenMultiLinksColorForGroupName(name) {
+    const groupName = resolveOpenMultiLinksGroupName(name);
+    if (!groupName) return 'blue';
+    const colorIndex = Array.from(groupName).reduce(
+      (total, char) => total + char.charCodeAt(0),
+      0
+    ) % OPEN_MULTI_LINK_GROUP_COLORS.length;
+    return OPEN_MULTI_LINK_GROUP_COLORS[colorIndex] || 'blue';
+  }
+
   function buildOpenMultiLinksUrl(config = {}) {
     const links = (Array.isArray(config.links) ? config.links : [])
       .map((link) => String(link || '').trim())
@@ -355,7 +371,6 @@
   }
 
   function buildArbDetailMultiLinksUrl(rows = [], options = {}) {
-    const safeRows = Array.isArray(rows) ? rows : [];
     const links = (Array.isArray(rows) ? rows : [])
       .map((row) => buildArbDetailDexLink({
         chain: row && row.chain,
@@ -366,9 +381,10 @@
       .filter((link) => link && isHttpLink(link.url))
       .map((link) => link.url);
 
+    const groupName = resolveOpenMultiLinksGroupName(options.name);
     return buildOpenMultiLinksUrl({
-      name: options.name || '',
-      color: options.color || resolveOpenMultiLinksColorForChain(safeRows[0] && safeRows[0].chain),
+      name: groupName,
+      color: options.color || resolveOpenMultiLinksColorForGroupName(groupName),
       links
     });
   }
@@ -1248,6 +1264,8 @@
     buildArbDetailChartPreviewSignature,
     buildArbOpportunityChartHref,
     buildOpenMultiLinksUrl,
+    resolveOpenMultiLinksGroupName,
+    resolveOpenMultiLinksColorForGroupName,
     resolveOpenMultiLinksColorForChain,
     buildArbDetailMultiLinksUrl,
     resolveArbOpportunityBaseAmount,

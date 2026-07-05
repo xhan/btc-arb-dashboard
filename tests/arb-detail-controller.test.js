@@ -226,7 +226,7 @@ function createBaseDeps(overrides = {}) {
         visible: true,
         refreshToken: 12,
         pausedDashboard: false,
-        selectedOpportunity: { ...options.opportunity, label: '机会 7' },
+        selectedOpportunity: { ...options.opportunity, label: '机会 7', groupName: 'WBTC eth <-> arb' },
         opportunityId: options.opportunityId,
         cards: [{ inputAmount: options.baseAmount, requestVersion: 0, rows: [{ id: 'row-1' }] }],
         editingInputIndex: null
@@ -249,7 +249,7 @@ function createBaseDeps(overrides = {}) {
   controller.open('opp-1');
   controller.bindChromeEvents();
   refs.multiLinksButton.listeners.click({});
-  assert.ok(calls.some((call) => call[0] === 'buildMultiLinks' && call[1] === 1 && call[2] === '' && call[3] === undefined));
+  assert.ok(calls.some((call) => call[0] === 'buildMultiLinks' && call[1] === 1 && call[2] === 'WBTC eth <-> arb' && call[3] === undefined));
   assert.ok(calls.some((call) => call[0] === 'copyText' && String(call[1]).startsWith('chrome-extension://kopjcgdfdbflnmmjplaefilbjjagiakb/open.html?payload=')));
   assert.ok(calls.some((call) => call[0] === 'toast' && call[1] === '已复制多链接'));
 }

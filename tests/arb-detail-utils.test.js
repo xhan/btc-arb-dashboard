@@ -12,6 +12,8 @@ const {
   buildArbDetailChartPreviewSignature,
   buildArbOpportunityChartHref,
   buildOpenMultiLinksUrl,
+  resolveOpenMultiLinksGroupName,
+  resolveOpenMultiLinksColorForGroupName,
   resolveOpenMultiLinksColorForChain,
   buildArbDetailMultiLinksUrl,
   resolveArbOpportunityBaseAmount,
@@ -885,6 +887,12 @@ assert.deepStrictEqual(
 assert.strictEqual(resolveOpenMultiLinksColorForChain('arbitrum'), 'cyan');
 assert.strictEqual(resolveOpenMultiLinksColorForChain('starknet'), 'orange');
 assert.strictEqual(resolveOpenMultiLinksColorForChain('unknown'), 'blue');
+assert.strictEqual(resolveOpenMultiLinksGroupName(' WBTC eth <-> arb '), 'WBTC');
+assert.strictEqual(resolveOpenMultiLinksGroupName('PYUSD - USDC'), 'PYUSD');
+assert.strictEqual(resolveOpenMultiLinksGroupName('   '), '');
+assert.strictEqual(resolveOpenMultiLinksColorForGroupName('WBTC eth <-> arb'), 'yellow');
+assert.strictEqual(resolveOpenMultiLinksColorForGroupName('PYUSD - USDC'), 'blue');
+assert.strictEqual(resolveOpenMultiLinksColorForGroupName('   '), 'blue');
 
 const detailMultiLinksUrl = buildArbDetailMultiLinksUrl([
   {
@@ -900,15 +908,35 @@ const detailMultiLinksUrl = buildArbDetailMultiLinksUrl([
     inputAmount: 2
   }
 ], {
-  name: ''
+  name: 'WBTC eth <-> arb'
 });
 assert.deepStrictEqual(
   decodeOpenMultiLinksPayload(detailMultiLinksUrl),
   {
-    color: 'cyan',
+    name: 'WBTC',
+    color: 'yellow',
     links: [
       'https://swap.defillama.com/?chain=arbitrum&from=0xaaa&tab=swap&to=0xbbb',
       'https://jup.ag/?sell=So11111111111111111111111111111111111111112&buy=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+    ]
+  }
+);
+
+assert.deepStrictEqual(
+  decodeOpenMultiLinksPayload(buildArbDetailMultiLinksUrl([
+    {
+      chain: 'ethereum',
+      fromTokenAddress: '0xaaa',
+      toTokenAddress: '0xbbb',
+      inputAmount: 1
+    }
+  ], {
+    name: '   '
+  })),
+  {
+    color: 'blue',
+    links: [
+      'https://swap.defillama.com/?chain=ethereum&from=0xaaa&tab=swap&to=0xbbb'
     ]
   }
 );

@@ -407,7 +407,11 @@
           nextOpportunityIdsByTargetKey,
           cycle,
           items.length > 1 ? `机会 ${index + 1}` : '',
-          { section: `fixed:${rule && rule.id || ''}`, alertPreset: { type: 'path' } }
+          {
+            section: `fixed:${rule && rule.id || ''}`,
+            groupName: String(rule && rule.title || '').trim(),
+            alertPreset: { type: 'path' }
+          }
         )
       });
     }

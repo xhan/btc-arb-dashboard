@@ -382,8 +382,9 @@
 
     function copyMultiLinks() {
       const rows = Array.isArray(state.cards[0]?.rows) ? state.cards[0].rows : [];
+      const opportunity = state.selectedOpportunity || {};
       const url = arbDetailUtils.buildArbDetailMultiLinksUrl(rows, {
-        name: ''
+        name: opportunity.groupName || opportunity.label || ''
       });
       if (!url) {
         deps.showCopyToast('暂无可复制多链接');
