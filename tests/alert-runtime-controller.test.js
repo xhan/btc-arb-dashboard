@@ -24,10 +24,22 @@ function createPathAlertRuntimeState() {
   let forceImmediate = false;
   const map = new Map();
   return {
-    get: (key) => map.get(key),
+    get: (key) => map.get(key) || null,
     getState: () => map,
     isForceImmediateEnabled: () => forceImmediate,
-    pruneInactive: () => {},
+    pruneInactive(alerts) {
+      const activeIds = new Set(
+        (Array.isArray(alerts) ? alerts : [])
+          .filter((alert) => alert && alert.id && alert.enabled !== false)
+          .map((alert) => alert.id)
+      );
+      for (const alertId of Array.from(map.keys())) {
+        if (!activeIds.has(alertId)) {
+          map.delete(alertId);
+        }
+      }
+      return map;
+    },
     reset(options = {}) {
       forceImmediate = options.forceImmediate === true;
       map.clear();
@@ -306,6 +318,37 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
+  const base = createBaseDeps();
+  const { config, deps } = createBaseDeps({
+    arbPathConfig: {
+      watchItems: [
+        { title: 'watched', type: 'fixed-rule', ruleId: 'fixed:watched' }
+      ]
+    },
+    arbPathConfigUtils,
+    dashboardRuntimeUtils: {
+      ...base.deps.dashboardRuntimeUtils,
+      getActivePathAlertEvaluationAlerts: (alertConfig) => (
+        (alertConfig.alerts || []).filter((alert) => alert && alert.enabled !== false && alert.target && alert.target.type !== 'quote')
+      )
+    }
+  });
+  config.alerts = [
+    {
+      id: 'stale-unwatched',
+      enabled: true,
+      target: { type: 'rule', ruleKind: 'fixed', ruleId: 'fixed:unwatched' }
+    }
+  ];
+  deps.pathAlertRuntimeState.set('stale-unwatched', { isSoundActive: true });
+  const controller = createAlertRuntimeController(deps);
+
+  controller.evaluatePathAlertsOnce();
+
+  assert.strictEqual(deps.pathAlertRuntimeState.get('stale-unwatched'), null);
+}
+
+{
   const unwatchedQuoteAlert = {
     id: 'unwatched-quote',
     target: {
@@ -348,6 +391,91 @@ function createBaseDeps(overrides = {}) {
     }
   });
   const controller = createAlertRuntimeController(deps);
+  deps.pathAlertRuntimeState.set('unwatched-quote', { status: 'cooldown' });
 
   controller.checkPriceForAlerts({ id: 101 });
+
+  assert.strictEqual(deps.pathAlertRuntimeState.get('unwatched-quote'), null);
 }
+
+{
+  const base = createBaseDeps();
+  const { config, deps } = createBaseDeps({
+    arbPathConfig: {
+      watchItems: [
+        { title: 'missing quote watch', type: 'quote-price', quoteId: 202, direction: 'forward' }
+      ]
+    },
+    arbPathConfigUtils,
+    dashboardRuntimeUtils: {
+      ...base.deps.dashboardRuntimeUtils,
+      findDashboardQuoteById: () => null,
+      getActivePathAlertEvaluationAlerts: () => []
+    },
+    getDashboardState: () => []
+  });
+  config.alerts = [
+    {
+      id: 'missing-quote-alert',
+      enabled: true,
+      target: {
+        type: 'quote',
+        quoteId: 202,
+        direction: 'forward',
+        ruleKind: 'targetAbove',
+        value: 1
+      }
+    }
+  ];
+  deps.pathAlertRuntimeState.set('missing-quote-alert', { status: 'cooldown' });
+  const controller = createAlertRuntimeController(deps);
+
+  controller.evaluatePathAlertsOnce();
+
+  assert.strictEqual(deps.pathAlertRuntimeState.get('missing-quote-alert'), null);
+}
+
+(async () => {
+  const audioCalls = [];
+  const panelCalls = [];
+  const base = createBaseDeps();
+  const { deps } = createBaseDeps({
+    alertLogUiUtils: {
+      ...base.deps.alertLogUiUtils,
+      resolveAlertSettingsChangeAction: () => ({
+        type: 'set-force-immediate',
+        checked: false
+      })
+    },
+    arbAlertBridgeRuntime: {
+      refreshArbPanel: () => {
+        panelCalls.push('refreshPanel');
+        return true;
+      }
+    },
+    audioUtils: {
+      syncLoopingAudio: (audioEl, shouldPlay) => {
+        audioCalls.push([audioEl, shouldPlay]);
+      }
+    },
+    pathAlertUtils: {
+      ...base.deps.pathAlertUtils,
+      createPathAlertConfigClient: () => ({
+        load: async () => base.config,
+        loadStrict: async () => base.config
+      })
+    }
+  });
+  const controller = createAlertRuntimeController(deps);
+  deps.pathAlertRuntimeState.set('active-sound', { isSoundActive: true });
+  deps.pathAlertRuntimeState.setForceImmediate(true);
+
+  controller.handleAlertSettingsChange({});
+  await Promise.resolve();
+
+  assert.deepStrictEqual(panelCalls, ['refreshPanel']);
+  assert.deepStrictEqual(audioCalls, [[undefined, false]]);
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

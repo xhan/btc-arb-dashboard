@@ -11,7 +11,7 @@ assert.strictEqual(config.CHART_AUTO_REFRESH_INTERVAL_MS, 5000);
 assert.strictEqual(config.FLOATING_PANEL_BASE_Z_INDEX, 2100);
 assert.strictEqual(config.DATA_TERMINAL_UPDATE_DELAY_MS, 1000);
 assert.strictEqual(config.DEFAULT_QUOTE_DISPLAY_MODE, 'rate');
-assert.strictEqual(config.ARB_PANEL_UPDATE_DELAY_MS, 800);
+assert.strictEqual(config.ARB_PANEL_UPDATE_DELAY_MS, 500);
 assert.strictEqual(config.ARB_DETAIL_REFRESH_INTERVAL_MS, 2500);
 assert.strictEqual(config.MUTED_STATE_VISIBLE_REFRESH_MS, 1000);
 assert.strictEqual(config.MUTED_STATE_HIDDEN_MAX_REFRESH_MS, 60000);

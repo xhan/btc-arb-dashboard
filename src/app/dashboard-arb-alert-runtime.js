@@ -213,6 +213,7 @@
       pathAlertNotificationUtils: options.pathAlertNotificationUtils,
       pathAlertPageUtils: options.pathAlertPageUtils,
       pathAlertRuleDefinitions,
+      pathAlertMarketChangeDelayMs: options.updateDelayMs,
       pathAlertUtils: options.pathAlertUtils,
       quoteDisplayUtils: options.quoteDisplayUtils,
       quoteStateRuntime: options.quoteStateRuntime,

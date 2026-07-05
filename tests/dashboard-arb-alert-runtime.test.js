@@ -186,6 +186,7 @@ assert.strictEqual(panelOptions.getAlertConfig(), alertConfig);
 assert.strictEqual(alertOptions.arbAlertBridgeRuntime.id, 'bridge');
 assert.strictEqual(alertOptions.arbPathConfig.id, 'config');
 assert.strictEqual(alertOptions.arbPathConfigUtils.id, 'config-utils');
+assert.strictEqual(alertOptions.pathAlertMarketChangeDelayMs, 1000);
 assert.strictEqual(alertOptions.applyFloatingPanelDisplay(), 'display');
 assert.strictEqual(alertOptions.buildLiveQuoteLabel(), 'live-label');
 assert.deepStrictEqual(alertOptions.findQuoteById(42), { id: 42 });

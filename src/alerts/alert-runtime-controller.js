@@ -663,10 +663,6 @@
       body.addEventListener('keydown', unlockAudio, { once: true });
     }
 
-    function pruneInactiveAlertRuntimeState() {
-      pathAlertRuntimeState.pruneInactive(pathAlertConfig && pathAlertConfig.alerts);
-    }
-
     function filterWatchedPathAlertEvaluationAlerts(alerts) {
       if (arbPathConfigUtils && typeof arbPathConfigUtils.filterWatchedRuleAlerts === 'function') {
         return arbPathConfigUtils.filterWatchedRuleAlerts(alerts, arbPathConfig);
@@ -685,6 +681,29 @@
         return arbPathConfigUtils.filterWatchedQuoteAlerts(alerts, arbPathConfig);
       }
       return Array.isArray(alerts) ? alerts : [];
+    }
+
+    function getActiveWatchedRuntimeAlerts() {
+      const alerts = Array.isArray(pathAlertConfig && pathAlertConfig.alerts)
+        ? pathAlertConfig.alerts
+        : [];
+      const hasDashboardQuote = typeof dashboardRuntimeUtils.findDashboardQuoteById === 'function'
+        ? (quoteId) => Boolean(dashboardRuntimeUtils.findDashboardQuoteById(getDashboardState(), quoteId))
+        : () => true;
+      const watchedQuoteAlerts = filterWatchedQuoteAlerts(alerts.filter((alert) => (
+        alert
+        && alert.id
+        && alert.enabled !== false
+        && alert.target
+        && alert.target.type === 'quote'
+      ))).filter((alert) => (
+        hasDashboardQuote(alert.target.quoteId)
+      ));
+      return getActiveWatchedPathAlertEvaluationAlerts().concat(watchedQuoteAlerts);
+    }
+
+    function pruneInactiveAlertRuntimeState() {
+      pathAlertRuntimeState.pruneInactive(getActiveWatchedRuntimeAlerts());
     }
 
     function hasActiveWatchedPathAlertEvaluationTarget() {
@@ -1090,8 +1109,10 @@
       renderAlertSettingsPanel();
       try {
         pathAlertRuntimeState.reset({ forceImmediate: false });
+        updateAlertSoundState();
         pathAlertConfig = await pathAlertConfigClient.loadStrict();
         restartPathAlertScheduler();
+        refreshArbPanel();
       } finally {
         pathAlertReloading = false;
         renderAlertSettingsPanel();
@@ -1185,6 +1206,7 @@
       domRenderUtils.applyQuoteAlertHighlightUi(itemEl, uiUpdate);
       quoteStateRuntime.setUiState(quote.id, uiUpdate.nextState);
       domRenderUtils.applyQuoteAlertDismissButtonState(resultDiv, uiUpdate.nextState, quote.id, { documentImpl });
+      pruneInactiveAlertRuntimeState();
       updateAlertSoundState();
     }
 
