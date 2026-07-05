@@ -483,7 +483,7 @@ module.exports = {
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x004E9C3EF86bc1ca1f0bB5C7662861Ee93350568",
-          "paused": false,
+          "paused": true,
           "showInverse": false,
           "requestChannelId": "ch1"
         },
@@ -495,7 +495,7 @@ module.exports = {
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0x93919784C523f39CACaa98Ee0a9d96c3F32b593e",
           "showInverse": true,
-          "paused": false,
+          "paused": true,
           "requestChannelId": "ch1"
         },
         {
@@ -506,7 +506,7 @@ module.exports = {
           "fromToken": "0x0555E30da8f98308EdB960aa94C0Db47230d2B9c",
           "toToken": "0xC3827A4BC8224ee2D116637023b124CED6db6e90",
           "showInverse": false,
-          "paused": false,
+          "paused": true,
           "requestChannelId": "ch1"
         },
         {
@@ -551,7 +551,10 @@ module.exports = {
           "preferredSource": "Kyber",
           "fromToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
           "toToken": "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3",
-          "showInverse": true
+          "showInverse": true,
+          "kyberExcludedSources": [
+            "clear"
+          ]
         },
         {
           "id": 1778105611291,
@@ -1030,7 +1033,7 @@ module.exports = {
           "preferredSource": "Kyber",
           "fromToken": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
           "toToken": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
-          "showInverse": false,
+          "showInverse": true,
           "requestChannelId": "ch1"
         },
         {

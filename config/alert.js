@@ -7,7 +7,7 @@ module.exports = {
     "pathAlertEvalIntervalMs": 1000,
     "defaultCooldownSec": 180,
     "changedLegMinBp": 0.1,
-    "localSoundEnabled": true,
+    "localSoundEnabled": false,
     "webhookEnabled": false,
     "dayAppEnabled": false,
     "telegramEnabled": true,
