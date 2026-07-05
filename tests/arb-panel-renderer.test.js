@@ -251,7 +251,8 @@ const quotePriceHtml = renderArbGrid({
             priceText: '1.00042',
             metaText: 'Ethereum · USDT/USDe',
             alertText: '报警 延迟13s >= 1.0008',
-            statusText: ''
+            statusText: '',
+            triggered: true
           },
           {
             entryType: 'quote-price',
@@ -259,7 +260,8 @@ const quotePriceHtml = renderArbGrid({
             priceText: '--',
             metaText: 'Ethereum · cbBTC/syBTC',
             statusText: '等待报价',
-            muted: true
+            muted: true,
+            triggered: false
           }
         ]
       }
@@ -268,10 +270,12 @@ const quotePriceHtml = renderArbGrid({
   isMeaningfulPath: () => false
 });
 
-assert.ok(quotePriceHtml.includes('class="arb-opportunity arb-opportunity-quote-price"'));
+assert.ok(quotePriceHtml.includes('class="arb-opportunity arb-opportunity-quote-price is-triggered"'));
+assert.ok(quotePriceHtml.includes('class="arb-opportunity arb-opportunity-quote-price is-muted"'));
 assert.ok(quotePriceHtml.includes('ETH USDT/USDe 汇率高于'));
 assert.ok(quotePriceHtml.includes('class="arb-quote-price-value">1.00042</div>'));
-assert.ok(quotePriceHtml.includes('Ethereum · USDT/USDe'));
+assert.ok(!quotePriceHtml.includes('Ethereum · USDT/USDe'));
+assert.ok(!quotePriceHtml.includes('Ethereum · cbBTC/syBTC'));
 assert.ok(quotePriceHtml.includes('报警 延迟13s &gt;= 1.0008'));
 assert.ok(quotePriceHtml.includes('等待报价'));
 assert.ok(!quotePriceHtml.includes('正向'));

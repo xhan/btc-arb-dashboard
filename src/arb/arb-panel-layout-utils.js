@@ -699,6 +699,24 @@
     return [stateText, modeText, buildQuoteAlertRuleText(alert)].filter(Boolean).join(' ');
   }
 
+  function isQuoteAlertTriggered(alert, value) {
+    if (!alert || typeof alert !== 'object' || alert.enabled === false) return false;
+    const currentValue = Number(value);
+    const thresholdValue = Number(alert.value);
+    if (!Number.isFinite(currentValue) || !Number.isFinite(thresholdValue)) return false;
+    if (alert.ruleKind === 'targetAbove') return currentValue >= thresholdValue;
+    if (alert.ruleKind === 'targetBelow') return currentValue <= thresholdValue;
+    if (alert.ruleKind === 'percentUp' || alert.ruleKind === 'percentDown') {
+      const basePrice = Number(alert.basePrice);
+      if (!Number.isFinite(basePrice) || basePrice <= 0) return false;
+      const changePercent = ((currentValue - basePrice) / basePrice) * 100;
+      return alert.ruleKind === 'percentUp'
+        ? changePercent >= thresholdValue
+        : changePercent <= -thresholdValue;
+    }
+    return false;
+  }
+
   function buildQuotePriceWatchDisplayEntry(options = {}) {
     const hasQuote = options.hasQuote === true;
     const hasValue = options.value !== null && options.value !== undefined;
@@ -712,9 +730,9 @@
       entryType: 'quote-price',
       title: String(options.title || ''),
       priceText: hasValue ? String(options.priceText) : '--',
-      metaText: [options.chainLabel, options.pairLabel].filter(Boolean).join(' · '),
       statusText,
-      muted: Boolean(statusText)
+      muted: Boolean(statusText),
+      triggered: !statusText && isQuoteAlertTriggered(options.alert, options.value)
     };
     const alertText = buildQuoteAlertText(options.alert);
     if (alertText) entry.alertText = alertText;
@@ -727,8 +745,6 @@
     const getQuoteState = typeof options.getQuoteState === 'function' ? options.getQuoteState : () => ({});
     const resolveValue = typeof options.resolveValue === 'function' ? options.resolveValue : () => null;
     const isQuotePaused = typeof options.isQuotePaused === 'function' ? options.isQuotePaused : () => false;
-    const buildPairLabel = typeof options.buildPairLabel === 'function' ? options.buildPairLabel : () => '';
-    const formatChainLabel = typeof options.formatChainLabel === 'function' ? options.formatChainLabel : formatDefaultChainLabel;
     const formatPrice = typeof options.formatPrice === 'function' ? options.formatPrice : (value) => value;
     const opportunities = watchItems
       .map((item) => {
@@ -743,8 +759,6 @@
           value,
           priceText: value == null ? '--' : formatPrice(value, item, state, quote),
           isPaused: hasQuote ? isQuotePaused(quote, item, state) : false,
-          chainLabel: hasQuote ? formatChainLabel(quote.chain, quote, item, state) : '未知链',
-          pairLabel: hasQuote ? buildPairLabel(quote, state, item) : `报价 #${String(item.quoteId)}`,
           alert: item.alert
         });
       })

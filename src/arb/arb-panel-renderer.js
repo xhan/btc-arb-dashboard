@@ -43,9 +43,9 @@
   function renderQuotePriceOpportunity(entry) {
     const classNames = ['arb-opportunity', 'arb-opportunity-quote-price'];
     if (entry && entry.muted === true) classNames.push('is-muted');
+    if (entry && entry.triggered === true) classNames.push('is-triggered');
     const title = entry && entry.title ? String(entry.title) : '交易对价格';
     const priceText = entry && entry.priceText ? String(entry.priceText) : '--';
-    const metaText = entry && entry.metaText ? String(entry.metaText) : '';
     const alertText = entry && entry.alertText ? String(entry.alertText) : '';
     const statusText = entry && entry.statusText ? String(entry.statusText) : '';
     const statusHtml = statusText
@@ -62,7 +62,6 @@
         </div>
         <div class="arb-quote-price-value">${escapeHtml(priceText)}</div>
         ${alertHtml}
-        ${metaText ? `<div class="arb-quote-price-meta">${escapeHtml(metaText)}</div>` : ''}
       </div>
     `;
   }

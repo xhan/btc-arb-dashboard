@@ -874,17 +874,17 @@ assert.deepStrictEqual(
       entryType: 'quote-price',
       title: '等待报价测试',
       priceText: '--',
-      metaText: 'Ethereum · cbBTC/syBTC',
       statusText: '等待报价',
-      muted: true
+      muted: true,
+      triggered: false
     },
     {
       entryType: 'quote-price',
       title: '暂停测试',
       priceText: '1',
-      metaText: 'Ethereum · USDT/USDe',
       statusText: '报价暂停',
-      muted: true
+      muted: true,
+      triggered: false
     }
   ]
 );
@@ -897,7 +897,7 @@ assert.strictEqual(
     resolveValue: (_item, state) => Number(state.lastRawPrice),
     buildPairLabel: () => 'WBTC/cbBTC'
   }).opportunities[0].metaText,
-  'arb · WBTC/cbBTC'
+  undefined
 );
 
 assert.deepStrictEqual(
@@ -921,21 +921,69 @@ assert.deepStrictEqual(
         entryType: 'quote-price',
         title: '正向关注',
         priceText: '1.2346',
-        metaText: 'ETHEREUM · USDT/USDe',
         statusText: '',
-        muted: false
+        muted: false,
+        triggered: false
       },
       {
         entryType: 'quote-price',
         title: '缺失关注',
         priceText: '--',
-        metaText: '未知链 · 报价 #404',
         statusText: '等待报价',
-        muted: true
+        muted: true,
+        triggered: false
       }
     ],
     emptyText: '暂无关注价格'
   }
+);
+
+assert.deepStrictEqual(
+  buildQuotePriceWatchSection({
+    watchItems: [
+      {
+        title: '已触发高于',
+        quoteId: 41,
+        direction: 'forward',
+        alert: { enabled: true, ruleKind: 'targetAbove', value: 1.2 }
+      },
+      {
+        title: '未触发高于',
+        quoteId: 42,
+        direction: 'forward',
+        alert: { enabled: true, ruleKind: 'targetAbove', value: 1.2 }
+      },
+      {
+        title: '关闭报警',
+        quoteId: 43,
+        direction: 'forward',
+        alert: { enabled: false, ruleKind: 'targetBelow', value: 1.2 }
+      },
+      {
+        title: '上涨触发',
+        quoteId: 44,
+        direction: 'forward',
+        alert: { enabled: true, ruleKind: 'percentUp', value: 1, basePrice: 1 }
+      }
+    ],
+    findQuote: (item) => ({ id: item.quoteId, chain: 'ethereum' }),
+    getQuoteState: (quote) => ({
+      lastRawPrice: quote.id === 41 ? 1.3 : quote.id === 42 ? 1.1 : quote.id === 43 ? 1 : 1.02
+    }),
+    resolveValue: (_item, state) => Number(state.lastRawPrice),
+    isQuotePaused: () => false,
+    buildPairLabel: () => 'USDT/USDe',
+    formatPrice: (value) => String(value)
+  }).opportunities.map((entry) => ({
+    title: entry.title,
+    triggered: entry.triggered
+  })),
+  [
+    { title: '已触发高于', triggered: true },
+    { title: '未触发高于', triggered: false },
+    { title: '关闭报警', triggered: false },
+    { title: '上涨触发', triggered: true }
+  ]
 );
 
 assert.deepStrictEqual(
