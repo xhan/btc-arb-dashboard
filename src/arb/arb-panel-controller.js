@@ -66,7 +66,6 @@
     )
       ? domRenderUtils.createRenderInteractionDeferralRuntime({
         getTarget: () => refs.arbPathContent,
-        interactionRuntime: options.interactionRuntime,
         setTimeout: setTimer,
         clearTimeout: clearTimer,
         trackFocus: false,

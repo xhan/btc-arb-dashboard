@@ -12,6 +12,11 @@ let aliasRulesBuildCount = 0;
 let arbPanelDeferralOptions = null;
 let stableRendererOptions = null;
 let contentInteractionHolding = false;
+let sharedInteractionHolding = false;
+const sharedInteractionRuntime = {
+  addIdleListener: () => true,
+  shouldDeferRender: () => sharedInteractionHolding
+};
 
 const arbPanelCache = {
   getRuleSnapshot() {
@@ -174,7 +179,10 @@ const controller = createArbPanelController({
       arbPanelDeferralOptions = options;
       return {
         bind: () => true,
-        shouldDeferRender: () => contentInteractionHolding
+        shouldDeferRender: () => (
+          contentInteractionHolding
+          || Boolean(options.interactionRuntime && options.interactionRuntime.shouldDeferRender())
+        )
       };
     },
     createStableHtmlRenderer: (options) => {
@@ -197,6 +205,7 @@ const controller = createArbPanelController({
   getQuoteMarketState: () => ({}),
   getQuoteMarketStateMap: () => ({}),
   globalPathSourceSelectors: [],
+  interactionRuntime: sharedInteractionRuntime,
   isQuotePaused: () => false,
   mutedPathLegUtils: {
     filterMutedCycles: (cycles) => cycles,
@@ -247,6 +256,9 @@ assert.strictEqual(controller.buildLiveQuoteLabel('ethereum', 'USDC', 'USDT', ' 
 assert.strictEqual(arbPanelDeferralOptions.trackFocus, false);
 documentImpl.activeElement = { id: 'focused-opportunity' };
 contentInteractionHolding = false;
+sharedInteractionHolding = true;
+assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), false);
+sharedInteractionHolding = false;
 assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), false);
 contentInteractionHolding = true;
 assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), true);
