@@ -248,6 +248,41 @@ assert.deepStrictEqual(holdCalls.slice(-2), [
   ['idle']
 ]);
 
+const crossTargetListeners = {};
+const releaseListeners = {};
+const releaseListenerOptions = {};
+const crossTargetRuntime = createRenderInteractionHoldRuntime({
+  releaseTarget: {
+    addEventListener(type, handler, listenerOptions) {
+      releaseListeners[type] = handler;
+      releaseListenerOptions[type] = listenerOptions;
+    }
+  },
+  releaseEventListenerOptions: { capture: true },
+  setTimeout(callback) {
+    callback();
+    return 1;
+  },
+  clearTimeout() {}
+});
+assert.strictEqual(crossTargetRuntime.bind({
+  addEventListener(type, handler) {
+    crossTargetListeners[type] = handler;
+  }
+}), true);
+assert.strictEqual(typeof releaseListeners.pointerup, 'function');
+assert.strictEqual(typeof releaseListeners.pointercancel, 'function');
+assert.strictEqual(typeof releaseListeners.keyup, 'function');
+assert.deepStrictEqual(releaseListenerOptions.pointerup, { capture: true });
+crossTargetListeners.pointerdown({});
+assert.strictEqual(crossTargetRuntime.isHolding(), true);
+releaseListeners.pointerup({});
+assert.strictEqual(crossTargetRuntime.isHolding(), false);
+crossTargetListeners.keydown({});
+assert.strictEqual(crossTargetRuntime.isHolding(), true);
+releaseListeners.keyup({});
+assert.strictEqual(crossTargetRuntime.isHolding(), false);
+
 const holdDeferredWrites = [];
 const holdDeferredTarget = { innerHTML: '' };
 const holdFlushRuntime = createRenderInteractionHoldRuntime({

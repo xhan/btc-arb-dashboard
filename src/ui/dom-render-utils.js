@@ -583,6 +583,8 @@
     const focusMode = options.trackFocus === 'editable' ? 'editable' : 'all';
     const trackFocus = options.trackFocus !== false;
     const eventListenerOptions = options.eventListenerOptions;
+    const configuredReleaseTarget = options.releaseTarget || null;
+    const releaseEventListenerOptions = options.releaseEventListenerOptions || eventListenerOptions;
     const idleListeners = [];
     let boundTarget = null;
     let idleTimer = null;
@@ -690,13 +692,16 @@
       if (!target || typeof target.addEventListener !== 'function') return false;
       if (boundTarget) return false;
       boundTarget = target;
+      const releaseTarget = configuredReleaseTarget && typeof configuredReleaseTarget.addEventListener === 'function'
+        ? configuredReleaseTarget
+        : target;
       target.addEventListener('pointerdown', pointerDown, eventListenerOptions);
-      target.addEventListener('pointerup', pointerUp, eventListenerOptions);
-      target.addEventListener('pointercancel', pointerUp, eventListenerOptions);
       target.addEventListener('focusin', focusIn, eventListenerOptions);
       target.addEventListener('focusout', focusOut, eventListenerOptions);
       target.addEventListener('keydown', keyDown, eventListenerOptions);
-      target.addEventListener('keyup', keyUp, eventListenerOptions);
+      releaseTarget.addEventListener('pointerup', pointerUp, releaseEventListenerOptions);
+      releaseTarget.addEventListener('pointercancel', pointerUp, releaseEventListenerOptions);
+      releaseTarget.addEventListener('keyup', keyUp, releaseEventListenerOptions);
       return true;
     }
 
@@ -719,6 +724,8 @@
       clearTimeout: options.clearTimeout,
       idleDelayMs: options.idleDelayMs,
       trackFocus: options.trackFocus,
+      releaseTarget: options.releaseTarget,
+      releaseEventListenerOptions: options.releaseEventListenerOptions,
       onIdle: options.onIdle
     });
     const sharedInteractionRuntime = options.interactionRuntime || null;

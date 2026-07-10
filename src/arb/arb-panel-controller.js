@@ -69,6 +69,8 @@
         setTimeout: setTimer,
         clearTimeout: clearTimer,
         trackFocus: false,
+        releaseTarget: documentImpl,
+        releaseEventListenerOptions: { capture: true },
         onIdle: () => {
           if (arbPanelHtmlRenderer && typeof arbPanelHtmlRenderer.flush === 'function') {
             arbPanelHtmlRenderer.flush(refs.arbPathContent);

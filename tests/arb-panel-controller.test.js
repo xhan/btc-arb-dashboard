@@ -267,6 +267,8 @@ assert.strictEqual(aliasRulesBuildCount, 1);
 assert.strictEqual(controller.buildLiveQuoteLabel('ethereum', 'USDC', 'USDT', ' spot'), 'Chain:ethereum:USDC->USDT spot');
 
 assert.strictEqual(arbPanelDeferralOptions.trackFocus, false);
+assert.strictEqual(arbPanelDeferralOptions.releaseTarget, documentImpl);
+assert.deepStrictEqual(arbPanelDeferralOptions.releaseEventListenerOptions, { capture: true });
 documentImpl.activeElement = { id: 'focused-opportunity' };
 contentInteractionHolding = false;
 sharedInteractionHolding = true;
