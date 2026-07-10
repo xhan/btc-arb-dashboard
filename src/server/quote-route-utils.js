@@ -1,3 +1,5 @@
+const quoteSourceRegistry = require('../quote/quote-source-registry');
+
 function buildDefaultQuoteErrorContext(body = {}) {
   const { chain, fromToken, toToken, amount } = body;
   return { chain, fromToken, toToken, amount: amount || 1 };
@@ -14,73 +16,25 @@ function buildSolanaQuoteErrorContext(body = {}) {
   return { chain: 'solana', fromToken, toToken, amount: amount || 1 };
 }
 
-const MARKET_QUOTE_ROUTES = [
-  {
-    routePath: '/api/get-0x-quote',
-    providerKey: 'zerox',
-    sourceKey: 'zerox',
-    logSource: 'ZEROX'
-  },
-  {
-    routePath: '/api/get-lifi-quote',
-    providerKey: 'lifi',
-    sourceKey: 'lifi',
-    logSource: 'LIFI',
-    buildErrorContext: buildLifiQuoteErrorContext
-  },
-  {
-    routePath: '/api/get-ekubo-quote',
-    providerKey: 'ekubo',
-    sourceKey: 'starknet',
-    logSource: 'EKUBO'
-  },
-  {
-    routePath: '/api/get-jupiter-quote',
-    providerKey: 'jupiter',
-    sourceKey: 'solana',
-    logSource: 'JUPITER',
-    buildErrorContext: buildSolanaQuoteErrorContext
-  },
-  {
-    routePath: '/api/get-kyber-quote',
-    providerKey: 'kyber',
-    sourceKey: 'kyber',
-    logSource: 'KYBER'
-  },
-  {
-    routePath: '/api/get-velora-quote',
-    providerKey: 'velora',
-    sourceKey: 'velora',
-    logSource: 'VELORA'
-  },
-  {
-    routePath: '/api/get-llama-paraswap-quote',
-    providerKey: 'llamaParaSwap',
-    sourceKey: 'llamaparaswap',
-    logSource: 'LLAMA_PARASWAP'
-  },
-  {
-    routePath: '/api/get-cetus-quote',
-    providerKey: 'cetus',
-    sourceKey: 'sui',
-    logSource: 'CETUS'
-  }
-];
+const ERROR_CONTEXT_BUILDERS = {
+  'cross-chain': buildLifiQuoteErrorContext,
+  solana: buildSolanaQuoteErrorContext
+};
 
-const CEX_QUOTE_ROUTES = [
-  {
-    routePath: '/api/get-bybit-quote',
-    providerKey: 'bybit',
-    logSource: 'BYBIT',
-    chainLabel: 'Bybit'
-  },
-  {
-    routePath: '/api/get-binance-quote',
-    providerKey: 'binance',
-    logSource: 'BINANCE',
-    chainLabel: 'Binance'
-  }
-];
+const MARKET_QUOTE_ROUTES = quoteSourceRegistry.getRouteSources('market').map((source) => ({
+  routePath: source.endpoint,
+  providerKey: source.providerKey,
+  sourceKey: source.sourceKey,
+  logSource: source.logSource,
+  buildErrorContext: ERROR_CONTEXT_BUILDERS[source.errorContextKind]
+}));
+
+const CEX_QUOTE_ROUTES = quoteSourceRegistry.getRouteSources('cex').map((source) => ({
+  routePath: source.endpoint,
+  providerKey: source.providerKey,
+  logSource: source.logSource,
+  chainLabel: source.chainLabel
+}));
 
 function registerMarketQuoteRoute({
   app,

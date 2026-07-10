@@ -1,29 +1,18 @@
 (function (root, factory) {
-  const chainDefaults = typeof module !== 'undefined' && module.exports
-    ? require('../shared/chain-defaults')
-    : root.ChainDefaults;
-  const api = factory(chainDefaults);
+  const quoteSourceRegistry = typeof module !== 'undefined' && module.exports
+    ? require('../quote/quote-source-registry')
+    : root.QuoteSourceRegistry;
+  const api = factory(quoteSourceRegistry);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
   root.RequestChannelUtils = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (quoteSourceRegistry) {
   const DEFAULT_REQUEST_CHANNEL_ID = 'default';
   const DEFAULT_REQUEST_CHANNEL_NAME = '默认通道';
   const MULTI_CHANNEL_ENABLED_STORAGE_KEY = 'dashboard-multi-channel-enabled';
-  const DEFAULT_INTERVALS = {
-    kyber: 170,
-    zerox: 110,
-    velora: 700,
-    llamaparaswap: 800,
-    lifi: 170,
-    bybit: 1000,
-    binance: 1000,
-    solana: 3500,
-    sui: 500,
-    starknet: 1000
-  };
-  const CHANNEL_AWARE_SOURCE_KEYS = ['kyber', 'zerox', 'velora', 'llamaparaswap', 'lifi', 'solana', 'starknet'];
+  const DEFAULT_INTERVALS = quoteSourceRegistry.buildDefaultIntervals();
+  const CHANNEL_AWARE_SOURCE_KEYS = quoteSourceRegistry.getChannelAwareSourceKeys();
 
   function normalizeString(value) {
     return typeof value === 'string' ? value.trim() : '';
@@ -38,31 +27,6 @@
       .replace(/'/g, '&#39;');
   }
 
-  function normalizeChain(chain) {
-    if (chainDefaults && typeof chainDefaults.normalizeChain === 'function') {
-      return chainDefaults.normalizeChain(chain);
-    }
-    return normalizeString(chain).toLowerCase();
-  }
-
-  function isEvmChain(chain) {
-    if (chainDefaults && typeof chainDefaults.isEvmChain === 'function') {
-      return chainDefaults.isEvmChain(chain);
-    }
-    const normalized = normalizeChain(chain);
-    const nonEvm = new Set(['solana', 'sui', 'starknet', 'bybit', 'binance']);
-    return !!normalized && !nonEvm.has(normalized);
-  }
-
-  function isCrossChainQuote(quote) {
-    if (chainDefaults && typeof chainDefaults.isCrossChainQuote === 'function') {
-      return chainDefaults.isCrossChainQuote(quote);
-    }
-    const fromChain = normalizeChain(quote && quote.chain);
-    const toChain = normalizeChain(quote && quote.toChain);
-    return Boolean(fromChain && toChain && fromChain !== toChain);
-  }
-
   function isChannelAwareSourceKey(sourceKey) {
     return CHANNEL_AWARE_SOURCE_KEYS.includes(normalizeString(sourceKey).toLowerCase());
   }
@@ -73,30 +37,7 @@
   }
 
   function getQueueSourceKeyForQuote(quote) {
-    const chain = String(quote && quote.chain ? quote.chain : '');
-    const normalized = normalizeChain(chain);
-    let sourceKey = 'kyber';
-
-    if (isCrossChainQuote(quote)) return 'lifi';
-    if (normalized === 'bybit') return 'bybit';
-    if (normalized === 'binance') return 'binance';
-    if (normalized === 'solana') return 'solana';
-    if (normalized === 'sui') return 'sui';
-    if (normalized === 'starknet') return 'starknet';
-
-    if (isEvmChain(chain)) {
-      if (quote && quote.preferredSource === 'Velora') {
-        sourceKey = 'velora';
-      } else if (quote && quote.preferredSource === 'Llama-ParaSwap') {
-        sourceKey = 'llamaparaswap';
-      } else if (quote && quote.preferredSource === '0x') {
-        sourceKey = 'zerox';
-      } else if (quote && quote.preferredSource === 'LI.FI') {
-        sourceKey = 'lifi';
-      }
-    }
-
-    return sourceKey;
+    return quoteSourceRegistry.resolveQueueSourceKeyForQuote(quote);
   }
 
   function supportsRequestChannelForQuote(quote) {

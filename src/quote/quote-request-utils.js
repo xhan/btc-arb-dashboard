@@ -2,7 +2,10 @@
   const chainDefaults = typeof module !== 'undefined' && module.exports
     ? require('../shared/chain-defaults')
     : root.ChainDefaults;
-  const api = factory(chainDefaults);
+  const quoteSourceRegistry = typeof module !== 'undefined' && module.exports
+    ? require('./quote-source-registry')
+    : root.QuoteSourceRegistry;
+  const api = factory(chainDefaults, quoteSourceRegistry);
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   }
@@ -10,34 +13,23 @@
   if (root && root.window && root.window !== root) {
     root.window.QuoteRequestUtils = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
-  const MARKET_QUOTE_REQUESTS = Object.freeze({
-    '0x': Object.freeze({ endpoint: '/api/get-0x-quote', source: '0x', errorMessage: '0x API Request Failed' }),
-    Velora: Object.freeze({ endpoint: '/api/get-velora-quote', source: 'Velora', errorMessage: 'Velora API Request Failed' }),
-    'Llama-ParaSwap': Object.freeze({ endpoint: '/api/get-llama-paraswap-quote', source: 'Llama-ParaSwap', errorMessage: 'Llama-ParaSwap API Request Failed' }),
-    'LI.FI': Object.freeze({ endpoint: '/api/get-lifi-quote', source: 'LI.FI', errorMessage: 'LI.FI API Request Failed', includeRouteMeta: true }),
-    Ekubo: Object.freeze({ endpoint: '/api/get-ekubo-quote', source: 'Ekubo', errorMessage: 'Ekubo API Request Failed' }),
-    Jupiter: Object.freeze({ endpoint: '/api/get-jupiter-quote', source: 'Jupiter', errorMessage: 'Jupiter API Request Failed' })
-  });
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults, quoteSourceRegistry) {
+  function buildBrowserRequestMap(requestType) {
+    return Object.freeze(Object.fromEntries(
+      quoteSourceRegistry.getBrowserRequestSources(requestType).map((source) => {
+        const config = {
+          endpoint: source.endpoint,
+          source: source.displayName
+        };
+        if (source.errorMessage) config.errorMessage = source.errorMessage;
+        if (source.includeRouteMeta === true) config.includeRouteMeta = true;
+        return [source.displayName, Object.freeze(config)];
+      })
+    ));
+  }
 
-  const CEX_ORDERBOOK_REQUESTS = Object.freeze({
-    Bybit: Object.freeze({ endpoint: '/api/get-bybit-quote', source: 'Bybit' }),
-    Binance: Object.freeze({ endpoint: '/api/get-binance-quote', source: 'Binance' })
-  });
-
-  const KYBER_SUPPORTED_CHAINS = Object.freeze([
-    'ethereum', 'bsc', 'arbitrum', 'polygon', 'optimism', 'avalanche',
-    'base', 'linea', 'mantle', 'sonic', 'berachain', 'ronin',
-    'unichain', 'hyperevm', 'plasma', 'etherlink', 'monad', 'megaeth',
-    'cronos', 'zksync', 'fantom', 'polygon-zkevm',
-    'scroll', 'aurora', 'bittorrent', 'velas', 'oasis', 'blast',
-    'moonbeam', 'boba', 'gnosis', 'celo', 'mode'
-  ]);
-
-  const ZEROX_SUPPORTED_CHAINS = Object.freeze([
-    'ethereum', 'optimism', 'bsc', 'polygon', 'base', 'arbitrum',
-    'avalanche', 'linea', 'scroll', 'mantle', 'blast', 'mode'
-  ]);
+  const MARKET_QUOTE_REQUESTS = buildBrowserRequestMap('market');
+  const CEX_ORDERBOOK_REQUESTS = buildBrowserRequestMap('cex');
 
   function normalizeString(value) {
     return typeof value === 'string' ? value.trim() : '';
@@ -114,11 +106,11 @@
   }
 
   function isKyberSupportedChain(chain) {
-    return KYBER_SUPPORTED_CHAINS.includes(normalizeChainKey(chain));
+    return quoteSourceRegistry.supportsChain('kyber', chain);
   }
 
   function isZeroxSupportedChain(chain) {
-    return ZEROX_SUPPORTED_CHAINS.includes(normalizeChainKey(chain));
+    return quoteSourceRegistry.supportsChain('zerox', chain);
   }
 
   function shouldSkipQuoteSource(source, quote, options = {}) {

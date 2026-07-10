@@ -114,6 +114,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/path-alerts/path-alert-page-utils.js"'));
     assert.ok(response.body.includes('src="src/shared/trading-pair-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-pause-utils.js"'));
+    assert.ok(response.body.includes('src="src/quote/quote-source-registry.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-request-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-display-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-spread-utils.js"'));
@@ -180,6 +181,12 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       response.body.indexOf('src="src/shared/chain-defaults.js"') < response.body.indexOf('src="src/quote/quote-request-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/quote/quote-source-registry.js"') < response.body.indexOf('src="src/quote/quote-request-utils.js"')
+    );
+    assert.ok(
+      response.body.indexOf('src="src/quote/quote-source-registry.js"') < response.body.indexOf('src="src/request-channel/request-channel-utils.js"')
     );
     assert.ok(
       response.body.indexOf('src="src/quote/quote-display-utils.js"') < response.body.indexOf('src="src/quote/quote-ui-controller.js"')
@@ -656,6 +663,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(dexLinkUtilsResponse.statusCode, 200);
     const quoteRequestUtilsResponse = await request('/src/quote/quote-request-utils.js');
     assert.strictEqual(quoteRequestUtilsResponse.statusCode, 200);
+    const quoteSourceRegistryResponse = await request('/src/quote/quote-source-registry.js');
+    assert.strictEqual(quoteSourceRegistryResponse.statusCode, 200);
     const quoteUiControllerResponse = await request('/src/quote/quote-ui-controller.js');
     assert.strictEqual(quoteUiControllerResponse.statusCode, 200);
     const quoteFetchControllerResponse = await request('/src/quote/quote-fetch-controller.js');
@@ -1265,12 +1274,18 @@ async function waitForServer(attempts = 12) {
     assert.ok(quoteFetchControllerResponse.body.includes('deps.activeFetchControllerRuntime.deleteIfCurrent(quote.id, controller);'));
     assert.ok(!appJsResponse.body.includes('let activeFetchControllers = new Map();'));
     assert.ok(quoteQueueRuntimeUtilsResponse.body.includes('function createActiveFetchControllerRuntime(options = {})'));
-    assert.ok(quoteRequestUtilsResponse.body.includes('const MARKET_QUOTE_REQUESTS = Object.freeze({'));
-    assert.ok(quoteRequestUtilsResponse.body.includes('const CEX_ORDERBOOK_REQUESTS = Object.freeze({'));
+    assert.ok(quoteSourceRegistryResponse.body.includes('const QUOTE_SOURCES = Object.freeze(['));
+    assert.ok(quoteSourceRegistryResponse.body.includes("endpoint: '/api/get-kyber-quote'"));
+    assert.ok(quoteSourceRegistryResponse.body.includes("providerKey: 'llamaParaSwap'"));
+    assert.ok(quoteRequestUtilsResponse.body.includes("require('./quote-source-registry')"));
+    assert.ok(quoteRequestUtilsResponse.body.includes("const MARKET_QUOTE_REQUESTS = buildBrowserRequestMap('market');"));
+    assert.ok(quoteRequestUtilsResponse.body.includes("const CEX_ORDERBOOK_REQUESTS = buildBrowserRequestMap('cex');"));
     assert.ok(quoteRequestUtilsResponse.body.includes('function buildQuoteRequestInput(quote, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function shouldSkipQuoteSource(source, quote, options = {})'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function isKyberSupportedChain(chain)'));
     assert.ok(quoteRequestUtilsResponse.body.includes('function isZeroxSupportedChain(chain)'));
+    assert.ok(requestChannelUtilsResponse.body.includes("require('../quote/quote-source-registry')"));
+    assert.ok(requestChannelUtilsResponse.body.includes('quoteSourceRegistry.resolveQueueSourceKeyForQuote(quote)'));
     assert.ok(!appJsResponse.body.includes('const KYBER_SUPPORTED_CHAINS = ['));
     assert.ok(!appJsResponse.body.includes('const ZEROX_CHAIN_IDS = {'));
     assert.ok(!appJsResponse.body.includes('function is0xSupported(chain)'));
@@ -2956,6 +2971,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(queueStatsResponse.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(queueStatsResponse.body.includes('src="src/shared/chain-label-config.js"'));
     assert.ok(queueStatsResponse.body.includes('src="src/shared/chain-defaults.js"'));
+    assert.ok(queueStatsResponse.body.includes('src="src/quote/quote-source-registry.js"'));
     assert.ok(queueStatsResponse.body.includes('src="src/request-channel/request-channel-utils.js"'));
     assert.ok(
       queueStatsResponse.body.indexOf('src="src/shared/chain-label-config.js"') < queueStatsResponse.body.indexOf('src="src/shared/chain-defaults.js"')
@@ -2965,6 +2981,9 @@ async function waitForServer(attempts = 12) {
     );
     assert.ok(
       queueStatsResponse.body.indexOf('src="src/shared/chain-defaults.js"') < queueStatsResponse.body.indexOf('src="src/request-channel/request-channel-utils.js"')
+    );
+    assert.ok(
+      queueStatsResponse.body.indexOf('src="src/quote/quote-source-registry.js"') < queueStatsResponse.body.indexOf('src="src/request-channel/request-channel-utils.js"')
     );
     assert.ok(
       queueStatsResponse.body.indexOf('src="src/request-channel/request-channel-utils.js"') < queueStatsResponse.body.indexOf('src="src/queue-stats/queue-stats-utils.js"')

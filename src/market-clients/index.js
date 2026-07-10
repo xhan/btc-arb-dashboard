@@ -21,6 +21,7 @@ const { createVeloraClient } = require('./providers/velora');
 const { createDefiLlamaProxyClient } = require('./providers/defillama-proxy');
 const { createZeroXClient } = require('./providers/zerox');
 const chainDefaults = require('../shared/chain-defaults');
+const quoteSourceRegistry = require('../quote/quote-source-registry');
 
 const ERC20_ABI = ['function decimals() view returns (uint8)', 'function symbol() view returns (string)'];
 const ERC20_DECIMALS_SELECTOR = '0x313ce567';
@@ -330,7 +331,7 @@ function createMarketClients(options) {
     getSuiTokenMeta,
     getSolanaTokenMeta,
     getStarknetTokenMeta: getEkuboTokenMeta,
-    providers: {
+    providers: quoteSourceRegistry.assertProviderRegistry({
       kyber: createKyberClient(providerDeps),
       zerox: createZeroXClient(providerDeps),
       velora: createVeloraClient({
@@ -410,7 +411,7 @@ function createMarketClients(options) {
         fetchOnce: options.fetchOnce,
         splitTradingPairSymbol: splitCompactTradingPairSymbol
       })
-    }
+    })
   };
 }
 
