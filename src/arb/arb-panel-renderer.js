@@ -147,7 +147,7 @@
     const clickableAttrs = opportunityId && entry && entry.clickable !== false
       ? ` data-arb-opportunity-id="${escapeAttr(opportunityId)}" role="button" tabindex="0"`
       : '';
-    const renderKey = opportunityId || String(entry && entry.renderKey || '');
+    const renderKey = String(entry && entry.renderKey || '') || opportunityId;
     if (!renderKey) throw new Error('套利机会缺少稳定 key');
 
     return `<div class="${className}" data-render-key="opportunity:${escapeAttr(renderKey)}"${clickableAttrs}>${labelHtml}${displayMessageHtml}${legHtml}</div>`;

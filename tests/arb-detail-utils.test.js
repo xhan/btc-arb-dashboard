@@ -37,6 +37,7 @@ const {
   getArbDetailBudgetTimestamp,
   recordArbDetailBudgetTimestamp,
   createArbDetailSourceBudgetRuntime,
+  buildArbOpportunityRenderKey,
   buildUniqueArbOpportunityId,
   shouldApplyArbDetailRequestVersion,
   applyArbDetailCardError,
@@ -1314,6 +1315,9 @@ const uniqueIdRateChanged = buildUniqueArbOpportunityId(new Set(), '固定路径
 const uniqueIdDifferentLeg = buildUniqueArbOpportunityId(new Set(), '固定路径', '机会 1', stableCycleC);
 const uniqueIdB = buildUniqueArbOpportunityId(new Set([uniqueIdA]), '固定路径', '机会 1', stableCycleA);
 const uniqueIdC = buildUniqueArbOpportunityId(new Set([uniqueIdA, uniqueIdB]), '固定路径', '机会 2', stableCycleA);
+const renderKeyA = buildArbOpportunityRenderKey('固定路径', stableCycleA);
+const renderKeyRateChanged = buildArbOpportunityRenderKey('固定路径', stableCycleB);
+const renderKeyDifferentLeg = buildArbOpportunityRenderKey('固定路径', stableCycleC);
 
 assert.strictEqual(uniqueIdA, uniqueIdRateChanged);
 assert.notStrictEqual(uniqueIdA, uniqueIdDifferentLeg);
@@ -1321,6 +1325,8 @@ assert.notStrictEqual(uniqueIdA, uniqueIdB);
 assert.notStrictEqual(uniqueIdA, uniqueIdC);
 assert.ok(uniqueIdA.includes(':机会 1:'));
 assert.ok(uniqueIdC.includes(':机会 2:'));
+assert.strictEqual(renderKeyA, renderKeyRateChanged);
+assert.notStrictEqual(renderKeyA, renderKeyDifferentLeg);
 
 assert.strictEqual(
   shouldApplyArbDetailRequestVersion(2, 2),

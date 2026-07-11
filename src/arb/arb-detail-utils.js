@@ -1241,11 +1241,9 @@
     return Boolean(containerEl && Number(containerEl.childElementCount) > 0);
   }
 
-  function buildArbOpportunityStableId(section, label, cycle) {
-    const safeSection = String(section || '');
-    const safeLabel = String(label || '');
+  function buildArbOpportunityLegSignature(cycle) {
     const legs = Array.isArray(cycle?.legs) ? cycle.legs : [];
-    const legSignature = legs
+    return legs
       .filter((leg) => !(leg && (leg.rule || leg.chain === '规则')))
       .map((leg) => [
         String(leg.chain || ''),
@@ -1255,6 +1253,16 @@
         leg.inverse ? '1' : '0'
       ].join(':'))
       .join('|');
+  }
+
+  function buildArbOpportunityRenderKey(section, cycle) {
+    return `arb-opportunity:${String(section || '')}:${buildArbOpportunityLegSignature(cycle)}`;
+  }
+
+  function buildArbOpportunityStableId(section, label, cycle) {
+    const safeSection = String(section || '');
+    const safeLabel = String(label || '');
+    const legSignature = buildArbOpportunityLegSignature(cycle);
     return `arb-opportunity:${safeSection}:${safeLabel}:${legSignature}`;
   }
 
@@ -1366,6 +1374,7 @@
     buildArbDetailChartLinkState,
     applyArbDetailChartLinkState,
     hasArbDetailChartPreviewContent,
+    buildArbOpportunityRenderKey,
     buildUniqueArbOpportunityId,
     shouldApplyArbDetailRequestVersion,
     applyArbDetailCardError

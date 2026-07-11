@@ -565,6 +565,7 @@
       label,
       cycle,
       opportunityId,
+      renderKey: String(meta.renderKey || ''),
       isAlertHighlighted: options.isAlertHighlighted === true,
       clickable: meta.clickable !== false,
       displayMessage: typeof meta.displayMessage === 'string' ? meta.displayMessage : '',

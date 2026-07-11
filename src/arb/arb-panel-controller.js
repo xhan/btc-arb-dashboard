@@ -136,7 +136,9 @@
         label || '',
         cycle
       );
-      const entry = arbPanelLayoutUtils.buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta);
+      const renderKey = options.arbDetailUtils.buildArbOpportunityRenderKey(meta.section || '', cycle);
+      const entryMeta = { ...meta, renderKey };
+      const entry = arbPanelLayoutUtils.buildArbOpportunityStoreEntry(opportunityId, cycle, label, entryMeta);
       targetMap.set(opportunityId, entry);
       arbPanelLayoutUtils.registerArbOpportunityHighlightTarget(
         highlightTargetMap,
@@ -147,7 +149,7 @@
         opportunityId
       );
 
-      return arbPanelLayoutUtils.buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {
+      return arbPanelLayoutUtils.buildArbOpportunityDisplayEntry(opportunityId, cycle, label, entryMeta, {
         isAlertHighlighted: options.arbOpportunityHighlightRuntime.isHighlighted(opportunityId)
       });
     }

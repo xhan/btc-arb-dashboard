@@ -780,6 +780,7 @@ assert.deepStrictEqual(
     label: '机会 1',
     cycle: opportunityCycle,
     opportunityId: 'op-1',
+    renderKey: '',
     isAlertHighlighted: true,
     clickable: false,
     displayMessage: 'line 1',

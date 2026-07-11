@@ -1960,8 +1960,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes("USDTB: 'USDtb'"));
     assert.ok(!appJsResponse.body.includes('fixed:gho-usdc'));
     assert.ok(!appJsResponse.body.includes('special:usdtb-bybit'));
-    assert.ok(arbPanelControllerResponse.body.includes('arbPanelLayoutUtils.buildArbOpportunityStoreEntry(opportunityId, cycle, label, meta)'));
-    assert.ok(arbPanelControllerResponse.body.includes('arbPanelLayoutUtils.buildArbOpportunityDisplayEntry(opportunityId, cycle, label, meta, {'));
+    assert.ok(arbPanelControllerResponse.body.includes("options.arbDetailUtils.buildArbOpportunityRenderKey(meta.section || '', cycle)"));
+    assert.ok(arbPanelControllerResponse.body.includes('arbPanelLayoutUtils.buildArbOpportunityStoreEntry(opportunityId, cycle, label, entryMeta)'));
+    assert.ok(arbPanelControllerResponse.body.includes('arbPanelLayoutUtils.buildArbOpportunityDisplayEntry(opportunityId, cycle, label, entryMeta, {'));
     assert.ok(arbPanelControllerResponse.body.includes('arbPanelLayoutUtils.buildQuotePriceWatchSection({'));
     assert.ok(!appJsResponse.body.includes('typeof window.ArbPanelLayoutUtils'));
     assert.ok(moduleRegistryResponse.body.includes('getArbPaths: ['));

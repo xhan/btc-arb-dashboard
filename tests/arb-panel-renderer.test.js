@@ -102,6 +102,7 @@ const html = renderTestArbGrid({
           {
             label: '机会 1',
             opportunityId: 'fixed-1',
+            renderKey: 'fixed-cycle-1',
             chartHref: '/charts?pairs=%5B%7B%22quoteId%22%3A1%2C%22direction%22%3A%22forward%22%7D%5D',
             displayMessage: '1) 0.50000     0.9998     💹 13.0‱\n\n2.30000     💰 0.00247     💹 10.7‱(MAX)',
             profitRate: 0.0012,
@@ -125,7 +126,7 @@ assert.ok(html.includes('固定路径'));
 assert.ok(html.includes('机会 1'));
 assert.ok(html.includes('data-render-key="column:test-column:0"'));
 assert.ok(html.includes('data-render-key="section:test-section:0:0"'));
-assert.ok(html.includes('data-render-key="opportunity:fixed-1"'));
+assert.ok(html.includes('data-render-key="opportunity:fixed-cycle-1"'));
 assert.ok(html.includes('data-arb-opportunity-id="fixed-1"'));
 assert.ok(!html.includes('class="arb-opportunity-chart-link"'));
 assert.ok(!html.includes('data-arb-opportunity-alert-id="fixed-1"'));
