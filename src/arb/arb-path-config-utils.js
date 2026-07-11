@@ -9,6 +9,32 @@
     return value === 'inverse' ? 'inverse' : 'forward';
   }
 
+  function resolveItemsBySelectors(items, selectors) {
+    const safeItems = Array.isArray(items) ? items : [];
+    const safeSelectors = Array.isArray(selectors) ? selectors : [];
+    const usedIndexes = new Set();
+    const matches = [];
+
+    for (const selector of safeSelectors) {
+      let matchIndex = -1;
+      if (Number.isInteger(selector) && selector >= 0 && selector < safeItems.length) {
+        matchIndex = selector;
+      } else {
+        const normalizedSelector = String(selector ?? '').trim();
+        if (!normalizedSelector) continue;
+        matchIndex = safeItems.findIndex((item) => (
+          String(item && item.name || '') === normalizedSelector
+          || String(item && item.id || '') === normalizedSelector
+        ));
+      }
+      if (matchIndex < 0 || usedIndexes.has(matchIndex)) continue;
+      usedIndexes.add(matchIndex);
+      matches.push(safeItems[matchIndex]);
+    }
+
+    return matches;
+  }
+
   function normalizeQuotePriceWatchItem(item) {
     if (!item || typeof item !== 'object') return null;
     if (item.type !== 'quote-price') return null;
@@ -221,6 +247,7 @@
 
   return {
     normalizeDirection,
+    resolveItemsBySelectors,
     normalizeFixedRuleWatchItem,
     normalizeQuotePriceWatchItem,
     normalizeSpecialRuleWatchItem,

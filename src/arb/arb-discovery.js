@@ -5,31 +5,6 @@
   }
   root.ArbDiscovery = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  function resolveItemsBySelectors(items, selectors) {
-    const sourceItems = Array.isArray(items) ? items : [];
-    const sourceSelectors = Array.isArray(selectors) ? selectors : [];
-    const usedIndexes = new Set();
-    const matches = [];
-
-    for (const selector of sourceSelectors) {
-      let matchIndex = -1;
-      if (Number.isInteger(selector) && selector >= 0 && selector < sourceItems.length) {
-        matchIndex = selector;
-      } else {
-        const normalizedSelector = String(selector == null ? '' : selector).trim();
-        if (!normalizedSelector) continue;
-        matchIndex = sourceItems.findIndex((item) => (
-          String(item && item.name || '') === normalizedSelector
-          || String(item && item.id || '') === normalizedSelector
-        ));
-      }
-      if (matchIndex < 0 || usedIndexes.has(matchIndex)) continue;
-      usedIndexes.add(matchIndex);
-      matches.push(sourceItems[matchIndex]);
-    }
-    return matches;
-  }
-
   function buildMutedPathLegsSignature(entries, buildLegKey) {
     const resolveKey = typeof buildLegKey === 'function'
       ? buildLegKey
@@ -144,7 +119,10 @@
       const allTopologyEdges = templateUtils.buildTopologyEdges(allQuotes, quoteStateById, null);
       const allTopologyEdgesWithRules = allTopologyEdges.concat(ruleEdges);
       const fixedTemplatesByRuleId = {};
-      const globalSourceCategories = resolveItemsBySelectors(dashboardState, globalPathSourceSelectors);
+      const globalSourceCategories = options.arbPathConfigUtils.resolveItemsBySelectors(
+        dashboardState,
+        globalPathSourceSelectors
+      );
       const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => (
         Array.isArray(category && category.quotes) ? category.quotes : []
       )));
@@ -292,7 +270,6 @@
 
   return {
     buildMutedPathLegsSignature,
-    createArbDiscovery,
-    resolveItemsBySelectors
+    createArbDiscovery
   };
 }));

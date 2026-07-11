@@ -47,6 +47,7 @@ const discovery = createArbDiscovery({
     ]
   },
   arbPathConfigUtils: {
+    resolveItemsBySelectors: require('../src/arb/arb-path-config-utils').resolveItemsBySelectors,
     getFixedRuleWatchItems: (config) => config.watchItems.filter((item) => item.type === 'fixed-rule'),
     getSpecialRuleWatchItems: (config) => config.watchItems.filter((item) => item.type === 'special-rule'),
     applySpecialRuleWatchItemsToRules: (rules) => rules

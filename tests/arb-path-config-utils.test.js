@@ -13,8 +13,27 @@ const {
   normalizeFixedRuleWatchItem,
   normalizeQuotePriceWatchItem,
   normalizeSpecialRuleWatchItem,
+  resolveItemsBySelectors,
   resolveQuotePriceValue
 } = require('../src/arb/arb-path-config-utils');
+
+const selectorItems = [
+  { id: 11, name: 'WBTC监控' },
+  { id: 12, name: 'LBTC监控' },
+  { id: 13, name: 'TBTC监控' },
+  { id: 14, name: '没太多流动性的BTC' },
+  { id: 15, name: 'USD监控' }
+];
+
+assert.deepStrictEqual(
+  resolveItemsBySelectors(selectorItems, [0, 2, '没太多流动性的BTC']).map((item) => item.name),
+  ['WBTC监控', 'TBTC监控', '没太多流动性的BTC']
+);
+assert.deepStrictEqual(
+  resolveItemsBySelectors(selectorItems, [12, 'USD监控']).map((item) => item.name),
+  ['LBTC监控', 'USD监控']
+);
+assert.deepStrictEqual(resolveItemsBySelectors(selectorItems, [99, '不存在']), []);
 
 const config = {
   watchItems: [
