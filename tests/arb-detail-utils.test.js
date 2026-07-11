@@ -1264,6 +1264,32 @@ assert.strictEqual(detailBudgetRuntime.recordTimestamp('Kyber', 1400), 1500);
 assert.strictEqual(detailBudgetRuntime.getTimestamp('Kyber'), 1500);
 assert.ok(detailBudgetRuntime.getState() instanceof Map);
 
+(async () => {
+  let now = 2000;
+  const waits = [];
+  const sharedBudgetRuntime = createArbDetailSourceBudgetRuntime();
+  sharedBudgetRuntime.recordTimestamp('Kyber', now);
+
+  const waitOptions = {
+    intervalMs: 100,
+    now: () => now,
+    wait: async (waitMs) => {
+      waits.push(waitMs);
+      now += waitMs;
+    }
+  };
+  await Promise.all([
+    sharedBudgetRuntime.waitForTurn('Kyber', waitOptions),
+    sharedBudgetRuntime.waitForTurn('Kyber', waitOptions)
+  ]);
+
+  assert.deepStrictEqual(waits, [100, 100]);
+  assert.strictEqual(sharedBudgetRuntime.getTimestamp('Kyber'), 2200);
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+
 const stableCycleA = {
   legs: [
     { chain: 'ethereum', from: 'cbBTC', to: 'WBTC', quoteId: '1', inverse: false, rate: 1.0022 },

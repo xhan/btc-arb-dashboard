@@ -2448,7 +2448,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbDetailControllerResponse.body.includes('arbDetailUtils.buildOpenArbDetailState(state, {'));
     assert.ok(arbDetailControllerResponse.body.includes('arbDetailUtils.buildClosedArbDetailState(state)'));
     assert.ok(arbDetailControllerResponse.body.includes('const sourceBudgetRuntime = arbDetailUtils.createArbDetailSourceBudgetRuntime();'));
-    assert.ok(arbDetailControllerResponse.body.includes('sourceBudgetRuntime.getTimestamp(source)'));
+    assert.ok(arbDetailControllerResponse.body.includes('sourceBudgetRuntime.waitForTurn(source, {'));
+    assert.ok(!arbDetailControllerResponse.body.includes('sourceBudgetQueueByKey'));
     assert.ok(appJsResponse.body.includes('recordSourceAttempt: recordArbDetailSourceAttempt,'));
     assert.ok(runtimeRefUtilsResponse.body.includes('recordArbDetailSourceAttempt: (source) => {'));
     assert.ok(quoteFetchControllerResponse.body.includes('deps.recordSourceAttempt(source);'));
@@ -2456,6 +2457,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function recordQuoteSourceBudgetTimestamp(source'));
     assert.ok(!appJsResponse.body.includes('quoteSourceLastRequestAtByIntervalKey'));
     assert.ok(arbDetailUtilsResponse.body.includes('function createArbDetailSourceBudgetRuntime()'));
+    assert.ok(arbDetailUtilsResponse.body.includes('async function waitForTurn(source, options = {})'));
     assert.ok(!appJsResponse.body.includes('详情渲染模块未加载'));
     assert.ok(!appJsResponse.body.includes('typeof utils.buildArbDetail'));
     assert.ok(!appJsResponse.body.includes('buildDetailInputAmounts(baseAmount) {'));

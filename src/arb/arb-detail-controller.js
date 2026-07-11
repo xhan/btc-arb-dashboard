@@ -7,12 +7,6 @@
     root.window.ArbDetailController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  function createAbortError() {
-    const aborted = new Error('Aborted');
-    aborted.name = 'AbortError';
-    return aborted;
-  }
-
   function createArbDetailController(deps = {}) {
     const arbDetailUtils = deps.arbDetailUtils;
     const arbDetailRefreshUtils = deps.arbDetailRefreshUtils;
@@ -153,19 +147,11 @@
     }
 
     async function waitForSourceBudget(source, signal) {
-      const intervalKey = arbDetailUtils.getArbDetailIntervalKey(source);
-      if (!intervalKey) return;
-      if (signal && signal.aborted) throw createAbortError();
-
-      const waitMs = arbDetailUtils.getArbDetailRateLimitDelay(
-        sourceBudgetRuntime.getTimestamp(source),
-        arbDetailUtils.resolveArbDetailIntervalMs(source, deps.getApiIntervals())
-      );
-
-      if (waitMs > 0) {
-        await sleep(waitMs);
-        if (signal && signal.aborted) throw createAbortError();
-      }
+      return sourceBudgetRuntime.waitForTurn(source, {
+        intervalMs: arbDetailUtils.resolveArbDetailIntervalMs(source, deps.getApiIntervals()),
+        signal,
+        wait: sleep
+      });
     }
 
     function destroyChartPreview() {
@@ -464,6 +450,100 @@
       restartRefresh();
     }
 
+    async function refreshCard(card, cardIndex, executableLegs, controller, refreshToken, options = {}) {
+      const requestVersion = Number(card.requestVersion) || 0;
+      let firstLegSettled = false;
+
+      function notifyFirstLegSettled() {
+        if (firstLegSettled || typeof options.onFirstLegSettled !== 'function') return;
+        firstLegSettled = true;
+        options.onFirstLegSettled();
+      }
+
+      try {
+        const startAmount = Number(card.inputAmount);
+        let rollingAmount = startAmount;
+        let rows = [];
+        let finalSymbol = '';
+
+        for (const [legIndex, leg] of executableLegs.entries()) {
+          const match = deps.findQuoteById(leg.quoteId);
+          if (!match || !match.quote) {
+            throw new Error('报价配置不存在');
+          }
+          const legInputAmount = rollingAmount;
+
+          const { data, successSource } = await deps.fetchQuoteByStrategy(match.quote, {
+            signal: controller.signal,
+            isInverseFetch: Boolean(leg.inverse),
+            amount: legInputAmount,
+            requestChannelId: 'default',
+            skipDelay: true,
+            beforeSourceAttempt: (source) => waitForSourceBudget(source, controller.signal)
+          });
+
+          if (!state.visible || state.refreshToken !== refreshToken) return false;
+          if (!arbDetailUtils.shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
+            return false;
+          }
+
+          if (arbDetailUtils.shouldSyncArbDetailSnapshotForCard(cardIndex)) {
+            syncPrimaryCardQuoteState(
+              match.quote,
+              data,
+              successSource,
+              Boolean(leg.inverse)
+            );
+          }
+
+          rollingAmount = data.finalAmountOut;
+          finalSymbol = data.symbols.to || finalSymbol;
+          rows.push(arbDetailUtils.buildArbDetailRow(match.quote, data, {
+            inputAmount: legInputAmount,
+            isInverseFetch: Boolean(leg.inverse),
+            formatChainLabel: deps.formatChainLabel,
+            formatAmount: (value) => `${formatDetailNumber(value)}`
+          }));
+          if (legIndex === 0) notifyFirstLegSettled();
+        }
+
+        if (typeof options.waitForPrimaryCard === 'function') {
+          await options.waitForPrimaryCard();
+        }
+        if (!arbDetailUtils.shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
+          return false;
+        }
+
+        const summary = arbDetailUtils.summarizeDetailResult(startAmount, rollingAmount);
+        if (cardIndex === 3) {
+          const baseRows = Array.isArray(state.cards[0]?.rows) ? state.cards[0].rows : [];
+          rows = arbDetailUtils.applyArbDetailRateDeltas(rows, baseRows);
+        }
+        card.rows = rows;
+        card.summary = {
+          ...summary,
+          symbol: finalSymbol
+        };
+        card.error = '';
+        renderCardContents();
+        return true;
+      } catch (error) {
+        if (error.name === 'AbortError') throw error;
+        if (!arbDetailUtils.shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
+          return false;
+        }
+        arbDetailUtils.applyArbDetailCardError(
+          state.cards,
+          cardIndex,
+          error.message || '详情报价失败'
+        );
+        renderCardContents();
+        return false;
+      } finally {
+        notifyFirstLegSettled();
+      }
+    }
+
     async function refreshCards(refreshToken) {
       const current = state.selectedOpportunity;
       if (!current || !current.cycle) return false;
@@ -475,101 +555,35 @@
       fetchController = controller;
 
       try {
-        for (const [cardIndex, card] of state.cards.entries()) {
-          if (!state.visible || state.refreshToken !== refreshToken) return;
-
-          const requestVersion = Number(card.requestVersion) || 0;
-
-          try {
-            const startAmount = Number(card.inputAmount);
-            let rollingAmount = startAmount;
-            let rows = [];
-            let finalSymbol = '';
-            let shouldSkipApply = false;
-
-            for (const leg of executableLegs) {
-              const match = deps.findQuoteById(leg.quoteId);
-              if (!match || !match.quote) {
-                throw new Error('报价配置不存在');
-              }
-              const legInputAmount = rollingAmount;
-
-              const { data, successSource } = await deps.fetchQuoteByStrategy(match.quote, {
-                signal: controller.signal,
-                isInverseFetch: Boolean(leg.inverse),
-                amount: legInputAmount,
-                requestChannelId: 'default',
-                skipDelay: true,
-                beforeSourceAttempt: (source) => waitForSourceBudget(source, controller.signal)
-              });
-
-              if (!state.visible || state.refreshToken !== refreshToken) {
-                return;
-              }
-              if (!arbDetailUtils.shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
-                shouldSkipApply = true;
-                break;
-              }
-
-              if (arbDetailUtils.shouldSyncArbDetailSnapshotForCard(cardIndex)) {
-                syncPrimaryCardQuoteState(
-                  match.quote,
-                  data,
-                  successSource,
-                  Boolean(leg.inverse)
-                );
-              }
-
-              rollingAmount = data.finalAmountOut;
-              finalSymbol = data.symbols.to || finalSymbol;
-              rows.push(arbDetailUtils.buildArbDetailRow(match.quote, data, {
-                inputAmount: legInputAmount,
-                isInverseFetch: Boolean(leg.inverse),
-                formatChainLabel: deps.formatChainLabel,
-                formatAmount: (value) => `${formatDetailNumber(value)}`
-              }));
+        const [primaryCard, ...remainingCards] = state.cards;
+        let releasePrimaryFirstLeg;
+        const primaryFirstLeg = new Promise((resolve) => {
+          releasePrimaryFirstLeg = resolve;
+        });
+        const primaryCardTask = primaryCard
+          ? refreshCard(primaryCard, 0, executableLegs, controller, refreshToken, {
+              onFirstLegSettled: releasePrimaryFirstLeg
+            })
+          : Promise.resolve(false).finally(releasePrimaryFirstLeg);
+        const remainingTasks = remainingCards.map((card, index) => {
+          const cardIndex = index + 1;
+          return primaryFirstLeg.then(() => refreshCard(
+            card,
+            cardIndex,
+            executableLegs,
+            controller,
+            refreshToken,
+            {
+              waitForPrimaryCard: cardIndex === 3 ? () => primaryCardTask.catch(() => false) : null
             }
-
-            if (shouldSkipApply || !arbDetailUtils.shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
-              continue;
-            }
-
-            const summary = arbDetailUtils.summarizeDetailResult(startAmount, rollingAmount);
-            if (cardIndex === 3) {
-              const baseRows = Array.isArray(state.cards[0]?.rows) ? state.cards[0].rows : [];
-              rows = arbDetailUtils.applyArbDetailRateDeltas(rows, baseRows);
-            }
-            card.rows = rows;
-            card.summary = {
-              ...summary,
-              symbol: finalSymbol
-            };
-            card.error = '';
-            renderCardContents();
-          } catch (error) {
-            if (error.name === 'AbortError') {
-              throw error;
-            }
-            if (!arbDetailUtils.shouldApplyArbDetailRequestVersion(requestVersion, card.requestVersion)) {
-              continue;
-            }
-            arbDetailUtils.applyArbDetailCardError(
-              state.cards,
-              cardIndex,
-              error.message || '详情报价失败'
-            );
-            renderCardContents();
-          }
-        }
+          ));
+        });
+        await Promise.all([primaryCardTask, ...remainingTasks]);
       } catch (error) {
-        if (error.name === 'AbortError') {
-          return false;
-        }
+        if (error.name === 'AbortError') return false;
         throw error;
       } finally {
-        if (fetchController === controller) {
-          fetchController = null;
-        }
+        if (fetchController === controller) fetchController = null;
         renderCardContents();
       }
 

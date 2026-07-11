@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const { createArbDetailController } = require('../src/arb/arb-detail-controller');
+const { createArbDetailSourceBudgetRuntime } = require('../src/arb/arb-detail-utils');
 
 function createElement(id) {
   return {
@@ -101,7 +102,8 @@ function createBaseDeps(overrides = {}) {
       clearArbDetailPreviewContainers: () => calls.push(['clearPreview']),
       createArbDetailSourceBudgetRuntime: () => ({
         recordTimestamp: (source) => calls.push(['recordSource', source]),
-        getTimestamp: () => 0
+        getTimestamp: () => 0,
+        waitForTurn: (source) => calls.push(['waitForSource', source])
       }),
       findBestSummaryIndices: () => ({ bestProfitIndices: [], bestProfitRateIndices: [] }),
       getQuoteRunState: (paused) => ({ text: paused ? 'paused' : 'running' }),
@@ -329,6 +331,152 @@ function createBaseDeps(overrides = {}) {
   assert.ok(calls.some((call) => call[0] === 'fetchQuote' && call[1] === 101 && call[2] === true && call[3] === true));
   assert.ok(calls.some((call) => call[0] === 'setQuote' && call[1] === 101 && call[2] === 0.995 && call[3] === true));
   assert.ok(calls.some((call) => call[0] === 'marketChanged' && call[1] === 101 && call[2] === 0.995 && call[3] === 'inverse' && call[4] === '0x'));
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+
+(async () => {
+  let refreshCards = null;
+  const sourceStartTimes = [];
+  const baseDeps = createBaseDeps().deps;
+  const opportunity = {
+    id: 'opp-rate-limited',
+    cycle: { legs: [{ quoteId: 101, chain: 'solana' }] }
+  };
+  const { controller } = createBaseDeps({
+    arbDetailRefreshUtils: {
+      ...baseDeps.arbDetailRefreshUtils,
+      createArbDetailRefreshScheduler: (options) => {
+        refreshCards = options.refresh;
+        return { clear() {}, start() {} };
+      }
+    },
+    arbDetailUtils: {
+      ...baseDeps.arbDetailUtils,
+      buildOpenArbDetailState: (currentState, options) => ({
+        ...currentState,
+        visible: true,
+        refreshToken: 12,
+        selectedOpportunity: options.opportunity,
+        opportunityId: options.opportunityId,
+        cards: [0.1, 0.1, 0.2, 0.3].map((inputAmount) => ({ inputAmount, requestVersion: 0, rows: [] }))
+      }),
+      buildArbDetailRow: (_quote, data) => ({ outputAmount: data.finalAmountOut }),
+      shouldApplyArbDetailRequestVersion: () => true,
+      shouldSyncArbDetailSnapshotForCard: () => false,
+      summarizeDetailResult: () => ({ profit: 0, profitRate: 0 }),
+      applyArbDetailRateDeltas: (rows) => rows,
+      getArbDetailIntervalKey: () => 'solana',
+      resolveArbDetailIntervalMs: () => 20,
+      getArbDetailRateLimitDelay: (lastRequestAt, intervalMs, now = Date.now()) => (
+        lastRequestAt ? Math.max(0, lastRequestAt + intervalMs - now) : 0
+      ),
+      createArbDetailSourceBudgetRuntime
+    },
+    fetchQuoteByStrategy: async (_quote, options) => {
+      await options.beforeSourceAttempt('Jupiter');
+      sourceStartTimes.push(Date.now());
+      return {
+        data: { finalAmountOut: 0.101, symbols: { to: 'WBTC' } },
+        successSource: 'Jupiter'
+      };
+    },
+    getOpportunity: (id) => (id === 'opp-rate-limited' ? opportunity : null),
+    setTimeout,
+    clearTimeout
+  });
+
+  controller.open('opp-rate-limited');
+  await refreshCards(12);
+  assert.strictEqual(sourceStartTimes.length, 4);
+  for (let index = 1; index < sourceStartTimes.length; index += 1) {
+    assert.ok(sourceStartTimes[index] - sourceStartTimes[index - 1] >= 15, '同来源请求必须继续按间隔排队');
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+
+(async () => {
+  let refreshCards = null;
+  const pendingFetches = [];
+  const baseDeps = createBaseDeps().deps;
+  const opportunity = {
+    id: 'opp-concurrent',
+    cycle: {
+      legs: [
+        { quoteId: 101, chain: 'ethereum' },
+        { quoteId: 102, chain: 'arbitrum' }
+      ]
+    }
+  };
+  const { controller } = createBaseDeps({
+    arbDetailRefreshUtils: {
+      ...baseDeps.arbDetailRefreshUtils,
+      createArbDetailRefreshScheduler: (options) => {
+        refreshCards = options.refresh;
+        return { clear() {}, start() {} };
+      }
+    },
+    arbDetailUtils: {
+      ...baseDeps.arbDetailUtils,
+      buildOpenArbDetailState: (currentState, options) => ({
+        ...currentState,
+        visible: true,
+        refreshToken: 12,
+        selectedOpportunity: options.opportunity,
+        opportunityId: options.opportunityId,
+        cards: [0.1, 0.1, 0.2, 0.3].map((inputAmount) => ({
+          inputAmount,
+          requestVersion: 0,
+          rows: []
+        }))
+      }),
+      buildArbDetailRow: (_quote, data) => ({ outputAmount: data.finalAmountOut }),
+      shouldApplyArbDetailRequestVersion: () => true,
+      shouldSyncArbDetailSnapshotForCard: () => false,
+      summarizeDetailResult: (startAmount, finalAmount) => ({
+        profit: finalAmount - startAmount,
+        profitRate: finalAmount / startAmount - 1
+      }),
+      applyArbDetailRateDeltas: (rows) => rows
+    },
+    fetchQuoteByStrategy: (quote) => new Promise((resolve) => {
+      pendingFetches.push({ quoteId: quote.id, resolve, resolved: false });
+    }),
+    findQuoteById: (quoteId) => ({ quote: { id: quoteId } }),
+    getOpportunity: (id) => (id === 'opp-concurrent' ? opportunity : null)
+  });
+
+  controller.open('opp-concurrent');
+  const refreshPromise = refreshCards(12);
+  await Promise.resolve();
+  assert.strictEqual(pendingFetches.length, 1);
+  pendingFetches[0].resolved = true;
+  pendingFetches[0].resolve({
+    data: {
+      finalAmountOut: 0.101,
+      symbols: { to: 'WBTC' }
+    },
+    successSource: 'Kyber'
+  });
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.strictEqual(pendingFetches.length, 5, '第一档首腿完成后，其余 size 应并发开始');
+
+  for (let round = 0; round < 3; round += 1) {
+    pendingFetches.filter((item) => !item.resolved).forEach((item) => {
+      item.resolved = true;
+      item.resolve({
+        data: { finalAmountOut: 0.101, symbols: { to: 'WBTC' } },
+        successSource: 'Kyber'
+      });
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+  }
+  await refreshPromise;
 })().catch((error) => {
   console.error(error);
   process.exit(1);

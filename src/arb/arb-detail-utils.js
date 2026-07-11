@@ -695,6 +695,48 @@
 
   function createArbDetailSourceBudgetRuntime() {
     const budgetState = new Map();
+    const pendingTurnByIntervalKey = new Map();
+
+    function createAbortError() {
+      const error = new Error('Aborted');
+      error.name = 'AbortError';
+      return error;
+    }
+
+    async function waitForTurn(source, options = {}) {
+      const intervalKey = getArbDetailIntervalKey(source);
+      if (!intervalKey) return null;
+
+      const signal = options.signal;
+      const wait = typeof options.wait === 'function'
+        ? options.wait
+        : (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const now = typeof options.now === 'function' ? options.now : Date.now;
+      const previousTurn = pendingTurnByIntervalKey.get(intervalKey) || Promise.resolve();
+      const currentTurn = previousTurn.catch(() => {}).then(async () => {
+        if (signal && signal.aborted) throw createAbortError();
+
+        const waitMs = getArbDetailRateLimitDelay(
+          getArbDetailBudgetTimestamp(budgetState, source),
+          options.intervalMs,
+          now()
+        );
+        if (waitMs > 0) {
+          await wait(waitMs);
+          if (signal && signal.aborted) throw createAbortError();
+        }
+        return recordArbDetailBudgetTimestamp(budgetState, source, now());
+      });
+
+      pendingTurnByIntervalKey.set(intervalKey, currentTurn);
+      try {
+        return await currentTurn;
+      } finally {
+        if (pendingTurnByIntervalKey.get(intervalKey) === currentTurn) {
+          pendingTurnByIntervalKey.delete(intervalKey);
+        }
+      }
+    }
 
     return {
       getState: () => budgetState,
@@ -703,7 +745,8 @@
       },
       recordTimestamp(source, requestedAt = Date.now()) {
         return recordArbDetailBudgetTimestamp(budgetState, source, requestedAt);
-      }
+      },
+      waitForTurn
     };
   }
 
