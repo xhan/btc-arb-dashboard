@@ -21,6 +21,10 @@
     "ethers": "^6.12.1",
     "express": "^4.19.2",
     "https-proxy-agent": "^8.0.0",
+    "morphdom": "^2.7.8",
     "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "linkedom": "^0.18.13"
   }
 }

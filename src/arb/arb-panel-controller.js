@@ -10,6 +10,7 @@
     const arbPanelRenderer = options.arbPanelRenderer;
     const arbRuntimeMemoryUtils = options.arbRuntimeMemoryUtils;
     const arbDiscovery = options.arbDiscovery;
+    const interactionSafeRenderer = options.interactionSafeRenderer;
     const dashboardRuntimeUtils = options.dashboardRuntimeUtils;
     const domRenderUtils = options.domRenderUtils;
     const refs = options.refs || {};
@@ -45,32 +46,15 @@
     const clearTimer = typeof options.clearTimeout === 'function' ? options.clearTimeout : clearTimeout;
     const updateDelayMs = Number.isFinite(Number(options.updateDelayMs)) ? Number(options.updateDelayMs) : 0;
     const arbGlobalFilterStateRuntime = arbPanelLayoutUtils.createGlobalArbFilterStateRuntime();
-    let arbPanelHtmlRenderer = null;
-    const arbPanelInteractionDeferralRuntime = (
-      domRenderUtils && typeof domRenderUtils.createRenderInteractionDeferralRuntime === 'function'
-    )
-      ? domRenderUtils.createRenderInteractionDeferralRuntime({
+    const arbPanelHtmlRenderer = options.arbPanelHtmlRenderer
+      || interactionSafeRenderer.createInteractionSafeHtmlRenderer({
         getTarget: () => refs.arbPathContent,
         setTimeout: setTimer,
         clearTimeout: clearTimer,
         trackFocus: false,
         releaseTarget: documentImpl,
         releaseEventListenerOptions: { capture: true },
-        onIdle: () => {
-          if (arbPanelHtmlRenderer && typeof arbPanelHtmlRenderer.flush === 'function') {
-            arbPanelHtmlRenderer.flush(refs.arbPathContent);
-          }
-        }
-      })
-      : null;
-    arbPanelHtmlRenderer = domRenderUtils.createStableHtmlRenderer({
-      shouldDeferRender: (element) => (
-        Boolean(
-          arbPanelInteractionDeferralRuntime
-          && typeof arbPanelInteractionDeferralRuntime.shouldDeferRender === 'function'
-          && arbPanelInteractionDeferralRuntime.shouldDeferRender(element)
-        )
-      )
+        windowImpl
     });
     const arbExpandedSections = new Set();
     let arbLastPointerOpenedOpportunityId = null;
@@ -328,13 +312,14 @@
 
       const nextArbPanelHtml = arbPanelRenderer.renderArbGrid({
         columns,
+        columnKeys: arbPanelLayoutUtils.ARB_PANEL_COLUMN_KEYS,
         isMeaningfulPath: cycle => cycle && options.arbPaths.isMeaningfulPath(cycle.legs),
         shouldIncludeLeg: leg => !isRuleLeg(leg),
         formatChainLabel,
         formatLegLine: formatArbPathLegLine,
         formatProfit: profitRate => options.arbPaths.formatProfitWanfen(profitRate)
       });
-      arbPanelHtmlRenderer.render(refs.arbPathContent, nextArbPanelHtml);
+      arbPanelHtmlRenderer.update(nextArbPanelHtml);
     }
 
     function applyFloatingPanelDisplay(panel, action, config = {}) {
@@ -413,34 +398,11 @@
         : null;
     }
 
-    function flushContentRender() {
-      if (arbPanelHtmlRenderer && typeof arbPanelHtmlRenderer.flush === 'function') {
-        arbPanelHtmlRenderer.flush(refs.arbPathContent);
-      }
-    }
-
-    function handleContentFocusOut(event) {
-      const nextFocusedElement = event && event.relatedTarget;
-      if (
-        nextFocusedElement
-        && refs.arbPathContent
-        && typeof refs.arbPathContent.contains === 'function'
-        && refs.arbPathContent.contains(nextFocusedElement)
-      ) {
-        return;
-      }
-      flushContentRender();
-    }
-
     function bindContentEvents() {
       if (!refs.arbPathContent) return;
-      if (arbPanelInteractionDeferralRuntime && typeof arbPanelInteractionDeferralRuntime.bind === 'function') {
-        arbPanelInteractionDeferralRuntime.bind(refs.arbPathContent);
-      }
       refs.arbPathContent.addEventListener('pointerdown', handleContentPointerDown);
       refs.arbPathContent.addEventListener('click', handleContentClick);
       refs.arbPathContent.addEventListener('keydown', handleContentKeydown);
-      refs.arbPathContent.addEventListener('focusout', handleContentFocusOut);
     }
 
     function bindGlobalFilterEvents() {

@@ -7,17 +7,6 @@
     root.window.AlertRuntimeController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
-  function createNoopHtmlRenderer() {
-    return {
-      flush() {
-        return false;
-      },
-      render(target, html) {
-        if (target) target.innerHTML = html;
-      }
-    };
-  }
-
   function getNow() {
     return Date.now();
   }
@@ -29,6 +18,7 @@
     const mutedPathStorageUtils = deps.mutedPathStorageUtils || (root && root.MutedPathStorageUtils);
     const alertLogUiUtils = deps.alertLogUiUtils || (root && root.AlertLogUiUtils);
     const domRenderUtils = deps.domRenderUtils || (root && root.DomRenderUtils);
+    const interactionSafeRenderer = deps.interactionSafeRenderer || (root && root.InteractionSafeRenderer);
     const dashboardRuntimeUtils = deps.dashboardRuntimeUtils || (root && root.DashboardRuntimeUtils);
     const audioUtils = deps.audioUtils || (root && root.AudioUtils);
     const alertDebugUtils = deps.alertDebugUtils || (root && root.AlertDebugUtils);
@@ -59,59 +49,6 @@
     let pathAlertConfig = pathAlertUtils.normalizeAlertConfig();
     let pathAlertReloading = false;
 
-    function flushAlertContentRenderer(getRenderer, getElement) {
-      const renderer = typeof getRenderer === 'function' ? getRenderer() : null;
-      const element = typeof getElement === 'function' ? getElement() : null;
-      if (renderer && element && typeof renderer.flush === 'function') {
-        renderer.flush(element);
-      }
-    }
-
-    function createAlertContentInteractionRuntime(getRenderer, getElement, options = {}) {
-      if (!domRenderUtils || typeof domRenderUtils.createRenderInteractionDeferralRuntime !== 'function') {
-        return null;
-      }
-      return domRenderUtils.createRenderInteractionDeferralRuntime({
-        getTarget: getElement,
-        interactionRuntime: deps.interactionRuntime,
-        setTimeout: deps.setTimeout,
-        clearTimeout: deps.clearTimeout,
-        trackFocus: options.trackFocus,
-        onIdle: () => flushAlertContentRenderer(getRenderer, getElement)
-      });
-    }
-
-    function shouldDeferAlertContentRender(runtime, element, options = {}) {
-      if (
-        runtime
-        && typeof runtime.shouldDeferRender === 'function'
-        && runtime.shouldDeferRender(element)
-      ) {
-        return true;
-      }
-      return Boolean(
-        options.deferFocusedEditable === true
-        && domRenderUtils
-        && typeof domRenderUtils.shouldDeferRenderForFocusedEditable === 'function'
-        && domRenderUtils.shouldDeferRenderForFocusedEditable(element, { documentImpl })
-      );
-    }
-
-    function createAlertContentHtmlRenderer(runtime, options = {}) {
-      if (!domRenderUtils || typeof domRenderUtils.createStableHtmlRenderer !== 'function') {
-        return createNoopHtmlRenderer();
-      }
-      return domRenderUtils.createStableHtmlRenderer({
-        shouldDeferRender: (element) => shouldDeferAlertContentRender(runtime, element, options)
-      });
-    }
-
-    function bindAlertContentInteractionRuntime(runtime, element) {
-      if (runtime && element && typeof runtime.bind === 'function') {
-        runtime.bind(element);
-      }
-    }
-
     const pathAlertConfigClient = pathAlertUtils.createPathAlertConfigClient({
       fetch: fetchImpl,
       url: `${backendUrl}/api/get-alert-config`,
@@ -119,26 +56,28 @@
         logWarning('加载路径报警配置失败:', error);
       }
     });
-    let alertSettingsHtmlRenderer = null;
-    const alertSettingsInteractionRuntime = deps.alertSettingsHtmlRenderer
-      ? null
-      : createAlertContentInteractionRuntime(
-        () => alertSettingsHtmlRenderer,
-        () => refs.alertLogSettingsContent,
-        { trackFocus: 'editable' }
-      );
-    alertSettingsHtmlRenderer = deps.alertSettingsHtmlRenderer
-      || createAlertContentHtmlRenderer(alertSettingsInteractionRuntime, { deferFocusedEditable: true });
-    let mutedAlertStateHtmlRenderer = null;
-    const mutedAlertStateInteractionRuntime = deps.mutedAlertStateHtmlRenderer
-      ? null
-      : createAlertContentInteractionRuntime(
-        () => mutedAlertStateHtmlRenderer,
-        () => refs.alertLogMutedContent,
-        { trackFocus: false }
-      );
-    mutedAlertStateHtmlRenderer = deps.mutedAlertStateHtmlRenderer
-      || createAlertContentHtmlRenderer(mutedAlertStateInteractionRuntime);
+    const alertSettingsHtmlRenderer = deps.alertSettingsHtmlRenderer
+      || interactionSafeRenderer.createInteractionSafeHtmlRenderer({
+        getTarget: () => refs.alertLogSettingsContent,
+        interactionRuntime: deps.interactionRuntime,
+        setTimeout: deps.setTimeout,
+        clearTimeout: deps.clearTimeout,
+        trackFocus: 'editable',
+        releaseTarget: documentImpl,
+        releaseEventListenerOptions: { capture: true },
+        windowImpl
+      });
+    const mutedAlertStateHtmlRenderer = deps.mutedAlertStateHtmlRenderer
+      || interactionSafeRenderer.createInteractionSafeHtmlRenderer({
+        getTarget: () => refs.alertLogMutedContent,
+        interactionRuntime: deps.interactionRuntime,
+        setTimeout: deps.setTimeout,
+        clearTimeout: deps.clearTimeout,
+        trackFocus: false,
+        releaseTarget: documentImpl,
+        releaseEventListenerOptions: { capture: true },
+        windowImpl
+      });
     const pathAlertRuntimeState = deps.pathAlertRuntimeState || pathAlertUtils.createPathAlertRuntimeState();
     const pendingManualPathQuoteIds = new Set();
     const pathAlertSchedulerRuntime = deps.pathAlertSchedulerRuntime || pathAlertUtils.createPathAlertSchedulerRuntime({
@@ -522,7 +461,6 @@
 
     function renderMutedAlertStatePanel(nowMs = getNow()) {
       if (!refs.alertLogMutedContent) return;
-      bindAlertContentInteractionRuntime(mutedAlertStateInteractionRuntime, refs.alertLogMutedContent);
       pruneMutedPathTargetsInPlace(nowMs);
       pruneMutedPathLegsInPlace(nowMs);
       const panelHtml = alertLogUiUtils.buildMutedAlertStatePanelHtml({
@@ -537,13 +475,12 @@
         ),
         buildLegStatusText: (entry) => pathAlertUtils.buildMutedPathLegStatusText(entry, nowMs)
       });
-      mutedAlertStateHtmlRenderer.render(refs.alertLogMutedContent, panelHtml);
+      mutedAlertStateHtmlRenderer.update(panelHtml);
     }
 
     function renderAlertSettingsPanel() {
       if (!refs.alertLogSettingsContent) return;
-      bindAlertContentInteractionRuntime(alertSettingsInteractionRuntime, refs.alertLogSettingsContent);
-      alertSettingsHtmlRenderer.render(refs.alertLogSettingsContent, alertLogUiUtils.buildAlertSettingsPanelHtml({
+      alertSettingsHtmlRenderer.update(alertLogUiUtils.buildAlertSettingsPanelHtml({
         settings: pathAlertConfig.settings || {},
         forceImmediateAlerts: pathAlertRuntimeState.isForceImmediateEnabled()
       }));

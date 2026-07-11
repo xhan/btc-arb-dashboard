@@ -244,6 +244,7 @@ assert.deepStrictEqual(
     })
   })[0],
   {
+    renderKey: 'fixed:low-route',
     title: '低收益路径',
     opportunities: [
       {
@@ -748,6 +749,7 @@ assert.deepStrictEqual(
     buildFooterHtml: (cycleDisplayState) => cycleDisplayState.canToggleExpand ? 'toggle' : ''
   }),
   {
+    renderKey: 'global:all',
     title: '全局路径',
     opportunities: [{ label: '机会 2', cycleId: 'wbtc-cycle' }],
     footerHtml: '',
@@ -872,6 +874,7 @@ assert.deepStrictEqual(
   [
     {
       entryType: 'quote-price',
+      renderKey: 'quote-price:21:forward',
       title: '等待报价测试',
       priceText: '--',
       statusText: '等待报价',
@@ -880,6 +883,7 @@ assert.deepStrictEqual(
     },
     {
       entryType: 'quote-price',
+      renderKey: 'quote-price:22:forward',
       title: '暂停测试',
       priceText: '1',
       statusText: '报价暂停',
@@ -915,10 +919,12 @@ assert.deepStrictEqual(
     formatPrice: (value) => value.toFixed(4)
   }),
   {
+    renderKey: 'quote-watch',
     title: '关注列表',
     opportunities: [
       {
         entryType: 'quote-price',
+        renderKey: 'quote-price:11:forward',
         title: '正向关注',
         priceText: '1.2346',
         statusText: '',
@@ -927,6 +933,7 @@ assert.deepStrictEqual(
       },
       {
         entryType: 'quote-price',
+        renderKey: 'quote-price:404:inverse',
         title: '缺失关注',
         priceText: '--',
         statusText: '等待报价',
@@ -1033,6 +1040,7 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   buildQuotePriceWatchSection({ watchItems: null }),
   {
+    renderKey: 'quote-watch',
     title: '关注列表',
     opportunities: [],
     emptyText: '暂无关注价格'
@@ -1057,6 +1065,7 @@ assert.deepStrictEqual(
   }),
   [
     {
+      renderKey: 'fixed:wbtc-route',
       title: 'WBTC 固定路径',
       opportunities: [
         { label: '机会 1', cycleId: 'cycle-a', section: 'fixed:wbtc-route' },
@@ -1065,6 +1074,7 @@ assert.deepStrictEqual(
       emptyText: '无收益率 > 1bp'
     },
     {
+      renderKey: 'fixed:unknown',
       title: '固定路径',
       opportunities: [],
       emptyText: '无收益率 > 1bp'
@@ -1099,6 +1109,7 @@ assert.deepStrictEqual(
   }),
   [
     {
+      renderKey: 'special:USDTB 规则',
       title: 'USDTB 规则',
       sectionType: 'special-rule',
       titleProfitRate: 0.0003,
@@ -1108,6 +1119,7 @@ assert.deepStrictEqual(
       emptyText: '无收益率'
     },
     {
+      renderKey: 'special:负收益规则',
       title: '负收益规则',
       sectionType: 'special-rule',
       titleProfitRate: null,
@@ -1115,6 +1127,7 @@ assert.deepStrictEqual(
       emptyText: '无收益率'
     },
     {
+      renderKey: 'special:空规则',
       title: '空规则',
       sectionType: 'special-rule',
       titleProfitRate: null,

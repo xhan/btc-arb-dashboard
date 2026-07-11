@@ -27,7 +27,13 @@ const dashboardRuntimeUtils = {
 };
 const domRenderUtils = {
   closestEventTarget: { id: 'closest-event-target' },
-  createRenderInteractionHoldRuntime(options) {
+  createFloatingPanelZIndexRuntime(options) {
+    calls.push(['createZIndex', options]);
+    return { id: 'z-index' };
+  }
+};
+const interactionSafeRenderer = {
+  createInteractionRuntime(options) {
     capturedInteractionOptions = options;
     return {
       id: 'interaction',
@@ -35,10 +41,6 @@ const domRenderUtils = {
         calls.push(['bindInteraction', target]);
       }
     };
-  },
-  createFloatingPanelZIndexRuntime(options) {
-    calls.push(['createZIndex', options]);
-    return { id: 'z-index' };
   }
 };
 const dashboardRuntimeBridge = {
@@ -99,6 +101,7 @@ const modules = {
   }),
   getDashboardRuntimeUtils: () => dashboardRuntimeUtils,
   getDomRenderUtils: () => domRenderUtils,
+  getInteractionSafeRenderer: () => interactionSafeRenderer,
   getPriceSnapshotPayloadUtils: () => ({
     createPriceSnapshotTimerRuntime: (options) => ({ id: 'snapshot-timer', options }),
     createPriceSnapshotSaveRuntime(options) {
@@ -148,6 +151,7 @@ assert.deepStrictEqual(runtime.defaultIntervals, { dex: 3, cex: 5 });
 assert.deepStrictEqual(runtime.defaultArbCycleStartPriority, ['polygon', 'arbitrum']);
 assert.strictEqual(runtime.dashboardRuntimeUtils, dashboardRuntimeUtils);
 assert.strictEqual(runtime.domRenderUtils, domRenderUtils);
+assert.strictEqual(runtime.interactionSafeRenderer, interactionSafeRenderer);
 assert.strictEqual(runtime.closestEventTarget, domRenderUtils.closestEventTarget);
 assert.strictEqual(runtime.dashboardApiClient, dashboardApiClient);
 assert.strictEqual(runtime.dashboardRuntimeBridge, dashboardRuntimeBridge);

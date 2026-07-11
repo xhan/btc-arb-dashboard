@@ -9,6 +9,13 @@
   root.ArbPanelLayoutUtils = factory(chainDefaults);
 }(typeof globalThis !== 'undefined' ? globalThis : this, function (chainDefaults) {
   const DEFAULT_DISPLAY_MIN_PROFIT_BP = 0.5;
+  const ARB_PANEL_COLUMN_KEYS = Object.freeze([
+    'fixed-primary',
+    'fixed-secondary',
+    'special-rules',
+    'quote-watch',
+    'global'
+  ]);
 
   function formatDefaultChainLabel(chain) {
     if (chainDefaults && typeof chainDefaults.getChainDisplayName === 'function') {
@@ -559,6 +566,7 @@
     const opportunities = mapEntriesForDisplayCycles(cycles, displayState.displayCycles, buildEntry);
     const buildFooterHtml = typeof options.buildFooterHtml === 'function' ? options.buildFooterHtml : () => '';
     return {
+      renderKey: sectionKey,
       title: String(options.title || '全局路径'),
       opportunities,
       footerHtml: buildFooterHtml(displayState, sectionKey),
@@ -638,6 +646,7 @@
         opportunities = underThresholdEntry ? [underThresholdEntry] : [];
       }
       return {
+        renderKey: `fixed:${String(rule?.id || rule?.title || 'unknown')}`,
         title: String(rule?.title || '固定路径'),
         opportunities,
         emptyText: `无收益率 > ${displayMinProfitBp}bp`
@@ -668,6 +677,7 @@
           ? { ...entry, label: '' }
           : null;
         return {
+          renderKey: `special:${String(rule.id || title)}`,
           title,
           sectionType: 'special-rule',
           titleProfitRate: opportunity && opportunity.cycle ? opportunity.cycle.profitRate : null,
@@ -728,6 +738,7 @@
     }
     const entry = {
       entryType: 'quote-price',
+      renderKey: String(options.renderKey || ''),
       title: String(options.title || ''),
       priceText: hasValue ? String(options.priceText) : '--',
       statusText,
@@ -754,6 +765,7 @@
         const state = hasQuote ? getQuoteState(quote, item) || {} : {};
         const value = hasQuote ? resolveValue(item, state, quote) : null;
         return buildQuotePriceWatchDisplayEntry({
+          renderKey: `quote-price:${item.quoteId}:${item.direction === 'inverse' ? 'inverse' : 'forward'}`,
           title: item.title,
           hasQuote,
           value,
@@ -764,6 +776,7 @@
       })
       .filter(Boolean);
     return {
+      renderKey: 'quote-watch',
       title: '关注列表',
       opportunities,
       emptyText: '暂无关注价格'
@@ -772,6 +785,7 @@
 
   return {
     buildArbPanelColumns,
+    ARB_PANEL_COLUMN_KEYS,
     resolveItemsBySelectors,
     buildArbPathLegLine,
     buildArbPathLegLines,

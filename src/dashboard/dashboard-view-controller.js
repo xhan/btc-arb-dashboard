@@ -174,16 +174,21 @@
     }
 
     function renderDashboard() {
-      deps.dashboardEl.innerHTML = '';
       const dashboardState = getDashboardState();
       if (!Array.isArray(dashboardState)) {
         logger.error('Dashboard state is not an array:', dashboardState);
-        return;
+        return false;
       }
+      const nextDashboard = deps.documentImpl.createElement('div');
       dashboardState.forEach((category) => {
         const moduleEl = createCategoryModule(category);
-        if (moduleEl) deps.dashboardEl.appendChild(moduleEl);
+        if (moduleEl) nextDashboard.appendChild(moduleEl);
       });
+      if (typeof deps.morphDashboard !== 'function') {
+        throw new Error('交易对看板缺少交互安全渲染器');
+      }
+      deps.morphDashboard(deps.dashboardEl, nextDashboard);
+      return true;
     }
 
     return {

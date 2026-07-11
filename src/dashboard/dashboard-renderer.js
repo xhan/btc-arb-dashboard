@@ -134,6 +134,11 @@
     if (!documentImpl || typeof documentImpl.createElement !== 'function') return null;
     const itemEl = documentImpl.createElement('li');
     itemEl.id = `quote-item-${config.quoteId}`;
+    if (typeof itemEl.setAttribute === 'function') {
+      itemEl.setAttribute('data-render-key', `quote:${config.quoteId}`);
+    } else if (itemEl.dataset) {
+      itemEl.dataset.renderKey = `quote:${config.quoteId}`;
+    }
     itemEl.className = config.paused === true ? 'quote-item quote-item-paused' : 'quote-item';
     itemEl.innerHTML = renderQuoteItemShell(config);
     return itemEl;
@@ -163,6 +168,11 @@
     const moduleEl = documentImpl.createElement('div');
     moduleEl.className = 'module';
     moduleEl.id = `module-${config.categoryId}`;
+    if (typeof moduleEl.setAttribute === 'function') {
+      moduleEl.setAttribute('data-render-key', `category:${config.categoryId}`);
+    } else if (moduleEl.dataset) {
+      moduleEl.dataset.renderKey = `category:${config.categoryId}`;
+    }
     moduleEl.innerHTML = renderCategoryModuleShell(config);
     return moduleEl;
   }

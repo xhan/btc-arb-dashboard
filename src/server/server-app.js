@@ -66,12 +66,17 @@ function createDashboardServer(options = {}) {
   const port = Number(env.PORT) || 3000;
   const publicDir = path.join(rootDir, 'public');
   const srcDir = path.join(rootDir, 'src');
+  const morphdomBrowserPath = require.resolve('morphdom/dist/morphdom-umd.min.js');
   const serverVerbose = isServerVerbose(argv, env);
 
   app.use(cors());
   app.use(express.json());
   app.use(express.static(publicDir));
   app.use('/src', express.static(srcDir));
+
+  app.get('/vendor/morphdom.js', (req, res) => {
+    res.sendFile(morphdomBrowserPath);
+  });
 
   app.get('/', (req, res) => {
     res.sendFile(path.join(publicDir, 'index.html'));

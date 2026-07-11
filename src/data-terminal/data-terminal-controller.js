@@ -10,16 +10,7 @@
     root.window.DataTerminalController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root, chainDefaults) {
-  function createFallbackHtmlRenderer() {
-    return {
-      render(target, html) {
-        if (target) target.innerHTML = html;
-      },
-      reset() {}
-    };
-  }
-
-  function createInitialState(options = {}) {
+  function createInitialState() {
     return {
       visible: false,
       query: '',
@@ -27,8 +18,7 @@
       showDiff: false,
       selectedLeftKey: '',
       selectedRightKey: '',
-      domRefs: null,
-      htmlRenderer: options.htmlRenderer || createFallbackHtmlRenderer()
+      domRefs: null
     };
   }
 
@@ -36,52 +26,20 @@
     const utils = deps.dataTerminalUtils || (root && root.DataTerminalUtils);
     const dashboardRuntimeUtils = deps.dashboardRuntimeUtils || {};
     const domRenderUtils = deps.domRenderUtils || {};
+    const interactionSafeRenderer = deps.interactionSafeRenderer || (root && root.InteractionSafeRenderer);
     let state = null;
-    const interactionDeferralRuntime = (
-      domRenderUtils && typeof domRenderUtils.createRenderInteractionDeferralRuntime === 'function'
-    )
-      ? domRenderUtils.createRenderInteractionDeferralRuntime({
+    state = deps.state || createInitialState();
+    const contentRenderer = deps.htmlRenderer
+      || interactionSafeRenderer.createInteractionSafeHtmlRenderer({
         getTarget: () => (state && state.domRefs ? state.domRefs.content : null),
         interactionRuntime: deps.interactionRuntime,
         setTimeout: deps.setTimeout,
         clearTimeout: deps.clearTimeout,
         trackFocus: false,
-        onIdle: () => {
-          if (
-            state
-            && state.domRefs
-            && state.domRefs.content
-            && state.htmlRenderer
-            && typeof state.htmlRenderer.flush === 'function'
-          ) {
-            state.htmlRenderer.flush(state.domRefs.content);
-          }
-        }
-      })
-      : null;
-
-    function shouldDeferContentRender(element) {
-      return Boolean(
-        interactionDeferralRuntime
-        && typeof interactionDeferralRuntime.shouldDeferRender === 'function'
-        && interactionDeferralRuntime.shouldDeferRender(element)
-      );
-    }
-
-    function createDefaultHtmlRenderer() {
-      if (!domRenderUtils || typeof domRenderUtils.createStableHtmlRenderer !== 'function') {
-        return null;
-      }
-      return domRenderUtils.createStableHtmlRenderer({
-        shouldDeferRender: shouldDeferContentRender
+        releaseTarget: deps.documentImpl,
+        releaseEventListenerOptions: { capture: true },
+        windowImpl: deps.windowImpl
       });
-    }
-
-    state = deps.state || createInitialState({
-      htmlRenderer: deps.htmlRenderer || (
-        createDefaultHtmlRenderer()
-      )
-    });
     const cache = deps.cache || utils.createDataTerminalCache();
 
     function getDocument() {
@@ -205,8 +163,7 @@
       state.selectedRightKey = selectionSummary.rightKey;
 
       utils.applyDataTerminalSelectionSummaryDomState(refs, selectionSummary);
-      state.htmlRenderer.render(
-        refs.content,
+      contentRenderer.update(
         utils.buildDataTerminalPanelHtml(
           viewModel,
           {
@@ -296,7 +253,7 @@
       const refs = utils.getDataTerminalDomRefs(panel);
       state.visible = true;
       state.domRefs = refs;
-      state.htmlRenderer.reset();
+      contentRenderer.reset();
       utils.applyDataTerminalControlWritePlan(utils.buildDataTerminalControlWritePlan(state), refs);
 
       utils.bindDataTerminalControlEvents(refs, {
@@ -308,10 +265,6 @@
         onHeaderClick: handleHeaderClick,
         onMinimize: togglePanel
       });
-      if (interactionDeferralRuntime && typeof interactionDeferralRuntime.bind === 'function') {
-        interactionDeferralRuntime.bind(refs.content);
-      }
-
       if (refs.header && typeof domRenderUtils.bindFloatingPanelChrome === 'function') {
         domRenderUtils.bindFloatingPanelChrome(panel, refs.header, {
           documentImpl,
@@ -332,12 +285,15 @@
     function unmountPanel() {
       updateRuntime.clear();
       const refs = state.domRefs;
+      if (refs && refs.content && typeof contentRenderer.unbind === 'function') {
+        contentRenderer.unbind(refs.content);
+      }
       if (refs && refs.window && refs.window.parentNode) {
         refs.window.parentNode.removeChild(refs.window);
       }
       state.visible = false;
       state.domRefs = null;
-      state.htmlRenderer.reset();
+      contentRenderer.reset();
     }
 
     function togglePanel() {

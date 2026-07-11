@@ -4,6 +4,7 @@ const domRenderUtils = require('../src/ui/dom-render-utils');
 const arbPathConfigUtils = require('../src/arb/arb-path-config-utils');
 const pathAlertUtils = require('../src/path-alerts/path-alert-utils');
 const mutedPathLegUtils = require('../src/path-alerts/muted-path-leg-utils');
+const interactionSafeRenderer = require('../src/ui/interaction-safe-renderer');
 const {
   createAlertRuntimeController
 } = require('../src/alerts/alert-runtime-controller');
@@ -144,6 +145,7 @@ function createBaseDeps(overrides = {}) {
     documentImpl,
     fetchImpl: async () => ({ ok: true, json: async () => ({}) }),
     getDashboardLocalStorage: () => null,
+    interactionSafeRenderer,
     mutedPathLegUtils: {
       buildMutedPathLegKey: (entry) => entry && entry.key || '',
       pruneExpiredMutedPathLegs: (entries) => entries

@@ -100,12 +100,12 @@
 
   function buildQuoteSpreadPanelHtml(rows) {
     if (!Array.isArray(rows) || rows.length === 0) {
-      return '<div class="quote-spread-empty">暂无可计算的买/卖 spread</div>';
+      return '<div class="quote-spread-empty" data-render-key="quote-spread-empty">暂无可计算的买/卖 spread</div>';
     }
 
     return `
-      <div class="quote-spread-table">
-        <div class="quote-spread-row quote-spread-head">
+      <div class="quote-spread-table" data-render-key="quote-spread-table">
+        <div class="quote-spread-row quote-spread-head" data-render-key="quote-spread-head">
           <span>交易对</span>
           <span>链</span>
           <span>正向</span>
@@ -114,7 +114,7 @@
           <span>Spread</span>
         </div>
         ${rows.map((row) => `
-          <div class="quote-spread-row">
+          <div class="quote-spread-row" data-render-key="quote-spread-row:${escapeHtml(row.quoteId == null ? `${row.chain}:${row.pairLabel}` : row.quoteId)}">
             <span class="quote-spread-pair">${escapeHtml(row.pairLabel)}</span>
             <span>${escapeHtml(row.chainLabel || row.chain)}</span>
             <span>${escapeHtml(formatQuoteSpreadNumber(row.forwardRate))}</span>

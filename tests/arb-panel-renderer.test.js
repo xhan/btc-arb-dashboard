@@ -21,6 +21,24 @@ function resolveArbActionFor(resolver, matches, event = { type: 'click' }, extra
   });
 }
 
+function renderTestArbGrid(config = {}) {
+  const columns = (Array.isArray(config.columns) ? config.columns : []).map((sections, columnIndex) => (
+    (Array.isArray(sections) ? sections : []).map((section, sectionIndex) => ({
+      ...section,
+      renderKey: section.renderKey || `test-section:${columnIndex}:${sectionIndex}`,
+      opportunities: (Array.isArray(section.opportunities) ? section.opportunities : []).map((entry, entryIndex) => ({
+        ...entry,
+        renderKey: entry.renderKey || `test-entry:${columnIndex}:${sectionIndex}:${entryIndex}`
+      }))
+    }))
+  ));
+  return renderArbGrid({
+    ...config,
+    columns,
+    columnKeys: columns.map((_, index) => `test-column:${index}`)
+  });
+}
+
 const expandToggleEl = { dataset: { arbSectionKey: 'category:btc' } };
 const opportunityEl = { dataset: { arbOpportunityId: 'opp-1' } };
 
@@ -75,7 +93,7 @@ assert.deepStrictEqual(
   { type: 'none' }
 );
 
-const html = renderArbGrid({
+const html = renderTestArbGrid({
   columns: [
     [
       {
@@ -105,6 +123,9 @@ const html = renderArbGrid({
 
 assert.ok(html.includes('固定路径'));
 assert.ok(html.includes('机会 1'));
+assert.ok(html.includes('data-render-key="column:test-column:0"'));
+assert.ok(html.includes('data-render-key="section:test-section:0:0"'));
+assert.ok(html.includes('data-render-key="opportunity:fixed-1"'));
 assert.ok(html.includes('data-arb-opportunity-id="fixed-1"'));
 assert.ok(!html.includes('class="arb-opportunity-chart-link"'));
 assert.ok(!html.includes('data-arb-opportunity-alert-id="fixed-1"'));
@@ -115,7 +136,7 @@ assert.ok(html.includes('class="arb-path-line arb-path-display-line arb-path-dis
 assert.ok(html.includes('class="arb-opportunity-head-profit arb-profit">12.00</div>'));
 assert.ok(!html.includes('<div class="arb-profit">收益: 12.00</div>'));
 
-const emptyHtml = renderArbGrid({
+const emptyHtml = renderTestArbGrid({
   columns: [
     [
       {
@@ -129,7 +150,7 @@ const emptyHtml = renderArbGrid({
 
 assert.ok(emptyHtml.includes('<div class="arb-path-line arb-path-empty">无收益率 &gt; 0.5bp</div>'));
 
-const underThresholdHtml = renderArbGrid({
+const underThresholdHtml = renderTestArbGrid({
   columns: [
     [
       {
@@ -159,7 +180,7 @@ assert.ok(underThresholdHtml.includes('class="arb-path-line arb-path-display-lin
 assert.ok(!underThresholdHtml.includes('arb-opportunity-head'));
 assert.ok(!underThresholdHtml.includes('WBTC -&gt; LBTC'));
 
-const htmlWithoutLabel = renderArbGrid({
+const htmlWithoutLabel = renderTestArbGrid({
   columns: [
     [
       {
@@ -183,7 +204,7 @@ const htmlWithoutLabel = renderArbGrid({
 assert.ok(!htmlWithoutLabel.includes('<div class="arb-path-line"><strong>历史图表</strong></div>'));
 assert.ok(htmlWithoutLabel.includes('class="arb-path-line arb-opportunity-head-label"'));
 
-const highlightedHtml = renderArbGrid({
+const highlightedHtml = renderTestArbGrid({
   columns: [
     [
       {
@@ -207,7 +228,7 @@ const highlightedHtml = renderArbGrid({
 
 assert.ok(highlightedHtml.includes('class="arb-opportunity is-alert-highlight"'));
 
-const specialHtml = renderArbGrid({
+const specialHtml = renderTestArbGrid({
   columns: [
     [
       {
@@ -239,7 +260,7 @@ assert.ok(specialHtml.includes('class="arb-opportunity arb-opportunity-special-b
 assert.ok(!specialHtml.includes('arb-opportunity-head'));
 assert.ok(specialHtml.includes('class="arb-path-line arb-path-display-line">1.00000   💰0.00059   💹5.9‱</div>'));
 
-const quotePriceHtml = renderArbGrid({
+const quotePriceHtml = renderTestArbGrid({
   columns: [
     [
       {

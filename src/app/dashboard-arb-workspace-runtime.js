@@ -41,6 +41,7 @@
       dashboardRuntimeUtils: deps.dashboardRuntimeUtils,
       documentImpl: deps.documentImpl,
       domRenderUtils: deps.domRenderUtils,
+      interactionSafeRenderer: modules.getInteractionSafeRenderer(),
       fetchImpl: deps.fetchImpl,
       getActiveQuotes: deps.getActiveQuotes,
       getArbCycleStartPriority: deps.getArbCycleStartPriority,

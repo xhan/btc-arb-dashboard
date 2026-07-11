@@ -29,8 +29,7 @@ const viewController = {
 };
 const formController = { id: 'form-controller' };
 let renderRefValue = null;
-let dashboardInteractionHolding = false;
-let dashboardInteractionOptions = null;
+let interactionSafeRendererOptions = null;
 const documentImpl = { id: 'document', activeElement: null };
 const dashboardEl = {
   id: 'dashboard',
@@ -63,11 +62,15 @@ const runtime = createDashboardBoardRuntime({
     }
   },
   dashboardViewModeControllerUtils: {
-    APP_VIEW_DASHBOARD: 'dashboard',
-    createDashboardViewRenderRuntime(options) {
+    APP_VIEW_DASHBOARD: 'dashboard'
+  },
+  interactionSafeRendererUtils: {
+    createInteractionSafeViewRuntime(options) {
       calls.push(['createRender', options]);
+      interactionSafeRendererOptions = options;
       return renderRuntime;
-    }
+    },
+    morphElementChildren: () => true
   },
   dashboardViewRenderRuntimeRef: {
     set(value) {
@@ -85,29 +88,7 @@ const runtime = createDashboardBoardRuntime({
   shared: {
     documentImpl,
     dashboardRuntimeUtils: { id: 'runtime-utils' },
-    domRenderUtils: {
-      createRenderInteractionDeferralRuntime(options = {}) {
-        dashboardInteractionOptions = options;
-        return {
-          bind(target = options.getTarget()) {
-            calls.push(['bindDashboardInteraction', target && target.id]);
-            if (target && typeof target.addEventListener === 'function') {
-              target.addEventListener('pointerdown', () => {});
-            }
-            return true;
-          },
-          shouldDeferRender(target = options.getTarget()) {
-            calls.push(['shouldDeferDashboardInteraction', target && target.id]);
-            return dashboardInteractionHolding;
-          }
-        };
-      },
-      shouldDeferRenderForFocusedEditable(target, options = {}) {
-        const activeElement = options.documentImpl && options.documentImpl.activeElement;
-        calls.push(['shouldDeferDashboardFocusedEditable', target && target.id, activeElement && activeElement.name]);
-        return Boolean(activeElement && activeElement.editable === true && target.contains(activeElement));
-      }
-    }
+    domRenderUtils: {}
   },
   actionOptions: {
     closeArbDetailModal: () => {},
@@ -145,21 +126,9 @@ assert.deepStrictEqual(viewOptions.getRequestChannelOptions(), { channels: [] })
 assert.strictEqual(renderOptions.activeMode, 'dashboard');
 assert.strictEqual(renderOptions.getMode(), 'dashboard');
 assert.strictEqual(renderOptions.render(), 'render-dashboard');
-assert.strictEqual(typeof renderOptions.shouldDeferRender, 'function');
-assert.ok(calls.some((call) => call[0] === 'bindDashboardInteraction' && call[1] === 'dashboard'));
-assert.strictEqual(dashboardInteractionOptions.trackFocus, 'editable');
-assert.strictEqual(typeof dashboardInteractionOptions.onIdle, 'function');
-dashboardInteractionHolding = true;
-assert.strictEqual(renderOptions.shouldDeferRender(), true);
-dashboardInteractionHolding = false;
-assert.strictEqual(renderOptions.shouldDeferRender(), false);
-documentImpl.activeElement = { name: 'copyButton', insideDashboard: true, editable: false };
-assert.strictEqual(renderOptions.shouldDeferRender(), false);
-documentImpl.activeElement = { name: 'quoteAmountInput', insideDashboard: true, editable: true };
-assert.strictEqual(renderOptions.shouldDeferRender(), true);
-documentImpl.activeElement = null;
-assert.ok(calls.some((call) => call[0] === 'shouldDeferDashboardInteraction' && call[1] === 'dashboard'));
-assert.ok(calls.some((call) => call[0] === 'shouldDeferDashboardFocusedEditable' && call[1] === 'dashboard'));
+assert.strictEqual(interactionSafeRendererOptions.trackFocus, 'editable');
+assert.strictEqual(interactionSafeRendererOptions.releaseTarget, documentImpl);
+assert.deepStrictEqual(interactionSafeRendererOptions.releaseEventListenerOptions, { capture: true });
 assert.deepStrictEqual(formOptions.addQuoteInputs.map((item) => item.id), ['from', 'to']);
 assert.strictEqual(formOptions.createCategoryModule, viewController.createCategoryModule);
 assert.strictEqual(formOptions.createQuoteItem, viewController.createQuoteItem);

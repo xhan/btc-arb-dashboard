@@ -54,8 +54,10 @@
     const alertHtml = alertText
       ? `<div class="arb-quote-price-alert">${escapeHtml(alertText)}</div>`
       : '';
+    const renderKey = String(entry && entry.renderKey || '');
+    if (!renderKey) throw new Error(`报价关注项缺少稳定 key: ${title}`);
     return `
-      <div class="${classNames.join(' ')}">
+      <div class="${classNames.join(' ')}" data-render-key="${escapeAttr(renderKey)}">
         <div class="arb-quote-price-header">
           <div class="arb-quote-price-title">${escapeHtml(title)}</div>
           ${statusHtml}
@@ -145,8 +147,10 @@
     const clickableAttrs = opportunityId && entry && entry.clickable !== false
       ? ` data-arb-opportunity-id="${escapeAttr(opportunityId)}" role="button" tabindex="0"`
       : '';
+    const renderKey = opportunityId || String(entry && entry.renderKey || '');
+    if (!renderKey) throw new Error('套利机会缺少稳定 key');
 
-    return `<div class="${className}"${clickableAttrs}>${labelHtml}${displayMessageHtml}${legHtml}</div>`;
+    return `<div class="${className}" data-render-key="opportunity:${escapeAttr(renderKey)}"${clickableAttrs}>${labelHtml}${displayMessageHtml}${legHtml}</div>`;
   }
 
   function renderSection(section, options) {
@@ -177,8 +181,10 @@
     const sectionClassName = section && section.sectionType === 'special-rule'
       ? 'arb-section arb-section-special'
       : 'arb-section';
+    const renderKey = String(section && section.renderKey || '');
+    if (!renderKey) throw new Error(`套利 section 缺少稳定 key: ${title || '--'}`);
 
-    return `<div class="${sectionClassName}">${titleRowHtml}${headerExtraHtml}${body}${footerHtml}</div>`;
+    return `<div class="${sectionClassName}" data-render-key="section:${escapeAttr(renderKey)}">${titleRowHtml}${headerExtraHtml}${body}${footerHtml}</div>`;
   }
 
   function renderArbSectionToggleHtml(sectionKey, cycleDisplayState) {
@@ -203,6 +209,7 @@
 
   function renderArbGrid(config = {}) {
     const columns = Array.isArray(config.columns) ? config.columns : [];
+    const columnKeys = Array.isArray(config.columnKeys) ? config.columnKeys : [];
     const options = {
       isMeaningfulPath: config.isMeaningfulPath,
       shouldIncludeLeg: config.shouldIncludeLeg,
@@ -211,10 +218,12 @@
       formatProfit: config.formatProfit
     };
 
-    const columnHtml = columns.map((sections) => {
+    const columnHtml = columns.map((sections, index) => {
       const safeSections = Array.isArray(sections) ? sections : [];
+      const columnKey = String(columnKeys[index] || '');
+      if (!columnKey) throw new Error(`套利 column ${index} 缺少稳定 key`);
       const sectionHtml = safeSections.map((section) => renderSection(section, options)).join('');
-      return `<div class="arb-column">${sectionHtml}</div>`;
+      return `<div class="arb-column" data-render-key="column:${escapeAttr(columnKey)}">${sectionHtml}</div>`;
     }).join('');
 
     return `<div class="arb-path-grid">${columnHtml}</div>`;

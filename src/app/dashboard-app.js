@@ -243,6 +243,8 @@
             interactionRuntime: dashboardInputInteractionRuntime,
             logger: console,
             quoteStateRuntime,
+            setTimeout,
+            clearTimeout,
             resetQuoteUiRuntimeState,
             setQuoteMarketState,
             updateAlertSoundState: alertRuntimeController.updateAlertSoundState,

@@ -69,6 +69,7 @@
     getDataTerminalUtils: ['DataTerminalUtils', 'DataTerminalUtils is not loaded'],
     getDexLinkUtils: ['DexLinkUtils', 'DexLinkUtils is not loaded'],
     getDomRenderUtils: ['DomRenderUtils', 'DomRenderUtils is not loaded'],
+    getInteractionSafeRenderer: ['InteractionSafeRenderer', 'InteractionSafeRenderer is not loaded'],
     getKeyboardShortcutController: ['KeyboardShortcutController', 'KeyboardShortcutController is not loaded'],
     getKeyboardShortcutUtils: ['KeyboardShortcutUtils', 'KeyboardShortcutUtils is not loaded'],
     getMutedPathLegUtils: ['MutedPathLegUtils', 'MutedPathLegUtils is not loaded'],

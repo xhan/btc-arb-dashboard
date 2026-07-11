@@ -44,6 +44,7 @@
       addQuoteModalSelectionRuntime: shellRuntime.addQuoteModalSelectionRuntime || deps.addQuoteModalSelectionRuntime,
       confirmActionRuntime: shellRuntime.confirmActionRuntime || deps.confirmActionRuntime,
       interactionRuntime: deps.interactionRuntime,
+      interactionSafeRendererUtils: modules.getInteractionSafeRenderer(),
       dashboardActionControllerUtils: modules.getDashboardActionController(),
       dashboardFormControllerUtils: modules.getDashboardFormController(),
       dashboardViewControllerUtils: modules.getDashboardViewController(),
@@ -52,6 +53,9 @@
       dashboardViewRenderRuntimeRef: deps.dashboardViewRenderRuntimeRef,
       getRequestChannelOptions,
       quoteSettingsSelectionRuntime: shellRuntime.quoteSettingsSelectionRuntime || deps.quoteSettingsSelectionRuntime,
+      setTimeout: deps.setTimeout,
+      clearTimeout: deps.clearTimeout,
+      windowImpl: deps.windowImpl,
       refs,
       shared: {
         dashboardModalUtils: modules.getDashboardModalUtils(),

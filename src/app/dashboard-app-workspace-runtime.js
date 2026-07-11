@@ -169,7 +169,9 @@
       },
       timers: {
         setInterval: timers.setInterval,
-        clearInterval: timers.clearInterval
+        clearInterval: timers.clearInterval,
+        setTimeout: timers.setTimeout,
+        clearTimeout: timers.clearTimeout
       }
     });
 

@@ -5,17 +5,10 @@ const { createArbPanelController } = require('../src/arb/arb-panel-controller');
 let resetCount = 0;
 let renderedHtml = '';
 let broughtToFrontPanel = null;
-let arbPanelDeferralOptions = null;
-let stableRendererOptions = null;
-let contentInteractionHolding = false;
-let sharedInteractionHolding = false;
+let interactionSafeRendererOptions = null;
 const contentListeners = {};
 const openedOpportunities = [];
 const openResultByOpportunityId = new Map();
-const sharedInteractionRuntime = {
-  addIdleListener: () => true,
-  shouldDeferRender: () => sharedInteractionHolding
-};
 
 const panelContent = {
   textContent: '',
@@ -141,33 +134,21 @@ const controller = createArbPanelController({
     applyFloatingPanelViewportHeight: (targetPanel, height, options) => {
       targetPanel.maxHeight = `${height - options.minHeight}px`;
     },
-    createRenderInteractionDeferralRuntime: (options) => {
-      arbPanelDeferralOptions = options;
-      return {
-        bind: () => true,
-        shouldDeferRender: () => (
-          contentInteractionHolding
-          || Boolean(options.interactionRuntime && options.interactionRuntime.shouldDeferRender())
-        )
-      };
-    },
-    createStableHtmlRenderer: (options) => {
-      stableRendererOptions = options;
+  },
+  interactionSafeRenderer: {
+    createInteractionSafeHtmlRenderer(options) {
+      interactionSafeRendererOptions = options;
       return {
         reset: () => { resetCount += 1; },
-        render: (_contentEl, html) => { renderedHtml = html; }
+        update: (html) => { renderedHtml = html; }
       };
-    },
-    shouldDeferRenderWhileFocused: (element, options) => Boolean(
-      element && typeof element.contains === 'function' && element.contains(options && options.documentImpl && options.documentImpl.activeElement)
-    )
+    }
   },
   arbAlertBridgeRuntime: {},
   getArbDetailController: () => null,
   getDashboardState: () => dashboardState,
   getQuoteMarketState: () => ({}),
   getQuoteMarketStateMap: () => ({}),
-  interactionRuntime: sharedInteractionRuntime,
   isQuotePaused: () => false,
   openArbDetailModal: (opportunityId) => {
     openedOpportunities.push(opportunityId);
@@ -208,19 +189,9 @@ assert.strictEqual(controller.formatDetailNumber(1.23456, 2), '1.23');
 assert.strictEqual(controller.findQuoteById(42), dashboardState[0].quotes[0]);
 assert.strictEqual(controller.buildLiveQuoteLabel('ethereum', 'USDC', 'USDT', ' spot'), 'Chain:ethereum:USDC->USDT spot');
 
-assert.strictEqual(arbPanelDeferralOptions.trackFocus, false);
-assert.strictEqual(arbPanelDeferralOptions.releaseTarget, documentImpl);
-assert.deepStrictEqual(arbPanelDeferralOptions.releaseEventListenerOptions, { capture: true });
-documentImpl.activeElement = { id: 'focused-opportunity' };
-contentInteractionHolding = false;
-sharedInteractionHolding = true;
-assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), false);
-sharedInteractionHolding = false;
-assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), false);
-contentInteractionHolding = true;
-assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), true);
-contentInteractionHolding = false;
-documentImpl.activeElement = null;
+assert.strictEqual(interactionSafeRendererOptions.trackFocus, false);
+assert.strictEqual(interactionSafeRendererOptions.releaseTarget, documentImpl);
+assert.deepStrictEqual(interactionSafeRendererOptions.releaseEventListenerOptions, { capture: true });
 
 controller.update({ force: true });
 assert.strictEqual(resetCount, 0);

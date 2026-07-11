@@ -464,6 +464,9 @@ const mutedStatePanelHtml = buildMutedAlertStatePanelHtml({
 
 assert.ok(mutedStatePanelHtml.includes('沉默的路径'));
 assert.ok(mutedStatePanelHtml.includes('屏蔽的腿'));
+assert.ok(mutedStatePanelHtml.includes('data-render-key="muted-section:沉默的路径"'));
+assert.ok(mutedStatePanelHtml.includes('data-render-key="muted-path:new&quot;path"'));
+assert.ok(mutedStatePanelHtml.includes('data-render-key="muted-leg:new-leg"'));
 assert.ok(mutedStatePanelHtml.indexOf('New &lt;Path&gt;') < mutedStatePanelHtml.indexOf('old line'));
 assert.ok(mutedStatePanelHtml.indexOf('Base:A-&gt;B') < mutedStatePanelHtml.indexOf('Old Leg'));
 assert.ok(mutedStatePanelHtml.includes('new line &amp; more'));

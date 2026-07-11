@@ -703,6 +703,9 @@ const panelHtml = buildDataTerminalPanelHtml(
 );
 
 assert.ok(panelHtml.includes('data-terminal-grid'));
+assert.ok(panelHtml.includes('data-render-key="terminal-grid"'));
+assert.ok(panelHtml.includes('data-render-key="terminal-column:left"'));
+assert.ok(panelHtml.includes('data-render-key="terminal-row:left:left&quot;1"'));
 assert.ok(panelHtml.includes('data-terminal-row-selected'));
 assert.ok(panelHtml.includes('data-data-terminal-row-key="left&quot;1"'));
 assert.ok(panelHtml.includes('<span class="data-terminal-chain">Chain:ethereum</span>'));

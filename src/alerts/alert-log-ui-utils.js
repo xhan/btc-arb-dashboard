@@ -396,16 +396,19 @@
     const settings = options.settings && typeof options.settings === 'object' ? options.settings : {};
     const rows = [
       {
+        key: 'localSoundEnabled',
         label: '音效',
         dataAttr: 'data-alert-setting-toggle="localSoundEnabled"',
         checked: settings.localSoundEnabled !== false
       },
       {
+        key: 'webhookEnabled',
         label: '远程推送',
         dataAttr: 'data-alert-setting-toggle="webhookEnabled"',
         checked: settings.webhookEnabled === true
       },
       {
+        key: 'forceImmediate',
         label: '全部立即',
         dataAttr: 'data-alert-force-immediate',
         checked: options.forceImmediateAlerts === true
@@ -414,7 +417,7 @@
     return `
             <div class="alert-settings-panel">
                 ${rows.map((row) => `
-                    <label class="alert-setting-row">
+                    <label class="alert-setting-row" data-render-key="alert-setting:${escapeHtml(row.key)}">
                         <span>${escapeHtml(row.label)}</span>
                         <input type="checkbox" ${row.dataAttr} ${row.checked ? 'checked' : ''}>
                     </label>
@@ -455,7 +458,7 @@
       .map((action) => `<button type="button" class="muted-state-action-btn" ${action.dataAttr}="${escapeHtml(action.value)}">${escapeHtml(action.label)}</button>`)
       .join('');
     return `
-            <div class="muted-state-item">
+            <div class="muted-state-item" data-render-key="${escapeHtml(config.renderKey || '')}">
                 <div class="muted-state-item-title">${escapeHtml(config.title || '--')}</div>
                 ${linesHtml ? `<div class="muted-state-item-lines">${linesHtml}</div>` : ''}
                 <div class="muted-state-item-foot">
@@ -469,7 +472,7 @@
   function buildMutedStateSectionHtml(title, items, emptyText) {
     const list = Array.isArray(items) ? items : [];
     return `
-            <section class="muted-state-section">
+            <section class="muted-state-section" data-render-key="muted-section:${escapeHtml(title)}">
                 <div class="muted-state-title">${escapeHtml(title)}</div>
                 ${list.length ? list.join('') : `<div class="muted-state-empty">${escapeHtml(emptyText)}</div>`}
             </section>
@@ -502,19 +505,22 @@
     const mutedPathItems = sortMutedEntriesByMutedAtDesc(config.mutedPathTargets)
       .map((entry) => {
         const summaryLines = Array.isArray(entry && entry.summaryLinesSnapshot) ? entry.summaryLinesSnapshot : [];
+        const targetKey = buildPathTargetKey(entry);
         return buildMutedStateItemHtml({
+          renderKey: `muted-path:${targetKey}`,
           title: entry && (entry.logTitleSnapshot || summaryLines[0]) || '路径沉默',
           lines: summaryLines,
           status: buildPathStatusText(entry),
           actions: [
-            { label: '延长 2 小时', dataAttr: 'data-muted-path-target-extend', value: buildPathTargetKey(entry) },
-            { label: '恢复', dataAttr: 'data-muted-path-target-restore', value: buildPathTargetKey(entry) }
+            { label: '延长 2 小时', dataAttr: 'data-muted-path-target-extend', value: targetKey },
+            { label: '恢复', dataAttr: 'data-muted-path-target-restore', value: targetKey }
           ]
         });
       });
 
     const mutedLegItems = sortMutedEntriesByMutedAtDesc(config.mutedPathLegs)
       .map((entry) => buildMutedStateItemHtml({
+        renderKey: `muted-leg:${buildLegKey(entry)}`,
         title: buildLegTitle(entry) || '路径腿',
         lines: [],
         status: buildLegStatusText(entry),

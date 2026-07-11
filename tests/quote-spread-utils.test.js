@@ -72,4 +72,6 @@ assert.ok(html.includes('WBTC/cbBTC'));
 assert.ok(html.includes('+49.50bp'));
 assert.ok(html.includes('1.004950'));
 assert.ok(html.includes('USDC/USDT'));
+assert.ok(html.includes('data-render-key="quote-spread-table"'));
+assert.ok(html.includes('data-render-key="quote-spread-row:1"'));
 assert.ok(buildQuoteSpreadPanelHtml([]).includes('暂无可计算的买/卖 spread'));

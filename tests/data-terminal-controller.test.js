@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const dataTerminalUtils = require('../src/data-terminal/data-terminal-utils');
 const domRenderUtils = require('../src/ui/dom-render-utils');
+const interactionSafeRenderer = require('../src/ui/interaction-safe-renderer');
 const { createDataTerminalController, createInitialState } = require('../src/data-terminal/data-terminal-controller');
 const dashboardRuntimeUtils = require('../src/dashboard/dashboard-runtime-utils');
 
@@ -22,6 +23,10 @@ function createElement(name, calls, documentRef) {
     addEventListener(type, handler) {
       this.listeners[type] = handler;
       calls.push(['bind', name, type]);
+    },
+    removeEventListener(type, handler) {
+      if (this.listeners[type] === handler) delete this.listeners[type];
+      calls.push(['unbind', name, type]);
     },
     contains(target) {
       return target === element || Boolean(target && target.inside === name);
@@ -108,6 +113,7 @@ function createBaseDeps(overrides = {}) {
   const deps = {
     dataTerminalUtils,
     dashboardRuntimeUtils,
+    interactionSafeRenderer,
     documentImpl,
     windowImpl: {
       getComputedStyle: () => ({ display: 'block', width: '1000px', height: '600px' })
@@ -130,27 +136,6 @@ function createBaseDeps(overrides = {}) {
       }
     },
     domRenderUtils: {
-      createRenderInteractionDeferralRuntime(options = {}) {
-        calls.push(['createDeferral', options.trackFocus]);
-        return {
-          bind(target) {
-            calls.push(['bindDeferral', target && target.name]);
-            return true;
-          },
-          shouldDeferRender() {
-            return false;
-          }
-        };
-      },
-      createStableHtmlRenderer: () => ({
-        render(target, html) {
-          target.innerHTML = html;
-          calls.push(['render', target.name]);
-        },
-        reset() {
-          calls.push(['resetRenderer']);
-        }
-      }),
       bindFloatingPanelChrome(panel, header) {
         calls.push(['bindChrome', panel.id, header.name]);
       }
@@ -246,8 +231,6 @@ function createBaseDeps(overrides = {}) {
   assert.strictEqual(panel.style.top, '144px');
   assert.strictEqual(refs['#data-terminal-alias-toggle'].checked, true);
   assert.ok(calls.some((call) => call[0] === 'bindChrome'));
-  assert.ok(calls.some((call) => call[0] === 'createDeferral' && call[1] === false));
-  assert.ok(calls.some((call) => call[0] === 'bindDeferral' && call[1] === 'content'));
   assert.ok(calls.some((call) => call[0] === 'focus' && call[1] === 'searchInput'));
 
   refs['#data-terminal-search-input'].listeners.input({ target: { value: 'USDC' } });
@@ -297,6 +280,7 @@ function createBaseDeps(overrides = {}) {
 
   controller.unmountPanel();
   assert.ok(calls.some((call) => call[0] === 'clearTimeout' && call[1] === 'timer-2'));
+  assert.ok(calls.some((call) => call[0] === 'unbind' && call[1] === 'content' && call[2] === 'pointerdown'));
   assert.ok(calls.some((call) => call[0] === 'removeChild' && call[1] === 'data-terminal-window'));
   assert.strictEqual(controller.getState().visible, false);
   assert.strictEqual(controller.scheduleUpdate(), false);

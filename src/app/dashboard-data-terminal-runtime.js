@@ -24,6 +24,7 @@
       dataTerminalUtils: modules.getDataTerminalUtils(),
       dashboardRuntimeUtils: deps.dashboardRuntimeUtils,
       domRenderUtils: deps.domRenderUtils,
+      interactionSafeRenderer: modules.getInteractionSafeRenderer(),
       interactionRuntime: deps.interactionRuntime,
       documentImpl: deps.documentImpl,
       windowImpl: deps.windowImpl,

@@ -325,7 +325,7 @@
       || `<span class="data-terminal-pair">${escapeHtml(pairLabel)}</span>`;
 
     return `
-            <div class="data-terminal-row${selectedClass}" data-data-terminal-side="${escapeHtml(side)}" data-data-terminal-row-key="${escapeHtml(row.key)}">
+            <div class="data-terminal-row${selectedClass}" data-render-key="terminal-row:${escapeHtml(side)}:${escapeHtml(row.key)}" data-data-terminal-side="${escapeHtml(side)}" data-data-terminal-row-key="${escapeHtml(row.key)}">
                 <span class="data-terminal-chain">${escapeHtml(formatChainLabel(row.chain))}</span>
                 ${pairHtml}
                 <span class="data-terminal-rate">${escapeHtml(row.displayValue)}</span>
@@ -340,7 +340,7 @@
       ? list.map((row) => buildDataTerminalRowHtml(row, side, selectedKey, options)).join('')
       : `<div class="data-terminal-column-empty">${escapeHtml(emptyMessage)}</div>`;
     return `
-            <section class="data-terminal-column">
+            <section class="data-terminal-column" data-render-key="terminal-column:${escapeHtml(side)}">
                 <div class="data-terminal-head">
                     <span>链</span>
                     <span>Token -&gt; Token</span>
@@ -358,7 +358,7 @@
     }
 
     return `
-            <div class="data-terminal-grid">
+            <div class="data-terminal-grid" data-render-key="terminal-grid">
                 ${buildDataTerminalColumnHtml(viewModel.leftRows || [], viewModel.emptyMessage || '暂无匹配交易对', 'left', selectionState.selectedLeftKey, options)}
                 ${buildDataTerminalColumnHtml(viewModel.rightRows || [], viewModel.emptyMessage || '暂无匹配交易对', 'right', selectionState.selectedRightKey, options)}
             </div>

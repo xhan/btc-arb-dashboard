@@ -12,19 +12,10 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root, chainDefaults) {
   const DEFAULT_UPDATE_INTERVAL_MS = 1000;
 
-  function createFallbackHtmlRenderer() {
-    return {
-      render(target, html) {
-        if (target) target.innerHTML = html;
-        return true;
-      },
-      reset() {}
-    };
-  }
-
   function createQuoteSpreadController(deps = {}) {
     const quoteSpreadUtils = deps.quoteSpreadUtils || (root && root.QuoteSpreadUtils);
     const domRenderUtils = deps.domRenderUtils || {};
+    const interactionSafeRenderer = deps.interactionSafeRenderer || (root && root.InteractionSafeRenderer);
     const refs = deps.refs || {};
     const setIntervalFn = typeof deps.setInterval === 'function'
       ? deps.setInterval
@@ -35,11 +26,15 @@
     const updateIntervalMs = Number.isFinite(Number(deps.updateIntervalMs)) && Number(deps.updateIntervalMs) > 0
       ? Number(deps.updateIntervalMs)
       : DEFAULT_UPDATE_INTERVAL_MS;
-    const htmlRenderer = deps.htmlRenderer || (
-      domRenderUtils && typeof domRenderUtils.createStableHtmlRenderer === 'function'
-        ? domRenderUtils.createStableHtmlRenderer()
-        : createFallbackHtmlRenderer()
-    );
+    const htmlRenderer = deps.htmlRenderer || interactionSafeRenderer.createInteractionSafeHtmlRenderer({
+      getTarget: () => refs.content,
+      setTimeout: deps.setTimeout,
+      clearTimeout: deps.clearTimeout,
+      trackFocus: false,
+      releaseTarget: deps.documentImpl,
+      releaseEventListenerOptions: { capture: true },
+      windowImpl: deps.windowImpl
+    });
     let updateTimer = null;
 
     function getDashboardState() {
@@ -87,7 +82,7 @@
         limit: 20,
         formatChainLabel
       });
-      return htmlRenderer.render(refs.content, quoteSpreadUtils.buildQuoteSpreadPanelHtml(rows));
+      return htmlRenderer.update(quoteSpreadUtils.buildQuoteSpreadPanelHtml(rows));
     }
 
     function startUpdates() {

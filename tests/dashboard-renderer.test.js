@@ -742,6 +742,7 @@ assert.ok(quoteItemHtml.includes('title="恢复"'));
 assert.ok(quoteItemHtml.includes('aria-pressed="true"'));
 
 let createdQuoteItemTag = '';
+const createdQuoteItemAttributes = {};
 const createdQuoteItemEl = createQuoteItemShellElement({
   quoteId: 'quote-1',
   categoryId: 'cat-1',
@@ -757,7 +758,14 @@ const createdQuoteItemEl = createQuoteItemShellElement({
   documentImpl: {
     createElement(tagName) {
       createdQuoteItemTag = tagName;
-      return { id: '', className: '', innerHTML: '' };
+      return {
+        id: '',
+        className: '',
+        innerHTML: '',
+        setAttribute(name, value) {
+          createdQuoteItemAttributes[name] = value;
+        }
+      };
     }
   }
 });
@@ -765,6 +773,7 @@ assert.strictEqual(createdQuoteItemTag, 'li');
 assert.strictEqual(createdQuoteItemEl.id, 'quote-item-quote-1');
 assert.strictEqual(createdQuoteItemEl.className, 'quote-item quote-item-paused');
 assert.strictEqual(createdQuoteItemEl.innerHTML, quoteItemHtml);
+assert.strictEqual(createdQuoteItemAttributes['data-render-key'], 'quote:quote-1');
 assert.strictEqual(createQuoteItemShellElement({}, { documentImpl: {} }), null);
 
 const categoryHtml = renderCategoryModuleShell({
@@ -780,6 +789,7 @@ assert.ok(categoryHtml.includes('aria-pressed="true"'));
 assert.ok(categoryHtml.includes('id="quote-list-cat-1"'));
 
 let createdCategoryTag = '';
+const createdCategoryAttributes = {};
 const createdCategoryModuleEl = createCategoryModuleShellElement({
   categoryId: 'cat-1',
   categoryName: '主分区 <A>',
@@ -788,7 +798,14 @@ const createdCategoryModuleEl = createCategoryModuleShellElement({
   documentImpl: {
     createElement(tagName) {
       createdCategoryTag = tagName;
-      return { id: '', className: '', innerHTML: '' };
+      return {
+        id: '',
+        className: '',
+        innerHTML: '',
+        setAttribute(name, value) {
+          createdCategoryAttributes[name] = value;
+        }
+      };
     }
   }
 });
@@ -796,4 +813,5 @@ assert.strictEqual(createdCategoryTag, 'div');
 assert.strictEqual(createdCategoryModuleEl.id, 'module-cat-1');
 assert.strictEqual(createdCategoryModuleEl.className, 'module');
 assert.strictEqual(createdCategoryModuleEl.innerHTML, categoryHtml);
+assert.strictEqual(createdCategoryAttributes['data-render-key'], 'category:cat-1');
 assert.strictEqual(createCategoryModuleShellElement({}, { documentImpl: {} }), null);

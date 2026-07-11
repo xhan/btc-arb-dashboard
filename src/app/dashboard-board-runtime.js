@@ -15,52 +15,11 @@
     const viewOptions = options.viewOptions || {};
     const formOptions = options.formOptions || {};
     const domRenderUtils = shared.domRenderUtils || actionOptions.domRenderUtils || null;
+    const interactionSafeRenderer = options.interactionSafeRendererUtils;
     const documentImpl = shared.documentImpl || actionOptions.documentImpl || viewOptions.documentImpl || null;
     const getRequestChannelOptions = typeof options.getRequestChannelOptions === 'function'
       ? options.getRequestChannelOptions
       : () => ({});
-    let viewRenderRuntime = null;
-    const dashboardInteractionDeferralRuntime = (
-      domRenderUtils && typeof domRenderUtils.createRenderInteractionDeferralRuntime === 'function'
-    )
-      ? domRenderUtils.createRenderInteractionDeferralRuntime({
-        getTarget: () => refs.dashboardEl,
-        interactionRuntime: options.interactionRuntime,
-        setTimeout: options.setTimeout,
-        clearTimeout: options.clearTimeout,
-        trackFocus: 'editable',
-        onIdle: () => {
-          if (viewRenderRuntime && typeof viewRenderRuntime.ensureRendered === 'function') {
-            viewRenderRuntime.ensureRendered();
-          }
-        }
-      })
-      : null;
-
-    function shouldDeferDashboardRender() {
-      if (
-        dashboardInteractionDeferralRuntime
-        && typeof dashboardInteractionDeferralRuntime.shouldDeferRender === 'function'
-        && dashboardInteractionDeferralRuntime.shouldDeferRender()
-      ) {
-        return true;
-      }
-      return Boolean(
-        domRenderUtils
-        && typeof domRenderUtils.shouldDeferRenderForFocusedEditable === 'function'
-        && domRenderUtils.shouldDeferRenderForFocusedEditable(refs.dashboardEl, { documentImpl })
-      );
-    }
-
-    function bindDashboardInteractionDeferral() {
-      if (
-        dashboardInteractionDeferralRuntime
-        && typeof dashboardInteractionDeferralRuntime.bind === 'function'
-      ) {
-        dashboardInteractionDeferralRuntime.bind();
-      }
-    }
-
     const dashboardActionController = options.dashboardActionControllerUtils.createDashboardActionController({
       ...shared,
       ...actionOptions,
@@ -95,7 +54,10 @@
       ...shared,
       ...viewOptions,
       dashboardEl: refs.dashboardEl,
-      getRequestChannelOptions
+      getRequestChannelOptions,
+      morphDashboard: (target, nextDashboard) => (
+        interactionSafeRenderer.morphElementChildren(target, nextDashboard)
+      )
     });
     const {
       createCategoryModule,
@@ -103,13 +65,19 @@
       renderDashboard
     } = dashboardViewController;
 
-    viewRenderRuntime = options.dashboardViewModeControllerUtils.createDashboardViewRenderRuntime({
+    const viewRenderRuntime = interactionSafeRenderer.createInteractionSafeViewRuntime({
       activeMode: options.dashboardViewModeControllerUtils.APP_VIEW_DASHBOARD,
       getMode: () => options.dashboardViewModeController && options.dashboardViewModeController.getMode(),
+      getTarget: () => refs.dashboardEl,
       render: renderDashboard,
-      shouldDeferRender: shouldDeferDashboardRender
+      interactionRuntime: options.interactionRuntime,
+      setTimeout: options.setTimeout,
+      clearTimeout: options.clearTimeout,
+      trackFocus: 'editable',
+      releaseTarget: documentImpl,
+      releaseEventListenerOptions: { capture: true },
+      windowImpl: options.windowImpl
     });
-    bindDashboardInteractionDeferral();
     if (options.dashboardViewRenderRuntimeRef && typeof options.dashboardViewRenderRuntimeRef.set === 'function') {
       options.dashboardViewRenderRuntimeRef.set(viewRenderRuntime);
     }

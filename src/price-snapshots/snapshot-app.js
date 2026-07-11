@@ -272,6 +272,7 @@
 
     const fixedSections = [
       {
+        renderKey: 'snapshot:fixed',
         title: '固定路径',
         opportunities: FIXED_PATH_RULES
           .map((rule) => buildOpportunityEntry(
@@ -314,6 +315,7 @@
           .filter(Boolean)
         : ((cycles && cycles[0]) ? [buildOpportunityEntry(cycles[0], '机会 1')].filter(Boolean) : []);
       return {
+        renderKey: `snapshot:category:${category.name}`,
         title: category.name,
         opportunities
       };
@@ -337,6 +339,7 @@
       categorySections,
       [
         {
+          renderKey: 'snapshot:global',
           title: '全局路径',
           opportunities: globalOps,
           emptyText: '暂无可用路径'
@@ -354,6 +357,7 @@
 
     const html = window.ArbPanelRenderer.renderArbGrid({
       columns,
+      columnKeys: ['snapshot:fixed', 'snapshot:categories', 'snapshot:global'],
       isMeaningfulPath: (cycle) => cycle && Array.isArray(cycle.legs) && window.ArbPaths.isMeaningfulPath(cycle.legs),
       shouldIncludeLeg: (leg) => !(leg && (leg.rule || leg.chain === '规则')),
       formatChainLabel,

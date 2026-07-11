@@ -15,13 +15,15 @@
     const timers = options.timers || {};
     const dashboardRuntimeUtils = modules.getDashboardRuntimeUtils();
     const domRenderUtils = modules.getDomRenderUtils();
+    const interactionSafeRenderer = modules.getInteractionSafeRenderer();
     const closestEventTarget = domRenderUtils.closestEventTarget;
-    const dashboardInputInteractionRuntime = domRenderUtils.createRenderInteractionHoldRuntime({
+    const dashboardInputInteractionRuntime = interactionSafeRenderer.createInteractionRuntime({
       clearTimeout: timers.clearTimeout,
       eventListenerOptions: { capture: true },
       idleDelayMs: 80,
       setTimeout: timers.setTimeout,
-      trackFocus: false
+      trackFocus: false,
+      windowImpl: deps.windowImpl
     });
     dashboardInputInteractionRuntime.bind(deps.documentImpl);
 
@@ -99,6 +101,7 @@
     return {
       dashboardRuntimeUtils,
       domRenderUtils,
+      interactionSafeRenderer,
       closestEventTarget,
       dashboardInputInteractionRuntime,
       defaultIntervals,

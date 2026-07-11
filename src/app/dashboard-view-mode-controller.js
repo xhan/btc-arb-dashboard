@@ -123,70 +123,10 @@
     };
   }
 
-  function createDashboardViewRenderRuntime(options = {}) {
-    const activeMode = normalizeViewMode(options.activeMode || APP_VIEW_DASHBOARD);
-    const render = typeof options.render === 'function' ? options.render : () => {};
-    const shouldDeferRender = typeof options.shouldDeferRender === 'function'
-      ? options.shouldDeferRender
-      : () => false;
-    let rendered = false;
-    let dirty = false;
-    let deferredRender = false;
-
-    function getMode() {
-      return normalizeViewMode(typeof options.getMode === 'function' ? options.getMode() : null);
-    }
-
-    function isActive() {
-      return getMode() === activeMode;
-    }
-
-    function markDirty() {
-      dirty = true;
-      return false;
-    }
-
-    function renderNow() {
-      if (!isActive()) {
-        dirty = true;
-        deferredRender = false;
-        return false;
-      }
-      if (rendered && shouldDeferRender()) {
-        dirty = true;
-        deferredRender = true;
-        return false;
-      }
-      render();
-      rendered = true;
-      dirty = false;
-      deferredRender = false;
-      return rendered;
-    }
-
-    function ensureRendered() {
-      if (!rendered || dirty) {
-        return renderNow();
-      }
-      return rendered;
-    }
-
-    return {
-      ensureRendered,
-      hasDeferredRender: () => deferredRender,
-      hasRendered: () => rendered,
-      isActive,
-      isDirty: () => dirty,
-      markDirty,
-      renderNow
-    };
-  }
-
   return {
     APP_VIEW_ARB,
     APP_VIEW_DASHBOARD,
     VIEW_CLASS_BY_MODE,
-    createDashboardViewRenderRuntime,
     createDashboardViewModeController,
     normalizeViewMode,
     setButtonActive

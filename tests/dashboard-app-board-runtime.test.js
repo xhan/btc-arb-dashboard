@@ -25,6 +25,7 @@ const modules = {
   getDashboardRenderer: () => ({ id: 'renderer' }),
   getDashboardViewController: () => ({ id: 'view-utils' }),
   getDashboardViewModeController: () => ({ id: 'view-mode-utils' }),
+  getInteractionSafeRenderer: () => ({ id: 'interaction-safe-renderer' }),
   getArbDetailUtils: () => ({ id: 'arb-detail-utils' }),
   getDexLinkUtils: () => ({ id: 'dex-link-utils' }),
   getPathAlertPageUtils: () => ({ id: 'path-alert-page-utils' }),
@@ -148,6 +149,7 @@ assert.strictEqual(capturedOptions.dashboardActionControllerUtils.id, 'action-ut
 assert.strictEqual(capturedOptions.dashboardFormControllerUtils.id, 'form-utils');
 assert.strictEqual(capturedOptions.dashboardViewControllerUtils.id, 'view-utils');
 assert.strictEqual(capturedOptions.dashboardViewModeControllerUtils.id, 'view-mode-utils');
+assert.strictEqual(capturedOptions.interactionSafeRendererUtils.id, 'interaction-safe-renderer');
 assert.strictEqual(capturedOptions.addQuoteModalSelectionRuntime, deps.dashboardShellRuntime.addQuoteModalSelectionRuntime);
 assert.strictEqual(capturedOptions.confirmActionRuntime, deps.dashboardShellRuntime.confirmActionRuntime);
 assert.strictEqual(capturedOptions.interactionRuntime, deps.interactionRuntime);

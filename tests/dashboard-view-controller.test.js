@@ -109,8 +109,13 @@ function createBaseDeps(overrides = {}) {
       getDexLinkLabel: () => 'DexLink'
     },
     documentImpl: {
+      createElement: () => createElement('next-dashboard'),
       getElementById: (id) => docById[id] || null,
       querySelectorAll: () => [draggedNode, targetNode]
+    },
+    morphDashboard: (target, nextDashboard) => {
+      target.children = nextDashboard.children.slice();
+      return true;
     },
     getCategoryPauseAction: () => 'pause',
     getDashboardState: () => dashboardState,
@@ -225,4 +230,10 @@ function createBaseDeps(overrides = {}) {
   const controller = createDashboardViewController(deps);
   controller.renderDashboard();
   assert.strictEqual(calls[0][0], 'error');
+}
+
+{
+  const { deps } = createBaseDeps({ deps: { morphDashboard: null } });
+  const controller = createDashboardViewController(deps);
+  assert.throws(() => controller.renderDashboard(), /缺少交互安全渲染器/);
 }

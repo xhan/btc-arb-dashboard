@@ -15,6 +15,7 @@
       applyFloatingPanelDisplay: deps.applyFloatingPanelDisplay,
       documentImpl: deps.documentImpl,
       domRenderUtils: deps.domRenderUtils,
+      interactionSafeRenderer: modules.getInteractionSafeRenderer(),
       formatChainLabel: deps.formatChainLabel,
       getDashboardState: deps.getDashboardState,
       getQuoteMarketStateMap: deps.getQuoteMarketStateMap,
@@ -22,6 +23,9 @@
       refs,
       setInterval: timers.setInterval,
       clearInterval: timers.clearInterval,
+      setTimeout: timers.setTimeout,
+      clearTimeout: timers.clearTimeout,
+      windowImpl: deps.windowImpl,
       zIndexRuntime: deps.zIndexRuntime
     });
 

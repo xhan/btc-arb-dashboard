@@ -7,6 +7,7 @@ const {
 const quoteSpreadController = { id: 'quote-spread-controller' };
 let capturedOptions = null;
 const quoteSpreadUtils = { id: 'quote-spread-utils' };
+const interactionSafeRenderer = { id: 'interaction-safe-renderer' };
 const modules = {
   getQuoteSpreadController: () => ({
     createQuoteSpreadController(options) {
@@ -14,7 +15,8 @@ const modules = {
       return quoteSpreadController;
     }
   }),
-  getQuoteSpreadUtils: () => quoteSpreadUtils
+  getQuoteSpreadUtils: () => quoteSpreadUtils,
+  getInteractionSafeRenderer: () => interactionSafeRenderer
 };
 const refs = {
   window: { id: 'spread-window' },
@@ -52,6 +54,7 @@ assert.strictEqual(capturedOptions.formatChainLabel('arbitrum'), 'chain:arbitrum
 assert.strictEqual(capturedOptions.getDashboardState, deps.getDashboardState);
 assert.strictEqual(capturedOptions.getQuoteMarketStateMap, deps.getQuoteMarketStateMap);
 assert.strictEqual(capturedOptions.quoteSpreadUtils, quoteSpreadUtils);
+assert.strictEqual(capturedOptions.interactionSafeRenderer, interactionSafeRenderer);
 assert.strictEqual(capturedOptions.refs, refs);
 assert.strictEqual(capturedOptions.setInterval, timers.setInterval);
 assert.strictEqual(capturedOptions.clearInterval, timers.clearInterval);

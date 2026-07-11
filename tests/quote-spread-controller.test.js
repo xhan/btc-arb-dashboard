@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const quoteSpreadUtils = require('../src/quote/quote-spread-utils');
+const interactionSafeRenderer = require('../src/ui/interaction-safe-renderer');
 const { createQuoteSpreadController, DEFAULT_UPDATE_INTERVAL_MS } = require('../src/quote/quote-spread-controller');
 
 function createButton(name, calls) {
@@ -64,24 +65,9 @@ const controller = createQuoteSpreadController({
     bindFloatingPanelChrome(panel, header) {
       calls.push(['bindChrome', panel.id, header.id]);
       return { focusBound: true };
-    },
-    createStableHtmlRenderer() {
-      let renderedHtml = '';
-      return {
-        render(target, html) {
-          if (html === renderedHtml) return false;
-          target.innerHTML = html;
-          renderedHtml = html;
-          calls.push(['render']);
-          return true;
-        },
-        reset() {
-          renderedHtml = '';
-          calls.push(['resetRenderer']);
-        }
-      };
     }
   },
+  interactionSafeRenderer,
   applyFloatingPanelDisplay(panel, action, config) {
     visible = !visible;
     panel.style.display = visible ? 'flex' : 'none';
@@ -123,13 +109,13 @@ assert.strictEqual(closed.visible, false);
 assert.strictEqual(stopEvent.stopped, true);
 assert.strictEqual(clearedTimers.length, 1);
 assert.strictEqual(refs.content.innerHTML, '');
-assert.ok(calls.some((call) => call[0] === 'resetRenderer'));
 
 const defaultRefs = {
   window: { id: 'quote-spread-window-default', style: { display: 'none' } },
   content: { innerHTML: '' }
 };
 const defaultController = createQuoteSpreadController({
+  interactionSafeRenderer,
   quoteSpreadUtils,
   refs: defaultRefs,
   getDashboardState: () => dashboardState,
@@ -150,6 +136,7 @@ assert.strictEqual(defaultController.toggle().visible, true);
 assert.strictEqual(defaultRefs.content.innerHTML.includes('<span>eth</span>'), true);
 
 const missingApplyController = createQuoteSpreadController({
+  interactionSafeRenderer,
   quoteSpreadUtils,
   refs: { content: { innerHTML: 'stale' } }
 });

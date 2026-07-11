@@ -12,6 +12,7 @@ const controller = {
 };
 let capturedOptions = null;
 const dataTerminalUtils = { id: 'data-terminal-utils' };
+const interactionSafeRenderer = { id: 'interaction-safe-renderer' };
 const dexLinkUtils = {
   buildDexLinkCopyButtonHtml(config, className, label) {
     calls.push(['buildDexLink', config, className, label]);
@@ -26,7 +27,8 @@ const modules = {
     }
   }),
   getDataTerminalUtils: () => dataTerminalUtils,
-  getDexLinkUtils: () => dexLinkUtils
+  getDexLinkUtils: () => dexLinkUtils,
+  getInteractionSafeRenderer: () => interactionSafeRenderer
 };
 const deps = {
   clearTimeout: () => {},
@@ -65,6 +67,7 @@ assert.strictEqual(runtime.toggleDataTerminalPanel, controller.togglePanel);
 assert.strictEqual(runtime.scheduleDataTerminalUpdate, controller.scheduleUpdate);
 assert.strictEqual(capturedOptions.dataTerminalUtils, dataTerminalUtils);
 assert.strictEqual(capturedOptions.dashboardRuntimeUtils, deps.dashboardRuntimeUtils);
+assert.strictEqual(capturedOptions.interactionSafeRenderer, interactionSafeRenderer);
 assert.strictEqual(capturedOptions.updateDelayMs, 88);
 assert.strictEqual(capturedOptions.getMarketRevision(), 17);
 assert.deepStrictEqual(capturedOptions.getAliasRules(), { USDT0: 'USDT' });

@@ -29,6 +29,7 @@
         formatChainLabel: deps.formatChainLabel,
         getDashboardState: deps.getDashboardState,
         getQuoteMarketStateMap: deps.getQuoteMarketStateMap,
+        windowImpl: deps.windowImpl,
         zIndexRuntime: deps.zIndexRuntime
       },
       refs: refs.quoteSpread,
