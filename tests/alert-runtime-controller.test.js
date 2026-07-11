@@ -2,6 +2,8 @@ const assert = require('assert');
 
 const domRenderUtils = require('../src/ui/dom-render-utils');
 const arbPathConfigUtils = require('../src/arb/arb-path-config-utils');
+const pathAlertUtils = require('../src/path-alerts/path-alert-utils');
+const mutedPathLegUtils = require('../src/path-alerts/muted-path-leg-utils');
 const {
   createAlertRuntimeController
 } = require('../src/alerts/alert-runtime-controller');
@@ -75,6 +77,7 @@ function createMutedPathRuntime(initial = {}) {
 function createBaseDeps(overrides = {}) {
   const timers = [];
   const schedulerCalls = [];
+  const scheduledEvaluationCallbacks = [];
   const settingsContent = createElement('settings');
   const mutedContent = createElement('muted');
   const documentImpl = { activeElement: null };
@@ -95,6 +98,7 @@ function createBaseDeps(overrides = {}) {
       unlockAndReport: async () => true
     },
     alertDebugUtils: {
+      buildRuntimeDebugSnapshot: () => ({}),
       createAlertDebugController: () => ({
         enable: () => true,
         record: () => {}
@@ -153,15 +157,20 @@ function createBaseDeps(overrides = {}) {
       persistTargets: (entries) => entries
     },
     mutedPathStorageUtils: {},
-    pathAlertNotificationUtils: {},
+    pathAlertNotificationUtils: {
+      sortTriggeredPathAlertEntries: (entries) => entries
+    },
     pathAlertPageUtils: {},
     pathAlertRuntimeState: createPathAlertRuntimeState(),
     pathAlertSchedulerRuntime: {
-      restartEvaluation: () => {},
+      restartDeadlineEvaluation: () => {
+        schedulerCalls.push(['restartDeadlineEvaluation']);
+        return true;
+      },
       scheduleConfigSave: (callback) => callback(),
       scheduleEvaluation: (callback, delayMs) => {
         schedulerCalls.push(['scheduleEvaluation', delayMs]);
-        callback();
+        scheduledEvaluationCallbacks.push(callback);
         return true;
       },
       scheduleExternalReload: (callback) => callback()
@@ -201,9 +210,75 @@ function createBaseDeps(overrides = {}) {
     mutedPathRuntime,
     mutedContent,
     schedulerCalls,
+    scheduledEvaluationCallbacks,
     settingsContent,
     timers
   };
+}
+
+{
+  const invalidationConfigs = [];
+  const { deps } = createBaseDeps({
+    arbAlertBridgeRuntime: {
+      invalidateRuleSnapshot(config) {
+        invalidationConfigs.push(config);
+        return true;
+      },
+      refreshArbViewsAfterMutedPathLegChange: () => ({})
+    },
+    mutedPathLegUtils
+  });
+  const controller = createAlertRuntimeController(deps);
+
+  controller.muteArbDetailLeg({
+    quoteId: 1,
+    direction: 'forward',
+    pricingMode: 'raw',
+    chain: 'ethereum',
+    from: 'USDC',
+    to: 'USDT'
+  }, 2, 1000);
+
+  assert.deepStrictEqual(invalidationConfigs, [{ bumpRevision: false }]);
+}
+
+{
+  const evaluatedAlertIds = [];
+  const manualAlerts = [
+    { id: 'manual-1', enabled: true, target: { type: 'path', legs: [{ quoteId: 1 }] } },
+    { id: 'manual-2', enabled: true, target: { type: 'path', legs: [{ quoteId: 2 }] } }
+  ];
+  const base = createBaseDeps();
+  const { config, deps, scheduledEvaluationCallbacks } = createBaseDeps({
+    dashboardRuntimeUtils: {
+      ...base.deps.dashboardRuntimeUtils,
+      getActivePathAlertEvaluationAlerts: () => manualAlerts
+    },
+    getDashboardState: () => [],
+    getQuoteMarketStateMap: () => new Map(),
+    pathAlertUtils: {
+      ...pathAlertUtils,
+      evaluatePathAlert(alert, context) {
+        evaluatedAlertIds.push(alert.id);
+        return pathAlertUtils.evaluatePathAlert(alert, context);
+      }
+    }
+  });
+  config.alerts = manualAlerts;
+  const controller = createAlertRuntimeController(deps);
+
+  controller.scheduleManualPathAlertEvaluation({ quoteId: 1 });
+  controller.scheduleManualPathAlertEvaluation({ quoteId: 2 });
+  scheduledEvaluationCallbacks[0]();
+
+  assert.deepStrictEqual(evaluatedAlertIds, ['manual-1', 'manual-2']);
+}
+
+{
+  const { deps, schedulerCalls } = createBaseDeps();
+  const controller = createAlertRuntimeController(deps);
+  controller.restartPathAlertScheduler();
+  assert.deepStrictEqual(schedulerCalls, [['restartDeadlineEvaluation']]);
 }
 
 {
@@ -266,7 +341,13 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
+  const base = createBaseDeps();
+  const manualAlert = { id: 'manual', target: { type: 'path', legs: [] } };
   const { deps, schedulerCalls } = createBaseDeps({
+    dashboardRuntimeUtils: {
+      ...base.deps.dashboardRuntimeUtils,
+      getActivePathAlertEvaluationAlerts: () => [manualAlert]
+    },
     pathAlertMarketChangeDelayMs: 88
   });
   const controller = createAlertRuntimeController(deps);
@@ -276,7 +357,14 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
-  const { deps, schedulerCalls } = createBaseDeps();
+  const base = createBaseDeps();
+  const manualAlert = { id: 'manual', target: { type: 'path', legs: [] } };
+  const { deps, schedulerCalls } = createBaseDeps({
+    dashboardRuntimeUtils: {
+      ...base.deps.dashboardRuntimeUtils,
+      getActivePathAlertEvaluationAlerts: () => [manualAlert]
+    }
+  });
   const controller = createAlertRuntimeController(deps);
 
   assert.strictEqual(controller.schedulePathAlertEvaluation(), true);

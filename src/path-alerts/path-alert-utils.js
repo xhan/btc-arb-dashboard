@@ -17,7 +17,6 @@
   const PATH_ALERT_CONFIG_SYNC_KEY = 'path-alert-config-sync';
   const PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN = 'main-dashboard';
   const DEFAULT_PATH_ALERT_SETTINGS = Object.freeze({
-    pathAlertEvalIntervalMs: 1000,
     defaultCooldownSec: 180,
     changedLegMinBp: 0.1,
     localSoundEnabled: true,
@@ -202,10 +201,6 @@
   function normalizeAlertConfig(input) {
     const source = input && typeof input === 'object' ? input : {};
     const settings = {
-      pathAlertEvalIntervalMs: toPositiveInteger(
-        source.settings && source.settings.pathAlertEvalIntervalMs,
-        DEFAULT_PATH_ALERT_SETTINGS.pathAlertEvalIntervalMs
-      ),
       defaultCooldownSec: toPositiveInteger(
         source.settings && source.settings.defaultCooldownSec,
         DEFAULT_PATH_ALERT_SETTINGS.defaultCooldownSec
@@ -1027,13 +1022,33 @@
     };
   }
 
+  function getNextPathAlertRuntimeDeadline(alerts, runtimeState, nowMs = Date.now(), options = {}) {
+    const states = runtimeState instanceof Map ? runtimeState : new Map();
+    const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
+    let nextDeadline = Number.POSITIVE_INFINITY;
+
+    for (const alert of (Array.isArray(alerts) ? alerts : [])) {
+      if (!alert || !alert.id || alert.enabled === false) continue;
+      const state = states.get(alert.id);
+      if (!state) continue;
+      const effectiveAlert = buildEffectiveRuntimeAlert(alert, {
+        forceImmediate: options.forceImmediate === true
+      });
+      let deadline = null;
+      if (state.status === 'pending_confirm' && Number.isFinite(state.eligibleSince)) {
+        deadline = state.eligibleSince + (toNonNegativeInteger(effectiveAlert.confirmDelaySec, 0) * 1000);
+      } else if (state.status === 'cooldown' && Number.isFinite(state.cooldownUntil)) {
+        deadline = state.cooldownUntil;
+      }
+      if (Number.isFinite(deadline)) {
+        nextDeadline = Math.min(nextDeadline, Math.max(now, deadline));
+      }
+    }
+
+    return Number.isFinite(nextDeadline) ? nextDeadline : null;
+  }
+
   function createPathAlertSchedulerRuntime(options = {}) {
-    const setIntervalFn = typeof options.setInterval === 'function'
-      ? options.setInterval
-      : (typeof setInterval === 'function' ? setInterval : null);
-    const clearIntervalFn = typeof options.clearInterval === 'function'
-      ? options.clearInterval
-      : (typeof clearInterval === 'function' ? clearInterval : null);
     const setTimeoutFn = typeof options.setTimeout === 'function'
       ? options.setTimeout
       : (typeof setTimeout === 'function' ? setTimeout : null);
@@ -1043,14 +1058,10 @@
     const nowFn = typeof options.now === 'function'
       ? options.now
       : () => Date.now();
-    let evaluationTimer = null;
     let scheduledEvaluationTimer = null;
+    let deadlineEvaluationTimer = null;
     let configSaveTimer = null;
     let externalReloadTimer = null;
-    let evaluationIntervalMs = 0;
-    let lastEvaluationAt = null;
-    let lastEvaluationMinGapMs = 0;
-    let nextEvaluationIntervalAt = null;
 
     function clearTimer(timer, clearFn) {
       if (timer !== null && clearFn) {
@@ -1059,19 +1070,12 @@
       return null;
     }
 
-    function clearEvaluation() {
-      evaluationTimer = clearTimer(evaluationTimer, clearIntervalFn);
-    }
-
     function clearScheduledEvaluation() {
       scheduledEvaluationTimer = clearTimer(scheduledEvaluationTimer, clearTimeoutFn);
     }
 
-    function resetEvaluationClock() {
-      lastEvaluationAt = null;
-      lastEvaluationMinGapMs = 0;
-      nextEvaluationIntervalAt = null;
-      evaluationIntervalMs = 0;
+    function clearDeadlineEvaluation() {
+      deadlineEvaluationTimer = clearTimer(deadlineEvaluationTimer, clearTimeoutFn);
     }
 
     function getNowMs() {
@@ -1084,37 +1088,26 @@
       return Number.isFinite(value) && value >= 0 ? value : fallback;
     }
 
-    function runEvaluation(callback, minGapMs = 0) {
-      const safeMinGapMs = toSafeDelayMs(minGapMs);
-      const nowMs = getNowMs();
-      const elapsedMs = lastEvaluationAt === null ? Infinity : nowMs - lastEvaluationAt;
-      if (elapsedMs < safeMinGapMs) return false;
-
-      lastEvaluationAt = nowMs;
-      lastEvaluationMinGapMs = safeMinGapMs;
-      callback();
-      return true;
-    }
-
-    function restartEvaluation(config = {}) {
-      clearEvaluation();
+    function restartDeadlineEvaluation(config = {}) {
       clearScheduledEvaluation();
-      resetEvaluationClock();
+      clearDeadlineEvaluation();
       const hasActiveTarget = typeof config.hasActiveTarget === 'function'
         ? config.hasActiveTarget()
         : Boolean(config.hasActiveTarget);
-      if (!hasActiveTarget || typeof config.evaluate !== 'function' || !setIntervalFn) return false;
+      if (!hasActiveTarget || typeof config.evaluate !== 'function') return false;
+      config.evaluate();
+      return true;
+    }
 
-      const intervalMs = Number(config.intervalMs);
-      if (!Number.isFinite(intervalMs) || intervalMs <= 0) return false;
-
-      evaluationIntervalMs = intervalMs;
-      nextEvaluationIntervalAt = getNowMs() + intervalMs;
-      evaluationTimer = setIntervalFn(() => {
-        runEvaluation(config.evaluate, Math.min(intervalMs, lastEvaluationMinGapMs || intervalMs));
-        nextEvaluationIntervalAt = getNowMs() + intervalMs;
-      }, intervalMs);
-      runEvaluation(config.evaluate, 0);
+    function scheduleDeadlineEvaluation(callback, dueAtMs) {
+      if (typeof callback !== 'function' || !setTimeoutFn) return false;
+      const dueAt = Number(dueAtMs);
+      if (!Number.isFinite(dueAt)) return false;
+      clearDeadlineEvaluation();
+      deadlineEvaluationTimer = setTimeoutFn(() => {
+        deadlineEvaluationTimer = null;
+        callback();
+      }, Math.max(0, dueAt - getNowMs()));
       return true;
     }
 
@@ -1122,20 +1115,9 @@
       if (typeof callback !== 'function' || !setTimeoutFn) return false;
       if (scheduledEvaluationTimer) return true;
       const safeDelayMs = toSafeDelayMs(delayMs);
-      const dueAt = getNowMs() + safeDelayMs;
-      if (nextEvaluationIntervalAt !== null && nextEvaluationIntervalAt <= dueAt) {
-        const intervalMinGapMs = Math.min(
-          evaluationIntervalMs || safeDelayMs,
-          lastEvaluationMinGapMs || evaluationIntervalMs || safeDelayMs
-        );
-        const intervalCanRun = lastEvaluationAt === null
-          || (nextEvaluationIntervalAt - lastEvaluationAt) >= intervalMinGapMs;
-        if (intervalCanRun) return true;
-      }
-
       scheduledEvaluationTimer = setTimeoutFn(() => {
         scheduledEvaluationTimer = null;
-        runEvaluation(callback, safeDelayMs);
+        callback();
       }, safeDelayMs);
       return true;
     }
@@ -1162,13 +1144,15 @@
     }
 
     return {
+      clearDeadlineEvaluation,
       getTimers: () => ({
-        evaluationTimer,
+        deadlineEvaluationTimer,
         scheduledEvaluationTimer,
         configSaveTimer,
         externalReloadTimer
       }),
-      restartEvaluation,
+      restartDeadlineEvaluation,
+      scheduleDeadlineEvaluation,
       scheduleEvaluation,
       scheduleConfigSave(callback, delayMs = 250) {
         return scheduleTimeout('configSave', callback, delayMs);
@@ -1265,6 +1249,7 @@
     buildEffectiveRuntimeAlert,
     createPathAlertSchedulerRuntime,
     createPathAlertRuntimeState,
+    getNextPathAlertRuntimeDeadline,
     shouldActivatePathAlertSound,
     buildAllLegSnapshots,
     buildTriggeredPathAlertChangedLegs,

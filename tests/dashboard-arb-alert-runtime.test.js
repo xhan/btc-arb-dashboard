@@ -6,9 +6,12 @@ const {
 
 const calls = [];
 let bridgeOptions = null;
+let discoveryOptions = null;
 let panelOptions = null;
 let alertOptions = null;
 let detailController = null;
+let panelVisible = true;
+let activeRuleAlert = true;
 const alertConfig = { alerts: [{ id: 'quote-alert' }] };
 
 const runtime = createDashboardArbAlertRuntime({
@@ -23,8 +26,10 @@ const runtime = createDashboardArbAlertRuntime({
         bindAudioUnlockEvents: () => calls.push(['bindAudio']),
         buildQuoteAlertDisplayLabel: (quote, state, direction) => `alert:${quote.id}:${direction}`,
         checkPriceForAlerts: (quote, context = {}) => calls.push(['checkAlerts', quote.id, context.successSource || null]),
+        evaluateRuleAlerts: (snapshot, optionsArg) => calls.push(['evaluateRuleAlerts', snapshot, optionsArg]),
         getConfig: () => alertConfig,
-        schedulePathAlertEvaluation: (options = {}) => calls.push(['schedulePathAlertEvaluation', options.reason || null]),
+        hasActiveRuleAlertTarget: () => activeRuleAlert,
+        scheduleManualPathAlertEvaluation: (options = {}) => calls.push(['scheduleManualPathAlertEvaluation', options.reason || null]),
         toggleAlertLogPanel: () => calls.push(['toggleAlertLog'])
       };
     }
@@ -33,7 +38,29 @@ const runtime = createDashboardArbAlertRuntime({
     createArbAlertBridgeRuntime(options = {}) {
       calls.push(['createBridge']);
       bridgeOptions = options;
-      return { id: 'bridge' };
+      return { id: 'bridge', getActiveMutedPathLegs: () => [] };
+    }
+  },
+  arbDiscoveryUtils: {
+    createArbDiscovery(options = {}) {
+      calls.push(['createDiscovery']);
+      discoveryOptions = options;
+      return {
+        clearTopology: () => calls.push(['clearTopology']),
+        getAliasRules: () => ({ USDT: 'USDT0' }),
+        getPanelSnapshot: (snapshot) => {
+          calls.push(['getPanelSnapshot', snapshot]);
+          return { ...snapshot, globalCycles: [], panel: true };
+        },
+        getSnapshot: () => {
+          calls.push(['getSnapshot']);
+          return { id: 'snapshot' };
+        },
+        invalidate: (optionsArg) => {
+          calls.push(['invalidate', optionsArg || null]);
+          return true;
+        }
+      };
     }
   },
   arbPanelControllerUtils: {
@@ -44,22 +71,17 @@ const runtime = createDashboardArbAlertRuntime({
         applyFloatingPanelDisplay: () => 'display',
         buildArbPathLegLineOptions: () => ({ id: 'line-options' }),
         buildLiveQuoteLabel: () => 'live-label',
-        clearTopologyCache: () => calls.push(['clearTopology']),
         findQuoteById: (quoteId) => ({ id: quoteId }),
         formatArbPathLegLine: () => 'leg-line',
         formatChainLabel: (chain) => `chain:${chain}`,
         formatDetailNumber: (value) => String(value),
-        getAliasRules: () => ({ USDT: 'USDT0' }),
-        getSharedRuleSnapshot: () => ({ id: 'snapshot' }),
-        invalidateRuleSnapshotCache: (optionsArg) => {
-          calls.push(['invalidate', optionsArg || null]);
-          return true;
-        },
         isRuleLeg: () => false,
+        isVisible: () => panelVisible,
+        markDirty: () => calls.push(['markDirty']),
         scheduleUpdate: () => calls.push(['scheduleUpdate']),
         setMaxHeight: () => calls.push(['setMaxHeight']),
-        update: () => {
-          calls.push(['updatePanel']);
+        update: (optionsArg) => {
+          calls.push(['updatePanel', optionsArg]);
           return true;
         }
       };
@@ -91,6 +113,14 @@ const runtime = createDashboardArbAlertRuntime({
         isHighlighted: () => false,
         mark: () => false,
         onExpired: options.onExpired
+      };
+    },
+    createArbRefreshRuntime(options = {}) {
+      calls.push(['createRefresh']);
+      return {
+        hasDemand: options.hasDemand,
+        schedule: () => calls.push(['scheduleRefresh']),
+        refresh: options.refresh
       };
     }
   },
@@ -137,8 +167,6 @@ const runtime = createDashboardArbAlertRuntime({
   specialRuleAlertConfigUtils: { id: 'special-config' },
   arbPanelRefs: { arbPathWindow: {} },
   alertRefs: { alertLogWindow: {} },
-  setInterval: () => {},
-  clearInterval: () => {},
   setTimeout: () => {},
   clearTimeout: () => {},
   updateDelayMs: 1000,
@@ -149,6 +177,7 @@ const runtime = createDashboardArbAlertRuntime({
 assert.ok(runtime.alertRuntimeController);
 assert.ok(runtime.arbPanelController);
 assert.strictEqual(runtime.arbAlertBridgeRuntime.id, 'bridge');
+assert.ok(runtime.arbDiscovery);
 assert.deepStrictEqual(runtime.getOpportunity('opp-1'), { id: 'opp-1' });
 assert.strictEqual(runtime.updateArbPanel(), true);
 assert.strictEqual(runtime.invalidateArbRuleSnapshotCache({ bumpRevision: false }), true);
@@ -160,6 +189,8 @@ assert.strictEqual(bridgeOptions.specialArbRules[0].id, 'special');
 assert.strictEqual(bridgeOptions.getAlertRuntimeController(), runtime.alertRuntimeController);
 assert.strictEqual(bridgeOptions.invalidateArbRuleSnapshotCache(), true);
 assert.strictEqual(bridgeOptions.updateArbPanel(), true);
+assert.deepStrictEqual(discoveryOptions.getActiveMutedPathLegs(), []);
+assert.strictEqual(panelOptions.arbDiscovery, runtime.arbDiscovery);
 
 detailController = {
   closed: false,
@@ -179,8 +210,6 @@ panelOptions.openArbDetailModal('opp-2');
 assert.strictEqual(panelOptions.buildQuoteAlertDisplayLabel({ id: 9 }, {}, 'reverse'), 'alert:9:reverse');
 
 assert.strictEqual(panelOptions.arbAlertBridgeRuntime.id, 'bridge');
-assert.strictEqual(panelOptions.fixedPathRules[0].id, 'fixed');
-assert.strictEqual(panelOptions.specialArbRules[0].id, 'special');
 assert.strictEqual(panelOptions.arbPathConfig.id, 'config');
 assert.strictEqual(panelOptions.getAlertConfig(), alertConfig);
 assert.strictEqual(alertOptions.arbAlertBridgeRuntime.id, 'bridge');
@@ -193,15 +222,38 @@ assert.deepStrictEqual(alertOptions.findQuoteById(42), { id: 42 });
 runtime.handleQuoteMarketStateChanged({ id: 6 }, {}, { fetchMode: 'inverse', successSource: 'Jupiter' });
 runtime.handleQuoteMainFetchSuccess({ id: 7 }, { successSource: 'Kyber' });
 
-assert.deepStrictEqual(calls.slice(0, 5), [
+assert.deepStrictEqual(calls.slice(0, 7), [
   ['createOpportunity'],
   ['createHighlight', 8000],
   ['createBridge'],
+  ['createDiscovery'],
   ['createPanel'],
-  ['createAlert']
+  ['createAlert'],
+  ['createRefresh']
 ]);
 assert.ok(calls.some((call) => call[0] === 'bindAudio'));
-assert.ok(calls.some((call) => call[0] === 'scheduleUpdate'));
-assert.ok(calls.some((call) => call[0] === 'schedulePathAlertEvaluation' && call[1] === 'quote-market-state-changed'));
+assert.ok(calls.some((call) => call[0] === 'scheduleRefresh'));
+assert.ok(calls.some((call) => call[0] === 'scheduleManualPathAlertEvaluation' && call[1] === 'quote-market-state-changed'));
 assert.ok(calls.some((call) => call[0] === 'checkAlerts' && call[1] === 6 && call[2] === 'Jupiter'));
 assert.ok(calls.some((call) => call[0] === 'checkAlerts' && call[1] === 7 && call[2] === 'Kyber'));
+
+let refreshCallsStart = calls.length;
+runtime.arbRefreshRuntime.refresh();
+assert.deepStrictEqual(calls.slice(refreshCallsStart).map((call) => call[0]), [
+  'getSnapshot',
+  'evaluateRuleAlerts',
+  'getPanelSnapshot',
+  'updatePanel'
+]);
+assert.strictEqual(calls.at(-1)[1].snapshot.panel, true);
+
+panelVisible = false;
+refreshCallsStart = calls.length;
+runtime.arbRefreshRuntime.refresh();
+assert.deepStrictEqual(calls.slice(refreshCallsStart).map((call) => call[0]), [
+  'getSnapshot',
+  'evaluateRuleAlerts',
+  'markDirty'
+]);
+activeRuleAlert = false;
+assert.strictEqual(runtime.arbRefreshRuntime.hasDemand(), false);

@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const {
   buildRetainedArbOpportunityStore,
+  createArbRefreshRuntime,
   createArbPanelUpdateRuntime,
   createArbOpportunityHighlightRuntime,
   createArbOpportunityRuntime,
@@ -180,3 +181,34 @@ assert.strictEqual(panelUpdateRuntime.markDirty(), true);
 assert.strictEqual(panelUpdateRuntime.isDirty(), true);
 assert.strictEqual(panelUpdateRuntime.clearDirty(), true);
 assert.strictEqual(panelUpdateRuntime.clearDirty(), false);
+
+let arbRefreshDemand = false;
+let arbRefreshCount = 0;
+let arbRefreshSkippedCount = 0;
+const arbRefreshTimers = [];
+const arbRefreshRuntime = createArbRefreshRuntime({
+  delayMs: 500,
+  hasDemand: () => arbRefreshDemand,
+  onSkipped: () => { arbRefreshSkippedCount += 1; },
+  refresh: (options) => {
+    arbRefreshCount += options.forcePanel ? 10 : 1;
+    return 'snapshot';
+  },
+  setTimer(callback, delayMs) {
+    const timer = { callback, delayMs };
+    arbRefreshTimers.push(timer);
+    return timer;
+  },
+  clearTimer() {}
+});
+
+assert.strictEqual(arbRefreshRuntime.schedule(), false);
+assert.strictEqual(arbRefreshSkippedCount, 1);
+arbRefreshDemand = true;
+assert.strictEqual(arbRefreshRuntime.schedule(), true);
+assert.strictEqual(arbRefreshRuntime.schedule(), false);
+assert.strictEqual(arbRefreshTimers[0].delayMs, 500);
+arbRefreshTimers[0].callback();
+assert.strictEqual(arbRefreshCount, 1);
+assert.strictEqual(arbRefreshRuntime.refresh({ forcePanel: true }), 'snapshot');
+assert.strictEqual(arbRefreshCount, 11);

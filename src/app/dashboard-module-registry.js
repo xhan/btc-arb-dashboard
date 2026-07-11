@@ -17,6 +17,7 @@
     getArbDetailController: ['ArbDetailController', 'ArbDetailController is not loaded'],
     getArbDetailRefreshUtils: ['ArbDetailRefreshUtils', 'ArbDetailRefreshUtils is not loaded'],
     getArbDetailUtils: ['ArbDetailUtils', 'ArbDetailUtils is not loaded'],
+    getArbDiscovery: ['ArbDiscovery', 'ArbDiscovery is not loaded'],
     getArbEquivalenceUtils: ['ArbEquivalenceUtils', 'ArbEquivalenceUtils is not loaded'],
     getArbFixedUtils: ['ArbFixedUtils', 'ArbFixedUtils is not loaded'],
     getArbPanelLayoutUtils: ['ArbPanelLayoutUtils', 'ArbPanelLayoutUtils is not loaded'],

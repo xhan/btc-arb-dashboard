@@ -140,9 +140,8 @@
     mutedAlertStateHtmlRenderer = deps.mutedAlertStateHtmlRenderer
       || createAlertContentHtmlRenderer(mutedAlertStateInteractionRuntime);
     const pathAlertRuntimeState = deps.pathAlertRuntimeState || pathAlertUtils.createPathAlertRuntimeState();
+    const pendingManualPathQuoteIds = new Set();
     const pathAlertSchedulerRuntime = deps.pathAlertSchedulerRuntime || pathAlertUtils.createPathAlertSchedulerRuntime({
-      setInterval: deps.setInterval,
-      clearInterval: deps.clearInterval,
       setTimeout: deps.setTimeout,
       clearTimeout: deps.clearTimeout
     });
@@ -395,7 +394,7 @@
       if (!deps.arbAlertBridgeRuntime || typeof deps.arbAlertBridgeRuntime.invalidateRuleSnapshot !== 'function') {
         return false;
       }
-      return deps.arbAlertBridgeRuntime.invalidateRuleSnapshot();
+      return deps.arbAlertBridgeRuntime.invalidateRuleSnapshot({ bumpRevision: false });
     }
 
     function refreshArbViewsAfterMutedPathLegChange(options = {}) {
@@ -676,6 +675,18 @@
       );
     }
 
+    function getActiveWatchedRuleAlerts() {
+      return getActiveWatchedPathAlertEvaluationAlerts().filter((alert) => (
+        alert && alert.target && alert.target.type === 'rule'
+      ));
+    }
+
+    function getActiveWatchedManualPathAlerts() {
+      return getActiveWatchedPathAlertEvaluationAlerts().filter((alert) => (
+        alert && alert.target && alert.target.type === 'path'
+      ));
+    }
+
     function filterWatchedQuoteAlerts(alerts) {
       if (arbPathConfigUtils && typeof arbPathConfigUtils.filterWatchedQuoteAlerts === 'function') {
         return arbPathConfigUtils.filterWatchedQuoteAlerts(alerts, arbPathConfig);
@@ -706,15 +717,12 @@
       pathAlertRuntimeState.pruneInactive(getActiveWatchedRuntimeAlerts());
     }
 
-    function hasActiveWatchedPathAlertEvaluationTarget() {
-      const hasActiveTarget = typeof dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget === 'function'
-        ? dashboardRuntimeUtils.hasActivePathAlertEvaluationTarget(pathAlertConfig)
-        : dashboardRuntimeUtils.getActivePathAlertEvaluationAlerts(pathAlertConfig).length > 0;
-      if (!hasActiveTarget) return false;
-      if (!arbPathConfigUtils || typeof arbPathConfigUtils.filterWatchedRuleAlerts !== 'function') {
-        return true;
-      }
-      return getActiveWatchedPathAlertEvaluationAlerts().length > 0;
+    function hasActiveWatchedRuleAlertTarget() {
+      return getActiveWatchedRuleAlerts().length > 0;
+    }
+
+    function hasActiveWatchedManualPathAlertTarget() {
+      return getActiveWatchedManualPathAlerts().length > 0;
     }
 
     function buildRuleAlertEvaluation(target, alert = null, sharedRuleSnapshot = getSharedArbRuleSnapshot()) {
@@ -835,22 +843,53 @@
       });
     }
 
-    function evaluatePathAlertsOnce() {
-      const evaluationAlerts = getActiveWatchedPathAlertEvaluationAlerts();
+    function getAlertSnapshotQuotes(sharedRuleSnapshot) {
+      if (sharedRuleSnapshot && Array.isArray(sharedRuleSnapshot.allQuotes)) {
+        return sharedRuleSnapshot.allQuotes;
+      }
+      return getDashboardState().flatMap((category) => (
+        Array.isArray(category && category.quotes) ? category.quotes : []
+      )).filter((quote) => (
+        typeof deps.isQuotePaused !== 'function' || !deps.isQuotePaused(quote)
+      ));
+    }
+
+    function scheduleNextAlertDeadline() {
+      if (typeof pathAlertUtils.getNextPathAlertRuntimeDeadline !== 'function') return false;
+      const nextDeadline = pathAlertUtils.getNextPathAlertRuntimeDeadline(
+        getActiveWatchedRuntimeAlerts(),
+        pathAlertRuntimeState.getState(),
+        getNow(),
+        { forceImmediate: pathAlertRuntimeState.isForceImmediateEnabled() }
+      );
+      if (!Number.isFinite(Number(nextDeadline))) {
+        if (typeof pathAlertSchedulerRuntime.clearDeadlineEvaluation === 'function') {
+          pathAlertSchedulerRuntime.clearDeadlineEvaluation();
+        }
+        return false;
+      }
+      if (typeof pathAlertSchedulerRuntime.scheduleDeadlineEvaluation !== 'function') return false;
+      return pathAlertSchedulerRuntime.scheduleDeadlineEvaluation(evaluateAllAlertsOnce, nextDeadline);
+    }
+
+    function evaluateAlertBatch(evaluationAlerts, sharedRuleSnapshot = {}, options = {}) {
       if (!evaluationAlerts.length) {
         pruneInactiveAlertRuntimeState();
         updateAlertSoundState();
-        return;
+        scheduleNextAlertDeadline();
+        return false;
       }
       pruneMutedPathTargetsInPlace(getNow());
-      const sharedRuleSnapshot = getSharedArbRuleSnapshot();
       const context = {
         quoteStateById: getQuoteMarketStateMap(),
         resolveRuleEvaluation(target, alert) {
           return buildRuleAlertEvaluation(target, alert, sharedRuleSnapshot);
         }
       };
-      const allLegSnapshots = pathAlertUtils.buildAllLegSnapshots(sharedRuleSnapshot.allQuotes || [], getQuoteMarketStateMap());
+      const allLegSnapshots = pathAlertUtils.buildAllLegSnapshots(
+        getAlertSnapshotQuotes(sharedRuleSnapshot),
+        getQuoteMarketStateMap()
+      );
       const nowMs = getNow();
       const logTriggeredEntries = [];
       const remoteTriggeredEntries = [];
@@ -915,32 +954,80 @@
       }
 
       updateAlertSoundState();
-      if (shouldRefreshArbPanelHighlights) {
+      if (shouldRefreshArbPanelHighlights && options.deferPanelRefresh !== true) {
         refreshArbPanel();
       }
       renderAlertSettingsPanel();
+      scheduleNextAlertDeadline();
+      return true;
+    }
+
+    function evaluateRuleAlerts(sharedRuleSnapshot, options = {}) {
+      const evaluationAlerts = getActiveWatchedRuleAlerts();
+      const snapshot = evaluationAlerts.length
+        ? (sharedRuleSnapshot || getSharedArbRuleSnapshot())
+        : {};
+      return evaluateAlertBatch(evaluationAlerts, snapshot, options);
+    }
+
+    function evaluateManualPathAlerts(options = {}) {
+      const quoteIds = options.quoteIds instanceof Set
+        ? options.quoteIds
+        : new Set(Number.isFinite(Number(options.quoteId)) ? [Number(options.quoteId)] : []);
+      const evaluationAlerts = getActiveWatchedManualPathAlerts().filter((alert) => {
+        if (!quoteIds.size) return true;
+        const legs = Array.isArray(alert && alert.target && alert.target.legs)
+          ? alert.target.legs
+          : [];
+        return legs.some((leg) => quoteIds.has(Number(leg && leg.quoteId)));
+      });
+      return evaluateAlertBatch(evaluationAlerts, {});
+    }
+
+    function evaluatePathAlertsOnce() {
+      const evaluationAlerts = getActiveWatchedPathAlertEvaluationAlerts();
+      const hasRuleAlert = evaluationAlerts.some((alert) => alert && alert.target && alert.target.type === 'rule');
+      return evaluateAlertBatch(
+        evaluationAlerts,
+        hasRuleAlert ? getSharedArbRuleSnapshot() : {}
+      );
+    }
+
+    function evaluateAllAlertsOnce() {
+      evaluatePathAlertsOnce();
+      evaluateQuoteAlertsOnce();
+      scheduleNextAlertDeadline();
     }
 
     function restartPathAlertScheduler() {
-      pathAlertSchedulerRuntime.restartEvaluation({
-        hasActiveTarget: hasActiveWatchedPathAlertEvaluationTarget,
-        intervalMs: pathAlertConfig && pathAlertConfig.settings
-          ? pathAlertConfig.settings.pathAlertEvalIntervalMs
-          : 0,
-        evaluate: evaluatePathAlertsOnce
+      pathAlertSchedulerRuntime.restartDeadlineEvaluation({
+        hasActiveTarget: () => getActiveWatchedRuntimeAlerts().length > 0,
+        evaluate: evaluateAllAlertsOnce
       });
     }
 
-    function schedulePathAlertEvaluation(options = {}) {
-      if (!hasActiveWatchedPathAlertEvaluationTarget()) return false;
+    function scheduleManualPathAlertEvaluation(options = {}) {
+      if (!hasActiveWatchedManualPathAlertTarget()) return false;
+      const quoteId = Number(options.quoteId);
+      if (Number.isFinite(quoteId)) pendingManualPathQuoteIds.add(quoteId);
 
       const delayMs = Number.isFinite(Number(options.delayMs))
         ? Number(options.delayMs)
         : pathAlertMarketChangeDelayMs;
       if (typeof pathAlertSchedulerRuntime.scheduleEvaluation === 'function') {
-        return pathAlertSchedulerRuntime.scheduleEvaluation(evaluatePathAlertsOnce, delayMs);
+        const scheduled = pathAlertSchedulerRuntime.scheduleEvaluation(
+          () => {
+            const quoteIds = new Set(pendingManualPathQuoteIds);
+            pendingManualPathQuoteIds.clear();
+            evaluateManualPathAlerts({ quoteIds });
+          },
+          delayMs
+        );
+        if (scheduled) return true;
       }
-      evaluatePathAlertsOnce();
+      const quoteIds = new Set(pendingManualPathQuoteIds);
+      pendingManualPathQuoteIds.clear();
+      evaluateManualPathAlerts({ quoteIds });
       return true;
     }
 
@@ -1208,6 +1295,7 @@
       domRenderUtils.applyQuoteAlertDismissButtonState(resultDiv, uiUpdate.nextState, quote.id, { documentImpl });
       pruneInactiveAlertRuntimeState();
       updateAlertSoundState();
+      scheduleNextAlertDeadline();
     }
 
     async function loadPathAlertConfig() {
@@ -1228,9 +1316,13 @@
       buildMutedPathTargetKey,
       buildQuoteAlertDisplayLabel,
       checkPriceForAlerts,
+      evaluateManualPathAlerts,
       evaluatePathAlertsOnce,
       evaluateQuoteAlertsOnce,
+      evaluateRuleAlerts,
       getConfig: () => pathAlertConfig,
+      hasActiveManualPathAlertTarget: hasActiveWatchedManualPathAlertTarget,
+      hasActiveRuleAlertTarget: hasActiveWatchedRuleAlertTarget,
       getMutedPathLegs: () => mutedPathRuntime.getLegs(),
       getMutedPathTargetEntry,
       handleAlertLogClick,
@@ -1246,7 +1338,8 @@
       renderMutedAlertStatePanel,
       restartPathAlertScheduler,
       restoreMutedAlertLogEntries,
-      schedulePathAlertEvaluation,
+      scheduleManualPathAlertEvaluation,
+      schedulePathAlertEvaluation: scheduleManualPathAlertEvaluation,
       syncMutedPathLogTimer,
       toggleAlertLogPanel,
       updateAlertSoundState

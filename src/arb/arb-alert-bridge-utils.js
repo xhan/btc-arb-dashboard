@@ -154,9 +154,9 @@
       };
     }
 
-    function invalidateRuleSnapshot() {
+    function invalidateRuleSnapshot(config = {}) {
       if (!invalidateArbRuleSnapshotCache) return false;
-      invalidateArbRuleSnapshotCache();
+      invalidateArbRuleSnapshotCache(config);
       return true;
     }
 

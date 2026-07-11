@@ -7,7 +7,9 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function createDashboardArbAlertRuntime(options = {}) {
     let alertRuntimeController = null;
+    let arbDiscovery = null;
     let arbPanelController = null;
+    let arbRefreshRuntime = null;
 
     const pathAlertRuleDefinitions = options.pathAlertRuleDefinitions || {};
     const fixedPathRules = pathAlertRuleDefinitions.FIXED_PATH_RULES || [];
@@ -55,9 +57,9 @@
         : false;
     }
 
-    function invalidateArbRuleSnapshotCache() {
-      return arbPanelController && typeof arbPanelController.invalidateRuleSnapshotCache === 'function'
-        ? arbPanelController.invalidateRuleSnapshotCache()
+    function invalidateArbRuleSnapshotCache(config = {}) {
+      return arbDiscovery && typeof arbDiscovery.invalidate === 'function'
+        ? arbDiscovery.invalidate(config)
         : false;
     }
 
@@ -76,8 +78,8 @@
     }
 
     function handleQuoteMarketStateChanged(quote, state, context = {}) {
-      if (alertRuntimeController && typeof alertRuntimeController.schedulePathAlertEvaluation === 'function') {
-        alertRuntimeController.schedulePathAlertEvaluation({
+      if (alertRuntimeController && typeof alertRuntimeController.scheduleManualPathAlertEvaluation === 'function') {
+        alertRuntimeController.scheduleManualPathAlertEvaluation({
           fetchMode: context.fetchMode,
           quoteId: quote && quote.id,
           reason: 'quote-market-state-changed'
@@ -90,8 +92,8 @@
       ) {
         alertRuntimeController.checkPriceForAlerts(quote, context);
       }
-      return arbPanelController && typeof arbPanelController.scheduleUpdate === 'function'
-        ? arbPanelController.scheduleUpdate()
+      return arbRefreshRuntime && typeof arbRefreshRuntime.schedule === 'function'
+        ? arbRefreshRuntime.schedule()
         : false;
     }
 
@@ -116,12 +118,33 @@
       updateArbPanel
     });
 
-    arbPanelController = options.arbPanelControllerUtils.createArbPanelController({
-      arbAlertBridgeRuntime,
+    arbDiscovery = options.arbDiscoveryUtils.createArbDiscovery({
       arbCyclePriorityUtils: options.arbCyclePriorityUtils,
-      arbDetailUtils: options.arbDetailUtils,
       arbEquivalenceUtils: options.arbEquivalenceUtils,
       arbFixedUtils: options.arbFixedUtils,
+      arbPathConfig: options.arbPathConfig,
+      arbPathConfigUtils: options.arbPathConfigUtils,
+      arbPaths: options.arbPaths,
+      arbPathTemplateCacheUtils: options.arbPathTemplateCacheUtils,
+      arbRuleSnapshotUtils: options.arbRuleSnapshotUtils,
+      arbSpecialUtils: options.arbSpecialUtils,
+      dashboardRuntimeUtils: options.dashboardRuntimeUtils,
+      fixedPathRules,
+      getActiveMutedPathLegs: arbAlertBridgeRuntime.getActiveMutedPathLegs,
+      getActiveQuotes: options.getActiveQuotes,
+      getArbCycleStartPriority: options.getArbCycleStartPriority,
+      getDashboardState: options.getDashboardState,
+      getQuoteMarketStateMap: options.getQuoteMarketStateMap,
+      globalPathSourceSelectors: options.globalPathSourceSelectors,
+      mutedPathLegUtils: options.mutedPathLegUtils,
+      quoteStateRuntime: options.quoteStateRuntime,
+      specialArbRules
+    });
+
+    arbPanelController = options.arbPanelControllerUtils.createArbPanelController({
+      arbDiscovery,
+      arbAlertBridgeRuntime,
+      arbDetailUtils: options.arbDetailUtils,
       arbOpportunityHighlightRuntime,
       arbOpportunityRuntime,
       arbPanelLayoutUtils: options.arbPanelLayoutUtils,
@@ -129,18 +152,12 @@
       arbPathConfig: options.arbPathConfig,
       arbPathConfigUtils: options.arbPathConfigUtils,
       arbPaths: options.arbPaths,
-      arbPathTemplateCacheUtils: options.arbPathTemplateCacheUtils,
-      arbRuleSnapshotUtils: options.arbRuleSnapshotUtils,
       arbRuntimeMemoryUtils: options.arbRuntimeMemoryUtils,
-      arbSpecialUtils: options.arbSpecialUtils,
       chainDefaults: options.chainDefaults,
       closestEventTarget: options.closestEventTarget,
       dashboardRuntimeUtils: options.dashboardRuntimeUtils,
       documentImpl: options.documentImpl,
       domRenderUtils: options.domRenderUtils,
-      fixedPathRules,
-      getActiveQuotes: options.getActiveQuotes,
-      getArbCycleStartPriority: options.getArbCycleStartPriority,
       getArbDetailController,
       getAlertConfig: () => (
         alertRuntimeController && typeof alertRuntimeController.getConfig === 'function'
@@ -149,20 +166,14 @@
       ),
       getDashboardState: options.getDashboardState,
       getQuoteMarketState: options.getQuoteMarketState,
-      getQuoteMarketStateMap: options.getQuoteMarketStateMap,
-      globalPathSourceSelectors: options.globalPathSourceSelectors,
-      interactionRuntime: options.interactionRuntime,
       isQuotePaused: options.isQuotePaused,
-      mutedPathLegUtils: options.mutedPathLegUtils,
       openArbDetailModal,
       pathAlertPageUtils: options.pathAlertPageUtils,
       pathAlertRuleDefinitions,
       quoteDisplayUtils: options.quoteDisplayUtils,
-      quoteStateRuntime: options.quoteStateRuntime,
       refs: options.arbPanelRefs,
       setTimeout: options.setTimeout,
       clearTimeout: options.clearTimeout,
-      specialArbRules,
       updateDelayMs: options.updateDelayMs,
       windowImpl: options.windowImpl,
       zIndexRuntime: options.zIndexRuntime,
@@ -197,7 +208,7 @@
       getQuoteChainDisplayName: options.getQuoteChainDisplayName,
       getQuoteMarketState: options.getQuoteMarketState,
       getQuoteMarketStateMap: options.getQuoteMarketStateMap,
-      getSharedArbRuleSnapshot: arbPanelController.getSharedRuleSnapshot,
+      getSharedArbRuleSnapshot: arbDiscovery.getSnapshot,
       isCrossChainQuote: options.isCrossChainQuote,
       isQuotePaused: options.isQuotePaused,
       isRuleLeg: arbPanelController.isRuleLeg,
@@ -218,11 +229,33 @@
       quoteDisplayUtils: options.quoteDisplayUtils,
       quoteStateRuntime: options.quoteStateRuntime,
       refs: options.alertRefs,
-      setInterval: options.setInterval,
-      clearInterval: options.clearInterval,
       setTimeout: options.setTimeout,
       clearTimeout: options.clearTimeout,
       windowImpl: options.windowImpl
+    });
+
+    arbRefreshRuntime = options.arbRuntimeMemoryUtils.createArbRefreshRuntime({
+      delayMs: options.updateDelayMs,
+      setTimer: options.setTimeout,
+      clearTimer: options.clearTimeout,
+      hasDemand: () => (
+        arbPanelController.isVisible()
+        || alertRuntimeController.hasActiveRuleAlertTarget()
+      ),
+      onSkipped: () => arbPanelController.markDirty(),
+      refresh: (config = {}) => {
+        const snapshot = arbDiscovery.getSnapshot();
+        alertRuntimeController.evaluateRuleAlerts(snapshot, { deferPanelRefresh: true });
+        if (arbPanelController.isVisible() || config.forcePanel === true) {
+          arbPanelController.update({
+            snapshot: arbDiscovery.getPanelSnapshot(snapshot),
+            force: config.forcePanel === true
+          });
+        } else {
+          arbPanelController.markDirty();
+        }
+        return snapshot;
+      }
     });
 
     if (options.bindAudioUnlockEvents !== false && typeof alertRuntimeController.bindAudioUnlockEvents === 'function') {
@@ -232,25 +265,27 @@
     return {
       alertRuntimeController,
       arbAlertBridgeRuntime,
+      arbDiscovery,
       arbOpportunityHighlightRuntime,
       arbOpportunityRuntime,
+      arbRefreshRuntime,
       arbPanelController,
       applyFloatingPanelDisplay: arbPanelController.applyFloatingPanelDisplay,
       buildArbPathLegLineOptions: arbPanelController.buildArbPathLegLineOptions,
       buildLiveQuoteLabel: arbPanelController.buildLiveQuoteLabel,
-      clearTopologyCache: arbPanelController.clearTopologyCache,
+      clearTopologyCache: arbDiscovery.clearTopology,
       findQuoteById: arbPanelController.findQuoteById,
       formatArbPathLegLine: arbPanelController.formatArbPathLegLine,
       formatChainLabel: arbPanelController.formatChainLabel,
       formatDetailNumber: arbPanelController.formatDetailNumber,
-      getAliasRules: arbPanelController.getAliasRules,
+      getAliasRules: arbDiscovery.getAliasRules,
       getOpportunity: arbOpportunityRuntime.getOpportunity,
-      getSharedArbRuleSnapshot: arbPanelController.getSharedRuleSnapshot,
+      getSharedArbRuleSnapshot: arbDiscovery.getSnapshot,
       handleQuoteMarketStateChanged,
       handleQuoteMainFetchSuccess,
-      invalidateArbRuleSnapshotCache: arbPanelController.invalidateRuleSnapshotCache,
+      invalidateArbRuleSnapshotCache: arbDiscovery.invalidate,
       isRuleLeg: arbPanelController.isRuleLeg,
-      scheduleArbPanelUpdate: arbPanelController.scheduleUpdate,
+      scheduleArbPanelUpdate: arbRefreshRuntime.schedule,
       setArbPanelMaxHeight: arbPanelController.setMaxHeight,
       updateArbPanel: arbPanelController.update
     };

@@ -146,7 +146,7 @@ async function waitForServer(attempts = 15) {
     assert.strictEqual(defaultResponse.statusCode, 200);
     const defaultConfig = JSON.parse(defaultResponse.body);
     assert.strictEqual(defaultConfig.version, 1);
-    assert.strictEqual(defaultConfig.settings.pathAlertEvalIntervalMs, 1000);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(defaultConfig.settings, 'pathAlertEvalIntervalMs'), false);
     assert.strictEqual(defaultConfig.settings.localSoundEnabled, true);
     assert.strictEqual(defaultConfig.settings.webhookEnabled, false);
     assert.deepStrictEqual(defaultConfig.alerts, []);
@@ -187,7 +187,7 @@ async function waitForServer(attempts = 15) {
     assert.strictEqual(fs.existsSync(alertConfigPath), true);
     const savedText = fs.readFileSync(alertConfigPath, 'utf-8');
     const savedJson = JSON.parse(savedText);
-    assert.strictEqual(savedJson.settings.pathAlertEvalIntervalMs, 2500);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(savedJson.settings, 'pathAlertEvalIntervalMs'), false);
     assert.strictEqual(savedJson.settings.localSoundEnabled, true);
     assert.strictEqual(savedJson.settings.webhookEnabled, true);
     assert.strictEqual(savedJson.alerts[0].target.ruleId, 'fixed:gho-usdc');

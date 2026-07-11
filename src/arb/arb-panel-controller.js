@@ -8,16 +8,11 @@
   function createArbPanelController(options = {}) {
     const arbPanelLayoutUtils = options.arbPanelLayoutUtils;
     const arbPanelRenderer = options.arbPanelRenderer;
-    const arbPathTemplateCacheUtils = options.arbPathTemplateCacheUtils;
     const arbRuntimeMemoryUtils = options.arbRuntimeMemoryUtils;
+    const arbDiscovery = options.arbDiscovery;
     const dashboardRuntimeUtils = options.dashboardRuntimeUtils;
     const domRenderUtils = options.domRenderUtils;
     const refs = options.refs || {};
-    const fixedPathRules = Array.isArray(options.fixedPathRules) ? options.fixedPathRules : [];
-    const specialArbRules = Array.isArray(options.specialArbRules) ? options.specialArbRules : [];
-    const globalPathSourceSelectors = Array.isArray(options.globalPathSourceSelectors)
-      ? options.globalPathSourceSelectors
-      : [];
     const arbPathConfig = options.arbPathConfig || {};
     const getDashboardState = typeof options.getDashboardState === 'function'
       ? options.getDashboardState
@@ -25,21 +20,12 @@
     const getQuoteMarketState = typeof options.getQuoteMarketState === 'function'
       ? options.getQuoteMarketState
       : () => null;
-    const getQuoteMarketStateMap = typeof options.getQuoteMarketStateMap === 'function'
-      ? options.getQuoteMarketStateMap
-      : () => ({});
     const getAlertConfig = typeof options.getAlertConfig === 'function'
       ? options.getAlertConfig
       : () => null;
-    const getActiveQuotes = typeof options.getActiveQuotes === 'function'
-      ? options.getActiveQuotes
-      : (quotes) => (Array.isArray(quotes) ? quotes : []);
     const isQuotePaused = typeof options.isQuotePaused === 'function'
       ? options.isQuotePaused
       : () => false;
-    const getArbCycleStartPriority = typeof options.getArbCycleStartPriority === 'function'
-      ? options.getArbCycleStartPriority
-      : () => [];
     const getArbDetailController = typeof options.getArbDetailController === 'function'
       ? options.getArbDetailController
       : () => null;
@@ -58,7 +44,6 @@
     const setTimer = typeof options.setTimeout === 'function' ? options.setTimeout : setTimeout;
     const clearTimer = typeof options.clearTimeout === 'function' ? options.clearTimeout : clearTimeout;
     const updateDelayMs = Number.isFinite(Number(options.updateDelayMs)) ? Number(options.updateDelayMs) : 0;
-    const arbPanelCache = arbPathTemplateCacheUtils.createArbPanelCache();
     const arbGlobalFilterStateRuntime = arbPanelLayoutUtils.createGlobalArbFilterStateRuntime();
     let arbPanelHtmlRenderer = null;
     const arbPanelInteractionDeferralRuntime = (
@@ -89,7 +74,6 @@
     });
     const arbExpandedSections = new Set();
     let arbLastPointerOpenedOpportunityId = null;
-    let cachedAliasRules = null;
 
     const arbPanelUpdateRuntime = arbRuntimeMemoryUtils.createArbPanelUpdateRuntime({
       setTimer,
@@ -104,68 +88,10 @@
       return Array.isArray(dashboardState) ? dashboardState : [];
     }
 
-    function getAllDashboardQuotes() {
-      return getDashboardCategories().flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []);
-    }
-
-    function getCycleStartPriorityList() {
-      const priority = getArbCycleStartPriority();
-      return Array.isArray(priority) ? priority : [];
-    }
-
-    function getAliasRules() {
-      if (!cachedAliasRules) {
-        cachedAliasRules = options.arbEquivalenceUtils.buildAliasRulesFromGroups(
-          options.arbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS
-        );
-      }
-      return cachedAliasRules;
-    }
-
-    function buildQuoteMetaById() {
-      return dashboardRuntimeUtils.buildQuoteMetaById(getDashboardCategories());
-    }
-
-    function buildPreferredCycleStartSymbols(aliasRules, canonicalSymbol = 'cbBTC') {
-      const priority = getCycleStartPriorityList();
-      const configuredPriority = priority.length
-        ? priority
-        : [canonicalSymbol];
-      return options.arbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority);
-    }
-
     function getFixedRuleWatchItems() {
       return options.arbPathConfigUtils && typeof options.arbPathConfigUtils.getFixedRuleWatchItems === 'function'
         ? options.arbPathConfigUtils.getFixedRuleWatchItems(arbPathConfig)
         : [];
-    }
-
-    function getConfiguredFixedPathRules() {
-      const watchItems = getFixedRuleWatchItems();
-      if (!watchItems.length) return fixedPathRules;
-      const rulesById = new Map(
-        fixedPathRules
-          .filter((rule) => rule && rule.id)
-          .map((rule) => [rule.id, rule])
-      );
-      return watchItems
-        .map((item) => rulesById.get(item.ruleId))
-        .filter(Boolean);
-    }
-
-    function getSpecialRuleWatchItems() {
-      return options.arbPathConfigUtils && typeof options.arbPathConfigUtils.getSpecialRuleWatchItems === 'function'
-        ? options.arbPathConfigUtils.getSpecialRuleWatchItems(arbPathConfig)
-        : [];
-    }
-
-    function getConfiguredSpecialArbRules() {
-      return options.arbPathConfigUtils && typeof options.arbPathConfigUtils.applySpecialRuleWatchItemsToRules === 'function'
-        ? options.arbPathConfigUtils.applySpecialRuleWatchItemsToRules(
-          specialArbRules,
-          getSpecialRuleWatchItems()
-        )
-        : specialArbRules;
     }
 
     function formatChainLabel(chain) {
@@ -203,126 +129,6 @@
         toSymbol,
         suffix,
         formatChainLabel
-      });
-    }
-
-    function invalidateRuleSnapshotCache(config = {}) {
-      if (config.bumpRevision !== false && options.quoteStateRuntime) {
-        options.quoteStateRuntime.bumpMarketRevision();
-      }
-      arbPanelCache.clearRuleSnapshot();
-    }
-
-    function clearTopologyCache() {
-      arbPanelCache.clearTopology();
-    }
-
-    function getActiveMutedPathLegs(nowMs) {
-      if (typeof arbAlertBridgeRuntime.getActiveMutedPathLegs !== 'function') return [];
-      return arbAlertBridgeRuntime.getActiveMutedPathLegs(nowMs);
-    }
-
-    function getArbPathTopologyCache() {
-      const utils = arbPathTemplateCacheUtils;
-      const dashboardState = getDashboardCategories();
-      const quoteStateById = getQuoteMarketStateMap();
-      const cacheKey = `${utils.buildArbPathTopologyCacheKey(dashboardState, quoteStateById)}|${getCycleStartPriorityList().join(',')}`;
-      const cachedTopology = arbPanelCache.getTopology(cacheKey);
-      if (cachedTopology) {
-        return cachedTopology;
-      }
-
-      const aliasRules = getAliasRules();
-      const preferredCycleStartSymbols = buildPreferredCycleStartSymbols(aliasRules, 'cbBTC');
-      const ruleEdges = options.arbPaths.buildRuleEdges(aliasRules);
-      const quoteMetaById = buildQuoteMetaById();
-      const allQuotes = getActiveQuotes(getAllDashboardQuotes());
-      const allTopologyEdges = utils.buildTopologyEdges(allQuotes, quoteStateById, null);
-      const allTopologyEdgesWithRules = allTopologyEdges.concat(ruleEdges);
-      const fixedTemplatesByRuleId = {};
-
-      const globalSourceCategories = arbPanelLayoutUtils.resolveItemsBySelectors(dashboardState, globalPathSourceSelectors);
-      const globalSourceQuotes = getActiveQuotes(globalSourceCategories.flatMap((category) => Array.isArray(category && category.quotes) ? category.quotes : []));
-      const globalEdges = utils.buildTopologyEdges(globalSourceQuotes, quoteStateById, null);
-      const globalTemplates = utils.buildCycleTemplates(globalEdges.concat(ruleEdges), {
-        maxDepth: 3,
-        limit: Number.MAX_SAFE_INTEGER,
-        acceptCycle: options.arbPaths.isMeaningfulPath,
-        preferredStartSymbols: preferredCycleStartSymbols
-      });
-
-      for (const rule of getConfiguredFixedPathRules()) {
-        if (!rule) continue;
-        const filteredEdges = options.arbFixedUtils.filterEdgesForFixedRule(rule, allTopologyEdgesWithRules, quoteMetaById);
-        fixedTemplatesByRuleId[rule.id] = utils.buildFixedPathTemplates(filteredEdges, rule, aliasRules, {
-          limit: Number(rule.resultLimit) || 1,
-          preferredStartSymbols: preferredCycleStartSymbols
-        });
-      }
-
-      return arbPanelCache.setTopology(cacheKey, {
-        ruleEdges,
-        globalTemplates,
-        fixedTemplatesByRuleId
-      });
-    }
-
-    function getSharedRuleSnapshot() {
-      const topologyCacheForFixed = getArbPathTopologyCache();
-      const dashboardState = getDashboardCategories();
-      const cacheKey = dashboardRuntimeUtils.buildArbRuleSnapshotCacheKey(
-        dashboardState,
-        options.quoteStateRuntime.getMarketRevision()
-      );
-      const cachedSnapshot = arbPanelCache.getRuleSnapshot(cacheKey);
-      if (cachedSnapshot) {
-        return cachedSnapshot;
-      }
-
-      const aliasRules = getAliasRules();
-      const allQuotes = getActiveQuotes(getAllDashboardQuotes());
-      const nowMs = Date.now();
-      const mutedPathLegs = getActiveMutedPathLegs(nowMs);
-      const allEdges = options.mutedPathLegUtils.filterMutedPathLegs(
-        options.arbPaths.buildEdges(allQuotes, getQuoteMarketStateMap(), null),
-        mutedPathLegs,
-        nowMs
-      );
-      const ruleEdges = options.arbPaths.buildRuleEdges(aliasRules);
-      const allEdgesWithRules = allEdges.concat(ruleEdges);
-      const quoteMetaById = buildQuoteMetaById();
-      const quotesByCategoryName = dashboardRuntimeUtils.buildQuotesByCategoryName(
-        dashboardState,
-        getActiveQuotes
-      );
-      const baseSnapshot = options.arbRuleSnapshotUtils.buildArbRuleSnapshot({
-        fixedRules: getConfiguredFixedPathRules(),
-        specialRules: getConfiguredSpecialArbRules(),
-        allEdgesWithRules,
-        fixedTemplatesByRuleId: topologyCacheForFixed && topologyCacheForFixed.fixedTemplatesByRuleId
-          ? topologyCacheForFixed.fixedTemplatesByRuleId
-          : null,
-        quoteMetaById,
-        quotesByCategoryName,
-        quoteStateById: getQuoteMarketStateMap(),
-        aliasRules,
-        mutedPathLegs,
-        mutedPathLegUtils: options.mutedPathLegUtils,
-        preferredStartSymbols: buildPreferredCycleStartSymbols(aliasRules, 'cbBTC'),
-        arbPathsApi: options.arbPaths,
-        arbFixedUtils: options.arbFixedUtils,
-        arbSpecialUtils: options.arbSpecialUtils
-      });
-
-      return arbPanelCache.setRuleSnapshot(cacheKey, {
-        ...baseSnapshot,
-        aliasRules,
-        allQuotes,
-        allEdges,
-        ruleEdges,
-        allEdgesWithRules,
-        quoteMetaById,
-        quotesByCategoryName
       });
     }
 
@@ -420,7 +226,7 @@
     function buildSpecialSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
       return arbPanelLayoutUtils.buildSpecialArbSections({
         specialResults: sharedRuleSnapshot.specialResults,
-        specialRules: getConfiguredSpecialArbRules(),
+        specialRules: sharedRuleSnapshot.configuredSpecialRules,
         buildEntry: (opportunity) => createOpportunityEntry(
           nextOpportunityMap,
           nextOpportunityIdsByTargetKey,
@@ -442,18 +248,8 @@
       });
     }
 
-    function buildGlobalSection(topologyCache, templateUtils, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
+    function buildGlobalSection(globalCycles, nextOpportunityMap, nextOpportunityIdsByTargetKey) {
       const globalSectionKey = 'global:all';
-      const nowMs = Date.now();
-      const mutedPathLegs = getActiveMutedPathLegs(nowMs);
-      const globalCycles = options.mutedPathLegUtils.filterMutedCycles(
-        topologyCache.globalTemplates
-          .map((template) => templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap()))
-          .filter(Boolean)
-          .sort((left, right) => Number(right.profitRate) - Number(left.profitRate)),
-        mutedPathLegs,
-        nowMs
-      );
       const filterState = arbGlobalFilterStateRuntime.get();
       const filterCriteria = arbPanelLayoutUtils.buildGlobalArbFilterCriteria(filterState, {
         normalizeChainFilterToken: (chainToken) => options.chainDefaults.normalizeChainFilterToken(chainToken)
@@ -486,18 +282,14 @@
       });
     }
 
-    function buildPanelData() {
-      const sharedRuleSnapshot = getSharedRuleSnapshot();
-      const topologyCache = getArbPathTopologyCache();
-      const templateUtils = arbPathTemplateCacheUtils;
+    function buildPanelData(sharedRuleSnapshot = arbDiscovery.getPanelSnapshot()) {
       const nextOpportunityMap = new Map();
       const nextOpportunityIdsByTargetKey = new Map();
 
       const fixedSections = buildFixedSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
       const specialSections = buildSpecialSections(sharedRuleSnapshot, nextOpportunityMap, nextOpportunityIdsByTargetKey);
       const globalSection = buildGlobalSection(
-        topologyCache,
-        templateUtils,
+        sharedRuleSnapshot.globalCycles,
         nextOpportunityMap,
         nextOpportunityIdsByTargetKey
       );
@@ -523,7 +315,7 @@
       }
       arbPanelUpdateRuntime.clearDirty();
 
-      const panelData = buildPanelData();
+      const panelData = buildPanelData(config.snapshot);
       if (panelData.error) {
         arbPanelHtmlRenderer.reset();
         arbPanelRenderer.applyArbPanelErrorText(refs.arbPathContent, panelData.error);
@@ -685,14 +477,12 @@
       bindGlobalFilterEvents,
       buildArbPathLegLineOptions,
       buildLiveQuoteLabel,
-      clearTopologyCache,
       findQuoteById,
       formatArbPathLegLine,
       formatChainLabel,
       formatDetailNumber,
-      getAliasRules,
-      getSharedRuleSnapshot,
-      invalidateRuleSnapshotCache,
+      isVisible: () => dashboardRuntimeUtils.isPanelVisible(refs.arbPathWindow),
+      markDirty: () => arbPanelUpdateRuntime.markDirty(),
       isRuleLeg,
       scheduleUpdate: () => arbPanelUpdateRuntime.schedule(),
       setMaxHeight,

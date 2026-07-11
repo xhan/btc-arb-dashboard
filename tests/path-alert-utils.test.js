@@ -19,6 +19,7 @@ const {
   findDuplicatePathAlert,
   findDismissedPathAlert,
   getQuoteAlertsForQuoteId,
+  getNextPathAlertRuntimeDeadline,
   buildAllLegSnapshots,
   buildTriggeredPathAlertChangedLegs,
   resolvePathAlertSnapshotState,
@@ -188,7 +189,7 @@ const normalizedConfig = normalizeAlertConfig({
   ]
 });
 
-assert.strictEqual(normalizedConfig.settings.pathAlertEvalIntervalMs, 2000);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(normalizedConfig.settings, 'pathAlertEvalIntervalMs'), false);
 assert.strictEqual(normalizedConfig.settings.defaultCooldownSec, 120);
 assert.strictEqual(normalizedConfig.settings.localSoundEnabled, false);
 assert.strictEqual(normalizedConfig.settings.webhookEnabled, true);
@@ -1299,20 +1300,28 @@ pathAlertRuntimeState.reset({ forceImmediate: false });
 assert.strictEqual(pathAlertRuntimeState.get('active-alert'), null);
 assert.strictEqual(pathAlertRuntimeState.isForceImmediateEnabled(), false);
 
+const deadlineAlerts = [
+  { id: 'pending', enabled: true, triggerMode: 'delayed', confirmDelaySec: 13 },
+  { id: 'cooldown', enabled: true, triggerMode: 'immediate', cooldownSec: 180 }
+];
+const deadlineRuntimeState = new Map([
+  ['pending', { status: 'pending_confirm', eligibleSince: 1000 }],
+  ['cooldown', { status: 'cooldown', cooldownUntil: 20_000 }]
+]);
+assert.strictEqual(
+  getNextPathAlertRuntimeDeadline(deadlineAlerts, deadlineRuntimeState, 2000),
+  14_000
+);
+deadlineRuntimeState.set('pending', { status: 'idle', eligibleSince: null });
+assert.strictEqual(
+  getNextPathAlertRuntimeDeadline(deadlineAlerts, deadlineRuntimeState, 2000),
+  20_000
+);
+
 let timerId = 0;
-const clearedIntervals = [];
 const clearedTimeouts = [];
-const scheduledIntervals = [];
 const scheduledTimeouts = [];
 const pathAlertSchedulerRuntime = createPathAlertSchedulerRuntime({
-  setInterval(callback, delayMs) {
-    const timer = { id: ++timerId, type: 'interval', callback, delayMs };
-    scheduledIntervals.push(timer);
-    return timer;
-  },
-  clearInterval(timer) {
-    clearedIntervals.push(timer.id);
-  },
   setTimeout(callback, delayMs) {
     const timer = { id: ++timerId, type: 'timeout', callback, delayMs };
     scheduledTimeouts.push(timer);
@@ -1322,20 +1331,6 @@ const pathAlertSchedulerRuntime = createPathAlertSchedulerRuntime({
     clearedTimeouts.push(timer.id);
   }
 });
-let evaluationCount = 0;
-assert.strictEqual(pathAlertSchedulerRuntime.restartEvaluation({
-  hasActiveTarget: () => true,
-  intervalMs: 1000,
-  evaluate: () => { evaluationCount += 1; }
-}), true);
-assert.strictEqual(evaluationCount, 1);
-assert.strictEqual(scheduledIntervals[0].delayMs, 1000);
-assert.strictEqual(pathAlertSchedulerRuntime.restartEvaluation({
-  hasActiveTarget: () => false,
-  intervalMs: 1000,
-  evaluate: () => { evaluationCount += 1; }
-}), false);
-assert.deepStrictEqual(clearedIntervals, [scheduledIntervals[0].id]);
 let saveCount = 0;
 assert.strictEqual(pathAlertSchedulerRuntime.scheduleConfigSave(() => { saveCount += 1; }, 250), true);
 assert.strictEqual(pathAlertSchedulerRuntime.scheduleConfigSave(() => { saveCount += 10; }, 300), true);
@@ -1353,119 +1348,38 @@ assert.strictEqual(scheduledEvaluationCount, 1);
 assert.strictEqual(pathAlertSchedulerRuntime.getTimers().scheduledEvaluationTimer, null);
 
 {
-  let nowMs = 0;
-  let timerIdForCoalescing = 0;
-  const coalescingIntervals = [];
-  const coalescingTimeouts = [];
-  const coalescingRuntime = createPathAlertSchedulerRuntime({
-    now: () => nowMs,
-    setInterval(callback, delayMs) {
-      const timer = { id: ++timerIdForCoalescing, callback, delayMs };
-      coalescingIntervals.push(timer);
-      return timer;
-    },
-    clearInterval() {},
+  let deadlineNowMs = 1000;
+  const deadlineTimers = [];
+  const clearedDeadlineTimers = [];
+  let deadlineEvaluationCount = 0;
+  const deadlineScheduler = createPathAlertSchedulerRuntime({
+    now: () => deadlineNowMs,
     setTimeout(callback, delayMs) {
-      const timer = { id: ++timerIdForCoalescing, callback, delayMs };
-      coalescingTimeouts.push(timer);
+      const timer = { callback, delayMs };
+      deadlineTimers.push(timer);
       return timer;
     },
-    clearTimeout() {}
+    clearTimeout(timer) {
+      clearedDeadlineTimers.push(timer);
+    }
   });
-  let coalescedEvaluationCount = 0;
 
-  assert.strictEqual(coalescingRuntime.restartEvaluation({
+  assert.strictEqual(deadlineScheduler.restartDeadlineEvaluation({
     hasActiveTarget: true,
-    intervalMs: 1000,
-    evaluate: () => { coalescedEvaluationCount += 1; }
+    evaluate: () => { deadlineEvaluationCount += 1; }
   }), true);
-  assert.strictEqual(coalescedEvaluationCount, 1);
-
-  nowMs = 100;
-  assert.strictEqual(coalescingRuntime.scheduleEvaluation(() => {
-    coalescedEvaluationCount += 1;
-  }, 800), true);
-  assert.strictEqual(coalescingTimeouts[0].delayMs, 800);
-
-  nowMs = 900;
-  coalescingTimeouts[0].callback();
-  assert.strictEqual(coalescedEvaluationCount, 2);
-
-  nowMs = 1000;
-  coalescingIntervals[0].callback();
-  assert.strictEqual(coalescedEvaluationCount, 2);
-
-  nowMs = 1200;
-  assert.strictEqual(coalescingRuntime.scheduleEvaluation(() => {
-    coalescedEvaluationCount += 1;
-  }, 800), true);
-  assert.strictEqual(coalescingTimeouts.length, 1, 'periodic evaluation within delay window should cover quote-triggered evaluation');
-  nowMs = 2000;
-  coalescingIntervals[0].callback();
-  assert.strictEqual(coalescedEvaluationCount, 3);
-
-  nowMs = 2200;
-  assert.strictEqual(coalescingRuntime.scheduleEvaluation(() => {
-    coalescedEvaluationCount += 1;
-  }, 800), true);
-  assert.strictEqual(coalescingTimeouts.length, 1, 'exact next periodic boundary should not need an extra timer');
-  nowMs = 3000;
-  coalescingIntervals[0].callback();
-  assert.strictEqual(coalescedEvaluationCount, 4);
-}
-
-{
-  let nowMs = 0;
-  let timerIdForSkippedInterval = 0;
-  const skippedIntervalTimers = [];
-  const skippedIntervalTimeouts = [];
-  const skippedIntervalRuntime = createPathAlertSchedulerRuntime({
-    now: () => nowMs,
-    setInterval(callback, delayMs) {
-      const timer = { id: ++timerIdForSkippedInterval, callback, delayMs };
-      skippedIntervalTimers.push(timer);
-      return timer;
-    },
-    clearInterval() {},
-    setTimeout(callback, delayMs) {
-      const timer = { id: ++timerIdForSkippedInterval, callback, delayMs };
-      skippedIntervalTimeouts.push(timer);
-      return timer;
-    },
-    clearTimeout() {}
-  });
-  let skippedIntervalEvaluationCount = 0;
-
-  assert.strictEqual(skippedIntervalRuntime.restartEvaluation({
-    hasActiveTarget: true,
-    intervalMs: 1000,
-    evaluate: () => { skippedIntervalEvaluationCount += 1; }
-  }), true);
-  assert.strictEqual(skippedIntervalEvaluationCount, 1);
-
-  nowMs = 100;
-  assert.strictEqual(skippedIntervalRuntime.scheduleEvaluation(() => {
-    skippedIntervalEvaluationCount += 1;
-  }, 800), true);
-  nowMs = 900;
-  skippedIntervalTimeouts[0].callback();
-  assert.strictEqual(skippedIntervalEvaluationCount, 2);
-
-  nowMs = 950;
-  assert.strictEqual(skippedIntervalRuntime.scheduleEvaluation(() => {
-    skippedIntervalEvaluationCount += 1;
-  }, 800), true);
-  assert.strictEqual(
-    skippedIntervalTimeouts.length,
-    2,
-    'an interval that will be skipped by min-gap must not cover quote-triggered evaluation'
-  );
-  nowMs = 1000;
-  skippedIntervalTimers[0].callback();
-  assert.strictEqual(skippedIntervalEvaluationCount, 2);
-  nowMs = 1750;
-  skippedIntervalTimeouts[1].callback();
-  assert.strictEqual(skippedIntervalEvaluationCount, 3);
+  assert.strictEqual(deadlineEvaluationCount, 1);
+  assert.strictEqual(deadlineScheduler.scheduleDeadlineEvaluation(
+    () => { deadlineEvaluationCount += 1; },
+    2500
+  ), true);
+  assert.strictEqual(deadlineTimers[0].delayMs, 1500);
+  deadlineNowMs = 2500;
+  deadlineTimers[0].callback();
+  assert.strictEqual(deadlineEvaluationCount, 2);
+  deadlineScheduler.scheduleDeadlineEvaluation(() => {}, 4000);
+  deadlineScheduler.scheduleDeadlineEvaluation(() => {}, 5000);
+  assert.strictEqual(clearedDeadlineTimers.length, 1);
 }
 
 let delayedRuntime = advancePathAlertRuntime(delayedAlert, null, {

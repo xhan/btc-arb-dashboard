@@ -1,34 +1,28 @@
 (function (root, factory) {
-  const config = factory();
+  const pathAlertRuleDefinitions = typeof module === 'object' && module.exports
+    ? require('../path-alerts/path-alert-rule-definitions')
+    : root.PathAlertRuleDefinitions;
+  const config = factory(pathAlertRuleDefinitions);
   if (typeof module === 'object' && module.exports) {
     module.exports = config;
   }
   root.ArbPathConfig = config;
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (pathAlertRuleDefinitions) {
+  const fixedRuleWatchItems = (pathAlertRuleDefinitions.FIXED_PATH_RULES || []).map((rule) => ({
+    title: rule.title,
+    type: 'fixed-rule',
+    ruleId: rule.id
+  }));
+  const specialRuleWatchItems = (pathAlertRuleDefinitions.SPECIAL_ARB_RULES || []).map((rule) => ({
+    title: rule.title,
+    type: 'special-rule',
+    ruleId: rule.id
+  }));
+
   return {
     watchItems: [
-      // fixed path watch items
-      { title: 'WBTC eth <-> arb', type: 'fixed-rule', ruleId: 'fixed:wbtc-eth-arb' },
-      { title: 'WBTC - BTC (-arb)', type: 'fixed-rule', ruleId: 'fixed:wbtc-btc-no-arb' },
-      { title: 'LBTC - BTC', type: 'fixed-rule', ruleId: 'fixed:lbtc-btc' },
-      { title: 'WBTC - LBTC', type: 'fixed-rule', ruleId: 'fixed:wbtc-lbtc' },
-      { title: 'tBTC - WBTC', type: 'fixed-rule', ruleId: 'fixed:tbtc-wbtc' },
-      { title: 'tBTC - BTC', type: 'fixed-rule', ruleId: 'fixed:tbtc-btc' },
-      { title: 'GHO - USD', type: 'fixed-rule', ruleId: 'fixed:gho-usd' },
-      { title: 'GHO - USDT', type: 'fixed-rule', ruleId: 'fixed:gho-usdt' },
-      { title: 'PYUSD - USDC', type: 'fixed-rule', ruleId: 'fixed:pyusd-usdc' },
-      { title: 'USDG - USDC', type: 'fixed-rule', ruleId: 'fixed:usdg-usdc' },
-      { title: 'USDE - USDT', type: 'fixed-rule', ruleId: 'fixed:usde-usdt' },
-      { title: 'sUSDE - USDT', type: 'fixed-rule', ruleId: 'fixed:susde-usdt' },
-      { title: 'sUSDai - USDT', type: 'fixed-rule', ruleId: 'fixed:susdai-usdt' },
-      { title: 'DAI - USDT', type: 'fixed-rule', ruleId: 'fixed:dai-usdt' },
-      { title: 'msETH', type: 'fixed-rule', ruleId: 'fixed:mseth' },
-      { title: 'weETH', type: 'fixed-rule', ruleId: 'fixed:weeth' },
-      { title: 'wstETH', type: 'fixed-rule', ruleId: 'fixed:wsteth' },
-      // special rule watch items
-      { title: 'WBTC <-> BYBIT', type: 'special-rule', ruleId: 'special:wbtc-bybit' },
-      { title: 'USDe <-> BYBIT', type: 'special-rule', ruleId: 'special:usde-bybit' },
-      { title: 'USDtb <-> BYBIT', type: 'special-rule', ruleId: 'special:usdtb-bybit' },
+      ...fixedRuleWatchItems,
+      ...specialRuleWatchItems,
       // ethereum cbBTC/syBTC
       { title: 'eth cbBTC/syBTC 价格高于', type: 'quote-price', quoteId: 1774206818567, direction: 'forward' },
       // bsc BTCB/syBTC

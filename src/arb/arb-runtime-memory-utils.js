@@ -241,6 +241,62 @@
     };
   }
 
+  function createArbRefreshRuntime(options = {}) {
+    const setTimer = typeof options.setTimer === 'function'
+      ? options.setTimer
+      : (typeof setTimeout === 'function' ? setTimeout : null);
+    const clearTimer = typeof options.clearTimer === 'function'
+      ? options.clearTimer
+      : (typeof clearTimeout === 'function' ? clearTimeout : null);
+    const delayMs = Number.isFinite(Number(options.delayMs)) && Number(options.delayMs) >= 0
+      ? Number(options.delayMs)
+      : 0;
+    const hasDemand = typeof options.hasDemand === 'function' ? options.hasDemand : () => true;
+    const refreshCallback = typeof options.refresh === 'function' ? options.refresh : () => null;
+    const onSkipped = typeof options.onSkipped === 'function' ? options.onSkipped : () => {};
+    let timer = null;
+
+    function clear() {
+      if (timer === null) return false;
+      if (clearTimer) clearTimer(timer);
+      timer = null;
+      return true;
+    }
+
+    function refresh(config = {}) {
+      clear();
+      if (config.force !== true && !hasDemand()) {
+        onSkipped();
+        return false;
+      }
+      return refreshCallback(config);
+    }
+
+    function schedule() {
+      if (!hasDemand()) {
+        onSkipped();
+        return false;
+      }
+      if (timer !== null) return false;
+      if (!setTimer) {
+        refresh();
+        return true;
+      }
+      timer = setTimer(() => {
+        timer = null;
+        refresh();
+      }, delayMs);
+      return true;
+    }
+
+    return {
+      clear,
+      hasTimer: () => timer !== null,
+      refresh,
+      schedule
+    };
+  }
+
   function createArbOpportunityRuntime() {
     let opportunityMap = new Map();
     let opportunityStore = new Map();
@@ -277,6 +333,7 @@
   return {
     buildRetainedArbOpportunityStore,
     createArbPanelUpdateRuntime,
+    createArbRefreshRuntime,
     createArbOpportunityHighlightRuntime,
     createArbOpportunityRuntime,
     getNextArbOpportunityHighlightExpiry,

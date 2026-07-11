@@ -2,13 +2,9 @@ const assert = require('assert');
 
 const { createArbPanelController } = require('../src/arb/arb-panel-controller');
 
-let ruleSnapshotCleared = 0;
-let topologyCleared = 0;
-let marketRevisionBumps = 0;
 let resetCount = 0;
 let renderedHtml = '';
 let broughtToFrontPanel = null;
-let aliasRulesBuildCount = 0;
 let arbPanelDeferralOptions = null;
 let stableRendererOptions = null;
 let contentInteractionHolding = false;
@@ -19,27 +15,6 @@ const openResultByOpportunityId = new Map();
 const sharedInteractionRuntime = {
   addIdleListener: () => true,
   shouldDeferRender: () => sharedInteractionHolding
-};
-
-const arbPanelCache = {
-  getRuleSnapshot() {
-    return null;
-  },
-  getTopology() {
-    return null;
-  },
-  setRuleSnapshot(_key, value) {
-    return value;
-  },
-  setTopology(_key, value) {
-    return value;
-  },
-  clearRuleSnapshot() {
-    ruleSnapshotCleared += 1;
-  },
-  clearTopology() {
-    topologyCleared += 1;
-  }
 };
 
 const panelContent = {
@@ -57,21 +32,18 @@ const dashboardState = [{
 }];
 
 const controller = createArbPanelController({
-  arbCyclePriorityUtils: {
-    buildPreferredCycleStartSymbols: (_aliasRules, priority) => priority
+  arbDiscovery: {
+    getPanelSnapshot: () => ({
+      configuredSpecialRules: [],
+      fixedResults: [],
+      globalCycles: [],
+      specialResults: []
+    })
   },
   arbDetailUtils: {
     formatDetailNumber: (value, precision) => Number(value).toFixed(precision),
     isArbRuleLeg: (leg) => Boolean(leg && leg.ruleLeg)
   },
-  arbEquivalenceUtils: {
-    DEFAULT_ASSET_EQUIVALENCE_GROUPS: [['USDT', 'USDT0']],
-    buildAliasRulesFromGroups: (groups) => {
-      aliasRulesBuildCount += 1;
-      return { groups };
-    }
-  },
-  arbFixedUtils: {},
   arbOpportunityHighlightRuntime: {
     isHighlighted: () => false
   },
@@ -136,19 +108,6 @@ const controller = createArbPanelController({
     isMeaningfulPath: () => true,
     formatProfitWanfen: (profitRate) => String(profitRate)
   },
-  arbPathTemplateCacheUtils: {
-    buildArbPathTopologyCacheKey: () => 'topology',
-    buildCycleTemplates: () => [],
-    buildFixedPathTemplates: () => [],
-    buildTopologyEdges: () => [],
-    createArbPanelCache: () => arbPanelCache
-  },
-  arbRuleSnapshotUtils: {
-    buildArbRuleSnapshot: () => ({
-      fixedResults: [],
-      specialResults: []
-    })
-  },
   arbRuntimeMemoryUtils: {
     createArbPanelUpdateRuntime: (options) => ({
       clearDirty: () => true,
@@ -160,7 +119,6 @@ const controller = createArbPanelController({
       }
     })
   },
-  arbSpecialUtils: {},
   chainDefaults: {
     getChainDisplayName: (chain) => `Chain:${chain}`,
     normalizeChainFilterToken: (chain) => String(chain || '').toLowerCase()
@@ -204,21 +162,13 @@ const controller = createArbPanelController({
       element && typeof element.contains === 'function' && element.contains(options && options.documentImpl && options.documentImpl.activeElement)
     )
   },
-  fixedPathRules: [],
-  getActiveQuotes: (quotes) => quotes,
   arbAlertBridgeRuntime: {},
-  getArbCycleStartPriority: () => ['cbBTC'],
   getArbDetailController: () => null,
   getDashboardState: () => dashboardState,
   getQuoteMarketState: () => ({}),
   getQuoteMarketStateMap: () => ({}),
-  globalPathSourceSelectors: [],
   interactionRuntime: sharedInteractionRuntime,
   isQuotePaused: () => false,
-  mutedPathLegUtils: {
-    filterMutedCycles: (cycles) => cycles,
-    filterMutedPathLegs: (legs) => legs
-  },
   openArbDetailModal: (opportunityId) => {
     openedOpportunities.push(opportunityId);
     return openResultByOpportunityId.has(opportunityId)
@@ -234,10 +184,6 @@ const controller = createArbPanelController({
   quoteDisplayUtils: {
     formatCexBookValue: (value) => String(value)
   },
-  quoteStateRuntime: {
-    bumpMarketRevision: () => { marketRevisionBumps += 1; },
-    getMarketRevision: () => 1
-  },
   refs: {
     arbPathWindow: panel,
     arbPathContent: panelContent,
@@ -245,7 +191,6 @@ const controller = createArbPanelController({
   },
   setTimeout,
   clearTimeout,
-  specialArbRules: [],
   updateDelayMs: 0,
   windowImpl: { innerHeight: 900, getComputedStyle: () => ({ display: 'none' }) },
   zIndexRuntime: {
@@ -261,9 +206,6 @@ assert.strictEqual(
 );
 assert.strictEqual(controller.formatDetailNumber(1.23456, 2), '1.23');
 assert.strictEqual(controller.findQuoteById(42), dashboardState[0].quotes[0]);
-assert.deepStrictEqual(controller.getAliasRules(), { groups: [['USDT', 'USDT0']] });
-assert.strictEqual(controller.getAliasRules(), controller.getAliasRules());
-assert.strictEqual(aliasRulesBuildCount, 1);
 assert.strictEqual(controller.buildLiveQuoteLabel('ethereum', 'USDC', 'USDT', ' spot'), 'Chain:ethereum:USDC->USDT spot');
 
 assert.strictEqual(arbPanelDeferralOptions.trackFocus, false);
@@ -279,15 +221,6 @@ contentInteractionHolding = true;
 assert.strictEqual(stableRendererOptions.shouldDeferRender(panelContent, '<next>'), true);
 contentInteractionHolding = false;
 documentImpl.activeElement = null;
-
-controller.invalidateRuleSnapshotCache();
-assert.strictEqual(marketRevisionBumps, 1);
-assert.strictEqual(ruleSnapshotCleared, 1);
-controller.invalidateRuleSnapshotCache({ bumpRevision: false });
-assert.strictEqual(marketRevisionBumps, 1);
-assert.strictEqual(ruleSnapshotCleared, 2);
-controller.clearTopologyCache();
-assert.strictEqual(topologyCleared, 1);
 
 controller.update({ force: true });
 assert.strictEqual(resetCount, 0);

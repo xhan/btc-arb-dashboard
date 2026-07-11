@@ -11,8 +11,10 @@ const fixedWatchItems = config.watchItems.filter((item) => item.type === 'fixed-
 const specialWatchItems = config.watchItems.filter((item) => item.type === 'special-rule');
 const quoteWatchItems = config.watchItems.filter((item) => item.type === 'quote-price');
 assert.deepStrictEqual(fixedWatchItems.map((item) => item.ruleId), FIXED_PATH_RULES.map((rule) => rule.id));
+assert.deepStrictEqual(fixedWatchItems.map((item) => item.title), FIXED_PATH_RULES.map((rule) => rule.title));
 assert.strictEqual(fixedWatchItems.find((item) => item.ruleId === 'fixed:wbtc-eth-arb').title, 'WBTC eth <-> arb');
 assert.deepStrictEqual(specialWatchItems.map((item) => item.ruleId), SPECIAL_ARB_RULES.map((rule) => rule.id));
+assert.deepStrictEqual(specialWatchItems.map((item) => item.title), SPECIAL_ARB_RULES.map((rule) => rule.title));
 assert.ok(quoteWatchItems.length > 0);
 
 for (const item of quoteWatchItems) {

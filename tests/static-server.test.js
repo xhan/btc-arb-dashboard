@@ -99,6 +99,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/arb/arb-path-config.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-path-config-utils.js"'));
     assert.ok(response.body.includes('src="src/arb/arb-rule-snapshot-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-discovery.js"'));
     assert.ok(response.body.includes('src="src/alerts/alert-log-ui-utils.js"'));
     assert.ok(response.body.includes('src="src/alerts/alert-runtime-controller.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/muted-path-storage-utils.js"'));
@@ -381,6 +382,9 @@ async function waitForServer(attempts = 12) {
       response.body.indexOf('src="src/arb/arb-panel-renderer.js"') < response.body.indexOf('src="src/arb/arb-panel-controller.js"')
     );
     assert.ok(
+      response.body.indexOf('src="src/arb/arb-discovery.js"') < response.body.indexOf('src="src/arb/arb-panel-controller.js"')
+    );
+    assert.ok(
       response.body.indexOf('src="src/ui/audio-utils.js"') < response.body.indexOf('src="src/app/dashboard-app.js"')
     );
     assert.ok(
@@ -637,6 +641,8 @@ async function waitForServer(attempts = 12) {
     assert.strictEqual(arbPanelRendererResponse.statusCode, 200);
     const arbPanelControllerResponse = await request('/src/arb/arb-panel-controller.js');
     assert.strictEqual(arbPanelControllerResponse.statusCode, 200);
+    const arbDiscoveryResponse = await request('/src/arb/arb-discovery.js');
+    assert.strictEqual(arbDiscoveryResponse.statusCode, 200);
     const arbRuntimeMemoryUtilsResponse = await request('/src/arb/arb-runtime-memory-utils.js');
     assert.strictEqual(arbRuntimeMemoryUtilsResponse.statusCode, 200);
     const arbAlertBridgeUtilsResponse = await request('/src/arb/arb-alert-bridge-utils.js');
@@ -1823,8 +1829,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(dashboardRuntimeUtilsResponse.body.includes('return getActivePathAlertEvaluationAlerts(alertConfig).length > 0;'));
     assert.ok(!appJsResponse.body.includes('function buildArbRuleSnapshotCacheKey()'));
     assert.ok(!appJsResponse.body.includes('function buildQuotesByCategoryName()'));
-    assert.ok(arbPanelControllerResponse.body.includes('const cacheKey = dashboardRuntimeUtils.buildArbRuleSnapshotCacheKey('));
-    assert.ok(arbPanelControllerResponse.body.includes('const quotesByCategoryName = dashboardRuntimeUtils.buildQuotesByCategoryName('));
+    assert.ok(arbDiscoveryResponse.body.includes('options.dashboardRuntimeUtils.buildArbRuleSnapshotCacheKey('));
+    assert.ok(arbDiscoveryResponse.body.includes('const quotesByCategoryName = options.dashboardRuntimeUtils.buildQuotesByCategoryName('));
+    assert.ok(!arbPanelControllerResponse.body.includes('buildArbRuleSnapshotCacheKey('));
     assert.ok(!appJsResponse.body.includes('return previousState !== nextState;'));
     assert.ok(!appJsResponse.body.includes('function setQuoteUiState('));
     assert.ok(alertRuntimeControllerResponse.body.includes('quoteStateRuntime.setUiState(quote.id, uiUpdate.nextState)'));
@@ -1942,12 +1949,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbAlertRuntimeResponse.body.includes('function handleQuoteMainFetchSuccess(quote, context = {})'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const fixedPathRules = pathAlertRuleDefinitions.FIXED_PATH_RULES || [];'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const specialArbRules = pathAlertRuleDefinitions.SPECIAL_ARB_RULES || [];'));
-    assert.ok(arbPanelControllerResponse.body.includes('options.arbRuleSnapshotUtils.buildArbRuleSnapshot({'));
-    assert.ok(arbPanelControllerResponse.body.includes('options.arbCyclePriorityUtils.buildPreferredCycleStartSymbols(aliasRules, configuredPriority)'));
+    assert.ok(arbDiscoveryResponse.body.includes('options.arbRuleSnapshotUtils.buildArbRuleSnapshot({'));
+    assert.ok(arbDiscoveryResponse.body.includes('options.arbCyclePriorityUtils.buildPreferredCycleStartSymbols('));
     assert.ok(appLifecycleRuntimeResponse.body.includes('normalizeArbCycleStartPriority: modules.getArbCyclePriorityUtils().normalizeArbCycleStartPriority'));
     assert.ok(lifecycleControllerResponse.body.includes('normalizePriority: deps.normalizeArbCycleStartPriority'));
-    assert.ok(arbPanelControllerResponse.body.includes('options.arbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS'));
-    assert.ok(arbPanelControllerResponse.body.includes('options.arbEquivalenceUtils.buildAliasRulesFromGroups('));
+    assert.ok(arbDiscoveryResponse.body.includes('options.arbEquivalenceUtils.DEFAULT_ASSET_EQUIVALENCE_GROUPS'));
+    assert.ok(arbDiscoveryResponse.body.includes('options.arbEquivalenceUtils.buildAliasRulesFromGroups('));
     assert.ok(!appJsResponse.body.includes('function getAssetEquivalenceGroups()'));
     assert.ok(!appJsResponse.body.includes('window.ArbRuleSnapshotUtils &&'));
     assert.ok(!appJsResponse.body.includes('window.ArbCyclePriorityUtils &&'));
@@ -2030,6 +2037,10 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertRuntimeControllerResponse.body.includes("logWarning('[quote-alert] sound skipped: audio not unlocked'"));
     assert.ok(alertRuntimeControllerResponse.body.includes("logInfo('[quote-alert] muted trigger skipped'"));
     assert.ok(arbAlertRuntimeResponse.body.includes('const arbOpportunityRuntime = options.arbRuntimeMemoryUtils.createArbOpportunityRuntime();'));
+    assert.ok(arbAlertRuntimeResponse.body.includes('arbDiscovery = options.arbDiscoveryUtils.createArbDiscovery({'));
+    assert.ok(arbAlertRuntimeResponse.body.includes('const snapshot = arbDiscovery.getSnapshot();'));
+    assert.ok(arbAlertRuntimeResponse.body.includes('alertRuntimeController.evaluateRuleAlerts(snapshot, { deferPanelRefresh: true });'));
+    assert.ok(arbRuntimeMemoryUtilsResponse.body.includes('function createArbRefreshRuntime(options = {})'));
     assert.ok(arbAlertRuntimeResponse.body.includes('const arbAlertBridgeRuntime = options.arbAlertBridgeUtils.createArbAlertBridgeRuntime({'));
     assert.ok(arbAlertRuntimeResponse.body.includes('arbPanelLayoutUtils: options.arbPanelLayoutUtils,'));
     assert.ok(arbAlertRuntimeResponse.body.includes('fixedPathRules,'));
@@ -2043,7 +2054,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbAlertRuntimeResponse.body.includes('arbPathConfigUtils: options.arbPathConfigUtils,'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.buildRuleAlertEvaluation(target, alert, sharedRuleSnapshot, {'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.markTriggeredAlertOpportunity(alert, evaluation, nowMs)'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.invalidateRuleSnapshot()'));
+    assert.ok(alertRuntimeControllerResponse.body.includes("deps.arbAlertBridgeRuntime.invalidateRuleSnapshot({ bumpRevision: false })"));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.refreshArbViewsAfterMutedPathLegChange(options)'));
     assert.ok(alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.refreshArbPanel()'));
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.arbAlertBridgeRuntime.selectFirstUnmutedDisplayedCycle'));
@@ -2058,7 +2069,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.renderArbDetailModal'));
     assert.ok(!alertRuntimeControllerResponse.body.includes('deps.isArbDetailVisible'));
     assert.ok(arbPanelControllerResponse.body.includes('const arbAlertBridgeRuntime = options.arbAlertBridgeRuntime || {};'));
-    assert.ok(arbPanelControllerResponse.body.includes('arbAlertBridgeRuntime.getActiveMutedPathLegs(nowMs)'));
+    assert.ok(arbDiscoveryResponse.body.includes('const mutedPathLegs = getActiveMutedPathLegs(nowMs);'));
+    assert.ok(!arbPanelControllerResponse.body.includes('getActiveMutedPathLegs(nowMs)'));
     assert.ok(!arbPanelControllerResponse.body.includes('getAlertRuntimeController'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbOpportunityRuntime.setPanelOpportunities(nextOpportunityMap, nextOpportunityIdsByTargetKey, retainedEntries);'));
     assert.ok(arbWorkspaceRuntimeResponse.body.includes('getOpportunity: (opportunityId) => arbAlertRuntime.getOpportunity(opportunityId)'));
@@ -2143,8 +2155,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function getActivePathAlertEvaluationAlerts()'));
     assert.ok(!appJsResponse.body.includes('function hasActivePathAlertEvaluationTarget()'));
     assert.ok(alertRuntimeControllerResponse.body.includes('function getActiveWatchedPathAlertEvaluationAlerts()'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('function hasActiveWatchedPathAlertEvaluationTarget()'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('hasActiveTarget: hasActiveWatchedPathAlertEvaluationTarget'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function hasActiveWatchedRuleAlertTarget()'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function hasActiveWatchedManualPathAlertTarget()'));
     assert.ok(alertRuntimeControllerResponse.body.includes('function pruneInactiveAlertRuntimeState()'));
     assert.ok(moduleRegistryResponse.body.includes('getPathAlertUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('PathAlertUtils is not loaded'));
@@ -2226,8 +2238,8 @@ async function waitForServer(attempts = 12) {
     assert.ok(!appJsResponse.body.includes('function filterMutedArbEdges('));
     assert.ok(!appJsResponse.body.includes('function filterMutedArbCycles('));
     assert.ok(!appJsResponse.body.includes('function buildVisibleArbEdges('));
-    assert.ok(arbPanelControllerResponse.body.includes('options.mutedPathLegUtils.filterMutedPathLegs('));
-    assert.ok(arbPanelControllerResponse.body.includes('options.mutedPathLegUtils.filterMutedCycles('));
+    assert.ok(arbDiscoveryResponse.body.includes('options.mutedPathLegUtils.filterMutedPathLegs('));
+    assert.ok(arbDiscoveryResponse.body.includes('options.mutedPathLegUtils.filterMutedCycles('));
     const pruneMutedPathTargetsMatch = alertRuntimeControllerResponse.body.match(/function pruneMutedPathTargetsInPlace\([\s\S]*?\n    \}/);
     assert.ok(pruneMutedPathTargetsMatch);
     assert.ok(!pruneMutedPathTargetsMatch[0].includes('window.PathAlertUtils'));
@@ -2307,9 +2319,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(alertLogUiResponse.body.includes('全部立即'));
     assert.ok(alertRuntimeControllerResponse.body.includes('const pathAlertRuntimeState = deps.pathAlertRuntimeState || pathAlertUtils.createPathAlertRuntimeState();'));
     assert.ok(alertRuntimeControllerResponse.body.includes('const pathAlertSchedulerRuntime = deps.pathAlertSchedulerRuntime || pathAlertUtils.createPathAlertSchedulerRuntime({'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.restartEvaluation({'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('function schedulePathAlertEvaluation(options = {})'));
-    assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.scheduleEvaluation(evaluatePathAlertsOnce, delayMs)'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.restartDeadlineEvaluation'));
+    assert.ok(!alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.restartEvaluation({'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function scheduleManualPathAlertEvaluation(options = {})'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('const pendingManualPathQuoteIds = new Set();'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('evaluateManualPathAlerts({ quoteIds });'));
+    assert.ok(alertRuntimeControllerResponse.body.includes('function evaluateRuleAlerts(sharedRuleSnapshot, options = {})'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.scheduleConfigSave(() => {'));
     assert.ok(alertRuntimeControllerResponse.body.includes('pathAlertSchedulerRuntime.scheduleExternalReload(() => {'));
     assert.ok(pathAlertUtilsResponse.body.includes('function buildPathAlertConfigSyncPayload(source, nowMs = Date.now())'));
@@ -2468,26 +2483,28 @@ async function waitForServer(attempts = 12) {
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getFixedRuleWatchItems(arbPathConfig)'));
     assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.applyFixedRuleWatchItemsToResults('));
     assert.ok(arbPanelControllerResponse.body.includes('function buildSpecialSections('));
-    assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.getSpecialRuleWatchItems(arbPathConfig)'));
-    assert.ok(arbPanelControllerResponse.body.includes('options.arbPathConfigUtils.applySpecialRuleWatchItemsToRules('));
+    assert.ok(arbDiscoveryResponse.body.includes('options.arbPathConfigUtils.getSpecialRuleWatchItems(arbPathConfig)'));
+    assert.ok(arbDiscoveryResponse.body.includes('options.arbPathConfigUtils.applySpecialRuleWatchItemsToRules('));
     assert.ok(arbPanelControllerResponse.body.includes('function buildGlobalSection('));
     assert.ok(moduleRegistryResponse.body.includes('getArbPathTemplateCacheUtils: ['));
     assert.ok(moduleRegistryResponse.body.includes('ArbPathTemplateCacheUtils is not loaded'));
+    assert.ok(moduleRegistryResponse.body.includes('getArbDiscovery: ['));
+    assert.ok(moduleRegistryResponse.body.includes('ArbDiscovery is not loaded'));
     assert.ok(arbPathTemplateCacheUtilsResponse.body.includes('function createArbPanelCache()'));
-    assert.ok(arbPanelControllerResponse.body.includes('const arbPanelCache = arbPathTemplateCacheUtils.createArbPanelCache();'));
-    assert.ok(arbPanelControllerResponse.body.includes('arbPanelCache.clearRuleSnapshot();'));
-    assert.ok(arbPanelControllerResponse.body.includes('arbPanelCache.clearTopology();'));
+    assert.ok(arbDiscoveryResponse.body.includes('const cache = templateUtils.createArbPanelCache();'));
+    assert.ok(arbDiscoveryResponse.body.includes('cache.clearRuleSnapshot();'));
+    assert.ok(arbDiscoveryResponse.body.includes('cache.clearAll();'));
     assert.ok(!appJsResponse.body.includes('function invalidateArbPathTopologyCache('));
     assert.ok(!appJsResponse.body.includes('function invalidateArbCaches('));
-    assert.ok(arbPanelControllerResponse.body.includes('arbPanelCache.getRuleSnapshot(cacheKey)'));
-    assert.ok(arbPanelControllerResponse.body.includes('arbPanelCache.setRuleSnapshot(cacheKey, {'));
-    assert.ok(arbPanelControllerResponse.body.includes('arbPanelCache.getTopology(cacheKey)'));
-    assert.ok(arbPanelControllerResponse.body.includes('arbPanelCache.setTopology(cacheKey, {'));
+    assert.ok(arbDiscoveryResponse.body.includes('cache.getRuleSnapshot(cacheKey)'));
+    assert.ok(arbDiscoveryResponse.body.includes('cache.setRuleSnapshot(cacheKey, {'));
+    assert.ok(arbDiscoveryResponse.body.includes('cache.getTopology(cacheKey)'));
+    assert.ok(arbDiscoveryResponse.body.includes('cache.setTopology(cacheKey, {'));
     assert.ok(!appJsResponse.body.includes('arbRuleSnapshotCacheKey'));
     assert.ok(!appJsResponse.body.includes('arbRuleSnapshotCache ='));
     assert.ok(!appJsResponse.body.includes('arbPathTopologyCacheKey'));
     assert.ok(!appJsResponse.body.includes('arbPathTopologyCache ='));
-    assert.ok(arbPanelControllerResponse.body.includes('templateUtils.evaluateCycleTemplate(template, getQuoteMarketStateMap())'));
+    assert.ok(arbDiscoveryResponse.body.includes('templateUtils.evaluateCycleTemplate(template, quoteStateById)'));
     assert.ok(!appJsResponse.body.includes('topologyCache && templateUtils'));
     assert.ok(!appJsResponse.body.includes('window.ArbPaths.findTopCycles(globalEdges.concat(ruleEdges)'));
     assert.ok(arbPanelControllerResponse.body.includes('const fixedSections = buildFixedSections('));

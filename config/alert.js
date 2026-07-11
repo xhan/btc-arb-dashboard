@@ -4,7 +4,6 @@
 module.exports = {
   "version": 1,
   "settings": {
-    "pathAlertEvalIntervalMs": 1000,
     "defaultCooldownSec": 180,
     "changedLegMinBp": 0.1,
     "localSoundEnabled": false,

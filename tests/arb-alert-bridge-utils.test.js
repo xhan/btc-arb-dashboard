@@ -94,7 +94,7 @@ const bridgeRuntime = createArbAlertBridgeRuntime({
   highlightRuntime,
   closeArbDetailModal: () => sideEffects.push(['closeDetail']),
   getAlertRuntimeController: () => alertRuntime,
-  invalidateArbRuleSnapshotCache: () => sideEffects.push(['invalidate']),
+  invalidateArbRuleSnapshotCache: (config) => sideEffects.push(['invalidate', config]),
   isArbDetailVisible: () => true,
   renderArbDetailModal: () => sideEffects.push(['renderDetail']),
   specialArbRules: [{ id: 'special-a', title: 'Special A' }],
@@ -118,7 +118,7 @@ assert.deepStrictEqual(highlighted, [
   [['opp-1', 'opp-2'], 5678],
   [['opp-3'], 6789]
 ]);
-assert.strictEqual(bridgeRuntime.invalidateRuleSnapshot(), true);
+assert.strictEqual(bridgeRuntime.invalidateRuleSnapshot({ bumpRevision: false }), true);
 assert.strictEqual(bridgeRuntime.refreshArbPanel(), true);
 assert.deepStrictEqual(
   bridgeRuntime.selectFirstUnmutedDisplayedCycle(
@@ -177,7 +177,7 @@ assert.deepStrictEqual(
   { type: 'path', legs: [{ quoteId: 1 }] }
 );
 assert.deepStrictEqual(sideEffects, [
-  ['invalidate'],
+  ['invalidate', { bumpRevision: false }],
   ['updatePanel'],
   ['closeDetail'],
   ['updatePanel'],
