@@ -41,7 +41,7 @@
     : {};
   const DEFAULT_ARB_CYCLE_START_PRIORITY = window.ArbCyclePriorityUtils
     ? window.ArbCyclePriorityUtils.DEFAULT_ARB_CYCLE_START_PRIORITY
-    : ['cbBTC', 'WBTC', 'ETH'];
+    : ['cbBTC', 'WBTC', 'ETH', 'USDT'];
   let arbCycleStartPriority = Array.from(DEFAULT_ARB_CYCLE_START_PRIORITY);
 
   function formatChainLabel(chain) {

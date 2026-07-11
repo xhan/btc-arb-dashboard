@@ -6,7 +6,8 @@
   "arbCycleStartPriority": [
     "cbBTC",
     "WBTC",
-    "ETH"
+    "ETH",
+    "USDT"
   ],
   "providerSettings": {
     "kyberClientId": "xh-chain-baby",

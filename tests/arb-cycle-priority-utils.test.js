@@ -6,7 +6,7 @@ const {
   buildPreferredCycleStartSymbols
 } = require('../src/arb/arb-cycle-priority-utils');
 
-assert.deepStrictEqual(DEFAULT_ARB_CYCLE_START_PRIORITY, ['cbBTC', 'WBTC', 'ETH']);
+assert.deepStrictEqual(DEFAULT_ARB_CYCLE_START_PRIORITY, ['cbBTC', 'WBTC', 'ETH', 'USDT']);
 
 assert.deepStrictEqual(
   normalizeArbCycleStartPriority([' cbBTC ', 'WBTC', '', 'ETH', 'WBTC']),
@@ -15,13 +15,20 @@ assert.deepStrictEqual(
 
 assert.deepStrictEqual(
   normalizeArbCycleStartPriority([]),
-  ['cbBTC', 'WBTC', 'ETH']
+  ['cbBTC', 'WBTC', 'ETH', 'USDT']
 );
 
 assert.deepStrictEqual(
   buildPreferredCycleStartSymbols(
-    { xBTC: 'cbBTC', BTCB: 'cbBTC', 'BTC.b': 'cbBTC', wBTC: 'WBTC' },
-    ['cbBTC', 'WBTC', 'ETH']
+    {
+      xBTC: 'cbBTC',
+      BTCB: 'cbBTC',
+      'BTC.b': 'cbBTC',
+      wBTC: 'WBTC',
+      'USD₮0': 'USDT',
+      USDT0: 'USDT'
+    },
+    ['cbBTC', 'WBTC', 'ETH', 'USDT']
   ),
-  ['cbBTC', 'xBTC', 'BTCB', 'BTC.b', 'WBTC', 'wBTC', 'ETH']
+  ['cbBTC', 'xBTC', 'BTCB', 'BTC.b', 'WBTC', 'wBTC', 'ETH', 'USDT', 'USD₮0', 'USDT0']
 );
