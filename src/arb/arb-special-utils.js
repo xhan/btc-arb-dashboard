@@ -166,8 +166,11 @@
       .slice(0, limit);
   }
 
-  function buildBestBybitBook(quotes, quoteStateById, rule, aliasRules, maxBookLevels) {
+  function buildBestBybitBook(quotes, quoteStateById, rule, aliasRules, maxBookLevels, options = {}) {
     const normalizedRuleCexChain = normalizeChain(rule.cexChain || 'Bybit');
+    const isLegAllowed = typeof options.isLegAllowed === 'function'
+      ? options.isLegAllowed
+      : () => true;
     let bidCandidate = null;
     let askCandidate = null;
 
@@ -193,14 +196,18 @@
         maxBookLevels
       );
 
-      if (bids.length && (!bidCandidate || bids[0].price > bidCandidate.levels[0].price)) {
+      if (bids.length
+        && isLegAllowed({ quoteId: quote.id, direction: 'forward', pricingMode: 'cex-bid1' })
+        && (!bidCandidate || bids[0].price > bidCandidate.levels[0].price)) {
         bidCandidate = {
           quoteId: quote.id,
           chain: quote.chain,
           levels: bids
         };
       }
-      if (asks.length && (!askCandidate || asks[0].price < askCandidate.levels[0].price)) {
+      if (asks.length
+        && isLegAllowed({ quoteId: quote.id, direction: 'inverse', pricingMode: 'cex-ask1-inverse', inverse: true })
+        && (!askCandidate || asks[0].price < askCandidate.levels[0].price)) {
         askCandidate = {
           quoteId: quote.id,
           chain: quote.chain,
@@ -459,6 +466,7 @@
               rate: primary.weightedCexRate,
               chain: primary.cexChain,
               quoteId: primary.cexQuoteId,
+              pricingMode: 'cex-bid1',
               cexLevelLabel: 'bid',
               cexLevelSize: primary.totalInput
             }
@@ -476,6 +484,7 @@
             chain: primary.cexChain,
             quoteId: primary.cexQuoteId,
             inverse: true,
+            pricingMode: 'cex-ask1-inverse',
             cexLevelLabel: 'ask',
             cexLevelSize: primary.totalInput
           },
@@ -506,7 +515,10 @@
       };
       const aliasRules = context.aliasRules || null;
       const edges = buildEdges(context.quotes, context.quoteStateById);
-      const dexEdges = edges.filter((edge) => !isCexChain(edge.chain));
+      const visibleEdges = typeof context.filterVisibleLegs === 'function'
+        ? context.filterVisibleLegs(edges)
+        : edges;
+      const dexEdges = visibleEdges.filter((edge) => !isCexChain(edge.chain));
       const dexForward = selectBestMatchingEdge(
         dexEdges,
         rule.dexBase,
@@ -521,7 +533,14 @@
         aliasRules,
         { chainPredicate: isEthereumChain }
       );
-      const bybitBook = buildBestBybitBook(context.quotes, context.quoteStateById, rule, aliasRules, this.maxBookLevels);
+      const bybitBook = buildBestBybitBook(
+        context.quotes,
+        context.quoteStateById,
+        rule,
+        aliasRules,
+        this.maxBookLevels,
+        { isLegAllowed: context.isLegAllowed }
+      );
 
       const candidates = [];
       if (dexForward && bybitBook.bidCandidate) {
@@ -583,6 +602,13 @@
 
   function buildSpecialArbOpportunities(options = {}) {
     const rules = Array.isArray(options.rules) ? options.rules : [];
+    const mutedPathLegUtils = options.mutedPathLegUtils || null;
+    const mutedPathLegs = Array.isArray(options.mutedPathLegs) ? options.mutedPathLegs : [];
+    const nowMs = Number.isFinite(Number(options.nowMs)) ? Number(options.nowMs) : Date.now();
+    const filterVisibleLegs = mutedPathLegUtils && typeof mutedPathLegUtils.filterMutedPathLegs === 'function'
+      ? (legs) => mutedPathLegUtils.filterMutedPathLegs(legs, mutedPathLegs, nowMs)
+      : (legs) => Array.isArray(legs) ? legs.slice() : [];
+    const isLegAllowed = (leg) => filterVisibleLegs([leg]).length === 1;
     const opportunities = [];
 
     for (const rule of rules) {
@@ -593,13 +619,19 @@
         opportunity = runner.run({
           quotes: Array.isArray(options.quotes) ? options.quotes : [],
           quoteStateById: options.quoteStateById instanceof Map ? options.quoteStateById : new Map(),
-          aliasRules: options.aliasRules || null
+          aliasRules: options.aliasRules || null,
+          filterVisibleLegs,
+          isLegAllowed
         });
       } catch (error) {
         // 单条特殊规则失败不应影响其他规则渲染
         opportunity = null;
       }
       if (!opportunity || !opportunity.cycle || !Number.isFinite(opportunity.cycle.profitRate)) continue;
+      if (mutedPathLegUtils && typeof mutedPathLegUtils.filterMutedCycles === 'function'
+        && !mutedPathLegUtils.filterMutedCycles([opportunity.cycle], mutedPathLegs, nowMs).length) {
+        continue;
+      }
       opportunities.push(opportunity);
     }
 

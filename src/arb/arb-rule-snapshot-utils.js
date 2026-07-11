@@ -74,11 +74,21 @@
         rules: [rule],
         quotes,
         quoteStateById,
-        aliasRules
+        aliasRules,
+        mutedPathLegs,
+        mutedPathLegUtils,
+        nowMs
       });
       const normalizedOpportunities = Array.isArray(opportunities) ? opportunities : [];
-      specialResults.push({ rule, opportunities: normalizedOpportunities });
-      specialByRuleId[rule.id] = normalizedOpportunities;
+      const visibleOpportunities = mutedPathLegUtils && typeof mutedPathLegUtils.filterMutedCycles === 'function'
+        ? normalizedOpportunities.filter((opportunity) => (
+          opportunity
+          && opportunity.cycle
+          && mutedPathLegUtils.filterMutedCycles([opportunity.cycle], mutedPathLegs, nowMs).length > 0
+        ))
+        : normalizedOpportunities;
+      specialResults.push({ rule, opportunities: visibleOpportunities });
+      specialByRuleId[rule.id] = visibleOpportunities;
     }
 
     return {

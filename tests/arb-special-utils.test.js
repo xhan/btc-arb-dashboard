@@ -1,6 +1,7 @@
 const assert = require('assert');
 
 const { buildSpecialArbOpportunities } = require('../src/arb/arb-special-utils');
+const mutedPathLegUtils = require('../src/path-alerts/muted-path-leg-utils');
 
 const rules = [
   {
@@ -131,6 +132,43 @@ const bidDominant = buildSpecialArbOpportunities({
 });
 assert.strictEqual(bidDominant.length, 1);
 assert.strictEqual(bidDominant[0].direction, 'eth-to-bybit-bid');
+
+const mutedReverseDexLeg = buildSpecialArbOpportunities({
+  rules,
+  quotes: categoryQuotes,
+  quoteStateById,
+  aliasRules: { xBTC: 'cbBTC' },
+  mutedPathLegs: [{
+    quoteId: 2,
+    direction: 'forward',
+    pricingMode: 'raw',
+    mutedAt: 1000,
+    expiresAt: 3000
+  }],
+  mutedPathLegUtils,
+  nowMs: 2000
+});
+assert.strictEqual(mutedReverseDexLeg.length, 1);
+assert.strictEqual(mutedReverseDexLeg[0].direction, 'eth-to-bybit-bid');
+assert.strictEqual(mutedReverseDexLeg[0].cycle.legs[0].quoteId, 1);
+
+const mutedAskBookLeg = buildSpecialArbOpportunities({
+  rules,
+  quotes: categoryQuotes,
+  quoteStateById,
+  aliasRules: { xBTC: 'cbBTC' },
+  mutedPathLegs: [{
+    quoteId: 3,
+    direction: 'inverse',
+    pricingMode: 'cex-ask1-inverse',
+    mutedAt: 1000,
+    expiresAt: 3000
+  }],
+  mutedPathLegUtils,
+  nowMs: 2000
+});
+assert.strictEqual(mutedAskBookLeg.length, 1);
+assert.strictEqual(mutedAskBookLeg[0].direction, 'eth-to-bybit-bid');
 
 const aliasChainOpportunities = buildSpecialArbOpportunities({
   rules,

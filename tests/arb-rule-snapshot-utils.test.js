@@ -75,8 +75,10 @@ const snapshot = buildArbRuleSnapshot({
     }
   },
   arbSpecialUtils: {
-    buildSpecialArbOpportunities() {
-      const rule = arguments[0].rules[0];
+    buildSpecialArbOpportunities(options) {
+      const rule = options.rules[0];
+      assert.deepStrictEqual(options.mutedPathLegs, []);
+      assert.strictEqual(options.mutedPathLegUtils, null);
       if (rule.id === 'special:wbtc-bybit') {
         return [{
           ruleId: 'special:wbtc-bybit',
@@ -287,3 +289,43 @@ const snapshotSkipsMutedLegs = buildArbRuleSnapshot({
 
 assert.strictEqual(snapshotSkipsMutedLegs.fixedResults.length, 1);
 assert.deepStrictEqual(snapshotSkipsMutedLegs.fixedResults[0].cycles, []);
+
+let specialMutedOptions = null;
+const snapshotSkipsMutedSpecialCycle = buildArbRuleSnapshot({
+  fixedRules: [],
+  specialRules: [{ id: 'special:test', categoryName: 'TEST' }],
+  quotesByCategoryName: new Map([['TEST', [{ id: 501, chain: 'ethereum' }]]]),
+  quoteStateById: new Map(),
+  mutedPathLegs: [{
+    quoteId: 501,
+    direction: 'forward',
+    pricingMode: 'raw',
+    mutedAt: 1000,
+    expiresAt: 3000
+  }],
+  mutedPathLegUtils: {
+    filterMutedPathLegs: (edges) => edges,
+    filterMutedCycles: (cycles, mutedLegs, nowMs) => {
+      assert.strictEqual(nowMs, 2000);
+      return cycles.filter((cycle) => !cycle.legs.some((leg) => (
+        mutedLegs.some((entry) => entry.quoteId === leg.quoteId)
+      )));
+    }
+  },
+  nowMs: 2000,
+  arbSpecialUtils: {
+    buildSpecialArbOpportunities(options) {
+      specialMutedOptions = options;
+      return [{
+        ruleId: 'special:test',
+        cycle: {
+          legs: [{ quoteId: 501, direction: 'forward', pricingMode: 'raw', rate: 1.01 }],
+          profitRate: 0.01
+        }
+      }];
+    }
+  }
+});
+assert.deepStrictEqual(specialMutedOptions.mutedPathLegs.map((entry) => entry.quoteId), [501]);
+assert.strictEqual(specialMutedOptions.nowMs, 2000);
+assert.deepStrictEqual(snapshotSkipsMutedSpecialCycle.specialByRuleId['special:test'], []);
