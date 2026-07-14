@@ -9,6 +9,7 @@ let bridgeOptions = null;
 let discoveryOptions = null;
 let panelOptions = null;
 let alertOptions = null;
+let fixedPathActionOptions = null;
 let detailController = null;
 let panelVisible = true;
 let activeRuleAlert = true;
@@ -30,6 +31,10 @@ const runtime = createDashboardArbAlertRuntime({
         getConfig: () => alertConfig,
         hasActiveRuleAlertTarget: () => activeRuleAlert,
         scheduleManualPathAlertEvaluation: (options = {}) => calls.push(['scheduleManualPathAlertEvaluation', options.reason || null]),
+        saveConfig: config => {
+          calls.push(['saveAlertConfig', config]);
+          return Promise.resolve(config);
+        },
         toggleAlertLogPanel: () => calls.push(['toggleAlertLog'])
       };
     }
@@ -78,6 +83,7 @@ const runtime = createDashboardArbAlertRuntime({
         isRuleLeg: () => false,
         isVisible: () => panelVisible,
         markDirty: () => calls.push(['markDirty']),
+        refreshCurrentSnapshot: () => calls.push(['refreshCurrentPanel']),
         scheduleUpdate: () => calls.push(['scheduleUpdate']),
         setMaxHeight: () => calls.push(['setMaxHeight']),
         update: (optionsArg) => {
@@ -91,6 +97,22 @@ const runtime = createDashboardArbAlertRuntime({
   arbDetailUtils: { id: 'detail' },
   arbEquivalenceUtils: { id: 'equivalence' },
   arbFixedUtils: { id: 'fixed' },
+  fixedPathActionsControllerUtils: {
+    createDashboardFixedPathActionsController(options = {}) {
+      calls.push(['createFixedPathActions']);
+      fixedPathActionOptions = options;
+      return {
+        getNotes: () => ({ fixed: 'note' }),
+        initialize: () => {
+          calls.push(['initializeFixedPathActions']);
+          return Promise.resolve();
+        },
+        openAlert: ruleId => `alert:${ruleId}`,
+        openNote: ruleId => `note:${ruleId}`
+      };
+    }
+  },
+  arbPathNotesUtils: { id: 'notes-utils' },
   arbPanelLayoutUtils: { id: 'layout' },
   arbPanelRenderer: { id: 'renderer' },
   arbPathConfig: { id: 'config' },
@@ -167,6 +189,7 @@ const runtime = createDashboardArbAlertRuntime({
   specialRuleAlertConfigUtils: { id: 'special-config' },
   arbPanelRefs: { arbPathWindow: {} },
   alertRefs: { alertLogWindow: {} },
+  fixedPathActionRefs: { noteModal: {} },
   setTimeout: () => {},
   clearTimeout: () => {},
   updateDelayMs: 1000,
@@ -176,6 +199,7 @@ const runtime = createDashboardArbAlertRuntime({
 
 assert.ok(runtime.alertRuntimeController);
 assert.ok(runtime.arbPanelController);
+assert.ok(runtime.fixedPathActionsController);
 assert.strictEqual(runtime.arbAlertBridgeRuntime.id, 'bridge');
 assert.ok(runtime.arbDiscovery);
 assert.deepStrictEqual(runtime.getOpportunity('opp-1'), { id: 'opp-1' });
@@ -212,6 +236,13 @@ assert.strictEqual(panelOptions.buildQuoteAlertDisplayLabel({ id: 9 }, {}, 'reve
 assert.strictEqual(panelOptions.arbAlertBridgeRuntime.id, 'bridge');
 assert.strictEqual(panelOptions.arbPathConfig.id, 'config');
 assert.strictEqual(panelOptions.getAlertConfig(), alertConfig);
+assert.deepStrictEqual(panelOptions.getFixedPathNotes(), { fixed: 'note' });
+assert.strictEqual(panelOptions.openFixedPathAlert('fixed'), 'alert:fixed');
+assert.strictEqual(panelOptions.openFixedPathNote('fixed'), 'note:fixed');
+assert.strictEqual(fixedPathActionOptions.refs.noteModal !== undefined, true);
+assert.strictEqual(fixedPathActionOptions.getAlertConfig(), alertConfig);
+fixedPathActionOptions.saveAlertConfig({ alerts: [] });
+fixedPathActionOptions.onAlertChanged();
 assert.strictEqual(alertOptions.arbAlertBridgeRuntime.id, 'bridge');
 assert.strictEqual(alertOptions.arbPathConfig.id, 'config');
 assert.strictEqual(alertOptions.arbPathConfigUtils.id, 'config-utils');
@@ -222,13 +253,15 @@ assert.deepStrictEqual(alertOptions.findQuoteById(42), { id: 42 });
 runtime.handleQuoteMarketStateChanged({ id: 6 }, {}, { fetchMode: 'inverse', successSource: 'Jupiter' });
 runtime.handleQuoteMainFetchSuccess({ id: 7 }, { successSource: 'Kyber' });
 
-assert.deepStrictEqual(calls.slice(0, 7), [
+assert.deepStrictEqual(calls.slice(0, 9), [
   ['createOpportunity'],
   ['createHighlight', 8000],
   ['createBridge'],
   ['createDiscovery'],
   ['createPanel'],
   ['createAlert'],
+  ['createFixedPathActions'],
+  ['initializeFixedPathActions'],
   ['createRefresh']
 ]);
 assert.ok(calls.some((call) => call[0] === 'bindAudio'));
@@ -236,6 +269,8 @@ assert.ok(calls.some((call) => call[0] === 'scheduleRefresh'));
 assert.ok(calls.some((call) => call[0] === 'scheduleManualPathAlertEvaluation' && call[1] === 'quote-market-state-changed'));
 assert.ok(calls.some((call) => call[0] === 'checkAlerts' && call[1] === 6 && call[2] === 'Jupiter'));
 assert.ok(calls.some((call) => call[0] === 'checkAlerts' && call[1] === 7 && call[2] === 'Kyber'));
+assert.ok(calls.some((call) => call[0] === 'saveAlertConfig'));
+assert.ok(calls.some((call) => call[0] === 'refreshCurrentPanel'));
 
 let refreshCallsStart = calls.length;
 runtime.arbRefreshRuntime.refresh();

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>聚合报价看板 3.0</title>
+    <link rel="stylesheet" href="/styles/path-alert-editor.css">
     <style>
         :root {
             --bg-color: #f0f4f8;
@@ -914,6 +915,36 @@
         .arb-section-title { font-weight: 700; margin-bottom: 6px; font-size: 13px; }
         .arb-section-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
         .arb-section-title-row .arb-section-title { margin-bottom: 0; }
+        .arb-section-title-row-fixed { position: relative; display: block; }
+        .arb-section-title-row-fixed .arb-section-title { padding-right: 44px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .arb-section-title-actions { position: absolute; top: 0; right: 0; display: flex; align-items: center; gap: 5px; height: 16px; }
+        .arb-section-action {
+            width: auto;
+            min-width: 18px;
+            height: 16px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: var(--text-color-light);
+            font-size: 10px;
+            line-height: 16px;
+            cursor: pointer;
+        }
+        .arb-section-action:hover,
+        .arb-section-action:focus-visible { color: var(--text-color); }
+        .arb-section-note-action { position: relative; opacity: 0.52; }
+        .arb-section-note-action.has-note { opacity: 0.82; }
+        .arb-section-note-dot {
+            display: none;
+            position: absolute;
+            top: 1px;
+            right: -2px;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #d69e2e;
+        }
+        .arb-section-note-action.has-note .arb-section-note-dot { display: block; }
         .arb-section-title-profit { flex-shrink: 0; font-size: 12px; font-weight: 700; }
         .arb-section-special { padding: 8px; }
         .arb-path-line { margin-bottom: 4px; line-height: 1.35; }
@@ -926,6 +957,25 @@
         .arb-path-display-line-positive-under-threshold { color: #d69e2e; }
         .dark-mode .arb-path-display-line-positive-under-threshold { color: #f6e05e; }
         .arb-path-display-line-empty { min-height: 0.8em; }
+        .arb-fixed-path-modal { z-index: 8000; }
+        .arb-fixed-path-modal .modal-box { width: min(520px, 92vw); max-width: none; padding: 18px; }
+        .arb-fixed-path-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .arb-fixed-path-modal-header h3 { margin: 0; font-size: 16px; }
+        .arb-fixed-path-modal-close { border: 0; background: transparent; color: var(--text-color-light); font-size: 18px; cursor: pointer; }
+        #arb-fixed-note-input {
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font: inherit;
+        }
+        #arb-fixed-note-error { min-height: 18px; margin-top: 6px; color: #c53030; font-size: 12px; }
+        #arb-fixed-alert-modal .modal-box { width: min(560px, 94vw); }
         .arb-opportunity { padding-top: 6px; margin-top: 6px; border-top: 1px dashed var(--border-color); }
         .arb-opportunity:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
         .arb-opportunity-special-body {
@@ -1846,6 +1896,29 @@
             <div id="arb-detail-grid"></div>
         </div>
     </div>
+    <div class="modal-overlay arb-fixed-path-modal" id="arb-fixed-note-modal">
+        <div class="modal-box">
+            <div class="arb-fixed-path-modal-header">
+                <h3 id="arb-fixed-note-title">固定路径 · Note</h3>
+                <button id="arb-fixed-note-close" class="arb-fixed-path-modal-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <textarea id="arb-fixed-note-input" maxlength="500"></textarea>
+            <div id="arb-fixed-note-error"></div>
+            <div class="modal-buttons">
+                <button id="arb-fixed-note-cancel" type="button">取消</button>
+                <button id="arb-fixed-note-save" type="button">保存</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay arb-fixed-path-modal" id="arb-fixed-alert-modal">
+        <div class="modal-box">
+            <div class="arb-fixed-path-modal-header">
+                <h3 id="arb-fixed-alert-title">固定路径 · 报警设置</h3>
+                <button id="arb-fixed-alert-close" class="arb-fixed-path-modal-close" type="button" aria-label="关闭">×</button>
+            </div>
+            <div id="arb-fixed-alert-editor" class="path-alert-editor-host"></div>
+        </div>
+    </div>
     <audio id="path-alert-sound" src="assets/alert_path.mp3" preload="auto"></audio>
     
     <div class="modal-overlay" id="settings-modal">
@@ -2129,9 +2202,12 @@
     <script src="src/path-alerts/path-alert-utils.js"></script>
     <script src="src/path-alerts/path-alert-notification-utils.js"></script>
     <script src="src/path-alerts/path-alert-page-utils.js"></script>
+    <script src="src/path-alerts/path-alert-editor-utils.js"></script>
     <script src="src/path-alerts/path-alert-rule-definitions.js"></script>
     <script src="src/arb/arb-path-config.js"></script>
     <script src="src/arb/arb-path-config-utils.js"></script>
+    <script src="src/arb/arb-path-notes-utils.js"></script>
+    <script src="src/app/dashboard-fixed-path-actions-controller.js"></script>
     <script src="src/arb/arb-panel-renderer.js"></script>
     <script src="src/arb/arb-discovery.js"></script>
     <script src="src/arb/arb-panel-controller.js"></script>

@@ -6,8 +6,10 @@ let resetCount = 0;
 let renderedHtml = '';
 let broughtToFrontPanel = null;
 let interactionSafeRendererOptions = null;
+let panelSnapshotReads = 0;
 const contentListeners = {};
 const openedOpportunities = [];
+const openedFixedPathActions = [];
 const openResultByOpportunityId = new Map();
 
 const panelContent = {
@@ -26,12 +28,15 @@ const dashboardState = [{
 
 const controller = createArbPanelController({
   arbDiscovery: {
-    getPanelSnapshot: () => ({
-      configuredSpecialRules: [],
-      fixedResults: [],
-      globalCycles: [],
-      specialResults: []
-    })
+    getPanelSnapshot: () => {
+      panelSnapshotReads += 1;
+      return {
+        configuredSpecialRules: [],
+        fixedResults: [],
+        globalCycles: [],
+        specialResults: []
+      };
+    }
   },
   arbDetailUtils: {
     formatDetailNumber: (value, precision) => Number(value).toFixed(precision),
@@ -156,6 +161,9 @@ const controller = createArbPanelController({
       ? openResultByOpportunityId.get(opportunityId)
       : true;
   },
+  getFixedPathNotes: () => ({ 'fixed:wbtc': '备注' }),
+  openFixedPathAlert: (ruleId) => openedFixedPathActions.push(['alert', ruleId]),
+  openFixedPathNote: (ruleId) => openedFixedPathActions.push(['note', ruleId]),
   pathAlertPageUtils: {
     buildPathAlertQuoteLabel: ({ chain, fromSymbol, toSymbol, suffix, formatChainLabel }) => (
       `${formatChainLabel(chain)}:${fromSymbol}->${toSymbol}${suffix}`
@@ -194,11 +202,20 @@ assert.strictEqual(interactionSafeRendererOptions.releaseTarget, documentImpl);
 assert.deepStrictEqual(interactionSafeRendererOptions.releaseEventListenerOptions, { capture: true });
 
 controller.update({ force: true });
+assert.strictEqual(panelSnapshotReads, 1);
 assert.strictEqual(resetCount, 0);
 assert.strictEqual(panelContent.textContent, '');
 assert.strictEqual(renderedHtml, '关注列表|全局路径');
+controller.refreshCurrentSnapshot();
+assert.strictEqual(panelSnapshotReads, 1);
 
 controller.bindContentEvents();
+contentListeners.click({ action: { type: 'edit-fixed-note', ruleId: 'fixed:wbtc' } });
+contentListeners.click({ action: { type: 'edit-fixed-alert', ruleId: 'fixed:wbtc' } });
+assert.deepStrictEqual(openedFixedPathActions, [
+  ['note', 'fixed:wbtc'],
+  ['alert', 'fixed:wbtc']
+]);
 openResultByOpportunityId.set('stale-opportunity', false);
 openedOpportunities.length = 0;
 contentListeners.pointerdown({ action: { type: 'open-opportunity', opportunityId: 'stale-opportunity' } });

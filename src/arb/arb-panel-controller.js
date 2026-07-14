@@ -58,6 +58,7 @@
     });
     const arbExpandedSections = new Set();
     let arbLastPointerOpenedOpportunityId = null;
+    let lastPanelSnapshot = null;
 
     const arbPanelUpdateRuntime = arbRuntimeMemoryUtils.createArbPanelUpdateRuntime({
       setTimer,
@@ -191,6 +192,9 @@
         : sharedRuleSnapshot.fixedResults;
       return arbPanelLayoutUtils.buildFixedArbSections({
         fixedResults,
+        notesByRuleId: typeof options.getFixedPathNotes === 'function'
+          ? options.getFixedPathNotes()
+          : {},
         getDisplayMinProfitBp: (rule) => arbPanelLayoutUtils.normalizeDisplayMinProfitBp(
           rule && rule.displayMinProfitBp,
           arbPanelLayoutUtils.resolveDefaultDisplayMinProfitBp(options.pathAlertRuleDefinitions)
@@ -301,7 +305,9 @@
       }
       arbPanelUpdateRuntime.clearDirty();
 
-      const panelData = buildPanelData(config.snapshot);
+      const panelSnapshot = config.snapshot || arbDiscovery.getPanelSnapshot();
+      lastPanelSnapshot = panelSnapshot;
+      const panelData = buildPanelData(panelSnapshot);
       if (panelData.error) {
         arbPanelHtmlRenderer.reset();
         arbPanelRenderer.applyArbPanelErrorText(refs.arbPathContent, panelData.error);
@@ -322,6 +328,12 @@
         formatProfit: profitRate => options.arbPaths.formatProfitWanfen(profitRate)
       });
       arbPanelHtmlRenderer.update(nextArbPanelHtml);
+    }
+
+    function refreshCurrentSnapshot() {
+      return lastPanelSnapshot
+        ? updateArbPanel({ snapshot: lastPanelSnapshot })
+        : updateArbPanel();
     }
 
     function applyFloatingPanelDisplay(panel, action, config = {}) {
@@ -366,6 +378,14 @@
         closestEventTarget,
         containsElement: (element) => refs.arbPathContent.contains(element)
       });
+      if (action.type === 'edit-fixed-note') {
+        if (typeof options.openFixedPathNote === 'function') options.openFixedPathNote(action.ruleId);
+        return;
+      }
+      if (action.type === 'edit-fixed-alert') {
+        if (typeof options.openFixedPathAlert === 'function') options.openFixedPathAlert(action.ruleId);
+        return;
+      }
       if (action.type === 'toggle-section') {
         if (arbExpandedSections.has(action.sectionKey)) {
           arbExpandedSections.delete(action.sectionKey);
@@ -447,6 +467,7 @@
       formatDetailNumber,
       isVisible: () => dashboardRuntimeUtils.isPanelVisible(refs.arbPathWindow),
       markDirty: () => arbPanelUpdateRuntime.markDirty(),
+      refreshCurrentSnapshot,
       isRuleLeg,
       scheduleUpdate: () => arbPanelUpdateRuntime.schedule(),
       setMaxHeight,

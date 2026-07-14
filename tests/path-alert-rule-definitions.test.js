@@ -71,6 +71,22 @@ for (const ruleId of specialRuleIds) {
 }
 
 const alertConfig = readJsonFileSync(path.join(__dirname, '..', 'config', 'alert.js'));
+const fixedRuleIds = new Set(FIXED_PATH_RULES.map((rule) => rule.id));
+const fixedRuleAlerts = alertConfig.alerts.filter((entry) => (
+  entry && entry.target && entry.target.type === 'rule' && entry.target.ruleKind === 'fixed'
+));
+for (const rule of FIXED_PATH_RULES) {
+  assert.strictEqual(
+    fixedRuleAlerts.filter((entry) => entry.target.ruleId === rule.id).length,
+    1,
+    `fixed rule should have exactly one alert: ${rule.id}`
+  );
+}
+assert.deepStrictEqual(
+  fixedRuleAlerts.filter((entry) => !fixedRuleIds.has(entry.target.ruleId)),
+  [],
+  'fixed alerts should not reference removed rules'
+);
 const ghoUsdtAlert = alertConfig.alerts.find((entry) => entry && entry.target && entry.target.ruleId === 'fixed:gho-usdt');
 const pyusdUsdcAlert = alertConfig.alerts.find((entry) => entry && entry.target && entry.target.ruleId === 'fixed:pyusd-usdc');
 const usdgUsdcAlert = alertConfig.alerts.find((entry) => entry && entry.target && entry.target.ruleId === 'fixed:usdg-usdc');

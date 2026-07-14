@@ -14,6 +14,7 @@ const {
   renderPathAlertEditorQuoteTargetHtml,
   renderPathAlertEditorRuleChoicesHtml,
   renderPathAlertEditorSelectedLegsHtml,
+  updatePathAlertEditorDraftField,
   validatePathAlertEditorDraft
 } = require('../src/path-alerts/path-alert-editor-utils');
 
@@ -310,6 +311,9 @@ const selectedLegsDefaultHtml = renderPathAlertEditorSelectedLegsHtml({
 });
 assert.ok(selectedLegsDefaultHtml.includes('(arb) USDC -&gt; WETH'));
 const editorHtml = renderPathAlertEditorHtml({
+  mode: 'create',
+  step: 'target',
+  canContinue: false,
   draft: {
     name: 'Draft <name>',
     sourceType: 'special',
@@ -330,14 +334,83 @@ const editorHtml = renderPathAlertEditorHtml({
 });
 assert.ok(editorHtml.includes('错误 &lt;x&gt;'));
 assert.ok(editorHtml.includes('已有 &lt;报警&gt;'));
-assert.ok(editorHtml.includes('value="Draft &lt;name&gt;"'));
-assert.ok(editorHtml.includes('placeholder="例如：只关注 eth / arb 这条"'));
 assert.ok(editorHtml.includes('data-editor-type="special">特殊规则'));
-assert.ok(editorHtml.includes('id="editor-special-min-profit"'));
-assert.ok(editorHtml.includes('value="2"'));
-assert.ok(editorHtml.includes('id="editor-confirm-delay" type="number" min="0" value="0" disabled'));
-assert.ok(editorHtml.includes('id="editor-cooldown" type="number" min="1" value="240"'));
-assert.ok(editorHtml.includes('id="editor-save-btn" disabled'));
+assert.ok(editorHtml.includes('id="editor-next-btn" disabled'));
+assert.ok(!editorHtml.includes('id="editor-name"'));
+assert.ok(!editorHtml.includes('id="editor-special-min-profit"'));
+
+const compactEditorHtml = renderPathAlertEditorHtml({
+  mode: 'edit',
+  draft: {
+    id: 'fixed-alert',
+    name: '套利通知',
+    sourceType: 'fixed',
+    thresholdBp: 1,
+    triggerMode: 'delayed',
+    confirmDelaySec: 13,
+    cooldownSec: 180,
+    enabled: true
+  },
+  summaryHtml: '<div class="summary-line">WBTC - LBTC</div>',
+  defaultCooldownSec: 180
+});
+assert.ok(compactEditorHtml.includes('报警名称（可选）'));
+assert.ok(compactEditorHtml.includes('用于通知标题'));
+assert.ok(compactEditorHtml.includes('value="套利通知"'));
+assert.ok(compactEditorHtml.includes('WBTC - LBTC'));
+assert.ok(compactEditorHtml.includes('class="path-alert-editor-settings-grid"'));
+assert.ok(compactEditorHtml.includes('id="editor-threshold"'));
+assert.ok(compactEditorHtml.includes('id="editor-save-btn"'));
+assert.ok(!compactEditorHtml.includes('data-editor-type='));
+assert.ok(!compactEditorHtml.includes('id="editor-back-btn"'));
+
+const createSettingsHtml = renderPathAlertEditorHtml({
+  mode: 'create',
+  step: 'settings',
+  draft: {
+    name: '',
+    sourceType: 'special',
+    triggerMode: 'immediate',
+    confirmDelaySec: 0,
+    cooldownSec: '',
+    enabled: false
+  },
+  summaryHtml: '<div class="summary-line">特殊规则</div>',
+  specialRuleConfig: { minNetProfit: 2, minNetProfitBp: 5 },
+  defaultCooldownSec: 240,
+  saveDisabled: true
+});
+assert.ok(createSettingsHtml.includes('id="editor-back-btn"'));
+assert.ok(createSettingsHtml.includes('id="editor-special-min-profit"'));
+assert.ok(createSettingsHtml.includes('value="2"'));
+assert.ok(createSettingsHtml.includes('id="editor-confirm-delay" type="number" min="0" value="0" disabled'));
+assert.ok(createSettingsHtml.includes('id="editor-cooldown" type="number" min="1" value="240"'));
+assert.ok(createSettingsHtml.includes('id="editor-save-btn" disabled'));
+
+const updatedDraft = {
+  name: '',
+  triggerMode: 'delayed',
+  specialRuleConfig: { minNetProfit: 1, minNetProfitBp: 2 }
+};
+assert.strictEqual(
+  updatePathAlertEditorDraftField(updatedDraft, { id: 'editor-name', value: '报警名称' }),
+  true
+);
+assert.strictEqual(
+  updatePathAlertEditorDraftField(updatedDraft, { id: 'editor-trigger', value: 'immediate' }),
+  true
+);
+assert.strictEqual(
+  updatePathAlertEditorDraftField(updatedDraft, { id: 'editor-enabled', checked: false }),
+  true
+);
+assert.strictEqual(updatePathAlertEditorDraftField(updatedDraft, { id: 'unknown', value: 'x' }), false);
+assert.deepStrictEqual(updatedDraft, {
+  name: '报警名称',
+  triggerMode: 'immediate',
+  enabled: false,
+  specialRuleConfig: { minNetProfit: 1, minNetProfitBp: 2 }
+});
 assert.strictEqual(
   validatePathAlertEditorDraft({
     sourceType: 'quote',

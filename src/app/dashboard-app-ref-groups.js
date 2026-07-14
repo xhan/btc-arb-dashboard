@@ -39,6 +39,7 @@
           arbGlobalFilterClearBtn: refs.arbGlobalFilterClearBtn,
           arbGlobalFilterElements: refs.arbGlobalFilterElements
         },
+        fixedPathActions: refs.arbFixedPathActionRefs,
         alert: {
           alertLogWindow: refs.alertLogWindow,
           alertLogLogTab: refs.alertLogLogTab,

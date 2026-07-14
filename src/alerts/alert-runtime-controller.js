@@ -1004,14 +1004,32 @@
     async function persistPathAlertConfig() {
       const normalized = pathAlertUtils.normalizeAlertConfig(pathAlertConfig);
       pathAlertConfig = normalized;
-      await fetchImpl(`${backendUrl}/api/save-alert-config`, {
+      const response = await fetchImpl(`${backendUrl}/api/save-alert-config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(normalized)
       });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload && payload.error ? payload.error : '保存报警配置失败');
+      }
       restartPathAlertScheduler();
       renderAlertSettingsPanel();
       emitPathAlertConfigSync(pathAlertUtils.PATH_ALERT_CONFIG_SYNC_SOURCE_MAIN);
+    }
+
+    async function savePathAlertConfig(nextConfig) {
+      const previousConfig = pathAlertConfig;
+      pathAlertConfig = pathAlertUtils.normalizeAlertConfig(nextConfig);
+      try {
+        await persistPathAlertConfig();
+      } catch (error) {
+        pathAlertConfig = previousConfig;
+        throw error;
+      }
+      pathAlertRuntimeState.reset({ forceImmediate: false });
+      updateAlertSoundState();
+      return pathAlertConfig;
     }
 
     function queuePathAlertConfigSave() {
@@ -1277,6 +1295,7 @@
       restoreMutedAlertLogEntries,
       scheduleManualPathAlertEvaluation,
       schedulePathAlertEvaluation: scheduleManualPathAlertEvaluation,
+      saveConfig: savePathAlertConfig,
       syncMutedPathLogTimer,
       toggleAlertLogPanel,
       updateAlertSoundState

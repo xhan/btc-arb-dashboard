@@ -181,6 +181,9 @@ const refs = {
   detail: {
     modal: { id: 'detail-modal' }
   },
+  fixedPathActions: {
+    noteModal: { id: 'fixed-note-modal' }
+  },
   viewMode: {
     dashboardEl: { id: 'dashboard' },
     arbPathWindow: { id: 'arb-window' }
@@ -244,6 +247,7 @@ assert.strictEqual(arbOptions.deps.onQuoteMarketStateChanged, deps.onQuoteMarket
 assert.strictEqual(arbOptions.deps.onQuoteMarketStateChangedSideEffect, deps.onQuoteMarketStateChangedSideEffect);
 assert.strictEqual(arbOptions.deps.showCopyToast, quoteWorkspaceRuntime.showCopyToast);
 assert.strictEqual(arbOptions.refs.arbPanel, refs.arbPanel);
+assert.strictEqual(arbOptions.refs.fixedPathActions, refs.fixedPathActions);
 assert.strictEqual(arbOptions.timers.setInterval, timers.setInterval);
 
 assert.strictEqual(auxOptions.modules, modules);

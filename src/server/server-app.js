@@ -25,6 +25,7 @@ const { registerConfigRoutes } = require('./config-route-utils');
 const { createQuoteLogger, withQuoteLogRequestChannel } = require('./quote-log-utils');
 const { registerQuoteRoutes } = require('./quote-route-utils');
 const { registerPathAlertRoutes } = require('./path-alert-route-utils');
+const { registerArbPathNotesRoutes } = require('./arb-path-notes-route-utils');
 const { registerPriceSnapshotRoutes } = require('./price-snapshot-route-utils');
 const fs = require('fs').promises;
 const path = require('path');
@@ -99,6 +100,7 @@ function createDashboardServer(options = {}) {
   const requestChannelsPath = resolveProjectFilePath(path.join('config', 'request_channels.json'), 'REQUEST_CHANNELS_PATH', { rootDir });
   const metadataCachePath = resolveProjectFilePath(path.join('db', 'metadata-cache.json'), 'METADATA_CACHE_PATH', { rootDir });
   const alertConfigPath = resolveProjectFilePath(path.join('config', 'alert.js'), 'ALERT_CONFIG_PATH', { rootDir });
+  const arbPathNotesConfigPath = resolveProjectFilePath(path.join('config', 'arb-path-notes.js'), 'ARB_PATH_NOTES_CONFIG_PATH', { rootDir });
   const priceSnapshotDir = path.resolve(env.PRICE_SNAPSHOT_DIR || path.join(rootDir, 'db', 'price'));
 
   function logMessage(category, message, level = 'info') {
@@ -203,6 +205,14 @@ function createDashboardServer(options = {}) {
     marketClients,
     fetchImpl: fetch,
     telegramBotApiBaseUrlOverride: env.TELEGRAM_BOT_API_BASE_URL,
+    logger
+  });
+
+  registerArbPathNotesRoutes({
+    app,
+    configPath: arbPathNotesConfigPath,
+    readJsonFile,
+    safeWriteJsonFile,
     logger
   });
 

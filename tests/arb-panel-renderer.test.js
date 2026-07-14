@@ -41,6 +41,24 @@ function renderTestArbGrid(config = {}) {
 
 const expandToggleEl = { dataset: { arbSectionKey: 'category:btc' } };
 const opportunityEl = { dataset: { arbOpportunityId: 'opp-1' } };
+const fixedNoteEl = { dataset: { arbFixedNoteRuleId: 'fixed:wbtc' } };
+const fixedAlertEl = { dataset: { arbFixedAlertRuleId: 'fixed:wbtc' } };
+
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentClickAction, { '[data-arb-fixed-note-rule-id]': fixedNoteEl }),
+  { type: 'edit-fixed-note', ruleId: 'fixed:wbtc' }
+);
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentClickAction, { '[data-arb-fixed-alert-rule-id]': fixedAlertEl }),
+  { type: 'edit-fixed-alert', ruleId: 'fixed:wbtc' }
+);
+assert.deepStrictEqual(
+  resolveArbActionFor(resolveArbPathContentPointerDownAction, {
+    '[data-arb-fixed-note-rule-id]': fixedNoteEl,
+    '[data-arb-opportunity-id]': opportunityEl
+  }, { type: 'pointerdown', button: 0 }),
+  { type: 'none' }
+);
 
 assert.deepStrictEqual(
   resolveArbActionFor(resolveArbPathContentClickAction, { '.arb-path-expand-toggle': expandToggleEl }),
@@ -180,6 +198,27 @@ assert.ok(underThresholdHtml.includes('class="arb-opportunity arb-opportunity-fi
 assert.ok(underThresholdHtml.includes('class="arb-path-line arb-path-display-line arb-path-display-line-positive-under-threshold">收益率 +0.40bp &lt; 1bp</div>'));
 assert.ok(!underThresholdHtml.includes('arb-opportunity-head'));
 assert.ok(!underThresholdHtml.includes('WBTC -&gt; LBTC'));
+
+const fixedActionsHtml = renderTestArbGrid({
+  columns: [
+    [
+      {
+        title: 'WBTC - LBTC',
+        sectionType: 'fixed-rule',
+        ruleId: 'fixed:wbtc-lbtc',
+        note: '跨链到账较慢',
+        opportunities: []
+      }
+    ]
+  ]
+});
+
+assert.ok(fixedActionsHtml.includes('data-arb-fixed-note-rule-id="fixed:wbtc-lbtc"'));
+assert.ok(fixedActionsHtml.includes('class="arb-section-action arb-section-note-action has-note"'));
+assert.ok(fixedActionsHtml.includes('data-arb-fixed-alert-rule-id="fixed:wbtc-lbtc"'));
+assert.ok(fixedActionsHtml.includes('arb-section-title-row arb-section-title-row-fixed'));
+assert.ok(fixedActionsHtml.includes('>Note<span class="arb-section-note-dot" aria-hidden="true"></span></button>'));
+assert.ok(fixedActionsHtml.includes('>…</button>'));
 
 const zeroUnderThresholdHtml = renderTestArbGrid({
   columns: [

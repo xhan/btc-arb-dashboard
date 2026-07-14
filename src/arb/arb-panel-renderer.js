@@ -156,6 +156,14 @@
     return `<div class="${className}" data-render-key="opportunity:${escapeAttr(renderKey)}"${clickableAttrs}>${labelHtml}${displayMessageHtml}${legHtml}</div>`;
   }
 
+  function renderFixedSectionActions(section) {
+    const ruleId = String(section && section.ruleId || '').trim();
+    if (!ruleId) return '';
+    const title = String(section && section.title || '固定路径');
+    const hasNote = Boolean(String(section && section.note || '').trim());
+    return `<div class="arb-section-title-actions"><button type="button" class="arb-section-action arb-section-note-action${hasNote ? ' has-note' : ''}" data-arb-fixed-note-rule-id="${escapeAttr(ruleId)}" aria-label="编辑 ${escapeAttr(title)} 备注" title="编辑备注">Note<span class="arb-section-note-dot" aria-hidden="true"></span></button><button type="button" class="arb-section-action arb-section-alert-action" data-arb-fixed-alert-rule-id="${escapeAttr(ruleId)}" aria-label="编辑 ${escapeAttr(title)} 报警设置" title="报警设置">…</button></div>`;
+  }
+
   function renderSection(section, options) {
     const opportunities = Array.isArray(section && section.opportunities)
       ? section.opportunities
@@ -176,9 +184,12 @@
     const titleProfitClass = titleProfitRate != null && titleProfitRate >= 0
       ? 'arb-profit'
       : 'arb-profit arb-profit-neg';
-    const titleRowHtml = section && section.sectionType === 'special-rule'
-      ? `<div class="arb-section-title-row"><div class="arb-section-title">${escapeHtml(title)}</div>${titleProfitRate != null ? `<div class="arb-section-title-profit ${titleProfitClass}">${escapeHtml((options.formatProfit || defaultFormatProfit)(titleProfitRate))}</div>` : ''}</div>`
-      : `<div class="arb-section-title">${escapeHtml(title)}</div>`;
+    let titleRowHtml = `<div class="arb-section-title">${escapeHtml(title)}</div>`;
+    if (section && section.sectionType === 'special-rule') {
+      titleRowHtml = `<div class="arb-section-title-row"><div class="arb-section-title">${escapeHtml(title)}</div>${titleProfitRate != null ? `<div class="arb-section-title-profit ${titleProfitClass}">${escapeHtml((options.formatProfit || defaultFormatProfit)(titleProfitRate))}</div>` : ''}</div>`;
+    } else if (section && section.sectionType === 'fixed-rule') {
+      titleRowHtml = `<div class="arb-section-title-row arb-section-title-row-fixed"><div class="arb-section-title">${escapeHtml(title)}</div>${renderFixedSectionActions(section)}</div>`;
+    }
     const headerExtraHtml = section && section.headerExtraHtml ? section.headerExtraHtml : '';
     const footerHtml = section && section.footerHtml ? section.footerHtml : '';
     const sectionClassName = section && section.sectionType === 'special-rule'
@@ -253,6 +264,18 @@
     const containsElement = typeof options.containsElement === 'function'
       ? options.containsElement
       : () => true;
+    const noteBtn = resolveClosest(event, '[data-arb-fixed-note-rule-id]', options);
+    if (noteBtn && containsElement(noteBtn)) {
+      const ruleId = readDatasetValue(noteBtn, 'arbFixedNoteRuleId');
+      return ruleId ? { type: 'edit-fixed-note', ruleId } : { type: 'none' };
+    }
+
+    const alertBtn = resolveClosest(event, '[data-arb-fixed-alert-rule-id]', options);
+    if (alertBtn && containsElement(alertBtn)) {
+      const ruleId = readDatasetValue(alertBtn, 'arbFixedAlertRuleId');
+      return ruleId ? { type: 'edit-fixed-alert', ruleId } : { type: 'none' };
+    }
+
     const toggleBtn = resolveClosest(event, '.arb-path-expand-toggle', options);
     if (toggleBtn && containsElement(toggleBtn)) {
       const sectionKey = readDatasetValue(toggleBtn, 'arbSectionKey');
@@ -272,7 +295,11 @@
     if (event && typeof event.button === 'number' && event.button !== 0) {
       return { type: 'none' };
     }
-    if (resolveClosest(event, '.arb-path-expand-toggle', options)) {
+    if (
+      resolveClosest(event, '.arb-path-expand-toggle', options)
+      || resolveClosest(event, '[data-arb-fixed-note-rule-id]', options)
+      || resolveClosest(event, '[data-arb-fixed-alert-rule-id]', options)
+    ) {
       return { type: 'none' };
     }
 

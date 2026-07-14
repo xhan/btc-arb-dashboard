@@ -569,3 +569,59 @@ function createBaseDeps(overrides = {}) {
   console.error(error);
   process.exitCode = 1;
 });
+
+(async () => {
+  const base = createBaseDeps();
+  const { deps } = createBaseDeps({
+    fetchImpl: async () => ({
+      ok: false,
+      json: async () => ({ error: 'write failed' })
+    }),
+    pathAlertUtils: {
+      ...base.deps.pathAlertUtils,
+      normalizeAlertConfig: value => value || base.config
+    }
+  });
+  const controller = createAlertRuntimeController(deps);
+  const nextConfig = { settings: {}, alerts: [{ id: 'unsaved-alert' }] };
+
+  await assert.rejects(() => controller.saveConfig(nextConfig), /write failed/);
+  assert.strictEqual(controller.getConfig(), base.config);
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+
+(async () => {
+  const fetchCalls = [];
+  const refreshCalls = [];
+  const base = createBaseDeps();
+  const { deps } = createBaseDeps({
+    arbAlertBridgeRuntime: {
+      refreshArbPanel: () => refreshCalls.push('refresh')
+    },
+    fetchImpl: async (url, options) => {
+      fetchCalls.push([url, options]);
+      return { ok: true, json: async () => ({}) };
+    },
+    pathAlertUtils: {
+      ...base.deps.pathAlertUtils,
+      normalizeAlertConfig: (config) => config
+    }
+  });
+  const controller = createAlertRuntimeController(deps);
+  const nextConfig = {
+    settings: { localSoundEnabled: false },
+    alerts: [{ id: 'fixed-alert', enabled: true }]
+  };
+
+  await controller.saveConfig(nextConfig);
+
+  assert.strictEqual(controller.getConfig(), nextConfig);
+  assert.ok(fetchCalls[0][0].endsWith('/api/save-alert-config'));
+  assert.deepStrictEqual(JSON.parse(fetchCalls[0][1].body), nextConfig);
+  assert.deepStrictEqual(refreshCalls, []);
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

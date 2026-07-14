@@ -72,7 +72,7 @@ async function runQueuedWriterTest() {
     }
   });
 
-  await Promise.all([
+  const results = await Promise.allSettled([
     writer.writeJsonFile('/tmp/config.json', { id: 1 }),
     writer.writeJsonFile('/tmp/config.json', { id: 2 })
   ]);
@@ -85,6 +85,8 @@ async function runQueuedWriterTest() {
   assert.strictEqual(errors.length, 1);
   assert.strictEqual(errors[0][0], '❌ 写入配置失败:');
   assert.strictEqual(errors[0][1].message, 'first failed');
+  assert.strictEqual(results[0].status, 'rejected');
+  assert.strictEqual(results[1].status, 'fulfilled');
 }
 
 async function runQueuedJavaScriptWriterTest() {

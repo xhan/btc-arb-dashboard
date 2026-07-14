@@ -405,6 +405,34 @@
     return normalizePathAlert(alert);
   }
 
+  function updatePathAlertEditorDraftField(draft, field, options = {}) {
+    if (!draft || !field) return false;
+    const id = String(field.id || '');
+    if (id === 'editor-name') draft.name = field.value || '';
+    else if (id === 'editor-threshold') draft.thresholdBp = field.value === '' ? '' : Number(field.value);
+    else if (id === 'editor-trigger') draft.triggerMode = field.value === 'delayed' ? 'delayed' : 'immediate';
+    else if (id === 'editor-confirm-delay') draft.confirmDelaySec = Number(field.value || 0);
+    else if (id === 'editor-cooldown') draft.cooldownSec = Number(field.value || options.defaultCooldownSec || 180);
+    else if (id === 'editor-enabled') draft.enabled = field.checked === true;
+    else if (id === 'editor-quote-id') draft.selectedQuoteId = field.value || '';
+    else if (id === 'editor-quote-direction') draft.quoteDirection = field.value === 'inverse' ? 'inverse' : 'forward';
+    else if (id === 'editor-quote-rule-kind') draft.quoteRuleKind = field.value || 'targetAbove';
+    else if (id === 'editor-quote-value') draft.quoteValue = field.value === '' ? '' : Number(field.value);
+    else if (id === 'editor-quote-base-price') draft.quoteBasePrice = field.value === '' ? '' : Number(field.value);
+    else if (id === 'editor-special-min-profit' || id === 'editor-special-min-profit-bp') {
+      const resolveSpecialRuleConfig = typeof options.resolveSpecialRuleConfig === 'function'
+        ? options.resolveSpecialRuleConfig
+        : (config) => ({ ...(config || {}) });
+      const specialRuleConfig = resolveSpecialRuleConfig(draft.specialRuleConfig);
+      if (id === 'editor-special-min-profit') specialRuleConfig.minNetProfit = Number(field.value || 0);
+      else specialRuleConfig.minNetProfitBp = Number(field.value || 0);
+      draft.specialRuleConfig = specialRuleConfig;
+    } else {
+      return false;
+    }
+    return true;
+  }
+
   function renderPathAlertEditorRuleChoicesHtml(rules, selectedRuleId) {
     const items = Array.isArray(rules) ? rules : [];
     if (!items.length) return '<div class="empty">暂无可选规则</div>';
@@ -458,7 +486,7 @@
       return `<option value="${escapeHtml(quoteId)}" ${selectedQuoteId === quoteId ? 'selected' : ''}>${escapeHtml(quote && quote.label)}</option>`;
     }).join('');
 
-    return `
+    const selectionHtml = `
       <div class="form-group">
         <label for="editor-quote-id">报价</label>
         <select id="editor-quote-id" ${options.quoteSelectDisabled ? 'disabled' : ''}>
@@ -473,6 +501,8 @@
           <option value="inverse" ${draft && draft.quoteDirection === 'inverse' ? 'selected' : ''}>反向</option>
         </select>
       </div>
+    `;
+    const settingsHtml = `
       <div class="form-group">
         <label for="editor-quote-rule-kind">规则</label>
         <select id="editor-quote-rule-kind">
@@ -493,6 +523,9 @@
         </div>
       ` : ''}
     `;
+    if (options.selectionOnly === true) return selectionHtml;
+    if (options.settingsOnly === true) return settingsHtml;
+    return `${selectionHtml}${settingsHtml}`;
   }
 
   function renderPathAlertEditorSelectedLegsHtml(draft, options = {}) {
@@ -562,34 +595,55 @@
       : '<div id="editor-error-slot" class="status-message"></div>';
     const sourceType = draft.sourceType || 'path';
     const defaultCooldownSec = options.defaultCooldownSec || 180;
-    const saveDisabledAttr = duplicateAlert || options.dismissedTarget ? 'disabled' : '';
-    return `
+    const mode = options.mode === 'edit' || draft.id ? 'edit' : 'create';
+    const step = mode === 'edit' || options.step === 'settings' ? 'settings' : 'target';
+    const saveDisabledAttr = duplicateAlert || options.dismissedTarget || options.saveDisabled ? 'disabled' : '';
+    const messagesHtml = `
       ${errorHtml}
       ${duplicateHtml}
       ${dismissedHtml}
+    `;
+    if (step === 'target') {
+      return `
+      ${messagesHtml}
+      <div class="path-alert-editor-target-step">
+        <div class="type-tabs">
+          <button type="button" class="type-tab${sourceType === 'path' ? ' active' : ''}" data-editor-type="path">手工路径</button>
+          <button type="button" class="type-tab${sourceType === 'quote' ? ' active' : ''}" data-editor-type="quote">交易对报警</button>
+          <button type="button" class="type-tab${sourceType === 'fixed' ? ' active' : ''}" data-editor-type="fixed">固定规则</button>
+          <button type="button" class="type-tab${sourceType === 'special' ? ' active' : ''}" data-editor-type="special">特殊规则</button>
+        </div>
+        <div class="path-alert-editor-target-grid">
+          <div class="editor-pane">${options.targetPaneHtml || ''}</div>
+          <div class="editor-pane">
+            <div class="editor-pane-title">${sourceType === 'path' ? '已选路径' : '已选目标'}</div>
+            ${options.selectedTargetHtml || ''}
+          </div>
+        </div>
+      </div>
+      <div class="editor-actions">
+        <div class="inline-hint">先选择报警类型和目标。</div>
+        <div class="editor-actions-right">
+          <button type="button" id="editor-cancel-btn">取消</button>
+          <button type="button" class="primary" id="editor-next-btn" ${options.canContinue === false ? 'disabled' : ''}>下一步</button>
+        </div>
+      </div>
+      `;
+    }
+
+    return `
+      ${messagesHtml}
       <div class="form-group">
-        <label for="editor-name">备注（可选）</label>
-        <input id="editor-name" type="text" value="${escapeHtml(draft.name)}" placeholder="例如：只关注 eth / arb 这条">
+        <label for="editor-name">报警名称（可选）</label>
+        <input id="editor-name" type="text" value="${escapeHtml(draft.name)}" placeholder="例如：WBTC 跨链套利">
+        <div class="path-alert-editor-field-hint">用于通知标题</div>
       </div>
-
-      <div class="type-tabs">
-        <button type="button" class="type-tab${sourceType === 'path' ? ' active' : ''}" data-editor-type="path">手工路径</button>
-        <button type="button" class="type-tab${sourceType === 'quote' ? ' active' : ''}" data-editor-type="quote">交易对报警</button>
-        <button type="button" class="type-tab${sourceType === 'fixed' ? ' active' : ''}" data-editor-type="fixed">固定规则</button>
-        <button type="button" class="type-tab${sourceType === 'special' ? ' active' : ''}" data-editor-type="special">特殊规则</button>
+      <div class="path-alert-editor-target-summary">
+        <div class="editor-pane-title">报警目标</div>
+        <div class="summary-box">${options.summaryHtml || ''}</div>
       </div>
-
-      <div class="editor-grid">
-        <div class="editor-pane">
-          ${options.targetPaneHtml || ''}
-        </div>
-        <div class="editor-pane">
-          <div class="editor-pane-title">${sourceType === 'path' ? '已选路径' : '已选目标'}</div>
-          ${options.selectedTargetHtml || ''}
-          <div class="summary-box">${options.summaryHtml || ''}</div>
-        </div>
-        <div class="editor-pane editor-settings-pane">
-          <div class="editor-pane-title">报警条件</div>
+      <div class="path-alert-editor-settings-grid">
+          ${options.conditionPaneHtml || ''}
           ${sourceType === 'quote' || sourceType === 'special' ? '' : `
             <div class="form-group">
               <label for="editor-threshold">收益阈值 (bp)</label>
@@ -625,12 +679,12 @@
             <input id="editor-enabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}>
             <span>启用这条报警</span>
           </label>
-        </div>
       </div>
 
       <div class="editor-actions">
         <div class="inline-hint">保存后，主看板会自动同步。</div>
         <div class="editor-actions-right">
+          ${mode === 'create' ? '<button type="button" id="editor-back-btn">上一步</button>' : ''}
           <button type="button" id="editor-cancel-btn">取消</button>
           <button type="button" class="primary" id="editor-save-btn" ${saveDisabledAttr}>保存</button>
         </div>
@@ -652,6 +706,7 @@
     renderPathAlertEditorQuoteTargetHtml,
     renderPathAlertEditorRuleChoicesHtml,
     renderPathAlertEditorSelectedLegsHtml,
+    updatePathAlertEditorDraftField,
     validatePathAlertEditorDraft
   };
 }));

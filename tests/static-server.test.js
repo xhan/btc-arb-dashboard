@@ -57,6 +57,9 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="arb-detail-chart-preview"'));
     assert.ok(response.body.includes('id="arb-detail-chart-auto-refresh"'));
     assert.ok(response.body.includes('id="arb-detail-profit-preview"'));
+    assert.ok(response.body.includes('id="arb-fixed-note-modal"'));
+    assert.ok(response.body.includes('id="arb-fixed-alert-modal"'));
+    assert.ok(response.body.includes('href="/styles/path-alert-editor.css"'));
     assert.ok(response.body.includes('#arb-path-window { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;'));
     assert.ok(response.body.includes('<body class="app-view-arb">'));
     assert.ok(response.body.includes('id="app-view-tabs"'));
@@ -117,6 +120,12 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('src="src/path-alerts/path-alert-notification-utils.js"'));
     assert.ok(!response.body.includes('src="quote-alert-config-utils.js"'));
     assert.ok(response.body.includes('src="src/path-alerts/path-alert-page-utils.js"'));
+    assert.ok(response.body.includes('src="src/path-alerts/path-alert-editor-utils.js"'));
+    assert.ok(response.body.includes('src="src/arb/arb-path-notes-utils.js"'));
+    assert.ok(response.body.includes('src="src/app/dashboard-fixed-path-actions-controller.js"'));
+    assert.ok(
+      response.body.indexOf('src="src/path-alerts/path-alert-editor-utils.js"') < response.body.indexOf('src="src/app/dashboard-fixed-path-actions-controller.js"')
+    );
     assert.ok(response.body.includes('src="src/shared/trading-pair-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-pause-utils.js"'));
     assert.ok(response.body.includes('src="src/quote/quote-source-registry.js"'));
@@ -3030,6 +3039,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsResponse.body.includes('批量删除'));
     assert.ok(pathAlertsResponse.body.includes('已忽略规则'));
     assert.ok(pathAlertsResponse.body.includes('id="path-alerts-editor-modal"'));
+    assert.ok(pathAlertsResponse.body.includes('href="/styles/path-alert-editor.css"'));
     assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-search-input"'));
     assert.ok(!pathAlertsResponse.body.includes('id="path-alerts-dismissed-search-input"'));
     assert.ok(pathAlertsResponse.body.includes('src="src/shared/trading-pair-utils.js"'));
@@ -3115,6 +3125,14 @@ async function waitForServer(attempts = 12) {
     assert.ok(pathAlertsAppResponse.body.includes("event.key === 'Enter'"));
     assert.ok(pathAlertsAppResponse.body.includes('pageState.filterQuoteId = String(parsed.filterQuoteId || \'\').trim();'));
     assert.ok(pathAlertsAppResponse.body.includes('applyInitialRoute();'));
+
+    const notesResponse = await request('/api/arb-path-notes');
+    assert.strictEqual(notesResponse.statusCode, 200);
+    assert.strictEqual(typeof JSON.parse(notesResponse.body), 'object');
+    const notesControllerResponse = await request('/src/app/dashboard-fixed-path-actions-controller.js');
+    assert.strictEqual(notesControllerResponse.statusCode, 200);
+    const editorStylesResponse = await request('/styles/path-alert-editor.css');
+    assert.strictEqual(editorStylesResponse.statusCode, 200);
   } finally {
     serverProcess.kill();
   }

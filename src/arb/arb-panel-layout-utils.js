@@ -609,6 +609,9 @@
 
   function buildFixedArbSections(options = {}) {
     const fixedResults = Array.isArray(options.fixedResults) ? options.fixedResults : [];
+    const notesByRuleId = options.notesByRuleId && typeof options.notesByRuleId === 'object'
+      ? options.notesByRuleId
+      : {};
     const getDisplayMinProfitBp = typeof options.getDisplayMinProfitBp === 'function'
       ? options.getDisplayMinProfitBp
       : () => DEFAULT_DISPLAY_MIN_PROFIT_BP;
@@ -626,6 +629,9 @@
       return {
         renderKey: `fixed:${String(rule?.id || rule?.title || 'unknown')}`,
         title: String(rule?.title || '固定路径'),
+        sectionType: 'fixed-rule',
+        ruleId: String(rule?.id || ''),
+        note: String(notesByRuleId[rule?.id] || ''),
         opportunities,
         emptyText: `无收益率 > ${displayMinProfitBp}bp`
       };

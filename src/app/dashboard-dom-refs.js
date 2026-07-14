@@ -82,6 +82,17 @@
     const arbGlobalFilterClearBtn = getById(documentImpl, 'arb-global-filter-clear-btn');
     const arbPathHeader = getById(documentImpl, 'arb-path-header');
     const arbPathMinBtn = getById(documentImpl, 'arb-path-min-btn');
+    const arbFixedNoteModal = getById(documentImpl, 'arb-fixed-note-modal');
+    const arbFixedNoteTitle = getById(documentImpl, 'arb-fixed-note-title');
+    const arbFixedNoteTextarea = getById(documentImpl, 'arb-fixed-note-input');
+    const arbFixedNoteError = getById(documentImpl, 'arb-fixed-note-error');
+    const arbFixedNoteSaveBtn = getById(documentImpl, 'arb-fixed-note-save');
+    const arbFixedNoteCancelBtn = getById(documentImpl, 'arb-fixed-note-cancel');
+    const arbFixedNoteCloseBtn = getById(documentImpl, 'arb-fixed-note-close');
+    const arbFixedAlertModal = getById(documentImpl, 'arb-fixed-alert-modal');
+    const arbFixedAlertTitle = getById(documentImpl, 'arb-fixed-alert-title');
+    const arbFixedAlertEditor = getById(documentImpl, 'arb-fixed-alert-editor');
+    const arbFixedAlertCloseBtn = getById(documentImpl, 'arb-fixed-alert-close');
     const toggleQuoteDisplayBtn = getById(documentImpl, 'toggle-quote-display-btn');
     const toggleDataTerminalBtn = getById(documentImpl, 'toggle-data-terminal-btn');
     const toggleSpreadBtn = getById(documentImpl, 'toggle-spread-btn');
@@ -212,6 +223,19 @@
       },
       arbPathHeader,
       arbPathMinBtn,
+      arbFixedPathActionRefs: {
+        noteModal: arbFixedNoteModal,
+        noteTitle: arbFixedNoteTitle,
+        noteTextarea: arbFixedNoteTextarea,
+        noteError: arbFixedNoteError,
+        noteSaveBtn: arbFixedNoteSaveBtn,
+        noteCancelBtn: arbFixedNoteCancelBtn,
+        noteCloseBtn: arbFixedNoteCloseBtn,
+        alertModal: arbFixedAlertModal,
+        alertTitle: arbFixedAlertTitle,
+        alertEditor: arbFixedAlertEditor,
+        alertCloseBtn: arbFixedAlertCloseBtn
+      },
       toggleQuoteDisplayBtn,
       toggleDataTerminalBtn,
       toggleSpreadBtn,

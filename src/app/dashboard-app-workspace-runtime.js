@@ -126,6 +126,7 @@
         arbPanel: refs.arbPanel,
         alert: refs.alert,
         detail: refs.detail,
+        fixedPathActions: refs.fixedPathActions,
         viewMode: refs.viewMode
       },
       timers: {

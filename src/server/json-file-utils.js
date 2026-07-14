@@ -120,19 +120,18 @@ function createQueuedJsonFileWriter(options = {}) {
     let writeQueue = Promise.resolve();
 
     async function writeJsonFile(filePath, data) {
-        writeQueue = writeQueue.then(async () => {
-            try {
-                const tempPath = `${filePath}.tmp`;
-                const existingContent = isJavaScriptConfigFile(filePath)
-                    ? await readFile(filePath, 'utf-8').catch(() => '')
-                    : '';
-                await writeFile(tempPath, formatConfigFileContent(filePath, data, { existingContent }), 'utf-8');
-                await rename(tempPath, filePath);
-            } catch (error) {
-                logger.error('❌ 写入配置失败:', error);
-            }
+        const operation = writeQueue.then(async () => {
+            const tempPath = `${filePath}.tmp`;
+            const existingContent = isJavaScriptConfigFile(filePath)
+                ? await readFile(filePath, 'utf-8').catch(() => '')
+                : '';
+            await writeFile(tempPath, formatConfigFileContent(filePath, data, { existingContent }), 'utf-8');
+            await rename(tempPath, filePath);
         });
-        return writeQueue;
+        writeQueue = operation.catch((error) => {
+            logger.error('❌ 写入配置失败:', error);
+        });
+        return operation;
     }
 
     return {

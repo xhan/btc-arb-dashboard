@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>报警管理</title>
+  <link rel="stylesheet" href="/styles/path-alert-editor.css">
   <style>
     :root {
       --bg: #f5f7fa;
@@ -406,6 +407,12 @@
       box-shadow: 0 20px 60px rgba(15, 23, 42, 0.16);
       padding: 12px;
     }
+    .editor-modal.compact .editor-modal-card {
+      width: min(560px, 96vw);
+    }
+    .editor-modal.target-step .editor-modal-card {
+      width: min(820px, 96vw);
+    }
     .editor-modal-head {
       display: flex;
       justify-content: space-between;
@@ -711,7 +718,7 @@
         <h2 id="path-alerts-editor-title">新建报警</h2>
         <button id="path-alerts-close-editor-btn" type="button">关闭</button>
       </div>
-      <div id="path-alerts-editor"></div>
+      <div id="path-alerts-editor" class="path-alert-editor-host"></div>
     </div>
   </div>
 

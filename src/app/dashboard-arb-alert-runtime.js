@@ -8,6 +8,7 @@
   function createDashboardArbAlertRuntime(options = {}) {
     let alertRuntimeController = null;
     let arbDiscovery = null;
+    let fixedPathActionsController = null;
     let arbPanelController = null;
     let arbRefreshRuntime = null;
 
@@ -165,9 +166,24 @@
           : null
       ),
       getDashboardState: options.getDashboardState,
+      getFixedPathNotes: () => (
+        fixedPathActionsController && typeof fixedPathActionsController.getNotes === 'function'
+          ? fixedPathActionsController.getNotes()
+          : {}
+      ),
       getQuoteMarketState: options.getQuoteMarketState,
       isQuotePaused: options.isQuotePaused,
       interactionSafeRenderer: options.interactionSafeRenderer,
+      openFixedPathAlert: ruleId => (
+        fixedPathActionsController && typeof fixedPathActionsController.openAlert === 'function'
+          ? fixedPathActionsController.openAlert(ruleId)
+          : false
+      ),
+      openFixedPathNote: ruleId => (
+        fixedPathActionsController && typeof fixedPathActionsController.openNote === 'function'
+          ? fixedPathActionsController.openNote(ruleId)
+          : false
+      ),
       openArbDetailModal,
       pathAlertPageUtils: options.pathAlertPageUtils,
       pathAlertRuleDefinitions,
@@ -236,6 +252,29 @@
       windowImpl: options.windowImpl
     });
 
+    if (
+      options.fixedPathActionsControllerUtils
+      && typeof options.fixedPathActionsControllerUtils.createDashboardFixedPathActionsController === 'function'
+    ) {
+      fixedPathActionsController = options.fixedPathActionsControllerUtils.createDashboardFixedPathActionsController({
+        arbPathNotesUtils: options.arbPathNotesUtils,
+        backendUrl: options.backendUrl,
+        documentImpl: options.documentImpl,
+        fetchImpl: options.fetchImpl,
+        getAlertConfig: () => alertRuntimeController.getConfig(),
+        onAlertChanged: () => arbPanelController.refreshCurrentSnapshot(),
+        pathAlertEditorUtils: options.pathAlertEditorUtils,
+        pathAlertPageUtils: options.pathAlertPageUtils,
+        pathAlertRuleDefinitions,
+        pathAlertUtils: options.pathAlertUtils,
+        refs: options.fixedPathActionRefs,
+        saveAlertConfig: config => alertRuntimeController.saveConfig(config)
+      });
+      fixedPathActionsController.initialize().catch(error => {
+        options.logWarning('加载固定路径备注失败:', error);
+      });
+    }
+
     arbRefreshRuntime = options.arbRuntimeMemoryUtils.createArbRefreshRuntime({
       delayMs: options.updateDelayMs,
       setTimer: options.setTimeout,
@@ -272,6 +311,7 @@
       arbOpportunityRuntime,
       arbRefreshRuntime,
       arbPanelController,
+      fixedPathActionsController,
       applyFloatingPanelDisplay: arbPanelController.applyFloatingPanelDisplay,
       buildArbPathLegLineOptions: arbPanelController.buildArbPathLegLineOptions,
       buildLiveQuoteLabel: arbPanelController.buildLiveQuoteLabel,

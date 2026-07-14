@@ -28,6 +28,7 @@
   let quoteCandidates = [];
   let pageState = {
     editorVisible: false,
+    editorStep: 'target',
     errorMessage: '',
     saveMessage: '',
     draft: null,
@@ -399,6 +400,7 @@
     pageState.errorMessage = '';
     pageState.saveMessage = '';
     pageState.draft = cloneDraft(draft);
+    pageState.editorStep = mode === 'edit' ? 'settings' : 'target';
     editorTitleEl.textContent = pageState.draft.id ? '编辑报警' : '新建报警';
     updateHistory(mode, mode === 'edit'
       ? { alertId: pageState.draft.id }
@@ -411,6 +413,7 @@
     pageState.errorMessage = '';
     pageState.saveMessage = '';
     pageState.draft = null;
+    pageState.editorStep = 'target';
     updateHistory('manage');
     renderEditor();
   }
@@ -621,7 +624,7 @@
     });
   }
 
-  function renderQuoteTargetEditor(draft) {
+  function renderQuoteTargetEditor(draft, options = {}) {
     const quoteOptions = Array.from(quoteById.values()).map((quote) => {
       const label = isCexOrderbookChain(quote.chain)
         ? `(${formatChainLabel(quote.chain)}) ${quote.symbol || '--'}`
@@ -629,8 +632,17 @@
       return { id: quote.id, label };
     });
     return window.PathAlertEditorUtils.renderPathAlertEditorQuoteTargetHtml(draft, quoteOptions, {
-      quoteSelectDisabled: Boolean(pageState.filterQuoteId)
+      quoteSelectDisabled: Boolean(pageState.filterQuoteId) || options.lockTarget === true,
+      selectionOnly: options.selectionOnly === true,
+      settingsOnly: options.settingsOnly === true
     });
+  }
+
+  function hasSelectedEditorTarget(draft) {
+    if (!draft) return false;
+    if (draft.sourceType === 'path') return Array.isArray(draft.legs) && draft.legs.length > 0;
+    if (draft.sourceType === 'quote') return Boolean(String(draft.selectedQuoteId || '').trim());
+    return Boolean(String(draft.selectedRuleId || '').trim());
   }
 
   function renderSelectedLegs(draft) {
@@ -646,11 +658,17 @@
 
   function renderEditor() {
     if (!pageState.editorVisible || !pageState.draft) {
-      if (editorModalEl) editorModalEl.classList.remove('visible');
+      if (editorModalEl) {
+        editorModalEl.classList.remove('visible', 'compact', 'target-step');
+      }
       editorEl.innerHTML = '';
       return;
     }
-    if (editorModalEl) editorModalEl.classList.add('visible');
+    if (editorModalEl) {
+      editorModalEl.classList.add('visible');
+      editorModalEl.classList.toggle('compact', pageState.editorStep === 'settings');
+      editorModalEl.classList.toggle('target-step', pageState.editorStep === 'target');
+    }
 
     const draft = pageState.draft;
     const duplicateAlert = findDuplicateAlertForDraft(draft);
@@ -659,15 +677,21 @@
     const targetPaneHtml = draft.sourceType === 'path'
       ? renderCandidateSearchArea(draft)
       : draft.sourceType === 'quote'
-        ? renderQuoteTargetEditor(draft)
+        ? renderQuoteTargetEditor(draft, { selectionOnly: true })
         : renderRuleChoices(draft.sourceType, draft.selectedRuleId);
     editorEl.innerHTML = window.PathAlertEditorUtils.renderPathAlertEditorHtml({
+      mode: draft.id ? 'edit' : 'create',
+      step: pageState.editorStep,
+      canContinue: hasSelectedEditorTarget(draft),
       draft,
       errorMessage: pageState.errorMessage,
       duplicateAlert,
       duplicateEditHref: duplicateAlert ? getEditAlertHref(duplicateAlert.id) : '',
       dismissedTarget,
       targetPaneHtml,
+      conditionPaneHtml: draft.sourceType === 'quote'
+        ? renderQuoteTargetEditor(draft, { settingsOnly: true, lockTarget: Boolean(draft.id) })
+        : '',
       selectedTargetHtml: renderSelectedLegs(draft),
       summaryHtml: window.PathAlertPageUtils.renderPathAlertRouteLinesHtml(targetSummaryLines, 'summary-line'),
       specialRuleConfig: resolveSpecialRuleAlertConfig(draft.specialRuleConfig),
@@ -695,7 +719,7 @@
     try {
       await persistAlertConfig();
       renderList();
-      openEditorWithDraft(buildDraftFromAlert(nextAlert), 'edit');
+      closeEditor();
     } catch (saveError) {
       pageState.errorMessage = saveError.message || '保存失败';
       renderEditor();
@@ -965,33 +989,14 @@
   function updateDraftField(event) {
     if (!pageState.draft) return;
     const target = event.target;
-    if (!pageState.draft.specialRuleConfig || typeof pageState.draft.specialRuleConfig !== 'object') {
-      pageState.draft.specialRuleConfig = null;
+    if (target.id === 'path-alert-search-input') {
+      pageState.draft.searchQuery = target.value || '';
+    } else {
+      window.PathAlertEditorUtils.updatePathAlertEditorDraftField(pageState.draft, target, {
+        defaultCooldownSec: alertConfig.settings?.defaultCooldownSec || 180,
+        resolveSpecialRuleConfig: resolveSpecialRuleAlertConfig
+      });
     }
-    if (target.id === 'editor-name') pageState.draft.name = target.value || '';
-    if (target.id === 'path-alert-search-input') pageState.draft.searchQuery = target.value || '';
-    if (target.id === 'editor-threshold') pageState.draft.thresholdBp = target.value === '' ? '' : Number(target.value);
-    if (target.id === 'editor-trigger') pageState.draft.triggerMode = target.value === 'delayed' ? 'delayed' : 'immediate';
-    if (target.id === 'editor-confirm-delay') pageState.draft.confirmDelaySec = Number(target.value || 0);
-    if (target.id === 'editor-cooldown') pageState.draft.cooldownSec = Number(target.value || alertConfig.settings?.defaultCooldownSec || 180);
-    if (target.id === 'editor-enabled') pageState.draft.enabled = target.checked;
-    if (target.id === 'editor-special-min-profit') {
-      pageState.draft.specialRuleConfig = {
-        ...resolveSpecialRuleAlertConfig(pageState.draft.specialRuleConfig),
-        minNetProfit: Number(target.value || 0)
-      };
-    }
-    if (target.id === 'editor-special-min-profit-bp') {
-      pageState.draft.specialRuleConfig = {
-        ...resolveSpecialRuleAlertConfig(pageState.draft.specialRuleConfig),
-        minNetProfitBp: Number(target.value || 0)
-      };
-    }
-    if (target.id === 'editor-quote-id') pageState.draft.selectedQuoteId = target.value || '';
-    if (target.id === 'editor-quote-direction') pageState.draft.quoteDirection = target.value === 'inverse' ? 'inverse' : 'forward';
-    if (target.id === 'editor-quote-rule-kind') pageState.draft.quoteRuleKind = target.value || 'targetAbove';
-    if (target.id === 'editor-quote-value') pageState.draft.quoteValue = target.value === '' ? '' : Number(target.value);
-    if (target.id === 'editor-quote-base-price') pageState.draft.quoteBasePrice = target.value === '' ? '' : Number(target.value);
     if (pageState.errorMessage) clearEditorError();
     if (target.id === 'path-alert-search-input') {
       pageState.activeCandidateIndex = -1;
@@ -1040,9 +1045,15 @@
 
   function handleEditorKeydown(event) {
     const target = event.target;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeEditor();
+      return;
+    }
+
     if (!target || target.id !== 'path-alert-search-input') return;
 
-    if (!pageState.filteredCandidates.length && event.key !== 'Escape') return;
+    if (!pageState.filteredCandidates.length) return;
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
@@ -1064,9 +1075,12 @@
       return;
     }
 
-    if (event.key === 'Escape') {
-      hideCandidateSuggestions();
-    }
+  }
+
+  function handleDocumentKeydown(event) {
+    if (event.key !== 'Escape' || event.defaultPrevented || !pageState.editorVisible) return;
+    event.preventDefault();
+    closeEditor();
   }
 
   function handleEditorClick(event) {
@@ -1114,6 +1128,21 @@
       pageState.draft.specialRuleConfig = pageState.draft.sourceType === 'special'
         ? { minNetProfit: 0, minNetProfitBp: 0 }
         : null;
+      renderEditor();
+      return;
+    }
+
+    if (event.target.closest('#editor-next-btn')) {
+      if (!hasSelectedEditorTarget(pageState.draft)) return;
+      pageState.editorStep = 'settings';
+      pageState.errorMessage = '';
+      renderEditor();
+      return;
+    }
+
+    if (event.target.closest('#editor-back-btn')) {
+      pageState.editorStep = 'target';
+      pageState.errorMessage = '';
       renderEditor();
       return;
     }
@@ -1185,13 +1214,6 @@
     editorEl.addEventListener('keydown', handleEditorKeydown);
     editorEl.addEventListener('input', updateDraftField);
     editorEl.addEventListener('change', updateDraftField);
-    if (editorModalEl) {
-      editorModalEl.addEventListener('click', (event) => {
-        if (event.target === editorModalEl) {
-          closeEditor();
-        }
-      });
-    }
     if (contextBarEl) {
       contextBarEl.addEventListener('click', handleContextBarClick);
     }
@@ -1200,6 +1222,7 @@
         renderCandidateSuggestions();
       }
     });
+    document.addEventListener('keydown', handleDocumentKeydown);
     document.addEventListener('click', (event) => {
       const target = event.target;
       if (target && typeof target.closest === 'function' && target.closest('.path-alert-search-shell')) return;

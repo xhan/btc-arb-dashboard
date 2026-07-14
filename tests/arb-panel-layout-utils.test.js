@@ -215,6 +215,7 @@ assert.deepStrictEqual(
         { id: 'negative', profitRate: -0.00001 }
       ]
     }],
+    notesByRuleId: { 'low-route': '跨链到账较慢' },
     getDisplayMinProfitBp: () => 1,
     buildEntry: (cycle, index, items, rule) => ({
       label: items.length > 1 ? `机会 ${index + 1}` : '',
@@ -225,6 +226,9 @@ assert.deepStrictEqual(
   {
     renderKey: 'fixed:low-route',
     title: '低收益路径',
+    sectionType: 'fixed-rule',
+    ruleId: 'low-route',
+    note: '跨链到账较慢',
     opportunities: [
       {
         label: '',
@@ -1047,6 +1051,9 @@ assert.deepStrictEqual(
     {
       renderKey: 'fixed:wbtc-route',
       title: 'WBTC 固定路径',
+      sectionType: 'fixed-rule',
+      ruleId: 'wbtc-route',
+      note: '',
       opportunities: [
         { label: '机会 1', cycleId: 'cycle-a', section: 'fixed:wbtc-route' },
         { label: '机会 2', cycleId: 'cycle-b', section: 'fixed:wbtc-route' }
@@ -1056,6 +1063,9 @@ assert.deepStrictEqual(
     {
       renderKey: 'fixed:unknown',
       title: '固定路径',
+      sectionType: 'fixed-rule',
+      ruleId: '',
+      note: '',
       opportunities: [],
       emptyText: '无收益率 > 1bp'
     }
