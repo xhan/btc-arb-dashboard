@@ -547,6 +547,7 @@ async function waitForServer(attempts = 12) {
     assert.ok(response.body.includes('id="quote-spread-content"'));
     assert.ok(response.body.includes('<button id="alert-log-settings-tab" class="alert-log-tab" type="button" title="快速提醒设置 (A)">设置</button>'));
     assert.ok(response.body.includes('<button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">📝</button>'));
+    assert.ok(response.body.includes('<a id="path-alerts-link-btn" href="/path-alerts" target="_blank" rel="noopener noreferrer" title="在新窗口打开报警管理页">🚨</a>'));
     assert.ok(response.body.includes('<a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">📸</a>'));
     assert.ok(response.body.includes('<a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">📊</a>'));
     assert.ok(!response.body.includes('id="toggle-calc-btn"'));

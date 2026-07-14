@@ -113,13 +113,16 @@
     const displayMessage = entry && typeof entry.displayMessage === 'string'
       ? entry.displayMessage.trim()
       : '';
+    const displayLineClass = isUnderThresholdEntry && Number(cycle.profitRate) > 0
+      ? 'arb-path-line arb-path-display-line arb-path-display-line-positive-under-threshold'
+      : 'arb-path-line arb-path-display-line';
     const displayMessageHtml = displayMessage
       ? displayMessage
         .split('\n')
         .map((line) => String(line || '').trim())
         .map((line) => (
           line
-            ? `<div class="arb-path-line arb-path-display-line">${escapeHtml(line)}</div>`
+            ? `<div class="${displayLineClass}">${escapeHtml(line)}</div>`
             : '<div class="arb-path-line arb-path-display-line arb-path-display-line-empty">&nbsp;</div>'
         ))
         .join('')

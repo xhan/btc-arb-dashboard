@@ -923,6 +923,8 @@
             font-variant-numeric: tabular-nums;
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         }
+        .arb-path-display-line-positive-under-threshold { color: #d69e2e; }
+        .dark-mode .arb-path-display-line-positive-under-threshold { color: #f6e05e; }
         .arb-path-display-line-empty { min-height: 0.8em; }
         .arb-opportunity { padding-top: 6px; margin-top: 6px; border-top: 1px dashed var(--border-color); }
         .arb-opportunity:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
@@ -1760,6 +1762,7 @@
              <button id="toggle-data-terminal-btn" title="显示/隐藏数据终端">数据终端</button>
              <button id="toggle-spread-btn" title="检测交易对买/卖 spread">Spread</button>
              <button id="toggle-alert-log-btn" title="显示/隐藏提醒日志">📝</button>
+             <a id="path-alerts-link-btn" href="/path-alerts" target="_blank" rel="noopener noreferrer" title="在新窗口打开报警管理页">🚨</a>
              <a id="snapshot-link-btn" href="/snapshot?mode=nearest" target="_blank" rel="noopener noreferrer" title="在新窗口打开快照页面">📸</a>
              <a id="charts-link-btn" href="/charts" target="_blank" rel="noopener noreferrer" title="在新窗口打开历史图表页">📊</a>
              <button id="global-settings-btn" class="icon-btn" title="API 设置">⚙️</button>

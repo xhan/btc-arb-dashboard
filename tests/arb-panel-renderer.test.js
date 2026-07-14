@@ -177,9 +177,31 @@ const underThresholdHtml = renderTestArbGrid({
 
 assert.ok(underThresholdHtml.includes('data-arb-opportunity-id="fixed-low-1"'));
 assert.ok(underThresholdHtml.includes('class="arb-opportunity arb-opportunity-fixed-under-threshold"'));
-assert.ok(underThresholdHtml.includes('class="arb-path-line arb-path-display-line">收益率 +0.40bp &lt; 1bp</div>'));
+assert.ok(underThresholdHtml.includes('class="arb-path-line arb-path-display-line arb-path-display-line-positive-under-threshold">收益率 +0.40bp &lt; 1bp</div>'));
 assert.ok(!underThresholdHtml.includes('arb-opportunity-head'));
 assert.ok(!underThresholdHtml.includes('WBTC -&gt; LBTC'));
+
+const zeroUnderThresholdHtml = renderTestArbGrid({
+  columns: [
+    [
+      {
+        title: '零收益路径',
+        opportunities: [
+          {
+            entryType: 'fixed-under-threshold',
+            opportunityId: 'fixed-zero-1',
+            cycle: { profitRate: 0, legs: [] },
+            displayMessage: '收益率 0.00bp < 1bp',
+            hideLegs: true
+          }
+        ]
+      }
+    ]
+  ]
+});
+
+assert.ok(zeroUnderThresholdHtml.includes('class="arb-path-line arb-path-display-line">收益率 0.00bp &lt; 1bp</div>'));
+assert.ok(!zeroUnderThresholdHtml.includes('arb-path-display-line-positive-under-threshold'));
 
 const htmlWithoutLabel = renderTestArbGrid({
   columns: [
