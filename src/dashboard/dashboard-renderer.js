@@ -592,6 +592,7 @@
     const symbol = String(config.symbol || '').trim();
     const fromToken = String(config.fromToken || '').trim();
     const toToken = String(config.toToken || '').trim();
+    const amountValid = resolveAddQuoteAmount(config.amount) !== null;
 
     return {
       pairFieldsVisible: Boolean(chain && !isCex),
@@ -600,8 +601,14 @@
       toChainValue: toChain,
       fromPlaceholder: placeholders[normalizedChain] || 'Enter token address',
       toPlaceholder: placeholders[normalizedToChain || normalizedChain] || 'Enter token address',
-      saveDisabled: !chain || (isCex ? !symbol : (!fromToken || !toToken))
+      saveDisabled: !amountValid || !chain || (isCex ? !symbol : (!fromToken || !toToken))
     };
+  }
+
+  function resolveAddQuoteAmount(value) {
+    const amountText = String(value ?? '').trim();
+    const amount = amountText ? Number(amountText) : 1;
+    return Number.isFinite(amount) && amount > 0 ? amount : null;
   }
 
   function buildAddQuoteDraft(config = {}) {
@@ -617,13 +624,16 @@
       ? config.defaultSourceResolver
       : () => 'Kyber';
     const quoteId = config.quoteId;
+    const amount = resolveAddQuoteAmount(config.amount);
+    if (amount === null) return null;
     const normalizedChain = normalizeChainKey(chain);
     const normalizedToChain = config.toChain ? normalizeChainKey(config.toChain) : '';
     const quote = {
       id: quoteId,
       chain: normalizedChain,
-      amount: 1,
-      preferredSource: defaultSourceResolver(chain)
+      amount,
+      preferredSource: defaultSourceResolver(chain),
+      showInverse: true
     };
 
     if (isCexOrderbookChain(chain)) {

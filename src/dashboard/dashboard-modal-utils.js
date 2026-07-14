@@ -198,7 +198,8 @@
       toChain: readElementValue(refs.toChainSelect),
       fromToken: readElementValue(refs.fromInput),
       toToken: readElementValue(refs.toInput),
-      symbol: readElementValue(refs.symbolInput)
+      symbol: readElementValue(refs.symbolInput),
+      amount: readElementValue(refs.amountInput)
     };
   }
 
@@ -334,6 +335,7 @@
     setElementValue(refs.fromInput, '');
     setElementValue(refs.toInput, '');
     setElementValue(refs.symbolInput, '');
+    setElementValue(refs.amountInput, '1');
     if (typeof options.syncControls === 'function') {
       options.syncControls();
     }

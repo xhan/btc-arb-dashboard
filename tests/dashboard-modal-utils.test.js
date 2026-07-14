@@ -58,6 +58,7 @@ function createRefs() {
     fromInput: { value: '0xaaa', placeholder: '' },
     toInput: { value: '0xbbb', placeholder: '' },
     symbolInput: { value: 'btcusdt' },
+    amountInput: { value: '2.5' },
     toChainGroup: { style: { display: '' } },
     pairFields: { style: { display: '' } },
     symbolField: { style: { display: '' } },
@@ -71,7 +72,8 @@ assert.deepStrictEqual(readAddQuoteFormValues(refs), {
   toChain: 'arbitrum',
   fromToken: '0xaaa',
   toToken: '0xbbb',
-  symbol: 'btcusdt'
+  symbol: 'btcusdt',
+  amount: '2.5'
 });
 
 const genericModal = { classList: createClassList([]) };
@@ -180,6 +182,7 @@ assert.strictEqual(resetRefs.toChainSelect.value, '');
 assert.strictEqual(resetRefs.fromInput.value, '');
 assert.strictEqual(resetRefs.toInput.value, '');
 assert.strictEqual(resetRefs.symbolInput.value, '');
+assert.strictEqual(resetRefs.amountInput.value, '1');
 assert.strictEqual(resetRefs.modal.classList.contains('visible'), false);
 assert.strictEqual(resetResult, undefined);
 assert.strictEqual(resetSyncCount, 1);

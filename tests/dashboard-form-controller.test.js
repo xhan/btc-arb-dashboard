@@ -213,17 +213,42 @@ function createBaseDeps(overrides = {}) {
 }
 
 {
-  const { calls, dashboardState, deps, quoteListEl } = createBaseDeps({
-    deps: {
-      dashboardRenderer: {
-        ...createDashboardRenderer(),
-        resolveAddQuoteModalClickAction: () => ({ type: 'save' })
-      }
+  const { calls, dashboardState, deps, quoteListEl } = createBaseDeps();
+  let draftValues = null;
+  deps.dashboardRenderer = {
+    ...createDashboardRenderer(),
+    resolveAddQuoteModalClickAction: () => ({ type: 'save' }),
+    buildAddQuoteDraft(values) {
+      draftValues = values;
+      return {
+        id: values.quoteId,
+        chain: 'ethereum',
+        amount: 2.5,
+        preferredSource: 'Kyber',
+        showInverse: true,
+        fromToken: 'USDC',
+        toToken: 'USDT'
+      };
     }
+  };
+  deps.dashboardModalUtils.readAddQuoteFormValues = () => ({
+    chain: 'ethereum',
+    fromToken: 'USDC',
+    toToken: 'USDT',
+    amount: '2.5'
   });
   const controller = createDashboardFormController(deps);
   controller.handleAddQuoteModalClick({});
-  assert.deepStrictEqual(dashboardState[0].quotes.map((quote) => quote.id), [2000]);
+  assert.strictEqual(draftValues.amount, '2.5');
+  assert.deepStrictEqual(dashboardState[0].quotes, [{
+    id: 2000,
+    chain: 'ethereum',
+    amount: 2.5,
+    preferredSource: 'Kyber',
+    showInverse: true,
+    fromToken: 'USDC',
+    toToken: 'USDT'
+  }]);
   assert.deepStrictEqual(quoteListEl.appended.map((node) => node.name), ['quote-cat-1-2000']);
   assert.deepStrictEqual(
     calls.filter((call) => ['updateCategoryPauseButtonState', 'saveData', 'queueQuoteRefresh', 'clearAddQuoteSelection', 'resetAddQuoteModal', 'syncAddQuoteFormControls'].includes(call[0])),

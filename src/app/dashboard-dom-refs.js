@@ -63,6 +63,7 @@
     const addQuoteFromInput = getById(documentImpl, 'add-quote-from');
     const addQuoteToInput = getById(documentImpl, 'add-quote-to');
     const addQuoteSymbolInput = getById(documentImpl, 'add-quote-symbol');
+    const addQuoteAmountInput = getById(documentImpl, 'add-quote-amount');
     const addQuoteSaveBtn = getById(documentImpl, 'add-quote-save');
     const confirmModal = getById(documentImpl, 'confirm-modal');
     const confirmMessageEl = getById(documentImpl, 'confirm-message');
@@ -164,6 +165,7 @@
       addQuoteFromInput,
       addQuoteToInput,
       addQuoteSymbolInput,
+      addQuoteAmountInput,
       addQuoteSaveBtn,
       addQuoteModalRefs: {
         modal: addQuoteModal,
@@ -172,6 +174,7 @@
         fromInput: addQuoteFromInput,
         toInput: addQuoteToInput,
         symbolInput: addQuoteSymbolInput,
+        amountInput: addQuoteAmountInput,
         toChainGroup: addQuoteToChainGroup,
         pairFields: addQuotePairFields,
         symbolField: addQuoteSymbolField,

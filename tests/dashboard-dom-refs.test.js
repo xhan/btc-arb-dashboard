@@ -26,6 +26,7 @@ function makeElement(id) {
   'add-quote-modal',
   'add-quote-chain',
   'add-quote-from',
+  'add-quote-amount',
   'confirm-modal',
   'confirm-message',
   'arb-global-filter-input',
@@ -60,6 +61,7 @@ assert.strictEqual(refs.settingsIntervalInputRefs['setting-kyber-interval'], ele
 assert.strictEqual(refs.addQuoteModalRefs.modal, elements.get('add-quote-modal'));
 assert.strictEqual(refs.addQuoteModalRefs.chainSelect, elements.get('add-quote-chain'));
 assert.strictEqual(refs.addQuoteModalRefs.fromInput, elements.get('add-quote-from'));
+assert.strictEqual(refs.addQuoteModalRefs.amountInput, elements.get('add-quote-amount'));
 assert.strictEqual(refs.confirmModalRefs.modal, elements.get('confirm-modal'));
 assert.strictEqual(refs.confirmModalRefs.message, elements.get('confirm-message'));
 assert.strictEqual(refs.arbGlobalFilterElements['arb-global-filter-input'], elements.get('arb-global-filter-input'));

@@ -13,6 +13,7 @@ const refs = {
   addCategoryModal: ref('addCategoryModal'),
   addCategoryModalRefs: ref('addCategoryModalRefs'),
   addQuoteChainSelect: ref('addQuoteChainSelect'),
+  addQuoteAmountInput: ref('addQuoteAmountInput'),
   addQuoteFromInput: ref('addQuoteFromInput'),
   addQuoteModal: ref('addQuoteModal'),
   addQuoteModalRefs: ref('addQuoteModalRefs'),
@@ -107,7 +108,8 @@ assert.strictEqual(groups.board.addCategoryModal, refs.addCategoryModal);
 assert.deepStrictEqual(groups.board.addQuoteInputs, [
   refs.addQuoteFromInput,
   refs.addQuoteToInput,
-  refs.addQuoteSymbolInput
+  refs.addQuoteSymbolInput,
+  refs.addQuoteAmountInput
 ]);
 assert.strictEqual(groups.board.quoteSettingsModalElements, refs.quoteSettingsModalElements);
 

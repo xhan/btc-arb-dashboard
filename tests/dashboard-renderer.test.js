@@ -431,6 +431,15 @@ assert.strictEqual(
   }).saveDisabled,
   true
 );
+assert.strictEqual(
+  buildAddQuoteFormViewState({
+    chain: 'ethereum',
+    fromToken: '0xfrom',
+    toToken: '0xto',
+    amount: '0'
+  }).saveDisabled,
+  true
+);
 
 assert.deepStrictEqual(
   buildAddQuoteDraft({
@@ -457,6 +466,7 @@ assert.deepStrictEqual(
   buildAddQuoteDraft({
     quoteId: 124,
     chain: 'Bybit',
+    amount: '2.5',
     symbol: ' btcusdt ',
     isCexOrderbookChain: () => true,
     normalizeChainKey: (chain) => String(chain || '').trim().toLowerCase(),
@@ -465,10 +475,21 @@ assert.deepStrictEqual(
   {
     id: 124,
     chain: 'Bybit',
-    amount: 1,
+    amount: 2.5,
     preferredSource: 'Bybit',
-    symbol: 'BTCUSDT'
+    symbol: 'BTCUSDT',
+    showInverse: true
   }
+);
+assert.strictEqual(
+  buildAddQuoteDraft({
+    quoteId: 125,
+    chain: 'ethereum',
+    amount: '0',
+    fromToken: '0xfrom',
+    toToken: '0xto'
+  }),
+  null
 );
 assert.strictEqual(buildAddQuoteDraft({ chain: 'ethereum', fromToken: '0xfrom' }), null);
 

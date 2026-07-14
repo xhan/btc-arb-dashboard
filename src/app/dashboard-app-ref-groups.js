@@ -83,7 +83,7 @@
         addCategoryModal: refs.addCategoryModal,
         addCategoryModalRefs: refs.addCategoryModalRefs,
         addQuoteChainSelect: refs.addQuoteChainSelect,
-        addQuoteInputs: [refs.addQuoteFromInput, refs.addQuoteToInput, refs.addQuoteSymbolInput],
+        addQuoteInputs: [refs.addQuoteFromInput, refs.addQuoteToInput, refs.addQuoteSymbolInput, refs.addQuoteAmountInput],
         addQuoteModal: refs.addQuoteModal,
         addQuoteModalRefs: refs.addQuoteModalRefs,
         addQuoteToChainSelect: refs.addQuoteToChainSelect,

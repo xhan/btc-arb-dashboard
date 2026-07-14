@@ -13,6 +13,7 @@ const quoteFetchControllerJs = fs.readFileSync('src/quote/quote-fetch-controller
 const indexHtml = fs.readFileSync('public/index.html', 'utf8');
 
 assert.ok(indexHtml.includes('id="add-quote-to-chain"'), '添加报价弹窗应提供目标链选择');
+assert.ok(indexHtml.includes('id="add-quote-amount"'), '添加报价弹窗应提供 Size 输入');
 assert.ok(dashboardDomRefsJs.includes("const addQuoteToChainSelect = getById(documentImpl, 'add-quote-to-chain');"), '前端应读取目标链选择控件');
 assert.ok(dashboardFormControllerJs.includes('deps.dashboardRenderer.buildAddQuoteDraft({'), '保存添加报价时应走 dashboard renderer draft 构造');
 assert.ok(dashboardRendererJs.includes('quote.toChain = normalizedToChain'), '保存跨链报价时应写入 toChain');
