@@ -5,7 +5,7 @@
   }
   root.ArbCyclePriorityUtils = factory(root.ArbEquivalenceUtils);
 }(typeof globalThis !== 'undefined' ? globalThis : this, function (arbEquivalenceUtils) {
-  const DEFAULT_ARB_CYCLE_START_PRIORITY = Object.freeze(['cbBTC', 'WBTC', 'ETH', 'USDT']);
+  const DEFAULT_ARB_CYCLE_START_PRIORITY = Object.freeze(['cbBTC', 'WBTC', 'ETH', 'USDT', 'USDC']);
 
   function normalizeArbCycleStartPriority(priorityList, fallback = DEFAULT_ARB_CYCLE_START_PRIORITY) {
     const source = Array.isArray(priorityList) && priorityList.length ? priorityList : fallback;

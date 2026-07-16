@@ -7,7 +7,8 @@
     "cbBTC",
     "WBTC",
     "ETH",
-    "USDT"
+    "USDT",
+    "USDC"
   ],
   "providerSettings": {
     "kyberClientId": "xh-chain-baby",
