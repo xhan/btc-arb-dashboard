@@ -18,6 +18,7 @@ function buildDefaultConfigMore() {
   return {
     providerSettings: {
       kyberClientId: 'xh-quote-dashboard',
+      kyberExcludedSources: [],
       lifiApiKey: '',
       lifiIntegrator: '',
       lifiSlippage: '0.0001',
@@ -31,6 +32,7 @@ function buildDefaultConfigMore() {
       llamaParaSwapSlippage: '0.5'
     },
     kyberClientId: 'xh-quote-dashboard',
+    kyberExcludedSources: [],
     lifiApiKey: '',
     lifiIntegrator: '',
     lifiSlippage: '0.0001',
@@ -71,6 +73,10 @@ function normalizeConfigMoreData(configMore = {}) {
     return [];
   };
   const rawClientId = pickString(providerSettings.kyberClientId, configMore.kyberClientId);
+  const rawKyberExcludedSources = pickArray(
+    providerSettings.kyberExcludedSources,
+    configMore.kyberExcludedSources
+  );
   const rawLifiApiKey = pickString(providerSettings.lifiApiKey, configMore.lifiApiKey, configMore.LIFIApiKey);
   const rawLifiIntegrator = pickString(providerSettings.lifiIntegrator, configMore.lifiIntegrator, configMore.LIFIIntegrator);
   const rawLifiSlippage = pickString(providerSettings.lifiSlippage, configMore.lifiSlippage, configMore.LIFISlippage);
@@ -103,6 +109,7 @@ function normalizeConfigMoreData(configMore = {}) {
 
   const normalized = {
     kyberClientId: rawClientId || 'xh-quote-dashboard',
+    kyberExcludedSources: rawKyberExcludedSources,
     lifiApiKey: rawLifiApiKey,
     lifiIntegrator: rawLifiIntegrator,
     lifiSlippage: rawLifiSlippage || '0.0001',
@@ -125,6 +132,7 @@ function normalizeConfigMoreData(configMore = {}) {
     ...normalized,
     providerSettings: {
       kyberClientId: normalized.kyberClientId,
+      kyberExcludedSources: normalized.kyberExcludedSources,
       lifiApiKey: normalized.lifiApiKey,
       lifiIntegrator: normalized.lifiIntegrator,
       lifiSlippage: normalized.lifiSlippage,

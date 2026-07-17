@@ -51,17 +51,21 @@ function createKyberClient(deps) {
         deps.getEvmTokenMeta(chain, toToken, provider)
       ]);
 
+      const configMore = requestContext && requestContext.configMore
+        ? requestContext.configMore
+        : await deps.getConfigMore();
+      const excludedSources = parseExcludedSources([
+        ...parseExcludedSources(configMore.kyberExcludedSources),
+        ...parseExcludedSources(input && input.kyberExcludedSources)
+      ]);
       const amountInRaw = deps.toRawAmount(finalAmount, fromMeta.decimals);
       const apiUrl = buildKyberRouteUrl({
         chain,
         fromToken,
         toToken,
         amountInRaw,
-        excludedSources: input && input.kyberExcludedSources
+        excludedSources
       });
-      const configMore = requestContext && requestContext.configMore
-        ? requestContext.configMore
-        : await deps.getConfigMore();
 
       deps.logQuoteRequest('KYBER', {
         chain,

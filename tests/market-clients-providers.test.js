@@ -27,7 +27,10 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
         })
       };
     },
-    getConfigMore: async () => ({ kyberClientId: 'kyber-client' }),
+    getConfigMore: async () => ({
+      kyberClientId: 'kyber-client',
+      kyberExcludedSources: ['fermi', 'curve-stable-ng', 'dodo-gsp']
+    }),
     getEvmProvider: (chain) => (chain === 'ethereum' ? {} : null),
     getEvmTokenMeta: async (chain, tokenAddress) => {
       if (tokenAddress === '0xfrom') return { symbol: 'WBTC', decimals: 8 };
@@ -61,7 +64,7 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
   });
   assert.strictEqual(
     kyberRequests[0].url,
-    'https://aggregator-api.kyberswap.com/ethereum/api/v1/routes?tokenIn=0xfrom&tokenOut=0xto&amountIn=100000000'
+    'https://aggregator-api.kyberswap.com/ethereum/api/v1/routes?tokenIn=0xfrom&tokenOut=0xto&amountIn=100000000&excludedSources=fermi%2Ccurve-stable-ng%2Cdodo-gsp'
   );
   assert.deepStrictEqual(kyberRequests[0].options, {
     headers: { 'X-Client-Id': 'kyber-client' }
@@ -73,12 +76,13 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
     fromToken: '0xfrom',
     toToken: '0xto',
     amount: 1,
-    kyberExcludedSources: ['uniswap-v3', ' balancer-v3 ', 'uniswap-v3'],
+    kyberExcludedSources: ['uniswap-v3', ' fermi ', 'balancer-v3', 'uniswap-v3'],
     requestContext: {
       channelId: 'hk-1',
       httpProxy: 'http://127.0.0.1:18001',
       configMore: {
-        kyberClientId: 'hk-client'
+        kyberClientId: 'hk-client',
+        kyberExcludedSources: ['fermi', 'curve-stable-ng', 'dodo-gsp']
       }
     }
   });
@@ -86,7 +90,7 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
   assert.strictEqual(kyberChannelResult.source, 'Kyber');
   assert.strictEqual(
     kyberChannelRequests[0].url,
-    'https://aggregator-api.kyberswap.com/ethereum/api/v1/routes?tokenIn=0xfrom&tokenOut=0xto&amountIn=100000000&excludedSources=uniswap-v3%2Cbalancer-v3'
+    'https://aggregator-api.kyberswap.com/ethereum/api/v1/routes?tokenIn=0xfrom&tokenOut=0xto&amountIn=100000000&excludedSources=fermi%2Ccurve-stable-ng%2Cdodo-gsp%2Cuniswap-v3%2Cbalancer-v3'
   );
   assert.deepStrictEqual(kyberChannelRequests[0].options, {
     headers: { 'X-Client-Id': 'hk-client' }
@@ -95,7 +99,8 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
     channelId: 'hk-1',
     httpProxy: 'http://127.0.0.1:18001',
     configMore: {
-      kyberClientId: 'hk-client'
+      kyberClientId: 'hk-client',
+      kyberExcludedSources: ['fermi', 'curve-stable-ng', 'dodo-gsp']
     }
   });
 

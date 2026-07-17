@@ -22,6 +22,7 @@ const defaultIntervals = {
 const defaultConfigMore = {
   providerSettings: {
     kyberClientId: 'default-client',
+    kyberExcludedSources: ['fermi', 'curve-stable-ng', 'dodo-gsp'],
     lifiApiKey: 'default-lifi',
     lifiIntegrator: 'default-integrator',
     jupiterApiKey: 'default-jupiter',
@@ -32,6 +33,7 @@ const defaultConfigMore = {
     llamaParaSwapSlippage: '0.5'
   },
   kyberClientId: 'default-client',
+  kyberExcludedSources: ['fermi', 'curve-stable-ng', 'dodo-gsp'],
   lifiApiKey: 'default-lifi',
   lifiIntegrator: 'default-integrator',
   jupiterApiKey: 'default-jupiter',
@@ -69,6 +71,14 @@ assert.strictEqual(config.channels[1].id, 'hk-1');
 assert.strictEqual(config.channels[1].intervals.kyber, 90);
 assert.strictEqual(config.channels[1].intervals.zerox, 110);
 assert.strictEqual(config.channels[1].configMore.kyberClientId, 'hk-client');
+assert.deepStrictEqual(
+  config.channels[1].configMore.kyberExcludedSources,
+  ['fermi', 'curve-stable-ng', 'dodo-gsp']
+);
+assert.deepStrictEqual(
+  config.channels[1].configMore.providerSettings.kyberExcludedSources,
+  ['fermi', 'curve-stable-ng', 'dodo-gsp']
+);
 assert.strictEqual(config.channels[1].configMore.lifiApiKey, 'hk-lifi');
 assert.strictEqual(config.channels[1].configMore.lifiIntegrator, 'default-integrator');
 assert.strictEqual(config.channels[1].configMore.llamaParaSwapProxyUrl, 'http://127.0.0.1:18082');

@@ -16,6 +16,7 @@ assert.deepStrictEqual(normalizeStringArray(null), []);
 
 const defaultConfigMore = buildDefaultConfigMore();
 assert.strictEqual(defaultConfigMore.kyberClientId, 'xh-quote-dashboard');
+assert.deepStrictEqual(defaultConfigMore.kyberExcludedSources, []);
 assert.strictEqual(defaultConfigMore.lifiSlippage, '0.0001');
 assert.strictEqual(defaultConfigMore.providerSettings.llamaParaSwapProxyUrl, 'http://127.0.0.1:18081');
 assert.strictEqual(defaultConfigMore.llamaParaSwapProxyUrl, 'http://127.0.0.1:18081');
@@ -30,6 +31,7 @@ assert.deepStrictEqual(getConfigSettings({}), {});
 const normalizedConfigMore = normalizeConfigMoreData({
   providerSettings: {
     kyberClientId: ' custom-client ',
+    kyberExcludedSources: [' fermi ', '', 'curve-stable-ng'],
     lifiApiKey: ' lifi-key ',
     lifiIntegrator: ' integrator ',
     lifiSlippage: '',
@@ -50,6 +52,8 @@ const normalizedConfigMore = normalizeConfigMoreData({
   telegramBotApiBaseUrl: ' http://telegram.local '
 });
 assert.strictEqual(normalizedConfigMore.kyberClientId, 'custom-client');
+assert.deepStrictEqual(normalizedConfigMore.kyberExcludedSources, ['fermi', 'curve-stable-ng']);
+assert.deepStrictEqual(normalizedConfigMore.providerSettings.kyberExcludedSources, ['fermi', 'curve-stable-ng']);
 assert.strictEqual(normalizedConfigMore.lifiApiKey, 'lifi-key');
 assert.strictEqual(normalizedConfigMore.lifiIntegrator, 'integrator');
 assert.strictEqual(normalizedConfigMore.lifiSlippage, '0.0001');
@@ -72,7 +76,13 @@ assert.strictEqual(normalizedConfigMore.telegramBotApiBaseUrl, 'http://telegram.
 async function runStoreTest() {
   const reads = {
     '/config.json': { dashboard: [{ id: 1 }], settings: { kyber: 230 } },
-    '/config_more.json': { providerSettings: { kyberClientId: ' runtime-client ', lifiSlippage: '0.002' } },
+    '/config_more.json': {
+      providerSettings: {
+        kyberClientId: ' runtime-client ',
+        kyberExcludedSources: ['fermi', 'curve-stable-ng', 'dodo-gsp'],
+        lifiSlippage: '0.002'
+      }
+    },
     '/request_channels.json': {
       channels: [
         {
@@ -107,6 +117,10 @@ async function runStoreTest() {
   assert.strictEqual(cache.configMore.lifiSlippage, '0.002');
   assert.strictEqual(cache.requestChannelsConfig.channels.length, 2);
   assert.strictEqual(cache.requestChannelsConfig.byId.get('HK-1').configMore.kyberClientId, 'hk-client');
+  assert.deepStrictEqual(
+    cache.requestChannelsConfig.byId.get('HK-1').configMore.kyberExcludedSources,
+    ['fermi', 'curve-stable-ng', 'dodo-gsp']
+  );
   assert.strictEqual((await store.getConfigMore()).kyberClientId, 'runtime-client');
   assert.strictEqual((await store.getRequestChannelsConfig()).defaultChannelId, 'default');
 }
