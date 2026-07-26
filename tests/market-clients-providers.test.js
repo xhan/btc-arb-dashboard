@@ -31,7 +31,7 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
       kyberClientId: 'kyber-client',
       kyberExcludedSources: ['fermi', 'curve-stable-ng', 'dodo-gsp']
     }),
-    getEvmProvider: (chain) => (chain === 'ethereum' ? {} : null),
+    getEvmProvider: (chain) => (['ethereum', 'arbitrum'].includes(chain) ? {} : null),
     getEvmTokenMeta: async (chain, tokenAddress) => {
       if (tokenAddress === '0xfrom') return { symbol: 'WBTC', decimals: 8 };
       return { symbol: 'USDC', decimals: 6 };
@@ -103,6 +103,55 @@ const { createCetusClient } = require('../src/market-clients/providers/cetus');
       kyberExcludedSources: ['fermi', 'curve-stable-ng', 'dodo-gsp']
     }
   });
+
+  const kyberArbitrumResult = await kyber.getQuote({
+    chain: 'arbitrum',
+    fromToken: '0xfrom',
+    toToken: '0xto',
+    amount: 1
+  });
+  assert.strictEqual(kyberArbitrumResult.source, 'Kyber');
+  assert.strictEqual(
+    kyberRequests[2].url,
+    'https://aggregator-api.kyberswap.com/arbitrum/api/v1/routes?tokenIn=0xfrom&tokenOut=0xto&amountIn=100000000'
+  );
+
+  await kyber.getQuote({
+    chain: 'arbitrum',
+    fromToken: '0xfrom',
+    toToken: '0xto',
+    amount: 1,
+    kyberExcludedSources: ['uniswap-v3']
+  });
+  assert.strictEqual(
+    kyberRequests[3].url,
+    'https://aggregator-api.kyberswap.com/arbitrum/api/v1/routes?tokenIn=0xfrom&tokenOut=0xto&amountIn=100000000&excludedSources=uniswap-v3'
+  );
+
+  const kyberFailure = createKyberClient({
+    fetchOnce: async () => {
+      throw new Error('route not found');
+    },
+    getConfigMore: async () => ({ kyberClientId: 'kyber-client' }),
+    getEvmProvider: () => ({}),
+    getEvmTokenMeta: async (chain, tokenAddress) => (
+      tokenAddress === '0xfrom'
+        ? { symbol: 'sUSDai', decimals: 18 }
+        : { symbol: 'WETH', decimals: 18 }
+    ),
+    toRawAmount: () => '1000000000000000000',
+    fromRawAmount: () => {
+      throw new Error('fromRawAmount should not be called after a Kyber request failure');
+    },
+    logQuoteRequest: () => {},
+    logQuoteResult: () => {}
+  });
+  await assert.rejects(
+    () => kyberFailure.getQuote({ chain: 'plasma', fromToken: '0xfrom', toToken: '0xto', amount: 1 }),
+    (error) => error.message === 'route not found'
+      && error.quoteLogContext.fromSymbol === 'sUSDai'
+      && error.quoteLogContext.toSymbol === 'WETH'
+  );
 
   const zeroXRequests = [];
   const zeroX = createZeroXClient({

@@ -50,7 +50,11 @@ function registerMarketQuoteRoute({
       const result = await marketClients.providers[providerKey].getQuote(input);
       res.json(result);
     } catch (error) {
-      logQuoteError(logSource, withQuoteLogRequestChannel(buildErrorContext(req.body), input), error);
+      const errorContext = {
+        ...buildErrorContext(req.body),
+        ...(error && error.quoteLogContext)
+      };
+      logQuoteError(logSource, withQuoteLogRequestChannel(errorContext, input), error);
       res.status(500).json({ error: error.message });
     }
   });

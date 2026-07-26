@@ -236,6 +236,56 @@ x-ratelimit-reset-after: 10
 - `HEAD` 实测会返回 `404`
 - 带 `Origin` 请求时，服务端会回 `access-control-allow-origin`
 
+## 服务端限流实测（2026-07-24）
+
+测试使用同一个 Ethereum `cbBTC -> WBTC` 报价 URL、同一出口 IP，每个
+`X-Client-Id` 只请求一次。实际响应如下：
+
+| X-Client-Id | 状态 | x-ratelimit-limit | x-ratelimit-remaining | x-ratelimit-reset-after |
+| --- | ---: | ---: | ---: | ---: |
+| `kingswap-trade-bot` | 200 | `100, 10` | 99 | 10 |
+| `kingswap-quote-dashboard` | 200 | `100, 10` | 98 | 10 |
+| `xh-chain-baby` | 200 | `60, 10` | 59 | 10 |
+| `xh-chain-trade` | 200 | `100, 10` | 97 | 10 |
+
+观察：
+
+- `X-Client-Id` 会影响服务端给出的限流档位；随机 ID `swap-hero-0927` 返回的是
+  `30, 10`，上表分别是 `60, 10` 或 `100, 10`。
+- 三个 `100, 10` 的不同 ID 按请求顺序得到剩余值 `99 -> 98 -> 97`，说明它们在本次
+  同一出口 IP 测试中没有获得独立的 100 次额度。
+- `x-ratelimit-reset-after: 10` 始终为 10，表示 10 秒限流窗口，不是实时倒计时。
+- 仅凭这次单出口测试，无法确认不同出口 IP 是否能叠加额度。
+
+本次单次请求的等价 `curl` 如下。`-D -` 会把响应头输出到终端，`-o /dev/null` 丢弃响应体：
+
+```bash
+curl -sS -D - -o /dev/null \
+  -A 'market-diff-header-check/1.0' \
+  -H 'X-Client-Id: kingswap-quote-dashboard' \
+  'https://aggregator-api.kyberswap.com/ethereum/api/v1/routes?tokenIn=0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf&tokenOut=0x2260fac5e5542a773aa44fbcfedf7c193bc2c599&amountIn=100000000'
+```
+
+把 `X-Client-Id` 的值替换为表中的其他 ID，即可复现对应的单次检查。
+
+### 4 QPS 随机 ID 压测
+
+使用 `X-Client-Id: swap-hero-0927` 对同一 URL 按定时并发 `4 QPS` 发起请求。首个
+`429` 是第 36 个请求，响应时约在第 9.16 秒；最终收到 35 个 `200` 和 2 个 `429`
+（第 37 个请求在首个 429 返回前已发出）。
+
+首个 `429` 的关键响应头：
+
+```text
+x-tier: basic
+x-ratelimit-limit: 30, 10
+x-ratelimit-remaining: 0
+x-ratelimit-reset-after: 10
+```
+
+因此，`basic` 档应按每 10 秒 30 次，即稳定不超过 `3 QPS` 使用。并发请求时，成功响应
+中的 `x-ratelimit-remaining` 会因在途请求和响应返回顺序而跳变，不能把单条值当作严格计数器。
+
 ## 最小可用调用
 
 ### curl

@@ -98,9 +98,11 @@ async function runMarketErrorPathTest() {
     app,
     marketClients: {
       providers: {
-        lifi: {
+        kyber: {
           getQuote: async () => {
-            throw new Error('route failed');
+            const error = new Error('route failed');
+            error.quoteLogContext = { fromSymbol: 'sUSDai', toSymbol: 'WETH' };
+            throw error;
           }
         }
       }
@@ -108,20 +110,28 @@ async function runMarketErrorPathTest() {
     buildQuoteRequestInput: async (body, sourceKey) => ({ ...body, requestContext: { channelId: 'HK-1' }, sourceKey }),
     logQuoteError: (source, context, error) => errors.push({ source, context, error: error.message }),
     withQuoteLogRequestChannel: (context, input) => ({ ...context, channelId: input.requestContext.channelId }),
-    marketRoutes: [MARKET_QUOTE_ROUTES.find((route) => route.routePath === '/api/get-lifi-quote')],
+    marketRoutes: [MARKET_QUOTE_ROUTES.find((route) => route.routePath === '/api/get-kyber-quote')],
     cexRoutes: []
   });
 
   const response = createResponse();
-  await app.handlers.get('/api/get-lifi-quote')({
-    body: { chain: 'base', toChain: 'arbitrum', fromToken: '0xaaa', toToken: '0xbbb' }
+  await app.handlers.get('/api/get-kyber-quote')({
+    body: { chain: 'plasma', fromToken: '0xaaa', toToken: '0xbbb' }
   }, response);
 
   assert.strictEqual(response.statusCode, 500);
   assert.deepStrictEqual(response.body, { error: 'route failed' });
   assert.deepStrictEqual(errors, [{
-    source: 'LIFI',
-    context: { chain: 'base->arbitrum', fromToken: '0xaaa', toToken: '0xbbb', amount: 1, channelId: 'HK-1' },
+    source: 'KYBER',
+    context: {
+      chain: 'plasma',
+      fromToken: '0xaaa',
+      toToken: '0xbbb',
+      amount: 1,
+      fromSymbol: 'sUSDai',
+      toSymbol: 'WETH',
+      channelId: 'HK-1'
+    },
     error: 'route failed'
   }]);
 }
